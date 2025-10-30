@@ -234,7 +234,8 @@
                                 {% endwith %}
                               </div>
                             </div>
-                            <button onclick="addUser()" type="button" class="btn btn-success pull-right clearfix">
+                            <button onclick="addUser()" type="button" class="btn btn-success pull-right clearfix"
+                              {% if not enable_multi_contributors %}style="display:none;"{% endif %}>
                               <i class="glyphicon glyphicon-plus"></i>New
                             </button>
                           </div>
@@ -502,6 +503,7 @@
           <input type="hidden" id="list_license_data" name="list_license_data" value='{{ list_license_data }}'>
           <input type="hidden" id="application_item_type" name="application_item_type" value='{{application_item_type}}'>
           <input type="hidden" id="enable_feedback_maillist" name="enable_feedback_maillist" value='{{enable_feedback_maillist}}'>
+          <input type="hidden" id="enable_multi_contributors" name="enable_multi_contributors" value='{{enable_multi_contributors}}'>
           <input type="hidden" id="enable_request_maillist" name="enable_request_maillist" value='{{enable_request_maillist}}'/>
           {% set position_err_msg = "Position is being inputted (Only input when selecting 'Others')" %}
           <input type="hidden" id="err_input_other_position" name="err_input_other_position" value='{{_(position_err_msg)}}'>

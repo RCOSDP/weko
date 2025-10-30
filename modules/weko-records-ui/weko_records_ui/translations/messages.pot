@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-10-03 17:28+0900\n"
+"POT-Creation-Date: 2025-10-21 14:06+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,36 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/test_utils.py:692 weko_records_ui/api.py:634 weko_records_ui/fd.py:509
-#: weko_records_ui/fd.py:513 weko_records_ui/fd.py:519
-#: weko_records_ui/fd.py:654 weko_records_ui/utils.py:1209
+#: tests/test_utils.py:712 weko_records_ui/api.py:634 weko_records_ui/fd.py:651
+#: weko_records_ui/fd.py:729 weko_records_ui/utils.py:1213
 msgid "Unexpected error occurred."
 msgstr ""
 
-#: tests/test_utils.py:696 weko_records_ui/utils.py:1211
+#: tests/test_utils.py:716 weko_records_ui/utils.py:1215
 msgid "Failed to send mail."
 msgstr ""
 
-#: tests/test_utils.py:993 tests/test_utils.py:994 tests/test_utils.py:996
-#: tests/test_utils.py:1001 tests/test_utils.py:1021 tests/test_utils.py:1025
-#: tests/test_utils.py:1027 tests/test_utils.py:1029 tests/test_utils.py:1031
-#: tests/test_utils.py:1033 tests/test_utils.py:1061
-#: weko_records_ui/utils.py:1256 weko_records_ui/utils.py:1292
-#: weko_records_ui/utils.py:1923 weko_records_ui/utils.py:1957
-msgid "Token is invalid."
-msgstr ""
-
-#: tests/test_utils.py:1042 weko_records_ui/utils.py:1310
-#: weko_records_ui/utils.py:1975
-msgid "The expiration date for download has been exceeded."
-msgstr ""
-
-#: tests/test_utils.py:1053 weko_records_ui/utils.py:1317
-#: weko_records_ui/utils.py:1983
-msgid "The download limit has been exceeded."
-msgstr ""
-
-#: tests/test_views.py:956 weko_records_ui/views.py:1106
+#: tests/test_views.py:1303 weko_records_ui/views.py:1247
 msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
 msgstr ""
 
@@ -111,69 +91,69 @@ msgstr ""
 msgid "Cannot update because the corresponding item is being edited."
 msgstr ""
 
-#: weko_records_ui/config.py:396
+#: weko_records_ui/config.py:435
 msgid "write your own license"
 msgstr ""
 
-#: weko_records_ui/config.py:401
+#: weko_records_ui/config.py:440
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
-#: weko_records_ui/config.py:416
+#: weko_records_ui/config.py:455
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:428
+#: weko_records_ui/config.py:467
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:442
+#: weko_records_ui/config.py:481
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:456
+#: weko_records_ui/config.py:495
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:470
+#: weko_records_ui/config.py:509
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:484
+#: weko_records_ui/config.py:523
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:499
+#: weko_records_ui/config.py:538
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:511
+#: weko_records_ui/config.py:550
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:525
+#: weko_records_ui/config.py:564
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:539
+#: weko_records_ui/config.py:578
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:553
+#: weko_records_ui/config.py:592
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: weko_records_ui/config.py:567
+#: weko_records_ui/config.py:606
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"
@@ -207,8 +187,26 @@ msgstr ""
 msgid "Internal Server Error."
 msgstr ""
 
-#: weko_records_ui/fd.py:557
+#: weko_records_ui/fd.py:488
+msgid "Restricted access is disabled."
+msgstr ""
+
+#: weko_records_ui/fd.py:501 weko_records_ui/fd.py:621
+#: weko_records_ui/fd.py:714
+#, python-format
+msgid "The file \"%s\" does not exist."
+msgstr ""
+
+#: weko_records_ui/fd.py:513 weko_records_ui/fd.py:568
+msgid "Invalid token."
+msgstr ""
+
+#: weko_records_ui/fd.py:577
 msgid "Could not download file."
+msgstr ""
+
+#: weko_records_ui/fd.py:586
+msgid "Invalid verification info."
 msgstr ""
 
 #: weko_records_ui/pdf.py:672
@@ -228,7 +226,7 @@ msgstr ""
 msgid "There is not enough storage space."
 msgstr ""
 
-#: weko_records_ui/rest.py:774
+#: weko_records_ui/rest.py:778
 msgid "Item Type"
 msgstr ""
 
@@ -236,37 +234,83 @@ msgstr ""
 msgid "Allow read file."
 msgstr ""
 
-#: weko_records_ui/utils.py:448
+#: weko_records_ui/utils.py:452
 msgid "Item cannot be deleted because the import is in progress."
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:218
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:151
-#: weko_records_ui/utils.py:984
+#: weko_records_ui/utils.py:988
 msgid "Restricted Access"
 msgstr ""
 
-#: weko_records_ui/utils.py:993
+#: weko_records_ui/utils.py:997
 msgid "Download is available from {}/{}/{}."
 msgstr ""
 
-#: weko_records_ui/utils.py:996
+#: weko_records_ui/utils.py:1000
 msgid "Download / Preview is available from {}/{}/{}."
 msgstr ""
 
-#: weko_records_ui/utils.py:1462
+#: weko_records_ui/utils.py:1260 weko_records_ui/utils.py:1296
+msgid "Token is invalid."
+msgstr ""
+
+#: weko_records_ui/utils.py:1314 weko_records_ui/utils.py:2347
+msgid "The expiration date for download has been exceeded."
+msgstr ""
+
+#: weko_records_ui/utils.py:1321 weko_records_ui/utils.py:2344
+msgid "The download limit has been exceeded."
+msgstr ""
+
+#: weko_records_ui/utils.py:1580
 msgid "Guest"
 msgstr ""
 
-#: weko_records_ui/utils.py:1473
+#: weko_records_ui/utils.py:1591
 msgid "Free Input"
 msgstr ""
 
-#: weko_records_ui/views.py:863
-msgid "Success Secret URL Generate"
+#: weko_records_ui/utils.py:2324
+msgid "The type of URL is not specified."
 msgstr ""
 
-#: weko_records_ui/views.py:1003
+#: weko_records_ui/utils.py:2328
+msgid "The provided token is invalid."
+msgstr ""
+
+#: weko_records_ui/utils.py:2332
+msgid "This feature is currently disabled."
+msgstr ""
+
+#: weko_records_ui/utils.py:2337
+msgid "This file is currently not available for this feature."
+msgstr ""
+
+#: weko_records_ui/utils.py:2342
+msgid "This URL has been deactivated."
+msgstr ""
+
+#: weko_records_ui/views.py:904
+msgid "Secret URL generated successfully"
+msgstr ""
+
+#: weko_records_ui/views.py:909
+msgid ", please check your email inbox"
+msgstr ""
+
+#: weko_records_ui/views.py:911
+msgid ""
+", but there was an error while sending the email. To use the URL, please "
+"refresh the page and copy it from the issued URL list"
+msgstr ""
+
+#: weko_records_ui/views.py:914
+msgid "."
+msgstr ""
+
+#: weko_records_ui/views.py:1144
 msgid "PDF cover page settings have been updated."
 msgstr ""
 
@@ -424,6 +468,8 @@ msgid "Edit"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:384
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
 msgid "Delete"
 msgstr ""
 
@@ -514,6 +560,8 @@ msgid "No title"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:68
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
 msgid "Action"
 msgstr ""
 
@@ -526,6 +574,7 @@ msgid "Copy file to open bucket"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:157
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:248
 msgid "Secret URL"
 msgstr ""
 
@@ -534,94 +583,175 @@ msgid "Plagarism Check"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:229
+msgid "Link Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
+msgid "Item has not been filled in."
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:205
+msgid "URL Expiry Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
+msgid "Max Expiry Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:211
+msgid "Download Limit"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:214
+msgid "Max Download Count"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:218
+msgid "Create Secret URL"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:221
+msgid "Send Email"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:251
+msgid "Label Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:252
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:299
+msgid "Create Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
+msgid "Expiration Date"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
+msgid "Download Count"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:275
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:322
+msgid "Copy"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:283
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:330
+msgid "message_del_check"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:284
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:331
+msgid "message_del_success"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
+msgid "message_copy_success"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:295
+msgid "Onetime URL"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:298
+msgid "User Name"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:338
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:367
 msgid "Version"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:5
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:201
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:339
 msgid "Stats"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:346
 msgid ""
 "Copy Success. Take note of URL. This URL cannot be confirmed again once "
 "the screen is closed. If you have created a new bucket, please check that"
 " the bucket is set to public."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:209
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:347
 msgid "Please select the same named file as the original file."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:210
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
 msgid "File replacement successful."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:211
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
 msgid "Replacing file failed."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:215
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:235
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:353
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
 msgid "Show"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:216
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:235
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:354
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
 msgid "Hide"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:230
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:368
 msgid "Date Modified"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:231
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
 msgid "Object File Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:232
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
 msgid "File Size"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:233
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
 msgid "File Hash Value"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:234
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
 msgid "Contributor Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:256
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:394
 msgid "Downloads"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:264
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:402
 msgid "Plays"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:274
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:412
 msgid "See details"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:315
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:453
 msgid "Chose bucket or input creating bucket name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
 msgid "Bucket"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:327
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:465
 msgid "New Creating Bucket Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:341
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:479
 msgid "Execution"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:345
+#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:483
 msgid "Close"
 msgstr ""
 

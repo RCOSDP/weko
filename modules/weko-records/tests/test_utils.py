@@ -110,7 +110,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
         "control_number":1,
         "weko_creator_id":1,
         "owner":"1",
-        "weko_shared_ids":[1],
+        "weko_shared_ids":[],
         "shared_user_ids":[],
         "item_1":"item_1_v",
         "item_2":"",
@@ -126,9 +126,9 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
     dc, jrc, is_edit = json_loader(data3,_pid)
 
     assert dc == OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), 
-                        ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_ids', []), ('_oai', {'id': '1'}), ('owner', 1), ('owners', [1])])
+                        ('author_link', ['2', '2']), ('weko_shared_ids', []),("weko_link", {"2": "5678"}), ('_oai', {'id': '1'}), ('owner', 1), ('owners', [1])])
     assert jrc == {'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_5': ['item_5'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'),
-                        ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_ids', []), ('_oai', {'id': '1'}), ('owner', 1), ('owners', [1])]), 'itemtype': 'test10', 'publish_date': None,
+                        ('author_link', ['2', '2']), ('weko_shared_ids', []),("weko_link", {"2": "5678"}), ('_oai', {'id': '1'}), ('owner', 1), ('owners', [1])]), 'itemtype': 'test10', 'publish_date': None,
                         'author_link': ['2', '2'], "weko_link": {"2": "5678"}, 'weko_creator_id': '1', 'weko_shared_ids': []}
     assert is_edit == False
 
@@ -141,7 +141,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
             '$schema': 'http://schema/3',
             "pubdate":"2023-08-08",
             "title":"test_item2",
-            "weko_shared_ids":[1],
+            "weko_shared_ids":[2],
             "shared_user_ids":[2],
             "item_1":"item_1_v",
             "item_2":"item_2_v",
@@ -154,9 +154,9 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
         }
         dc, jrc, is_edit = json_loader(data4,_pid)
         assert dc == OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                                ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_ids', [2]), ('owner', 1), ('owners', [1])])
+                                ('author_link', ['2', '2']),('weko_shared_ids', [2]),("weko_link", {"2": "5678"}), ('owner', 1), ('owners', [1])])
         assert jrc == {'item_6': ['item_6_1_v'], 'item_5': ['item_5'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                    ('author_link', ['2', '2']), ("weko_link" ,{"2": "5678"}), ('weko_shared_ids', [2]), ('owner', 1), ('owners', [1])]), 'itemtype': 'test10', 'publish_date': None,
+                    ('author_link', ['2', '2']), ('weko_shared_ids', [2]),("weko_link" ,{"2": "5678"}), ('owner', 1), ('owners', [1])]), 'itemtype': 'test10', 'publish_date': None,
                     'author_link': ['2', '2'], "weko_link" :{"2": "5678"}, 'weko_creator_id': '1', 'weko_shared_ids': [2]}
         assert is_edit == True
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
@@ -177,7 +177,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
             }
             dc, jrc, is_edit = json_loader(data5, _pid)
             assert dc == OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                                    ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_ids', [2]), ('owner', 2), ('owners', [2])])
+                                    ('author_link', ['2', '2']), ('weko_shared_ids', [2]),("weko_link", {"2": "5678"}), ('owner', 5), ('owners', [5])])
             assert jrc == {'item_5': ['item_5'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': 
                 OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), 
                             ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), 
@@ -188,10 +188,10 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                             ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}),
                             ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}),
                             ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), 
-                            ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_ids', [2]), ('owner', 2), ('owners', [2])]),
+                            ('author_link', ['2', '2']),('weko_shared_ids', [2]),("weko_link", {"2": "5678"}),  ('owner', 5), ('owners', [5])]),
                             'itemtype': 'test10', 'publish_date': None, 
                             'author_link': ['2', '2'], "weko_link": {"2": "5678"}, 'weko_creator_id': '5', 'weko_shared_ids': [2]}
-            
+
             assert is_edit == True
 
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
@@ -202,7 +202,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                 '$schema': 'http://schema/3',
                 "pubdate":"2023-08-08",
                 "title":"test_item2",
-                "weko_shared_id":2,
+                "weko_shared_ids":[2],
                 "item_1":"item_1_v",
                 "item_2":"item_2_v",
                 "item_3":{"item_3_1":"item_3_1_v"},
@@ -213,10 +213,10 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                 "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]},
             }
             dc, jrc, is_edit = json_loader(data6, _pid)
-            assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ["item_6_1","item_6_1_v"]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                                    ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_id', 2), ('owner', '1')])
+            assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ["item_6_1","item_6_1_v"]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
+                                    ('author_link', ['2', '2']),('weko_shared_ids', [2]),("weko_link", {"2": "5678"}),  ('owner', 1),('owners',[1])])
             assert jrc == {'item_5': ['item_5'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_6': ["item_6_1",'item_6_1_v'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata':
-                OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}),
+                OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}),
                             ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}),
                             ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}),
                             ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}),
@@ -226,9 +226,9 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                             ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}),
                             ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}),
                             ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                            ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_id', 2), ('owner', '1')]),
-                            'itemtype': 'test10', 'publish_date': '2023-08-08',
-                            'author_link': ['2', '2'], "weko_link": {"2": "5678"}, 'weko_creator_id': '1', 'weko_shared_id': 2}
+                            ('author_link', ['2', '2']), ('weko_shared_ids', [2]),("weko_link", {"2": "5678"}), ('owner', 1),('owners',[1])]),
+                            'itemtype': 'test10', 'publish_date': None,
+                            'author_link': ['2', '2'], "weko_link": {"2": "5678"}, 'weko_creator_id': '1', 'weko_shared_ids': [2]}
             assert is_edit == True
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
         with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
@@ -240,7 +240,7 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                         '$schema': 'http://schema/3',
                         "pubdate":"2023-08-08",
                         "title":"test_item2",
-                        "weko_shared_id":2,
+                        "weko_shared_ids":[2],
                         "item_1":"item_1_v",
                         "item_2":"item_2_v",
                         "item_3":{"item_3_1":"item_3_1_v"},
@@ -251,10 +251,10 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                         "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]},
                     }
                     dc, jrc, is_edit = json_loader(data, _pid)
-                    assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ["item_6_1","item_6_1_v"]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                                            ('author_link', ['2', '2']),("weko_link", {"2": "5678"}), ('weko_shared_id', 2), ('owner', 1)])
+                    assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ["item_6_1","item_6_1_v"]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
+                                            ('author_link', ['2', '2']),('weko_shared_ids', [2]),("weko_link", {"2": "5678"}), ('owner', 1),('owners',[1])])
                     assert jrc == {'item_5': ['item_5'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata':
-                        OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}),
+                        OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}),
                                     ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}),
                                     ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}),
                                     ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}),
@@ -264,9 +264,9 @@ def test_json_loader(app, db, item_type, item_type2, item_type_mapping2, db_regi
                                     ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}),
                                     ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}),
                                     ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'),
-                                    ('author_link', ['2', '2']),("weko_link", {"2": "5678"}),  ('weko_shared_id', 2), ('owner', 1)]),
-                                    'itemtype': 'test10', 'publish_date': '2023-08-08',
-                                    'author_link': ['2', '2'], "weko_link": {"2": "5678"},  'weko_shared_id': 2 ,'weko_creator_id': '1'}
+                                    ('author_link', ['2', '2']), ('weko_shared_ids', [2]), ("weko_link", {"2": "5678"}), ('owner', 1),('owners',[1])]),
+                                    'itemtype': 'test10', 'publish_date': None,
+                                    'author_link': ['2', '2'], "weko_link": {"2": "5678"},  'weko_shared_ids': [2] ,'weko_creator_id': '1'}
                     assert is_edit == True
                     data={
                         '$schema': 'http://schema/3',
@@ -303,12 +303,12 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
     item_type_scheme={"properties":{"control_number":{"type":"string"},"item_1":{"title":"item_1","type":"string"},"item_2":{"title":"item_2","type":"string"},"item_3":{"title":"item_3","type":"object","properties":{"item_3_1":{"title":"item_3_1","type":"string"},"iscreator":{"type":"string"}}},"item_4":{"title":"item_4","type":"object","properties":{"item_4_1":{"title":"item_4_1","type":"string"}}},"item_5":{"title":"item_5","type":"array","items":{"properties":{"filename":{"type":"string","title":"filename"},"iscreator":{"type":"string"}}},},"item_6":{"title":"item_6","type":"array","items":{"properties":{"item_6_1":{"title":"item_6_1","type":"string"}}},},"item_7":{"title":"item_7","type":"array","items":{"properties":{"nameIdentifiers":{"type":"array","items":{"properties":{"nameIdentifier":{"title":"name identifier","type":"string"},"nameIdentifierScheme":{"title":"name identifier scheme","type":"string"}}}}}}},"item_8":{"title":"item_8","type": "object","properties":{"nameIdentifiers":{"type":"array","items":{"properties":{"nameIdentifier":{"title":"name identifier","type":"string"},"nameIdentifierScheme":{"title":"name identifier scheme","type":"string"}}}}}}}}
     item_type_mapping = {"control_number":{},"item_1":{"jpcoar_mapping":""},"item_2":{"jpcoar_mapping":""},"item_3":{"jpcoar_mapping":{"item_3":{"@value":"item_3_1"}}},"item_4":{"jpcoar_mapping":{"item_4":{"@value":"item_4_1"}}},"item_5":{"jpcoar_mapping":{"item_5":{"@value":"filename"}}},"item_6":{"jpcoar_mapping":{"item_6":{"@value":"item_6_1"}}},"item_7":{"jpcoar_mapping":{"creator1":{"nameIdentifier":{"@value":"nameIdentifiers.nameIdentifier","@attributes":{"nameIdentifierScheme":"nameIdentifiers.nameIdentifierScheme"}}}}},"item_8":{"jpcoar_mapping":{"creator1":{"nameIdentifier":{"@value":"nameIdentifiers.nameIdentifier","@attributes":{"nameIdentifierScheme":"nameIdentifiers.nameIdentifierScheme"}}}}}}
     _pid = records[0][0]
-    
+
     # not exist $schema
     data1={}
     result = json_loader(data1, _pid)
     assert result==None
-    
+
     # not exist scheme, mapping
     data2={
         '$schema': 'http://schema/1/A-test'
@@ -320,8 +320,8 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
     assert e.type==RuntimeError
     assert str(e.value)=="Item Type 1 does not exist."
 
-    
-    ItemTypes.create(
+
+    test10_itemtype = ItemTypes.create(
         name='test10',
         item_type_name=ItemTypeName(name='test10'),
         schema=item_type_scheme,
@@ -332,17 +332,17 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         def dumps(self):
             return item_type_mapping
     mocker.patch("weko_records.utils.Mapping.get_record",return_value=MockMapping())
-
+    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
 
     # weko_shared_ids!=[], shared_user_ids=[], exist control_number
     data3={
-        '$schema': 'http://schema/3',
+        '$schema': f'http://schema/{test10_itemtype.id}',
         "pubdate":"2023-08-08",
         "title":"test_item1",
         "control_number":1,
         "weko_creator_id":1,
         "owner":"1",
-        "weko_shared_ids":[1],
+        "weko_shared_ids":[],
         "shared_user_ids":[],
         "item_1":"item_1_v",
         "item_2":"",
@@ -356,17 +356,18 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
     app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
     dc, jrc, is_edit = json_loader(data3,_pid)
-    assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('_oai', {'id': '1'})])
-    assert jrc == {'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_5': ['item_5'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('_oai', {'id': '1'})]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678']}
+    assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[]),('weko_link', {'1234': '1234','5678': '5678'}), ('_oai', {'id': '1'}),('owner', 1),('owners',[1])])
+    assert jrc == {'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_5': ['item_5'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': ''}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item1'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[]),('weko_link', {'1234': '1234','5678': '5678'}), ('_oai', {'id': '1'}),('owner', 1),('owners',[1])]), 'itemtype': 'test10', 'publish_date': None, 'author_link': ['1234', '5678'],'weko_shared_ids':[],'weko_link': {'1234': '1234','5678': '5678'},'weko_creator_id': '1'}
     assert is_edit == False
 
-    
+
     # weko_shared_ids!=-1, shared_user_ids!=[], sm.get is not none
     class MockSM:
+        mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
         search_conditions=WEKO_ADMIN_MANAGEMENT_OPTIONS
     with patch("weko_records.utils.sm.get",return_value=MockSM()):
         data4={
-            '$schema': 'http://schema/3',
+            '$schema': f'http://schema/{test10_itemtype.id}',
             "pubdate":"2023-08-08",
             "title":"test_item2",
             "weko_shared_ids":[1],
@@ -381,13 +382,14 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
             "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]}
         }
         dc, jrc, is_edit = json_loader(data4,_pid)
-        assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678'])])
-        assert jrc == {'item_6': ['item_6_1_v'], 'item_5': ['item_5'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678'])]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678']}
+        assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[2]),('weko_link', {'1234': '1234','5678': '5678'}),('owner', 1),('owners',[1])])
+        assert jrc == {'item_6': ['item_6_1_v'], 'item_5': ['item_5'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[2]),('weko_link', {'1234': '1234','5678': '5678'}),('owner', 1),('owners',[1])]), 'itemtype': 'test10', 'publish_date': None, 'author_link': ['1234', '5678'],'weko_creator_id': '1','weko_link': {'1234': '1234','5678': '5678'},'weko_shared_ids': [2]}
         assert is_edit == True
+        mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             data5={
-                '$schema': 'http://schema/3',
+                '$schema': f'http://schema/{test10_itemtype.id}',
                 "pubdate":"2023-08-08",
                 "title":"test_item2",
                 "shared_user_ids":[2],
@@ -401,8 +403,8 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
                 "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]}
             }
             dc, jrc, is_edit = json_loader(data5, _pid)
-            assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_ids', [2]), ('owner', '5')])
-            assert jrc == {'item_5': ['item_5'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_ids', [2]), ('owner', '5')]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['1234', '5678'], 'weko_creator_id': '5', 'weko_shared_ids': [2]}
+            assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_ids', [2]),('weko_link', {'1234': '1234','5678': '5678'}),('owner', 5),('owners',[5])])
+            assert jrc == {'item_5': ['item_5'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']), ('weko_shared_ids', [2]),('weko_link', {'1234': '1234','5678': '5678'}),('owner', 5),('owners',[5])]), 'itemtype': 'test10', 'publish_date': None, 'author_link': ['1234', '5678'], 'weko_creator_id': '5','weko_link': {'1234': '1234', '5678': '5678'}, 'weko_shared_ids': [2]}
             assert is_edit == True
 
 
@@ -429,16 +431,15 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         "attribute_name": "item_1",
         "attribute_value": "Item"
       }]
-    
+
     _data9 = records[8][1]
     _data9['$schema'] = 'http://schema/3'
 
     _data10 = records[7][1]
     _data10['$schema'] = 'http://schema/2'
     _data10['weko_creator_id'] = '1'
-    
+
     _dc_data = {
-        '_oai': {'id': '1'},
         'author_link': [],
         'control_number': '1',
         'item_1': {'attribute_name': 'item_1',
@@ -448,7 +449,8 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         'item_type_id': '2',
         'owner': 1,
         'owners':[1],
-        'weko_shared_ids': []
+        'weko_shared_ids': [],
+        'weko_link':{}
     }
     _jrc_data = {
         '_item_metadata': {
@@ -528,6 +530,7 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         'author_link': [],
         'owner': 1,
         'owners': [1],
+        'weko_link': {},
         'weko_shared_ids': []
     }
 
@@ -547,6 +550,7 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
             'control_number': '1',
             'author_link': [],
             'weko_shared_ids': [],
+            'weko_link': {},
             'owner': 1,
             'owners':[1]
         },
@@ -556,6 +560,7 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         'author_link': [],
         'owner': 1,
         'owners': [1],
+        'weko_link': {},
         'weko_shared_ids': []
     }
 
@@ -621,8 +626,9 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
                                             'attribute_value': 'Item'}]},
         'item_title': ['weko_shared_ids_3'],
         'item_type_id': '2',
-        'owner': 5,
-        'owners':[5],
+        'owner': 3,
+        'owners':[3],
+        'weko_link': {},
         'weko_shared_ids': [1,2]
     }
 
@@ -636,109 +642,112 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         'item_type_id': '2',
         'owner': 1,
         'owners':[1],
+        'weko_link': {},
         'weko_shared_ids': [1,2]
     }
-    
+
     # do nothing
     result = json_loader(data1, _pid)
     assert result==None
 
+    no_itemtype_data={
+        '$schema': 'http://schema/0/A-test'
+    }
     # no item type
     with pytest.raises(Exception) as e:
-        json_loader(data2, _pid)
+        json_loader(no_itemtype_data, _pid)
     assert e.type==RuntimeError
-    assert str(e.value)=="Item Type 1 does not exist."
+    assert str(e.value)=="Item Type 0 does not exist."
 
     # running
     app.config['WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME'] = 'jpcoar_v1_mapping'
     app.config['WEKO_SCHEMA_DDI_SCHEMA_NAME'] = 'ddi_mapping'
-    dc, jrc, is_edit = json_loader(_data3, _pid, owner_id=1)
-    assert dict(dc)==_dc_data
-    assert dict(jrc)==_jrc_data
-    assert is_edit==False
+    with patch("weko_records.utils.SchemaTree.get_jpcoar_json", return_value=_jrc_data):
+        dc, jrc, is_edit = json_loader(_data3, _pid, owner_id=1)
+        assert dict(dc)==_dc_data
+        assert dict(jrc)==_jrc_data
+        assert is_edit == True
 
-    # shared_user_ids=[]
-    dc, jrc, is_edit = json_loader(_data4, _pid)
-    jrc['_item_metadata'] = dict(jrc['_item_metadata'])
-    assert dict(jrc)==_jrc_data_4
-    
+    #shared_user_ids=[]
+    with patch("weko_records.utils.SchemaTree.get_jpcoar_json", return_value=_jrc_data_4):
+        dc, jrc, is_edit = json_loader(_data4, _pid)
+        jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+        assert dict(jrc)==_jrc_data_4
+
     # shared_user_ids=[{"user":1},{"user":2}] user=admin, weko_creator_id=1
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]), \
+         patch("weko_records.utils.SchemaTree.get_jpcoar_json", return_value=_jrc_data_5):
         dc, jrc, is_edit = json_loader(_data5, _pid, owner_id=1)
         jrc['_item_metadata'] = dict(jrc['_item_metadata'])
         assert dict(jrc)==_jrc_data_5
 
-    # shared_user_ids=[{"user":1},{"user":2}] user=admin, owner未設定
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        # shared_user_ids=[{"user":1},{"user":2}] user=admin, owner未設定
         dc, jrc, is_edit = json_loader(_data6, _pid)
         assert dict(dc)==_dc_data_6
 
-    # shared_user_ids=[{"user":1},{"user":2}] user=admin, owner=1
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        # shared_user_ids=[{"user":1},{"user":2}] user=admin, owner=1
         dc, jrc, is_edit = json_loader(_data7, _pid, owner_id=1)
         assert dict(dc)==_dc_data_7
-    
-    # Exception発生
-    ojson = ItemTypes.get_record(2)
-    del ojson['properties']['item_1']
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+
+        # Exception発生
+        ojson = ItemTypes.get_record(2)
+        del ojson['properties']['item_1']
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             with pytest.raises(Exception):
                 dc, jrc, is_edit = json_loader(_data4, _pid)
                 assert e.type==KeyError
-    
+
     # "object" == creator["type"]
     ojson = ItemTypes.get_record(2)
     ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator']}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
-            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
-            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
-            assert dict(jrc)==_jrc_data_4_1
-    
-    ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]),\
+         patch("weko_schema_ui.schema.SchemaTree.get_jpcoar_json", return_value=_jrc_data_4_1):
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_1
 
-    _data4["weko_creator_id"] = '1'
-    ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
+        with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
+            dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
+            jrc['_item_metadata'] = dict(jrc['_item_metadata'])
+            assert dict(jrc)==_jrc_data_4_1
+
+        _data4["weko_creator_id"] = '1'
+        ojson["properties"]["item_1"] = {'type': 'object', 'properties': ['iscreator', 'other']}
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)["weko_creator_id"]==_jrc_data_4_1["weko_creator_id"]
-    
-    
-    # "array" == creator["type"]
-    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['iscreator']}}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+
+
+        # "array" == creator["type"]
+        ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['iscreator']}}
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_1
 
-    # "array" == item_data.get("type")
-    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]),\
+         patch("weko_schema_ui.schema.SchemaTree.get_jpcoar_json", return_value=_jrc_data_4_2):
+        # "array" == item_data.get("type")
+        ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             dc, jrc, is_edit = json_loader(_data4, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_2
 
-    # isinstance(v, list):
-    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        # isinstance(v, list):
+        ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)==_jrc_data_4_2
 
-    # isinstance(v, list): 
+    # isinstance(v, list):
     ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]),\
+         patch("weko_schema_ui.schema.SchemaTree.get_jpcoar_json", return_value=_jrc_data_4_3):
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             _data8['item_1'] = ["test"]
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
@@ -750,30 +759,29 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
     ojson = ItemTypes.get_record(2)
     # isinstance(v, str):
     ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]),\
+         patch("weko_schema_ui.schema.SchemaTree.get_jpcoar_json", return_value=_jrc_data_4_3):
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             _data8['item_1'] = "test"
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dict(jrc)["_item_metadata"]["item_1"]["attribute_value"]=="test"
-    
-    # pubdateを通すだけ
-    ojson = ItemTypes.get_record(3)
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+
+        # pubdateを通すだけ
+        ojson = ItemTypes.get_record(3)
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             with pytest.raises(Exception) as e:
                 dc, jrc, is_edit = json_loader(_data9, _pid, owner_id=1)
-         
-    ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
-    ojson["properties"]["control_number"] = {'type': 'int', 'items': {'properties': 1}}
-    ojson = ItemTypes.get_record(2)
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+
+        ojson["properties"]["item_1"] = {'type': 'array', 'items': {'properties': ['filename']}}
+        ojson["properties"]["control_number"] = {'type': 'int', 'items': {'properties': 1}}
+        ojson = ItemTypes.get_record(2)
         with patch("weko_records.api.ItemTypes.get_record", return_value=ojson):
             _data8['control_number'] = 1
             dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
             jrc['_item_metadata'] = dict(jrc['_item_metadata'])
             assert dc['control_number'] == _pid.pid_value
-    
+
     ojson = ItemTypes.get_record(2)
     expect_jrc = {'item': [], 'weko_creator_id': 10}
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
@@ -782,7 +790,7 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
                 _data8['control_number'] = 1
                 dc, jrc, is_edit = json_loader(_data8, _pid, owner_id=1)
                 assert jrc['weko_creator_id'] == 10
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         with patch('weko_records.utils.SchemaTree.get_jpcoar_json', return_value={'item': [], 'weko_creator_id': '1'}):
             dc, jrc, is_edit = json_loader(_data10, _pid, owner_id=1)
@@ -835,7 +843,7 @@ def test_json_loader_with_out_workflow_activity(app, db, item_type, item_type2, 
                         "owner":"1",
                         "pubdate":"2023-08-08",
                         "title":"test_item2",
-                        "weko_shared_id":2,
+                        "weko_shared_ids":2,
                         "item_1":"item_1_v",
                         "item_2":"item_2_v",
                         "item_3":{"item_3_1":"item_3_1_v"},
@@ -846,19 +854,20 @@ def test_json_loader_with_out_workflow_activity(app, db, item_type, item_type2, 
                         "item_8":{"nameIdentifiers":[{"nameIdentifierScheme":"WEKO","nameIdentifier":"5678"}]},
                     }
                     dc, jrc, is_edit = json_loader(data, _pid)
-                    assert dc == OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ['item_6_1', 'item_6_1_v']}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['2', '2']), ('weko_link', {'2': '5678'}), ('_oai', {'id': '1'}), ('weko_shared_id', 2), ('owner', 1)])
-                    assert jrc == {'weko_creator_id': '1', 'item_5': ['item_5'], 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('pubdate', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ['item_6_1', 'item_6_1_v']}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['2', '2']), ('weko_link', {'2': '5678'}), ('_oai', {'id': '1'}), ('weko_shared_id', 2), ('owner', 1)]), 'itemtype': 'test10', 'publish_date': '2023-08-08', 'author_link': ['2', '2'], 'weko_link': {'2': '5678'}, 'weko_shared_id': 2}
+                    assert dc == OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ['item_6_1', 'item_6_1_v']}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['2', '2']), ('weko_shared_ids', 2), ('weko_link', {'2': '5678'}), ('_oai', {'id': '1'}), ('owner', 1), ('owners', [1])])
+                    assert jrc == {'weko_creator_id': '1', 'item_5': ['item_5'], 'item_6': ['item_6_1_v'], 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value': ['item_6_1', 'item_6_1_v']}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '3'), ('control_number', '1'), ('author_link', ['2', '2']), ('weko_shared_ids', 2), ('weko_link', {'2': '5678'}), ('_oai', {'id': '1'}), ('owner', 1), ('owners', [1])]), 'itemtype': 'test10', 'publish_date': None, 'author_link': ['2', '2'], 'weko_link': {'2': '5678'}, 'weko_shared_ids': 2}
                     assert is_edit == False
 
 
 # def get_author_link(author_link, value)
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_author_link -v -s -vv --cov-branch --cov-report=term --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_get_author_link():
+def test_get_author_link(app,mocker):
     author_link = []
+    weko_link=dict()
     value_list = [
         {
             "nameIdentifiers":[{
-                "nameIdentifierScheme": 'WEKO', 
+                "nameIdentifierScheme": 'WEKO',
                 "nameIdentifier": 'v1'
                 }]
         },
@@ -869,23 +878,24 @@ def test_get_author_link():
             }]
         }
     ]
-
-    ret = get_author_link(author_link, value_list)
-    assert ['v1'] == author_link
+    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1"])
+    ret = get_author_link(author_link, weko_link, value_list)
+    assert ['1'] == author_link
 
     author_link = []
     value_dict = {
             "nameIdentifiers":[{
-                "nameIdentifierScheme": 'WEKO', 
+                "nameIdentifierScheme": 'WEKO',
                 "nameIdentifier": 'v2'
                 }]
     }
-    ret = get_author_link(author_link, value_dict)
-    assert ['v2'] == author_link
+    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["2"])
+    ret = get_author_link(author_link,  weko_link, value_dict)
+    assert ['2'] == author_link
 
     author_link = []
     value_str = 'v2'
-    ret = get_author_link(author_link, value_str)
+    ret = get_author_link(author_link,weko_link, value_str)
     assert [] == author_link
 
 

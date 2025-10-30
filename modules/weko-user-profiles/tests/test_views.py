@@ -448,7 +448,7 @@ def test_profile_form_factory(app,req_context,users,user_profiles):
     with app.test_client():
         result = profile_form_factory()
         assert type(result) == EmailProfileForm
-        assert result.department is None
+        assert type(result.department) == SelectField
         assert result.username.data == "sysadmin user"
         app.config.update(
             USERPROFILES_EMAIL_ENABLED=False

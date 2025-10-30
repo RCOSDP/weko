@@ -318,11 +318,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
 
         except BadRequest as e:
-            traceback.format_exc()
+            traceback.print_exc()
             raise BadRequest(str(e))
         except Exception as e:
             current_app.logger.error(f"Unexpected error. {e}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise InternalServerError("Internal server error.")
 
     def process_authors_data_before(self, author_data):
@@ -424,11 +424,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise InternalServerError("Database error.")
         except Exception as ex:
             current_app.logger.error(f"Unexpected error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise InternalServerError("Internal server error.")
 
     def validate_author_data(self, author_data, pk_id=None):
@@ -641,7 +641,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
 
         except AuthorBaseRESTError as ex:
-            traceback.format_exc()
+            traceback.print_exc()
             raise
         except SQLAlchemyError as ex:
             db.session.rollback()
@@ -651,7 +651,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
         except Exception as ex:
             current_app.logger.exception(f"Unexpected error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise AuthorInternalServerError(
                 description="Failed to update author."
             )
@@ -803,18 +803,18 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             return self.make_response(200)
 
         except AuthorBaseRESTError as ex:
-            traceback.format_exc()
+            traceback.print_exc()
             raise
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise AuthorInternalServerError(
                 description="Failed to delete author."
             )
         except Exception as ex:
             current_app.logger.error(f"Unexpected error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise AuthorInternalServerError(
                 description="Failed to delete author."
             )

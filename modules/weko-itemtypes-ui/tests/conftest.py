@@ -133,7 +133,7 @@ from werkzeug.local import LocalProxy
 from weko_itemtypes_ui import WekoItemtypesUI
 from weko_itemtypes_ui.admin import itemtype_meta_data_adminview,itemtype_properties_adminview,itemtype_mapping_adminview,itemtype_rocrate_mapping_adminview
 from weko_logging.audit import WekoLoggingUserActivity
-from tests.helpers import json_data
+from tests.helpers import json_data, sync_sequence
 
 """Pytest configuration."""
 
@@ -544,6 +544,11 @@ def item_type(app,db):
             {"item_type_name":item_type_name,"item_type":item_type,"item_type_mapping":item_type_mapping}
         )
     db.session.commit()
+
+    sync_sequence(db.session, ItemTypeName)
+    sync_sequence(db.session, ItemType)
+    sync_sequence(db.session, ItemTypeMapping)
+
     return itemtype_list
 @pytest.fixture()
 def itemtype_props(app,db):

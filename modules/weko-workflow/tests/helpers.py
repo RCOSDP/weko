@@ -130,6 +130,10 @@ def fill_oauth2_headers(json_headers, token):
 
 def create_activity(db, item_title, recid, path, login_user, shared_user, workflow, status, action_order):
     item_id = uuid.uuid4()
+    # Get shared_user_id
+    shared_user_ids = []
+    if shared_user is not None and shared_user > 0:
+        shared_user_ids = [{'user': shared_user}]
     if action_order > 2:
         record_metadata={
             "path":path,
@@ -144,7 +148,7 @@ def create_activity(db, item_title, recid, path, login_user, shared_user, workfl
             "publish_date":"2024-01-11",
             "control_number":str(recid),
             "publish_status":"2",
-            "weko_shared_ids":[{'user': shared_user}],
+            "weko_shared_ids":shared_user_ids,
             "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": item_title,"subitem_1551255648112": "ja"}]},
             "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794","resourcetype": "conference paper"}]},
             "relation_version_is_last": True

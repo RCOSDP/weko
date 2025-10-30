@@ -265,7 +265,7 @@ class TestHeadlessActivity:
         mock_activity.workflow = workflow["workflow"]
         # login user matches
         mock_activity.activity_login_user = users[0]["id"]
-        mock_activity.shared_user_id = users[3]["id"]
+        mock_activity.shared_user_ids = [{"user": users[3]["id"]}]
         with patch("weko_workflow.headless.activity.verify_deletion") as mock_verify_deletion, \
                 patch("weko_workflow.headless.activity.HeadlessActivity.get_activity_by_id") as mock_get_activity_by_id, \
                 patch("weko_workflow.headless.activity.PersistentIdentifier.get_by_object") as mock_get_pid, \
@@ -500,11 +500,11 @@ class TestHeadlessActivity:
         activity.workflow = MagicMock(**workflow["workflow"].__dict__, spec=WorkFlow)
         activity.workflow.index_tree_id = "1"
         activity.workflow.location = MagicMock(name="local", spec=Location)
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
-            "shared_user_id": users[1]["id"],
+            "shared_user_ids": [users[1]["id"]],
             "item_title":[{"subitem_title":"Test Title"}],
             "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}]
         }
@@ -527,7 +527,7 @@ class TestHeadlessActivity:
             mock_feedback_mail.assert_called_once()
             mock_request_mail.assert_called_once()
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_deposit_create.assert_called_once_with({}, id_=mock_uuid.return_value, workflow_location_name=activity.workflow.location.name)
             mock_upload.assert_called_once_with(files, {})
             mock_delete.assert_called_once_with(set())
@@ -552,11 +552,11 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
-            "weko_shared_id": users[1]["id"],
+            "weko_shared_ids": [users[1]["id"]],
             "item_title":[{"subitem_title":"Test Title"}],
             "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}],
             "item_1617186783814": []
@@ -575,7 +575,7 @@ class TestHeadlessActivity:
 
             assert activity.recid == "200001"
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {})
             mock_delete.assert_called_once_with(set())
             mock_upt_meta.assert_called_once()
@@ -594,7 +594,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         workflow_index_tree_id = workflow["workflow"].index_tree_id
         activity.workflow.index_tree_id = None
@@ -616,7 +616,7 @@ class TestHeadlessActivity:
 
             assert activity.recid == "200001"
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == -1
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == []
             mock_upload.assert_called_once_with(None, {})
             mock_delete.assert_called_once_with(set())
             mock_upt_meta.assert_called_once()
@@ -633,12 +633,12 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
-        # no index tree id, shared_user_id and weko_shared_id are specified
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
+        # no index tree id, shared_user_ids and weko_shared_ids are specified
         metadata = {
             "pubdate": "2024-01-01",
-            "shared_user_id": users[1]["id"],
-            "weko_shared_id": users[3]["id"],
+            "shared_user_ids": [users[1]["id"]],
+            "weko_shared_ids": [users[3]["id"]],
             "item_title":[{"subitem_title":"Test Title"}],
             "item_files": [{"filename": "test.txt"}, {"filename": "ignore.txt"}]
         }
@@ -653,7 +653,7 @@ class TestHeadlessActivity:
                 activity._input_metadata(metadata, files)
             assert ex.value.args[0] == "Index is not specified in workflow or item metadata."
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]    # shared_user_id is used
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]    # shared_user_ids is used
 
 
         activity = HeadlessActivity(_lock_skip=True)
@@ -663,7 +663,7 @@ class TestHeadlessActivity:
         mock_activity.activity_community_id = None
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         metadata = {
             "pubdate": "2024-01-01",
@@ -740,7 +740,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -795,7 +795,7 @@ class TestHeadlessActivity:
             mock_feedback_mail.assert_called_once()
             mock_request_mail.assert_called_once()
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
             mock_delete.assert_called_once_with(set([str(_uuid0)]))             # Delete old files
 
@@ -823,7 +823,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -875,7 +875,7 @@ class TestHeadlessActivity:
 
             assert activity.recid== mock_pid.pid_value
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
             mock_delete.assert_called_once_with(set())                               # No old files to delete
 
@@ -904,7 +904,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
         old_metadata = {
             "pubdate": "2023-01-01",
             "item_title":[{"subitem_title":"Old Title"}],
@@ -954,7 +954,7 @@ class TestHeadlessActivity:
 
             assert activity.recid== mock_pid.pid_value
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
             mock_delete.assert_called_once_with(set([str(uuid1)]))         # Delete old files
 
@@ -996,7 +996,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1063,7 +1063,7 @@ class TestHeadlessActivity:
             mock_feedback_mail.assert_called_once()
             mock_request_mail.assert_called_once()
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
             mock_delete.assert_called_once_with(set([str(_uuid0)]))             # Delete old files
 
@@ -1090,7 +1090,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1153,7 +1153,7 @@ class TestHeadlessActivity:
 
             assert activity.recid== mock_deposit.pid.pid_value
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
             mock_delete.assert_called_once_with(set())                          # No old files to delete
 
@@ -1182,7 +1182,7 @@ class TestHeadlessActivity:
         activity._model = mock_activity
         activity.workflow = workflow["workflow"]
         activity.workflow.index_tree_id = "1"
-        activity.item_type = item_type
+        activity.item_type = next(i['obj'] for i in item_type if i['id'] == 1)
 
         old_metadata = {
             "pubdate": "2023-01-01",
@@ -1238,7 +1238,7 @@ class TestHeadlessActivity:
 
             assert activity.recid== mock_deposit.pid.pid_value
             mock_update_activity.call_args[0][0] == mock_activity.activity_id
-            mock_update_activity.call_args[0][1]["shared_user_id"] == users[1]["id"]
+            mock_update_activity.call_args[0][1]["shared_user_ids"] == [users[1]["id"]]
             mock_upload.assert_called_once_with(files, {"old.txt": mock_deposit.files[0].obj, "ignore.txt": mock_deposit.files[1].obj})
             mock_delete.assert_called_once_with(set())                          # No old files to delete
 

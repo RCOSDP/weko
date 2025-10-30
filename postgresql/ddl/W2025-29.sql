@@ -194,78 +194,77 @@ CREATE TABLE oa_status (
 );
 
 -- modules/weko-records-ui/weko_records_ui/alembic/e0b1ef08d08c_create_file_url_download_log_table.py
--- Uncomment after merging W2024-23
--- DROP TABLE IF EXISTS file_onetime_download;
--- CREATE TABLE file_onetime_download (
---     created TIMESTAMP NOT NULL,
---     updated TIMESTAMP NOT NULL,
---     id SERIAL,
---     approver_id INTEGER NOT NULL,
---     record_id VARCHAR(255) NOT NULL,
---     file_name VARCHAR(255) NOT NULL,
---     expiration_date TIMESTAMP NOT NULL,
---     download_limit INTEGER NOT NULL,
---     download_count INTEGER NOT NULL DEFAULT 0,
---     user_mail VARCHAR(255) NOT NULL,
---     is_guest BOOLEAN NOT NULL,
---     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
---     extra_info JSON NOT NULL DEFAULT '{}',
---     CONSTRAINT pk_file_onetime_download PRIMARY KEY (id),
---     CONSTRAINT fk_file_onetime_download_approver_id_accounts_user FOREIGN KEY (approver_id) REFERENCES accounts_user(id),
---     CONSTRAINT check_expiration_date CHECK (created < expiration_date),
---     CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
---     CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
--- );
--- DROP TABLE IF EXISTS file_secret_download;
--- CREATE TABLE file_secret_download (
---     created TIMESTAMP NOT NULL,
---     updated TIMESTAMP NOT NULL,
---     id SERIAL,
---     creator_id INTEGER NOT NULL,
---     record_id VARCHAR(255) NOT NULL,
---     file_name VARCHAR(255) NOT NULL,
---     label_name VARCHAR(255) NOT NULL,
---     expiration_date TIMESTAMP NOT NULL,
---     download_limit INTEGER NOT NULL,
---     download_count INTEGER NOT NULL DEFAULT 0,
---     is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
---     CONSTRAINT pk_file_secret_download PRIMARY KEY (id),
---     CONSTRAINT fk_file_secret_download_creator_id_accounts_user FOREIGN KEY (creator_id) REFERENCES accounts_user(id),
---     CONSTRAINT check_expiration_date CHECK (created < expiration_date),
---     CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
---     CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
--- );
--- CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
--- CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
--- CREATE TABLE file_url_download_log (
---     created TIMESTAMP NOT NULL,
---     updated TIMESTAMP NOT NULL,
---     id SERIAL,
---     url_type urltype NOT NULL,
---     secret_url_id INTEGER,
---     onetime_url_id INTEGER,
---     ip_address INET,
---     access_status accessstatus NOT NULL,
---     used_token VARCHAR(255) NOT NULL,
---     CONSTRAINT pk_file_url_download_log PRIMARY KEY (id),
---     CONSTRAINT fk_file_url_download_log_secret_url_id_file_secret_download FOREIGN KEY (secret_url_id) REFERENCES file_secret_download(id),
---     CONSTRAINT fk_file_url_download_log_onetime_url_id_file_onetime_download FOREIGN KEY (onetime_url_id) REFERENCES file_onetime_download(id),
---     CONSTRAINT chk_url_id CHECK (
---         (url_type = 'SECRET' AND secret_url_id IS NOT NULL AND onetime_url_id IS NULL)
---         OR
---         (url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND secret_url_id IS NULL)
---     ),
---     CONSTRAINT chk_ip_address CHECK (
---         (url_type = 'SECRET' AND ip_address IS NOT NULL)
---         OR
---         (url_type = 'ONETIME' AND ip_address IS NULL)
---     ),
---     CONSTRAINT chk_access_status CHECK (
---         (url_type = 'SECRET' AND (access_status = 'OPEN_NO' OR access_status = 'OPEN_DATE'))
---         OR
---         (url_type = 'ONETIME' AND access_status = 'OPEN_RESTRICTED')
---     )
--- );
+DROP TABLE IF EXISTS file_onetime_download;
+CREATE TABLE file_onetime_download (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    approver_id INTEGER,
+    record_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    download_limit INTEGER NOT NULL,
+    download_count INTEGER NOT NULL DEFAULT 0,
+    user_mail VARCHAR(255) NOT NULL,
+    is_guest BOOLEAN NOT NULL,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    extra_info JSON NOT NULL DEFAULT '{}',
+    CONSTRAINT pk_file_onetime_download PRIMARY KEY (id),
+    CONSTRAINT fk_file_onetime_download_approver_id_accounts_user FOREIGN KEY (approver_id) REFERENCES accounts_user(id),
+    CONSTRAINT check_expiration_date CHECK (created < expiration_date),
+    CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
+    CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
+);
+DROP TABLE IF EXISTS file_secret_download;
+CREATE TABLE file_secret_download (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    creator_id INTEGER NOT NULL,
+    record_id VARCHAR(255) NOT NULL,
+    file_name VARCHAR(255) NOT NULL,
+    label_name VARCHAR(255) NOT NULL,
+    expiration_date TIMESTAMP NOT NULL,
+    download_limit INTEGER NOT NULL,
+    download_count INTEGER NOT NULL DEFAULT 0,
+    is_deleted BOOLEAN NOT NULL DEFAULT FALSE,
+    CONSTRAINT pk_file_secret_download PRIMARY KEY (id),
+    CONSTRAINT fk_file_secret_download_creator_id_accounts_user FOREIGN KEY (creator_id) REFERENCES accounts_user(id),
+    CONSTRAINT check_expiration_date CHECK (created < expiration_date),
+    CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
+    CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
+);
+CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
+CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
+CREATE TABLE file_url_download_log (
+    created TIMESTAMP NOT NULL,
+    updated TIMESTAMP NOT NULL,
+    id SERIAL,
+    url_type urltype NOT NULL,
+    secret_url_id INTEGER,
+    onetime_url_id INTEGER,
+    ip_address INET,
+    access_status accessstatus NOT NULL,
+    used_token VARCHAR(255) NOT NULL,
+    CONSTRAINT pk_file_url_download_log PRIMARY KEY (id),
+    CONSTRAINT fk_file_url_download_log_secret_url_id_file_secret_download FOREIGN KEY (secret_url_id) REFERENCES file_secret_download(id),
+    CONSTRAINT fk_file_url_download_log_onetime_url_id_file_onetime_download FOREIGN KEY (onetime_url_id) REFERENCES file_onetime_download(id),
+    CONSTRAINT chk_url_id CHECK (
+        (url_type = 'SECRET' AND secret_url_id IS NOT NULL AND onetime_url_id IS NULL)
+        OR
+        (url_type = 'ONETIME' AND onetime_url_id IS NOT NULL AND secret_url_id IS NULL)
+    ),
+    CONSTRAINT chk_ip_address CHECK (
+        (url_type = 'SECRET' AND ip_address IS NOT NULL)
+        OR
+        (url_type = 'ONETIME' AND ip_address IS NULL)
+    ),
+    CONSTRAINT chk_access_status CHECK (
+        (url_type = 'SECRET' AND (access_status = 'OPEN_NO' OR access_status = 'OPEN_DATE'))
+        OR
+        (url_type = 'ONETIME' AND access_status = 'OPEN_RESTRICTED')
+    )
+);
 
 -- modules/weko-swordserver/weko_swordserver/alembic/ce82f0d78dcb_create_sword_clients_table.py
 CREATE TABLE sword_clients (
@@ -866,7 +865,7 @@ E-mail：[restricted_site_mail]', true, 3),
 
 [secret_url]
 
-このURLは[restricted_expiration_date][restricted_expiration_date_ja]まで有効です。ダウンロードは[restricted_download_count][restricted_download_count_ja]回まで可能です。
+このURLは[restricted_expiration_date]まで有効です。ダウンロードは[restricted_download_count]回まで可能です。
 
 ＊このメールは自動送信されているので返信しないでください。
 ＊このメールに心当たりのない方は、[restricted_site_name_ja]までご連絡ください。
@@ -887,7 +886,7 @@ The data can be downloaded from the address below.
 
 [secret_url]
 
-This URL is valid until [restricted_expiration_date][restricted_expiration_date_en]. You can download it up to [restricted_download_count][restricted_download_count_en] times.
+This URL is valid until [restricted_expiration_date]. You can download it up to [restricted_download_count] times.
 
 Please do not reply to this email as it has been sent automatically.
 If you received this message in error, please notify the [restricted_site_name_en].

@@ -4,8 +4,8 @@
 import uuid
 import pytest
 import uuid
-from mock import patch
-from flask import json, url_for, make_response
+from mock import patch,Mock
+from flask import json, url_for, make_response, current_app
 from invenio_accounts.testutils import login_user_via_session as login
 from werkzeug.exceptions import InternalServerError ,Forbidden
 from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
@@ -66,7 +66,7 @@ class TestFlowSettingView:
         # (5, 200),
         # (6, 200),
     ])
-    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db):
+    def test_flow_detail_acl(self,client,workflow,db_register2,users,users_index,status_code,db,mocker):
         adminsetting=AdminSettings(id=1,name='items_display_settings',settings={})
         # Adminsettings display_request_form is None
         with db.session.begin_nested():
@@ -101,6 +101,37 @@ class TestFlowSettingView:
                 res =  client.get(url)
                 assert res.status_code == 403
 
+        mock_action_role = Mock()
+        mock_action_role.specify_property = "test"
+        mock_action_role.action_item_registrant = True
+
+        mock_action = Mock()
+        mock_action.action_role = mock_action_role
+
+        mock_flow = Mock()
+        mock_flow.id = 1
+        mock_flow.flow_actions = [mock_action]
+
+        with patch("weko_admin.models.AdminSettings.get",return_value={"edit_mail_templates_enable": True,"display_request_form": False}):
+            with patch("weko_workflow.api.Flow.get_flow_detail", return_value=mock_flow):
+                mock_args=mocker.patch("flask.templating._render",return_value=make_response())
+                url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+                res =  client.get(url)
+                args,kwargs = mock_args.call_args
+                assert res.status_code == status_code
+                assert args[1]['actions'][0].action_role.specify_property== "test"
+                assert args[1]['actions'][0].action_role.action_item_registrant == True
+
+        with patch("weko_admin.models.AdminSettings.get",return_value={"edit_mail_templates_enable": False,"display_request_form": False}):
+            with patch("weko_workflow.api.Flow.get_flow_detail", return_value=mock_flow):
+                mock_args=mocker.patch("flask.templating._render",return_value=make_response())
+                url = '/admin/flowsetting/{}'.format(flow_define.flow_id)
+                res =  client.get(url)
+                args,kwargs = mock_args.call_args
+                assert res.status_code == status_code
+                assert args[1]['actions'][0].action_role.specify_property== None
+                assert args[1]['actions'][0].action_role.action_item_registrant == False
+
     # def flow_detail(self, flow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_return_repositories -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_flow_detail_return_repositories(self,client,workflow,users):
@@ -131,6 +162,8 @@ class TestFlowSettingView:
         with db.session.begin_nested():
             db.session.add(adminsetting)
         db.session.commit()
+
+        app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"] = True
 
         #repoadmin
         login(client=client, email=users[1]['email'])
@@ -249,14 +282,14 @@ class TestFlowSettingView:
 #     def new_flow(self, flow_id='0'):
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_new_flow2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_new_flow2(self,app,workflow):
-        with app.test_request_context( "/admin/workflowsetting/"+str(workflow["flow"].flow_id), method="POST",headers={"Content-Type": "application/json"} ,data='{"flow_name": "flow_name1"}'):
+        with app.test_request_context( "/admin/workflowsetting/"+str(workflow["flow"].flow_id), method="POST",headers={"Content-Type": "application/json"} ,data='{"flow_name": "flow_name1", "repository_id": "Root Index"}'):
             with patch('weko_workflow.admin.FlowSettingView._check_auth',return_value=False):
                 with pytest.raises(Forbidden):
                     FlowSettingView().new_flow(str(workflow["flow"].flow_id))
             with patch('weko_workflow.admin.FlowSettingView._check_auth',return_value=True):
                 res = FlowSettingView().new_flow(str(workflow["flow"].flow_id))
                 assert json.loads(res.data).get("code","") == 0
-        with app.test_request_context( "/admin/workflowsetting/"+str(workflow["flow"].flow_id), method="POST",headers={"Content-Type": "application/json"} ,data='{"flow_name": "flow_name2"}'):
+        with app.test_request_context( "/admin/workflowsetting/"+str(workflow["flow"].flow_id), method="POST",headers={"Content-Type": "application/json"} ,data='{"flow_name": "flow_name2", "repository_id": "Root Index"}'):
             res = FlowSettingView().new_flow("0")
             assert res.status_code == 200
 
@@ -278,7 +311,7 @@ class TestFlowSettingView:
                 assert json.loads(FlowSettingView().del_flow(str(workflow["flow"].flow_id)).data).get("code","")  == 500
                 with patch('weko_workflow.admin.Flow.get_flow_detail',return_value=""):
                     assert json.loads(FlowSettingView().del_flow(str(workflow["flow"].flow_id)).data).get("code","")  == 0
-                with patch('weko_workflow.admin.WorkFlow.get_workflow_by_flow_id',return_value=[]):
+                with patch('weko_workflow.admin.WorkFlow.get_workflow_by_flow_id',return_value=[workflow["workflow"]]):
                     assert json.loads(FlowSettingView().del_flow(str(workflow["flow"].flow_id)).data).get("code","")  == 500
 
 #     def get_actions():
@@ -395,6 +428,14 @@ class TestFlowSettingView:
             # sysadmin
             with patch('flask_login.utils._get_user',return_value=users[2]["obj"]):
                 assert FlowSettingView._check_auth(workflow["flow"].flow_id)
+                assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
+
+                current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+                
+                assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
+            
+            current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False)
+
             #repoadmin
             with patch('flask_login.utils._get_user',return_value=users[1]["obj"]):
 
@@ -407,7 +448,10 @@ class TestFlowSettingView:
 
                 #102
                 assert FlowSettingView._check_auth(workflow["flow"].flow_id)
-                #103
+                assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
+
+                current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+                
                 assert not FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
 
 
@@ -472,10 +516,32 @@ class TestWorkFlowSettingView:
         res =  client.get(url)
         args, kwargs = mock_render.call_args
         assert args[1]["is_sysadmin"] == is_sysadmin
-        if not is_sysadmin:
-            assert res.status_code == 403
-        else:
+        assert res.status_code == status_code
+        assert args[1]['is_display_restricted_access_checkbox'] == False
+
+        current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
+        url = url_for('workflowsetting.workflow_detail',workflow_id='0',_external=True)
+        mock_render =mocker.patch("flask.templating._render", return_value=make_response())
+        res =  client.get(url)
+        assert res.status_code == status_code
+        is_sysadmin = users_index == 2
+        args, kwargs = mock_render.call_args
+        # 81
+        assert args[1]["is_sysadmin"] == is_sysadmin
+
+        wf:WorkFlow = workflow_open_restricted[0]["workflow"]
+        flows_id = wf.flows_id
+        url = url_for('workflowsetting.workflow_detail',workflow_id=flows_id,_external=True)
+        is_sysadmin = users_index == 2
+        res =  client.get(url)
+        args, kwargs = mock_render.call_args
+        assert args[1]["is_sysadmin"] == is_sysadmin
+        if is_sysadmin:
             assert res.status_code == status_code
+            assert args[1]['is_display_restricted_access_checkbox'] == True
+        else:
+            assert res.status_code == 403
+            assert args[1]['is_display_restricted_access_checkbox'] == False
 
         #117
         wf:WorkFlow = db_register_full_action["workflow"]
@@ -517,7 +583,7 @@ class TestWorkFlowSettingView:
     @pytest.mark.parametrize('users_index, status_code', [
         # (0, 403),
         (1, 200),
-        # (2, 200),
+        (2, 200),
         # (3, 200),
         # (4, 200),
         # (5, 200),
@@ -527,12 +593,12 @@ class TestWorkFlowSettingView:
         login(client=client, email=users[users_index]['email'])
         url = '/admin/workflowsetting/{}'.format(0)
         q = WorkFlow.query.all()
-        assert len(q) == 1
+        assert len(q) == 2
         with patch("flask.templating._render", return_value=""):
             with pytest.raises(AttributeError):
                 res =  client.post(url)
         q = WorkFlow.query.all()
-        assert len(q) == 1
+        assert len(q) == 2
 
         data = {
             "id": 1,
@@ -551,7 +617,7 @@ class TestWorkFlowSettingView:
             res =  client.put(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
             assert res.status_code == status_code
 
-        q = WorkFlow.query.first()
+        q = WorkFlow.query.filter_by(id=1).first()
         assert q.open_restricted == False
         assert q.is_gakuninrdm == False
 
@@ -571,11 +637,11 @@ class TestWorkFlowSettingView:
         with patch("flask.templating._render", return_value=""):
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
         assert res.status_code == 200
-        q = WorkFlow.query.first()
+        q = WorkFlow.query.filter_by(id=1).first()
         assert q.open_restricted == False
         assert q.is_gakuninrdm == False
 
-        q = WorkFlow.query.first()
+        q = WorkFlow.query.filter_by(id=1).first()
         assert q.open_restricted == False
         assert q.is_gakuninrdm == False
         assert q.index_tree_id == None
@@ -597,8 +663,11 @@ class TestWorkFlowSettingView:
         with patch("flask.templating._render", return_value=""):
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
         assert res.status_code == 200
-        q = WorkFlow.query.first()
-        assert q.open_restricted == True
+        q = WorkFlow.query.filter_by(id=1).first()
+        if users_index == 2:
+            assert q.open_restricted == True
+        else:
+            assert q.open_restricted == False
         assert q.is_gakuninrdm == True
         assert q.index_tree_id == 1
         q = WorkflowRole.query.all()
@@ -617,13 +686,13 @@ class TestWorkFlowSettingView:
         login(client=client, email=users[users_index]['email'])
         url = '/admin/workflowsetting/{}'.format(0)
         with patch("flask.templating._render", return_value=""):
-            res =  client.put(url)
+            res =  client.put(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
             assert res.status_code == status_code  
 
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
         assert res.status_code == 200
         q = WorkFlow.query.all()
-        assert len(q) == 2
+        assert len(q) == 4
 
     #     def update_workflow(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_update_workflow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -740,9 +809,9 @@ class TestWorkFlowSettingView:
 
 
 # class ActivitySettingView(BaseView):
-# .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingsView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 class TestActivitySettingsView:
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_get_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingsView::test_index_get_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_index_get_request(self, client, db_register2, users):
         """Test GET request for ActivitySettingsView.index."""
         login(client=client, email=users[2]['email'])
@@ -750,7 +819,7 @@ class TestActivitySettingsView:
         res = client.get(url)
         assert res.status_code == 200
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_post_request_valid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingsView::test_index_post_request_valid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_index_post_request_valid_form(self, client, app, db_register2, users):
         """Test POST request with valid form for ActivitySettingsView.index."""
         login(client=client, email=users[2]['email'])
@@ -760,7 +829,7 @@ class TestActivitySettingsView:
         res = client.post(url, data={"submit": "set_search_author_form", "displayRadios": "1"})
         assert res.status_code == 200
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_post_request_invalid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingsView::test_index_post_request_invalid_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_index_post_request_invalid_form(self, client, app, db_register2, users):
         """Test POST request with invalid form for ActivitySettingsView.index."""
         login(client=client, email=users[2]['email'])
@@ -770,7 +839,7 @@ class TestActivitySettingsView:
         res = client.post(url, data={"submit": "set_search_author_form"})
         assert res.status_code == 200
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_activity_display_settings_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingsView::test_index_activity_display_settings_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_index_activity_display_settings_not_found(self, client, app, db_register2, users):
         """Test GET request when activity_display_settings is not found."""
         login(client=client, email=users[2]['email'])
@@ -780,17 +849,17 @@ class TestActivitySettingsView:
         res = client.get(url)
         assert res.status_code == 200
 
-    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingView::test_index_exception_handling -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestActivitySettingsView::test_index_exception_handling -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_index_exception_handling(self, client, app, db_register2, users):
         """Test exception handling in ActivitySettingsView.index."""
         login(client=client, email=users[2]['email'])
         def raise_exception(*args, **kwargs):
             raise Exception("Test exception")
 
-        AdminSettings.get = raise_exception
-        url = url_for("activity.index", _external=True)
-        res = client.get(url)
-        assert res.status_code == 400
+        with patch("weko_workflow.admin.check_activity_settings", side_effect=raise_exception):
+            url = url_for("activity.index", _external=True)
+            res = client.get(url)
+            assert res.status_code == 400
 
 
 

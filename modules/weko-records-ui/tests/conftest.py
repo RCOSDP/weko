@@ -24,12 +24,13 @@ import copy
 import json
 from os.path import join
 import os
+import re
 import shutil
 import tempfile
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+from collections import OrderedDict
 from unittest.mock import patch
-from datetime import timedelta
 from kombu import Exchange, Queue
 from sqlalchemy.sql import func
 from invenio_mail import InvenioMail
@@ -98,6 +99,7 @@ from weko_index_tree.config import (
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui import WekoItemsUI
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+from weko_items_ui.scopes import item_read_scope
 from weko_logging.audit import WekoLoggingUserActivity
 from weko_records import WekoRecords
 from weko_records.api import ItemsMetadata, FilesMetadata
@@ -105,7 +107,7 @@ from weko_records_ui.ext import WekoRecordsREST
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLicenseInfo, SiteLicenseIpAddress, RequestMailList
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
-from weko_items_ui.scopes import item_read_scope
+from weko_records_ui.utils import create_download_url
 
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -230,7 +232,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_UPATED=True,
         WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
         I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English"), ('fr', 'French')],
-        SERVER_NAME="TEST_SERVER",
+        SERVER_NAME="test_server",
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
@@ -287,7 +289,8 @@ def base_app(instance_path):
         WEKO_RECORDS_UI_OA_API_CODE = WEKO_RECORDS_UI_OA_API_CODE,
         EXTERNAL_SYSTEM = EXTERNAL_SYSTEM,
         ITEM_ACTION = ITEM_ACTION,
-        FILE_OPEN_STATUS = FILE_OPEN_STATUS
+        FILE_OPEN_STATUS = FILE_OPEN_STATUS,
+        WEKO_RECORDS_UI_RESTRICTED_API = False
     )
     #with ESTestServer(timeout=30) as server:
     client = Elasticsearch(['localhost:9200'])
@@ -308,7 +311,7 @@ def base_app(instance_path):
     InvenioPreviewer(app_)
     InvenioRecords(app_)
     InvenioRecordsUI(app_)
-    
+
     InvenioSearch(app_)
     InvenioSearchUI(app_)
     InvenioPIDRelations(app_)
@@ -5171,7 +5174,7 @@ def workflows(app, db, workflow_actions, itemtypes, users, records):
     )
     data_usage_activity = Activity(
         item_id=records[1][0]['record'].id,
-        activity_id="usage_application_activity_id_dummy1",
+        activity_id="usage_application_1",
         workflow_id=1,
         flow_id=flow_define.id,
         action_id=1,
@@ -5186,7 +5189,7 @@ def workflows(app, db, workflow_actions, itemtypes, users, records):
         shared_user_ids=[],
         extra_info={
             "related_title": "Data Usage Report",
-            "record_id": 1,
+            "record_id": '1',
             "file_name": records[1][0]["filename"],
             "guest_mail": "guest@nii.co.jp",
             "user_mail": "user@nii.co.jp"
@@ -5199,7 +5202,7 @@ def workflows(app, db, workflow_actions, itemtypes, users, records):
         file_name=records[1][0]["filename"],
         activity_id='',
         token='',
-        expiration_date=datetime.now()
+        expiration_date=10
     )
 
     with db.session.begin_nested():
@@ -5512,7 +5515,7 @@ def site_license_info(app, db):
         organization_name='test',
         domain_name='domain',
         mail_address='nii@nii.co.jp',
-        receive_mail_flag=False)
+        receive_mail_flag='F')
     with db.session.begin_nested():
         db.session.add(record)
     return record
@@ -5527,16 +5530,16 @@ def site_license_ipaddr(app, db,site_license_info):
     return record1
 
 @pytest.fixture()
-def db_fileonetimedownload(app, db):
-    record = FileOnetimeDownload(
-        file_name="helloworld.pdf",
-        user_mail="wekosoftware@nii.ac.jp",
+def db_fileonetimedownload(app, users):
+    record = FileOnetimeDownload.create(
+        approver_id=1,
         record_id='1',
-        download_count=10,
-        expiration_date=0,
-        extra_info={"is_guest": True, "send_usage_report": True, "usage_application_activity_id": "","password_for_download":"test_pass"}
-    )
-    db.session.add(record)
+        file_name="helloworld.pdf",
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=30),
+        download_limit=10,
+        user_mail="wekosoftware@nii.ac.jp",
+        is_guest=False,
+        extra_info={})
     return record
 
 
@@ -5547,83 +5550,103 @@ def db_file_permission(app, db,users,records_restricted):
     filename0 = results[0]["filename"]
     record0 = FilePermission(
         user_id=1, record_id=recid0.pid_value, file_name=filename0,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
+        usage_application_activity_id="usage_application_1",
         usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record0.user_id else None,users))[0]['email']
-    record0_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid0.pid_value
-                                        ,file_name=filename0
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+    record0_onetime=FileOnetimeDownload(
+        approver_id=users[0]['id'],
+        record_id=recid0.pid_value,
+        file_name=filename0,
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail=email,
+        is_guest=False,
+        extra_info={}
+    )
     recid1 = results[1]["recid"]
     filename1 = results[1]["filename"]
     record1 = FilePermission(
         user_id=1, record_id=recid1.pid_value, file_name=filename1,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_application_1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record1.user_id else None,users))[0]['email']
-    record1_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid1.pid_value
-                                        ,file_name=filename1
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+    record1_onetime=FileOnetimeDownload(
+        approver_id=users[0]['id'],
+        record_id=recid1.pid_value,
+        file_name=filename1,
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail=email,
+        is_guest=False,
+        extra_info={}
+    )
     recid2 = results[2]["recid"]
     filename2 = results[2]["filename"]
     record2 = FilePermission(
         user_id=1, record_id=recid2.pid_value, file_name=filename2,
-                 usage_application_activity_id="usage_application_activity_id_dummy1",
+                 usage_application_activity_id="usage_application_1",
                  usage_report_activity_id="usage_report_activity_id_dummy1",status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record2.user_id else None,users))[0]['email']
-    record2_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid2.pid_value
-                                        ,file_name=filename2
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
-    
+    record2_onetime=FileOnetimeDownload(
+        approver_id=users[0]['id'],
+        record_id=recid2.pid_value,
+        file_name=filename2,
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail=email,
+        is_guest=False,
+        extra_info={}
+    )
+
     # not approved yet
     recid3 = results[len(results)-1]["recid"]
     filename3 = results[len(results)-1]["filename"]
     record3 = FilePermission(
         user_id=users[0]['id'], record_id=recid3.pid_value, file_name=filename3,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=-1, 
+        usage_application_activity_id="usage_application_1",
+        usage_report_activity_id=None, status=-1,
     )
 
     recid4 = results[len(results)-1]["recid"]
     filename4 = results[len(results)-1]["filename"]
     record4 = FilePermission(
         user_id=users[0]['id'], record_id=recid4.pid_value, file_name=filename4,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
+        usage_application_activity_id="usage_application_1",
+        usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record4.user_id else None,users))[0]['email']
-    record4_onetime=FileOnetimeDownload(user_mail =email
-                                        ,record_id=recid4.pid_value
-                                        ,file_name=filename4
-                                        ,download_count =1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
-    
+    record4_onetime=FileOnetimeDownload(
+        approver_id=users[0]['id'],
+        record_id=recid4.pid_value,
+        file_name=filename4,
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail=email,
+        is_guest=False,
+        extra_info={}
+    )
+
     recid5 = results[len(results)-1]["recid"]
     filename5 = results[len(results)-1]["filename"]
     record5 = FilePermission(
         user_id=users[0]['id'], record_id=recid5.pid_value, file_name=filename5,
-        usage_application_activity_id="usage_application_activity_id_dummy1",
-        usage_report_activity_id=None, status=1, 
+        usage_application_activity_id="usage_application_1",
+        usage_report_activity_id=None, status=1,
     )
     email = list(filter(lambda x : x['email'] if x['id'] == record5.user_id else None,users))[0]['email']
-    record5_onetime=FileOnetimeDownload(user_mail=email
-                                        ,record_id=recid5.pid_value
-                                        ,file_name=filename5
-                                        ,download_count=1
-                                        ,expiration_date=1
-                                        ,extra_info=str({}))
+    record5_onetime=FileOnetimeDownload(
+        approver_id=users[0]['id'],
+        record_id=recid5.pid_value,
+        file_name=filename5,
+        expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+        download_limit=1,
+        user_mail=email,
+        is_guest=False,
+        extra_info={}
+    )
     with db.session.begin_nested():
         db.session.add(record0)
         db.session.add(record1)
@@ -5637,7 +5660,7 @@ def db_file_permission(app, db,users,records_restricted):
         # db.session.add(record3_onetime)
         db.session.add(record4_onetime)
         db.session.add(record5_onetime)
-    
+
     return [record0,record1,record2,record3,record4,record5]
 
 @pytest.fixture()
@@ -5815,13 +5838,14 @@ def make_record_need_restricted_access(app, db, workflows, users):
         usage_report_activity_id=None,
         status=1,   # Approved
     )
-    file13_onetime = FileOnetimeDownload(
-        user_mail=users[0]['email'],
-        record_id=rec_id13,
-        file_name='dummy.txt',
-        download_count=1,
-        expiration_date=1,
-    )
+    file13_onetime = FileOnetimeDownload(user_mail=users[0]['email']
+                                        ,record_id=rec_id13
+                                        ,file_name='dummy.txt'
+                                        ,download_limit=1
+                                        ,expiration_date = datetime.now(timezone.utc) + timedelta(hours=24)
+                                        ,extra_info={}
+                                        ,is_guest=False
+                                        ,approver_id=1)
 
     # 4. Restricted Access is not approved.
     rec_id14 = 14
@@ -5915,14 +5939,14 @@ def make_record_need_restricted_access(app, db, workflows, users):
         title='test6',
         action_order=1,
     )
-    
+
     guest_activity_12 = GuestActivity(
         user_mail="guest@example.org",
         record_id=12,
         file_name="dummy.txt",
         activity_id="A-00000000-1234",
         token='',
-        expiration_date=datetime.now()
+        expiration_date=1
     )
 
     with db.session.begin_nested():
@@ -6171,6 +6195,67 @@ def db_rocrate_mapping(db):
         db.session.add(rocrate_mapping)
     db.session.commit()
 
+
+@pytest.fixture
+def secret_url(app, users, params=None):
+    """Fixture that creates secret URL object and provides the token of it.
+
+    Args:
+        params (dict, optional): Custom parameters for the secret object.
+    """
+    params = params or {}
+    ex_date = datetime.now(timezone.utc) + timedelta(days=30)
+    secret_obj = None
+    secret_url = None
+    with app.test_request_context():
+        secret_obj = FileSecretDownload.create(
+            creator_id      =params.get('creator_id'     , 1         ),
+            record_id       =params.get('record_id'      , '1'       ),
+            file_name       =params.get('file_name'      , 'test.txt'),
+            label_name      =params.get('label_name'     , 'test_url'),
+            expiration_date =params.get('expiration_date', ex_date   ),
+            download_limit  =params.get('download_limit' , 10        )
+        )
+        secret_url = create_download_url(secret_obj)
+    match = re.search(r'[?&]token=([^&]+)', secret_url)
+    secret_token = match.group(1)
+    return {
+        'secret_obj'  : secret_obj,
+        'secret_token': secret_token,
+        'secret_url'  : secret_url
+    }
+
+
+@pytest.fixture
+def onetime_url(app, users, params=None):
+    """Fixture that creates onetime URL object and provides the token of it.
+
+    Args:
+        params (dict, optional): Custom parameters for the onetime object.
+    """
+    params = params or {}
+    ex_date = datetime.now(timezone.utc) + timedelta(days=30)
+    onetime_obj = None
+    onetime_url = None
+    with app.test_request_context():
+        onetime_obj = FileOnetimeDownload.create(
+            approver_id     = params.get('approver_id'    , 1                 ),
+            record_id       = params.get('record_id'      , '1'               ),
+            file_name       = params.get('file_name'      , 'test.txt'        ),
+            expiration_date = params.get('expiration_date', ex_date           ),
+            download_limit  = params.get('download_limit' , 10                ),
+            user_mail       = params.get('user_mail'      , 'test@example.org'),
+            is_guest        = params.get('is_guest'       , False             ),
+            extra_info      = params.get('extra_info'     , {'activity_id': 1})
+        )
+        onetime_url = create_download_url(onetime_obj)
+    match = re.search(r'[?&]token=([^&]+)', onetime_url)
+    onetime_token = match.group(1)
+    return {
+        'onetime_obj'  : onetime_obj,
+        'onetime_token': onetime_token,
+        'onetime_url'  : onetime_url
+    }
 @pytest.fixture()
 def make_request_maillist(db):
     rec_id_1 = 1000

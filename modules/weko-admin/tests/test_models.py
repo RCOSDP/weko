@@ -812,7 +812,6 @@ class TestSiteInfo:
             result = SiteInfo.get()
             assert result == {}
 
-        assert 1==2
 
 #    def update(cls, site_info):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestSiteInfo::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -1164,7 +1163,8 @@ class TestFacetSearchSetting:
         test = {
             "Data Language": "language",
             "Data Type": "description.value",
-            "Time Period(s)": "temporal"
+            "Time Period(s)": "temporal",
+            'raw_test': 'fields.raw'
         }
         result = FacetSearchSetting.get_activated_facets_mapping()
         assert result == test

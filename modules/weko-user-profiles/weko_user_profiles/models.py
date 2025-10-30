@@ -204,8 +204,12 @@ class UserProfile(db.Model):
         """Return whether this UserProfile is anonymous."""
         return False
 
-    def get_institute_data(self):
+    def get_institute_data(self, enable_custom=False):
         """Get institute data.
+
+        Args:
+            enable_custom (bool): enable customize profile fields.
+
         Returns:
             list: list of dict which contains affiliated institution name and position.
         """
@@ -218,16 +222,36 @@ class UserProfile(db.Model):
         item_field_settings = [
             profile_setting.get("item"+ str(i), {}).get("visible", False)  for i in range(3, 17)]
         institute_dict = [
-            {"subitem_affiliated_institution_name": self.item3 if item_field_settings[0] else "",
-            'subitem_affiliated_institution_position': self.item4 if item_field_settings[1] else ""},
-            {'subitem_affiliated_institution_name': self.item5 if item_field_settings[2] else "",
-            'subitem_affiliated_institution_position': self.item6 if item_field_settings[3] else ""},
-            {'subitem_affiliated_institution_name': self.item7 if item_field_settings[4] else "",
-            'subitem_affiliated_institution_position':self.item8 if item_field_settings[5] else ""},
-            {'subitem_affiliated_institution_name': self.item9 if item_field_settings[6] else "",
-            'subitem_affiliated_institution_position': self.item10 if item_field_settings[7] else ""},
-            {'subitem_affiliated_institution_name': self.item11 if item_field_settings[8] else "",
-            'subitem_affiliated_institution_position': self.item12 if item_field_settings[9] else ""}
+            {
+                "subitem_affiliated_institution_name": self.item3 \
+                    if not enable_custom or item_field_settings[0] else "",
+                'subitem_affiliated_institution_position': self.item4 \
+                    if not enable_custom or item_field_settings[1] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item5 \
+                    if not enable_custom or item_field_settings[2] else "",
+                'subitem_affiliated_institution_position': self.item6 \
+                    if not enable_custom or item_field_settings[3] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item7 \
+                    if not enable_custom or item_field_settings[4] else "",
+                'subitem_affiliated_institution_position': self.item8 \
+                    if not enable_custom or item_field_settings[5] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item9 \
+                    if not enable_custom or item_field_settings[6] else "",
+                'subitem_affiliated_institution_position': self.item10 \
+                    if not enable_custom or item_field_settings[7] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item11 \
+                    if not enable_custom or item_field_settings[8] else "",
+                'subitem_affiliated_institution_position': self.item12 \
+                    if not enable_custom or item_field_settings[9] else ""
+            }
         ]
         return institute_dict
 

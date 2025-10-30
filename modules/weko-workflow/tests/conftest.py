@@ -143,6 +143,8 @@ class MockEs():
         return Response(response=json.dumps({}),status=500)
     def exists(self,**arguments):
         pass
+    def update(self, *args, **kwargs):
+        return {"result": "updated"}
     @property
     def transport(self):
         return self.es.transport
@@ -565,6 +567,9 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = '利用報告/Data Usage Report',
         WEKO_WORKFLOW_TODO_TAB = 'todo',
         WEKO_HANDLE_CREDS_JSON_PATH='/code/modules/resources/handle_creds.json',
+        WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False,
+        WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True,
+        WEKO_RECORDS_UI_RESTRICTED_API= False,
     )
 
     app_.testing = True
@@ -636,6 +641,7 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.drop_all()
     db_.create_all()
     yield db_
     db_.session.remove()
@@ -878,7 +884,7 @@ def users_1(app, db):
         sysadmin = create_test_user(email='sysadmin@test.org')
     else:
         sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -959,11 +965,15 @@ def activity_acl_users(app, db):
       ┃     ┗━ com_index_child02
       ┗━ not_com_index
     """
+    max_position = Index.query.with_entities(Index.position).order_by(Index.position.desc()).first()
+    max_position = -1 if max_position is None else max_position[0]
+    parent_index = Index(parent=0,position=max_position+1,index_name="root",display_no=5,public_state=True)
+    db.session.add(parent_index)
+    db.session.flush()
     indexes = [
-        Index(id=1,parent=0,position=0,index_name="com_index",display_no=5,public_state=True),
-        Index(id=2,parent=1,position=0,index_name="com_index_child01",display_no=5,public_state=True),
-        Index(id=3,parent=1,position=1,index_name="com_index_child02",display_no=5,public_state=True),
-        Index(id=4,parent=0,position=1,index_name="not_com_index",display_no=5,public_state=True)
+        Index(parent=parent_index.id,position=0,index_name="com_index_child01",display_no=5,public_state=True),
+        Index(parent=parent_index.id,position=1,index_name="com_index_child02",display_no=5,public_state=True),
+        Index(parent=0,position=max_position+2,index_name="not_com_index",display_no=5,public_state=True)
     ]
     db.session.add_all(indexes)
     db.session.commit()
@@ -971,7 +981,7 @@ def activity_acl_users(app, db):
     test_role01_com = Community.create(community_id="test_role01_com", role_id=test_role01.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
-                            root_node_id=indexes[0].id)
+                            root_node_id=parent_index.id)
     db.session.commit()
     return {
         "users":[sysadmin, repoadmin, test_role01_user, test_role01_comadmin, test_role02_user, test_role03_comadmin, no_role_user],
@@ -1019,6 +1029,10 @@ def workflow_with_action_role(db, action_data, item_type, activity_acl_users):
 @pytest.fixture()
 def activity_acl(db, workflow_with_action_role, activity_acl_users):
     users = activity_acl_users["users"]
+
+    # Assign to variables for easy understanding
+    test_role01_comadmin = users[3]
+
     workflows = workflow_with_action_role
     activites = [
         create_activity(db,"sysadmin_入力待ち",1,["4"],users[0],-1,workflows[0],'M',3),
@@ -1059,12 +1073,11 @@ def activity_acl(db, workflow_with_action_role, activity_acl_users):
         create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)",36,["4"],users[2],-1,workflows[3],'M',3),
         create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role02)",37,["4"],users[2],-1,workflows[4],'M',3),
         create_activity(db,"test_role01_user_入力中_権限外_代理(test_role01_comadmin)",38,["4"],users[2],4,workflows[0],'M',3),
-        create_activity(db,"test_role01_user_承認待ち_権限外_代理(test_role01_comadmin)",39,["4"],users[2],4,workflows[0],'M',4),
+        create_activity(db,"test_role01_user_承認待ち_権限外_代理(test_role01_comadmin)",39,["4"],users[2],test_role01_comadmin.id,workflows[0],'M',4),
         create_activity(db,"test_role01_user_入力中_権限外_actionrole(test_role02)_代理(test_role01_comadmin)",40,["4"],users[2],4,workflows[2],'M',3),
         create_activity(db,"test_role01_user_入力中_権限外_!actionrole(test_role01)_代理(test_role01_comadmin)",41,["4"],users[2],4,workflows[3],'M',3),
         create_activity(db,"test_role01_user_入力中_権限内+外",42,["2","4"],users[2],-1,workflows[0],'M',3),
         create_activity(db,"test_role03_comadmin_入力中_com所属なし",43,["2"],users[5],-1,workflows[0],'M',3),
-
     ]
 
     return activites
@@ -1084,7 +1097,7 @@ def item_type_usage_report(db):
         item_type_schema = dict()
         with open("tests/data/item_type/itemtype_schema_31003.json", "r") as f:
             item_type_schema = json.load(f)
-        
+
         item_type_form = dict()
         with open("tests/data/item_type/itemtype_form_31003.json", "r") as f:
             item_type_form = json.load(f)
@@ -1566,6 +1579,12 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                    action_role=2,
                                    action_user=1
                                    )
+    action_role_5 = FlowActionRole(flow_action_id=flow_action4.id,
+                                   action_role=2,
+                                   action_user=1,
+                                   specify_property="test",
+                                   action_item_registrant=True
+                                   )
     with db.session.begin_nested():
         db.session.add(action_role_1)
         db.session.add(action_role_2_1)
@@ -1577,6 +1596,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         db.session.add(action_role_4_2)
         db.session.add(action_role_4_3)
         db.session.add(action_role_4_4)
+        db.session.add(action_role_5)
     db.session.commit()
 
     workflow = WorkFlow.query.filter_by(flows_name='test workflow1').one_or_none()
@@ -2158,13 +2178,13 @@ def db_register_1(app, db, db_records, users_1, action_data, item_type):
     db.session.commit()
     return {'flow_define':flow_define,
             'item_type':item_type,
-            'workflow':workflow, 
+            'workflow':workflow,
             "activities":[activity]}
 
 
 @pytest.fixture()
 def workflow(app, db, item_type, action_data, users):
-    flow_define = FlowDefine(id=1,flow_id=uuid.uuid4(),
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
                              flow_name='Registration Flow',
                              flow_user=1)
     with db.session.begin_nested():
@@ -2250,7 +2270,7 @@ def workflow(app, db, item_type, action_data, users):
                         flows_name='test workflow01',
                         itemtype_id=1,
                         index_tree_id=None,
-                        flow_id=1,
+                        flow_id=flow_define.id,
                         is_deleted=False,
                         open_restricted=False,
                         location_id=None,
@@ -2259,7 +2279,7 @@ def workflow(app, db, item_type, action_data, users):
                         flows_name='test workflow02',
                         itemtype_id=1,
                         index_tree_id=None,
-                        flow_id=1,
+                        flow_id=flow_define.id,
                         is_deleted=True,
                         open_restricted=False,
                         location_id=None,
@@ -2329,10 +2349,10 @@ def no_begin_action(app, db):
 
 @pytest.fixture()
 def workflow_open_restricted(app, db, item_type, action_data, users):
-    flow_define1 = FlowDefine(id=2,flow_id=uuid.uuid4(),
+    flow_define1 = FlowDefine(id=4,flow_id=uuid.uuid4(),
                                 flow_name='terms_of_use_only',
                                 flow_user=1)
-    flow_define2 = FlowDefine(id=3,flow_id=uuid.uuid4(),
+    flow_define2 = FlowDefine(id=5,flow_id=uuid.uuid4(),
                                 flow_name='usage application',
                                 flow_user=1)
     with db.session.begin_nested():
@@ -2413,7 +2433,7 @@ def workflow_open_restricted(app, db, item_type, action_data, users):
                         flows_name='terms_of_use_only',
                         itemtype_id=1,
                         index_tree_id=None,
-                        flow_id=2,
+                        flow_id=flow_define1.id,
                         is_deleted=False,
                         open_restricted=True,
                         location_id=None,
@@ -2422,7 +2442,7 @@ def workflow_open_restricted(app, db, item_type, action_data, users):
                         flows_name='usage application',
                         itemtype_id=1,
                         index_tree_id=None,
-                        flow_id=3,
+                        flow_id=flow_define2.id,
                         is_deleted=False,
                         open_restricted=True,
                         location_id=None,
@@ -2431,7 +2451,7 @@ def workflow_open_restricted(app, db, item_type, action_data, users):
                         flows_name='nomal workflow',
                         itemtype_id=1,
                         index_tree_id=None,
-                        flow_id=3,
+                        flow_id=flow_define2.id,
                         is_deleted=False,
                         open_restricted=False,
                         location_id=None,
@@ -3029,7 +3049,7 @@ def db_register_fullaction(app, db, db_records, users, action_data, item_type):
         db.session.add(action_identifier3)
     db.session.commit()
     return {"flow_actions":flow_actions,
-            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6]}
+            "activities":[activity,activity_item1,activity_item2,activity_item3,activity_item4,activity_item5,activity_item6,del_activity,app_del_activity,two_app_del_activity,two_app_del_activity2]}
 
 @pytest.fixture()
 def db_register_usage_application_workflows(app, db, action_data, item_type ):
@@ -3241,24 +3261,24 @@ def db_register_usage_application_workflows(app, db, action_data, item_type ):
     db.session.commit()
 
     workflows.update({
-		"flow_define1"        : flow_define1      
-		# ,"flow_define2"       : flow_define2      
-		,"flow_define3"       : flow_define3      
-		,"flow_define4"       : flow_define4      
-		,"flow_action1_1"     : flow_action1_1    
-		,"flow_action1_2"     : flow_action1_2    
-		,"flow_action1_3"     : flow_action1_3    
-		# ,"flow_action2_1"     : flow_action2_1    
-		# ,"flow_action2_2"     : flow_action2_2    
-		,"flow_action3_1"     : flow_action3_1    
-		,"flow_action3_2"     : flow_action3_2    
-		,"flow_action3_3"     : flow_action3_3    
-		,"flow_action3_4"     : flow_action3_4    
-		,"flow_action4_1"     : flow_action4_1    
-		,"flow_action4_2"     : flow_action4_2    
-		,"flow_action4_3"     : flow_action4_3    
-		,"flow_action4_4"     : flow_action4_4    
-		,"flow_action4_5"     : flow_action4_5    
+		"flow_define1"        : flow_define1
+		# ,"flow_define2"       : flow_define2
+		,"flow_define3"       : flow_define3
+		,"flow_define4"       : flow_define4
+		,"flow_action1_1"     : flow_action1_1
+		,"flow_action1_2"     : flow_action1_2
+		,"flow_action1_3"     : flow_action1_3
+		# ,"flow_action2_1"     : flow_action2_1
+		# ,"flow_action2_2"     : flow_action2_2
+		,"flow_action3_1"     : flow_action3_1
+		,"flow_action3_2"     : flow_action3_2
+		,"flow_action3_3"     : flow_action3_3
+		,"flow_action3_4"     : flow_action3_4
+		,"flow_action4_1"     : flow_action4_1
+		,"flow_action4_2"     : flow_action4_2
+		,"flow_action4_3"     : flow_action4_3
+		,"flow_action4_4"     : flow_action4_4
+		,"flow_action4_5"     : flow_action4_5
 		,"workflow_workflow1" : workflow_workflow1
 		# ,"workflow_workflow2" : workflow_workflow2
 		,"workflow_workflow3" : workflow_workflow3
@@ -3270,12 +3290,12 @@ def db_register_usage_application_workflows(app, db, action_data, item_type ):
 @pytest.fixture()
 def db_register_usage_application(app, db, db_records, users, action_data, item_type, db_register_usage_application_workflows ):
     workflows = db_register_usage_application_workflows
-    
+
     # 利用登録(now -> item_registration, next ->end)
     activity1 = Activity(activity_id='A-00000001-20001'
                         ,workflow_id=workflows["workflow_workflow1"].id
                         , flow_id=workflows["flow_define1"].id,
-                    action_id=3, 
+                    action_id=3,
                     item_id=db_records[2][2].id,
                     activity_login_user=1,
                     action_status = 'M',
@@ -4487,7 +4507,7 @@ def activity_with_roles_for_request_mail(app, workflow, db, item_type, users):
                     flow_action_id = flow_actions[1].id,
                     action_user = 2,
                     action_user_exclude = False,
-                    )            
+                    )
     ]
     with db.session.begin_nested():
         db.session.add_all(flow_action_roles)
@@ -4545,7 +4565,7 @@ def activity_with_roles_for_request_mail(app, workflow, db, item_type, users):
         action_order=6, item_id=item_metdata.model.id,
         action_status=ActionStatusPolicy.ACTION_BEGIN
     )
-    
+
     with db.session.begin_nested():
         db.session.add(activity)
     db.session.commit()
@@ -4561,7 +4581,7 @@ def activity_with_roles_for_request_mail(app, workflow, db, item_type, users):
     request_mail = ActivityRequestMail(activity_id = activity.activity_id,
                                     display_request_button = True,
                                     request_maillist = [{"email": "contributor@test.org", "author_id": "1"}])
-    
+
     with db.session.begin_nested():
         db.session.add(request_mail)
     db.session.commit()
@@ -4741,7 +4761,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
     flow_action2_4 = workflows["flow_action2_4"]
     workflow_workflow1 = workflows["workflow_workflow1"]
     workflow_workflow2 = workflows["workflow_workflow2"]
-    
+
     # 1.利用申請(now -> item_registration)
     activity1 = Activity(activity_id='A-00000001-20001'
                         ,workflow_id=workflow_workflow1.id
@@ -4820,7 +4840,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,expiration_date=10
         ,is_usage_report=False
     )
-    
+
     # 3.利用申請(end)
     activity3 = Activity(activity_id='A-00000001-20003'
                         ,workflow_id=workflow_workflow1.id
@@ -4959,7 +4979,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
         ,expiration_date=10
         ,is_usage_report=False
     )
-    
+
     # 6.利用申請 edit item (now -> item_registration)
     activity6 = Activity(activity_id='A-00000001-20006'
                         ,workflow_id=workflow_workflow1.id
@@ -5181,7 +5201,7 @@ def db_register_for_application_api(app, db, users, db_register_for_application_
     })
     return workflows
 
-    
+
 
 @pytest.fixture()
 def application_api_request_body(app, item_type):

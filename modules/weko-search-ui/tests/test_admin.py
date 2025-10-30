@@ -814,63 +814,31 @@ def test_ItemBulkExport_index(i18n_app, users, client_request_args, db_records2,
 def test_ItemBulkExport_export_all(users, client, redis_connect, mocker):
     url = url_for('items/bulk-export.export_all')
     start_time_str = '2024/05/01 12:55:36'
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
-        mocker.patch("weko_search_ui.admin.check_session_lifetime",return_value=True)
-        with patch("weko_search_ui.admin.get_export_status",
-                   return_value=(True, '', '', '', 'STARTED', start_time_str, '')):
-            res = client.post(url)
-            assert json.loads(res.data) == {'data': {
-                'celery_is_run': True,
-                'is_lifetime': True,
-                'error_message': '',
-                'export_run_msg': '',
-                'export_status': True,
-                'finish_time': '',
-                'start_time': start_time_str,
-                'status': 'STARTED',
-                'uri_status': False
-            }}
+    mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
+    mocker.patch("weko_search_ui.admin.check_session_lifetime",return_value=True)
+    login_user_via_session(client, users[3]['obj'])
+
+    with patch("weko_search_ui.admin.get_export_status",
+                return_value=(True, '', '', '', 'STARTED', start_time_str, '')):
+        res = client.post(url)
+        assert json.loads(res.data) == {'data': {
+            'celery_is_run': True,
+            'is_lifetime': True,
+            'error_message': '',
+            'export_run_msg': '',
+            'export_status': True,
+            'finish_time': '',
+            'start_time': start_time_str,
+            'status': 'STARTED',
+            'uri_status': False
+        }}
 
         task = MagicMock()
         task.task_id = 1
         mocker.patch('weko_search_ui.tasks.export_all_task.apply_async',
                      return_value=task)
-        file_json = {
-            'start_time': start_time_str,
-            'finish_time': '',
-            'export_path': '',
-            'cancel_flg': False,
-            'write_file_status': {
-                '1': 'started'
-            }
-        }
-        cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name='KEY_EXPORT_ALL',
-            user_id=current_user.get_id()
-        )
-        cache_uri_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name='URI_EXPORT_ALL',
-            user_id=current_user.get_id()
-        )
-        cache_msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name='MSG_EXPORT_ALL',
-            user_id=current_user.get_id()
-        )
-        run_msg_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name='RUN_MSG_EXPORT_ALL',
-            user_id=current_user.get_id()
-        )
-        file_cache_key = current_app.config["WEKO_ADMIN_CACHE_PREFIX"].format(
-            name='RUN_MSG_EXPORT_ALL_FILE_CREATE',
-            user_id=current_user.get_id()
-        )
-        datastore = redis_connect
-        datastore.delete(cache_key)
-        datastore.put(cache_uri_key, 'test_uri'.encode('utf-8'), ttl_secs=30)
-        datastore.put(cache_msg_key, ''.encode('utf-8'), ttl_secs=30)
-        datastore.put(run_msg_key, ''.encode('utf-8'), ttl_secs=30)
-        datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
+    with patch("weko_search_ui.admin.get_export_status",
+                return_value=(True, 'test_uri', '', '', 'STARTED', start_time_str, '')):
         mocker.patch("weko_search_ui.utils.AsyncResult",side_effect=MockAsyncResult)
         res = client.post(url)
         assert json.loads(res.data) == {'data': {
@@ -885,20 +853,20 @@ def test_ItemBulkExport_export_all(users, client, redis_connect, mocker):
             'uri_status': True
         }}
 
-        with patch("weko_search_ui.admin.get_export_status",
-                   return_value=(False, '', '', '', 'STARTED', start_time_str, '')):
-            res = client.post(url)
-            assert json.loads(res.data) == {'data': {
-                'celery_is_run': True,
-                'is_lifetime': True,
-                'error_message': '',
-                'export_run_msg': '',
-                'export_status': False,
-                'finish_time': '',
-                'start_time': start_time_str,
-                'status': 'STARTED',
-                'uri_status': False
-            }}
+    with patch("weko_search_ui.admin.get_export_status",
+                return_value=(False, '', '', '', 'STARTED', start_time_str, '')):
+        res = client.post(url)
+        assert json.loads(res.data) == {'data': {
+            'celery_is_run': True,
+            'is_lifetime': True,
+            'error_message': '',
+            'export_run_msg': '',
+            'export_status': False,
+            'finish_time': '',
+            'start_time': start_time_str,
+            'status': 'STARTED',
+            'uri_status': False
+        }}
 
 #     def check_export_status(self): ~ GETS STUCK
 # def test_ItemBulkExport_check_export_status(i18n_app, users, client_request_args, db_records2):

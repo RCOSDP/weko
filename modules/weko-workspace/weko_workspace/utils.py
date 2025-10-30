@@ -2250,7 +2250,6 @@ def get_datacite_description_data(data):
     default_language = current_app.config.get(
         "WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE", "en"
     )
-    default_type = 'Abstract'
     for item in data:
         if 'description' in item:
             new_data = dict()

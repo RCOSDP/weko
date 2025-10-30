@@ -181,6 +181,51 @@
               </table>
             </div>
             <div class="table-responsive">
+              {%- if show_secret_URL -%}
+              <div id="secret_url_section" style="display: none;">
+                {%- for file in files | sort(attribute='key') if file.key == filename -%}
+                  {%- set is_billing_file = False -%}
+                  {%- set billing_file_data = "" -%}
+                  {%- set billing_file_url = "" -%}
+                  {%- set billing_file_class = "" -%}
+                  {%- if billing_files_permission -%}
+                    {%- set billing_file_permission = billing_files_permission.get(file.filename) -%}
+                    {%- set is_billing_file = True -%}
+                    {%- set billing_file_class = " billing-file" -%}
+                    {%- set file_url = "javascript:void(0);" -%}
+                    {%- set access_permission = record | check_file_permission(file.info()) -%}
+                  {%- endif %}
+                  <form id="secret_url_form" data-secret-download-limit="{{ secret_download_limit }}" data-secret-download-data="{{ secret_download_data }}">
+                    <div>
+                      <label for="link_name">{{_('Link Name')}}</label>
+                      <input type="text" id="link_name">
+                      <p id="link_name_error" class="error-message" style="display: none;">{{_('Item has not been filled in.')}}</p>
+                    </div>
+                    <div>
+                      <label for="expiration_date">{{_('URL Expiry Date')}}</label>
+                      <input type="date" id="expiration_date">
+                      <p id="expiration_date_error" class="error-message" style="display: none;">{{_('Item has not been filled in.')}}</p>
+                      <p id="max_date_display" data-expiration-date="{{_('Max Expiry Date')}}:"></p> <!-- 日付設定フィールドの下に表示 -->
+                    </div>
+                    <div>
+                      <label for="download_limit">{{_('Download Limit')}}</label>
+                      <input type="number" id="download_limit">
+                      <p id="download_limit_error" class="error-message" style="display: none;">{{_('Item has not been filled in.')}}</p>
+                      <p id="max_download_display" data-download-count="{{_('Max Download Count')}}:"></p> <!-- ダウンロード制限フィールドの下に表示 -->
+                    </div>
+                    <div>
+                      <button type="submit" id="create_secret_url" url="{{ url_for('invenio_records_ui.recid_secret_url', filename=file.filename, pid_value=pid.pid_value) }}">
+                        {{_('Create Secret URL')}}
+                      </button>
+                      <div class="checkbox-container">
+                        <label for="send_email">{{_('Send Email')}}</label>
+                        <input type="checkbox" id="send_email">
+                      </div>
+                    </div>
+                  </form>
+                {%- endfor -%}
+              </div>
+              {%- endif -%}
               {% from "weko_records_ui/output_detail_data.html" import output_attribute_value_mlt %}
               {%- set display_file_info = record.display_file_info -%}
               <table class="table table-bordered table-striped detail-table">
@@ -194,7 +239,100 @@
                 {%- endfor -%}
               </table>
             </div>
-
+            {%- if show_secret_URL -%}
+              {%- if active_secret_URLs -%}
+              <div class="secret-url-area">
+                  <table class="table table-bordered table-striped">
+                      <thead>
+                          <tr>
+                              <th colspan="5">{{_('Secret URL')}}</th>
+                          </tr>
+                          <tr>
+                              <th class="col-sm-4 col-md-4">{{_('Label Name')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Create Date')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Expiration Date')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Download Count')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Action')}}</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {%- for url in active_secret_URLs -%}
+                          <tr>
+                              <td class="col-sm-4 col-md-4">{{ url.label_name }}</td>
+                              <td class="col-sm-2 col-md-2 date-format">{{ url.created }}</td>
+                              <td class="col-sm-2 col-md-2 date-format">{{ url.expiration_date }}</td>
+                              <td class="col-sm-2 col-md-2">{{ url.download_count }}/{{url.download_limit}}</td>
+                              <td class="col-sm-2 col-md-2">
+                                <div class="button-group">
+                                  <button class="delete_secret_url img-rounded action-button button-sm"
+                                      url="{{url_for('invenio_records_ui.recid_delete_secret_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
+                                      <i class="action-icon"></i>
+                                      {{_('Delete')}}
+                                  </button>
+                                  <button class="copy_secret_url img-rounded action-button button-sm"
+                                      url="{{url_for('invenio_records_ui.recid_copy_secret_url', filename=filename, pid_value=pid.pid_value, secret_url_id=url.id)}}">
+                                      <i class="action-icon"></i>
+                                      {{_('Copy')}}
+                                  </button>
+                                </div>
+                              </td>
+                          </tr>
+                          {%- endfor -%}
+                      </tbody>
+                  </table>
+                  <div id="delete-confirmation-message" data-message="{{ _('message_del_check') }}"></div>
+                  <div id="delete-success-message" data-message="{{ _('message_del_success') }}"></div>
+                  <div id="copy-message" data-message="{{ _('message_copy_success') }}"></div>
+              </div>
+              {%- endif -%}
+            {%- endif -%}
+            {%- if show_onetime_URL -%}
+              {%- if active_onetime_URLs -%}
+              <div class="onetime-url-area">
+                  <table class="table table-bordered table-striped">
+                      <thead>
+                          <tr>
+                              <th colspan="5">{{_('Onetime URL')}}</th>
+                          </tr>
+                          <tr>
+                              <th class="col-sm-4 col-md-4">{{_('User Name')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Create Date')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Expiration Date')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Download Count')}}</th>
+                              <th class="col-sm-2 col-md-2">{{_('Action')}}</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          {%- for url in active_onetime_URLs -%}
+                          <tr>
+                              <td class="col-sm-4 col-md-4">{{ url.user_mail }}</td>
+                              <td class="col-sm-2 col-md-2 date-format">{{ url.created }}</td>
+                              <td class="col-sm-2 col-md-2 date-format">{{ url.expiration_date }}</td>
+                              <td class="col-sm-2 col-md-2">{{ url.download_count }}/{{url.download_limit}}</td>
+                              <td class="col-sm-2 col-md-2">
+                                <div class="button-group">
+                                  <button class="delete_onetime_url img-rounded action-button button-sm"
+                                      url="{{url_for('invenio_records_ui.recid_delete_onetime_url', filename=filename, pid_value=pid.pid_value, onetime_url_id=url.id)}}">
+                                      <i class="action-icon"></i>
+                                      {{_('Delete')}}
+                                  </button>
+                                  <button class="copy_onetime_url img-rounded action-button button-sm"
+                                      url="{{url_for('invenio_records_ui.recid_copy_onetime_url', filename=filename, pid_value=pid.pid_value, onetime_url_id=url.id)}}">
+                                      <i class="action-icon"></i>
+                                      {{_('Copy')}}
+                                  </button>
+                                </div>
+                              </td>
+                          </tr>
+                          {%- endfor -%}
+                      </tbody>
+                  </table>
+                  <div id="delete-confirmation-message" data-message="{{ _('message_del_check') }}"></div>
+                  <div id="delete-success-message" data-message="{{ _('message_del_success') }}"></div>
+                  <div id="copy-message" data-message="{{ _('message_copy_success') }}"></div>
+              </div>
+              {%- endif -%}
+            {%- endif -%}
             <div role="navigation">
               <ul class="nav nav-tabs">
                 <li class="active"><a  href="#versions" data-toggle="tab">{{_('Version')}}</a></li>

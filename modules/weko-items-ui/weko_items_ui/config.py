@@ -382,3 +382,6 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS=\
 from kombu import Exchange, Queue
 LINKAGE_MQ_EXCHANGE = Exchange('cris_researchmap_linkage', type='direct')
 LINKAGE_MQ_QUEUE = Queue("cris_researchmap_linkage", exchange=LINKAGE_MQ_EXCHANGE, routing_key="cris_researchmap_linkage",queue_arguments={"x-queue-type":"quorum"})
+
+WEKO_ITEMS_UI_PROXY_POSTING = False
+"""Setting for multiple proxy posters."""

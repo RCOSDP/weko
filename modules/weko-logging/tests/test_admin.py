@@ -4,7 +4,7 @@
 import pytest
 
 from flask import url_for,make_response,json
-from mock import patch
+from unittest.mock import patch, MagicMock
 
 from invenio_accounts.testutils import login_user_via_session
 from weko_logging.utils import UserActivityLogUtils
@@ -24,7 +24,7 @@ class TestExportLogAdminView():
     @pytest.mark.parametrize('users_index, is_permission', [
         (0,True), # sysadmin
         (1,True), # repoadmin
-        (2,True), # comadmin
+        (2,False), # comadmin
         (3,False), # contributor
         (4,False), # generaluser
         (5, False), # originalroleuser
@@ -64,7 +64,7 @@ class TestExportLogAdminView():
     @pytest.mark.parametrize('users_index, is_permission', [
         (0,True), # sysadmin
         (1,True), # repoadmin
-        (2,True), # comadmin
+        (2,False), # comadmin
         (3,False), # contributor
         (4,False), # generaluser
         (5, False), # originalroleuser
@@ -145,7 +145,7 @@ class TestExportLogAdminView():
     @pytest.mark.parametrize('users_index, is_permission', [
         (0,True), # sysadmin
         (1,True), # repoadmin
-        (2,True), # comadmin
+        (2,False), # comadmin
         (3,False), # contributor
         (4,False), # generaluser
         (5, False), # originalroleuser
@@ -158,6 +158,9 @@ class TestExportLogAdminView():
         url = url_for("logs/export.check_export_status")
         mocker_celery_run = mocker.patch("weko_logging.admin.check_celery_is_run")
         mocker_celery_run.return_value = True
+        mocker.patch("weko_logging.admin.UserActivityLogUtils.get_export_url", return_value={})
+        mock_task = mocker.patch("weko_logging.admin.export_all_user_activity_logs.AsyncResult")
+        mock_task.return_value = MagicMock(state="PENDING", successful=lambda: True)
         res =  client.get(url)
         assert_role(res,is_permission)
 
@@ -231,7 +234,7 @@ class TestExportLogAdminView():
     @pytest.mark.parametrize('users_index, is_permission', [
         (0,True), # sysadmin
         (1,True), # repoadmin
-        (2,True), # comadmin
+        (2,False), # comadmin
         (3,False), # contributor
         (4,False), # generaluser
         (5, False), # originalroleuser
@@ -277,7 +280,7 @@ class TestExportLogAdminView():
     @pytest.mark.parametrize('users_index, is_permission', [
         (0,True), # sysadmin
         (1,True), # repoadmin
-        (2,True), # comadmin
+        (2,False), # comadmin
         (3,False), # contributor
         (4,False), # generaluser
         (5, False), # originalroleuser

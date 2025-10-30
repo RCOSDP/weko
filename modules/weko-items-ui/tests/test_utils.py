@@ -4,12 +4,12 @@ import os
 from datetime import datetime
 from io import StringIO
 from collections import OrderedDict
-from unittest.mock import MagicMock, Mock, mock_open
+from unittest.mock import MagicMock, Mock, mock_open, patch
 import copy
 import tempfile
 import pytz
 import shutil
-from dictdiffer import diff, patch
+from dictdiffer import diff
 from elasticsearch import exceptions as es_exceptions
 from six import BytesIO
 from sqlalchemy.exc import SQLAlchemyError
@@ -24,8 +24,8 @@ from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_redis.redis import RedisConnection
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from jsonschema import SchemaError, ValidationError
-from mock import patch
 from werkzeug.exceptions import BadRequest
+from invenio_accounts.testutils import login_user_via_session
 from weko_deposit.api import WekoDeposit, WekoRecord, WekoFileObject
 from weko_records.api import ItemTypes
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
@@ -135,7 +135,6 @@ from weko_items_ui.utils import (
     send_mail_direct_registered,
     send_mail_from_notification_info,
     get_notification_targets,
-    get_notification_targets_approver,
     get_duplicate_fields,
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
@@ -190,7 +189,7 @@ def test_get_user_info_by_username(users, db_userprofile):
         "user_id": users[0]["id"],
         "email": users[0]["email"],
     }
-    
+
     with patch("weko_items_ui.utils.check_display_shared_user", return_value=False):
         username = db_userprofile[users[0]["email"]].get_username
         assert get_user_info_by_username(username)==None
@@ -7882,21 +7881,21 @@ def test_make_stats_file(app, db, users, db_itemtype, db_records, db_itemtype2, 
 
     itemtype = ItemTypes.get_by_id(item_type_id)
     meta_list = itemtype.render.get("meta_list")
-    
+
     with app.test_request_context():
         login_user(users[2]["obj"])
         with patch("weko_items_ui.utils.get_item_from_option", return_value = meta_list.keys()):
             make_stats_file(item_type_id, [1,2,3], list_item_role)
-        
+
         p = PersistentIdentifier.query.filter_by(id=1).first()
         with patch("weko_deposit.api.WekoRecord._get_pid", return_value = p):
             make_stats_file(item_type_id, [1,2,3], list_item_role)
-            
+
         with patch("weko_workflow.utils.IdentifierHandle.get_idt_registration_data") as g:
             for i in range(len(app.config["WEKO_IMPORT_DOI_TYPE"])):
                 g.return_value = ([app.config["IDENTIFIER_GRANT_LIST"][i+1][2]],[app.config["WEKO_IMPORT_DOI_TYPE"][i]])
-                make_stats_file(item_type_id, [1,2,3], list_item_role)      
-        
+                make_stats_file(item_type_id, [1,2,3], list_item_role)
+
         item_type_id = 2
         list_item_role = {"2": {"weko_creator_id": "1", "weko_shared_ids": []}}
         itemtype = ItemTypes.get_by_id(item_type_id)
@@ -7906,7 +7905,7 @@ def test_make_stats_file(app, db, users, db_itemtype, db_records, db_itemtype2, 
             if meta == "item_1568286510993" :
                 meta_list[meta]["option"]["hidden"] = False
                 meta_list[meta]["option"]["multiple"] = True
-        
+
         i = 0
         for key, v in sorted(itemtype.render["table_row_map"]["schema"]["properties"].items()):
             if v["type"] == "array":
@@ -7916,11 +7915,11 @@ def test_make_stats_file(app, db, users, db_itemtype, db_records, db_itemtype2, 
                 }
                 i += 1
                 if i > 1: break
-        
+
         with patch("weko_items_ui.utils.get_sub_item_option", return_value = "Hide"):
             with app.test_request_context():
                 make_stats_file(item_type_id, [7,8], list_item_role)
-        
+
     with patch("weko_items_ui.utils.RequestMailList.get_mail_list_by_item_id",return_value = [{"email":"contributor@test.org","author_id":""},{"email":"user@test.org","author_id":""}]):
         with patch("weko_items_ui.utils.check_created_id", return_value=True):
             with app.test_request_context():
@@ -8340,14 +8339,15 @@ def test_get_list_file_by_record_id(db_records,users,esindex):
 
 # def c(item_types_data, export_path):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_write_bibtex_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_write_bibtex_files(app, db_oaischema, db_records, db_itemtype_15):
+def test_write_bibtex_files(app, client, db_oaischema, db_records, db_itemtype_15, users, tmp_path):
+    login_user_via_session(client, users[1]["obj"])
     app.config.update(OAISERVER_XSL_URL=None)
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
     redis_connection.delete("cache_jpcoar_mapping")
     item_types_data = {
         "15": {
             "item_type_id": "15",
-            "name": "itemtype",
+            "name": "デフォルトアイテムタイプ（フル）(15)",
             "root_url": "https://localhost:8443/",
             "jsonschema": "items/jsonschema/15",
             "keys": [],
@@ -8366,21 +8366,24 @@ def test_write_bibtex_files(app, db_oaischema, db_records, db_itemtype_15):
             "data": {},
         }
     }
-    export_path = "./tests/"
+    export_path = str(tmp_path / "weko_export_thrb3g8g/20220827140620")
+    os.makedirs(export_path)
     schema = {}
     schema['root_name'] = db_oaischema.form_data.get('root_name')
     schema['schema_location'] = db_oaischema.schema_location
     schema['namespaces'] = db_oaischema.namespaces
-    schema['schema'] = json.loads(
-        db_oaischema.xsd, object_pairs_hook=OrderedDict)
-    with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
-        with patch('invenio_oaiserver.response.url_for', return_value='http://localhost/oai'):
-            with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
-                write_bibtex_files(item_types_data, export_path)
-                assert os.path.exists("{}/itemtype.bib".format(export_path)) == True
+    schema['schema'] = json.loads(db_oaischema.xsd, object_pairs_hook=OrderedDict)
+    with patch('weko_schema_ui.schema.cache_schema', return_value=schema), \
+            patch('invenio_oaiserver.response.url_for', return_value='http://localhost/oai'), \
+            patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'), \
+            patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+        write_bibtex_files(item_types_data, export_path)
+        assert os.path.exists("{}/デフォルトアイテムタイプ（フル）(15).bib".format(export_path)) == True
 
-    with patch("weko_items_ui.utils.make_bibtex_data", return_value="test_value"):
-        export_path = "/tmp/weko_export_agvb5jc9/20220827140620"
+    export_path = str(tmp_path / "weko_export_agvb5jc9/20220827140620")
+    os.makedirs(export_path)
+    with patch("weko_items_ui.utils.make_bibtex_data", return_value="test_value"), \
+            patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         write_bibtex_files(item_types_data, export_path)
         file_path15 = f"{export_path}/デフォルトアイテムタイプ（フル）(15).bib"
         file_path14 = f"{export_path}/デフォルトアイテムタイプ（シンプル）(14).bib"
@@ -8576,63 +8579,63 @@ def test__get_max_export_items(app,users):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test__export_item(app, db, users, db_records, db_itemtype):
     depid, recid, parent, doi, record, item = db_records[0]
-    records_data={'created': '2022-08-25T12:56:26.587349+00:00', 'id': 1, 
-                  'links': {'self': 'https://localhost:8443/api/records/1'}, 
-                  'metadata': {'_comment': ['en_conference paperITEM00000001(public_open_access_simple)', 'WEKO-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2', 'https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/', '4-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz', 'Joho, Taro,Joho, Taro,Joho, Taro', 'Joho,Joho,Joho', 'Taro,Taro,Taro', '0000000121691048', 'ISNI', 'http://isni.org/isni/0000000121691048', 'University,Source Title,1,111,12,1,3,Degree Name,2021-06-30,xxxxxx,kakenhi,Degree Grantor Name', 'Conference Name', '1', 'JPN', 'Sponsor', '2000', '12', '1', '2020', '12', '2020/12/11', '1', 'Conference Venue', 'Conference Place'], 
-                               '_files_info': [{'extention': 'pdf', 'label': '1KB.pdf', 'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}], 
-                               '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'author_link': ['4'], 'control_number': '1', 
-                                                'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}]}, 
-                                                'item_1617186385884': {'attribute_name': 'Alternative Title', 'attribute_value_mlt': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}]}, 
-                                                'item_1617186419668': {'attribute_name': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]}, 
-                                                'item_1617186476635': {'attribute_name': 'Access Rights', 'attribute_value_mlt': [{'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}]}, 
-                                                'item_1617186499011': {'attribute_name': 'Rights', 'attribute_value_mlt': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}]}, 
-                                                'item_1617186609386': {'attribute_name': 'Subject', 'attribute_value_mlt': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}]}, 
-                                                'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}]}, 
-                                                'item_1617186643794': {'attribute_name': 'Publisher', 'attribute_value_mlt': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}]}, 'item_1617186660861': {'attribute_name': 'Date', 'attribute_value_mlt': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}]}, 'item_1617186702042': {'attribute_name': 'Language', 'attribute_value_mlt': [{'subitem_1551255818386': 'jpn'}]}, 'item_1617186783814': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}]}, 
-                                                'item_1617186859717': {'attribute_name': 'Temporal', 'attribute_value_mlt': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}]}, 'item_1617186882738': {'attribute_name': 'Geo Location', 'attribute_value_mlt': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}]}, 
-                                                'item_1617186901218': {'attribute_name': 'Funding Reference', 'attribute_value_mlt': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}]}, 'item_1617186920753': {'attribute_name': 'Source Identifier', 'attribute_value_mlt': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}]}, 'item_1617186941041': {'attribute_name': 'Source Title', 'attribute_value_mlt': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}]}, 
-                                                'item_1617186959569': {'attribute_name': 'Volume Number', 'attribute_value_mlt': [{'subitem_1551256328147': '1'}]}, 'item_1617186981471': {'attribute_name': 'Issue Number', 'attribute_value_mlt': [{'subitem_1551256294723': '111'}]}, 
-                                                'item_1617186994930': {'attribute_name': 'Number of Pages', 'attribute_value_mlt': [{'subitem_1551256248092': '12'}]}, 'item_1617187024783': {'attribute_name': 'Page Start', 'attribute_value_mlt': [{'subitem_1551256198917': '1'}]}, 
-                                                'item_1617187045071': {'attribute_name': 'Page End', 'attribute_value_mlt': [{'subitem_1551256185532': '3'}]}, 'item_1617187112279': {'attribute_name': 'Degree Name', 'attribute_value_mlt': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}]}, 'item_1617187136212': {'attribute_name': 'Date Granted', 'attribute_value_mlt': [{'subitem_1551256096004': '2021-06-30'}]}, 
-                                                'item_1617187187528': {'attribute_name': 'Conference', 'attribute_value_mlt': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}]}, 
-                                                'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'dataset', 'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1'}]}, 
-                                                'item_1617265215918': {'attribute_name': 'Version Type', 'attribute_value_mlt': [{'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}]}, 
-                                                'item_1617349709064': {'attribute_name': 'Contributor', 'attribute_value_mlt': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]}, 
-                                                'item_1617349808926': {'attribute_name': 'Version', 'attribute_value_mlt': [{'subitem_1523263171732': 'Version'}]}, 
-                                                'item_1617351524846': {'attribute_name': 'APC', 'attribute_value_mlt': [{'subitem_1523260933860': 'Unknown'}]}, 
-                                                'item_1617353299429': {'attribute_name': 'Relation', 'attribute_value_mlt': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain', 'mimetype': 'application/pdf', 'url': {'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}, 'version_id': '9008626e-cb32-48bd-8409-1204f03b8077'}]}, 'item_1617610673286': {'attribute_name': 'Rights Holder', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}]}, 
-                                                'item_1617620223087': {'attribute_name': 'Heading', 'attribute_value_mlt': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'item_1617944105607': {'attribute_name': 'Degree Grantor', 'attribute_value_mlt': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}]}, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'item_type_id': '15', 'owner': '1', 'path': ['1661432090216'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-08-06'}, 'publish_date': '2021-08-06', 'publish_status': '0', 'relation_version_is_last': True, 'title': ['ja_conference paperITEM00000001(public_open_access_open_access_simple)'], 
-                                                'weko_creator_id': '1', "weko_shared_ids": []}, 
-                                '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'accessRights': ['open access'], 'alternative': ['Alternative Title', 'Alternative Title'], 'apc': ['Unknown'], 'author_link': ['4'], 'conference': {'conferenceCountry': ['JPN'], 'conferenceDate': ['2020/12/11'], 'conferenceName': ['Conference Name'], 'conferenceSequence': ['1'], 'conferenceSponsor': ['Sponsor'], 'conferenceVenue': ['Conference Venue']}, 'contributor': {'@attributes': {'contributorType': [['ContactPerson']]}, 'affiliation': {'affiliationName': [], 'nameIdentifier': []}, 'contributorAlternative': [], 'contributorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['xxxxxxx', 'xxxxxxx', 'xxxxxxx']}, 'control_number': '1', 'creator': {'affiliation': {'affiliationName': ['University'], 'nameIdentifier': ['0000000121691048']}, 'creatorAlternative': [], 'creatorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['4', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz']}, 'date': [{'dateType': 'Available', 'value': '2021-06-30'}], 'dateGranted': ['2021-06-30'], 'degreeGrantor': {'degreeGrantorName': ['Degree Grantor Name'], 'nameIdentifier': ['xxxxxx']}, 'degreeName': ['Degree Name'], 'description': [{'descriptionType': 'Abstract', 'value': 'Description\nDescription<br/>Description'}, {'descriptionType': 'Abstract', 'value': '概要\n概要\n概要\n概要'}], 'feedback_mail_list': [{'author_id': '', 'email': 'wekosoftware@nii.ac.jp'}], 'fundingReference': {'awardNumber': ['Award Number'], 'awardTitle': ['Award Title'], 'funderIdentifier': ['http://xxx'], 'funderName': ['Funder Name']}, 'geoLocation': {'geoLocationPlace': ['Japan']}, 'identifier': [{'identifierType': 'URI', 'value': 'http://localhost'}], 'issue': ['111'], 'itemtype': 'デフォルトアイテムタイプ（フル）', 'language': ['jpn'], 'numPages': ['12'], 'pageEnd': ['3'], 'pageStart': ['1'], 'path': ['1661432090216'], 'publish_date': '2021-08-06', 'publish_status': '0', 'publisher': ['Publisher'], 'relation': {'@attributes': {'relationType': [['isVersionOf']]}, 'relatedIdentifier': [{'identifierType': 'arXiv', 'value': 'xxxxx'}], 'relatedTitle': ['Related Title']}, 'relation_version_is_last': True, 'rights': ['Rights Information'], 'rightsHolder': {'nameIdentifier': ['xxxxxx'], 'rightsHolderName': ['Right Holder Name']}, 'sourceIdentifier': [{'identifierType': 'ISSN', 'value': 'xxxx-xxxx-xxxx'}], 'sourceTitle': ['Source Title'], 'subject': [{'subjectScheme': 'Other', 'value': 'Sibject1'}], 'temporal': ['Temporal'], 'title': ['en_conference paperITEM00000001(public_open_access_simple)', 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'], 'type': ['dataset'], 'version': ['Version'], 'versiontype': ['AO'], 'volume': ['1'], 'weko_creator_id': '1', "weko_shared_ids": [], 'test_mapping': 'test_mapping'}, 
+    records_data={'created': '2022-08-25T12:56:26.587349+00:00', 'id': 1,
+                  'links': {'self': 'https://localhost:8443/api/records/1'},
+                  'metadata': {'_comment': ['en_conference paperITEM00000001(public_open_access_simple)', 'WEKO-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2', 'https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/', '4-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz', 'Joho, Taro,Joho, Taro,Joho, Taro', 'Joho,Joho,Joho', 'Taro,Taro,Taro', '0000000121691048', 'ISNI', 'http://isni.org/isni/0000000121691048', 'University,Source Title,1,111,12,1,3,Degree Name,2021-06-30,xxxxxx,kakenhi,Degree Grantor Name', 'Conference Name', '1', 'JPN', 'Sponsor', '2000', '12', '1', '2020', '12', '2020/12/11', '1', 'Conference Venue', 'Conference Place'],
+                               '_files_info': [{'extention': 'pdf', 'label': '1KB.pdf', 'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}],
+                               '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'author_link': ['4'], 'control_number': '1',
+                                                'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}]},
+                                                'item_1617186385884': {'attribute_name': 'Alternative Title', 'attribute_value_mlt': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}]},
+                                                'item_1617186419668': {'attribute_name': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]},
+                                                'item_1617186476635': {'attribute_name': 'Access Rights', 'attribute_value_mlt': [{'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}]},
+                                                'item_1617186499011': {'attribute_name': 'Rights', 'attribute_value_mlt': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}]},
+                                                'item_1617186609386': {'attribute_name': 'Subject', 'attribute_value_mlt': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}]},
+                                                'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}]},
+                                                'item_1617186643794': {'attribute_name': 'Publisher', 'attribute_value_mlt': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}]}, 'item_1617186660861': {'attribute_name': 'Date', 'attribute_value_mlt': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}]}, 'item_1617186702042': {'attribute_name': 'Language', 'attribute_value_mlt': [{'subitem_1551255818386': 'jpn'}]}, 'item_1617186783814': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}]},
+                                                'item_1617186859717': {'attribute_name': 'Temporal', 'attribute_value_mlt': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}]}, 'item_1617186882738': {'attribute_name': 'Geo Location', 'attribute_value_mlt': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}]},
+                                                'item_1617186901218': {'attribute_name': 'Funding Reference', 'attribute_value_mlt': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}]}, 'item_1617186920753': {'attribute_name': 'Source Identifier', 'attribute_value_mlt': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}]}, 'item_1617186941041': {'attribute_name': 'Source Title', 'attribute_value_mlt': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}]},
+                                                'item_1617186959569': {'attribute_name': 'Volume Number', 'attribute_value_mlt': [{'subitem_1551256328147': '1'}]}, 'item_1617186981471': {'attribute_name': 'Issue Number', 'attribute_value_mlt': [{'subitem_1551256294723': '111'}]},
+                                                'item_1617186994930': {'attribute_name': 'Number of Pages', 'attribute_value_mlt': [{'subitem_1551256248092': '12'}]}, 'item_1617187024783': {'attribute_name': 'Page Start', 'attribute_value_mlt': [{'subitem_1551256198917': '1'}]},
+                                                'item_1617187045071': {'attribute_name': 'Page End', 'attribute_value_mlt': [{'subitem_1551256185532': '3'}]}, 'item_1617187112279': {'attribute_name': 'Degree Name', 'attribute_value_mlt': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}]}, 'item_1617187136212': {'attribute_name': 'Date Granted', 'attribute_value_mlt': [{'subitem_1551256096004': '2021-06-30'}]},
+                                                'item_1617187187528': {'attribute_name': 'Conference', 'attribute_value_mlt': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}]},
+                                                'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'dataset', 'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1'}]},
+                                                'item_1617265215918': {'attribute_name': 'Version Type', 'attribute_value_mlt': [{'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}]},
+                                                'item_1617349709064': {'attribute_name': 'Contributor', 'attribute_value_mlt': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]},
+                                                'item_1617349808926': {'attribute_name': 'Version', 'attribute_value_mlt': [{'subitem_1523263171732': 'Version'}]},
+                                                'item_1617351524846': {'attribute_name': 'APC', 'attribute_value_mlt': [{'subitem_1523260933860': 'Unknown'}]},
+                                                'item_1617353299429': {'attribute_name': 'Relation', 'attribute_value_mlt': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain', 'mimetype': 'application/pdf', 'url': {'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}, 'version_id': '9008626e-cb32-48bd-8409-1204f03b8077'}]}, 'item_1617610673286': {'attribute_name': 'Rights Holder', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}]},
+                                                'item_1617620223087': {'attribute_name': 'Heading', 'attribute_value_mlt': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'item_1617944105607': {'attribute_name': 'Degree Grantor', 'attribute_value_mlt': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}]}, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'item_type_id': '15', 'owner': '1', 'path': ['1661432090216'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-08-06'}, 'publish_date': '2021-08-06', 'publish_status': '0', 'relation_version_is_last': True, 'title': ['ja_conference paperITEM00000001(public_open_access_open_access_simple)'],
+                                                'weko_creator_id': '1', "weko_shared_ids": []},
+                                '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'accessRights': ['open access'], 'alternative': ['Alternative Title', 'Alternative Title'], 'apc': ['Unknown'], 'author_link': ['4'], 'conference': {'conferenceCountry': ['JPN'], 'conferenceDate': ['2020/12/11'], 'conferenceName': ['Conference Name'], 'conferenceSequence': ['1'], 'conferenceSponsor': ['Sponsor'], 'conferenceVenue': ['Conference Venue']}, 'contributor': {'@attributes': {'contributorType': [['ContactPerson']]}, 'affiliation': {'affiliationName': [], 'nameIdentifier': []}, 'contributorAlternative': [], 'contributorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['xxxxxxx', 'xxxxxxx', 'xxxxxxx']}, 'control_number': '1', 'creator': {'affiliation': {'affiliationName': ['University'], 'nameIdentifier': ['0000000121691048']}, 'creatorAlternative': [], 'creatorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['4', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz']}, 'date': [{'dateType': 'Available', 'value': '2021-06-30'}], 'dateGranted': ['2021-06-30'], 'degreeGrantor': {'degreeGrantorName': ['Degree Grantor Name'], 'nameIdentifier': ['xxxxxx']}, 'degreeName': ['Degree Name'], 'description': [{'descriptionType': 'Abstract', 'value': 'Description\nDescription<br/>Description'}, {'descriptionType': 'Abstract', 'value': '概要\n概要\n概要\n概要'}], 'feedback_mail_list': [{'author_id': '', 'email': 'wekosoftware@nii.ac.jp'}], 'fundingReference': {'awardNumber': ['Award Number'], 'awardTitle': ['Award Title'], 'funderIdentifier': ['http://xxx'], 'funderName': ['Funder Name']}, 'geoLocation': {'geoLocationPlace': ['Japan']}, 'identifier': [{'identifierType': 'URI', 'value': 'http://localhost'}], 'issue': ['111'], 'itemtype': 'デフォルトアイテムタイプ（フル）', 'language': ['jpn'], 'numPages': ['12'], 'pageEnd': ['3'], 'pageStart': ['1'], 'path': ['1661432090216'], 'publish_date': '2021-08-06', 'publish_status': '0', 'publisher': ['Publisher'], 'relation': {'@attributes': {'relationType': [['isVersionOf']]}, 'relatedIdentifier': [{'identifierType': 'arXiv', 'value': 'xxxxx'}], 'relatedTitle': ['Related Title']}, 'relation_version_is_last': True, 'rights': ['Rights Information'], 'rightsHolder': {'nameIdentifier': ['xxxxxx'], 'rightsHolderName': ['Right Holder Name']}, 'sourceIdentifier': [{'identifierType': 'ISSN', 'value': 'xxxx-xxxx-xxxx'}], 'sourceTitle': ['Source Title'], 'subject': [{'subjectScheme': 'Other', 'value': 'Sibject1'}], 'temporal': ['Temporal'], 'title': ['en_conference paperITEM00000001(public_open_access_simple)', 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'], 'type': ['dataset'], 'version': ['Version'], 'versiontype': ['AO'], 'volume': ['1'], 'weko_creator_id': '1', "weko_shared_ids": [], 'test_mapping': 'test_mapping'},
                                                 'updated': '2022-08-26T12:57:36.376731+00:00'}
-    records_data_2={'created': '2022-08-25T12:56:26.587349+00:00', 'id': 1, 
-                  'links': {'self': 'https://localhost:8443/api/records/1'}, 
-                  'metadata': {'_comment': ['en_conference paperITEM00000001(public_open_access_simple)', 'WEKO-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2', 'https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/', '4-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz', 'Joho, Taro,Joho, Taro,Joho, Taro', 'Joho,Joho,Joho', 'Taro,Taro,Taro', '0000000121691048', 'ISNI', 'http://isni.org/isni/0000000121691048', 'University,Source Title,1,111,12,1,3,Degree Name,2021-06-30,xxxxxx,kakenhi,Degree Grantor Name', 'Conference Name', '1', 'JPN', 'Sponsor', '2000', '12', '1', '2020', '12', '2020/12/11', '1', 'Conference Venue', 'Conference Place'], 
-                               '_files_info': [{'extention': 'pdf', 'label': '1KB.pdf', 'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}], 
-                               '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'author_link': ['4'], 'control_number': '1', 
-                                                'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}]}, 
-                                                'item_1617186385884': {'attribute_name': 'Alternative Title', 'attribute_value_mlt': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}]}, 
-                                                'item_1617186419668': {'attribute_name': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]}, 
-                                                'item_1617186476635': {'attribute_name': 'Access Rights', 'attribute_value_mlt': [{'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}]}, 
-                                                'item_1617186499011': {'attribute_name': 'Rights', 'attribute_value_mlt': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}]}, 
-                                                'item_1617186609386': {'attribute_name': 'Subject', 'attribute_value_mlt': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}]}, 
-                                                'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}]}, 
-                                                'item_1617186643794': {'attribute_name': 'Publisher', 'attribute_value_mlt': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}]}, 'item_1617186660861': {'attribute_name': 'Date', 'attribute_value_mlt': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}]}, 'item_1617186702042': {'attribute_name': 'Language', 'attribute_value_mlt': [{'subitem_1551255818386': 'jpn'}]}, 'item_1617186783814': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}]}, 
-                                                'item_1617186859717': {'attribute_name': 'Temporal', 'attribute_value_mlt': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}]}, 'item_1617186882738': {'attribute_name': 'Geo Location', 'attribute_value_mlt': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}]}, 
-                                                'item_1617186901218': {'attribute_name': 'Funding Reference', 'attribute_value_mlt': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}]}, 'item_1617186920753': {'attribute_name': 'Source Identifier', 'attribute_value_mlt': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}]}, 'item_1617186941041': {'attribute_name': 'Source Title', 'attribute_value_mlt': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}]}, 
-                                                'item_1617186959569': {'attribute_name': 'Volume Number', 'attribute_value_mlt': [{'subitem_1551256328147': '1'}]}, 'item_1617186981471': {'attribute_name': 'Issue Number', 'attribute_value_mlt': [{'subitem_1551256294723': '111'}]}, 
-                                                'item_1617186994930': {'attribute_name': 'Number of Pages', 'attribute_value_mlt': [{'subitem_1551256248092': '12'}]}, 'item_1617187024783': {'attribute_name': 'Page Start', 'attribute_value_mlt': [{'subitem_1551256198917': '1'}]}, 
-                                                'item_1617187045071': {'attribute_name': 'Page End', 'attribute_value_mlt': [{'subitem_1551256185532': '3'}]}, 'item_1617187112279': {'attribute_name': 'Degree Name', 'attribute_value_mlt': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}]}, 'item_1617187136212': {'attribute_name': 'Date Granted', 'attribute_value_mlt': [{'subitem_1551256096004': '2021-06-30'}]}, 
-                                                'item_1617187187528': {'attribute_name': 'Conference', 'attribute_value_mlt': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}]}, 
-                                                'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'dataset', 'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1'}]}, 
-                                                'item_1617265215918': {'attribute_name': 'Version Type', 'attribute_value_mlt': [{'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}]}, 
-                                                'item_1617349709064': {'attribute_name': 'Contributor', 'attribute_value_mlt': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]}, 
-                                                'item_1617349808926': {'attribute_name': 'Version', 'attribute_value_mlt': [{'subitem_1523263171732': 'Version'}]}, 
-                                                'item_1617351524846': {'attribute_name': 'APC', 'attribute_value_mlt': [{'subitem_1523260933860': 'Unknown'}]}, 
-                                                'item_1617353299429': {'attribute_name': 'Relation', 'attribute_value_mlt': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain', 'mimetype': 'application/pdf', 'url': {'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}, 'version_id': '9008626e-cb32-48bd-8409-1204f03b8077'}]}, 'item_1617610673286': {'attribute_name': 'Rights Holder', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}]}, 
-                                                'item_1617620223087': {'attribute_name': 'Heading', 'attribute_value_mlt': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'item_1617944105607': {'attribute_name': 'Degree Grantor', 'attribute_value_mlt': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}]}, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'item_type_id': '15', 'owner': '1', 'path': ['1661432090216'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-08-06'}, 'publish_date': '2021-08-06', 'publish_status': '0', 'relation_version_is_last': True, 'title': ['ja_conference paperITEM00000001(public_open_access_open_access_simple)'], 
-                                                'weko_creator_id': '2', "weko_shared_ids": [2]}, 
-                                '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'accessRights': ['open access'], 'alternative': ['Alternative Title', 'Alternative Title'], 'apc': ['Unknown'], 'author_link': ['4'], 'conference': {'conferenceCountry': ['JPN'], 'conferenceDate': ['2020/12/11'], 'conferenceName': ['Conference Name'], 'conferenceSequence': ['1'], 'conferenceSponsor': ['Sponsor'], 'conferenceVenue': ['Conference Venue']}, 'contributor': {'@attributes': {'contributorType': [['ContactPerson']]}, 'affiliation': {'affiliationName': [], 'nameIdentifier': []}, 'contributorAlternative': [], 'contributorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['xxxxxxx', 'xxxxxxx', 'xxxxxxx']}, 'control_number': '1', 'creator': {'affiliation': {'affiliationName': ['University'], 'nameIdentifier': ['0000000121691048']}, 'creatorAlternative': [], 'creatorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['4', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz']}, 'date': [{'dateType': 'Available', 'value': '2021-06-30'}], 'dateGranted': ['2021-06-30'], 'degreeGrantor': {'degreeGrantorName': ['Degree Grantor Name'], 'nameIdentifier': ['xxxxxx']}, 'degreeName': ['Degree Name'], 'description': [{'descriptionType': 'Abstract', 'value': 'Description\nDescription<br/>Description'}, {'descriptionType': 'Abstract', 'value': '概要\n概要\n概要\n概要'}], 'feedback_mail_list': [{'author_id': '', 'email': 'wekosoftware@nii.ac.jp'}], 'fundingReference': {'awardNumber': ['Award Number'], 'awardTitle': ['Award Title'], 'funderIdentifier': ['http://xxx'], 'funderName': ['Funder Name']}, 'geoLocation': {'geoLocationPlace': ['Japan']}, 'identifier': [{'identifierType': 'URI', 'value': 'http://localhost'}], 'issue': ['111'], 'itemtype': 'デフォルトアイテムタイプ（フル）', 'language': ['jpn'], 'numPages': ['12'], 'pageEnd': ['3'], 'pageStart': ['1'], 'path': ['1661432090216'], 'publish_date': '2021-08-06', 'publish_status': '0', 'publisher': ['Publisher'], 'relation': {'@attributes': {'relationType': [['isVersionOf']]}, 'relatedIdentifier': [{'identifierType': 'arXiv', 'value': 'xxxxx'}], 'relatedTitle': ['Related Title']}, 'relation_version_is_last': True, 'rights': ['Rights Information'], 'rightsHolder': {'nameIdentifier': ['xxxxxx'], 'rightsHolderName': ['Right Holder Name']}, 'sourceIdentifier': [{'identifierType': 'ISSN', 'value': 'xxxx-xxxx-xxxx'}], 'sourceTitle': ['Source Title'], 'subject': [{'subjectScheme': 'Other', 'value': 'Sibject1'}], 'temporal': ['Temporal'], 'title': ['en_conference paperITEM00000001(public_open_access_simple)', 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'], 'type': ['dataset'], 'version': ['Version'], 'versiontype': ['AO'], 'volume': ['1'], 'weko_creator_id': '2', "weko_shared_ids": [2], 'test_mapping': 'test_mapping'}, 
+    records_data_2={'created': '2022-08-25T12:56:26.587349+00:00', 'id': 1,
+                  'links': {'self': 'https://localhost:8443/api/records/1'},
+                  'metadata': {'_comment': ['en_conference paperITEM00000001(public_open_access_simple)', 'WEKO-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2-,- ORCID-,- CiNii-,- KAKEN2', 'https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/-,- https://orcid.org/-,- https://ci.nii.ac.jp/-,- https://kaken.nii.ac.jp/', '4-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz-,- xxxxxxx-,- xxxxxxx-,- zzzzzzz', 'Joho, Taro,Joho, Taro,Joho, Taro', 'Joho,Joho,Joho', 'Taro,Taro,Taro', '0000000121691048', 'ISNI', 'http://isni.org/isni/0000000121691048', 'University,Source Title,1,111,12,1,3,Degree Name,2021-06-30,xxxxxx,kakenhi,Degree Grantor Name', 'Conference Name', '1', 'JPN', 'Sponsor', '2000', '12', '1', '2020', '12', '2020/12/11', '1', 'Conference Venue', 'Conference Place'],
+                               '_files_info': [{'extention': 'pdf', 'label': '1KB.pdf', 'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}],
+                               '_item_metadata': {'_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'author_link': ['4'], 'control_number': '1',
+                                                'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000001(public_open_access_simple)', 'subitem_1551255648112': 'en'}]},
+                                                'item_1617186385884': {'attribute_name': 'Alternative Title', 'attribute_value_mlt': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}]},
+                                                'item_1617186419668': {'attribute_name': 'Creator', 'attribute_type': 'creator', 'attribute_value_mlt': [{'creatorAffiliations': [{'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048'}], 'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}]}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}, {'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]},
+                                                'item_1617186476635': {'attribute_name': 'Access Rights', 'attribute_value_mlt': [{'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}]},
+                                                'item_1617186499011': {'attribute_name': 'Rights', 'attribute_value_mlt': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}]},
+                                                'item_1617186609386': {'attribute_name': 'Subject', 'attribute_value_mlt': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}]},
+                                                'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_language': 'ja', 'subitem_description_type': 'Abstract'}]},
+                                                'item_1617186643794': {'attribute_name': 'Publisher', 'attribute_value_mlt': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}]}, 'item_1617186660861': {'attribute_name': 'Date', 'attribute_value_mlt': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}]}, 'item_1617186702042': {'attribute_name': 'Language', 'attribute_value_mlt': [{'subitem_1551255818386': 'jpn'}]}, 'item_1617186783814': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_identifier_type': 'URI', 'subitem_identifier_uri': 'http://localhost'}]},
+                                                'item_1617186859717': {'attribute_name': 'Temporal', 'attribute_value_mlt': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}]}, 'item_1617186882738': {'attribute_name': 'Geo Location', 'attribute_value_mlt': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}]},
+                                                'item_1617186901218': {'attribute_name': 'Funding Reference', 'attribute_value_mlt': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}]}, 'item_1617186920753': {'attribute_name': 'Source Identifier', 'attribute_value_mlt': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}]}, 'item_1617186941041': {'attribute_name': 'Source Title', 'attribute_value_mlt': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}]},
+                                                'item_1617186959569': {'attribute_name': 'Volume Number', 'attribute_value_mlt': [{'subitem_1551256328147': '1'}]}, 'item_1617186981471': {'attribute_name': 'Issue Number', 'attribute_value_mlt': [{'subitem_1551256294723': '111'}]},
+                                                'item_1617186994930': {'attribute_name': 'Number of Pages', 'attribute_value_mlt': [{'subitem_1551256248092': '12'}]}, 'item_1617187024783': {'attribute_name': 'Page Start', 'attribute_value_mlt': [{'subitem_1551256198917': '1'}]},
+                                                'item_1617187045071': {'attribute_name': 'Page End', 'attribute_value_mlt': [{'subitem_1551256185532': '3'}]}, 'item_1617187112279': {'attribute_name': 'Degree Name', 'attribute_value_mlt': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}]}, 'item_1617187136212': {'attribute_name': 'Date Granted', 'attribute_value_mlt': [{'subitem_1551256096004': '2021-06-30'}]},
+                                                'item_1617187187528': {'attribute_name': 'Conference', 'attribute_value_mlt': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}]},
+                                                'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'dataset', 'resourceuri': 'http://purl.org/coar/resource_type/c_ddb1'}]},
+                                                'item_1617265215918': {'attribute_name': 'Version Type', 'attribute_value_mlt': [{'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}]},
+                                                'item_1617349709064': {'attribute_name': 'Contributor', 'attribute_value_mlt': [{'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'contributorName': '情報, 太郎', 'lang': 'ja'}, {'contributorName': 'ジョウホウ, タロウ', 'lang': 'ja-Kana'}, {'contributorName': 'Joho, Taro', 'lang': 'en'}], 'contributorType': 'ContactPerson', 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'CiNii', 'nameIdentifierURI': 'https://ci.nii.ac.jp/'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierScheme': 'KAKEN2', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/'}]}]},
+                                                'item_1617349808926': {'attribute_name': 'Version', 'attribute_value_mlt': [{'subitem_1523263171732': 'Version'}]},
+                                                'item_1617351524846': {'attribute_name': 'APC', 'attribute_value_mlt': [{'subitem_1523260933860': 'Unknown'}]},
+                                                'item_1617353299429': {'attribute_name': 'Relation', 'attribute_value_mlt': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}]}, 'item_1617605131499': {'attribute_name': 'File', 'attribute_type': 'file', 'attribute_value_mlt': [{'accessrole': 'open_access', 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'displaytype': 'simple', 'filename': '1KB.pdf', 'filesize': [{'value': '1 KB'}], 'format': 'text/plain', 'mimetype': 'application/pdf', 'url': {'url': 'https://weko3.example.org/record/1/files/1KB.pdf'}, 'version_id': '9008626e-cb32-48bd-8409-1204f03b8077'}]}, 'item_1617610673286': {'attribute_name': 'Rights Holder', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierScheme': 'ORCID', 'nameIdentifierURI': 'https://orcid.org/'}], 'rightHolderNames': [{'rightHolderLanguage': 'ja', 'rightHolderName': 'Right Holder Name'}]}]},
+                                                'item_1617620223087': {'attribute_name': 'Heading', 'attribute_value_mlt': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}]}, 'item_1617944105607': {'attribute_name': 'Degree Grantor', 'attribute_value_mlt': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}]}, 'item_title': 'ja_conference paperITEM00000001(public_open_access_open_access_simple)', 'item_type_id': '15', 'owner': '1', 'path': ['1661432090216'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2021-08-06'}, 'publish_date': '2021-08-06', 'publish_status': '0', 'relation_version_is_last': True, 'title': ['ja_conference paperITEM00000001(public_open_access_open_access_simple)'],
+                                                'weko_creator_id': '2', "weko_shared_ids": [2]},
+                                '_oai': {'id': 'oai:weko3.example.org:00000001', 'sets': ['1661432090216']}, 'accessRights': ['open access'], 'alternative': ['Alternative Title', 'Alternative Title'], 'apc': ['Unknown'], 'author_link': ['4'], 'conference': {'conferenceCountry': ['JPN'], 'conferenceDate': ['2020/12/11'], 'conferenceName': ['Conference Name'], 'conferenceSequence': ['1'], 'conferenceSponsor': ['Sponsor'], 'conferenceVenue': ['Conference Venue']}, 'contributor': {'@attributes': {'contributorType': [['ContactPerson']]}, 'affiliation': {'affiliationName': [], 'nameIdentifier': []}, 'contributorAlternative': [], 'contributorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['xxxxxxx', 'xxxxxxx', 'xxxxxxx']}, 'control_number': '1', 'creator': {'affiliation': {'affiliationName': ['University'], 'nameIdentifier': ['0000000121691048']}, 'creatorAlternative': [], 'creatorName': ['情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro', '情報, 太郎', 'ジョウホウ, タロウ', 'Joho, Taro'], 'familyName': ['情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho', '情報', 'ジョウホウ', 'Joho'], 'givenName': ['太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro', '太郎', 'タロウ', 'Taro'], 'nameIdentifier': ['4', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz', 'xxxxxxx', 'xxxxxxx', 'zzzzzzz']}, 'date': [{'dateType': 'Available', 'value': '2021-06-30'}], 'dateGranted': ['2021-06-30'], 'degreeGrantor': {'degreeGrantorName': ['Degree Grantor Name'], 'nameIdentifier': ['xxxxxx']}, 'degreeName': ['Degree Name'], 'description': [{'descriptionType': 'Abstract', 'value': 'Description\nDescription<br/>Description'}, {'descriptionType': 'Abstract', 'value': '概要\n概要\n概要\n概要'}], 'feedback_mail_list': [{'author_id': '', 'email': 'wekosoftware@nii.ac.jp'}], 'fundingReference': {'awardNumber': ['Award Number'], 'awardTitle': ['Award Title'], 'funderIdentifier': ['http://xxx'], 'funderName': ['Funder Name']}, 'geoLocation': {'geoLocationPlace': ['Japan']}, 'identifier': [{'identifierType': 'URI', 'value': 'http://localhost'}], 'issue': ['111'], 'itemtype': 'デフォルトアイテムタイプ（フル）', 'language': ['jpn'], 'numPages': ['12'], 'pageEnd': ['3'], 'pageStart': ['1'], 'path': ['1661432090216'], 'publish_date': '2021-08-06', 'publish_status': '0', 'publisher': ['Publisher'], 'relation': {'@attributes': {'relationType': [['isVersionOf']]}, 'relatedIdentifier': [{'identifierType': 'arXiv', 'value': 'xxxxx'}], 'relatedTitle': ['Related Title']}, 'relation_version_is_last': True, 'rights': ['Rights Information'], 'rightsHolder': {'nameIdentifier': ['xxxxxx'], 'rightsHolderName': ['Right Holder Name']}, 'sourceIdentifier': [{'identifierType': 'ISSN', 'value': 'xxxx-xxxx-xxxx'}], 'sourceTitle': ['Source Title'], 'subject': [{'subjectScheme': 'Other', 'value': 'Sibject1'}], 'temporal': ['Temporal'], 'title': ['en_conference paperITEM00000001(public_open_access_simple)', 'ja_conference paperITEM00000001(public_open_access_open_access_simple)'], 'type': ['dataset'], 'version': ['Version'], 'versiontype': ['AO'], 'volume': ['1'], 'weko_creator_id': '2', "weko_shared_ids": [2], 'test_mapping': 'test_mapping'},
                                                 'updated': '2022-08-26T12:57:36.376731+00:00'}
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         # normal
@@ -8640,20 +8643,20 @@ def test__export_item(app, db, users, db_records, db_itemtype):
             # 不正なrecord_id
             with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=None):
                 assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({}, {})
-            
+
             assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': ''}, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
 
             # records_data is None
-            assert _export_item(1,'JSON',False,'./tests/data/') == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {})
+            assert _export_item(1,'JSON',False,'./tests/data/') == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': '' }, {})
 
             # weko_shared_ids=あり contributor
-            assert _export_item(1,'JSON',False,'./tests/data/',records_data_2) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': str(users[0]["id"]), "weko_shared_ids": [int(users[0]["id"])]}})
-            
+            assert _export_item(1,'JSON',False,'./tests/data/',records_data_2) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': '' }, {'1': {'weko_creator_id': str(users[0]["id"]), "weko_shared_ids": [int(users[0]["id"])]}})
+
             # exported_item['item_type_id'] = False
             rec = WekoRecord.get_record_by_pid(1)
             rec["item_type_id"] = None
             rec.commit()
-            assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': None,'name': 'recid_1','path': 'recid_1','record_id': record.id }, {})
+            assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': None,'name': 'recid_1','path': 'recid_1','record_id': record.id , 'researchmap_linkage': '' }, {})
             rec = WekoRecord.get_record_by_pid(1)
             rec["item_type_id"] = 1
             rec.commit()
@@ -8661,22 +8664,22 @@ def test__export_item(app, db, users, db_records, db_itemtype):
             # hide_meta_data_for_role(record_role_ids) == True
             with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=['_comment','item_1617186476635', ['item_1617186499011','item_1617186609386']]):
                 with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
-                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
-            
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': '' }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+
             list_hidden = ['_comment_2', ['dummy', 'item_1617186499011','item_1617186609386']]
             with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=list_hidden):
                 with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
-                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': '' }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
 
             list_hidden = ['feedback_mail_list', ['description', 'type']]
             with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=list_hidden):
                 with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
-                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
-            
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': '' }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+
             list_hidden = [['description', 'descriptionType'], ['degreeGrantor', 'nameIdentifier']]
             with patch("weko_items_ui.utils.get_ignore_item_from_mapping", return_value=list_hidden):
                 with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
-                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
+                    assert _export_item(1,'JSON',False,'./tests/data/',records_data) == ({'files': [],'item_type_id': '1','name': 'recid_1','path': 'recid_1','record_id': record.id, 'researchmap_linkage': '' }, {'1': {'weko_creator_id': '1', "weko_shared_ids": []}})
 
             from invenio_files_rest.models import Bucket, ObjectVersion
             from invenio_records_files.models import RecordsBuckets
@@ -8701,7 +8704,8 @@ def test__export_item(app, db, users, db_records, db_itemtype):
                                                                                     'item_type_id': '1',
                                                                                     'name': 'recid_1',
                                                                                     'path': 'recid_1',
-                                                                                    'record_id': record.id }
+                                                                                    'record_id': record.id,
+                                                                                    'researchmap_linkage': '' }
             assert _export_item(1,'JSON',True,'./tests/data/',records_data)[1] == {'1': {'weko_creator_id': '1', "weko_shared_ids": []}}
 
 
@@ -8935,7 +8939,8 @@ def test_validate_user_mail(app, db, db_workflow):
     }
     res = ActivityAction.query.first()
     assert res.action_handler == -1
-    assert validate_user_mail(users, activity_id, request_data, keys, result)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_register_in_system': [], 'validate_required_email': []}
+    with patch("weko_items_ui.utils.check_display_shared_user", return_value=True):
+        assert validate_user_mail(users, activity_id, request_data, keys, result)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_register_in_system': [], 'validate_required_email': []}
     res = ActivityAction.query.first()
     assert res.action_handler == 1
 
@@ -8978,10 +8983,11 @@ def test_validate_user_mail_and_index(app, db, db_workflow):
     res = ActivityAction.query.first()
     assert res.action_handler == -1
 
-    request_data={'user_b': 'user@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['ccc'], 'auto_set_index_action': False}
-    assert validate_user_mail_and_index(request_data)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_required_email': [], 'validate_register_in_system': []}
-    res = ActivityAction.query.first()
-    assert res.action_handler == 1
+    with patch("weko_items_ui.utils.check_display_shared_user", return_value=True):
+        request_data={'user_b': 'user@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['ccc'], 'auto_set_index_action': False}
+        assert validate_user_mail_and_index(request_data)=={'index': True, 'validate_map_flow_and_item_type': False, 'validate_required_email': [], 'validate_register_in_system': []}
+        res = ActivityAction.query.first()
+        assert res.action_handler == 1
 
     request_data={'user_b': 'contributor@test.org', 'activity_id': 'A-00000000-00000', 'user_to_check': ['user_b'], 'user_key_to_check': ['ccc'], 'auto_set_index_action': True}
     assert validate_user_mail_and_index(request_data)=={'index': False, 'validate_map_flow_and_item_type': False, 'validate_required_email': [], 'validate_register_in_system': []}
@@ -10981,13 +10987,15 @@ def test_make_stats_file_with_permission_issue33432(app, users,db_itemtype,db_re
 # def check_item_is_being_edit(
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_item_is_being_edit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_item_is_being_edit(db, db_records, db_workflow, db_activity):
-    workflow = db_workflow["workflow"]
-    depid, recid, parent, doi, record, item = db_records[1]
-    assert check_item_is_being_edit(recid) == ""
+    with patch("weko_items_ui.utils.Activity.query") as mock_query:
+        mock_query.filter.return_value.filter.retrun_value.order_by.return_value.first.return_value = None
+        workflow = db_workflow["workflow"]
+        depid, recid, parent, doi, record, item = db_records[1]
+        assert check_item_is_being_edit(recid) == ""
 
     post_workflow = Activity()
     post_workflow.action_status = ActionStatusPolicy.ACTION_DOING
-    assert check_item_is_being_edit(recid, post_workflow) == None
+    assert check_item_is_being_edit(recid, post_workflow) == "None"
 
     depid, recid, parent, doi, record, item = db_records[0]
     assert check_item_is_being_edit(recid) == "A-00000000-00001"
@@ -11334,7 +11342,7 @@ def test_get_weko_link(app, client, users, db_records, mocker):
     # not key == "nameIdentifiers" is true
     res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
     assert res == {}
-    
+
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_duplicate_fields -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_duplicate_fields():
     data_author_list = [
@@ -11365,7 +11373,7 @@ def test_get_duplicate_fields():
     assert res[2] == []
     assert res[3] == ["情報, 太郎", "じょうほう, たろう", "じょうほう, じろう", "情報, 次郎"]
     assert res[4] == ["6", "7"]
-    
+
     data_author_dict = {
         "creatorNames":[
             {"creatorName":"情報, 太郎"},
@@ -11382,7 +11390,7 @@ def test_get_duplicate_fields():
     assert res[2] == []
     assert res[3] == ["情報, 太郎", "じょうほう, たろう"]
     assert res[4] == ["6"]
-    
+
     data_title_list = [
         {
             "subitem_title": "テストタイトル",
@@ -11399,7 +11407,7 @@ def test_get_duplicate_fields():
     assert res[2] == ["テストタイトル", "test title"]
     assert res[3] == []
     assert res[4] == []
-    
+
     data_title_dict = {
         "subitem_title": "テストタイトルその2",
         "subitem_title_language": "ja"
@@ -11410,8 +11418,8 @@ def test_get_duplicate_fields():
     assert res[2] == ["テストタイトルその2"]
     assert res[3] == []
     assert res[4] == []
-    
-    
+
+
     data_idt_list = [
         {
             "subitem_identifier_uri": "5678",
@@ -11428,7 +11436,7 @@ def test_get_duplicate_fields():
     assert res[2] == []
     assert res[3] == []
     assert res[4] == []
-    
+
     data_idt_dict = {
         "subitem_identifier_uri": "12345",
         "subitem_identifier_type": "DOI",
@@ -11439,7 +11447,7 @@ def test_get_duplicate_fields():
     assert res[2] == []
     assert res[3] == []
     assert res[4] == []
-    
+
     data_resourcetype_list = [
         {
             "resourcetype": "data paper",
@@ -11466,9 +11474,9 @@ def test_get_duplicate_fields():
     assert res[2] == []
     assert res[3] == []
     assert res[4] == []
-    
-    
-    
+
+
+
 # def check_duplicate(data, is_item=True):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_duplicate(app, users,db_records3):
@@ -11510,16 +11518,16 @@ def test_check_duplicate(app, users,db_records3):
         assert res == False
 
         # creatorNames OK
-        res, recid_list, item_links =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"情報, 太郎"}]}]},True)
+        res, recid_list, item_links =  check_duplicate({"creatorNames":[{"creatorNames":[{"creatorName":"情報, 太郎"}, {"creatorName":"ジョウホウ, タロウ"}, {"creatorName":"Joho, Taro"}], "subitem_title":"タイトル", "resourcetype":"Resource Type"},
+                                                                        {"creatorNames":[{"creatorName":"情報, 次郎"}, {"creatorName":"ジョウホウ, タロウ"}, {"creatorName":"Joho, Taro"}]},
+                                                                        {"creatorNames":[{"creatorName":"情報, 三郎"}, {"creatorName":"ジョウホウ, タロウ"}, {"creatorName":"Joho, Taro"}]},
+                                                                        ]},True)
         assert recid_list[0] == 8
 
         # resourcetype
         res, [], [] =  check_duplicate({"resourcetype":{"resourcetype":"test"}},True)
         assert res == False
 
-# def get_notification_targets(deposit, user_id):
-
-# def get_notification_targets_approver(activity):
 
 # def create_item_deleted_data(deposit, profile, target, url):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_create_item_deleted_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -11538,7 +11546,7 @@ def test_create_item_deleted_data(app, db,users, db_records2, db_userprofile):
             assert res == "test_template_fill"
             test = {
                 "target_title":"タイトル",
-                "recipient_name":None,
+                "recipient_name":"contributor",
                 "event_date":"2025-01-01 12:00:00",
                 "target_url":url
             }
@@ -11557,7 +11565,7 @@ def test_create_item_deleted_data(app, db,users, db_records2, db_userprofile):
             assert res == "test_template_fill"
             test = {
                 "target_title":"タイトル",
-                "recipient_name":None,
+                "recipient_name":"contributor",
                 "event_date":"2025-01-01 12:00:00",
                 "target_url":url
             }
@@ -11637,7 +11645,7 @@ def test_send_mail_item_deleted(app, mocker):
     _, kwargs = mock_send_mail_from_notification_info.call_args
     get_info_func = kwargs["get_info_func"]
     get_info_func(deposit)
-    mock_get_notification_targets.assert_called_once_with(deposit, user_id,-1)
+    mock_get_notification_targets.assert_called_once_with(deposit, user_id, [])
 
     assert kwargs["context_obj"] == deposit
     assert kwargs["content_creator"] == create_item_deleted_data
@@ -11713,9 +11721,8 @@ def test_send_mail_from_notification_info_success(app, mocker, users, db_userpro
     # Assertions
     assert send_count == 1
     args, _ = mock_send_mail.call_args
-    assert args[0] == "Test Subject"    # subject
-    assert args[2] == "Test Body"       # body
-    assert args[1] == target.email    # recipient
+    assert args[0] == {"mail_subject": "Test Subject", "mail_body": "Test Body",
+                       "mail_recipients": [target.email], "mail_cc": [], "mail_bcc": []}
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_send_mail_from_notification_info_no_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_send_mail_from_notification_info_no_setting(app, mocker, users):
@@ -11825,29 +11832,26 @@ def test_send_mail_from_notification_info_missing_keys(app, mocker, users):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_notification_targets(app, users, db_records2, db_userprofile, db_notifsetting):
     deposit = db_records2[0][4]
-    deposit["_deposit"]["owners"] = [users[1]["id"],users[2]["id"]]
-    user_id = users[1]["id"]
+    deposit["owner"] = users[2]["id"]
 
-    # exist shared user
-    result = get_notification_targets(deposit, user_id, users[0]["id"])
+    # exist shared users
+    result = get_notification_targets(deposit, None, [users[0]["id"]])
 
-    assert set(result["targets"]) == {users[2]["obj"] ,users[0]["obj"]}
+    assert set(result["targets"]) == {users[0]["obj"]}
 
     expected_settings = {
-        users[2]["id"]: db_notifsetting[users[2]["id"]],
         users[0]["id"]: db_notifsetting[users[0]["id"]],
     }
     expected_profiles = {
-        users[2]["id"]: db_userprofile[users[2]["email"]],
         users[0]["id"]: db_userprofile[users[0]["email"]],
     }
     assert result["settings"] == expected_settings
     assert result["profiles"] == expected_profiles
 
-    # shared user is none
-    result = get_notification_targets(deposit, user_id, -1)
+    # noone shared users
+    result = get_notification_targets(deposit, None, [])
 
-    assert set(result["targets"]) == {users[2]["obj"]}
+    assert set(result["targets"]) == set()
 
     expected_settings = {
         users[2]["id"]: db_notifsetting[users[2]["id"]],
@@ -11855,18 +11859,6 @@ def test_get_notification_targets(app, users, db_records2, db_userprofile, db_no
     expected_profiles = {
         users[2]["id"]: db_userprofile[users[2]["email"]],
     }
-    assert result["settings"] == expected_settings
-    assert result["profiles"] == expected_profiles
-
-
-    # owner is empty
-    deposit = db_records2[0][4]
-    deposit["_deposit"]["owners"] = []
-    user_id = users[1]["id"]
-
-    result = get_notification_targets(deposit, user_id,-1)
-
-    assert result["targets"] == []
     assert result["settings"] == {}
     assert result["profiles"] == {}
 
@@ -11876,179 +11868,6 @@ def test_get_notification_targets(app, users, db_records2, db_userprofile, db_no
     user_id = users[1]["id"]
     with patch("weko_items_ui.utils.User.query") as mock_user_query:
         mock_user_query.filter.return_value.all.side_effect = SQLAlchemyError("DB Error")
-        result = get_notification_targets(deposit, user_id,-1)
+        result = get_notification_targets(deposit, user_id, [])
     assert result == {}
-    
-# def get_notification_targets_approver(activity):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_normal_behavior -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_normal_behavior(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community, db_approval_action):
-    comm = db_community
-    approval_action_role = db_approval_action["flow_action_role"]
-    approval_action_role.action_role = users[1]["obj"].roles[0].id  # repoadmin_role
-    approval_action_role.action_role_exclude = True
-    approval_action_role.action_user = users[1]["id"]
-    approval_action_role.action_user_exclude = False
-    activity = db_workflow["activity"]
-    activity.shared_user_id = -1
-    activity.activity_login_user = users[0]["id"]
-    activity.activity_community_id = comm.id
-    activity.action_order=3
-    actor = db_userprofile[users[0]["email"]]
-    actor.username = "contirbutor"
-    db.session.commit()
 
-    res = get_notification_targets_approver(activity)
-    assert set(res["targets"]) == {users[i]["obj"] for i in [1, 3]}
-    expected_settings = {
-        users[i]["id"]: db_notifsetting[users[i]["id"]] for i in [1, 3]
-    }
-    expected_profiles = {
-        users[i]["id"]: db_userprofile[users[i]["email"]] for i in [1, 3]
-    }
-    assert res["settings"] == expected_settings
-    assert res["profiles"] == expected_profiles
-    assert res["actor"] == {"name": actor.username, "email": users[0]["email"]}
-
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_no_approval_action_role -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_no_approval_action_role(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community):
-    comm = db_community
-    activity = db_workflow["activity"]
-    activity.shared_user_id = -1
-    activity.activity_login_user = users[0]["id"]
-    activity.activity_community_id = comm.id
-    activity.action_order=3
-    actor = db_userprofile[users[0]["email"]]
-    actor.username = "contirbutor"
-    db.session.commit()
-
-    res = get_notification_targets_approver(activity)
-    assert set(res["targets"]) == {users[i]["obj"] for i in [1, 3, 6]}
-    expected_settings = {
-        users[i]["id"]: db_notifsetting[users[i]["id"]] for i in [1, 3, 6]
-    }
-    expected_profiles = {
-        users[i]["id"]: db_userprofile[users[i]["email"]] for i in [1, 3, 6]
-    }
-    assert res["settings"] == expected_settings
-    assert res["profiles"] == expected_profiles
-    assert res["actor"] == {"name": actor.username, "email": users[0]["email"]}
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_role_inclusion -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_role_inclusion(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community, db_approval_action):
-    comm = db_community
-    approval_action_role = db_approval_action["flow_action_role"]
-    approval_action_role.action_role = users[2]["obj"].roles[0].id  # sysadmin_role
-    approval_action_role.action_role_exclude = False
-    activity = db_workflow["activity"]
-    activity.shared_user_id = -1
-    activity.activity_login_user = users[0]["id"]
-    activity.activity_community_id = comm.id
-    activity.action_order=3
-
-    actor = db_userprofile[users[0]["email"]]
-    actor.username = "contirbutor"
-    db.session.commit()
-
-    res = get_notification_targets_approver(activity)
-    assert set(res["targets"]) == {users[i]["obj"] for i in [1, 3, 6]}
-    expected_settings = {
-        users[i]["id"]: db_notifsetting[users[i]["id"]] for i in [1, 3, 6]
-    }
-    expected_profiles = {
-        users[i]["id"]: db_userprofile[users[i]["email"]] for i in [1, 3, 6]
-    }
-    assert res["settings"] == expected_settings
-    assert res["profiles"] == expected_profiles
-    assert res["actor"] == {"name": actor.username, "email": users[0]["email"]}
-
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_user_excluded -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_user_excluded(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community, db_approval_action):
-    comm = db_community
-    approval_action_role = db_approval_action["flow_action_role"]
-    approval_action_role.action_user = users[1]["id"]  # repoadmin_user
-    approval_action_role.action_user_exclude = True
-    activity = db_workflow["activity"]
-    activity.shared_user_id = -1
-    activity.activity_login_user = users[0]["id"]
-    activity.activity_community_id = comm.id
-    activity.action_order=3
-
-    actor = db_userprofile[users[0]["email"]]
-    actor.username = "contirbutor"
-    db.session.commit()
-
-    res = get_notification_targets_approver(activity)
-    assert set(res["targets"]) == {users[i]["obj"] for i in [3, 6]}
-    expected_settings = {
-        users[i]["id"]: db_notifsetting[users[i]["id"]] for i in [3, 6]
-    }
-    expected_profiles = {
-        users[i]["id"]: db_userprofile[users[i]["email"]] for i in [3, 6]
-    }
-    assert res["settings"] == expected_settings
-    assert res["profiles"] == expected_profiles
-    assert res["actor"] == {"name": actor.username, "email": users[0]["email"]}
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_shared_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_shared_user(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community):
-    comm = db_community
-    activity = db_workflow["activity"]
-    activity.shared_user_id = users[0]["id"]
-    activity.activity_login_user = users[1]["id"]
-    activity.activity_community_id = comm.id
-    actor = db_userprofile[users[1]["email"]]
-    actor.username = "contirbutor"
-    db.session.commit()
-
-    res = get_notification_targets_approver(activity)
-    assert set(res["targets"]) == {users[i]["obj"] for i in [1, 3, 6]}
-    expected_settings = {
-        users[i]["id"]: db_notifsetting[users[i]["id"]] for i in [1, 3, 6]
-    }
-    expected_profiles = {
-        users[i]["id"]: db_userprofile[users[i]["email"]] for i in [1, 3, 6]
-    }
-    assert res["settings"] == expected_settings
-    assert res["profiles"] == expected_profiles
-    assert res["actor"] == {"name": actor.username, "email": users[1]["email"]}
-
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_no_community -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_no_community(app, db, users, db_workflow, db_userprofile, db_notifsetting):
-    activity = db_workflow["activity"]
-    activity.shared_user_id = -1
-    activity.activity_login_user = users[1]["id"]
-    activity.activity_community_id = None
-    actor = db_userprofile[users[1]["email"]]
-    actor.username = "repoadmin"
-    db.session.commit()
-
-    res = get_notification_targets_approver(activity)
-    assert set(res["targets"]) == {users[i]["obj"] for i in [6]}
-    expected_settings = {
-        users[i]["id"]: db_notifsetting[users[i]["id"]] for i in [6]
-    }
-    expected_profiles = {
-        users[i]["id"]: db_userprofile[users[i]["email"]] for i in [6]
-    }
-    assert res["settings"] == expected_settings
-    assert res["profiles"] == expected_profiles
-    assert res["actor"] == {"name": actor.username, "email": users[1]["email"]}
-
-
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_notification_targets_approver_db_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_notification_targets_approver_db_error(app, db, users, db_workflow, db_userprofile, db_notifsetting, db_community):
-    activity = db_workflow["activity"]
-    activity.shared_user_id = -1
-    activity.activity_login_user = users[1]["id"]
-    activity.activity_community_id = None
-    actor = db_userprofile[users[1]["email"]]
-    actor.username = "repoadmin"
-    db.session.commit()
-
-    with patch("weko_items_ui.utils.User.query") as mock_user_query:
-        mock_user_query.filter.return_value.all.side_effect = SQLAlchemyError("DB Error")
-        res = get_notification_targets_approver(activity)
-    assert res == {}

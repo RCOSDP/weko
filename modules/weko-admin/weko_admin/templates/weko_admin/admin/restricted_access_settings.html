@@ -50,14 +50,26 @@
   <input id="download_limit_label" type="hidden" value='{{ download_limit }}'/>
   <input id="expiration_date_label" type="hidden" value='{{ expiration_date }}'/>
   <input id="unlimited_label" type="hidden" value='{{ _("Unlimited") }}'/>
+  <div id="secret_label_names" hidden
+    data-max-download-limit='{{ _("Max Download Limit") }}'
+    data-max-expiration-date='{{ _("Max Expiration Date") }}'
+    data-download-limit-initial='{{ _("Download Limit Initial Value") }}'
+    data-expiration-date-initial='{{ _("Expiration Date Initial Value") }}'>
+  </div>
+  <div id="message_keywords" hidden
+    data-maximum='{{ _("the allowed maximum") }}'>
+  </div>
   <input id="save_label" type="hidden" value='{{ _("Save") }}'/>
   <input id="usage_report_workflow_access_label" type="hidden" value='{{ _("Usage Report Workflow Access") }}'/>
   <input id="check_input_download" type="hidden"
          value='{{ _("Must set a positive integer for %(name)s.", name=download_limit) }}'/>
   <input id="check_input_expiration_date" type="hidden"
          value='{{ _("Must set a positive integer for %(name)s.", name=expiration_date) }}'/>
-  <input id="empty_download" type="hidden" value='{{ _("Please set %(name)s.", name=download_limit) }}'/>
+  <input id="empty_download" hidden value='{{ _("Please set %(name)s.", name=download_limit) }}'/>
   <input id="empty_expiration_date" type="hidden" value='{{ _("Please set %(name)s.", name=expiration_date) }}'/>
+  <div id="validation_error_messages" hidden
+    data-empty-value='{{ _("Please set %(name)s.", name="[label_name]") }}'
+    data-out-of-range='{{ _("%(label_name)s value is out of range. Please set an integer value between %(min)s and %(max)s.", label_name="[label_name]", min="[min]", max="[max]") }}'></div>
   <input id="error_message" type="hidden" value="{{error_message}}">
   <input id="password_for_download" type="hidden" value='{{_("password check function")}}'>
   <input id="item_application" type="hidden" value='{{_("application for use of items without content")}}'>
