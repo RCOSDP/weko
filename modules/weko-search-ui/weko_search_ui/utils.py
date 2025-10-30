@@ -923,6 +923,7 @@ def check_jsonld_import_items(
 
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
+        mapper.data_path = data_path
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
         list_record = [
             {
