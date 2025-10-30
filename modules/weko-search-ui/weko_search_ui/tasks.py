@@ -157,9 +157,8 @@ def import_item(item, request_info):
         result = import_items_to_system(item, request_info) or dict()
         result["start_date"] = start_date
         return result
-    except Exception as ex:
-        current_app.logger.error(ex)
-        traceback.print_exc(file=sys.stdout)
+    except Exception:
+        current_app.logger.error(traceback.format_exc())
 
 
 @shared_task

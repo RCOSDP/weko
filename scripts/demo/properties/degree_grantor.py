@@ -89,17 +89,17 @@ def schema(title="", multi_flag=multiple_flag):
                         "type": "object",
                         "format": "object",
                         "properties": {
+                            "subitem_degreegrantor_name": {
+                                "format": "text",
+                                "title": "学位授与機関名",
+                                "type": "string",
+                            },
                             "subitem_degreegrantor_language": {
                                 "editAble": True,
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "title": "言語",
-                            },
-                            "subitem_degreegrantor_name": {
-                                "format": "text",
-                                "title": "学位授与機関名",
-                                "type": "string",
                             },
                         },
                     },
@@ -182,15 +182,6 @@ def form(
                     "add": "New",
                     "items": [
                         {
-                            "key": "{}.subitem_degreegrantor[].subitem_degreegrantor_language".format(
-                                key
-                            ),
-                            "title": "言語",
-                            "title_i18n": {"en": "Language", "ja": "言語"},
-                            "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
-                            "type": "select",
-                        },
-                        {
                             "key": "{}.subitem_degreegrantor[].subitem_degreegrantor_name".format(
                                 key
                             ),
@@ -200,6 +191,15 @@ def form(
                                 "ja": "学位授与機関名",
                             },
                             "type": "text",
+                        },
+                        {
+                            "key": "{}.subitem_degreegrantor[].subitem_degreegrantor_language".format(
+                                key
+                            ),
+                            "title": "言語",
+                            "title_i18n": {"en": "Language", "ja": "言語"},
+                            "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
+                            "type": "select",
                         },
                     ],
                     "key": "{}.subitem_degreegrantor".format(key),

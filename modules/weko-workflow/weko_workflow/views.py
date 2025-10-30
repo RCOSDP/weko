@@ -1,23 +1,4 @@
 # -*- coding: utf-8 -*-
-#
-# This file is part of WEKO3.
-# Copyright (C) 2017 National Institute of Informatics.
-#
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
-
 """Blueprint for weko-workflow."""
 
 import json
@@ -1108,8 +1089,11 @@ def display_activity(activity_id="0", community_id=None):
 
 
     if action_endpoint == 'item_link' and recid:
-        item_link = ItemLink.get_item_link_info(recid.pid_value)
-        ctx['item_link'] = item_link
+        try:
+            item_link = ItemLink.get_item_link_info(recid.pid_value)
+            ctx['item_link'] = item_link
+        except Exception:
+            current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
 
     # Get item link info.
     try:
@@ -1144,6 +1128,18 @@ def display_activity(activity_id="0", community_id=None):
     if approval_record and files:
         files = set_files_display_type(approval_record, files)
 
+    # Add item link data for approval steps
+    if approval_record and recid and action_endpoint in ['approval', 'approval_advisor', 'approval_guarantor', 'approval_administrator']:
+        try:
+            item_link_info = ItemLink.get_item_link_info(recid.pid_value)
+        except Exception:
+            item_link_info = None
+            current_app.logger.error("Unexpected error: {}".format(sys.exc_info()))
+
+        if item_link_info:
+            approval_record["relation"] = item_link_info
+        else:
+            approval_record["relation"] = []
 
     ctx.update(
         dict(

@@ -1,10 +1,10 @@
 import traceback
 from invenio_db import db
 from weko_records.api import ItemTypes
-
+from flask import current_app
 def main():
     try:
-        print("Add 'peer_reviewed' to version_type property. (id = 1016)")
+        current_app.logger.info("Add 'peer_reviewed' to version_type property. (id = 1016)")
         query = """
             UPDATE item_type_property 
             SET schema = schema || jsonb_set(schema, '{"properties","subitem_peer_reviewed"}', '{"editAble": true,"type": ["null", "string"],"format": "select","enum": [null, "Peer reviewed", "Not peer reviewed"],"currentEnum": ["Peer reviewed", "Not peer reviewed"],"title": "査読の有無","title_i18n": {"en": "Peer reviewed/Not peer reviewed", "ja": "査読の有無"}}'),
@@ -14,23 +14,31 @@ def main():
         """
         db.session.execute(query)
         db.session.flush()
-        print("  Successfully added 'peer_reviewed' to version_type property. (id = 1016)")
+        current_app.logger.info("  Successfully added 'peer_reviewed' to version_type property. (id = 1016)")
 
-        print("Reload all itemtypes")
+        import properties
+        mapping = {}
+        for i in dir(properties):
+            prop = getattr(properties, i)
+            if getattr(prop, 'property_id', None) and prop.property_id == 1016:
+                mapping[int(prop.property_id)] = prop.mapping
+        current_app.logger.info("Reload all itemtypes")
         itemtypes = ItemTypes.get_all()
         for itemtype in itemtypes:
-                ret = ItemTypes.reload(itemtype.id)
-                print(f"  itemtype id:{itemtype.id}, itemtype name:{itemtype.item_type_name.name}")
-                print(f"  {ret['msg']}")
+                ret = ItemTypes.reload(itemtype.id, mapping)
+                current_app.logger.info(f"  itemtype id:{itemtype.id}, itemtype name:{itemtype.item_type_name.name}")
+                current_app.logger.info(f"  {ret['msg']}")
         
         db.session.commit()
-        print("  Successfully reloaded all itemtypes")
+        for itemtype in itemtypes:
+            current_app.logger.info(f"[FIX] item_type:{itemtype.id}")
+        current_app.logger.info("  Successfully reloaded all itemtypes")
 
-        print("Completed!")
+        current_app.logger.info("Completed!")
     except Exception as e:
-        print(traceback.format_exc())
+        current_app.logger.error(traceback.format_exc())
         db.session.rollback()
-        print("Failed to update itemtype property.")
+        current_app.logger.error("Failed to update itemtype property.")
 
 if __name__ == "__main__":
     main()

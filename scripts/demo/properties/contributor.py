@@ -5,6 +5,7 @@ from .property_func import (
     get_property_form,
     set_post_data,
     get_select_value,
+    make_title_map,
 )
 from . import property_config as config
 
@@ -132,7 +133,7 @@ mapping = {
     "lom_mapping": "",
     "oai_dc_mapping": {
         "contributor": {
-            "@value": "contributorNames.contributorName,nameIdentifiers.nameIdentifier"
+            "@value": "contributorNames.contributorName"
         }
     },
     "spase_mapping": "",
@@ -184,34 +185,48 @@ def schema(title="", multi_flag=multiple_flag):
                     "enum": contributor_type,
                     "format": "select",
                     "title": "寄与者タイプ",
+                    "title_i18n": {"en": "Contributor Type", "ja": "寄与者タイプ"},
                     "type": ["null", "string"],
                 },
                 "nameIdentifiers": {
                     "format": "array",
+                                    "type": "array",
                     "items": {
                         "format": "object",
+                        "type": "object",
                         "properties": {
                             "nameIdentifier": {
                                 "format": "text",
                                 "title": "寄与者識別子",
+                                "title_i18n": {
+                                    "en": "Contributor Name Identifier",
+                                    "ja": "寄与者識別子",
+                                },
                                 "type": "string",
                             },
                             "nameIdentifierScheme": {
                                 "format": "select",
                                 "title": "寄与者識別子Scheme",
+                                "title_i18n": {
+                                    "en": "Contributor Name Identifier Scheme",
+                                    "ja": "寄与者識別子Scheme",
+                                },
                                 "type": ["null", "string"],
                                 "enum": [],
                             },
                             "nameIdentifierURI": {
                                 "format": "text",
                                 "title": "寄与者識別子URI",
+                                "title_i18n": {
+                                    "en": "Contributor Name Identifier URI",
+                                    "ja": "寄与者識別子URI",
+                                },
                                 "type": "string",
                             },
                         },
-                        "type": "object",
                     },
                     "title": "寄与者識別子",
-                    "type": "array",
+    
                 },
                 "contributorNames": {
                     "format": "array",
@@ -221,6 +236,7 @@ def schema(title="", multi_flag=multiple_flag):
                             "contributorName": {
                                 "format": "text",
                                 "title": "姓名",
+                                "title_i18n": {"en": "Name", "ja": "姓名"},
                                 "type": "string",
                             },
                             "lang": {
@@ -228,6 +244,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "format": "select",
                                 "title": "言語",
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                                 "type": ["null", "string"],
                             },
                             "nameType": {
@@ -235,6 +252,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "enum": config.NAME_TYPE_VAL,
                                 "format": "select",
                                 "title": "名前タイプ",
+                                "title_i18n": {"en": "Name Type", "ja": "名前タイプ"},
                                 "type": ["null", "string"],
                             },
                         },
@@ -248,17 +266,19 @@ def schema(title="", multi_flag=multiple_flag):
                     "items": {
                         "format": "object",
                         "properties": {
-                            "familyNameLang": {
+                            "familyName": {
+                                "format": "text",
+                                "title": "姓",
+                                "title_i18n": {"en": "Family Name", "ja": "姓"},
+                                "type": "string",
+                            },
+                                                        "familyNameLang": {
                                 "editAble": True,
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "format": "select",
                                 "title": "言語",
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                                 "type": ["null", "string"],
-                            },
-                            "familyName": {
-                                "format": "text",
-                                "title": "姓",
-                                "type": "string",
                             },
                         },
                         "type": "object",
@@ -274,6 +294,7 @@ def schema(title="", multi_flag=multiple_flag):
                             "givenName": {
                                 "format": "text",
                                 "title": "名",
+                                "title_i18n": {"en": "Given Name", "ja": "名"},
                                 "type": "string",
                             },
                             "givenNameLang": {
@@ -281,6 +302,7 @@ def schema(title="", multi_flag=multiple_flag):
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "format": "select",
                                 "title": "言語",
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                                 "type": ["null", "string"],
                             },
                         },
@@ -294,17 +316,19 @@ def schema(title="", multi_flag=multiple_flag):
                     "items": {
                         "format": "object",
                         "properties": {
+                            "contributorAlternative": {
+                                "format": "text",
+                                "title": "別名",
+                                "title_i18n": {"en": "Alternative Name", "ja": "別名"},
+                                "type": "string",
+                            },
                             "contributorAlternativeLang": {
                                 "editAble": True,
                                 "enum": config.LANGUAGE_VAL2_1,
                                 "format": "select",
                                 "title": "言語",
+                                "title_i18n": {"en": "Language", "ja": "言語"},
                                 "type": ["null", "string"],
-                            },
-                            "contributorAlternative": {
-                                "format": "text",
-                                "title": "別名",
-                                "type": "string",
                             },
                         },
                         "type": "object",
@@ -331,16 +355,31 @@ def schema(title="", multi_flag=multiple_flag):
                                             "format": "select",
                                             # "enum": [],
                                             "enum": config.AFFILIATION_SCHEME_VAL,
+                                            "currentEnum": config.AFFILIATION_SCHEME_VAL[
+                                                1:
+                                            ],
                                             "title": "所属機関識別子Scheme",
+                                            "title_i18n": {
+                                        "en": "Affiliation Name Identifier Scheme",
+                                        "ja": "所属機関識別子Scheme",
+                                    },
                                         },
                                         "contributorAffiliationNameIdentifier": {
                                             "format": "text",
                                             "title": "所属機関識別子",
+                                            "title_i18n": {
+                                "en": "Affiliation Name Identifiers",
+                                "ja": "所属機関識別子",
+                            },
                                             "type": "string",
                                         },
                                         "contributorAffiliationURI": {
                                             "format": "text",
                                             "title": "所属機関識別子URI",
+                                            "title_i18n": {
+                                        "en": "Affiliation Name Identifier URI",
+                                        "ja": "所属機関識別子URI",
+                                    },
                                             "type": "string",
                                         },
                                     },
@@ -357,6 +396,10 @@ def schema(title="", multi_flag=multiple_flag):
                                         "contributorAffiliationName": {
                                             "format": "text",
                                             "title": "所属機関名",
+                                            "title_i18n": {
+                                        "en": "Affiliation Name",
+                                        "ja": "所属機関名",
+                                    },
                                             "type": "string",
                                         },
                                         "contributorAffiliationNameLang": {
@@ -365,6 +408,7 @@ def schema(title="", multi_flag=multiple_flag):
                                             "format": "select",
                                             "enum": config.LANGUAGE_VAL2_1,
                                             "title": "言語",
+                                            "title_i18n": {"en": "Language", "ja": "言語"},
                                         },
                                     },
                                 },
@@ -382,6 +426,10 @@ def schema(title="", multi_flag=multiple_flag):
                             "contributorMail": {
                                 "format": "text",
                                 "title": "メールアドレス",
+                                 "title_i18n": {
+                                "en": "Email Address",
+                                "ja": "メールアドレス",
+                            },
                                 "type": "string",
                             }
                         },
@@ -425,17 +473,11 @@ def form(
                                 "en": "Contributor Name Identifier Scheme",
                                 "ja": "寄与者識別子Scheme",
                             },
-                            "titleMap": [],
+                            "titleMap": make_title_map(
+                                config.CREATOR_IDENTIFIER_SCHEMA_LBL,
+                                config.CREATOR_IDENTIFIER_SCHEMA_VAL,
+                            ),
                             "type": "select",
-                        },
-                        {
-                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
-                            "title": "寄与者識別子URI",
-                            "title_i18n": {
-                                "en": "Contributor Name Identifier URI",
-                                "ja": "寄与者識別子URI",
-                            },
-                            "type": "text",
                         },
                         {
                             "key": "{}.nameIdentifiers[].nameIdentifier".format(key),
@@ -446,11 +488,23 @@ def form(
                             },
                             "type": "text",
                         },
+                        {
+                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
+                            "title": "寄与者識別子URI",
+                            "title_i18n": {
+                                "en": "Contributor Name Identifier URI",
+                                "ja": "寄与者識別子URI",
+                            },
+                            "type": "text",
+                        },
                     ],
                     "key": "{}.nameIdentifiers".format(key),
                     "style": {"add": "btn-success"},
                     "title": "寄与者識別子",
-                    "title_i18n": {"en": "Contributor Name Identifier", "ja": "寄与者識別子"},
+                    "title_i18n": {
+                        "en": "Contributor Name Identifier",
+                        "ja": "寄与者識別子",
+                    },
                 },
                 {
                     "add": "New",
@@ -485,17 +539,17 @@ def form(
                     "add": "New",
                     "items": [
                         {
+                            "key": "{}.familyNames[].familyName".format(key),
+                            "title": "姓",
+                            "title_i18n": {"en": "Family Name", "ja": "姓"},
+                            "type": "text",
+                        },
+                        {
                             "key": "{}.familyNames[].familyNameLang".format(key),
                             "title": "言語",
                             "title_i18n": {"en": "Language", "ja": "言語"},
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                             "type": "select",
-                        },
-                        {
-                            "key": "{}.familyNames[].familyName".format(key),
-                            "title": "姓",
-                            "title_i18n": {"en": "Family Name", "ja": "姓"},
-                            "type": "text",
                         },
                     ],
                     "key": "{}.familyNames".format(key),
@@ -529,6 +583,14 @@ def form(
                     "add": "New",
                     "items": [
                         {
+                            "key": "{}.contributorAlternatives[].contributorAlternative".format(
+                                key
+                            ),
+                            "title": "別名",
+                            "title_i18n": {"en": "Alternative Name", "ja": "別名"},
+                            "type": "text",
+                        },
+                        {
                             "key": "{}.contributorAlternatives[].contributorAlternativeLang".format(
                                 key
                             ),
@@ -537,19 +599,14 @@ def form(
                             "titleMap": get_select_value(config.LANGUAGE_VAL2_1),
                             "type": "select",
                         },
-                        {
-                            "key": "{}.contributorAlternatives[].contributorAlternative".format(
-                                key
-                            ),
-                            "title": "別名",
-                            "title_i18n": {"en": "Alternative Name", "ja": "別名"},
-                            "type": "text",
-                        },
                     ],
                     "key": "{}.contributorAlternatives".format(key),
                     "style": {"add": "btn-success"},
                     "title": "寄与者別名",
-                    "title_i18n": {"en": "Contributor Alternative Name", "ja": "寄与者別名"},
+                    "title_i18n": {
+                        "en": "Contributor Alternative Name",
+                        "ja": "寄与者別名",
+                    },
                 },
                 {
                     "add": "New",
@@ -557,17 +614,6 @@ def form(
                         {
                             "add": "New",
                             "items": [
-                                {
-                                    "key": "{}.contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationNameIdentifier".format(
-                                        key
-                                    ),
-                                    "title": "所属機関識別子",
-                                    "title_i18n": {
-                                        "en": "Affiliation Name Identifier",
-                                        "ja": "所属機関識別子",
-                                    },
-                                    "type": "text",
-                                },
                                 {
                                     "key": "{}.contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationScheme".format(
                                         key
@@ -581,6 +627,17 @@ def form(
                                         config.AFFILIATION_SCHEME_VAL
                                     ),
                                     "type": "select",
+                                },
+                                {
+                                    "key": "{}.contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationNameIdentifier".format(
+                                        key
+                                    ),
+                                    "title": "所属機関識別子",
+                                    "title_i18n": {
+                                        "en": "Affiliation Name Identifier",
+                                        "ja": "所属機関識別子",
+                                    },
+                                    "type": "text",
                                 },
                                 {
                                     "key": "{}.contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationURI".format(
@@ -635,7 +692,10 @@ def form(
                             ),
                             "style": {"add": "btn-success"},
                             "title": "所属機関名",
-                            "title_i18n": {"en": "Affiliation Names", "ja": "所属機関名"},
+                            "title_i18n": {
+                                "en": "Affiliation Names",
+                                "ja": "所属機関名",
+                            },
                         },
                     ],
                     "key": "{}.contributorAffiliations".format(key),
@@ -649,7 +709,10 @@ def form(
                         {
                             "key": "{}.contributorMails[].contributorMail".format(key),
                             "title": "メールアドレス",
-                            "title_i18n": {"en": "Email Address", "ja": "メールアドレス"},
+                            "title_i18n": {
+                                "en": "Email Address",
+                                "ja": "メールアドレス",
+                            },
                             "type": "text",
                         }
                     ],

@@ -19,7 +19,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"identifier": {"@value": "subitem_identifier_uri"}},
+    "oai_dc_mapping": "",
     "spase_mapping": "",
 }
 id_type = [None, "DOI", "HDL", "URI"]

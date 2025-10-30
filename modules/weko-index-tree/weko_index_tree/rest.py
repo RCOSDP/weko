@@ -67,6 +67,7 @@ from .scopes import (
 )
 from .utils import (
     check_doi_in_index, check_index_permissions, can_admin_access_index,
+    delete_index_reset_trees_from_redis, delete_index_reset_ignore_more_trees_from_redis,
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
 )
 from .schema import IndexCreateRequestSchema, IndexUpdateRequestSchema
@@ -360,6 +361,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
+                delete_index_reset_trees_from_redis(lang_code)
+                delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
@@ -427,6 +430,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
+                delete_index_reset_trees_from_redis(lang_code)
+                delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
@@ -460,6 +465,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 save_index_trees_to_redis(tree_ja, lang=lang_code)
             else:
                 save_index_trees_to_redis(tree, lang=lang_code)
+            delete_index_reset_trees_from_redis(lang_code)
+            delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -553,8 +560,10 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
-                    tree = self.record_class.get_browsing_tree()
-
+                    if current_user and current_user.is_authenticated:
+                        tree = self.record_class.get_browsing_tree()
+                    else:
+                        tree = self.record_class.get_browsing_reset_tree()
                 else:
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)
@@ -649,6 +658,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                         save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
+                delete_index_reset_trees_from_redis(lang_code)
+                delete_index_reset_ignore_more_trees_from_redis(lang_code)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
 

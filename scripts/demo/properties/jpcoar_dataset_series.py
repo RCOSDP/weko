@@ -24,6 +24,8 @@ mapping = {
     "spase_mapping": "",
 }
 
+series = [None, "True", "False"]
+
 
 def add(post_data, key, **kwargs):
     """Add to a item type."""
@@ -43,13 +45,18 @@ def schema(title="", multi_flag=multiple_flag):
         """Schema text."""
         _d = {
             "type": "object",
+            "title": "データセットシリーズ",
             "format": "object",
             "properties": {
                 "jpcoar_dataset_series": {
                     "type": ["null", "string"],
                     "format": "select",
-                    "enum": [None, "True", "False"],
+                    "enum": series,
                     "title": "Dataset Series",
+                    "title_i18n": {
+                        "ja": "データセットシリーズ",
+                        "en": "Dataset Series",
+                    },
                 }
             },
         }
@@ -71,14 +78,26 @@ def form(
                     "key": "{}.jpcoar_dataset_series".format(key),
                     "type": "select",
                     "title": "Dataset Series",
-                    "title_i18n": {"ja": "データセットシリーズ", "en": "Dataset Series"},
-                    "titleMap": [
-                        {"value": "True", "name": "True"},
-                        {"value": "False", "name": "False"},
-                    ],
+                    "isHide": False,
+                    "required": False,
+                    "isShowList": False,
+                    "isNonDisplay": False,
+                    "isSpecifyNewline": False,
+                    "title_i18n_temp": {
+                        "ja": "データセットシリーズ",
+                        "en": "Dataset Series",
+                    },
+                    "title_i18n": {
+                        "ja": "データセットシリーズ",
+                        "en": "Dataset Series",
+                    },
+                    "titleMap": get_select_value(series),
                 },
             ],
             "key": key.replace("[]", ""),
+            "type": "fieldset",
+            "title": "データセットシリーズ",
+            "title_i18n": {"en": "", "ja": "データセットシリーズ"},
         }
         return _d
 

@@ -124,15 +124,15 @@ def form(
                     "type": "select",
                 },
                 {
-                    "key": "{}.subitem_subject_uri".format(key),
-                    "title": "主題URI",
-                    "title_i18n": {"en": "Subject URI", "ja": "主題URI"},
-                    "type": "text",
-                },
-                {
                     "key": "{}.subitem_subject".format(key),
                     "title": "主題",
                     "title_i18n": {"en": "Subject", "ja": "主題"},
+                    "type": "text",
+                },
+                {
+                    "key": "{}.subitem_subject_uri".format(key),
+                    "title": "主題URI",
+                    "title_i18n": {"en": "Subject URI", "ja": "主題URI"},
                     "type": "text",
                 },
             ],

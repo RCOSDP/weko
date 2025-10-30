@@ -226,22 +226,34 @@ class TestIndexActionResource:
 
         with patch("weko_index_tree.api.Indexes.create",return_value=True) as mock_create:
             # create with ja, en
+            redis_connect.put("index_reset_tree_view_test_ja","test_ja_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_ja","test_ja_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
             data = {"id":"12", "value":"test_new_index"}
             res = client_rest.post(url,json=data)
             assert res.status_code == 201
             assert json.loads(res.data) == {"status":201, "message":"Index created successfully.","errors":[]}
             assert redis_connect.redis.exists("index_tree_view_test_ja") == True
             assert redis_connect.redis.exists("index_tree_view_test_en") == True
+            assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == False
+            assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
             redis_connect.delete("index_tree_view_test_ja")
             redis_connect.delete("index_tree_view_test_en")
 
             # create with en
             AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+            redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
             res = client_rest.post(url,json=data)
             assert res.status_code == 201
             assert json.loads(res.data) == {"status":201, "message":"Index created successfully.","errors":[]}
             assert redis_connect.redis.exists("index_tree_view_test_ja") == False
             assert redis_connect.redis.exists("index_tree_view_test_en") == True
+            assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
             redis_connect.delete("index_tree_view_test_en")
 
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexActionResource::test_put_acl_login -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
@@ -284,10 +296,30 @@ class TestIndexActionResource:
                 "public_date":"","public_state":False,
                 "harvest_public_state":False,
             }
+
+            # update with ja, en
+            AdminLangSettings.update_lang(lang_code="ja", is_registered=True, sequence=0)
+            redis_connect.put("index_reset_tree_view_test_ja","test_ja_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_ja","test_ja_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+            res = client_rest.put(url, json=data)
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"delete_flag": False,"errors": [],"message": "Index updated successfully.","status": 200}
+            assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == False
+            assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
+
+            # update with en
             AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+            redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
             res = client_rest.put(url,json=data)
             assert res.status_code == 200
             assert json.loads(res.data)=={'delete_flag': False,'errors': ['The index cannot be kept private because there are links from items that have a DOI.'],  'message': '','status': 200}
+            assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
 
             data = {
                 "public_date":"","public_state":True,
@@ -403,19 +435,31 @@ class TestIndexActionResource:
 
         with patch("weko_search_ui.tasks.is_import_running", return_value=None),patch("weko_workflow.utils.get_cache_data",return_value=True):
             # delete with ja, en
+            redis_connect.put("index_reset_tree_view_test_ja","test_ja_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_ja","test_ja_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
             res = client_rest.delete(url)
             assert res.status_code == 200
             assert json.loads(res.data) == {"status": 200, "message": "test_msg", "errors":"test_error"}
+            assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == False
+            assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
             redis_connect.delete("index_tree_view_test_ja")
             redis_connect.delete("index_tree_view_test_en")
 
             # delete with en
             AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+            redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+            redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
             res = client_rest.delete(url)
             assert res.status_code == 200
             assert json.loads(res.data) == {"status": 200, "message": "test_msg", "errors":"test_error"}
             assert redis_connect.redis.exists("index_tree_view_test_ja") == False
             assert redis_connect.redis.exists("index_tree_view_test_en") == True
+            assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+            assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
             redis_connect.delete("index_tree_view_test_en")
 
 # class IndexTreeActionResource(ContentNegotiatedMethodView):
@@ -505,6 +549,10 @@ class TestIndexTreeActionResource:
 
             with patch("weko_search_ui.tasks.is_import_running", return_value=None):
                 # move with jp, en
+                redis_connect.put("index_reset_tree_view_test_ja","test_ja_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+                redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+                redis_connect.put("index_reset_tree_ignore_more_view_test_ja","test_ja_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+                redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
                 data = {"pre_parent":"0","parent":"0","position":"0"}
                 index_id="3"
                 url = "/tree/move/{}".format(index_id)
@@ -513,17 +561,25 @@ class TestIndexTreeActionResource:
                 assert json.loads(res.data) == {'message': 'Index moved successfully.', 'status': 201}
                 assert redis_connect.redis.exists("index_tree_view_test_ja") == True
                 assert redis_connect.redis.exists("index_tree_view_test_en") == True
+                assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == False
+                assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+                assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == False
+                assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
                 redis_connect.delete("index_tree_view_test_ja")
                 redis_connect.delete("index_tree_view_test_en")
 
                 # move with en
                 AdminLangSettings.update_lang(lang_code="ja",is_registered=False,sequence=0)
+                redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+                redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
                 data = {"pre_parent":"0","parent":"0","position":"1"}
                 res = client_rest.put(url,json=data)
                 assert res.status_code == 201
                 assert json.loads(res.data) == {'message': 'Index moved successfully.', 'status': 201}
                 assert redis_connect.redis.exists("index_tree_view_test_ja") == False
                 assert redis_connect.redis.exists("index_tree_view_test_en") == True
+                assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+                assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
                 redis_connect.delete("index_tree_view_test_en")
 
             # move failed
@@ -537,6 +593,21 @@ class TestIndexTreeActionResource:
             assert redis_connect.redis.exists("index_tree_view_test_ja") == False
             assert redis_connect.redis.exists("index_tree_view_test_en") == False
 
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexTreeActionResource::test_get -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+    def test_get(self, client_rest, users, test_indices, without_session_remove):
+        os.environ["INVENIO_WEB_HOST_NAME"] = "test"
+        # guest_user
+        res = client_rest.get("/tree?action=browsing", content_type="application/json")
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert len(data[2]["children"]) == 0
+
+        # login_user
+        login_user_via_session(client=client_rest, email=users[3]["email"])
+        res = client_rest.get("/tree?action=browsing", content_type="application/json")
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert len(data[2]["children"]) == 1
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::test_get_parent_index_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace
 def test_get_parent_index_tree(client_rest, users, test_indices):

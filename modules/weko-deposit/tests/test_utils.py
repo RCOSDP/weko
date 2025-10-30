@@ -33,7 +33,7 @@ def test_update_pdf_contents_es(app, mocker):
     # Normal case: get_pdf_info and apply_async are called
     class DummyDep:
         def __init__(self, id): self.id = id
-        def get_pdf_info_reindex_command(self): return {'file': 'info'}
+        def get_pdf_info(self): return {'file': 'info'}
     dummy_deps = [DummyDep(rid) for rid in record_ids]
     with patch("weko_deposit.utils.WekoDeposit.get_records", return_value=dummy_deps):
         with patch("weko_deposit.utils.extract_pdf_and_update_file_contents.apply_async") as mock_task:
@@ -49,7 +49,7 @@ def test_update_pdf_contents_es_noresult(app, mocker):
     # When NoResultFound occurs: logger.error and traceback.print_exc are called
     class DummyDep:
         def __init__(self, id): self.id = id
-        def get_pdf_info_reindex_command(self): raise NoResultFound()
+        def get_pdf_info(self): raise NoResultFound()
     dummy_logger = types.SimpleNamespace(error=lambda msg: setattr(dummy_logger, 'logged', msg))
     dummy_trace = types.SimpleNamespace(print_exc=lambda: setattr(dummy_trace, 'called', True))
     with patch("weko_deposit.utils.WekoDeposit.get_records", return_value=[DummyDep('id1')]):
