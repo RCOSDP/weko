@@ -106,7 +106,6 @@ def generate_random_str(length=128):
 
 def parse_attributes():
     """Parse arguments from environment variables."""
-    from weko_admin.models import AdminSettings
     attrs = {}
     error = False
 
