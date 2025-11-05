@@ -1486,7 +1486,10 @@ class JsonLdMapper(JsonMapper):
             parent_prop_key = ".".join(
                 full_props[:(len(full_props) - len(prop_props) + 1)]
             )
-            m_index = re.search(r"\[(\d+)\]", meta_props[0])
+            if len(meta_props) >= 2:
+                m_index = re.search(r"\[(\d+)\]", meta_props[-2])
+            else:
+                m_index = re.search(r"\[(\d+)\]", meta_props[0])
             index = int(m_index.group(1)) if m_index is not None else None
             if (
                 not parent_prop_key in properties_mapping.values()
