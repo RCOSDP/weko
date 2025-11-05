@@ -1300,7 +1300,7 @@ SET json = (
 				'owners', jsonb_build_array((json #>> '{owner}')::numeric)
 			)
 	)
-) WHERE NOT json ? 'weko_shared_ids' AND NOT json ? 'owners';
+) WHERE json ? 'owner' AND NOT json ? 'weko_shared_ids' AND NOT json ? 'owners';
 -- Get number of rows updated
 GET DIAGNOSTICS updated_cnt = ROW_COUNT;
 RAISE NOTICE 'Updated % rows in records_metadata', updated_cnt;
