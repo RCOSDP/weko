@@ -235,6 +235,7 @@ CREATE TABLE IF NOT EXISTS oa_status (
     CONSTRAINT pk_oa_status PRIMARY KEY (oa_article_id)
 );
 
+-- modules/weko-records-ui
 RAISE NOTICE 'Migration for module weko-records-ui';
 -- modules/weko-records-ui/weko_records_ui/alembic/e0b1ef08d08c_create_file_url_download_log_table.py
 DROP TABLE IF EXISTS file_url_download_log;
@@ -322,6 +323,7 @@ CREATE TABLE IF NOT EXISTS file_url_download_log (
     )
 );
 
+-- modules/weko-swordserver
 RAISE NOTICE 'Migration for module weko-swordserver';
 -- modules/weko-swordserver/weko_swordserver/alembic/ce82f0d78dcb_create_sword_clients_table.py
 CREATE TABLE IF NOT EXISTS sword_clients (
@@ -345,6 +347,7 @@ CREATE TABLE IF NOT EXISTS sword_clients (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS ix_sword_clients_client_id ON sword_clients (client_id);
 
+-- modules/weko-user-profiles
 RAISE NOTICE 'Migration for module weko-user-profiles';
 -- modules/weko-user-profiles/weko_user_profiles/alembic/ac4ff52361f4_add_column_userprofile.py
 ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS s3_endpoint_url VARCHAR(128);
@@ -358,6 +361,7 @@ ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item14 VARCHAR(255
 ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item15 VARCHAR(255);
 ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item16 VARCHAR(255);
 
+-- modules/weko-workflow
 RAISE NOTICE 'Migration for module weko-workflow';
 -- modules/weko-workflow/weko_workflow/alembic/841860bb1333_add_activity_request_mail.py
 CREATE TABLE IF NOT EXISTS workflow_activity_request_mail (
