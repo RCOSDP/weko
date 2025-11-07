@@ -10,6 +10,7 @@
 
 import os
 import re
+import json
 import itertools
 import xmltodict
 import traceback
@@ -1443,6 +1444,7 @@ class JsonLdMapper(JsonMapper):
                 filename[5:] for filename in system_info["non_extract"]
                 if filename.startswith("data/")
             ],
+            "warnings": [],
         }
 
         missing_metadata = {}
@@ -1466,8 +1468,7 @@ class JsonLdMapper(JsonMapper):
             if len(prop_props) == 1:
                 if self._get_property_type(PROP_PATH) == "array":
                     schema = self.itemtype.schema["properties"]
-                    for prop in PROP_PATH:
-                        schema = schema.get(prop)
+                    schema = schema.get(prop_props[0])
                     schema = schema.get("items").get("properties")
                     interim = list(schema.keys())[0]
                     if parent.get(prop_props[0]) is None:
@@ -1486,10 +1487,7 @@ class JsonLdMapper(JsonMapper):
             parent_prop_key = ".".join(
                 full_props[:(len(full_props) - len(prop_props) + 1)]
             )
-            if len(meta_props) >= 2:
-                m_index = re.search(r"\[(\d+)\]", meta_props[-2])
-            else:
-                m_index = re.search(r"\[(\d+)\]", meta_props[0])
+            m_index = re.search(r"\[(\d+)\]", meta_props[0])
             index = int(m_index.group(1)) if m_index is not None else None
             if (
                 not parent_prop_key in properties_mapping.values()
@@ -1591,11 +1589,24 @@ class JsonLdMapper(JsonMapper):
                     META_VALUE = str(META_VALUE)
                 # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
                 # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
+                for title, path in item_map.items():
+                    if path == PROP_PATH:
+                        print(f"Title    : {title}")
                 try:
-                    _set_metadata(mapped_metadata, meta_props, prop_props)
+                    adjusted_meta_key = self._adjust_index(META_KEY, properties_mapping)
+                    valid_path = self._settable_path(adjusted_meta_key)
+                    if valid_path:
+                        set_by_jsonpath(
+                            mapped_metadata, valid_path, META_VALUE, fixed_properties=fixed_properties
+                        )
+                    else:
+                        system_info["warnings"].append(
+                            "Cannot convert to item type from json-ld, "
+                            f"{META_KEY}: {META_VALUE}"
+                        )
                 except Exception as ex:
                     current_app.logger.warning(
-                        f"Failed to set metadata for {META_KEY}: {META_VALUE}"
+                        f"Failed to set metadata for '{META_KEY}': '{META_VALUE}'"
                     )
                     traceback.print_exc()
 
@@ -1611,7 +1622,7 @@ class JsonLdMapper(JsonMapper):
                     {interim: str(missing_metadata)}
                 ]
             else:
-                mapped_metadata[item_map.get("Extra")] = str(missing_metadata)
+                mapped_metadata[item_map.get("Extra")] = json.dumps(missing_metadata)
 
         files_info = []
         for v in item_map.values():
@@ -1853,6 +1864,81 @@ class JsonLdMapper(JsonMapper):
             _deconstructer(return_data, "", key, value)
 
         return return_data
+
+    def _adjust_index(self, metadata_key, properties_mapping):
+       """Map path between json-ld and itemtype metadata.
+
+       Args:
+           metadata_key (str): path in json-ld metadata.
+           properties_mapping (dict): mapping between json-ld and itemtype metadata.
+
+       Returns:
+           str or None: Mapped path with index, or None if not found.
+       """
+       # Split meta_key and extract indices
+       key_parts = re.findall(r'([^\.\[]+)(?:\[(\d+)\])?', metadata_key)
+       key_names = [k for k, _ in key_parts]
+       key_indices = [idx for _, idx in key_parts]
+
+       # Find the longest matching mapping key
+       for i in range(len(key_names), 0, -1):
+           chained = ".".join(key_names[:i])
+           if chained in properties_mapping:
+               mapped = properties_mapping[chained]
+               mapped_parts = mapped.split('.')
+               # meta_key: hasPart[0].dcterms:accessRights
+               # mapping: hasPart.dcterms:accessRights -> item_30002_file35.accessrole
+               # → item_30002_file35[0].accessrole
+               result_parts = []
+               for j, part in enumerate(mapped_parts):
+                   idx = key_indices[j] if j < len(key_indices) else None
+                   if idx:
+                       if not re.search(r"\[\d+\]$", part):
+                           part = f"{part}[{idx}]"
+                   result_parts.append(part)
+               return ".".join(result_parts)
+       return None
+
+    def _settable_path(self, json_path):
+       """Check if can put value to the json path.
+
+       Args:
+           json_path (str): json path.
+
+       Returns:
+           str | None: settable json path or None if not settable.
+       """
+       tokens = tokenize_jsonpath(json_path)
+       settable_path = None
+
+       for element, index, current_path in tokens:
+           type = self._get_property_type(current_path)
+
+           if type == "array":
+               if index is not None:
+                   if settable_path:
+                       settable_path += f".{element}[{index}]"
+                   else:
+                       settable_path = f"{element}[{index}]"
+               else:
+                   if settable_path:
+                       settable_path += f".{element}[0]"
+                   else:
+                       settable_path = f"{element}[0]"
+           else:
+               if index is not None and index > 0:
+                   settable_path = None
+                   break
+               else:
+                   if settable_path:
+                       settable_path += f".{element}"
+                   else:
+                       settable_path = f"{element}"
+
+       if settable_path and re.search(r'\[\d+\]$', settable_path):
+           return None
+
+       return settable_path
 
     def to_rocrate_metadata(
         self, record_metadata=None, tsv_row_metadata=None, **kwargs
@@ -2332,3 +2418,121 @@ class JsonLdMapper(JsonMapper):
         rocrate.root_dataset["wk:metadataAutoFill"] = False
 
         return rocrate
+
+def tokenize_jsonpath(json_path):
+    """Tokenize the json path.
+
+    Args:
+        json_path (str): json path.
+
+    Returns:
+        list[tuple[str, int|None]]: list of tokens (element, index).
+    """
+    matches = re.findall(r"([^.\[]+)(?:\[(\d+)\])?\.?", json_path)
+    tokens = []  # type: list[tuple[str, int|None]]
+    current_path = ""
+    for element, index_str in matches:
+        if current_path:
+            current_path += "." + element
+        else:
+            current_path = element
+
+        if index_str:
+            index = int(index_str)
+        else:
+            index = None
+        tokens.append((element, index, current_path))
+    return tokens
+
+def set_by_jsonpath(root, path, value, create_missing=True, fixed_properties=None):
+    """
+    Set a value inside a nested dict/list structure using a JSONPath-like syntax.
+
+    Args:
+        root (dict | list): The root object to modify.
+        path (str): The JSONPath-like path to the location to set the value.
+        value: The value to set at the specified location.
+        create_missing (bool): Whether to create missing keys/lists along the path.
+        fixed_properties (dict | None):
+            Fixed value info in the form {parent_path: {sub_key: value}}.
+            If the path matches when creating a dict, merge these values.
+    """
+    tokens = []
+    i = 0
+    while i < len(path):
+        if path[i] == '.':
+            i += 1
+            continue
+        if path[i] == '[':
+            j = path.find(']', i)
+            if j == -1:
+                raise ValueError("Unmatched '[' in path")
+            index_str = path[i+1:j]
+            if not index_str.isdigit():
+                raise ValueError("Only integer indices are allowed inside []")
+            tokens.append(int(index_str))
+            i = j + 1
+        else:
+            j = i
+            while j < len(path) and path[j] not in '.[':
+                j += 1
+            tokens.append(path[i:j])
+            i = j
+
+    if not tokens:
+        raise ValueError("Empty path")
+
+    # Traverse until the second last token
+    cur = root
+    for idx in range(len(tokens) - 1):
+        tok = tokens[idx]
+        next_tok = tokens[idx + 1]
+
+        if isinstance(tok, int):
+            # Current should be a list
+            if not isinstance(cur, list):
+                raise TypeError("Expected list when accessing by index")
+            # Extend list if necessary
+            while len(cur) <= tok:
+                if isinstance(next_tok, int):
+                    cur.append([])
+                else:
+                    # Merge fixed properties if available
+                    parent_path = ".".join([t for t in tokens[:idx+1] if not isinstance(t, int)])
+                    if fixed_properties and parent_path in fixed_properties:
+                        d = dict(fixed_properties[parent_path])
+                        cur.append(d)
+                    else:
+                        cur.append({})
+            cur = cur[tok]
+        else:
+            # Current should be a dict
+            if not isinstance(cur, dict):
+                raise TypeError("Expected dict when accessing by key")
+            if tok not in cur:
+                if not create_missing:
+                    raise KeyError("Missing key: " + tok)
+                if isinstance(next_tok, int):
+                    cur[tok] = []
+                else:
+                    # Merge fixed properties if available
+                    parent_path = ".".join([t for t in tokens[:idx+1] if not isinstance(t, int)])
+                    if fixed_properties and parent_path in fixed_properties:
+                        d = dict(fixed_properties[parent_path])
+                        cur[tok] = d
+                    else:
+                        cur[tok] = {}
+            cur = cur[tok]
+
+    # Set the final value
+    last = tokens[-1]
+    if isinstance(last, int):
+        if not isinstance(cur, list):
+            raise TypeError("Expected list for final index")
+        while len(cur) <= last:
+            cur.append(None)
+        cur[last] = value
+    else:
+        if not isinstance(cur, dict):
+            raise TypeError("Expected dict for final key")
+        cur[last] = value
