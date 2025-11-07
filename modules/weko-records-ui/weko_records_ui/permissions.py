@@ -91,7 +91,7 @@ def file_permission_factory(record, *args, **kwargs):
             is_ok = can_by_oauth(fjson)
         else:
             item_type = kwargs.get('item_type', None)
-            is_ok = check_file_download_permission(record, fjson, item_type)
+            is_ok = check_file_download_permission(record, fjson, item_type=item_type)
         return is_ok
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
