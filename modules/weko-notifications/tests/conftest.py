@@ -37,6 +37,7 @@ from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_i18n import InvenioI18N
+from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
@@ -98,6 +99,7 @@ def base_app(instance_path):
     InvenioAssets(app_)
     InvenioDB(app_)
     InvenioI18N(app_)
+    InvenioOAuth2Server(app_)
     InvenioPIDRelations(app_)
     InvenioPIDStore(app_)
     InvenioRecords(app_)
@@ -288,18 +290,18 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12=""
     )
     db.session.add(all_data)
     repo_profile = UserProfile(
@@ -312,18 +314,18 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12=""
     )
     db.session.add(repo_profile)
     not_validate_language = UserProfile(
@@ -336,18 +338,18 @@ def user_profiles(db,users):
         university="test university",
         department="test department",
         position = "test position",
-        otherPosition="test other position",
-        phoneNumber="123-4567",
-        instituteName="test institute",
-        institutePosition="test institute position",
-        instituteName2="test institute2",
-        institutePosition2="test institute position2",
-        instituteName3="",
-        institutePosition3="",
-        instituteName4="",
-        institutePosition4="",
-        instituteName5="",
-        institutePosition5=""
+        item1="test other position",
+        item2="123-4567",
+        item3="test institute",
+        item4="test institute position",
+        item5="test institute2",
+        item6="test institute position2",
+        item7="",
+        item8="",
+        item9="",
+        item10="",
+        item11="",
+        item12=""
     )
     db.session.add(not_validate_language)
     db.session.commit()

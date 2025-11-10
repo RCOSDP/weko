@@ -27,6 +27,8 @@ from flask import json, current_app
 from mock import patch, MagicMock
 import pytest
 
+from invenio_accounts.models import Role
+from invenio_communities.models import Community
 from weko_workflow.rest import FileApplicationActivity
 
 def url(root, kwargs = {}):
@@ -147,8 +149,11 @@ def test_ApproveActivity_post(app, client, db, db_register_approval, auth_header
 
     current_app.config['WEKO_WORKFLOW_ENABLE_CONTRIBUTOR'] = False
 
-    activity_id = db_register_approval['activity'][0].activity_id
+    activity = db_register_approval['activity'][0]
+    activity_id = activity.activity_id
     activity_id_not_approval = db_register_approval['activity'][1].activity_id
+    activity.activity_community_id = 'comm01'
+    db.session.commit()
     version = 'v1'
     invalid_version = 'v0'
     headers_sysadmin = auth_headers[0]  # OAuth token : sysadmin
@@ -273,7 +278,7 @@ def test_ThrowOutActivity_post(app, client, db, db_register_approval, auth_heade
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_rest.py::test_FileApplicationActivity_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_FileApplicationActivity_post(app, client, db, db_register_for_application_api,
-                                      auth_headers, users, application_api_request_body, indextree, mocker):
+                                      auth_headers, users, application_api_request_body, indextree, records_restricted,mocker):
     """Test FileApplicationActivity.post method."""
 
     activity_id = db_register_for_application_api['activity1'].activity_id
@@ -294,6 +299,22 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     activity1_extra_info = db_register_for_application_api['activity1'].extra_info
     mock_task = mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents")
     mock_task.apply_async = MagicMock()
+    
+    # WEKO_RECORDS_UI_RESTRICTED_API = False : 403 error
+    params = {"index_ids": index1["id"]}
+    body = application_api_request_body[0]
+    res_check = 0   # OK
+    with patch('weko_workflow.rest.check_authority_action', return_value=res_check):
+        with patch("weko_handle.api.Handle.register_handle",return_value="handle:00.000.12345/0000000001"):
+            res = client.post(
+                url(f'/{version}/workflow/activities/{activity_id}/application', params),
+                data=json.dumps(body),
+                content_type='application/json',
+                headers=headers_student,
+            )
+    assert res.status_code == 403
+
+    current_app.config.update(WEKO_RECORDS_UI_RESTRICTED_API = True)
 
     # Invalid version : 400 error
     body = {"aaa":"123"}
@@ -375,8 +396,8 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     except:
         assert False
     assert "aaa is not one of enum in item_1616221960771.subitem_restricted_access_research_plan_type" in res_json["message"]
-    
-    
+
+
     # Guest: Invalid enum : 400 error
     params = {"token": "aaa"}
     body = application_api_request_body[1]
@@ -511,15 +532,15 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     body = application_api_request_body[0]
     res_check = 1   # NG
     with patch('weko_workflow.rest.check_authority_action', return_value=res_check):
-        
+
         class DummyRedis():
             def exists(self, v):
                 return True
-        
+
         class DummySessionstore():
             def __init__(self):
                 self.redis = DummyRedis()
-            
+
             def get(self, v):
                 return True
 
@@ -553,7 +574,7 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
         res_json = json.loads(res.get_data())
     except:
         assert False
-    
+
     # activity not found : 404 error
     params = {"index_ids": f'{index1["id"]}'}
     body = application_api_request_body[0]
@@ -570,7 +591,7 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
         res_json = json.loads(res.get_data())
     except:
         assert False
-    
+
     # Guest: activity not found : 404 error
     params = {"token": "aaa"}
     body = {"aaa":"123"}
@@ -621,7 +642,7 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
         res_json = json.loads(res.get_data())
     except:
         assert False
-    
+
     # Exception : 404
     params = {"index_ids": index1["id"]}
     body = application_api_request_body[0]
@@ -697,7 +718,7 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     }
     check["path"] = [f"{index1['id']}"]
     assert res_json["registerd_data"] == check
-    
+
     # Guest: Success : 200
     params = {"token": "aaa"}
     body = application_api_request_body[0]
@@ -773,7 +794,7 @@ def test_FileApplicationActivity_post(app, client, db, db_register_for_applicati
     check["path"] = [f"{index1['id']}"]
     assert res_json["registerd_data"] == check
 
-    
+
     # test for _clean_file_metadata()
     data = {
         "item_1616221831877": {

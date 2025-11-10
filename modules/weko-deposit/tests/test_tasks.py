@@ -24,7 +24,8 @@ import uuid
 import os
 import types
 from tests.helpers import json_data, create_record_with_pdf
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
+from invenio_pidstore.errors import PIDDoesNotExistError
 from weko_authors.models import AuthorsAffiliationSettings,AuthorsPrefixSettings
 from weko_deposit.api import WekoIndexer, WekoDeposit
 from weko_deposit.tasks import (
@@ -38,7 +39,6 @@ from weko_deposit.tasks import (
     _process
 )
 from invenio_pidstore.models import PersistentIdentifier
-from invenio_pidstore.errors import PIDDoesNotExistError
 from sqlalchemy.exc import SQLAlchemyError
 
 [
@@ -235,10 +235,7 @@ def test_update_authorInfo(app, db, records,mocker):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
             update_items_by_authorInfo(["1","xxx"], _target)
 from sqlalchemy.exc import SQLAlchemyError
-import pytest
-from mock import patch
 from weko_deposit.tasks import _get_author_prefix, _get_affiliation_id, _process, _change_to_meta, _update_author_data, update_items_by_authorInfo
-from weko_authors.models import AuthorsPrefixSettings
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateItemsByAuthorInfo -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestUpdateItemsByAuthorInfo:
@@ -411,7 +408,6 @@ class TestGetAffiliaitonId:
     def test_get_affiliation_id_no_data(self, db):
         assert _get_affiliation_id() == {}
 
-import uuid
 from weko_deposit.api import WekoDeposit
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestProcess:
@@ -472,6 +468,154 @@ class TestProcess:
             result = _process(data_size, data_from, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
             assert result == (1, True)
 
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_update_authorInfo(app, db, records,mocker):
+    app.config.update(WEKO_SEARCH_MAX_RESULT=1)
+    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link_and_weko_link")
+    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
+        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
+            update_items_by_authorInfo(["1","xxx"], {})
+    _target = {
+        'authorNameInfo': [
+            {'nameShowFlg': False}
+        ],
+        'authorIdInfo': [
+            {'authorIdShowFlg': False}
+        ],
+        'affiliationInfo': [
+        ],
+        'emailInfo': [],
+        'pk_id': '1'
+    }
+
+    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
+        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
+            update_items_by_authorInfo(["1","xxx"], _target)
+
+    weko = AuthorsPrefixSettings(
+        id=1,
+        name="WEKO",
+        scheme="WEKO"
+    )
+    orcid = AuthorsPrefixSettings(
+        id=2,
+        name="ORCID",
+        scheme="ORCID",
+        url="https://orcid.org/##"
+    )
+    cinii = AuthorsPrefixSettings(
+        id=3,
+        name="CiNii",
+        scheme="CiNii",
+        url="https://ci.nii.ac.jp/author/"
+    )
+    db.session.add(weko)
+    db.session.add(orcid)
+    db.session.add(cinii)
+    isni = AuthorsAffiliationSettings(
+        id=1,
+        name="ISNI",
+        scheme="ISNI",
+        url="http://www.isni.org/isni/##"
+    )
+    grid = AuthorsAffiliationSettings(
+        id=2,
+        name="GRID",
+        scheme="GRID",
+        url="https://www.grid.ac/institutes/"
+    )
+    ringgold = AuthorsAffiliationSettings(
+        id=3,
+        name="Ringgold",
+        scheme="Ringgold",
+    )
+    db.session.add(isni)
+    db.session.add(grid)
+    db.session.add(ringgold)
+    db.session.commit()
+
+
+    _target = {
+        'authorNameInfo': [
+            {"nameShowFlg":False},
+            {
+                'nameShowFlg': True,
+                'familyName': 'Test Fname',
+                'language': 'en',
+                'firstName': 'Test Gname'
+            }
+        ],
+        'authorIdInfo': [
+            {"authorIdShowFlg":False},
+            {
+                'authorIdShowFlg': True,
+                'idType': '', # not prefix_info
+                'authorId':'1'
+            },
+            {
+                "authorIdShowFlg":True,
+                "idType":"1", # prefix_info[url] is none
+                'authorId':'2'
+            },
+            {
+                "authorIdShowFlg":True,
+                "idType":"2", # prefix_info[url] contain ##
+                'authorId':'3'
+            },
+            {
+                "authorIdShowFlg":True,
+                "idType":"3", # prefix_info[url] not contain ##
+                'authorId':'4'
+            }
+        ],
+        'affiliationInfo': [
+            {
+                'identifierInfo': [
+                    {'identifierShowFlg': False},
+                    {
+                        "identifierShowFlg":True,
+                        "affiliationIdType":"",
+                        "affiliationId":"aaa"
+                    },
+                    {
+                        "identifierShowFlg":True,
+                        "affiliationIdType":"1", # url contain ##
+                        "affiliationId":"bbb"
+                    },
+                    {
+                        "identifierShowFlg":True,
+                        "affiliationIdType":"2", # url not contain ##
+                        "affiliationId":"ccc"
+                    },
+                    {
+                        "identifierShowFlg":True,
+                        "affiliationIdType":"3", # not url
+                        "affiliationId":"ddd"
+                    }
+                ],
+                'affiliationNameInfo': [
+                    {"affiliationNameShowFlg":False},
+                    {
+                        'affiliationNameShowFlg': True,
+                        'affiliationName': 'A01',
+                        'affiliationNameLang': 'en'
+                    }
+                ]
+            }
+        ],
+        'emailInfo': [
+            {
+                'email': 'test@nii.ac.jp'
+            }
+        ],
+        'pk_id': '2'
+    }
+    mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
+    with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
+        with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):
+            update_items_by_authorInfo(["1","xxx"], _target)
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_no_data -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -843,7 +987,7 @@ class TestChangeToMeta:
         force_change = True
 
         # 期待結果
-        expected_target_id = "weko_id_1"
+        expected_target_id = None
         expected_meta = {'mails': [{'mail': 'test@example.com'}], 'affiliations': [{'nameIdentifiers': [], 'affiliationNames': []}]}
         # 実行と検証
         target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, key_map, force_change)
@@ -890,7 +1034,6 @@ class TestChangeToMeta:
         assert meta == expected_meta
 
 
-from weko_records.api import ItemsMetadata
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestUpdateAuthorData:
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData::test_update_author_data_success -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1762,13 +1905,13 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
     num_pdf = 0
     num_not_pdf = 0
     test_file_data = {}
-    
-    # Create the number of pdf files to analyze, the number of tika files, 
+
+    # Create the number of pdf files to analyze, the number of tika files,
     # and the value to be passed to the method to update es
     for filename, info in pdf_files.items():
         file = info.get("file")
         if file.obj.mimetype == 'application/pdf':
-            
+
             is_pdf = True
             if filename == "not_exist.pdf":
                 test_file_data[filename] = ""
@@ -1784,7 +1927,7 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
             "size":file.obj.file.size,
             "is_pdf": is_pdf
         }
-        
+
     with patch("weko_deposit.utils.extract_text_from_pdf", return_value=mock_pdf_msg) as mock_pdf, \
         patch("weko_deposit.utils.extract_text_with_tika", return_value=mock_tika_msg) as mock_tika:
         with patch("weko_deposit.tasks.update_file_content") as mock_update:
@@ -1792,7 +1935,7 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
             assert mock_pdf.call_count == num_pdf
             assert mock_tika.call_count == num_not_pdf
             mock_update.assert_called_with(rec_uuid,test_file_data)
-            
+
             # Check if temporary files have been deleted
             for call in mock_pdf.call_args_list:
                 args, _ = call
@@ -1803,10 +1946,10 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
                 args, _ = call
                 filepath = args[0]
                 assert os.path.exists(filepath) == False
-                
+
             assert "Resource not found: b'not_exist_dir1'" in caplog.text
             caplog.clear()
-            
+
             from fs.errors import ResourceNotFoundError
             # error in extract_text_from_pdf
             # Check if temporary files have been deleted
@@ -1816,7 +1959,7 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
                 assert mock_pdf.call_count == num_pdf
                 assert "test exception" in caplog.text
                 caplog.clear()
-                
+
                 for call in mock_pdf.call_args_list:
                     args, _ = call
                     filepath = args[0]

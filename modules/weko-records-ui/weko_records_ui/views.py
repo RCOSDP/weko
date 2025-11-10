@@ -66,27 +66,38 @@ from weko_records.utils import custom_record_medata_for_export, \
 from weko_records_ui.api import get_item_provide_list
 from weko_search_ui.api import get_search_detail_keyword
 from weko_schema_ui.models import PublishStatus
-from weko_user_profiles.models import UserProfile
 from weko_workflow.api import WorkFlow
-from weko_records_ui.fd import add_signals_info
-from weko_records_ui.utils import check_items_settings, get_file_info_list, is_workflow_activity_work
-from weko_records_ui.external import call_external_system
-from weko_workflow.utils import extract_term_description, get_item_info, set_mail_info ,is_terms_of_use_only, process_send_mail
+from weko_workflow.utils import (
+    extract_term_description, get_item_info, set_mail_info,
+    is_terms_of_use_only
+)
 
-from .ipaddr import check_site_license_permission
-from .models import FilePermission, PDFCoverPageSettings
-from .permissions import (
+from weko_records_ui.api import (
+    get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket,
+    get_file_place_info
+)
+from weko_records_ui.external import call_external_system
+from weko_records_ui.fd import add_signals_info
+from weko_records_ui.ipaddr import check_site_license_permission
+from weko_records_ui.models import (
+    FileOnetimeDownload, FilePermission, FileSecretDownload,
+    PDFCoverPageSettings
+)
+from weko_records_ui.permissions import (
     check_content_clickable, check_created_id, check_created_id_by_recid,
     check_file_download_permission, check_original_pdf_download_permission,
     check_permission_period, file_permission_factory, get_permission
 )
-from .utils import create_secret_url, export_preprocess, get_billing_file_download_permission, \
-    get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
-    get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    delete_version, is_show_email_of_creator,hide_by_itemtype
-from .utils import restore as restore_imp
-from .utils import soft_delete as soft_delete_imp
-from .api import get_s3_bucket_list, copy_bucket_to_s3, replace_file_bucket, get_file_place_info
+from weko_records_ui.utils import (
+    check_items_settings, can_manage_onetime_url, can_manage_secret_url,
+    create_download_url, create_secret_url_record, delete_version,
+    export_preprocess, get_billing_file_download_permission, get_file_info_list,
+    get_google_detaset_meta, get_google_scholar_meta, get_groups_price,
+    get_min_price_billing_file_download, get_record_permalink, hide_by_email,
+    hide_by_itemtype, is_show_email_of_creator, is_workflow_activity_work,
+    send_secret_url_mail, validate_secret_url_generation_request,
+    restore as restore_imp, soft_delete as soft_delete_imp
+)
 
 
 blueprint = Blueprint(
@@ -732,10 +743,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
 
     onetime_file_name = ''
-    onetime_file_url = request.args.get("onetime_file_url")
-    if onetime_file_url:
-        k = urlparse(onetime_file_url)
-        onetime_file_name = k.path.split("/")[-1]
+    onetime_url = request.args.get("onetime_url")
+    if onetime_url:
+        onetime_url_parsed = urlparse(onetime_url)
+        onetime_file_name = onetime_url_parsed.path.split("/")[-1]
 
     # Get communities info
     belonging_community = []
@@ -814,10 +825,15 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_itemtype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_ITEM_TYPE') ,
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
-        show_secret_URL=_get_show_secret_url_button(record,filename),
+        show_secret_URL=can_manage_secret_url(record, filename),
         mailcheckflag = mailcheckflag,
-        onetime_file_url = onetime_file_url,
+        show_onetime_URL=can_manage_onetime_url(record, filename),
+        onetime_url = onetime_url,
         onetime_file_name = onetime_file_name,
+        active_secret_URLs=FileSecretDownload.fetch_active_urls(
+        record_id=pid.pid_value, file_name=filename, ascending=True),
+        active_onetime_URLs=FileOnetimeDownload.fetch_active_urls(
+            record_id=pid.pid_value, file_name=filename, ascending=True),
         restricted_errorMsg = restricted_errorMsg,
         with_files = with_files,
         belonging_community=belonging_community,
@@ -825,99 +841,224 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         **kwargs
     )
 
+@blueprint.route('/get-secret-settings', methods=['GET'])
+def get_secret_setting():
+    """
+    Get secret URL settings.
 
-def create_secret_url_and_send_mail(pid:PersistentIdentifier, record:WekoRecord, filename:str, **kwargs) -> str:
-    """on click button 'Secret URL'
-    generate secret URL and send mail.
-    about entrypoint settings, see at .config RECORDS_UI_ENDPOINTS.recid_secret_url
+    :return: JSON result containing secret download settings.
+    """
+    try:
+        # 初期化
+        result = {}
+
+        # AdminSettingsから設定を取得
+        admin_settings = AdminSettings.query.filter_by(name='restricted_access').first()
+        if admin_settings:
+            settings = admin_settings.settings
+            # 値を取得し、結果に追加
+            result['secret_expiration_date'] = settings.get('secret_URL_file_download', {}).get('secret_expiration_date',30)
+            result['secret_download_limit'] = settings.get('secret_URL_file_download', {}).get('secret_download_limit',10)
+            result['max_secret_expiration_date'] = settings.get('secret_URL_file_download', {}).get('max_secret_expiration_date',30)
+            result['max_secret_download_limit'] = settings.get('secret_URL_file_download', {}).get('max_secret_download_limit',10)
+        else:
+            # デフォルト値を設定
+            result['secret_expiration_date'] = 30
+            result['secret_download_limit'] = 10
+            result['max_secret_expiration_date'] = 30
+            result['max_secret_download_limit'] = 10
+
+        # JSON形式で返す
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
+    """Issue a new secret URL for a file in a record.
+
+    This method issues a new secret URL by creating a new record in the
+    FileSecretDownload table. The method also sends an email including the
+    URL to the user if the 'send_email' parameter of the request is set to
+    True.
 
     Args:
-        pid: PID object.
-        record: Record object.
-        filename: File name.
+        pid (PersistentIdentifier): The identifier for the item.
+        record (WekoRecord): The record metadata of the item.
+        filename (str): The file name to download.
 
     Returns:
-        result status and message text.
-    """
-    current_app.logger.info("pid:" + pid.pid_value)
-    current_app.logger.info("record:" + str(record.id))
-    current_app.logger.info("filename:" + filename)
+        flask.Response:
+            A JSON response containing result messages.
 
-    #permission check
-    # "Someone who can show Secret URL button" can also use generate Secret URL function.
-    if not _get_show_secret_url_button(record ,filename):
+    Raises:
+        flask.abort:
+            - 400 if the request is invalid.
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while creating the secret URL.
+    """
+    # permission check
+    if not validate_secret_url_generation_request(request.json):
+        abort(400)
+    if not can_manage_secret_url(record, filename):
         abort(403)
 
-    userprof:UserProfile = UserProfile.get_by_userid(current_user.id)
-    restricted_fullname = userprof._displayname or '' if userprof else ''
-    restricted_data_name = record.get('item_title','')
+    try:
+        url_obj = create_secret_url_record(pid.pid_value,
+                                           filename,
+                                           request.json)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
 
-    #generate url and regist db(FileSecretDownload)
-    result = create_secret_url(pid.pid_value,filename,current_user.email , restricted_fullname , restricted_data_name)
+    message = _('Secret URL generated successfully')
+    if request.json['send_email'] is True:
+        sending_result = send_secret_url_mail(
+            pid.object_uuid, url_obj, record.get('item_title', ''))
+        if sending_result:
+            message += _(', please check your email inbox')
+        else:
+            message += _(', but there was an error while sending the email. '
+                        'To use the URL, please refresh the page and copy it '
+                        'from the issued URL list')
+    return jsonify({'message': message + _('.')})
 
-    # set mail infomation
-    mail_info = set_mail_info(get_item_info(pid.object_uuid), type("" ,(object,),dict(activity_id = '')))
-    mail_info.update(result)
-    
-    # query secret mail template record
-    secret_genre_id = current_app.config.get('WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_GENRE_ID', -1)
-    secret_genre = MailTemplateGenres.query.get(secret_genre_id)
-    secret_mail_template = None
-    if secret_genre:
-        secret_mail_template = next(iter(secret_genre.templates or []), None)
 
-    #send mail
-    if secret_mail_template:
-        send_result = process_send_mail(mail_info, secret_mail_template.id)
-        if send_result:
-            return _('Success Secret URL Generate')
-
-    abort(500)
-
-def _get_show_secret_url_button(record : WekoRecord, filename :str) -> bool:
+def copy_secret_url(pid, record, **kwargs):
     """
-        Args:
-            WekoRecord : records_metadata for target item
-            str : target content name
-        Returns:
-            bool : return true if be able to show Secret URL button. or false.
+    Validate the request and return a secret URL to the user.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be copied.
+
+    Returns:
+        flask.Response:
+            A JSON response containing the URL and a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while preparing the URL.
     """
+    try:
+        if not can_manage_secret_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        url = create_download_url(url_record)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
 
-    #1.check secret url function is enabled
-    restricted_access = AdminSettings.get('restricted_access', False)
-    if not restricted_access:
-        restricted_access = current_app.config[
-            'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS']
+    return jsonify({'url': url,
+                    'message': 'The secret URL copied to your clipboard.'})
 
-    enable:bool = restricted_access.get('secret_URL_file_download',{}).get('secret_enable',False)
 
-    #2.check the user has permittion
-    has_parmission = False
-    # Registered user
-    owner_user_id = [int(record['owner'])] if record.get('owner') else []
-    shared_user_ids = [int(uid) for uid in record.get('weko_shared_ids', [])]
-    if current_user and current_user.is_authenticated and \
-        current_user.id in owner_user_id + shared_user_ids:
-        has_parmission = True
-    # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            has_parmission = True
+def copy_onetime_url(pid, record, **kwargs):
+    """
+    Validate the request and return a onetime URL to the user.
 
-    #3.check the file's accessrole is "open_no" ,or "open_date" and not open yet.
-    is_secret_file = False
-    current_app.logger.debug(record.get_file_data())
-    for content in record.get_file_data():
-        if content.get('filename') == filename:
-            if content.get('accessrole') == "open_no":
-                is_secret_file = True
-            elif content.get('accessrole') == "open_date" and \
-                datetime.now() < datetime.strptime(content.get('date',[{"dateValue" :'1970-01-01'}])[0].get("dateValue" ,'1970-01-01'), '%Y-%m-%d')  :
-                is_secret_file = True
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be copied.
 
-    # all true is show
-    return enable and has_parmission and is_secret_file
+    Returns:
+        flask.Response:
+            A JSON response containing the URL and a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while preparing the URL.
+    """
+    try:
+        if not can_manage_onetime_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        url = create_download_url(url_record)
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify({'url': url,
+                    'message': 'The onetime URL copied to your clipboard.'})
+
+
+def delete_secret_url(pid, record, **kwargs):
+    """
+    Delete a secret URL from the database.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be deleted.
+
+    Returns:
+        flask.Response:
+            A JSON response containing a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while deleting the URL.
+    """
+    try:
+        if not can_manage_secret_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        if not url_record:
+            abort(404)
+        url_record.delete_logically()
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify(
+        {'message': 'The secret URL has been successfully deleted.'})
+
+
+def delete_onetime_url(pid, record, **kwargs):
+    """
+    Delete an onetime URL from the database.
+
+    Args:
+        pid (str): A persistent identifier of the record.
+        record (dict): Record data associated with the target file.
+        **kwargs: Additional arguments, including:
+            - filename (str): The name of the file.
+            - url_id (str): The ID of the URL to be deleted.
+
+    Returns:
+        flask.Response:
+            A JSON response containing a success message.
+
+    Raises:
+        flask.abort:
+            - 403 if the user does not have enough permissions.
+            - 500 if an error occurs while deleting the URL.
+    """
+    try:
+        if not can_manage_onetime_url(record, kwargs['filename']):
+            abort(403)
+        url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        if not url_record:
+            abort(404)
+        url_record.delete_logically()
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(500)
+
+    return jsonify(
+        {'message': 'The one-time URL has been successfully deleted.'})
+
 
 
 @blueprint.route('/r/<parent_pid_value>', methods=['GET'])

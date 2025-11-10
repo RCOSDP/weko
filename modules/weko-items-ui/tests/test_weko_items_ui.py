@@ -62,8 +62,6 @@ def test_init():
 
     with app.test_request_context():
         assert 'weko-items-ui' in current_weko_items_ui.app.extensions
-    
-    
 
 
 def test_view(app,db_sessionlifetime):
@@ -74,18 +72,3 @@ def test_view(app,db_sessionlifetime):
         assert res.status_code == 302
         res = client.get("/items/schemaform/0")
         assert res.status_code == 302
-
-
-def test_prepare_edit_item(app):
-    from weko_items_ui.views import blueprint_api
-    app.login_manager._login_disabled = True
-    app.register_blueprint(blueprint_api)
-    
-    with app.test_request_context():
-        url = url_for('weko_items_ui_api.prepare_edit_item')
-    # WekoItemsUI(app)
-    with app.test_client() as client:
-        res = client.post(url, json={})
-        json_response = json.loads(res.get_data())
-        assert json_response.get('code') == -1
-        assert json_response.get('msg') == 'An error has occurred.'

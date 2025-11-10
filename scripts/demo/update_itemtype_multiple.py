@@ -40,7 +40,7 @@ def checkRegisterdProperty(itemType, new_prop_ids):
     for k in meta_list.keys():
         for id in new_prop_ids:
             if "cus_{}".format(id) in itemType.render["meta_list"][k]["input_type"]:
-                print("cus_{} is already updated.".format(id))
+                current_app.logger.info("cus_{} is already updated.".format(id))
                 old_prop_ids.append(id)
 
     return list(set(new_prop_ids) - set(old_prop_ids))
@@ -76,12 +76,11 @@ def main():
 
     try:
         i = 1
+        fixed_mapping_ids = []
         with db.session.begin_nested():
             itemType = ItemTypes.get_by_name('Multiple')
-            if itemType is None:
-                itemType = ItemTypes.get_by_id(12,with_deleted=True)
-                if itemType is None:
-                    raise Exception("itemType is not found.")
+            if itemType is None or not itemType.harvesting_type:
+                raise Exception("itemType is not found.")
             if itemType:
                 cur_prop_ids = checkRegisterdProperty(itemType, new_prop_ids)
                 _render = pickle.loads(pickle.dumps(itemType.render, -1))
@@ -117,7 +116,7 @@ def main():
                         _render["table_row"].append(_prop_id)
                         if _prop_id in _mapping.mapping and _mapping.mapping[_prop_id] and "=" not in _mapping.mapping[_prop_id]:
                             _mapping.mapping[_prop_id] = pickle.loads(pickle.dumps(_render["table_row_map"]["mapping"][_prop_id],-1))
-                        print("property cus_{} has been registerd.".format(id))
+                        current_app.logger.info("property cus_{} has been registerd.".format(id))
 
                 if len(cur_prop_ids) > 0:
                     from weko_itemtypes_ui.utils import (
@@ -147,16 +146,20 @@ def main():
                     
                     flag_modified(_mapping, 'mapping')
                     db.session.merge(_mapping)
-                    Mapping.create(item_type_id=itemType.id,
+                    fixed_mapping_ids.append(_mapping.id)
+                    new_mapping = Mapping.create(item_type_id=itemType.id,
                                mapping=_mapping.mapping)
-                    print("session merged.")
+                    fixed_mapping_ids.append(new_mapping.model.id)
+                    current_app.logger.info("session merged.")
 
         db.session.commit()
-        
-        print(f"[FIX][update_itemtype_multiple.py]item_type:{itemType.id}")
-        print("session commited.")
+        if itemType and itemType.harvesting_type:
+            current_app.logger.info(f"[FIX] item_type:{itemType.id}")
+            for mid in fixed_mapping_ids:
+                current_app.logger.info(f"[FIX] item_type_mapping:{mid}")
+        current_app.logger.info("session commited.")
     except Exception as e:
-        print(traceback.format_exc())
+        current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
 

@@ -28,6 +28,7 @@ import copy
 import tempfile
 from time import sleep
 from io import StringIO
+from distutils.util import strtobool
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -432,7 +433,7 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_d
                 key_map['name_lang_key']: name.get('language', '')
             })
         for id in target.get('authorIdInfo', []):
-            if not bool(id.get('authorIdShowFlg', "true")):
+            if not strtobool(id.get('authorIdShowFlg', "true")):
                 continue
             prefix_info = author_prefix.get(id.get('idType', ""), {})
             if prefix_info:
@@ -462,7 +463,7 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_d
             return target_id, meta
 
         for name in target.get('authorNameInfo', []):
-            if not bool(name.get('nameShowFlg', "true")):
+            if not strtobool(name.get('nameShowFlg', "true")):
                 continue
             family_names.append({
                 key_map['fname_key']: name.get('familyName', ''),
@@ -488,7 +489,7 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_d
         # 所属識別子情報
         for affiliation in target.get('affiliationInfo', []):
             for identifier in affiliation.get('identifierInfo', []):
-                if not bool(identifier.get('identifierShowFlg', 'true')):
+                if not strtobool(identifier.get('identifierShowFlg', 'true')):
                     continue
                 affiliation_id_info = affiliation_id.get(identifier.get('affiliationIdType', ''), {})
                 if affiliation_id_info:
@@ -505,7 +506,7 @@ def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_d
                         id_info.update({key_map['affiliation_id_uri_key']: url})
                     affiliation_identifiers.append(id_info)
             for name in affiliation.get('affiliationNameInfo', []):
-                if not bool(name.get('affiliationNameShowFlg', 'true')):
+                if not strtobool(name.get('affiliationNameShowFlg', 'true')):
                     continue
                 affiliation_names.append({
                     key_map['affiliation_name_key']: name.get('affiliationName', ''),

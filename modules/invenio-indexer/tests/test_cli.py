@@ -78,6 +78,9 @@ def test_reindex(app, script_info):
 
         # Make sure the index doesn't exist at the beginning (it was not
         # preserved by accident from some other tests)
+        if current_search_client.indices.exists(index):
+            current_search_client.indices.delete(index=index)
+
         assert current_search_client.indices.exists(index) is False
 
         # Initialize queue

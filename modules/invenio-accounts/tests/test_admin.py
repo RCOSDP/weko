@@ -7,7 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 import pytest
-from mock import patch, MagicMock
+from unittest.mock import patch, MagicMock
 from flask import current_app, session, url_for
 from flask_admin import menu
 from flask_security import url_for_security
@@ -18,8 +18,8 @@ from werkzeug.local import LocalProxy
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.cli import users_create
 from invenio_accounts.models import SessionActivity, User, Role
-from invenio_accounts.testutils import create_test_user, login_user_via_view
-from invenio_accounts.admin import SessionActivityView, UserView, RoleView
+from invenio_accounts.testutils import create_test_user, login_user_via_view, login_user_via_session
+from invenio_accounts.admin import SessionActivityView, UserView
 
 _datastore = LocalProxy(
     lambda: current_app.extensions['security'].datastore
@@ -27,7 +27,7 @@ _datastore = LocalProxy(
 
 
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
-def test_admin(app, admin_view):
+def test_admin(app, admin_view, users):
     """Test flask-admin interace."""
 
     # Test activation and deactivation
@@ -41,32 +41,32 @@ def test_admin(app, admin_view):
         _datastore.commit()
         inserted_id = _datastore.get_user('test@test.cern').id
 
-    with app.test_client() as client:
+        with app.test_client() as client:
+            login_user_via_session(client=client, email=users[2]['email'])
+            res = client.post(
+                request_url,
+                data={'rowid': inserted_id, 'action': 'activate','url':'/admin/user'},
+                follow_redirects=True
+            )
+            assert res.status_code == 200
 
-        res = client.post(
-            request_url,
-            data={'rowid': inserted_id, 'action': 'activate'},
-            follow_redirects=True
-        )
-        assert res.status_code == 200
+            res = client.post(
+                request_url,
+                data={'rowid': inserted_id, 'action': 'inactivate'},
+                follow_redirects=True
+            )
+            assert res.status_code == 200
 
-        res = client.post(
-            request_url,
-            data={'rowid': inserted_id, 'action': 'inactivate'},
-            follow_redirects=True
-        )
-        assert res.status_code == 200
-
-        pytest.raises(
-            ValueError, client.post, request_url,
-            data={'rowid': -42, 'action': 'inactivate'},
-            follow_redirects=True
-        )
-        pytest.raises(
-            ValueError, client.post, request_url,
-            data={'rowid': -42, 'action': 'activate'},
-            follow_redirects=True
-        )
+            pytest.raises(
+                ValueError, client.post, request_url,
+                data={'rowid': -42, 'action': 'inactivate'},
+                follow_redirects=True
+            )
+            pytest.raises(
+                ValueError, client.post, request_url,
+                data={'rowid': -42, 'action': 'activate'},
+                follow_redirects=True
+            )
 
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_admin_createuser -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_admin_createuser(app, admin_view, users):
@@ -74,61 +74,61 @@ def test_admin_createuser(app, admin_view, users):
 
     with app.app_context():
         with app.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
-                # Test empty mail form
-                res = client.post(
-                    url_for('user.create_view'),
-                    data={'email': ''},
-                    follow_redirects=True
-                )
-                assert b'This field is required.' in res.data
+            login_user_via_session(client=client, email=users[2]['email'])
+            # Test empty mail form
+            res = client.post(
+                url_for('user.create_view'),
+                data={'email': ''},
+                follow_redirects=True
+            )
+            assert b'This field is required.' in res.data
 
-                # Reproduces the workflow described in #154
+            # Reproduces the workflow described in #154
 
-                res = client.post(
-                    url_for('user.create_view'),
-                    data={'email': 'test1@test.cern'},
-                    follow_redirects=True
-                )
-                assert _datastore.get_user('test1@test.cern') is not None
+            res = client.post(
+                url_for('user.create_view'),
+                data={'email': 'test1@test.cern'},
+                follow_redirects=True
+            )
+            assert _datastore.get_user('test1@test.cern') is not None
 
-                res = client.post(
-                    url_for('user.create_view'),
-                    data={'email': 'test2@test.cern', 'active': 'true'},
-                    follow_redirects=True
-                )
-                user = _datastore.get_user('test2@test.cern')
-                assert user is not None
-                assert user.active is True
+            res = client.post(
+                url_for('user.create_view'),
+                data={'email': 'test2@test.cern', 'active': 'true'},
+                follow_redirects=True
+            )
+            user = _datastore.get_user('test2@test.cern')
+            assert user is not None
+            assert user.active is True
 
-                res = client.post(
-                    url_for('user.create_view'),
-                    data={'email': 'test3@test.cern', 'active': 'false'},
-                    follow_redirects=True
-                )
-                user = _datastore.get_user('test3@test.cern')
-                assert user is not None
-                assert user.active is False
+            res = client.post(
+                url_for('user.create_view'),
+                data={'email': 'test3@test.cern', 'active': 'false'},
+                follow_redirects=True
+            )
+            user = _datastore.get_user('test3@test.cern')
+            assert user is not None
+            assert user.active is False
 
-                user_data = dict(email='test4@test.cern', active=False,
-                                 password=hash_password('123456'))
-                _datastore.create_user(**user_data)
+            user_data = dict(email='test4@test.cern', active=False,
+                                password=hash_password('123456'))
+            _datastore.create_user(**user_data)
 
-                user_data = dict(email='test5@test.cern', active=True,
-                                 password=hash_password('123456'))
-                _datastore.create_user(**user_data)
+            user_data = dict(email='test5@test.cern', active=True,
+                                password=hash_password('123456'))
+            _datastore.create_user(**user_data)
 
-                user_data = dict(email='test6@test.cern', active=False,
-                                 password=hash_password('123456'))
-                _datastore.create_user(**user_data)
-                _datastore.commit()
-                assert _datastore.get_user('test4@test.cern') is not None
-                user = _datastore.get_user('test5@test.cern')
-                assert user is not None
-                assert user.active is True
-                user = _datastore.get_user('test6@test.cern')
-                assert user is not None
-                assert user.active is False
+            user_data = dict(email='test6@test.cern', active=False,
+                                password=hash_password('123456'))
+            _datastore.create_user(**user_data)
+            _datastore.commit()
+            assert _datastore.get_user('test4@test.cern') is not None
+            user = _datastore.get_user('test5@test.cern')
+            assert user is not None
+            assert user.active is True
+            user = _datastore.get_user('test6@test.cern')
+            assert user is not None
+            assert user.active is False
 
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_admin_sessions -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_admin_sessions(app, admin_view):
@@ -226,12 +226,13 @@ def test_admin_sessions_action_delete(app):
 def test_userview_get_query(app, users):
         """Test get_query for super role user."""
         view = UserView(User, db.session)
-        mock_repo = MagicMock(group=MagicMock(id=1))
-        with app.test_request_context():
-            with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
-                query = view.get_query()
-                assert query is not None
-                assert query.count() == User.query.count()
+        mock_repo = MagicMock(group=MagicMock(id=2))
+
+        with app.test_request_context(), app.test_client() as client:
+            login_user_via_view(client=client, email=users[2]['email'], password=users[2]['password'])
+            query = view.get_query()
+            assert query is not None
+            assert query.count() == User.query.count()
 
             with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
                 with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
@@ -246,12 +247,13 @@ def test_userview_get_query(app, users):
 def test_userview_get_count_query(app, users):
         """Test get_count_query for super role user."""
         view = UserView(User, db.session)
-        mock_repo = MagicMock(group=MagicMock(id=1))
-        with app.test_request_context():
-            with patch("flask_login.utils._get_user", return_value=users[2]['obj']):
-                query = view.get_count_query()
-                assert query is not None
-                assert query.scalar() == User.query.count()
+        mock_repo = MagicMock(group=MagicMock(id=2))
+
+        with app.test_request_context(), app.test_client() as client:
+            login_user_via_view(client=client, email=users[2]['email'], password=users[2]['password'])
+            query = view.get_count_query()
+            assert query is not None
+            assert query.scalar() == User.query.count()
 
             with patch("flask_login.utils._get_user", return_value=users[0]['obj']):
                 with patch("invenio_communities.models.Community.get_repositories_by_user", return_value=[mock_repo]):
@@ -264,18 +266,20 @@ def test_userview_get_count_query(app, users):
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_on_form_prefill -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_userview_on_form_prefill(app, users):
     """Test on_form_prefill for super role user."""
-    view = UserView(User, db.session)
-    form = view.create_form()
-    user = users[2]['obj']
-    user.roles = [
-        Role(name='role1'),
-        Role(name='role2_groups_1')
-    ]
-    view.get_one = MagicMock(return_value=user)
-    view.on_form_prefill(form, user.id)
-    assert form.data['active'] is False
-    assert form.role.data == [user.roles[0]]
-    assert form.group.data == [user.roles[1]]
+    with app.app_context():
+        view = UserView(User, db.session)
+        form = view.create_form()
+        user = User.query.filter_by(email=users[2]['email']).first()
+        ds = app.extensions["invenio-accounts"].datastore
+        ds.add_role_to_user(user, Role(name='role1'))
+        ds.add_role_to_user(user, Role(name='role2_groups_1'))
+        db.session.commit()
+
+        view.get_one = MagicMock(return_value=user)
+        view.on_form_prefill(form, user.id)
+        assert form.data['active'] is False
+        assert form.role.data == [user.roles[0], user.roles[1]]
+        assert form.group.data == [user.roles[2]]
 
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_edit_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
 def test_userview_edit_form(app, users):

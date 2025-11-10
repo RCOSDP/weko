@@ -53,7 +53,7 @@ from sqlalchemy_utils.functions import create_database, database_exists, drop_da
 from werkzeug.local import LocalProxy
 from invenio_records.api import Record
 from invenio_stats.processors import EventsIndexer
-from .helpers import create_record, json_data, bagify
+from .helpers import create_record, create_record2, json_data, bagify
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
@@ -1241,7 +1241,7 @@ def db_records(db, instance_path, users):
     result = []
     with db.session.begin_nested():
         for d in range(record_num):
-            result.append(create_record(db, record_data[d], item_data[d]))
+            result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
 
     index_metadata = {
@@ -1277,7 +1277,7 @@ def db_records2(db, instance_path, users):
     result = []
     with db.session.begin_nested():
         for d in range(record_num):
-            result.append(create_record(db,record_data[d], item_data[d]))
+            result.append(create_record2(record_data[d], item_data[d]))
     db.session.commit()
 
     index_metadata = {
@@ -1305,7 +1305,7 @@ def db_records3(db):
     result = []
     with db.session.begin_nested():
         for d in range(record_num):
-            result.append(create_record(db, record_data[d], item_data[d]))
+            result.append(create_record2(record_data[d], item_data[d]))
     db.session.commit()
 
     yield result
@@ -2079,7 +2079,7 @@ def db_itemtype_restricted_access(app, db, make_itemtype):
         "render": "tests/data/itemtype5_render.json",
         "mapping": "tests/data/itemtype5_mapping.json",
     }
-    
+
     return make_itemtype(itemtype_id, itemtype_data)
 
 @pytest.fixture()
@@ -2420,13 +2420,13 @@ def terms(db):
                                   settings={"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},
                                             "usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},
                                             "terms_and_conditions": [{"key": "168065611041",
-                                                                     "content": {"en":{"title": "Privacy Policy for WEKO3", "content": "Privacy Policy\nLast updated: April 05, 2023"}, 
-                                                                                 "ja":{"title": "利用規約", "content": "この利用規約（以下，「本規約」といいます。）"}}, 
+                                                                     "content": {"en":{"title": "Privacy Policy for WEKO3", "content": "Privacy Policy\nLast updated: April 05, 2023"},
+                                                                                 "ja":{"title": "利用規約", "content": "この利用規約（以下，「本規約」といいます。）"}},
                                                                      "existed":True}]
                                             }))
     settings.append(AdminSettings(id=7,name="display_stats_settings",settings={"display_stats":False}))
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
-    
+
     db.session.add_all(settings)
     db.session.commit()
 
@@ -4746,44 +4746,6 @@ def reset_class_value():
     DCMapper.identifiers = []
     DDIMapper.itemtype_map = {}
     DDIMapper.identifiers = []
-
-
-def create_record(db, record_data, item_data):
-    from weko_deposit.api import WekoDeposit, WekoRecord
-    with db.session.begin_nested():
-        record_data = copy.deepcopy(record_data)
-        item_data = copy.deepcopy(item_data)
-        rec_uuid = uuid.uuid4()
-        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-        rel = PIDRelation.create(recid,depid,3)
-        db.session.add(rel)
-        parent=None
-        doi = None
-
-        if '.' in record_data["recid"]:
-            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
-            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
-            PIDRelation.create(recid_p.parent, recid,2)
-        else:
-            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            rel = PIDRelation.create(parent, recid,2,0)
-            db.session.add(rel)
-            RecordIdentifier.next()
-        if record_data.get("_oai").get("id"):
-            oaiid = PersistentIdentifier.create('oai', record_data["_oai"]["id"],pid_provider="oai",object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-            hvstid = PersistentIdentifier.create('hvstid', record_data["_oai"]["id"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-        if "item_1612345678910" in record_data:
-            for i in range(len(record_data["item_1612345678910"]["attribute_value_mlt"])):
-                data = record_data["item_1612345678910"]["attribute_value_mlt"][i]
-                PersistentIdentifier.create(data.get("subitem_16345678901234").lower(),data.get("subitem_1623456789123"),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
-        record = WekoRecord.create(record_data, id_=rec_uuid)
-        item = ItemsMetadata.create(item_data, id_=rec_uuid)
-        deposit = WekoDeposit(record, record.model)
-
-        deposit.commit()
-
-    return recid, depid, record, item, parent, doi, deposit
 
 
 @pytest.fixture()

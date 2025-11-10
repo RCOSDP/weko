@@ -149,9 +149,13 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
         current_user_email = current_user.email if is_has_email else ''
 
         # Get email list of created workflow user.
-        user_id_list = [int(record['owner'])] if record.get('owner') else []
-        if record.get('weko_shared_ids'):
+        user_id_list = []
+        created_id = record.get('_deposit', {}).get('created_by')
+        user_id_list.append(created_id) if created_id else None
+        user_id_list.append(int(record['owner'])) if record.get('owner') else None
+        if current_app.config.get('WEKO_ITEMS_UI_PROXY_POSTING', False) and record.get('weko_shared_ids'):
             user_id_list.extend(record.get('weko_shared_ids'))
+        user_id_list = list(set(user_id_list))
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
         # Registered user
@@ -322,7 +326,7 @@ def check_open_restricted_permission(record, fjson):
     record_id = record.get('recid')
     file_name = fjson.get('filename')
     list_permission = __get_file_permission(record_id, file_name)
-    if list_permission:
+    if list_permission and current_app.config.get('WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG', False):
         permission = list_permission[0]
         return check_permission_period(permission)
     else:
@@ -338,7 +342,7 @@ def is_open_restricted(file_data):
     result = False
     if file_data:
         access_role = file_data.get('accessrole', '')
-        if 'open_restricted' in access_role:
+        if 'open_restricted' in access_role and current_app.config.get('WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG', False):
             result = True
     return result
 
@@ -527,14 +531,18 @@ def check_created_id(record):
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     comadmin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    proxy_posting = current_app.config.get('WEKO_ITEMS_UI_PROXY_POSTING', False)
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
     if user_id is not None:
         created_id = record.get('_deposit', {}).get('created_by')
+        owner = record.get('owner')
         shared_ids = record.get('weko_shared_ids')
         if user_id and created_id and user_id == str(created_id):
             is_himself = True
-        elif user_id and len(shared_ids)>0 and int(user_id) in shared_ids:
+        elif user_id and owner and user_id == str(owner):
+            is_himself = True
+        elif user_id and len(shared_ids)>0 and int(user_id) in shared_ids and proxy_posting:
             is_himself = True
         for lst in list(current_user.roles or []):
             # In case of supper user,it's always have permission
