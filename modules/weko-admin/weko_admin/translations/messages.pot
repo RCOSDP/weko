@@ -1717,6 +1717,46 @@ msgstr ""
 msgid "Setting detail condition"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Save button description"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Save all tab information"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab1"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab2"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab3"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab4"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Mapping Settings"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Setting button"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Mapping Path"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Setting detail condition value"
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/site_info.html:39
 msgid "Site Name"
 msgstr ""
