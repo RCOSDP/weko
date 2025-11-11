@@ -33,6 +33,8 @@ from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
+from sqlalchemy import and_
+from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_communities.models import Community
 from invenio_db import db
@@ -308,78 +310,62 @@ def get_user_groups():
         grps.append(group.id)
     return grps
 
-def check_roles(user_role, roles, params):
-    """
-    Check whether the user has access to an index based on roles and role groups.
+def check_index_permission_by_role_and_group(user_role, roles, user_group, groups):
 
-    This function determines if a user can access an index by evaluating:
-    - Whether the user is an administrator (always True)
-    - Whether the user's roles or role groups match those set for the index
-    - Whether guest access is allowed (when '-99' is set and no role groups are configured)
-    - If neither roles nor role groups are set for the index, internal group check is performed
+    if user_role[0]:
+        return True
 
-    Args:
-        user_role (tuple): (is_admin, [role_id, ...]) where is_admin is a bool.
-        roles (str or list): List or comma-separated string of role IDs set for the index.
-        params (dict): Dictionary containing:
-            - "role_groups": list of role group IDs set for the index
-            - "groups": list of group IDs the user belongs to
-            - "access_group_ids": group IDs set for the index
+    user_roles = [str(r) for r in user_role[1]] if user_role[1] else []
+    user_group_list = [str(g) for g in user_group]
 
-    Returns:
-        bool: True if the user has access to the index, False otherwise.
-    """
+    role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+    prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+    without_map_role = Role.query.filter(
+        ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
+    ).all()
 
-    is_can = False
-    group_perm = False
-    role_perm = False
+    role_groups = [str(lst.id) for lst in without_map_role if "_groups_" in lst.name]
+    without_map_role = [str(r.id) for r in without_map_role]
+    # Guest, Authenticated User
+    without_map_role.extend(['-98', '-99'])
 
-    if not user_role[0]:
-        roles_list = sorted(roles if isinstance(roles, list) else (roles.split(',') if roles else []))
-        set_index_group = any(int(r) in params["role_groups"] for r in roles_list)
-        set_index_role = any(int(r) not in params["role_groups"] for r in roles_list)
-        if current_user.is_authenticated:
-            self_role = user_role[1] or []
-            self_role.append('-98')
-            if set_index_group:
-                index_role_group = [int(r) for r in roles_list if int(r) in params["role_groups"]]
-                # Groups(role) are set for the index.
-                group_perm = any(str(rg) in [str(sr) for sr in self_role] for rg in index_role_group)
-                if set_index_role:
-                    # If the index has both role groups and roles.
-                    index_role = [int(r) for r in roles_list if int(r) not in params["role_groups"]]
-                    role_perm = any(str(role) in [str(r) for r in index_role] for role in self_role)
-                    is_can = group_perm and role_perm
-                else:
-                    # If the index has role groups but no roles.
-                    is_can = group_perm
-            elif set_index_role:
-                # Roles are set for the index, but no role groups are configured.
-                for role in self_role:
-                    if str(role) in roles_list:
-                        is_can = True
-                        break
-            else:
-                # No roles or role groups are set for the index, so proceed to internal group check.
-                is_can = check_groups(params["groups"], params["access_group_ids"])
+    user_role_list = [r for r in user_roles
+                      if r in without_map_role and r not in role_groups]
+    user_role_group = [r for r in user_roles
+                       if r in without_map_role and r in role_groups]
 
-        # Guest users can view when '-99' is set and no role groups are configured.
-        elif roles and "-99" in roles and not set_index_group:
-            is_can = True
-    # Administrators always have access.
-    else:
-        is_can = True
-    return is_can
+    role_list = sorted(roles if isinstance(roles, list)
+                       else (roles.split(',') if roles else []))
+    index_group_list = sorted(groups if isinstance(groups, list)
+                       else (groups.split(',') if groups else []))
+
+    index_role_list = [r for r in role_list
+                       if r in without_map_role and r not in role_groups]
+    index_role_group = [r for r in role_list
+                        if r in without_map_role and r in role_groups]
+
+    return check_roles(user_role_list, index_role_list) and \
+        check_groups(user_group_list, index_group_list, user_role_group, index_role_group)
 
 
-def check_groups(user_group, groups):
-    """Check groups."""
-    is_can = False
+def check_roles(user_role_list, index_role_list):
     if current_user.is_authenticated:
-        group = [x for x in user_group if str(x) in (groups or [])]
-        if group:
-            is_can = True
-    return is_can
+        user_role_list.append('-98')
+    else:
+        user_role_list.append('-99')
+    return any(r in index_role_list for r in user_role_list)
+
+
+def check_groups(user_group, index_group_list, user_role_group, index_role_group):
+    if current_user.is_authenticated and not user_group and not user_role_group:
+        user_group.append('-89')
+    elif not current_user.is_authenticated:
+        user_group.append('-89')
+
+    group_perm = any(r in user_group for r in index_group_list)
+    role_group_perm = any(r in user_role_group for r in index_role_group)
+    return group_perm or role_group_perm
+
 
 def filter_index_list_by_role(index_list):
     """Filter index list by role."""
@@ -390,8 +376,9 @@ def filter_index_list_by_role(index_list):
         if roles[0]:
             can_view = True
         else:
-            params = set_params(groups, index_data.browsing_group)
-            if check_roles(roles, index_data.browsing_role, params):
+            if check_index_permission_by_role_and_group(
+                roles, index_data.browsing_role,
+                groups, index_data.browsing_group):
                 if index_data.public_state \
                         and (index_data.public_date is None
                              or not is_future(index_data.public_date)):
@@ -406,36 +393,6 @@ def filter_index_list_by_role(index_list):
             result_list.append(i)
     return result_list
 
-def set_params(groups, index_group):
-    """
-    Generate a parameter dictionary for index permission checks.
-
-    This function collects all role group IDs from the Role table whose name contains 'group',
-    and combines them with the specified user groups and index groups to create a parameter
-    dictionary for permission checking functions.
-
-    Args:
-        groups (list): List of group IDs the user belongs to.
-        index_group (list): List of group IDs set for the index.
-
-    Returns:
-        dict: Dictionary containing:
-            - "role_groups": list of all role group IDs in the system
-            - "groups": list of group IDs the user belongs to
-            - "access_group_ids": list of group IDs set for the index
-    """
-    from invenio_accounts.models import Role
-
-    role_groups = []
-    for lst in Role.query.all():
-        if "group" in lst.name.lower():
-            role_groups.append(lst.id)
-    params = {
-        "role_groups": role_groups,
-        "groups": groups,
-        "access_group_ids": index_group
-    }
-    return params
 
 def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
     """Reduce index by."""
@@ -464,8 +421,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
                 # browsing role and group check
                 if browsing_role:
-                    params = set_params(groups, brw_group)
-                    if check_roles(roles, brw_role, params):
+                    if check_index_permission_by_role_and_group(
+                        roles, brw_role, groups, brw_group):
                         if public_state and \
                                 (public_date is None
                                  or not is_future(public_date)):
@@ -479,8 +436,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
                 # contribute role and group check
                 else:
-                    params = set_params(groups, contribute_group)
-                    if check_roles(roles, contribute_role, params):
+                    if check_index_permission_by_role_and_group(
+                        roles, contribute_role, groups, contribute_group):
                         lst['disabled'] = False
 
                         plst = plst or []
@@ -872,9 +829,10 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
             in_admin_view_scope = _check_community_admin_permission(index_data)
 
         is_content_public = False
-        params = set_params(groups, index_data.browsing_group)
         if index_data.public_state:
-            check_user_role = check_roles(roles, index_data.browsing_role, params)
+            check_user_role = check_index_permission_by_role_and_group(
+                roles, index_data.browsing_role,
+                groups, index_data.browsing_group)
             check_public_date = \
                 not is_future(index_data.public_date) \
                 if index_data.public_date else True

@@ -728,6 +728,7 @@ def indices(app, db):
         testIndexThree = Index(
             index_name="testIndexThree",
             browsing_role="1,2,3,4,-98,-99",
+            browsing_group="-89",
             public_state=True,
             harvest_public_state=True,
             id=33,
@@ -796,7 +797,7 @@ def test_indices(app, db):
                    recursive_contribute_group=False, online_issn='', is_deleted=False):
         _browsing_role = "3,-99"
         _contribute_role = "1,2,3,4,-98,-99"
-        _group = "g1,g2"
+        _group = "g1,g2,-89"
         return Index(
             id=id,
             parent=parent,

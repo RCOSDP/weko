@@ -109,12 +109,12 @@ class Indexes(object):
             data["recursive_coverpage_check"] = False
 
             group_list = ""
-            groups = Group.query.all()
+            groups = cls.get_account_group()
             for group in groups:
                 if not group_list:
-                    group_list = str(group.id)
+                    group_list = str(group["id"])
                 else:
-                    group_list = group_list + "," + str(group.id)
+                    group_list = group_list + "," + str(group["id"])
 
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
@@ -901,11 +901,10 @@ class Indexes(object):
             if not groups:
                 return allow, deny
             for group in groups:
-                if str(group.id) in allow_group_id:
-                    allow.append({'id': str(group.id), 'name': group.name})
+                if str(group["id"]) in allow_group_id:
+                    allow.append({'id': str(group["id"]), 'name': group["name"]})
                 else:
-                    deny.append({'id': str(group.id), 'name': group.name})
-
+                    deny.append({'id': str(group["id"]), 'name': group["name"]})
             return allow, deny
 
         def _get_filter_gakunin_map_groups_allow_deny(filtered_role_ids=[], filtered_roles=[]):
@@ -949,7 +948,7 @@ class Indexes(object):
         if index["public_date"]:
             index["public_date"] = index["public_date"].strftime('%Y%m%d')
 
-        group_list = Group.query.all()
+        group_list = cls.get_account_group()
         #browsing_groupとcontribute_groupの値を取得して、browsing_groupとcontribute_groupの辞書の値を保持します。
         allow_browsing_group_ids = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
@@ -1072,6 +1071,27 @@ class Indexes(object):
             return list(map(_get_dict, role)) \
                 + [{"id": -98, "name": "Authenticated User"}] \
                 + [{"id": -99, "name": "Guest"}]
+        except SQLAlchemyError:
+            return
+
+    @classmethod
+    def get_account_group(cls):
+        """Get account group."""
+        def _get_dict(x):
+            dt = dict()
+            for k, v in x.__dict__.items():
+                if not k.startswith('_') and "description" not in k:
+                    if not v:
+                        v = ""
+                    if isinstance(v, int) or isinstance(v, str):
+                        dt[k] = v
+            return dt
+
+        try:
+            with db.session.no_autoflush:
+                group = Group.query.all()
+            return list(map(_get_dict, group)) \
+                + [{"id": -89, "name": "No Group"}]
         except SQLAlchemyError:
             return
 
