@@ -8,7 +8,7 @@
             <img :src="`${appConf.amsImage ?? '/img'}/logo/logo01.png`" alt="AMS Logo" />
           </NuxtLink>
         </p>
-        <p class="text-white text-xs w-full md:w-auto mt-2 pb-1 md:mt-auto">
+        <p class="text-white text-2xl w-full md:w-auto mt-2 pb-1 md:mt-auto">
           {{ $t('serviceName') }}
           <!-- <br class="hidden md:block" />
           {{ $t('catchCopy') }} -->

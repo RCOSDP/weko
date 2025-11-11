@@ -10,7 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
-from flask import json, request
+from flask import json, request,current_app
 from weko_records.api import ItemTypes
 
 from .base import PreprocessorMixin, SerializerMixinInterface
@@ -109,20 +109,26 @@ class JSONSerializerMixin(SerializerMixinInterface):
             if '_source' in hit and '_item_metadata' in hit['_source'] and hit['_source']['_item_metadata']:
                 if 'control_number' in hit['_source']['_item_metadata']:
                     control_number=hit['_source']['_item_metadata']['control_number']
-                    record = WekoRecord.get_record_by_pid(control_number)
-                    is_admin = False
-                    is_owner = False
-                    roles = get_user_roles()
-                    if roles[0]:
-                        is_admin = True
-                    if check_created_id(record):
-                        is_owner = True
-                    is_public = check_publish_status(record)
-                    if check_created_id(record):
-                        is_owner = True
-                    is_public = check_publish_status(record)
-                    if not is_public and not is_admin and not is_owner:
+                    try:
+                        record = WekoRecord.get_record_by_pid(control_number)
+                        is_admin = False
+                        is_owner = False
+                        roles = get_user_roles()
+                        if roles[0]:
+                            is_admin = True
+                        if check_created_id(record):
+                            is_owner = True
+                        is_public = check_publish_status(record)
+                        if check_created_id(record):
+                            is_owner = True
+                        is_public = check_publish_status(record)
+                        if not is_public and not is_admin and not is_owner:
+                            hit['_source']['_item_metadata']={}
+                    except Exception as e:
+                        current_app.logger.error(f"Error in serialize_search: {e}")
                         hit['_source']['_item_metadata']={}
+                    
+ 
 
         return json.dumps(dict(
             hits=dict(

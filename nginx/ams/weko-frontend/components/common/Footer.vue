@@ -62,7 +62,7 @@
         <p class="text-white text-xs leading-6 mt-auto">
           {{ $t('serviceName') }}
           <!-- {{ $t('catchCopy') }} -->
-          <span class="block text-[10px]">Copyright 2023 NII inc.</span>
+          <!--<span class="block text-[10px]">Copyright 2023 NII inc.</span> -->
         </p>
       </div>
     </div>
