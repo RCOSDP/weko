@@ -1427,6 +1427,13 @@ class JsonLdMapper(JsonMapper):
                     fixed_properties[key] = {}
                 fixed_properties[key][sub_key] = value
 
+        def is_url(s: str) -> bool:
+            try:
+                result = urlparse(s)
+                return all([result.scheme, result.netloc])
+            except ValueError:
+                return False
+
         mapped_metadata = {}
         system_info = {
             **system_info,
@@ -1436,12 +1443,12 @@ class JsonLdMapper(JsonMapper):
             **({"uri": system_info["uri"]}
                 if isinstance(system_info.get("uri"), str) else {}),
             "file_path": [
-                filename[5:] if filename.startswith("data/") else ""
+                filename if not is_url(filename) else ""
                 for filename in system_info["file_path"]
             ],
             "non_extract": [
-                filename[5:] for filename in system_info["non_extract"]
-                if filename.startswith("data/")
+                filename for filename in system_info["non_extract"]
+                if not is_url(filename)
             ],
         }
 
@@ -1616,16 +1623,6 @@ class JsonLdMapper(JsonMapper):
                 continue
 
             files_key = v.split(".")[0]
-            files = mapped_metadata.get(files_key, [])
-
-            # remove "data/" prefix from label
-            files = [
-                file["url"].update({"label": label[5:]})
-                for file in files
-                for label in [file["url"].get("label")]
-                if label.startswith("data/")
-            ]
-
             files_info.append({"key": files_key})
         mapped_metadata["files_info"] = files_info
         # mapped_metadata = {
@@ -2249,7 +2246,7 @@ class JsonLdMapper(JsonMapper):
             return value
 
         # files entity reconstruction
-        # "@id" in files entity is format like "data/sample.txt"
+        # "@id" in files entity is format like "sample.txt"
         filename_mapping = ""
         file_url_url_mapping = ""
         for k, m in properties_mapping.items():
@@ -2266,24 +2263,21 @@ class JsonLdMapper(JsonMapper):
         if file_key == "hasPart" and files_entity:
             del rocrate.root_dataset["hasPart"]
 
-        extracted_files = kwargs.get("extracted_files", [])
+        extracted_files = kwargs.get("extracted_files", [])  # type: list[str]
         for entity in files_entity:
-            file_metadata = entity._jsonld
+            file_metadata = entity._jsonld  # type: dict
             del file_metadata["@id"]
             del file_metadata["@type"]
-            filename = dereference(filename_mapping.split(".")[1:], entity)
+            filename = dereference(filename_mapping.split(".")[1:], entity)  # type: str
             url = dereference(file_url_url_mapping.split(".")[1:], entity)
             entity.delete()
 
-            host_url = current_app.config["THEME_SITEURL"]
+            host_url = current_app.config["THEME_SITEURL"]  # type: str
             if isinstance(url, str) and host_url not in url:
                 rocrate.add_file(url, properties=file_metadata)
             else:
                 file_metadata["wk:textExtraction"] = filename in extracted_files
-                rocrate.add_file(
-                    dest_path=f"data/{filename}",
-                    properties=file_metadata
-                )
+                rocrate.add_file( dest_path=filename, properties=file_metadata)
 
         # Extra
         if "Extra" in item_map:
