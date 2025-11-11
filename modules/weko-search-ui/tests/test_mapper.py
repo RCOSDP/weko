@@ -1,3 +1,4 @@
+import json
 import pytest
 import xmltodict
 import uuid
@@ -4719,6 +4720,7 @@ class TestJsonLdMapper:
             assert system_info["cnri"] == "1234/5678"
             assert system_info["doi_ra"] == "DataCite"
             assert system_info["doi"] == "10.1234/5678"
+            assert system_info["file_path"] == ["sample.txt", "data.csv", "0606/data.csv", ""]
             assert system_info["non_extract"] == ["data.csv"]
             assert system_info["save_as_is"] == False
             assert system_info["amend_doi"] == "10.2964/jsik_2021_067"
@@ -4759,14 +4761,53 @@ class TestJsonLdMapper:
 
             assert list_record[0].get("errors") is None
 
+        schema["properties"].update({
+            "item_1754636750964": {
+                "type": "string",
+                "title": "Extra",
+                "format": "textarea"
+            }
+        })
+        item_type2.model.schema = schema
+        db.session.commit()
+        json_ld["@graph"][0].update({
+            "additional": { "@id": "#additional" }
+        })
+        json_ld["@graph"].append({
+            "@id": "#additional",
+            "value": "This is an extra field for testing."
+        })
+        with app.test_request_context():
+            mapper = JsonLdMapper(item_type2.model.id, json_mapping)
+            item_metadatas, format = mapper.to_item_metadata(json_ld)
+            item_metadata, system_info = item_metadatas[0]
+            assert isinstance(item_metadata["item_1754636750964"], str)
+            assert isinstance(json.loads(item_metadata["item_1754636750964"]), dict)
+
         schema = json_data("data/jsonld/item_type_schema.json")
+        schema = json_data("data/jsonld/item_type_schema.json")
+        schema["properties"].update({
+            "item_1744171568909": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "interim": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "title": "Extra",
+                "maxItems": 9999,
+                "minItems": 1
+            }
+        })
         item_type2.model.schema = schema
         mapping = json_data("data/jsonld/item_type_mapping.json")
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
-
         with app.test_request_context():
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
             item_metadatas, format = mapper.to_item_metadata(json_ld)
@@ -4778,21 +4819,25 @@ class TestJsonLdMapper:
             assert system_info["_id"] == "_:JournalPaper1"
             assert system_info["link_data"][0]["item_id"] == "_:EvidenceData1"
             assert system_info["link_data"][0]["sele_id"] == "isSupplementedBy"
+            assert system_info["file_path"] == ["sample.rst"]
             assert thesis["pubdate"] == "2021-10-15"
             assert thesis["path"] == [1623632832836]
             assert thesis["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO"
             assert thesis["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセット"
             assert thesis["files_info"][0]["key"] == "item_30001_file22"
+            assert thesis["item_1744171568909"][0]["interim"]
 
             evidence, system_info = item_metadatas[1]
             assert system_info["_id"] == "_:EvidenceData1"
             assert system_info["link_data"][0]["item_id"] == "_:JournalPaper1"
             assert system_info["link_data"][0]["sele_id"] == "isSupplementTo"
+            assert system_info["file_path"] == ["data.csv"]
             assert system_info["non_extract"] == ["data.csv"]
             assert evidence["pubdate"] == "2021-10-15"
             assert evidence["path"] == [1623632832836]
             assert evidence["item_30001_title0"][0]["subitem_title"] == "The Sample Dataset for WEKO, evidence part"
             assert evidence["item_30001_title0"][1]["subitem_title"] == "WEKO用サンプルデータセットのエビデンス部分"
+            assert evidence["item_1744171568909"][0]["interim"]
 
             list_record = [
                 {
@@ -4820,7 +4865,8 @@ class TestJsonLdMapper:
         assert system_info["cnri"] == "1234/5678"
         assert system_info["doi_ra"] == "DataCite"
         assert system_info["doi"] == "10.1234/5678"
-        assert system_info["non_extract"] == ["data/data.csv"]
+        assert system_info["file_path"] == ["sample.txt", "data.csv", "0606/data.csv", "https://example.com/test/sample/1"]
+        assert system_info["non_extract"] == ["data.csv"]
         assert system_info["save_as_is"] == False
         assert metadata["@id"] == "./"
         assert metadata["name"] == "The Sample Dataset for WEKO"
@@ -4832,9 +4878,9 @@ class TestJsonLdMapper:
         assert metadata["dc:title[1].language"] == "ja"
         assert metadata["dc:type.rdf:resource"] == "http://purl.org/coar/resource_type/c_ddb1"
         assert metadata["dc:type.value"] == "dataset"
-        assert metadata["hasPart[0].@id"] == "data/sample.txt"
+        assert metadata["hasPart[0].@id"] == "sample.txt"
         assert metadata["hasPart[0].name"] == "sample.txt"
-        assert metadata["hasPart[1].@id"] == "data/data.csv"
+        assert metadata["hasPart[1].@id"] == "data.csv"
         assert metadata["hasPart[1].name"] == "data.csv"
         assert metadata["dcterms:accessRights.value"] == "embargoed access"
         assert not any("@type" in key for key in metadata.keys())
@@ -4850,6 +4896,7 @@ class TestJsonLdMapper:
         assert system_info["link_data"][0]["sele_id"] == "isSupplementedBy"
         assert system_info["link_data"][1]["item_id"] == "https://example.repo.nii.ac.jp/records/123456789"
         assert system_info["link_data"][1]["sele_id"] == "isSupplementedBy"
+        assert system_info["file_path"] == ["sample.rst"]
         assert thesis["@id"] == "_:JournalPaper1"
         assert thesis["dc:title[0].value"] == "The Sample Dataset for WEKO"
         assert thesis["dc:title[1].value"] == "WEKO用サンプルデータセット"
@@ -4861,7 +4908,8 @@ class TestJsonLdMapper:
         assert system_info["_id"] == "_:EvidenceData1"
         assert system_info["link_data"][0]["item_id"] == "_:JournalPaper1"
         assert system_info["link_data"][0]["sele_id"] == "isSupplementTo"
-        assert system_info["non_extract"] == ["data/data.csv"]
+        assert system_info["file_path"] == ["data.csv"]
+        assert system_info["non_extract"] == ["data.csv"]
         assert evidence["@id"] == "_:EvidenceData1"
         assert evidence["dc:title[0].value"] == "The Sample Dataset for WEKO, evidence part"
         assert evidence["dc:title[1].value"] == "WEKO用サンプルデータセットのエビデンス部分"
@@ -4934,10 +4982,10 @@ class TestJsonLdMapper:
         haspart_1 = graph["hasPart"][1]["@id"]
         file_1 = rocrate.dereference(haspart_1)
 
-        assert haspart_0 == "data/sample.txt"
+        assert haspart_0 == "sample.txt"
         assert file_0["name"] == "sample.txt"
         assert rocrate.dereference(file_0["jpcoar:URI"]["@id"])["value"] == "https://localhost/record/2000001/files/sample.txt"
-        assert haspart_1 == "data/data.csv"
+        assert haspart_1 == "data.csv"
         assert file_1["name"] == "data.csv"
         assert rocrate.dereference(file_1["jpcoar:URI"]["@id"])["value"] == "https://localhost/record/2000001/files/data.csv"
 
