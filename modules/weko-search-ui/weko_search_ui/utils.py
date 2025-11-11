@@ -1463,13 +1463,14 @@ def handle_validate_item_import(list_record, schema) -> list:
                                 target_path, target[last_key], "'" + str(target[last_key]) + "'"
                             )
                         )
+                b = v2.iter_errors(record.get("metadata"))
                 if current_i18n.language == "ja":
                     _errors = []
-                    for error in a:
+                    for error in b:
                         _errors.append(handle_convert_validate_msg_to_jp(error.message))
                     errors = errors + _errors
                 else:
-                    errors = errors + [error.message for error in a]
+                    errors = errors + [error.message for error in b]
             else:
                 errors = errors = errors + [_("Specified item type does not exist.")]
 
