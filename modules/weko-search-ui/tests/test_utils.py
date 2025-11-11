@@ -930,7 +930,8 @@ def test_handle_convert_validate_msg_to_jp(i18n_app):
 
 
 # def handle_validate_item_import(list_record, schema) -> list:
-def test_handle_validate_item_import(app, mocker_itemtype):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_validate_item_import -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_validate_item_import(app, mocker_itemtype, mocker):
     filepath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)), "data", "csv", "data.json"
     )
@@ -964,6 +965,62 @@ def test_handle_validate_item_import(app, mocker_itemtype):
                 == result
             )
 
+    # string型に対してinteger型が送られた場合のテスト
+    schema = {
+        "type": "object",
+        "properties": {
+            "test_str": {"type": "string"}
+        },
+    }
+    list_record = [
+        {   
+            "metadata": {"test_str": 123},
+        }
+    ]
+    with app.test_request_context():
+        with set_locale("en"):
+            result = handle_validate_item_import(list_record, schema)
+            warnings = result[0].get("warnings", [])
+            assert any("Replace value of" in w for w in warnings)
+            assert any("is different from existing" in w for w in warnings)
+            assert type(list_record[0]["metadata"]["test_str"]) == str
+
+    list_record = [
+        {   
+            "metadata": {"test_str": 456},
+        }
+    ]
+    with app.test_request_context():
+        with set_locale("ja"):
+            result = handle_validate_item_import(list_record, schema)
+            warnings = result[0].get("warnings", [])
+            assert any("へ置き換えました。" in w for w in warnings)
+            assert any("と異なっています。" in w for w in warnings)
+
+    # 従来のエラーが発生するケースのテスト
+    schema = {
+        "type": "object",
+        "properties": {
+            "test_select": {
+                "type": "string",
+                "enum": [None, "Yes|Yes", "No|No"]
+            }
+        },
+    }
+    list_record = [
+        {
+            "metadata": {"test_select": "Yes"},
+        }
+    ]
+    with app.test_request_context():
+        with set_locale("en"):
+            result = handle_validate_item_import(list_record, schema)
+            assert "errors" in result[0]
+            
+    with app.test_request_context():
+        with set_locale("ja"):
+            result = handle_validate_item_import(list_record, schema)
+            assert "errors" in result[0]
 
 # def represents_int(s):
 def test_represents_int():

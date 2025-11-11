@@ -1445,28 +1445,28 @@ def handle_validate_item_import(list_record, schema) -> list:
         if record.get("metadata"):
             if v2:
                 a = v2.iter_errors(record.get("metadata"))
+                for error in a:
+                    if (
+                        error.validator == "type"
+                        and error.validator_value == "string"
+                        and isinstance(error.instance, int)
+                    ):
+                        target = record["metadata"]
+                        path_list = list(error.path)
+                        for key in path_list[:-1]:
+                            target = target[key]
+                        last_key = path_list[-1]
+                        target[last_key] = str(target[last_key])
+                        target_path = ".".join([str(p) for p in path_list[:-2]])
+                        warnings.append(
+                            _("Replace value of {} from {} to {}.").format(
+                                target_path, target[last_key], "'" + str(target[last_key]) + "'"
+                            )
+                        )
                 if current_i18n.language == "ja":
                     _errors = []
                     for error in a:
-                        if (
-                            error.validator == "type"
-                            and error.validator_value == "string"
-                            and isinstance(error.instance, int)
-                        ):
-                            target = record["metadata"]
-                            path_list = list(error.path)
-                            for key in path_list[:-1]:
-                                target = target[key]
-                            last_key = path_list[-1]
-                            target[last_key] = str(target[last_key])
-                            target_path = ".".join([str(p) for p in path_list[:-2]])
-                            warnings.append(
-                                _("Replace value of {} from {} to {}.").format(
-                                    target_path, target[last_key], "'" + str(target[last_key]) + "'"
-                                )
-                            )
-                        else:
-                            _errors.append(handle_convert_validate_msg_to_jp(error.message))
+                        _errors.append(handle_convert_validate_msg_to_jp(error.message))
                     errors = errors + _errors
                 else:
                     errors = errors + [error.message for error in a]
