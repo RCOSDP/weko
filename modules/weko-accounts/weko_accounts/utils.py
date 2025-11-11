@@ -30,7 +30,6 @@ from flask_login.config import EXEMPT_METHODS
 import hashlib
 
 from .config import WEKO_API_LIMIT_RATE_DEFAULT
-from weko_admin.models import AdminSettings
 
 limiter = Limiter(
     app=None,
@@ -111,6 +110,7 @@ def parse_attributes():
     error = False
 
     # Get attribute mapping from admin settings
+    from weko_admin.models import AdminSettings
     admin_settings = AdminSettings.get('attribute_mapping', dict_to_object=False)
 
     for header, attr in current_app.config[
@@ -221,7 +221,7 @@ def roles_required(roles, allow_anonymous=False):
 
 def get_sp_info():
     """Get Service Provider (SP) information for Shibboleth login.
-    
+
     Returns:
         dict: A dictionary containing SP entityID, handlerURL, and return URL.
     """
@@ -233,7 +233,7 @@ def get_sp_info():
     sp_entityID = 'https://' + current_app.config['WEB_HOST_NAME'] + '/shibboleth-sp'
     if 'SP_ENTITYID' in current_app.config:
         sp_entityID = current_app.config['SP_ENTITYID']
-    
+
     sp_handlerURL = 'https://' + current_app.config['WEB_HOST_NAME'] + '/Shibboleth.sso'
     if 'SP_HANDLERURL' in current_app.config:
         sp_handlerURL = current_app.config['SP_HANDLERURL']
