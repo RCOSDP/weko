@@ -1055,14 +1055,38 @@ RESOURCE_TYPE_V2_MAP = {
 }
 
 
-class JPCOARV2Mapper:
-    """JPCOAR V2 Mapper."""
+class BaseMapper:
+    """BaseMapper."""
+
+    itemtype_map = {}
+    identifiers = []
+
+    @classmethod
+    def update_itemtype_map(cls):
+        """Update itemtype map."""
+        for t in ItemTypes.get_all(with_deleted=False):
+            cls.itemtype_map[t.item_type_name.name] = t
 
     def __init__(self, xml):
         """Init."""
         self.xml = xml
         self.json = xmltodict.parse(xml) if xml else {}
+        if not BaseMapper.itemtype_map:
+            BaseMapper.update_itemtype_map()
+
         self.itemtype = None
+        for item in BaseMapper.itemtype_map:
+            if "Others" == item or "Multiple" == item:
+                self.itemtype = BaseMapper.itemtype_map.get(item)
+                break
+
+
+class JPCOARV2Mapper(BaseMapper):
+    """JPCOAR V2 Mapper."""
+
+    def __init__(self, xml):
+        """Init."""
+        super().__init__(xml)
 
     def map(self, item_type_name):
         """Get map."""
@@ -1070,7 +1094,7 @@ class JPCOARV2Mapper:
         if not item_type_name or not self.json or "jpcoar:jpcoar" not in self.json.keys():
             return default_metadata
 
-        self.itemtype = ItemTypes.get_by_name(item_type_name)
+        self.itemtype = self.itemtype_map.get(item_type_name)
 
         if not self.itemtype:
             return default_metadata
@@ -1143,7 +1167,7 @@ class JPCOARV2Mapper:
         return res
 
 
-class JsonMapper:
+class JsonMapper(BaseMapper):
     """ Mapper to map from Json format file to ItemType.
 
         The original file to be mapped by this Mapper is assumed to be a
@@ -1389,9 +1413,7 @@ class JsonLdMapper(JsonMapper):
         Args:
             json_ld (dict): metadata with json-ld format.
         Returns:
-            tuple (list[dict], str):
-                - list[dict]: list of mapped metadata.
-                - str: format of the metadata. "ro-crate" or "sword-bagit".
+            list[dict]: list of mapped metadata.
         """
         metadatas, format = self._deconstruct_json_ld(json_ld)
         list_items = [
@@ -1441,14 +1463,13 @@ class JsonLdMapper(JsonMapper):
             **({"uri": system_info["uri"]}
                 if isinstance(system_info.get("uri"), str) else {}),
             "file_path": [
-                filename[5:] if filename.startswith("data/") else ""
-                for filename in system_info["file_path"]
+                filename[5:] for filename in system_info["file_path"]
+                if filename.startswith("data/")
             ],
             "non_extract": [
                 filename[5:] for filename in system_info["non_extract"]
                 if filename.startswith("data/")
             ],
-            "warnings": [],
         }
 
         missing_metadata = {}
@@ -1472,7 +1493,8 @@ class JsonLdMapper(JsonMapper):
             if len(prop_props) == 1:
                 if self._get_property_type(PROP_PATH) == "array":
                     schema = self.itemtype.schema["properties"]
-                    schema = schema.get(prop_props[0])
+                    for prop in PROP_PATH:
+                        schema = schema.get(prop)
                     schema = schema.get("items").get("properties")
                     interim = list(schema.keys())[0]
                     if parent.get(prop_props[0]) is None:
@@ -1578,8 +1600,7 @@ class JsonLdMapper(JsonMapper):
                 )
                 mapped_metadata["request_mail_list"] = request_mail_list
             elif META_PATH not in properties_mapping:
-                if ("wk:" not in META_KEY and not META_KEY.endswith("@id")
-                    and META_KEY not in ["name", "description"]):
+                if not META_KEY.endswith("@id"):
                     missing_metadata[META_KEY] = META_VALUE
             else:
                 # item metadata
@@ -1594,25 +1615,15 @@ class JsonLdMapper(JsonMapper):
                 # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
                 # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
                 try:
-                    adjusted_meta_key = self._adjust_index(META_KEY, properties_mapping)
-                    valid_path = self._settable_path(adjusted_meta_key)
-                    if valid_path:
-                        set_by_jsonpath(
-                            mapped_metadata, valid_path, META_VALUE, fixed_properties=fixed_properties
-                        )
-                    else:
-                        system_info["warnings"].append(
-                            "Cannot convert to item type from json-ld, "
-                            f"{META_KEY}: {META_VALUE}"
-                        )
+                    _set_metadata(mapped_metadata, meta_props, prop_props)
                 except Exception as ex:
                     current_app.logger.warning(
-                        f"Failed to set metadata for '{META_KEY}': '{META_VALUE}'"
+                        f"Failed to set metadata for {META_KEY}: {META_VALUE}"
                     )
                     traceback.print_exc()
 
         # Check if "Extra" prepared in itemtype schema form item_map
-        if "Extra" in item_map and missing_metadata:
+        if "Extra" in item_map:
             extra_key = item_map["Extra"]
             prop_type = self._get_property_type(extra_key)
             if prop_type == "array":
@@ -1623,7 +1634,7 @@ class JsonLdMapper(JsonMapper):
                     {interim: str(missing_metadata)}
                 ]
             else:
-                mapped_metadata[item_map.get("Extra")] = json.dumps(missing_metadata)
+                mapped_metadata[item_map.get("Extra")] = str(missing_metadata)
 
         files_info = []
         for v in item_map.values():
@@ -1739,19 +1750,21 @@ class JsonLdMapper(JsonMapper):
         if not extracted:
             raise ValueError("Invalid json-ld format: Metadata is not found.")
 
-        def _resolve_link(value):
+        def _resolve_link(parent, key, value):
             """Resolve links in json-ld metadata and restore hierarchy."""
             if isinstance(value, dict):
                 if len(value) == 1 and "@id" in value and value["@id"] in extracted:
-                    return _resolve_link(extracted[value["@id"]])
+                    parent[key] = extracted[value["@id"]]
                 else:
-                    return {k: _resolve_link(v) for k, v in value.items()}
+                    for k, v in value.items():
+                        _resolve_link(value, k, v)
             elif isinstance(value, list):
-                return [_resolve_link(v) for v in value]
-            else:
-                return value
+                for i, v in enumerate(value):
+                    _resolve_link(value, i, v)
 
-        extracted = {k: _resolve_link(v) for k, v in extracted.items()}
+        # Restore metadata to tree structure by tracing "@id" in linked data
+        for key, value in extracted.items():
+            _resolve_link(extracted, key, value)
 
         list_extracted = []
         if format == "ro-crate":
@@ -1770,12 +1783,12 @@ class JsonLdMapper(JsonMapper):
             metadata = self._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
-                {"id": metadata.pop("identifier")}
-                if "identifier" in metadata else {}
+                {"id": extracted["identifier"]}
+                if "identifier" in extracted else {}
             )
             system_info.update(
-                {"uri": metadata.pop("uri")}
-                if "uri" in metadata else {}
+                {"uri": extracted["uri"]}
+                if "uri" in extracted else {}
             )
 
             list_grant = extracted.get("wk:grant", [])
@@ -1783,13 +1796,13 @@ class JsonLdMapper(JsonMapper):
                 raise ValueError(
                     "Invalid json-ld format: wk:grant is not a list."
                 )
-            for grant in list_grant:
+            for grant in extracted.get("wk:grant", []):
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "HDL":
                     system_info["cnri"] = grant.get("@id").lstrip("#")
                     break
-            for grant in list_grant:
+            for grant in extracted.get("wk:grant", []):
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "DOI":
@@ -1866,81 +1879,6 @@ class JsonLdMapper(JsonMapper):
 
         return return_data
 
-    def _adjust_index(self, metadata_key, properties_mapping):
-       """Map path between json-ld and itemtype metadata.
-
-       Args:
-           metadata_key (str): path in json-ld metadata.
-           properties_mapping (dict): mapping between json-ld and itemtype metadata.
-
-       Returns:
-           str or None: Mapped path with index, or None if not found.
-       """
-       # Split meta_key and extract indices
-       key_parts = re.findall(r'([^\.\[]+)(?:\[(\d+)\])?', metadata_key)
-       key_names = [k for k, _ in key_parts]
-       key_indices = [idx for _, idx in key_parts]
-
-       # Find the longest matching mapping key
-       for i in range(len(key_names), 0, -1):
-           chained = ".".join(key_names[:i])
-           if chained in properties_mapping:
-               mapped = properties_mapping[chained]
-               mapped_parts = mapped.split('.')
-               # meta_key: hasPart[0].dcterms:accessRights
-               # mapping: hasPart.dcterms:accessRights -> item_30002_file35.accessrole
-               # → item_30002_file35[0].accessrole
-               result_parts = []
-               for j, part in enumerate(mapped_parts):
-                   idx = key_indices[j] if j < len(key_indices) else None
-                   if idx:
-                       if not re.search(r"\[\d+\]$", part):
-                           part = f"{part}[{idx}]"
-                   result_parts.append(part)
-               return ".".join(result_parts)
-       return None
-
-    def _settable_path(self, json_path):
-       """Check if can put value to the json path.
-
-       Args:
-           json_path (str): json path.
-
-       Returns:
-           str | None: settable json path or None if not settable.
-       """
-       tokens = tokenize_jsonpath(json_path)
-       settable_path = None
-
-       for element, index, current_path in tokens:
-           type = self._get_property_type(current_path)
-
-           if type == "array":
-               if index is not None:
-                   if settable_path:
-                       settable_path += f".{element}[{index}]"
-                   else:
-                       settable_path = f"{element}[{index}]"
-               else:
-                   if settable_path:
-                       settable_path += f".{element}[0]"
-                   else:
-                       settable_path = f"{element}[0]"
-           else:
-               if index is not None and index > 0:
-                   settable_path = None
-                   break
-               else:
-                   if settable_path:
-                       settable_path += f".{element}"
-                   else:
-                       settable_path = f"{element}"
-
-       if settable_path and re.search(r'\[\d+\]$', settable_path):
-           return None
-
-       return settable_path
-       
     def extract_extended_metadata(self, list_extracted):
         """
         Store the content of files with wk:extendedMetadata set to True in extended_metadata,
@@ -2463,24 +2401,23 @@ class JsonLdMapper(JsonMapper):
         # Extra
         if "Extra" in item_map:
             extra_key = item_map["Extra"]
-            prop_type = self._get_property_type(extra_key)
-            if prop_type == "array":
-                extra_key_head = item_map["Extra"]
-                if not metadata_to_map.get(extra_key):
-                    extra_schema = self.itemtype.schema["properties"].get(
-                        extra_key_head).get("items", {}).get("properties")
-                    interim = list(extra_schema.keys())[0] if extra_schema else ""
-                    extra_key = extra_key_head + "[0]." + interim
+            # case: "Extra" is list
+            # If not list, pass this process.
+            extra_key_head = item_map["Extra"]
+            if not metadata_to_map.get(extra_key):
+                extra_schema = self.itemtype.schema["properties"].get(
+                    extra_key_head).get("items").get("properties")
+                interim = list(extra_schema.keys())[0]
+                extra_key = extra_key_head + "[0]." + interim
             str_extra_dict = metadata_to_map.get(extra_key)
-            if str_extra_dict:
-                extra_entity = {
-                    "description": "Metadata which is not able to be mapped",
-                    "value": str_extra_dict
-                }
-                add_entity(
-                    rocrate.root_dataset, "additionalProperty", gen_id("extra"),
-                    "PropertyValue", extra_entity
-                )
+            extra_entity = {
+                "description": "Metadata which is not able to be mapped",
+                "value": str_extra_dict
+            }
+            add_entity(
+                rocrate.root_dataset, "additionalProperty", gen_id("extra"),
+                "PropertyValue", extra_entity
+            )
 
         # wk:itemLinks
         list_item_link_info = ItemLink.get_item_link_info(recid)
@@ -2504,121 +2441,3 @@ class JsonLdMapper(JsonMapper):
         rocrate.root_dataset["wk:metadataAutoFill"] = False
 
         return rocrate
-
-def tokenize_jsonpath(json_path):
-    """Tokenize the json path.
-
-    Args:
-        json_path (str): json path.
-
-    Returns:
-        list[tuple[str, int|None]]: list of tokens (element, index).
-    """
-    matches = re.findall(r"([^.\[]+)(?:\[(\d+)\])?\.?", json_path)
-    tokens = []  # type: list[tuple[str, int|None]]
-    current_path = ""
-    for element, index_str in matches:
-        if current_path:
-            current_path += "." + element
-        else:
-            current_path = element
-
-        if index_str:
-            index = int(index_str)
-        else:
-            index = None
-        tokens.append((element, index, current_path))
-    return tokens
-
-def set_by_jsonpath(root, path, value, create_missing=True, fixed_properties=None):
-    """
-    Set a value inside a nested dict/list structure using a JSONPath-like syntax.
-
-    Args:
-        root (dict | list): The root object to modify.
-        path (str): The JSONPath-like path to the location to set the value.
-        value: The value to set at the specified location.
-        create_missing (bool): Whether to create missing keys/lists along the path.
-        fixed_properties (dict | None):
-            Fixed value info in the form {parent_path: {sub_key: value}}.
-            If the path matches when creating a dict, merge these values.
-    """
-    tokens = []
-    i = 0
-    while i < len(path):
-        if path[i] == '.':
-            i += 1
-            continue
-        if path[i] == '[':
-            j = path.find(']', i)
-            if j == -1:
-                raise ValueError("Unmatched '[' in path")
-            index_str = path[i+1:j]
-            if not index_str.isdigit():
-                raise ValueError("Only integer indices are allowed inside []")
-            tokens.append(int(index_str))
-            i = j + 1
-        else:
-            j = i
-            while j < len(path) and path[j] not in '.[':
-                j += 1
-            tokens.append(path[i:j])
-            i = j
-
-    if not tokens:
-        raise ValueError("Empty path")
-
-    # Traverse until the second last token
-    cur = root
-    for idx in range(len(tokens) - 1):
-        tok = tokens[idx]
-        next_tok = tokens[idx + 1]
-
-        if isinstance(tok, int):
-            # Current should be a list
-            if not isinstance(cur, list):
-                raise TypeError("Expected list when accessing by index")
-            # Extend list if necessary
-            while len(cur) <= tok:
-                if isinstance(next_tok, int):
-                    cur.append([])
-                else:
-                    # Merge fixed properties if available
-                    parent_path = ".".join([t for t in tokens[:idx+1] if not isinstance(t, int)])
-                    if fixed_properties and parent_path in fixed_properties:
-                        d = dict(fixed_properties[parent_path])
-                        cur.append(d)
-                    else:
-                        cur.append({})
-            cur = cur[tok]
-        else:
-            # Current should be a dict
-            if not isinstance(cur, dict):
-                raise TypeError("Expected dict when accessing by key")
-            if tok not in cur:
-                if not create_missing:
-                    raise KeyError("Missing key: " + tok)
-                if isinstance(next_tok, int):
-                    cur[tok] = []
-                else:
-                    # Merge fixed properties if available
-                    parent_path = ".".join([t for t in tokens[:idx+1] if not isinstance(t, int)])
-                    if fixed_properties and parent_path in fixed_properties:
-                        d = dict(fixed_properties[parent_path])
-                        cur[tok] = d
-                    else:
-                        cur[tok] = {}
-            cur = cur[tok]
-
-    # Set the final value
-    last = tokens[-1]
-    if isinstance(last, int):
-        if not isinstance(cur, list):
-            raise TypeError("Expected list for final index")
-        while len(cur) <= last:
-            cur.append(None)
-        cur[last] = value
-    else:
-        if not isinstance(cur, dict):
-            raise TypeError("Expected dict for final key")
-        cur[last] = value
