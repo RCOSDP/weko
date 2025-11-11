@@ -1467,7 +1467,7 @@ msgstr "リクエストフォーム"
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:464
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:471
 msgid "English"
-msgstr ""
+msgstr "英語"
 
 #: weko_admin/templates/weko_admin/admin/restricted_access_settings.html:83
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:465
@@ -1539,15 +1539,15 @@ msgstr "著者検索設定"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:54
 msgid "Search Author"
-msgstr ""
+msgstr "著者検索"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:59
 msgid "Search by Author Name"
-msgstr ""
+msgstr "著者名で検索"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:63
 msgid "Search by Author ID"
-msgstr ""
+msgstr "著者名IDで検索"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:76
 msgid "Search Results Setting"
@@ -1668,11 +1668,11 @@ msgstr "表示"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:300
 msgid "Width (Grid)"
-msgstr ""
+msgstr "横幅 (グリッド)"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:309
 msgid "Height (Pixel)"
-msgstr ""
+msgstr "縦幅 (ピクセル)"
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:329
 msgid "Facet"
@@ -1718,6 +1718,46 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
 msgid "Setting detail condition"
 msgstr "条件"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Save button description"
+msgstr "検索設定の保存ボタン"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Save all tab information"
+msgstr "全てのタブの情報を保存する"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab1"
+msgstr "検索画面表示設定"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab2"
+msgstr "詳細検索条件設定"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab3"
+msgstr "検索結果設定"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab4"
+msgstr "著者検索設定"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Mapping Settings"
+msgstr "マッピング設定"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Setting button"
+msgstr "設定（全てのタブの情報を保存ボタンを押さないと保存されません）"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Mapping Path"
+msgstr "マッピングパス"
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Setting detail condition value"
+msgstr "条件値"
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:39
 msgid "Site Name"

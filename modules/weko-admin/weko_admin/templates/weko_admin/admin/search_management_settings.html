@@ -40,182 +40,199 @@
 <div id="search_management" class="container-fluid table-responsive">
   <div ng-init="initData({{setting_data}})"
        ng-controller="searchManagementCtrl">
+
+    <!-- Floating Window -->
+    <aside class="admin-search-setting-floating" role="dialog" aria-label="help">
+      <div class="admin-search-setting-floating__header">
+        <strong>{{_('Search Settings Save button description')}}</strong>
+      </div>
+      <div class="admin-search-setting-floating__body">
+           <button type="button" class="btn btn-primary pull-right" ng-click="saveData()">
+             <span class="glyphicon glyphicon-save"></span>&nbsp;
+             {{_('Search Settings Save all tab information')}}
+           </button>
+      </div>
+    </aside>
+
     <div class="row">
       <div id="alerts"></div>
-      <div class="col-sm-12 col-md-12 col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h5><strong><p>{{ _('Search Author Setting') }}</p></strong></h5>
-          </div>
-          <div class="panel-body">
-            <form class="form-inline">
+    </div>
+    <ul class="nav nav-tabs">
+      <li role="presentation" class="active"><a data-tab="tab1" href="#">{{_('Search Settings Tab1')}}</a></li>
+      <li role="presentation"><a data-tab="tab2" href="#">{{_('Search Settings Tab2')}}</a></li>
+      <li role="presentation"><a data-tab="tab3" href="#">{{_('Search Settings Tab3')}}</a></li>
+      <li role="presentation"><a data-tab="tab4" href="#">{{_('Search Settings Tab4')}}</a></li>
+    </ul>
+    <!-- Tab1：Search Screen Display Settings  START -->
+    <div id="tab1" class="admin-search-setting-tab-content active">
+      <!--START  Main Screen Initial Display Setting-->
+      {% set disp_option = searchOptions.init_disp_setting_options %}
+      <div class="row">
+        <div class="col-sm-12 col-md-12 col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h5><strong>{{_('Main Screen Initial Display Setting')}}</strong></h5>
+            </div>
+            <div class="panel-body">
               <div class="row">
-                <div class="col-sm-2 text-right">
-                  <label>{{_('Search Author')}}</label>
-                </div>
-                <div class="col-sm-8">
-                    <label class="radio-inline">
-                      <input type="radio" ng-model="dataJson.search_author_flg" value="name">
-                      {{_("Search by Author Name")}}
-                    </label>
-                    <label class="radio-inline">
-                      <input type="radio" ng-model="dataJson.search_author_flg" value="id">
-                      {{_("Search by Author ID")}}
-                    </label>
-                </div>
+                <table class="table no-border">
+                  <tbody>
+                    <tr>
+                        <td>
+                          <div class="col-sm-3 col-md-2 col-md-2"><label>{{ _("Default Contents to Display") }}:</label></div>
+                          <div class="col-sm-3 col-md-3">
+                            <select id="init_disp_screen_setting" class="form-control"
+                                    ng-change="specificIndex();"
+                                    ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
+                              {%- if currentLanguage == 'ja' -%}
+                                <option ng-repeat="option in dataJson.init_disp_screen_setting" value="[[option.id]]">[[option.contents.ja]]</option>
+                              {%- else -%}
+                                <option ng-repeat="option in dataJson.init_disp_screen_setting" value="[[option.id]]">[[option.contents.en]]</option>
+                              {%- endif -%}
+                            </select>
+                          </div>
+                       </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="col-sm-2 col-md-2 col-md-2"><label ng-show="dataJson.init_disp_setting.init_disp_screen_setting == 3">
+                          {{ _("Display settings for web content") }}:</label>
+                        </div>
+                        <div class="col-sm-3 col-md-3">
+                          <select id="init_disp_index_disp_method" class="form-control"
+                                  ng-model="dataJson.init_disp_setting.init_disp_web_content"
+                                  ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 3"
+                                  ng-show="dataJson.init_disp_setting.init_disp_screen_setting == 3">
+                            <option ng-repeat="opt_num in dataJson.free_widgets track by $index" value="[[opt_num.widget_id]]">[[opt_num.label]]</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="col-sm-2 col-md-2 col-md-2"><label>{{ _("Default Index to Display") }}:</label></div>
+                        <div class="col-sm-3 col-md-3">
+                          <select id="init_disp_index_disp_method" class="form-control"
+                                  ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
+                                  ng-change="specificIndex();"
+                                  ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 0">
+                            {% for option in disp_option.init_disp_index_disp_method %}
+                              <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
+                            {% endfor %}
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr class="ng-hide"
+                        ng-show="dataJson.init_disp_setting.init_disp_index_disp_method=='1' && dataJson.init_disp_setting.init_disp_screen_setting == '0'">
+                      <td>
+                        <div class="col-sm-2 col-md-2"><label>{{ _("Initial Display Index") }}:</label></div>
+                        <div class="col-sm-10" style="padding-left: 12px;">
+                          <p>{{ _("An index which is not open in public cannot be selected") }}</p>
+                          <input id="init_disp_index_text" class="form-control" readonly="readonly">
+                          <input type="hidden" id="init_disp_index"/>
+                          <div class="initial-display-index">
+                            <div js-tree="treeConfig" ng-model="treeData" tree="treeInstance"
+                                 tree-events="select_node:selectInitDisplayIndex;deselect_node:disSelectInitDisplayIndex">
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h5><strong><p>{{_('Search Results Setting')}}</p></strong></h5>
-          </div>
-          <div class="panel-body">
-            <div class="row">
-              <div class="col-sm-12 col-md-12 col-md-12">
+      <!--END Main Screen Initial Display Setting -->
+      <div class="row">
+        <div class="col-sm-12 col-md-12 col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h5><strong><p>{{_('Index Tree/Facet Display Setting')}}</p></strong></h5>
+            </div>
+            <div class="panel-body">
+              <div class="row">
                 <table class="table table-bordered">
-                <tr>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      <form class="form-inline">
-                        <div class="form-group">
-                          <label for="def_dis_num">{{_('Default Display Number :')}}</label>
-                          <select id="def_dis_num" ng-model="dataJson.dlt_dis_num_selected" class="form-control">
-                            <option ng-repeat="opt_num in dataJson.dlt_dis_num_options track by $index" value="[[opt_num.id]]">{{_('[[opt_num.contents]]')}}</option>
-                          </select>
-                        </div>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-                 <tr>
-                  <td>
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      <form class="form-inline">
-                        <div class="form-group">
-                          <label for="def_dis_sort_index">{{_('Default Display Sort (Index Search) :')}}</label>
-                          <select id="def_dis_sort_index" ng-model="dataJson.dlt_index_sort_selected" class="form-control">
-                            <option ng-repeat="opt_index_sort in dataJson.dlt_index_sort_options track by $index" value="[[opt_index_sort.id]]" ng-disabled="opt_index_sort.disableFlg">{{_('[[opt_index_sort.contents]]')}}</option>
-                          </select>
-                        </div>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-                 <tr>
-                  <td>
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      <form class="form-inline">
-                        <div class="form-group">
-                          <label for="def_dis_sort_keywords">{{_('Default Display Sort (Keywords Search) :')}}</label>
-                          <select id="def_dis_sort_keywords" ng-model="dataJson.dlt_keyword_sort_selected" class="form-control">
-                            <option ng-repeat="opt_keyword_sort in dataJson.dlt_keyword_sort_options track by $index" value="[[opt_keyword_sort.id]]" ng-disabled="opt_keyword_sort.disableFlg">{{_('[[opt_keyword_sort.contents]]')}}</option>
-                          </select>
-                        </div>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-                 <tr>
-                  <td>
-                    <div class="row">
-                      <div class="col-sm-12 col-md-12 col-md-12">
-                        <span>{{_('Please set the sort of search results .')}}</span>
-                      </div>
-                    </div>
-                    <p>
-                    <div class="row">
-                      <div class="col-sm-5 col-md-5 col-md-5">
-                        <div class="col-sm-12 col-md-12 col-md-12">
-                          {{_('Allow')}}
-                          <br>
-                          <select multiple name="select_allow" id="select_allow" class="form-control" ng-model="selected_allow">
-                            <option ng-repeat="opt_sort_allow in dataJson.sort_options.allow track by $index" value="[[$index]]">{{_('[[opt_sort_allow.contents]]')}}</option>
-                          </select>
-                        </div>
-                      </div>
-                      <div class="col-sm-2 col-md-2 col-md-2 text-center">
-                        &nbsp;<br>
-                        <button type="button" class="btn btn-default" ng-click="setDeny(selected_allow)">
-                          <span class="glyphicon glyphicon-arrow-right"></span>
-                        </button>
-                        <br>
-                        <br>
-                        <button type="button" class="btn btn-default" ng-click="setAllow(selected_deny)" >
-                          <span class="glyphicon glyphicon-arrow-left"></span>
-                        </button>
-                      </div>
-                      <div class="col-sm-5 col-md-5 col-md-5">
-                        <div class="col-sm-12 col-md-12 col-md-12">
-                          {{_('Deny')}}
-                          <br>
-                          <select multiple name="select_deny" id="select_deny" class="form-control" ng-model="selected_deny">
-                            <option ng-repeat="opt_sort_deny in dataJson.sort_options.deny track by $index" value="[[$index]]">{{_('[[opt_sort_deny.contents]]')}}</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              </table>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <form class="form-inline">
+                          <div class="col-sm-2 col-md-2 col-md-2"><label>{{_('Index Tree')}}:</label></div>
+                          <div class="col-sm-10 col-md-10 col-md-10">
+                            <input type="checkbox" id="display_control_index_tree" value="dataJson.display_control.display_index_tree.id" ng-model="dataJson.display_control.display_index_tree.status" class="ng-pristine ng-valid ng-touched">
+                            <label for="display_control_index_tree" class="admin-search-setting-checkbox-label">{{_('Display')}}</label>
+                            <div style="display: flex; flex-direction: column; flex: 1">
+                              <form class="form-horizontal">
+                                <div class="form-group" style="margin-top: 15px">
+                                  <label for="width" class="control-label col-sm-2" style="padding-left: 0px">{{_('Width (Grid)')}}</label>
+                                  <select id="width" ng-model="dataJson.index_tree_style.width" class="form-control">
+                                    <option ng-repeat="opt_num in dataJson.index_tree_style.width_options track by $index" value="[[opt_num]]">[[opt_num]]</option>
+                                  </select>
+                                </div>
+                                <div class="form-group" style="margin-top: 15px;">
+                                  <label for="height" class="control-label col-sm-2" style="padding-left: 0px">{{_('Height (Pixel)')}}</label>
+                                  <input type="text" class="form-control" id="height" value="dataJson.index_tree_style.height" ng-model="dataJson.index_tree_style.height">
+                                </div>
+                              </form>
+                            </div>
+                          </div>
+                        </form>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <form class="form-inline">
+                          <div class="col-sm-2 col-md-2 col-md-2"><label>{{_('Facet')}}:</label></div>
+                          <div class="col-sm-10 col-md-10 col-md-10" style="display: flex;">
+                            <input type="checkbox" id="display_control_facet_search" value="dataJson.display_control.display_facet_search.id" ng-model="dataJson.display_control.display_facet_search.status" class="ng-pristine ng-valid ng-touched">
+                            <label for="display_control_facet_search" class="admin-search-setting-checkbox-label">{{_('Display')}}</label>
+                          </div>
+                        </form>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <form class="form-inline">
+                            <div class="col-sm-2 col-md-2 col-md-2"><label>{{_('Community')}}:</label></div>
+                            <div class="col-sm-10 col-md-10 col-md-10"  style="display: flex;">
+                              <input type="checkbox" id="display_control_community" value="dataJson.display_control.display_community.id" ng-model="dataJson.display_control.display_community.status" class="ng-pristine ng-valid ng-touched">
+                              <label for="display_control_community" class="admin-search-setting-checkbox-label">{{_('Display')}}</label>
+                            </div>
+                        </form>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-md-12">
-        <div class="panel panel-default scroll">
-          <div class="panel-heading">
-            <h5><strong><p>{{_('Detail Search Conditions Setting')}}</p></strong></h5>
-          </div>
-          <div class="panel-body">
-            <div class="row">
-              <div class="col-sm-12 col-md-12 col-md-12 text-center">
-                <table class="table table-bordered">
-                <tr>
-                  <td rowspan="[[rowspanNum]]">
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      {{_('Search Item')}}
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                     {{_('Useable Item')}}
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      {{_('Condition Name')}}
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      {{_('JPCOAR Mapping')}}
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      {{_('Initial Condition')}}
-                    </div>
-                  </td>
-                </tr>
-                <tr ng-repeat = "option_condition in dataJson.detail_condition track by $index">
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                        <label>
-                          <input type="checkbox" id="chk_useable_[[$index]]" value="option_condition.id" ng-model="option_condition.useable_status" >
-                        </label>
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
+    <!-- Tab1：Search Screen Display Settings  END -->
+    <!-- Tab2：Detail Search Conditions Setting  START -->
+    <div id="tab2" class="admin-search-setting-tab-content">
+      <div class="row">
+        <div class="col-sm-12 col-md-12 col-md-12">
+          <div class="panel panel-default scroll">
+            <div class="panel-heading">
+              <h5><strong><p>{{_('Detail Search Conditions Setting')}}</p></strong></h5>
+            </div>
+            <div class="panel-body">
+              <table class="table table-bordered">
+                <tbody>
+                  <tr>
+                    <td style="width: 270px">{{_('Condition Name')}}</td>
+                    <td style="width: 120px">{{_('Useable Item')}}</td>
+                    <td style="width: 120px">{{_('Initial Condition')}}</td>
+                    <td style="width: 300px">{{_('JPCOAR Mapping')}}</td>
+                    <td>{{_('Search Settings Mapping Settings')}}</td>
+                  </tr>
+                  <tr ng-repeat = "option_condition in dataJson.detail_condition track by $index">
+                    <td>
                       <form class="form-inline">
                         <div class="row">
                           {%- if currentLanguage == 'ja' -%}
@@ -226,386 +243,295 @@
                             <input type="hidden" class="form-control" id="hidden_contents_[[$index]]" value=[[option_condition.contents_value.ja]] readonly="readonly">
                           {%- endif -%}
                           <a data-toggle="modal" data-target="#search_contents_chg" class="btn btn-default" data-contents="label_contents_[[$index]]" data-subcontents="hidden_contents_[[$index]]" data-index="[[$index]]" id="btn_contents_[[$index]]" data-lang={{currentLanguage}}>
-                            <span class="glyphicon glyphicon-edit"></span>&nbsp
-                                {{ _('Edit') }}</a>
+                            <span class="glyphicon glyphicon-edit"></span>
+                            &nbsp{{ _('Edit') }}
+                          </a>
                         </div>
                       </form>
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      <p ng-repeat = "option_condition_mapping in option_condition.mapping track by $index">[[option_condition_mapping]]</p>
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                        <label>
-                          <input type="checkbox" id="chk_init_[[$index]]" value="option_condition.id" ng-model="option_condition.default_display" >
-                        </label>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      <input type="hidden" id="lat" value='{{_("lat")}}'/>
-                      <input type="hidden" id="lon" value='{{_("lon")}}'/>
-                      <input type="hidden" id="gte" value='{{_("gte")}}'/>
-                      <input type="hidden" id="lte" value='{{_("lte")}}'/>
-                      <input type="hidden" id="type" value='{{_("type")}}'/>
-                      <input type="hidden" id="coordinates" value='{{_("coordinates")}}'/>
-                      <label>{{_('Search item setting')}}:</label>
-                    </div>
-                  </td>
-                  <td >
-                    <div class="col-sm-4 col-md-4 col-md-4"  style="display: flex;">
-                      <a data-toggle="modal" data-target="#search_item_chg" class="btn btn-default" data-contents="label_contents_" id="btn_contents_[[$index]]">
-                        <span class="glyphicon glyphicon-edit"></span>&nbsp
-                          {{_('Search item setting')}}</a>
-                    </div>
-                  </td>
-                </tr>
-              </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h5><strong><p>{{_('Index Tree/Facet Display Setting')}}</p></strong></h5>
-          </div>
-          <div class="panel-body">
-            <div class="row">
-              <div class="col-sm-12 col-md-12 col-md-12">
-                <table class="table table-bordered">
-                <tr>
-                  <td >
-                    <div class="col-sm-12 col-md-12 col-md-12">
-                      <form class="form-inline">
-                        <div class="row">
-                            <div class="col-sm-2 col-md-2 col-md-2">
-                              <label>{{_('Index Tree')}}:</label>
-                            </div>
-                            <div class="col-sm-10 col-md-10 col-md-10">
-                              <input type="checkbox" id="display_control_index_tree" value="dataJson.display_control.display_index_tree.id" ng-model="dataJson.display_control.display_index_tree.status" class="ng-pristine ng-valid ng-touched">
-                              <label for="display_control_index_tree" style="font-weight: normal; margin: 0 5px;">{{_('Display')}}</label>
-                              <div style="display: flex; flex-direction: column; flex: 1">
-                                <form class="form-horizontal">
-                                  <div class="form-group" style="margin-top: 15px">
-                                    <label for="width" class="control-label col-sm-1">
-                                      {{_('Width (Grid)')}}
-                                    </label>
-                                    <select id="width" ng-model="dataJson.index_tree_style.width" class="form-control">
-                                      <option ng-repeat="opt_num in dataJson.index_tree_style.width_options track by $index" value="[[opt_num]]">[[opt_num]]</option>
-                                    </select>
-                                  </div>
-                                  <div class="form-group" style="margin-top:
-                                      15px;">
-                                    <label for="height" class="control-label col-sm-1">
-                                      {{_('Height (Pixel)')}}
-                                    </label>
-                                    <div class="controls col-sm-2">
-                                      <input type="text" class="form-control" id="height" value="dataJson.index_tree_style.height" ng-model="dataJson.index_tree_style.height">
-                                    </div>
-                                  </div>
-                                </form>
-                              </div>
-                            </div>
-                          </div>
-                      </form>
-                    </div>
-                  </td>
-                </tr>
-               <tr>
-                <td>
-                  <div class="col-sm-12 col-md-12 col-md-12">
-                    <form class="form-inline">
-                      <div class="row">
-                            <div class="col-sm-2 col-md-2 col-md-2">
-                              <label>{{_('Facet')}}:</label>
-                            </div>
-                            <div class="col-sm-10 col-md-10 col-md-10"  style="display: flex;">
-                              <input type="checkbox" id="display_control_facet_search" value="dataJson.display_control.display_facet_search.id" ng-model="dataJson.display_control.display_facet_search.status" class="ng-pristine ng-valid ng-touched">
-                              <label for="display_control_facet_search" style="
-                                  font-weight: normal;
-                                  margin: 0 5px;
-                              ">{{_('Display')}}</label>
-                            </div>
-                        </div>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              <tr>
-                <td>
-                  <div class="col-sm-12 col-md-12 col-md-12">
-                    <form class="form-inline">
-                      <div class="row">
-                            <div class="col-sm-2 col-md-2 col-md-2">
-                              <label>{{_('Community')}}:</label>
-                            </div>
-                            <div class="col-sm-10 col-md-10 col-md-10"  style="display: flex;">
-                              <input type="checkbox" id="display_control_community" value="dataJson.display_control.display_community.id" ng-model="dataJson.display_control.display_community.status" class="ng-pristine ng-valid ng-touched">
-                              <label for="display_control_community" style="
-                                  font-weight: normal;
-                                  margin: 0 5px;
-                              ">{{_('Display')}}</label>
-                            </div>
-                        </div>
-                    </form>
-                  </div>
-                </td>
-              </tr>
-              </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!--START  Main Screen Initial Display Setting-->
-  {% set disp_option = searchOptions.init_disp_setting_options %}
-    <div class="row">
-      <div class="col-sm-12 col-md-12 col-md-12">
-        <div class="panel panel-default">
-          <div class="panel-heading">
-            <h5><strong>{{_('Main Screen Initial Display Setting')}}</strong></h5>
-          </div>
-          <div class="panel-body">
-            <div class="row">
-              <table class="table no-border">
-                <colgroup>
-                  <col class="width_250px">
-                </colgroup>
-                <tr>
-                  <th scope="col"><label
-                          for="init_disp_screen_setting">{{ _("Default Contents to Display") }}:</label>
-                  </th>
-                  <td>
-                    <select id="init_disp_screen_setting" class="form-control"
-                            ng-change="specificIndex();"
-                            ng-model="dataJson.init_disp_setting.init_disp_screen_setting">
-                      {%- if currentLanguage == 'ja' -%}
-                        <option ng-repeat="option in dataJson.init_disp_screen_setting" value="[[option.id]]">[[option.contents.ja]]</option>
-                      {%- else -%}
-                        <option ng-repeat="option in dataJson.init_disp_screen_setting" value="[[option.id]]">[[option.contents.en]]</option>
-                      {%- endif -%}
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="col"><label ng-show="dataJson.init_disp_setting.init_disp_screen_setting == 3"
-                          for="init_disp_web_content">{{ _("Display settings for web content") }}:</label>
-                  </th>
-                  <td>
-                    <select id="init_disp_web_content" class="form-control"
-                            ng-model="dataJson.init_disp_setting.init_disp_web_content"
-                            ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 3"
-                            ng-show="dataJson.init_disp_setting.init_disp_screen_setting == 3">
-                      <option ng-repeat="opt_num in dataJson.free_widgets track by $index" value="[[opt_num.widget_id]]">[[opt_num.label]]</option>
-                    </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="col"><label
-                          for="init_disp_index_disp_method">{{ _("Default Index to Display") }}:</label>
-                  </th>
-                  <td>
-                    <select id="init_disp_index_disp_method"
-                            class="form-control"
-                            ng-model="dataJson.init_disp_setting.init_disp_index_disp_method"
-                            ng-change="specificIndex();"
-                            ng-disabled="dataJson.init_disp_setting.init_disp_screen_setting != 0">
-                      {% for option in disp_option.init_disp_index_disp_method %}
-                        <option value="{{ option.id }}">{{ option.contents[currentLanguage] }}</option>
-                      {% endfor %}
-                    </select>
-                  </td>
-                </tr>
-                <tr class="ng-hide"
-                    ng-show="dataJson.init_disp_setting.init_disp_index_disp_method=='1' && dataJson.init_disp_setting.init_disp_screen_setting == '0'">
-                  <th scope="col"><label
-                          for="init_disp_index_text">{{ _("Initial Display Index") }}:</label>
-                  </th>
-                  <td>
-                    <p>{{ _("An index which is not open in public cannot be selected") }}</p>
-                    <input id="init_disp_index_text" class="form-control"
-                           readonly="readonly">
-                    <input type="hidden" id="init_disp_index"/>
-                    <div class="initial-display-index">
-                      <div js-tree="treeConfig" ng-model="treeData"
-                           tree="treeInstance"
-                           tree-events="select_node:selectInitDisplayIndex;deselect_node:disSelectInitDisplayIndex">
+                    </td>
+                    <td class="text-center">
+                      <input type="checkbox" id="chk_useable_[[$index]]" value="option_condition.id" ng-model="option_condition.useable_status" >
+                    </td>
+                    <td class="text-center">
+                      <input type="checkbox"
+                             id="chk_init_[[$index]]"
+                             value="option_condition.id"
+                             ng-model="option_condition.default_display"
+                             ng-disabled="!option_condition.useable_status"
+                             ng-checked="option_condition.useable_status && option_condition.default_display"
+                             ng-change="!option_condition.useable_status ? option_condition.default_display = false : null">
+                    </td>
+                    <td title="[[ option_condition.mapping.join(', ') ]]">
+                      <p>[[ getJoinedMapping(option_condition.mapping) ]]</p>
+                    </td>
+                    <td ng-if="!option_condition.item_value"></td>
+                    <td ng-if="option_condition.item_value">
+                      <a data-toggle="modal" data-target="#search_item_chg" class="btn btn-default" data-contents="label_contents_[[$index]]" data-index="[[$index]]" id="btn_contents_[[$index]]">
+                        <span class="glyphicon glyphicon-edit"></span>&nbsp;{{ _('Search Settings Mapping Settings') }}
+                      </a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="col-sm-12 col-md-12 col-md-12">
+                        <input type="hidden" id="lat" value='{{_("lat")}}'/>
+                        <input type="hidden" id="lon" value='{{_("lon")}}'/>
+                        <input type="hidden" id="gte" value='{{_("gte")}}'/>
+                        <input type="hidden" id="lte" value='{{_("lte")}}'/>
+                        <input type="hidden" id="type" value='{{_("type")}}'/>
+                        <input type="hidden" id="coordinates" value='{{_("coordinates")}}'/>
+                        <input type="hidden" id="search_settings_mapping_path" value='{{_("Search Settings Mapping Path")}}'/>
                       </div>
-                    </div>
-                  </td>
-                </tr>
+                    </td>
+                  </tr>
+                </tbody>
               </table>
-            </div> <!-- End row class -->
+            </div>
           </div>
         </div>
       </div>
     </div>
-    <!--END Main Screen Initial Display Setting -->
-    <div class="form-group">
-      <button type="button" class="btn btn-primary pull-right" ng-click="saveData()">
-        <span class="glyphicon glyphicon-save"></span>&nbsp
-        {{_('Save')}}
-      </button>
-    </div>
-  </div>
-</div>
-
-
-<div id="search_contents_chg" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editHeader" aria-hidden="true">
-  <div class="modal-dialog" role="document" style="display: table; width: auto;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title" id="editHeader">WEKO</h4>
-      </div>
-      <div class="modal-body" style="overflow-x: auto;">
-        <div class="form-group">
-          <input type="text" name="labelname_text1" class="form-inline" id="labelname_text1">
-          <input type="hidden" name="labelname_id" class="form-inline" id="labelname_id">
-          <input type="hidden" name="labelname_lang" class="form-inline" id="labelname_lang">
-          <select id="sel_lang1" class="ng-pristine ng-valid ng-touched">
-            <option value="en">{{_('English')}}</option>
-            <option value="ja">{{_('Japanese')}}</option>
-          </select>
+    <!-- Tab2：Detail Search Conditions Setting  END -->
+    <!-- Tab3：Search Results Settings  START -->
+    <div id="tab3" class="admin-search-setting-tab-content">
+      <div class="row">
+        <div class="col-sm-12 col-md-12 col-md-12">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h5><strong><p>{{_('Search Results Setting')}}</p></strong></h5>
+            </div>
+            <div class="panel-body">
+              <div class="row">
+                <table class="table table-bordered">
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div class="col-sm-3 col-md-3"><label>{{_('Default Display Number :')}}</label></div>
+                        <div class="col-sm-3 col-md-3">
+                          <select id="def_dis_num" ng-model="dataJson.dlt_dis_num_selected" class="form-control">
+                            <option ng-repeat="opt_num in dataJson.dlt_dis_num_options track by $index" value="[[opt_num.id]]">{{_('[[opt_num.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="col-sm-3 col-md-3"><label>{{_('Default Display Sort (Index Search) :')}}</label></div>
+                        <div class="col-sm-3 col-md-3">
+                          <select id="def_dis_sort_index" ng-model="dataJson.dlt_index_sort_selected" class="form-control">
+                            <option ng-repeat="opt_index_sort in dataJson.dlt_index_sort_options track by $index" value="[[opt_index_sort.id]]" ng-disabled="opt_index_sort.disableFlg">{{_('[[opt_index_sort.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="col-sm-3 col-md-3"><label>{{_('Default Display Sort (Keywords Search) :')}}</label></div>
+                        <div class="col-sm-3 col-md-3">
+                          <select id="def_dis_sort_keywords" ng-model="dataJson.dlt_keyword_sort_selected" class="form-control">
+                            <option ng-repeat="opt_keyword_sort in dataJson.dlt_keyword_sort_options track by $index" value="[[opt_keyword_sort.id]]" ng-disabled="opt_keyword_sort.disableFlg">{{_('[[opt_keyword_sort.contents]]')}}</option>
+                          </select>
+                        </div>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="col-sm-12 col-md-12 col-md-12"><label>{{_('Please set the sort of search results .')}}</label></div>
+                        <div class="row col-sm-12 col-md-12 col-md-12">
+                          <div class="col-sm-3 col-md-3 col-md-3">
+                            {{_('Allow')}}<br>
+                            <select multiple name="select_allow" id="select_allow" class="form-control" ng-model="selected_allow" style="width:100%;" size="10">
+                              <option ng-repeat="opt_sort_allow in dataJson.sort_options.allow track by $index" value="[[$index]]">{{_('[[opt_sort_allow.contents]]')}}</option>
+                            </select>
+                          </div>
+                          <div class="col-sm-1 col-md-1 col-md-1  text-center">
+                            &nbsp;<br>
+                            <button type="button" class="btn btn-default" ng-click="setDeny(selected_allow)">
+                              <span class="glyphicon glyphicon-arrow-right"></span>
+                            </button>
+                            <br>
+                            <br>
+                            <button type="button" class="btn btn-default" ng-click="setAllow(selected_deny)" >
+                              <span class="glyphicon glyphicon-arrow-left"></span>
+                            </button>
+                          </div>
+                          <div class="col-sm-3 col-md-3 col-md-3">
+                            {{_('Deny')}}<br>
+                            <select multiple name="select_deny" id="select_deny" class="form-control" ng-model="selected_deny" style="width:100%;" size="10">
+                              <option ng-repeat="opt_sort_deny in dataJson.sort_options.deny track by $index" value="[[$index]]">{{_('[[opt_sort_deny.contents]]')}}</option>
+                            </select>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <input type="text" name="labelname_text2" class="form-inline" id="labelname_text2">
-          <select id="sel_lang2" class="ng-pristine ng-valid ng-touched">
-            <option value="en">{{_('English')}}</option>
-            <option value="ja">{{_('Japanese')}}</option>
-          </select>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="save_button" class="btn btn-primary pull-right" >
-          <span class="glyphicon glyphicon-save" class="close" data-dismiss="modal" aria-label="Close" data-num></span>&nbsp;
-          {{_('Save')}}
-        </button>
       </div>
     </div>
-  </div>
-</div>
-
-
-<div id="search_item_chg" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editHeader" aria-hidden="true">
-  <div class="modal-dialog" role="document" style="display: table; width: auto;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-        </button>
-        <h4 class="modal-title" id="editHeader">WEKO</h4>
+    <!-- Tab3：Search Results Settings  END -->
+    <!-- Tab4：Search Author Setting  START -->
+    <div id="tab4" class="admin-search-setting-tab-content">
+      <div class="row">
+        <div id="alerts"></div>
+          <div class="col-sm-12 col-md-12 col-md-12">
+            <div class="panel panel-default">
+              <div class="panel-heading">
+                <h5><strong><p>{{ _('Search Author Setting') }}</p></strong></h5>
+              </div>
+              <div class="panel-body">
+                <form class="form-inline">
+                  <div class="row">
+                    <div class="col-sm-2">
+                      <label>{{_('Search Author')}}</label>
+                    </div>
+                    <div class="col-sm-8">
+                      <label class="radio-inline">
+                        <input type="radio" ng-model="dataJson.search_author_flg" value="name">
+                        {{_("Search by Author Name")}}
+                      </label>
+                      <label class="radio-inline">
+                        <input type="radio" ng-model="dataJson.search_author_flg" value="id">
+                        {{_("Search by Author ID")}}
+                      </label>
+                   </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-body" style="overflow-x: auto;">
-        <div class="row">
-          <div class="col-sm-12">
-            <div class="panel panel-info">
-              <div class="panel-body item-type-list-header">
-                <div class="form-inline">
-                  <div class="col-sm-6 item-type-list">
-                    <div class="form-group">
-                      <label for="item-type-lists">{{_('Item Type List')}}</label>
-                      <select class="form-control" id="item-type-lists">
-                        {%- for list in lists -%}
-                        <option value="{{ list.item_type.0.id }}" {% if
-                                list.item_type.0.id== id %}{{ " selected" }}{%
-                                endif %}>{{ list.name }}({{
-                          list.item_type.0.tag }})
-                        </option>
-                        {%- endfor -%}
-                      </select>
+    </div>
+    <!-- Tab4：Search Author Setting  END -->
+
+    <!-- Search Conditions Edit Dialog  START -->
+    <div id="search_contents_chg" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editHeader" aria-hidden="true">
+      <div class="modal-dialog" role="document" style="display: table; width: auto;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="editHeader"></h4>
+          </div>
+          <div class="modal-body" style="overflow-x: auto;">
+            <div class="form-group">
+              <label for="labelname_text1" style="width: 75px;">{{_('English')}}:</label>
+              <input type="text" name="labelname_text1" class="form-inline" id="labelname_text1">
+              <input type="hidden" name="labelname_id" class="form-inline" id="labelname_id">
+              <input type="hidden" name="labelname_lang" class="form-inline" id="labelname_lang" value="en">
+            </div>
+            <div class="form-group">
+              <label for="labelname_text2" style="width: 75px;">{{_('Japanese')}}:</label>
+              <input type="text" name="labelname_text2" class="form-inline" id="labelname_text2">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="save_button" class="btn btn-primary pull-right" >
+              <span class="glyphicon glyphicon-save" class="close" data-dismiss="modal" aria-label="Close" data-num></span>&nbsp;
+              {{_('Search Settings Setting button')}}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Search Conditions Edit Dialog  END -->
+
+    <!-- Mapping Settings Dialog  START -->
+    <div id="search_item_chg" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="editHeader2" aria-hidden="true">
+      <div class="modal-dialog" role="document" style="display: table; width: 80dvw;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+            <h4 class="modal-title" id="editHeader2"></h4>
+          </div>
+          <div class="modal-body" style="overflow-x: auto;">
+            <div class="row">
+              <div class="col-sm-12">
+                <div class="panel panel-info">
+                  <div class="panel-body item-type-list-header">
+                    <div class="form-inline">
+                      <div class="col-sm-6 item-type-list">
+                        <div class="form-group">
+                          <label for="item-type-lists">{{_('Item Type List')}}</label>
+                          <select class="form-control" id="item-type-lists">
+                            {%- for list in lists -%}
+                            <option value="{{ list.item_type.0.id }}" {% if  list.item_type.0.id== id %}{{ " selected" }}{% endif %}>
+                              {{ list.name }}({{list.item_type.0.tag }})
+                            </option>
+                            {%- endfor -%}
+                          </select>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+            <div class="col-sm-12">
+              <input type="hidden" name="contents_word" class="form-inline" id="contents_word">
+              <table class="table" id="t_keyword">
+                <tbody id="tb_keyword">
+                  <tr id="tr_lists0" class="tr_lists">
+                    <td class="col-sm-10" id="setting_label">
+                      <div class="form-inline" id="setting_label1" style="display:flex; gap: .5rem;align-items: baseline;">
+                        <label id="label_id1" for="path_text1" class="admin-search-setting-mapping-item-label"></label>
+                        <input type="text" id="path_text1" class="form-control admin-search-setting-mapping-item-input" value="" placeholder="{{_('Enter Input Value')}}">
+                      </div>
+                      <div class="form-inline" id="setting_label2"style="padding-top:6px; display:flex; gap: .5rem;align-items: baseline;">
+                        <label id="label_id2" for="path_text1" class="admin-search-setting-mapping-item-label"></label>
+                        <input type="text" id="path_text2" class="form-control admin-search-setting-mapping-item-input" value="" placeholder="{{_('Enter Input Value')}}">
+                      </div>
+                      <div class="form-inline" id="setting_label3" style="padding-top:6px; display:flex; gap: .5rem;align-items: baseline;">
+                        <label for="condition_path_text" class="admin-search-setting-mapping-item-label">{{_('Setting detail condition')}}:</label>
+                        <input type="text" id="condition_path_text" class="form-control admin-search-setting-mapping-item-input" value="" placeholder="{{_('Enter Input Value')}}" >
+                      </div>
+                      <div class="form-inline" id="setting_label4" style="padding-top:6px; display:flex; gap: .5rem;align-items: baseline;">
+                         <label for="condition_value_text" class="admin-search-setting-mapping-item-label">{{_('Setting detail condition value')}}:</label>
+                        <input type="text" id="condition_value_text" class="form-control admin-search-setting-mapping-item-input" value="" placeholder="{{_('Enter Input Value')}}">
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          <div class="row">
+            <div class="col-sm-10"></div>
+            <div class="col-sm-2">
+              <button type="button" id="mapping-submit" class="btn btn-primary pull-right" data-action="save">
+                <span class="glyphicon glyphicon-save"></span>&nbsp;{{_('Search Settings Setting button')}}
+              </button>
+            </div>
           </div>
         </div>
-        <div class="col-sm-12">
-          <input type="hidden" name="contents_word" class="form-inline" id="contents_word">
-          <table class="table" id="t_keyword">
-            <tbody id="tb_keyword">
-              <tr id="tr_lists0" class="tr_lists">
-                <td class="col-sm-3" id="item_id">
-                  <select class="form-control" id="search_item" name="search_item"></select>
-                  <input type="hidden" name="contents_index" class="form-inline" id="contents_index">
-                </td>
-                <td class="col-sm-1" id="label_id">
-                  <div>
-                    <label id="label_id1"></label><br><br>
-                  </div>
-                  <div>
-                    <label id="label_id2"></label>
-                  </div>
-                </td>
-                <td class="col-sm-10" id="setting_label">
-                  <div class="form-inline" id="setting_label1">
-                    <select class="form-control" name="label_list" id="label_list1" style="width: 73px">
-                      <option value="0">json</option>
-                      <option value="1">xml</option>
-                    </select>
-                    <input type="text" id="path_text1" class="form-control" value="" placeholder="{{_('Enter Input Value')}}">
-                  </div>
-                  <div class="form-inline" id="setting_label2">
-                    <select class="form-control" name="label_list" id="label_list2" style="width: 73px">
-                      <option value="0">json</option>
-                      <option value="1">xml</option>
-                    </select>
-                    <input type="text" id="path_text2" class="form-control" value="" placeholder="{{_('Enter Input Value')}}">
-                  </div>
-                  <div class="form-inline" id="setting_label3" style="padding-top:6px;padding-left:6px">
-                    <label for="condition_path_text" style="width: 67px; font-weight: normal;">{{_('Setting detail condition')}}</label>
-                    <input type="text" id="condition_path_text" class="form-control" value="" placeholder="Enter Condition Path">
-                  </div>
-                  <div class="form-inline" id="setting_label4">
-                    <input type="text" id="condition_value_text" class="form-control" style="margin-left:76px" value="" placeholder="Enter Condition Value">
-                  </div>
-                </td>
-                <td class="col-sm-2" id="group_btn">
-                  <div class="btn-group form-inline" data-key="{{key}}">
-                    <!--Button-->
-                    <button type="button" class="btn btn-success
-                            ten-pixel-right-margin ten-pixel-bottom-margin"
-                            style="position:unset;" data-action="add" value="">
-                      <span class="glyphicon glyphicon-plus"></span>&nbsp;
-                      {{_('Add')}}
-                    </button>
-
-                    <button type="button" class="btn btn-danger
-                            ten-pixel-bottom-margin" id="button_remove"
-                            style="position:unset;" data-action="del">
-                      <span class="glyphicon glyphicon-remove"></span>
-                    </button>
-                    <!--Button-->
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="row">
-          <!--<div class= "col-sm-2"> -->
-          <div class="col-sm-10"></div>
-          <div class="col-sm-2">
-            <button type="button" id="mapping-submit" class="btn btn-primary pull-right" data-action="save">
-              <span class="glyphicon glyphicon-save"></span>&nbsp;
-              {{_('Save')}}
-            </button>
-          </div>
-        </div>
+      </div>
     </div>
+    <!-- Mapping Settings Dialog  END -->
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const header = document.querySelector('.content-header h4');
+        if (header && header.textContent.trim() === 'Search') {
+          header.textContent = "{{_('Admin menu_Setting_Search')}}";
+        }
+      });
+      const buttons = document.querySelectorAll('.nav-tabs a');
+      const contents = document.querySelectorAll('.admin-search-setting-tab-content');
+      buttons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          contents.forEach(c => c.classList.remove('active'));
+          buttons.forEach(c => c.closest('li').classList.remove('active'));
+          btn.closest('li').classList.add('active');
+          document.getElementById(btn.dataset.tab).classList.add('active');
+        });
+      });
+    </script>
   </div>
 </div>
 
