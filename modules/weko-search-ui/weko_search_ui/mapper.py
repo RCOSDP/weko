@@ -1589,9 +1589,6 @@ class JsonLdMapper(JsonMapper):
                     META_VALUE = str(META_VALUE)
                 # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
                 # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
-                for title, path in item_map.items():
-                    if path == PROP_PATH:
-                        print(f"Title    : {title}")
                 try:
                     adjusted_meta_key = self._adjust_index(META_KEY, properties_mapping)
                     valid_path = self._settable_path(adjusted_meta_key)

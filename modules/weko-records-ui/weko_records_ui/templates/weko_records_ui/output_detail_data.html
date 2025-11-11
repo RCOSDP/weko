@@ -117,8 +117,8 @@
             {%- if label == 'URL'  -%}
                 <td><a href="{{content | encode_filename }}">{{ content | escape_str }}</a></td>
             {%- elif content|url_to_link -%}
-            <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
-	    {%- else -%}
+                <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
+            {%- else -%}
                 <td class="multiple-line">{{ content | escape_str }}</td>
             {%- endif -%}
         {% endautoescape %}
