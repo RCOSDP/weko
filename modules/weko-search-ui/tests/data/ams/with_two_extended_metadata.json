@@ -1,0 +1,99 @@
+{
+  "@id": "./",
+  "@type": "Dataset",
+  "datePublished": "2025-10-22",
+  "name": "extract",
+  "description": "Item metadata for Item ID: 2000036. Title: extract.",
+  "wk:index": [
+    "1623632832836"
+  ],
+  "wk:publishStatus": "public",
+  "wk:feedbackMail": [],
+  "wk:requestMail": [],
+  "wk:grant": [],
+  "wk:editMode": "Keep",
+  "dc:title": [
+    {
+      "@id": "#:title_0",
+      "@type": "PropertyValue",
+      "value": "extract",
+      "language": "ja"
+    }
+  ],
+  "dc:type": {
+    "@id": "#:type_1",
+    "@type": "PropertyValue",
+    "rdf:resource": "departmental bulletin paper",
+    "value": "http://purl.org/coar/resource_type/c_6501"
+  },
+  "hasPart": [
+    {
+      "@id": "data/guide.pdf",
+      "@type": "File",
+      "dcterms:accessRights": "open_access",
+      "datePublished": "2025-10-22",
+      "name": "guide.pdf",
+      "jpcoar:extent": [
+        {
+          "@id": "#:extent_3",
+          "@type": "File",
+          "value": "844 KB"
+        }
+      ],
+      "jpcoar:mimeType": "application/pdf",
+      "jpcoar:URI": {
+        "@id": "#:URI_4",
+        "@type": "URL",
+        "value": "https://192.168.56.102/record/2000036/files/guide.pdf"
+      },
+      "wk:textExtraction": true,
+      "wk:extendedMetadata": true
+    },
+    {
+      "@id": "data/sample.txt",
+      "@type": "File",
+      "dcterms:accessRights": "open_access",
+      "datePublished": "2025-10-22",
+      "name": "sample.txt",
+      "jpcoar:extent": [
+        {
+          "@id": "#:extent_6",
+          "@type": "File",
+          "value": "51 B"
+        }
+      ],
+      "jpcoar:mimeType": "text/plain",
+      "jpcoar:URI": {
+        "@id": "#:URI_7",
+        "@type": "URL",
+        "value": "https://192.168.56.102/record/2000036/files/sample.txt"
+      },
+      "wk:textExtraction": true,
+      "wk:extendedMetadata": true
+    },
+    {
+      "@id": "data/pp.pptx",
+      "@type": "File",
+      "dcterms:accessRights": "open_access",
+      "datePublished": "2025-10-22",
+      "name": "pp.pptx",
+      "jpcoar:extent": [
+        {
+          "@id": "#:extent_9",
+          "@type": "File",
+          "value": "432 KB"
+        }
+      ],
+      "jpcoar:mimeType": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+      "jpcoar:URI": {
+        "@id": "#:URI_10",
+        "@type": "URL",
+        "value": "https://192.168.56.102/record/2000036/files/pp.pptx"
+      },
+      "wk:textExtraction": true,
+      "wk:extendedMetadata": false
+    }
+  ],
+  "wk:itemLinks": [],
+  "wk:metadataAutoFill": false
+}

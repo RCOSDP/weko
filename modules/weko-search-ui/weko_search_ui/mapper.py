@@ -11,6 +11,9 @@
 import os
 import re
 import json
+import chardet
+import mimetypes
+from pypdfium2 import PdfiumError
 import itertools
 import xmltodict
 import traceback
@@ -27,6 +30,7 @@ from weko_records.api import (
     Mapping, ItemTypes, FeedbackMailList, RequestMailList, ItemLink
 )
 from weko_records.serializers.utils import get_full_mapping
+from weko_deposit.utils import extract_text_from_pdf, extract_text_with_tika
 
 from .config import ROCRATE_METADATA_FILE, ROCRATE_METADATA_WK_CONTEXT_V1
 
@@ -1649,8 +1653,7 @@ class JsonLdMapper(JsonMapper):
         # }
         return mapped_metadata, system_info
 
-    @classmethod
-    def _deconstruct_json_ld(cls, json_ld):
+    def _deconstruct_json_ld(self, json_ld):
         """Deconstruct json-ld.
 
         Deconstructing json-ld metadata values ​​one by one
@@ -1760,10 +1763,11 @@ class JsonLdMapper(JsonMapper):
                 list_extracted = [ extracted ]
         else:
             list_extracted = [ extracted ]
+        self.extract_extended_metadata(list_extracted)
 
         list_deconstructed = []
         for extracted in list_extracted:
-            metadata = cls._deconstruct_dict(extracted)
+            metadata = self._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
                 {"id": metadata.pop("identifier")}
@@ -1936,6 +1940,91 @@ class JsonLdMapper(JsonMapper):
            return None
 
        return settable_path
+       
+    def extract_extended_metadata(self, list_extracted):
+        """
+        Store the content of files with wk:extendedMetadata set to True in extended_metadata,
+        and remove files with wk:extendedMetadata set to True from hasPart.
+
+        Args:
+            list_extracted (list): List of extracted metadata dictionaries.
+        Returns:
+            list: The updated list of extracted metadata with extended metadata merged.
+        """
+        for extracted in list_extracted:
+            extracted.pop('extended_metadata', None)
+            if 'hasPart' not in extracted:
+                continue
+            file_indices = [
+                idx for idx, item in enumerate(extracted['hasPart'])
+                if item.get('wk:extendedMetadata') is True
+            ]
+            if not file_indices:
+                continue
+            extended_metadatas = {}
+            extracted['extended_metadata'] = {}
+            for idx in reversed(file_indices):
+                filename = extracted['hasPart'].pop(idx).get('@id')
+                content = self.extract_text_from_files(filename)
+                extended_metadatas[filename] = content
+            extracted['extended_metadata']['value'] = json.dumps(
+                extended_metadatas, ensure_ascii=False)
+        return list_extracted
+
+    def extract_text_from_files(self, filename):
+        """
+        Extract text content from the specified file,
+        only if the file is of a specific MIME type.
+        Args:
+            filename (str): The name of the file to extract text from.
+
+        Returns:
+            str: The extracted text content from the file.
+        """
+        data_path = self.data_path
+        try:
+            file_path = os.path.join(data_path, filename)
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError
+            data = ""
+            mimetype = mimetypes.guess_type(filename)[0]
+            file_size_limit = current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']
+            # List of text-based MIME types allowed for text extraction and processing.
+            text_mimetypes = current_app.config["WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES"]
+            # All mimetypes subject to text extraction (including text_mimetypes)
+            extract_mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
+            if mimetype not in extract_mimetypes:
+                return data
+
+            # Extract content from file
+            current_app.logger.debug(f"extracting content from {filename}")
+            if mimetype in text_mimetypes:
+                with open(file_path, "rb") as fp:
+                    data = fp.read(file_size_limit)
+                inf = chardet.detect(data)
+                if inf["encoding"] is None:
+                    raise ValueError(
+                        f"Failed to load text file: {filename}")
+                data = data.decode(inf["encoding"], errors="replace")
+            elif mimetype == 'application/pdf':
+                data = extract_text_from_pdf(file_path, file_size_limit)
+            else:
+                try:
+                    data = extract_text_with_tika(file_path, file_size_limit)
+                except Exception as e:
+                    current_app.logger.error(e)
+                    traceback.print_exc()
+                    raise ValueError(
+                        f"Failed to load document: {filename}") from e
+        except FileNotFoundError as e:
+            current_app.logger.error(e)
+            traceback.print_exc()
+            raise FileNotFoundError(f"File Not Found: {filename}") from e
+        except PdfiumError as e:
+            current_app.logger.error(e)
+            traceback.print_exc()
+            raise PdfiumError(f"Failed to load PDF file: {filename}") from e
+        return data
 
     def to_rocrate_metadata(
         self, record_metadata=None, tsv_row_metadata=None, **kwargs
