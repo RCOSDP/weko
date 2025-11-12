@@ -965,31 +965,50 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
                 == result
             )
 
-    # string型に対してinteger型が送られた場合のテスト
     schema = {
         "type": "object",
         "properties": {
-            "test_str": {"type": "string"}
-        },
+            "item_xxx": {
+                "type": "object",
+                "properties": {
+                    "subitem_yyy": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "subitem_zzz": {
+                                    "type": "string",
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
+
     list_record = [
         {   
-            "metadata": {"test_str": 123},
+            "metadata": {
+                'item_xxx': {
+                    'subitem_yyy':[ 
+                        {"subitem_zzz": 123}
+                    ]
+                }
+            }
         }
     ]
     with app.test_request_context():
         with set_locale("en"):
             result = handle_validate_item_import(list_record, schema)
             warnings = result[0].get("warnings", [])
+            target = list_record[0]["metadata"]['item_xxx']['subitem_yyy'][0]["subitem_zzz"]
             assert any("Replace value of" in w for w in warnings)
             assert any("is different from existing" in w for w in warnings)
-            assert type(list_record[0]["metadata"]["test_str"]) == str
+            assert type(target) == str
 
-    list_record = [
-        {   
-            "metadata": {"test_str": 456},
-        }
-    ]
+    list_record[0]["metadata"]['item_xxx']['subitem_yyy'][0]["subitem_zzz"] = 456
+
     with app.test_request_context():
         with set_locale("ja"):
             result = handle_validate_item_import(list_record, schema)
@@ -997,19 +1016,34 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
             assert any("へ置き換えました。" in w for w in warnings)
             assert any("と異なっています。" in w for w in warnings)
 
-    # 従来のエラーが発生するケースのテスト
     schema = {
         "type": "object",
         "properties": {
-            "test_select": {
-                "type": "string",
-                "enum": [None, "Yes|Yes", "No|No"]
+            "item_aaa": {
+                "type": "object",
+                "properties": {
+                    "subitem_bbb": {
+                        "type": "object",
+                        "properties": {
+                            "subitem_ccc": {
+                                "enum": [None, "Yes|Yes", "No|No"],
+                            }
+                        }
+                    }
+                }
             }
-        },
+        }
     }
+
     list_record = [
-        {
-            "metadata": {"test_select": "Yes"},
+        {   
+            "metadata": {
+                'item_aaa': {
+                    'subitem_bbb': {
+                        "subitem_ccc": "Yes"
+                    }
+                }
+            }
         }
     ]
     with app.test_request_context():
