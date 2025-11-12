@@ -1511,7 +1511,8 @@ class JsonLdMapper(JsonMapper):
                 )
                 mapped_metadata["request_mail_list"] = request_mail_list
             elif META_PATH not in properties_mapping:
-                if not META_KEY.endswith("@id"):
+                if ("wk:" not in META_KEY and not META_KEY.endswith("@id")
+                    and META_KEY not in ["name", "description"]):
                     missing_metadata[META_KEY] = META_VALUE
                     system_info["warnings"].append(_(
                         "Cannot map to item type from json-ld; "
