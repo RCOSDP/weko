@@ -1711,11 +1711,7 @@ msgstr ""
 msgid "Default Contents to Display"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:401
-msgid "Display settings for web content"
-msgstr ""
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:380
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:400
 msgid "Default Index to Display"
 msgstr ""
 
@@ -1739,46 +1735,6 @@ msgstr ""
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
 msgid "Setting detail condition"
 msgstr "condition"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Save button description"
-msgstr "Save Search Settings button"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Save all tab information"
-msgstr "Save all tab information"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Tab1"
-msgstr "Search Screen Display Settings"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Tab2"
-msgstr "Detail Search Conditions Setting"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Tab3"
-msgstr "Search Results Settings"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Tab4"
-msgstr "Search Author Setting"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Mapping Settings"
-msgstr "Mapping Settings"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Setting button"
-msgstr "Settings (Changes will not be saved unless you click the Save all tab information button)"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Search Settings Mapping Path"
-msgstr "Mapping Path"
-
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html
-msgid "Setting detail condition value"
-msgstr "condition value"
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:39
 msgid "Site Name"
