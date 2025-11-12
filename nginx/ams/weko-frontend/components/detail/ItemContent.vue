@@ -179,10 +179,6 @@ function getSubSections(section: IDivision) {
         targetSubSection.push(subSection);
       }
     });
-    if (targetSubSection[0].name === "Extra") {
-      const extraStr = (props.item as any).metadata.Extra[0]['値'];
-      targetSubSection[0].text = extraStr;
-    }
   }
 
   return targetSubSection;
