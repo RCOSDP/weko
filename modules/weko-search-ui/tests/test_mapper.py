@@ -59,7 +59,8 @@ from weko_search_ui.mapper import (
     add_catalog,
     JPCOARV2Mapper,
     JsonMapper,
-    JsonLdMapper
+    JsonLdMapper,
+    set_by_jsonpath,
 )
 from .helpers import json_data
 
@@ -5276,3 +5277,89 @@ class TestJsonLdMapper:
             assert item_metadata["item_1736145554459"]["subitem_date_issued_datetime"] == "2025-06-11"
             assert item_metadata["item_1749689698804"]["subitem_relation_type_id"]["subitem_relation_type_id_text"] == "grdm"
             assert item_metadata["item_1749689698804"]["subitem_relation_type"] == "isVersionOf"
+
+
+def test_set_by_jsonpath():
+    data = {}
+
+    set_by_jsonpath(data, "pubdate", "2025-06-12")
+    assert data["pubdate"] == "2025-06-12"
+
+    set_by_jsonpath(data, "item_1.subitem_1", "value_1")
+    assert data["item_1"]["subitem_1"] == "value_1"
+
+    set_by_jsonpath(data, "item_1.subitem_2.subsubitem_1", "value_2", {"item_1": {"subitem_2": {"default_factory": "default_value"}}})
+    assert data["item_1"]["subitem_2"]["default_factory"] == "default_value"
+    assert data["item_1"]["subitem_2"]["subsubitem_1"] == "value_2"
+
+    with pytest.raises(TypeError):
+        set_by_jsonpath(data, "item_1[0].subitem_invalid", "value_invalid")
+
+
+    set_by_jsonpath(data, "item_2[0].subitem_3", "value_2")
+    assert data["item_2"][0]["subitem_3"] == "value_2"
+
+    set_by_jsonpath(data, "item_2[1].subitem_4", "value_3")
+    assert data["item_2"][1]["subitem_4"] == "value_3"
+
+    with pytest.raises(ValueError):
+        set_by_jsonpath(data, "item_2[2.subitem_4", "value_3")
+
+    with pytest.raises(ValueError):
+        set_by_jsonpath(data, "item_2[foo].subitem_invalid", "value_invalid")
+
+    set_by_jsonpath(data, "item_3[0].subitem_5.subsubitem_2", "value_4")
+    assert data["item_3"][0]["subitem_5"]["subsubitem_2"] == "value_4"
+
+    set_by_jsonpath(data, "item_3[1].subitem_5.subsubitem_3", "value_5")
+    assert data["item_3"][1]["subitem_5"]["subsubitem_3"] == "value_5"
+
+    set_by_jsonpath(data, "item_3[1].subitem_6[0].subsubitem_4", "value_6", {"item_3.subitem_6": {"default_factory": "default_value"}})
+    assert data["item_3"][1]["subitem_6"][0]["subsubitem_4"] == "value_6"
+    assert data["item_3"][1]["subitem_6"][0]["default_factory"] == "default_value"
+
+    with pytest.raises(TypeError):
+        set_by_jsonpath(data, "item_3.subitem_invalid", "value_invalid")
+
+    with pytest.raises(ValueError):
+        set_by_jsonpath(data, "", "value_invalid")
+
+    assert data == {
+        "pubdate": "2025-06-12",
+        "item_1": {
+            "subitem_1": "value_1",
+            "subitem_2": "value_2"
+        },
+        "item_2": [
+            {
+                "subitem_3": "value_2"
+            },
+            {
+                "subitem_4": "value_3"
+            }
+        ],
+        "item_3": [
+            {
+                "subitem_5": {
+                    "subsubitem_2": "value_4"
+                }
+            },
+            {
+                "subitem_5": {
+                    "subsubitem_3": "value_5"
+                },
+                "subitem_6": [
+                    {
+                        "subsubitem_4": "value_6",
+                        "default_factory": "default_value"
+                    }
+                ]
+            }
+        ]
+    }
+
+    set_by_jsonpath(data, "item_4.subitem_6[1]", "value_7")
+    assert data["item_4"]["subitem_6"][0] == None
+    assert data["item_4"]["subitem_6"][1] == "value_7"
+
+    set_by_jsonpath(data, "item_4.subitem_6[1]", "value_7")

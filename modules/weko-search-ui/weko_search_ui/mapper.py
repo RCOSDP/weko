@@ -1495,22 +1495,22 @@ class JsonLdMapper(JsonMapper):
                     ))
             else:
                 # item metadata
-                meta_props = META_KEY.split(".")
-                PROP_PATH = properties_mapping[META_PATH]
-                prop_props = PROP_PATH.split(".")
                 if META_VALUE is None or META_VALUE == "":
                     # If the value is None or empty, skip setting metadata
                     continue
                 if not isinstance(META_VALUE, (str, int, float, bool)):
                     META_VALUE = str(META_VALUE)
-                # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
-                # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
                 try:
-                    adjusted_meta_key = self._align_index(META_KEY, properties_mapping)
-                    valid_path = self._check_settable_path(adjusted_meta_key)
+                    destination_path = self._resolve_mapping_destination(
+                        META_KEY, properties_mapping
+                    )
+                    # META_KEY="dc:type.@id"
+                    # → destination_key=item_30001_resource_type11.resourceuri
+                    valid_path = self._check_settable_path(destination_path)
                     if valid_path:
                         set_by_jsonpath(
-                            mapped_metadata, valid_path, META_VALUE, fixed_properties=fixed_properties
+                            mapped_metadata, valid_path, META_VALUE,
+                            fixed_properties=fixed_properties
                         )
                     else:
                         missing_metadata[META_KEY] = META_VALUE
@@ -1539,10 +1539,12 @@ class JsonLdMapper(JsonMapper):
                     extra_key).get("items").get("properties")
                 interim = list(extra_schema.keys())[0]
                 mapped_metadata[item_map.get("Extra")] = [
-                    {interim: json.dumps(missing_metadata)}
+                    {interim: json.dumps(missing_metadata, ensure_ascii=False)}
                 ]
             else:
-                mapped_metadata[item_map.get("Extra")] = json.dumps(missing_metadata)
+                mapped_metadata[item_map.get("Extra")] = json.dumps(
+                    missing_metadata, ensure_ascii=False
+                )
             system_info["warnings"] = [
                 _("Metadata which could not be mapped to item type will be set in 'Extra'.")
             ] + system_info["warnings"]
@@ -1782,11 +1784,11 @@ class JsonLdMapper(JsonMapper):
 
         return return_data
 
-    def _align_index(self, metadata_key, properties_mapping):
-        """Map path between json-ld and itemtype metadata.
+    def _resolve_mapping_destination(self, metadata_key, properties_mapping):
+        """Resolve mapping destination path.
 
-        Align the indexes of the path and item type path in the json-ld
-        based on the mapping.
+        Searches for the path within the item type metadata corresponding to
+        the specified JSON-LD metadata key, taking into account existing indexes.
 
         Args:
             metadata_key (str): path in json-ld metadata.
