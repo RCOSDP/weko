@@ -1433,6 +1433,7 @@ def handle_validate_item_import(list_record, schema) -> list:
     v2 = Draft4Validator(schema) if schema else None
     for record in list_record:
         errors = record.get("errors") or []
+        warnings = []
         record_id = record.get("id")
         if record_id and (
             not represents_int(record_id) or re.search(r"([０-９])", record_id)
@@ -1444,19 +1445,45 @@ def handle_validate_item_import(list_record, schema) -> list:
         if record.get("metadata"):
             if v2:
                 a = v2.iter_errors(record.get("metadata"))
+                for error in a:
+                    if (
+                        error.validator == "type"
+                        and error.validator_value == "string"
+                        and isinstance(error.instance, int)
+                    ):
+                        target = record["metadata"]
+                        path_list = list(error.path)
+                        for key in path_list[:-1]:
+                            target = target[key]
+                        last_key = path_list[-1]
+                        target[last_key] = str(target[last_key])
+                        target_path = ".".join([str(p) for p in path_list[:-2]])
+                        warnings.append(
+                            _("Replace value of %(target_path)s from %(old_value)s to '%(new_value)s'.", 
+                                target_path=target_path, old_value=target[last_key], new_value=str(target[last_key])
+                            )
+                        )
+                b = v2.iter_errors(record.get("metadata"))
                 if current_i18n.language == "ja":
                     _errors = []
-                    for error in a:
+                    for error in b:
                         _errors.append(handle_convert_validate_msg_to_jp(error.message))
                     errors = errors + _errors
                 else:
-                    errors = errors + [error.message for error in a]
+                    errors = errors + [error.message for error in b]
             else:
                 errors = errors = errors + [_("Specified item type does not exist.")]
 
-        item_error = dict(**record)
-        item_error["errors"] = errors if len(errors) else None
-        result.append(item_error)
+        records = dict(**record)
+        records["errors"] = errors if len(errors) else None
+        if len(warnings) > 0:
+            warnings.append(
+                _("Specified %(type)s is different from existing %(existing_type)s.",
+                    type="type:integer", existing_type="type:string"
+                )
+            )
+            records["warnings"] = warnings if len(warnings) else None
+        result.append(records)
 
     return result
 

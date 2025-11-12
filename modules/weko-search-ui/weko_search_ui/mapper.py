@@ -1564,10 +1564,10 @@ class JsonLdMapper(JsonMapper):
                     extra_key).get("items").get("properties")
                 interim = list(extra_schema.keys())[0]
                 mapped_metadata[item_map.get("Extra")] = [
-                    {interim: json.dumps(missing_metadata)}
+                    {interim: json.dumps(missing_metadata, ensure_ascii=False)}
                 ]
             else:
-                mapped_metadata[item_map.get("Extra")] = json.dumps(missing_metadata)
+                mapped_metadata[item_map.get("Extra")] = json.dumps(missing_metadata, ensure_ascii=False)
             system_info["warnings"] = [
                 _("Metadata which could not be mapped to item type will be set in 'Extra'.")
             ] + system_info["warnings"]
@@ -2571,4 +2571,3 @@ def tokenize_jsonpath(json_path):
             index = None
         tokens.append((element, index, current_path))
     return tokens
-
