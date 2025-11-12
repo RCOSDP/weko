@@ -136,7 +136,13 @@ from weko_accounts import WekoAccounts
 from weko_deposit.api import WekoDeposit
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
-from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, WEKO_MAX_FILE_SIZE
+from weko_deposit.config import (
+    WEKO_BUCKET_QUOTA_SIZE,
+    WEKO_MAX_FILE_SIZE,
+    WEKO_DEPOSIT_FILESIZE_LIMIT,
+    WEKO_MIMETYPE_WHITELIST_FOR_ES,
+    WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES
+)
 from weko_groups import WekoGroups
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
@@ -694,7 +700,10 @@ def base_app(instance_path, search_class, request):
         WEKO_ITEMS_UI_INDEX_PATH_SPLIT = '///',
         WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5,
         WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100,
-        RECORDS_UI_ENDPOINTS = RECORDS_UI_ENDPOINTS
+        RECORDS_UI_ENDPOINTS = RECORDS_UI_ENDPOINTS,
+        WEKO_DEPOSIT_FILESIZE_LIMIT = WEKO_DEPOSIT_FILESIZE_LIMIT,
+        WEKO_MIMETYPE_WHITELIST_FOR_ES = WEKO_MIMETYPE_WHITELIST_FOR_ES,
+        WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES
     )
     app_.url_map.converters["pid"] = PIDConverter
     app_.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = search_class
