@@ -108,9 +108,6 @@ setup(
     include_package_data=True,
     platforms='any',
     entry_points={
-        'flask.commands': [
-            'oaipmh_file_create = invenio_oaiserver.cli:oaipmh_file_create',
-        ],
         'invenio_base.apps': [
             'invenio_oaiserver = invenio_oaiserver:InvenioOAIServer',
         ],
