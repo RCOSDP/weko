@@ -1688,7 +1688,11 @@ msgstr ""
 msgid "Default Contents to Display"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/search_management_settings.html:400
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:401
+msgid "Display settings for web content"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html:380
 msgid "Default Index to Display"
 msgstr ""
 
@@ -1711,6 +1715,46 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/search_management_settings.html:554
 msgid "Setting detail condition"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Save button description"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Save all tab information"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab1"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab2"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab3"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Tab4"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Mapping Settings"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Setting button"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Search Settings Mapping Path"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/admin/search_management_settings.html
+msgid "Setting detail condition value"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_info.html:39

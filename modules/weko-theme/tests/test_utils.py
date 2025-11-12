@@ -4,6 +4,7 @@ from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
 from elasticsearch_dsl import response, Search
+from weko_gridlayout.models import WidgetMultiLangData
 
 from weko_theme.utils import (
     get_weko_contents,
@@ -34,6 +35,28 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities, re
                 assert result
                 assert result['index_link_list']
 
+    search_setting = {
+        "init_disp_setting": {
+            "init_disp_screen_setting": "3",
+            "init_disp_index_disp_method": "0",
+            "init_disp_index": MagicMock(),
+            "init_disp_web_content": "24",
+        }
+    }
+
+    widgetmultilangdata_1 = WidgetMultiLangData(
+        widget_id=24, lang_code='en', label='',
+        description_data='{"description": ""}', is_deleted=False)
+    widgetmultilangdata_2 = WidgetMultiLangData(
+        widget_id=24, lang_code='ja', label='',
+        description_data='{description": ""}', is_deleted=False)
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch('weko_theme.utils.get_search_setting',
+                   return_value=search_setting):
+            with patch("weko_theme.utils.WidgetMultiLangData.get_by_widget_id",
+                       return_value=[widgetmultilangdata_1,
+                                     widgetmultilangdata_2]):
+                assert get_weko_contents('comm1')
 
 # def get_community_id(getargs):
 def test_get_community_id(i18n_app, communities, db):
