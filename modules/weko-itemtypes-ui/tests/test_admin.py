@@ -380,7 +380,7 @@ class TestItemTypeMetaDataView:
             "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
             "1":{"name":"test_name_en","schema":{"properties":{"filename":{"items":["test_file"]}}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
             "4":{"name":"test4_exist_system_prop","schema":{"system_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
-            "defaults":{"0":{"name":"Date (Type-less）","value":"datetime"}}
+            "defaults":{"0":{"name":"Date (Type-less)","value":"datetime"}}
         }
         assert result == test
         # adminsetting is None
@@ -404,7 +404,7 @@ class TestItemTypeMetaDataView:
             "system":{"2":{"name":"S_test2","schema":{},"form":{},"forms":{},"sort":None,"is_file":False}},
             "1":{"name":"test_name_en","schema":{"properties":{"filename":{"items":["test_file"]}}},"form":{"title_i18n":{"en":"test_name_en"}},"forms":{},"sort":None,"is_file":True},
             "4":{"name":"test4_exist_system_prop","schema":{"system_prop":True},"form":{},"forms":{},"sort":None,"is_file":False},
-            "defaults":{"0":{"name":"Date (Type-less）","value":"datetime"}}
+            "defaults":{"0":{"name":"Date (Type-less)","value":"datetime"}}
         }
         assert result == test
 #     def export(self,item_type_id):
@@ -544,6 +544,9 @@ class TestItemTypeMetaDataView:
                 pass
         mocker.patch("weko_itemtypes_ui.admin.io.BytesIO",side_effect=MockBytesIO)
         mocker.patch("weko_itemtypes_ui.admin.ZipFile",side_effect=MockZip)
+        item_type = item_type_data['item_type']
+        item_type.harvesting_type = False
+        db.session.commit()
         res = client.get(url)
         fp,kwargs = mock_send.call_args
         assert "ItemType.json" in fp[0].data

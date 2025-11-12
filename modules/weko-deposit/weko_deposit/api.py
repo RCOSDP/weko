@@ -1572,10 +1572,11 @@ class WekoDeposit(Deposit):
         except RuntimeError:
             raise
         except ValueError as ex:
-            raise ex
+            traceback.print_exc()
+            raise
         except BaseException:
             import traceback
-            traceback.format_exc()
+            traceback.print_exc()
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
@@ -1632,7 +1633,7 @@ class WekoDeposit(Deposit):
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
         self['_deposit']['created_by'] = int(
-            self.data.get('created_by', 
+            self.data.get('created_by',
                           current_user.id if current_user and current_user.is_authenticated else system_admin.id))
 
         if data:

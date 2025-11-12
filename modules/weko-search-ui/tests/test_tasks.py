@@ -5,12 +5,10 @@ import json
 import pathlib
 import pytest
 import unittest
-from flask import current_app, make_response, request
-from mock import patch, MagicMock, Mock
+from flask import current_app
+from unittest.mock import patch, MagicMock
 from flask_login import current_user
-from mock import patch
 
-from weko_index_tree.api import Indexes
 from weko_search_ui.tasks import (
     check_import_items_task,
     check_rocrate_import_items_task,
@@ -59,7 +57,7 @@ def test_check_import_items_task(i18n_app, users, mocker):
     mock_datetime = mocker.patch('weko_search_ui.tasks.datetime', autospec=True)
     mock_datetime.now.return_value = datetime(2025, 4, 1, 12, 0, 0)
     mock_apply_async = mocker.patch('weko_search_ui.tasks.remove_temp_dir_task.apply_async', autospec=True)
-    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+    with patch("weko_search_ui.tasks.check_tsv_import_items", return_value=data):
         with patch("shutil.rmtree", return_value=""):
             result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
             assert result["start_date"] == "2025-04-01 12:00:00"
@@ -77,9 +75,9 @@ def test_check_import_items_task(i18n_app, users, mocker):
             assert result["list_record"] == [{'errors': "error"}]
             assert not result.get("error")
             assert mock_apply_async.call_count == 1
-    
+
     data = {"error": 'error', 'data_path': 'test_path', 'list_record': [{'errors': None}]}
-    with patch("weko_search_ui.tasks.check_import_items", return_value=data):
+    with patch("weko_search_ui.tasks.check_tsv_import_items", return_value=data):
         with patch("shutil.rmtree", return_value=""):
             # with patch('weko_search_ui.tasks.get_lifetime', return_value=1800):
             result = check_import_items_task(file_path=file_path,is_change_identifier=True,host_url="https://localhost")
@@ -88,7 +86,7 @@ def test_check_import_items_task(i18n_app, users, mocker):
             assert not result.get("data_path")
             assert not result.get("list_record")
             assert result['error'] == 'error'
-    
+
     p.unlink()
 
 
@@ -452,7 +450,7 @@ def test_check_flag_metadata_replace(i18n_app):
     assert list_record == [{
         "id": 1, "metadata_replace": True,
         "errors": ["test_error.",
-                   "RO-Crate インポートでは、`wk:metadata_replace`フラグを有効にできません。"]
+                   "RO-Crate インポートでは、`wk:metadataReplace`フラグを有効にできません。"]
     }]
 
 

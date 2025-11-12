@@ -342,7 +342,7 @@ class TestExportView():
         try:
             with patch("weko_authors.admin.FileInstance.get_by_uri") as mocker_get_by_uri:
                 current_cache.set(
-                    current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"),
+                    f"{current_app.config.get('WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY')}_{users[0]['id']}",
                     "author_db",
                     timeout=0
                 )
@@ -353,7 +353,7 @@ class TestExportView():
                 test = {'code': 200, 'data': {'download_link': '', 'filename': expected_filename, 'key': 'authors_export_status'}}
                 assert json.loads(res.data) == test
         finally:
-            delete_cache_data(current_app.config.get("WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY"))
+            delete_cache_data(f"{current_app.config.get('WEKO_AUTHORS_EXPORT_TARGET_CACHE_KEY')}_{users[0]['id']}")
 
         # not get_export_status
         try:
@@ -365,7 +365,7 @@ class TestExportView():
             test = {'code': 200, 'data': {'download_link':'http://app/admin/authors/export/download/Creator_export_all','filename':'','key':'authors_exported_url','stop_point':{'key':'authors_export_stop_point'}}}
             assert json.loads(res.data)==test
         finally:
-            delete_cache_data("weko_authors_export_stop_point")
+            delete_cache_data(f"weko_authors_export_stop_point_{users[0]['id']}")
 
         # exsit FileInstance.get_by_uri
         current_cache.set(f"weko_authors_export_status_{users[0]['id']}",{"key":"authors_export_status","task_id":"test_task"})

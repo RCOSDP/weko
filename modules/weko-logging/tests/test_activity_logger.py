@@ -2,7 +2,6 @@
 """ User activity log test """
 
 from flask import g
-from datetime import datetime
 import logging
 
 import pytest
@@ -166,6 +165,43 @@ def test_log_error_invalid_case(app, client, db, users, caplog, mocker):
             target_key=expected_target_key)
         assert "target is None and target_key is not None" in str(excinfo.value)
 
+# .tox/c1/bin/pytest --cov=weko_logging tests/test_activity_logger.py::test_log_error_no_group_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
+def test_log_error_no_group_id(app, client, db, users, caplog, mocker):
+    caplog.set_level(logging.INFO)
+
+    # user_id
+    mock_current_user = mocker.patch("weko_logging.handler.current_user")
+
+    login_user_via_session(client=client, email=users[0]['email'])
+    mock_current_user.is_authenticated = True
+    mock_current_user.id = users[0]["id"]
+    mock_current_user.shib_weko_user = []
+
+    mock_request = mocker.patch("weko_logging.handler.request")
+    mock_request.headers.getlist.return_value = None
+
+    # ip address
+    mock_request.remote_addr = "123.456.789.001"
+
+    # client_id
+    mock_request.oauth = None
+
+    # target
+    expected_target_key = 2
+
+    # community_id and path
+    mock_request.path = "https://test_server/item/2"
+
+    mock_get_group_id = mocker.patch("weko_logging.activity_logger.UserActivityLogger.get_log_group_id")
+    mock_get_group_id.return_value = None
+
+
+    UserActivityLogger.error(
+        operation="ITEM_CREATE",
+        target_key=expected_target_key)
+
+    assert len(caplog.records) == 1
+
 
 # def UserActivityLogger:
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_activity_logger.py::test_log_info_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
@@ -309,6 +345,43 @@ def test_log_info_invalid_case(app, client, db, users, caplog, mocker):
             target_key=expected_target_key)
         assert "target is None and target_key is not None" in str(excinfo.value)
 
+# .tox/c1/bin/pytest --cov=weko_logging tests/test_activity_logger.py::test_log_info_no_group_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
+def test_log_info_no_group_id(app, client, db, users, caplog, mocker):
+    caplog.set_level(logging.INFO)
+
+    # user_id
+    mock_current_user = mocker.patch("weko_logging.handler.current_user")
+
+    login_user_via_session(client=client, email=users[0]['email'])
+    mock_current_user.is_authenticated = True
+    mock_current_user.id = users[0]["id"]
+    mock_current_user.shib_weko_user = []
+
+    mock_request = mocker.patch("weko_logging.handler.request")
+    mock_request.headers.getlist.return_value = None
+
+    # ip address
+    mock_request.remote_addr = "123.456.789.001"
+
+    # client_id
+    mock_request.oauth = None
+
+    # target
+    expected_target_key = 2
+
+    # community_id and path
+    mock_request.path = "https://test_server/item/2"
+
+    mock_get_group_id = mocker.patch("weko_logging.activity_logger.UserActivityLogger.get_log_group_id")
+    mock_get_group_id.return_value = None
+
+
+    UserActivityLogger.info(
+        operation="ITEM_CREATE",
+        target_key=expected_target_key)
+
+    assert len(caplog.records) == 1
+
 
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_activity_logger.py::test_log_other -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
 def test_log_other(app, client, db, users, caplog, mocker):
@@ -437,3 +510,18 @@ def test_issue_log_group_id(app, db, users):
         actual = UserActivityLogger.issue_log_group_id(session)
         assert actual == True
         assert g.log_group_id == 1
+
+# def get_summary_from_request(cls):
+# .tox/c1/bin/pytest --cov=weko_logging tests/test_activity_logger.py::test_get_summary_from_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
+def test_get_summary_from_request(mocker):
+    mock_get_summary_from_request = mocker.patch("weko_logging.activity_logger.UserActivityLogHandler.get_summary_from_request")
+    mock_get_summary_from_request.return_value = {
+        "ip_address": "172.0.0.2",
+        "path": "https://test_server/cc/sample",
+        "client_id": "test_client_id",
+        "args": {
+            "c": "community_sample2",
+        },
+    }
+    request_info = UserActivityLogger.get_summary_from_request()
+    assert request_info == mock_get_summary_from_request.return_value

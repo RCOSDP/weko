@@ -8,6 +8,7 @@ from weko_index_tree.utils import (
     get_user_groups,
     check_roles,
     check_groups,
+    check_index_permission_by_role_and_group,
     filter_index_list_by_role,
     get_index_id_list,
     get_publish_index_id_list,
@@ -200,7 +201,6 @@ def test_get_user_roles(i18n_app, client_rest, users):
     assert result[1] == None
 
 
-
 #+++ def get_user_groups():
 def test_get_user_groups(i18n_app, client_rest, users, db):
     with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
@@ -215,132 +215,97 @@ def test_get_user_groups(i18n_app, client_rest, users, db):
     # User not authenticated
     assert len(get_user_groups()) == 0
 
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_index_permission_by_role_and_group -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+# def check_index_permission_by_role_and_group(user_role, roles, user_group, groups):
+def test_check_index_permission_by_role_and_group(app, mocker):
+    mock_role1 = mocker.Mock()
+    mock_role1.id = 1
+    mock_role1.name = "role1"
+    mock_role2 = mocker.Mock()
+    mock_role2.id = 2
+    mock_role2.name = "jc_groups_xxx" # role_group
+    mock_roles = [mock_role1, mock_role2]
+
+    mock_filter = mocker.Mock()
+    mock_filter.all.return_value = mock_roles
+    mock_query = mocker.Mock()
+    mock_query.filter.return_value = mock_filter
+    mocker.patch("weko_index_tree.utils.Role.query", mock_query)
+
+    # Admin User
+    assert check_index_permission_by_role_and_group((True, []), '', [], '') is True
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles")
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups")
+    # mock query returns [1,2] → role id:3 is removed
+    # role id:2 is role_group → called in check_groups
+    check_index_permission_by_role_and_group((False, [1,2,3]), '1,2,3', [5,6], '5,6')
+    mock_check_roles.assert_called_with(['1'], ['1'])
+    mock_check_groups.assert_called_with(['5', '6'], ['5', '6'], ['2'], ['2'])
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=True)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=True)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is True
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=True)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=False)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=False)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=True)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=False)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=False)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
+
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-#+++ def check_roles(user_role, roles):
-def test_check_roles(i18n_app, users):
-    # Match both role and role group
-    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, ["10"])
-    roles = ["10"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is True
+# def check_roles(user_role_list, index_role_list):
+def test_check_roles(app, mocker):
+    mock_user = mocker.Mock()
+    mock_user.is_authenticated = True
+    # If logged in, the user has '-98'.
+    mocker.patch('flask_login.utils._get_user', return_value=mock_user)
 
-    # Only role group matches
-    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, ["30"])
-    roles = ["20"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is False
+    assert check_roles([], ['r1']) is False
+    assert check_roles([], ['-98']) is True
 
-    # Only role matches
-    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, ["30"])
-    roles = ["30"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is True
-
-    # Neither role nor role group matches
-    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, ["40"])
-    roles = ["50"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is False
-
-    # Both not set (group check)
-    params = {"role_groups": [], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, ["40"])
-    roles = []
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is False
-
-    # Admin user
-    user_role = (True, ["1"])
-    roles = ["1", "2"]
-    params = {"role_groups": [10], "groups": [100], "access_group_ids": [200]}
-    assert check_roles(user_role, roles, params) is True
-
-    # Guest user (role -99)
-    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, [])
-    roles = ["-99"]
-    with patch("flask_login.utils._get_user", return_value=MagicMock(is_authenticated=False)):
-        assert check_roles(user_role, roles, params) is True
-
-    # Role group is [10], roles are [10, 30], user_role is (not admin, [10, 30])
-    params = {"role_groups": [10], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, ["10", "30"])
-    roles = ["10", "30"]
-    with patch("flask_login.utils._get_user", return_value=MagicMock(is_authenticated=True)):
-        assert check_roles(user_role, roles, params) is True
-
-    # Role group is [10, 20], roles are [30], user_role is (not admin, [30])
-    params = {"role_groups": [10, 20], "groups": [100], "access_group_ids": [200]}
-    user_role = (False, [])
-    roles = ["-99", "10"]
-    with patch("flask_login.utils._get_user", return_value=MagicMock(is_authenticated=False)):
-        assert check_roles(user_role, roles, params) is False
-
-    # User has only the role set for the index
-    params = {"role_groups": [100, 200], "groups": [300], "access_group_ids": [400]}
-    user_role = (False, ["1"])
-    roles = ["1", "100"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is False
-
-    # User has only the role group set for the index
-    params = {"role_groups": [100, 200], "groups": [300], "access_group_ids": [400]}
-    user_role = (False, ["100"])
-    roles = ["1", "100"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is False
-
-    # User has neither the role nor the role group set for the index
-    params = {"role_groups": [100, 200], "groups": [300], "access_group_ids": [400]}
-    user_role = (False, ["999"])
-    roles = ["1", "100"]
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_roles(user_role, roles, params) is False
+    # If not logged in, the user has '-99'.
+    mock_user.is_authenticated = False
+    mocker.patch('flask_login.utils._get_user', return_value=mock_user)
+    assert check_roles([], ['r1']) is False
+    assert check_roles([], ['-99']) is True
 
 
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_set_params -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_set_params(app):
-    with app.app_context():
-        from weko_index_tree.utils import set_params
-        class MockRole:
-            def __init__(self, id, name):
-                self.id = id
-                self.name = name
-        mock_roles = [
-            MockRole(1, "group_admin"),
-            MockRole(2, "user"),
-            MockRole(3, "group_editor"),
-            MockRole(4, "guest")
-        ]
-        with patch("invenio_accounts.models.Role.query") as mock_query:
-            mock_query.all.return_value = mock_roles
-            groups = [100, 200]
-            index_group = [300]
-            params = set_params(groups, index_group)
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_groups -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+# def check_groups(user_group, index_group_list, user_role_group, index_role_group):
+def test_check_groups(app, mocker):
+    mock_user = mocker.Mock()
 
-            assert params["role_groups"] == [1, 3]
-            assert params["groups"] == [100, 200]
-            assert params["access_group_ids"] == [300]
+    # If not logged in, the user has '-89'.
+    mock_user.is_authenticated = False
+    mocker.patch('flask_login.utils._get_user', return_value=mock_user)
+    assert check_groups([], ['g1'], [], ['rg1']) is False
+    assert check_groups([], ['-89', 'g1'], [], ['rg1']) is True
 
-#+++ def check_groups(user_group, groups):
-def test_check_groups(i18n_app, users, db):
-    g1 = Group.create(name="group_test1").add_member(users[-1]['obj'])
-    g2 = Group.create(name="group_test2").add_member(users[-1]['obj'])
+    # If logged in and has no groups, the user has '-89'.
+    mock_user.is_authenticated = True
+    mocker.patch('flask_login.utils._get_user', return_value=mock_user)
+    assert check_groups([], ['g1'], [], ['rg1']) is False
+    assert check_groups([], ['-89', 'g1'], [], ['rg1']) is True
 
-    db.session.add(g1)
-    db.session.add(g2)
+    # If logged in and has groups, the user does not have '-89'.
 
-    user_group = ["group_test1", "group_test2"]
-    groups = [v for k,v in Group.get_group_list().items()]
+    # group: exists
+    assert check_groups(['g1'], ['-89'], [], ['rg2']) is False
+    # role_group: exists
+    assert check_groups([], ['-89'], ['rg1'], ['rg2']) is False
 
-    with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
-        assert check_groups(user_group, groups)
-
-    assert check_groups(user_group, groups) == False
+    # group: OK, role_group: NG → OK
+    assert check_groups(['g1'], ['-89', 'g1'], ['rg1'], ['rg2']) is True
+    # group: NG, role_group: OK → OK
+    assert check_groups(['g1'], ['-89'], ['rg1'], ['rg1']) is True
 
 
 #+++ def filter_index_list_by_role(index_list):
@@ -354,9 +319,8 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
             self.public_state = True
             self.public_date = None
     dummy1 = DummyIndex1()
-    with patch("weko_index_tree.utils.set_params", return_value={"role_groups": [], "groups": [], "access_group_ids": []}):
-        with patch("weko_index_tree.utils.check_roles", return_value=False):
-            assert filter_index_list_by_role([dummy1]) == []
+    with patch("weko_index_tree.utils.check_roles", return_value=False):
+        assert filter_index_list_by_role([dummy1]) == []
 
     # Case 2: public_state is False
     class DummyIndex2:
@@ -366,10 +330,9 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
             self.public_state = False
             self.public_date = None
     dummy2 = DummyIndex2()
-    with patch("weko_index_tree.utils.set_params", return_value={"role_groups": [], "groups": [], "access_group_ids": []}):
-        with patch("weko_index_tree.utils.check_roles", return_value=True):
-            with patch("weko_records_ui.utils.is_future", return_value=False):
-                assert filter_index_list_by_role([dummy2]) == []
+    with patch("weko_index_tree.utils.check_roles", return_value=True):
+        with patch("weko_records_ui.utils.is_future", return_value=False):
+            assert filter_index_list_by_role([dummy2]) == []
 
     # Case 3: normal access (user logged in and has group membership)
     with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
@@ -409,8 +372,8 @@ def test_reduce_index_by_role(app, db, users):
                 "public_state": True,
                 "public_date": datetime(2022, 1, 1, 0, 0),
                 "browsing_role": "3,-98,-99",
-                "contribute_group": "",
-                "browsing_group": "",
+                "contribute_group": "group_test1,-89",
+                "browsing_group": "group_test1,-89",
                 "children": [
                     {
                         "id": "11",
@@ -444,7 +407,18 @@ def test_reduce_index_by_role(app, db, users):
                         "browsing_group": "group_test1",
                         "children": [],
                         "settings": []
-                    }
+                    },
+                    {
+                        "id": "14",
+                        "contribute_role": "1,2,3,4,-98,-99",
+                        "public_state": True,
+                        "public_date": datetime(2022, 1, 1, 0, 0),
+                        "browsing_role": "3,-98,-99",
+                        "contribute_group": "",
+                        "browsing_group": "",
+                        "children": [],
+                        "settings": []
+                    },
                 ],
                 "settings": {
                     "checked": False
@@ -452,27 +426,28 @@ def test_reduce_index_by_role(app, db, users):
             }]
             new_tree = copy.deepcopy(tree)
             reduce_index_by_role(new_tree, admin_roles, groups, True)
-            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []},
+                                                        {'id': '14', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
 
             new_tree = copy.deepcopy(tree)
             reduce_index_by_role(new_tree, user_roles, groups, True)
-            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}, {'id': '12', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
-
-            new_tree = copy.deepcopy(tree)
-            reduce_index_by_role(new_tree, user_roles, [], True)
             assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': []}], 'settings': {'checked': False}}]
 
             new_tree = copy.deepcopy(tree)
+            reduce_index_by_role(new_tree, user_roles, [], True)
+            assert new_tree==[{'id': '10', 'children': [], 'settings': {'checked': False}}]
+
+            new_tree = copy.deepcopy(tree)
             reduce_index_by_role(new_tree, admin_roles, groups, False)
-            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}, {'id': '14', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
 
             new_tree = copy.deepcopy(tree)
             reduce_index_by_role(new_tree, user_roles, groups, False)
-            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '12', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
+            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': False}, 'disabled': False}]
 
             new_tree = copy.deepcopy(tree)
             reduce_index_by_role(new_tree, user_roles, [], False, ["10", "12"])
-            assert new_tree==[{'id': '10', 'children': [{'id': '11', 'children': [], 'settings': [], 'disabled': False}, {'id': '13', 'children': [], 'settings': [], 'disabled': False}], 'settings': {'checked': True}, 'disabled': False}]
+            assert new_tree==[{'id': '10', 'children': [], 'settings': {'checked': True}, 'disabled': False}]
 
 
 #+++ def get_index_id_list(indexes, id_list=None):

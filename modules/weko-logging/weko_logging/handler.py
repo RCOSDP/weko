@@ -64,11 +64,10 @@ class UserActivityLogHandler(logging.Handler):
         if user_id:
             user = User.query.filter_by(id=user_id).first()
             # get eppn from user
-            if user is not None:
-                shib_users = list(user.shib_weko_user)
-                if shib_users is not None and len(shib_users) == 1:
-                    shib_user = shib_users[0]
-                    eppn = shib_user.shib_eppn
+            shib_users = list(user.shib_weko_user) if user else None
+            if shib_users is not None and len(shib_users) == 1:
+                shib_user = shib_users[0]
+                eppn = shib_user.shib_eppn
 
         # get source, ip_address and client_id from request
         ip_address = None

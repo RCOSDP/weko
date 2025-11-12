@@ -520,7 +520,9 @@ class WorkFlow(object):
                     _workflow.flow_id = workflow.get('flow_id')
                     _workflow.delete_flow_id = workflow.get('delete_flow_id')
                     _workflow.index_tree_id = workflow.get('index_tree_id')
-                    _workflow.open_restricted = workflow.get('open_restricted')
+                    roles=[r.name for r in current_user.roles]
+                    if current_app.config['WEKO_SYS_USER'] in roles:
+                        _workflow.open_restricted = workflow.get('open_restricted')
                     _workflow.location_id = workflow.get('location_id')
                     _workflow.is_gakuninrdm = workflow.get('is_gakuninrdm')
                     _workflow.repository_id = workflow.get('repository_id') if workflow.get('repository_id') else _workflow.repository_id
@@ -728,7 +730,11 @@ class WorkFlow(object):
         wfs = []
         current_user_roles = [role.id for role in current_user.roles]
         if isinstance(workflows, list):
-            role = Role.query.all()
+            role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+            prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+            role = Role.query.filter(
+                ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
+            ).all()
             while workflows:
                 tmp = workflows.pop(0)
                 list_hide = Role.query.outerjoin(WorkflowRole) \
@@ -2283,7 +2289,7 @@ class WorkActivity(object):
             ).all()
             com_roles = list(
                 set([comm.id_role for comm in comm_list]).union(
-                    set([comm.group_id for comm in comm_list])))            
+                    set([comm.group_id for comm in comm_list])))
 
             if com_roles:
                 com_users = User.query.outerjoin(userrole).outerjoin(Role) \
@@ -4038,6 +4044,8 @@ class UpdateItem(object):
         :return: The rendered template.
         """
         from weko_deposit.api import WekoIndexer
+        from weko_records_ui.models import FileSecretDownload
+
         publish_status = record.get('publish_status')
         if not publish_status:
             record.update({'publish_status': status})
@@ -4046,6 +4054,36 @@ class UpdateItem(object):
 
         record.commit()
         db.session.commit()
+
+        # レコード内のすべてのキーと値をループし、"attribute_value_mlt"の中のすべての"accessrole"と"filename"のペアを検索
+        file_access_pairs = []
+
+        for key, value in record.items():
+            # 値が辞書であり、"attribute_value_mlt"キーを持つ場合
+            if isinstance(value, dict):
+                attribute_values = value.get("attribute_value_mlt", [])
+                # attribute_valuesがリストで、最初のアイテムが辞書で "accessrole" と "filename" が含まれているか確認
+                if attribute_values and isinstance(attribute_values, list):
+                    for item in attribute_values:
+                        if isinstance(item, dict):
+                            accessrole = item.get("accessrole")
+                            filename = item.get("filename")
+                            if accessrole and filename:
+                                file_access_pairs.append((filename, accessrole))
+
+        #ワークフロー更新時、accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
+        rec_number = record.get('recid')  # recid=record_id
+        if rec_number is not None:
+            for filename, accessrole in file_access_pairs:
+                # accessroleがopen_no, open_dateまたはNone以外の場合、シークレットURLを論理削除
+                if accessrole and accessrole not in ['open_no', 'open_date']:
+                    secret_urls = FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False, file_name=filename).all()
+                    for urls in secret_urls:
+                        # 論理削除メソッドを使用
+                        urls.delete_logically()
+                        # 処理するデータ量に応じて以下のような一括で論理削除を行うような処理を使用する。
+                        # FileSecretDownload.query.filter_by(record_id=rec_number, is_deleted=False).update({'is_deleted': True})
+            db.session.commit()
 
         indexer = WekoIndexer()
         indexer.update_es_data(record, update_revision=False, field='publish_status')

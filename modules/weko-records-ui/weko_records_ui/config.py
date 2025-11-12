@@ -184,12 +184,19 @@ RECORDS_UI_ENDPOINTS = dict(
                                ':edit_permission_factory',
         methods=['POST'],
     ),
+    recid_guest_onetime_validation=dict(
+        pid_type='recid',
+        route='/record/<pid_value>/file/onetime/<string:filename>',
+        view_imp='weko_records_ui.fd.check_onetime_token_and_validate',
+        record_class='weko_deposit.api:WekoRecord',
+        methods=['GET'],
+    ),
     recid_guest_file_download=dict(
         pid_type='recid',
         route='/record/<pid_value>/file/onetime/<string:filename>',
         view_imp='weko_records_ui.fd.file_download_onetime',
         record_class='weko_deposit.api:WekoRecord',
-        methods=['GET','POST'],
+        methods=['POST'],
     ),
     recid_secret_url=dict(
         pid_type='recid',
@@ -199,6 +206,42 @@ RECORDS_UI_ENDPOINTS = dict(
         permission_factory_imp='weko_records_ui.permissions'
                                ':page_permission_factory',
         methods=['POST'],
+    ),
+    recid_copy_secret_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/secret/<path:filename>/<secret_url_id>',
+        view_imp='weko_records_ui.views.copy_secret_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['GET'],
+    ),
+    recid_copy_onetime_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/onetime/<path:filename>/<onetime_url_id>',
+        view_imp='weko_records_ui.views.copy_onetime_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['GET'],
+    ),
+    recid_delete_secret_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/secret/<path:filename>/<secret_url_id>',
+        view_imp='weko_records_ui.views.delete_secret_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['DELETE'],
+    ),
+    recid_delete_onetime_url=dict(
+        pid_type='recid',
+        route='/records/<pid_value>/onetime/<path:filename>/<onetime_url_id>',
+        view_imp='weko_records_ui.views.delete_onetime_url',
+        record_class='weko_deposit.api:WekoRecord',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
+        methods=['DELETE'],
     ),
     recid_secret_file_download=dict(
         pid_type='recid',
@@ -214,10 +257,6 @@ WEKO_RECORDS_UI_SECRET_KEY = "secret"
 WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN = \
     "filename={} record_id={} user_mail={} date={}"
 """Onetime download pattern."""
-
-WEKO_RECORDS_UI_SECRET_DOWNLOAD_PATTERN = \
-    "filename={} record_id={} id={} date={}"
-"""Secret URL download pattern."""
 
 WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL = "email_pattern_send_secret_url.tpl"
 
@@ -720,6 +759,9 @@ WEKO_RECORDS_UI_REST_ENDPOINTS = {
         'default_media_type': 'application/json',
     },
 }
+
+WEKO_RECORDS_UI_RESTRICTED_API= False
+"""Setting RESTRICTED_API"""
 
 WEKO_RECORDS_UI_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 

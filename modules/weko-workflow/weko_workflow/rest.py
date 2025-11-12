@@ -24,7 +24,7 @@ import inspect
 
 import json
 from datetime import datetime as dt
-from flask import Blueprint, current_app, jsonify, request, make_response, session
+from flask import Blueprint, current_app, jsonify, request, make_response, session, abort
 from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_login import current_user
@@ -382,6 +382,8 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError() # 404 Error
 
     def post_v1(self, **kwargs):
+        if not current_app.config["WEKO_RECORDS_UI_RESTRICTED_API"]:
+            abort(403)
         def _fit_item_data_to_schema(schema, item_data, activity,
                                      current_key="", errors:list=[], _title_fill_data:dict={}):
             ret = None

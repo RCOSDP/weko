@@ -82,7 +82,7 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_time = show_exec_time(current_time, "add_peer_reviewed_to_version_type_property")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
-        current_app.logger.error(ex)
+        import traceback
         current_app.logger.error(traceback.format_exc())
         db.session.rollback()
 
@@ -125,7 +125,7 @@ def renew_all_item_types():
                 current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))
                 current_app.logger.error(ret.get("msg"))
                 continue
-            current_app.logger.info("renew itemtype id:{}".format(item_type_id))
+            # current_app.logger.info("renew itemtype id:{}".format(item_type_id))
             is_fix_mapping = False
             if "mapping" in ret.get("msg",""):
                 is_fix_mapping = True
@@ -135,9 +135,9 @@ def renew_all_item_types():
         db.session.commit()
 
         for (itemtype_id, is_fix_mapping) in fix_ids:
-            print(f"[FIX][renew_all_item_types]item_type:{itemtype_id}")
+            current_app.logger.info(f"[FIX] item_type:{itemtype_id}")
             if is_fix_mapping:
-                print(f"[FIX][renew_all_item_types]item_type_mapping:{itemtype_id}(item_type_id)")
+                current_app.logger.info(f"[FIX] item_type_mapping:{itemtype_id}(item_type_id)")
         current_app.logger.info("End renew_all_item_types")
     except Exception as ex:
         current_app.logger.error(ex)
@@ -179,7 +179,7 @@ def get_update_item_info_W2025_29_sql():
     r_result = db.engine.execute(r_query)
     r_ids = [row[0] for row in r_result]
     for id in r_ids:
-        print(f"[FIX][W2025-29.sql]records_metadata:{id}")
+        current_app.logger.info(f"[FIX] records_metadata:{id}")
     # Get all data in item_metadata (no conditions)
     i_query = text("""
         SELECT id
@@ -190,7 +190,7 @@ def get_update_item_info_W2025_29_sql():
     i_ids = [row[0] for row in i_result]
 
     for id in i_ids:
-        print(f"[FIX][W2025-29.sql]item_metadata:{id}")
+        current_app.logger.info(f"[FIX] item_metadata:{id}")
 
 
 
@@ -213,7 +213,7 @@ if __name__ == "__main__":
             batch_size = int(args[2])
             main(restricted_item_type_id, start_time, batch_size=batch_size)
         else:
-            print("Please provide restricted_item_type_id as an argument.")
+            current_app.logger.info("Please provide restricted_item_type_id as an argument.")
             sys.exit(1)
     finally:
         db.event.listen(

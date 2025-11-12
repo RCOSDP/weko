@@ -234,6 +234,7 @@ def users(app):
             ]
             db.session.add_all(action_roles)
             ds.add_role_to_user(user3, sysadmin_role)
+        db.session.commit()
 
     return [
         {'email': user1_email, 'id': user1_id,
