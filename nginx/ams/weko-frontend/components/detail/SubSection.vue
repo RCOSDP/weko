@@ -109,12 +109,28 @@ function convertFlat(json: object, tier = 0) {
   }
 }
 
+/**
+* Extra項目の内容を表示用に整形
+* @param text jsonオブジェクト
+*/
+function flatExtraText(text: object) {
+  let elementText = '';
+  if (typeof text === 'string') {
+    elementText = text;
+  } else if (typeof text === 'object' && text !== null) {
+    elementText = Object.values(text).join(' ');
+  }
+  props.subSection.text = [elementText];
+}
+
 /* ///////////////////////////////////
 // main
 /////////////////////////////////// */
 
 try {
-  if (props.subSection.material.type === 'metadata') {
+  if (props.subSection.name === "Extra") {
+    flatExtraText(props.subSection.text);
+  } else if (props.subSection.material.type === 'metadata') {
     convertFlat(props.subSection.material.data);
   }
 } catch (error) {
