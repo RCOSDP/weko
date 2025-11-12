@@ -304,9 +304,8 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
             self.public_state = True
             self.public_date = None
     dummy1 = DummyIndex1()
-    with patch("weko_index_tree.utils.set_params", return_value={"role_groups": [], "groups": [], "access_group_ids": []}):
-        with patch("weko_index_tree.utils.check_roles", return_value=False):
-            assert filter_index_list_by_role([dummy1]) == []
+    with patch("weko_index_tree.utils.check_roles", return_value=False):
+        assert filter_index_list_by_role([dummy1]) == []
 
     # Case 2: public_state is False
     class DummyIndex2:
@@ -316,10 +315,9 @@ def test_filter_index_list_by_role(i18n_app, indices, users, db):
             self.public_state = False
             self.public_date = None
     dummy2 = DummyIndex2()
-    with patch("weko_index_tree.utils.set_params", return_value={"role_groups": [], "groups": [], "access_group_ids": []}):
-        with patch("weko_index_tree.utils.check_roles", return_value=True):
-            with patch("weko_records_ui.utils.is_future", return_value=False):
-                assert filter_index_list_by_role([dummy2]) == []
+    with patch("weko_index_tree.utils.check_roles", return_value=True):
+        with patch("weko_records_ui.utils.is_future", return_value=False):
+            assert filter_index_list_by_role([dummy2]) == []
 
     # Case 3: normal access (user logged in and has group membership)
     with patch("flask_login.utils._get_user", return_value=users[-1]['obj']):
