@@ -1459,8 +1459,8 @@ def handle_validate_item_import(list_record, schema) -> list:
                         target[last_key] = str(target[last_key])
                         target_path = ".".join([str(p) for p in path_list[:-2]])
                         warnings.append(
-                            _("Replace value of {} from {} to {}.").format(
-                                target_path, target[last_key], "'" + str(target[last_key]) + "'"
+                            _("Replace value of %(target_path)s from %(old_value)s to '%(new_value)s'.", 
+                                target_path=target_path, old_value=target[last_key], new_value=str(target[last_key])
                             )
                         )
                 b = v2.iter_errors(record.get("metadata"))
@@ -1478,8 +1478,8 @@ def handle_validate_item_import(list_record, schema) -> list:
         records["errors"] = errors if len(errors) else None
         if len(warnings) > 0:
             warnings.append(
-                _("Specified {} is different from existing {}.").format(
-                    "type:integer", "type:string"
+                _("Specified %(type)s is different from existing %(existing_type)s.",
+                    type="type:integer", existing_type="type:string"
                 )
             )
             records["warnings"] = warnings if len(warnings) else None
