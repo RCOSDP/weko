@@ -362,6 +362,12 @@ class TestReportView:
         assert kwargs["current_schedule"] == {'frequency': 'daily', 'details': '', 'enabled': False}
         assert kwargs["repositories"][0]["id"] == "comm1"
 
+        with patch("weko_index_tree.api.Indexes.get_public_indexes_list",return_value=[]):
+            with patch("invenio_stats.utils.get_aggregations",return_value={}):
+                with patch("weko_admin.admin.ReportView.render",side_effect=Exception("test_error")):
+                    result = client.get(url)
+                    assert result.status_code == 400
+
 #    def get_file_stats_output(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_get_file_stats_output -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_get_file_stats_output(self,client,users,statistic_email_addrs,mocker):
@@ -565,7 +571,6 @@ class TestReportView:
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.get_email_address")
         data = {"inputEmail":["test.smith@test.org","","not_correct_email_address"], "repository_select": "Root Index"}
-
         mocker.patch("weko_admin.admin.redirect",return_value=make_response())
         mock_flash = mocker.patch("weko_admin.admin.flash")
         result = client.post(url,data=data)
@@ -872,12 +877,64 @@ def test_SearchSettingsView_index(client,db,users,item_type,admin_settings,index
     assert result.status_code == 200
     test = {"init_disp_setting":{"init_disp_index":"","init_disp_screen_setting":"0","init_disp_index_disp_method":"0"},
             "search_author_flg":"name",
-            "index_tree_style":{"width_options":["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],"width":"3","height":""}}
+            "free_widgets": [],
+            "init_disp_screen_setting": [{'id': '0', 'contents': {
+                'en': 'Index search result',
+                'ja': 'インデックス検索結果を表示する'
+            }},
+            {'id': '1', 'contents': {
+                'en': 'Ranking',
+                'ja': 'ランキングを表示する'
+            }},
+            {'id': '2', 'contents': {
+                'en': 'Communities',
+                'ja': 'コミュニティ一覧を表示する'
+            }}
+            ],
+            "index_tree_style":{"width_options":["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11"],"width":"3","height":""},
+            }
     args, kwargs = mock_render.call_args
     assert args[0] == "weko_admin/admin/search_management_settings.html"
     assert kwargs["widths"] == ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11']
     assert kwargs["setting_data"] == json.dumps(test)
     assert [item.name for item in kwargs["lists"]] == ['テストアイテムタイプ1','テストアイテムタイプ2']
+
+    mock_render = mocker.patch("weko_admin.admin.SearchSettingsView.render",return_value=make_response())
+    current_app.config.update(
+        WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS=True,
+    )
+    data1 = {'Id': '1', 'widgetType': 'Free description', 'label': 'TEST1'}
+    data2 = {'Id': '2', 'widgetType': 'dummy', 'label': 'TEST2'}
+    with patch('weko_admin.admin.WidgetDesignServices.get_repository_list', return_value={'repositories': [{'id': 'Root Index'}]}):
+        with patch('weko_admin.admin.WidgetDesignServices.get_widget_list', return_value={'data': [data1, data2]}):
+            result = client.get(url)
+            assert result.status_code == 200
+            args, kwargs = mock_render.call_args
+            assert args[0] == "weko_admin/admin/search_management_settings.html"
+            json_setting_data = json.loads(kwargs["setting_data"])
+            assert json_setting_data["free_widgets"][0]['widget_id'] == '1'
+
+    mock_render = mocker.patch("weko_admin.admin.SearchSettingsView.render",return_value=make_response())
+    current_app.config.update(
+        WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS=False,
+    )
+    search_setting = {
+        "init_disp_setting": {
+            "init_disp_screen_setting": "3",
+            "init_disp_index_disp_method": "0",
+            "init_disp_index": "0",
+            "init_disp_web_content": "24",
+        }
+    }
+    with patch('weko_admin.admin.get_search_setting', return_value=search_setting):
+        result = client.get(url)
+        assert result.status_code == 200
+        args, kwargs = mock_render.call_args
+        assert args[0] == "weko_admin/admin/search_management_settings.html"
+        json_setting_data = json.loads(kwargs["setting_data"])
+        assert json_setting_data["init_disp_setting"]['init_disp_screen_setting'] == '0'
+
+
     # raise Exception
     with patch("weko_admin.admin.ItemTypes.get_latest",side_effect=BaseException("test_error")):
         result = client.get(url)
