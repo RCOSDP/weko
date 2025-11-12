@@ -72,7 +72,7 @@
       ],
       "hasPart": [
         {
-          "@id": "data/sample.rst"
+          "@id": "sample.rst"
         }
       ],
       "hasPolicy": [
@@ -155,7 +155,7 @@
       ],
       "hasPart": [
         {
-          "@id": "data/data.csv"
+          "@id": "data.csv"
         }
       ],
       "hasPolicy": [
@@ -344,7 +344,7 @@
       "jpcoar:identifierRegistration": "DataCite"
     },
     {
-      "@id": "data/sample.rst",
+      "@id": "sample.rst",
       "@type": "File",
       "name": "sample.rst",
       "contentSize": "333",
@@ -360,7 +360,7 @@
       "wk:accessMode": "open_access"
     },
     {
-      "@id": "data/data.csv",
+      "@id": "data.csv",
       "@type": "File",
       "name": "data.csv",
       "contentSize": "1234",
