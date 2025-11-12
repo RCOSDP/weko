@@ -250,16 +250,18 @@
                       </form>
                     </td>
                     <td class="text-center">
-                      <input type="checkbox" id="chk_useable_[[$index]]" value="option_condition.id" ng-model="option_condition.useable_status" >
+                      <input type="checkbox"
+                             id="chk_useable_[[$index]]"
+                             value="option_condition.id"
+                             ng-model="option_condition.useable_status"
+                             ng-change="!option_condition.useable_status && (option_condition.default_display = false)">
                     </td>
                     <td class="text-center">
                       <input type="checkbox"
                              id="chk_init_[[$index]]"
                              value="option_condition.id"
                              ng-model="option_condition.default_display"
-                             ng-disabled="!option_condition.useable_status"
-                             ng-checked="option_condition.useable_status && option_condition.default_display"
-                             ng-change="!option_condition.useable_status ? option_condition.default_display = false : null">
+                             ng-disabled="!option_condition.useable_status">
                     </td>
                     <td title="[[ option_condition.mapping.join(', ') ]]">
                       <p>[[ getJoinedMapping(option_condition.mapping) ]]</p>
