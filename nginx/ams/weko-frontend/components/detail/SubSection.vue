@@ -114,7 +114,7 @@ function convertFlat(json: object, tier = 0) {
 /////////////////////////////////// */
 
 try {
-if (props.subSection.material.type === 'metadata') {
+  if (props.subSection.material.type === 'metadata') {
     convertFlat(props.subSection.material.data);
   }
 } catch (error) {
