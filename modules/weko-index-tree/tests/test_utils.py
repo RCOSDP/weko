@@ -234,16 +234,31 @@ def test_check_index_permission_by_role_and_group(app, mocker):
     mocker.patch("weko_index_tree.utils.Role.query", mock_query)
 
     # Admin User
-    check_index_permission_by_role_and_group((True, []), '', [], '') is True
+    assert check_index_permission_by_role_and_group((True, []), '', [], '') is True
 
-    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=True)
-    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=True)
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles")
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups")
     # mock query returns [1,2] → role id:3 is removed
     # role id:2 is role_group → called in check_groups
-    check_index_permission_by_role_and_group((False, [1,2,3]), '1,2,3', [5,6], '5,6') is False
+    check_index_permission_by_role_and_group((False, [1,2,3]), '1,2,3', [5,6], '5,6')
     mock_check_roles.assert_called_with(['1'], ['1'])
     mock_check_groups.assert_called_with(['5', '6'], ['5', '6'], ['2'], ['2'])
 
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=True)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=True)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is True
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=True)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=False)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=False)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=True)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
+
+    mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles", return_value=False)
+    mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=False)
+    assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 # def check_roles(user_role_list, index_role_list):
