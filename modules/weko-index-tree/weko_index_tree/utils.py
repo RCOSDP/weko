@@ -320,8 +320,8 @@ def check_index_permission_by_role_and_group(user_role, roles, user_group, group
             of role IDs assigned to the user.
         roles (list or str): A list of role IDs (or a comma-separated string of IDs)
             that are permitted to access the index.
-        user_group (list): A list of internal group IDs to which the user belongs.
-        groups (list or str): A list of internal group IDs (or a comma-separated string of IDs)
+        user_group (list): A list of group IDs to which the user belongs.
+        groups (list or str): A list of group IDs (or a comma-separated string of IDs)
             that are permitted to access the index.
 
     Returns:
@@ -392,8 +392,8 @@ def check_groups(user_group_list, index_group_list,
     Determine whether the user has access permission based on group and role group IDs.
 
     Args:
-        user_group (list): List of internal group IDs (as strings) to which the user belongs.
-        index_group_list (list): List of internal group IDs (as strings) configured for the index.
+        user_group (list): List of group IDs (as strings) to which the user belongs.
+        index_group_list (list): List of group IDs (as strings) configured for the index.
         user_role_group (list): List of role group IDs (as strings) assigned to the user.
         index_role_group (list): List of role group IDs (as strings) configured for the index.
 
@@ -401,12 +401,6 @@ def check_groups(user_group_list, index_group_list,
         bool: True if at least one group ID in user_group matches index_group_list,
               or at least one role group ID in user_role_group matches index_role_group.
               Otherwise, returns False.
-
-    Notes:
-        - If the user is authenticated and both user_group and user_role_group are empty,
-          '-89' (Authenticated User Group) is appended to user_group.
-        - If the user is not authenticated, '-89' (Guest Group) is appended to user_group.
-        - Access is granted if any group or role group ID matches between the user and the index.
     """
     # append "No Group"
     if current_user.is_authenticated and not user_group_list and not user_role_group:
