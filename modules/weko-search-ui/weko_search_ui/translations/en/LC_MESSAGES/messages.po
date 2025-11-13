@@ -8,16 +8,149 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-11-11 21:20+0900\n"
+"POT-Creation-Date: 2025-11-12 12:12+0900\n"
 "PO-Revision-Date: 2025-04-09 23:22+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
 "Language-Team: en <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n != 1)\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.5.1\n"
+"Generated-By: Babel 2.17.0\n"
+
+#: tests/conftest.py:409
+msgid "write your own license"
+msgstr ""
+
+#: tests/conftest.py:415
+msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
+msgstr ""
+
+#: tests/conftest.py:430
+msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
+msgstr ""
+
+#: tests/conftest.py:443
+msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:458
+msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:472
+msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
+msgstr ""
+
+#: tests/conftest.py:487
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
+"BY-NC-SA 3.0)"
+msgstr ""
+
+#: tests/conftest.py:502
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
+"NC-ND 3.0)"
+msgstr ""
+
+#: tests/conftest.py:517
+msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
+msgstr ""
+
+#: tests/conftest.py:530
+msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:545
+msgid ""
+"Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:560
+msgid ""
+"Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
+"4.0)"
+msgstr ""
+
+#: tests/conftest.py:575
+msgid ""
+"Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
+"(CC BY-NC-SA 4.0)"
+msgstr ""
+
+#: tests/conftest.py:590
+msgid ""
+"Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
+"International (CC BY-NC-ND 4.0)"
+msgstr ""
+
+#: tests/helpers.py:84
+msgid "Bagging a parent of the current directory is not supported"
+msgstr ""
+
+#: tests/helpers.py:87
+#, python-format
+msgid "Creating tag for directory %s"
+msgstr ""
+
+#: tests/helpers.py:90 tests/helpers.py:91
+#, python-format
+msgid "Bag directory %s does not exist"
+msgstr ""
+
+#: tests/helpers.py:96 tests/helpers.py:97
+#, python-format
+msgid "Bag directory %s does not contain a data directory"
+msgstr ""
+
+#: tests/helpers.py:104
+#, python-format
+msgid ""
+"Unable to write to the following directories and files:\n"
+"%s"
+msgstr ""
+
+#: tests/helpers.py:107
+msgid "Missing permissions to move all files and directories"
+msgstr ""
+
+#: tests/helpers.py:114
+#, python-format
+msgid ""
+"The following directories do not have read permissions:\n"
+"%s"
+msgstr ""
+
+#: tests/helpers.py:119
+#, python-format
+msgid ""
+"The following files do not have read permissions:\n"
+"%s"
+msgstr ""
+
+#: tests/helpers.py:123
+msgid "Read permissions are required to calculate file fixities"
+msgstr ""
+
+#: tests/helpers.py:126
+msgid "Creating data directory"
+msgstr ""
+
+#: tests/helpers.py:143
+msgid "Creating bagit.txt"
+msgstr ""
+
+#: tests/helpers.py:148
+msgid "Creating bag-info.txt"
+msgstr ""
+
+#: tests/helpers.py:167
+#, python-format
+msgid "An error occurred creating a bag in %s"
+msgstr ""
 
 #: weko_search_ui/admin.py:157
 msgid "The following item(s) cannot be deleted."
@@ -39,7 +172,7 @@ msgstr ""
 msgid "Index Delete is in progress on another device."
 msgstr ""
 
-#: weko_search_ui/admin.py:206
+#: weko_search_ui/admin.py:207
 msgid ""
 "DOI granting item(s) are including in the deletion items.<br/>DOI "
 "granting item(s) cannot be deleted without withdrawing the DOI.<br/>Do "
@@ -104,42 +237,45 @@ msgstr ""
 msgid "contents"
 msgstr ""
 
-#: weko_search_ui/mapper.py:1371
+#: weko_search_ui/mapper.py:1375
+#, python-brace-format
 msgid "\"{key}\" is required."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1392
+#: weko_search_ui/mapper.py:1396
+#, python-brace-format
 msgid "\"{key}\" is not in itemtype."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1394
+#: weko_search_ui/mapper.py:1398
+#, python-brace-format
 msgid "\"{key}\" is not in itemtype, did you mean \"{similar_key}\"?"
 msgstr ""
 
-#: weko_search_ui/mapper.py:1512
+#: weko_search_ui/mapper.py:1517
 #, python-format
 msgid ""
 "Cannot map to item type from json-ld; Mapping is not defined for the "
 "metadata, \"%(key)s\": \"%(value)s\""
 msgstr ""
 
-#: weko_search_ui/mapper.py:1538
+#: weko_search_ui/mapper.py:1543
 #, python-format
 msgid ""
 "Cannot map to item type from json-ld; Not found mapping destination for "
 "the metadata, \"%(key)s\": \"%(value)s\""
 msgstr ""
 
-#: weko_search_ui/mapper.py:1548
+#: weko_search_ui/mapper.py:1553
 #, python-format
 msgid "Failed to set metadata for json-ld, \"%(key)s\": \"%(value)s\""
 msgstr ""
 
-#: weko_search_ui/mapper.py:1568
+#: weko_search_ui/mapper.py:1572
 msgid "Metadata which could not be mapped to item type will be set in 'Extra'."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1572
+#: weko_search_ui/mapper.py:1576
 msgid "Metadata which could not be mapped to item type will be discarded."
 msgstr ""
 
@@ -155,25 +291,28 @@ msgstr ""
 msgid "The same item may have been registered."
 msgstr ""
 
-#: weko_search_ui/utils.py:592 weko_search_ui/utils.py:708
+#: weko_search_ui/utils.py:593 weko_search_ui/utils.py:709
+#, python-brace-format
 msgid ""
 "The format of the specified file {} does not support import. Please "
 "specify one of the following formats: zip, tar, gztar, bztar, xztar."
 msgstr ""
 
-#: weko_search_ui/utils.py:600
+#: weko_search_ui/utils.py:601
+#, python-brace-format
 msgid ""
 "The csv/tsv file was not found in the specified file {}. Check if the "
 "directory structure is correct."
 msgstr ""
 
-#: weko_search_ui/utils.py:649
+#: weko_search_ui/utils.py:650
 msgid ""
 "The item type of the item to be imported is missing or has already been "
 "deleted."
 msgstr ""
 
-#: weko_search_ui/utils.py:715
+#: weko_search_ui/utils.py:716
+#, python-brace-format
 msgid ""
 "The xml file was not found in the specified file {}. Check if the "
 "directory structure is correct."
@@ -183,268 +322,305 @@ msgstr ""
 msgid "The item type ID specified in the XML file does not exist."
 msgstr ""
 
-#: weko_search_ui/utils.py:1207
+#: weko_search_ui/utils.py:1206
+#, python-brace-format
 msgid ""
 "There is an error in the format of the first line of the header of the {}"
 " file."
 msgstr ""
 
-#: weko_search_ui/utils.py:1226
+#: weko_search_ui/utils.py:1225
+#, python-brace-format
 msgid "The item type ID specified in the {} file does not exist."
 msgstr ""
 
-#: weko_search_ui/utils.py:1235
+#: weko_search_ui/utils.py:1236
 msgid "Cannot register because the specified item type is not the latest version."
 msgstr ""
 
 #: weko_search_ui/utils.py:1250
+#, python-brace-format
 msgid "The following metadata keys are duplicated.<br/>{}"
 msgstr ""
 
-#: weko_search_ui/utils.py:1273
+#: weko_search_ui/utils.py:1274
+#, python-brace-format
 msgid "The item does not consistent with the specified item type.<br/>{}"
 msgstr ""
 
 #: weko_search_ui/utils.py:1303
+#, python-brace-format
 msgid "Cannot read {} file correctly."
 msgstr ""
 
-#: weko_search_ui/utils.py:1327
+#: weko_search_ui/utils.py:1328
+#, python-brace-format
 msgid ""
 "The following items are not registered because they do not exist in the "
 "specified item type. {}"
 msgstr ""
 
-#: weko_search_ui/utils.py:1337
+#: weko_search_ui/utils.py:1336
+#, python-brace-format
 msgid ""
 "The {} file could not be read. Make sure the file format is {} and that "
 "the file is UTF-8 encoded."
 msgstr ""
 
-#: weko_search_ui/utils.py:1368
+#: weko_search_ui/utils.py:1369
 msgid ""
 "The XML file could not be read. Make sure the file format is XML and that"
 " the file is UTF-8 encoded."
 msgstr ""
 
-#: weko_search_ui/utils.py:1440
+#: weko_search_ui/utils.py:1441
 msgid "Please specify item ID by half-width number."
 msgstr ""
 
-#: weko_search_ui/utils.py:1455
+#: weko_search_ui/utils.py:1462
+#, python-format
+msgid "Replace value of %(target_path)s from %(old_value)s to '%(new_value)s'."
+msgstr ""
+
+#: weko_search_ui/utils.py:1475
 msgid "Specified item type does not exist."
 msgstr ""
 
-#: weko_search_ui/utils.py:1529
+#: weko_search_ui/utils.py:1481
+#, python-format
+msgid "Specified %(type)s is different from existing %(existing_type)s."
+msgstr ""
+
+#: weko_search_ui/utils.py:1556
 msgid "Specified URI and system URI do not match."
 msgstr ""
 
-#: weko_search_ui/utils.py:1541
+#: weko_search_ui/utils.py:1568
 msgid "Item does not exist in the system."
 msgstr ""
 
-#: weko_search_ui/utils.py:1548
+#: weko_search_ui/utils.py:1575
 msgid "Item already DELETED in the system."
 msgstr ""
 
-#: weko_search_ui/utils.py:1565
+#: weko_search_ui/utils.py:1592
 msgid "Please specify either \"Keep\" or \"Upgrade\"."
 msgstr ""
 
-#: weko_search_ui/utils.py:2481
+#: weko_search_ui/utils.py:2508
 msgid "Title is required item."
 msgstr ""
 
-#: weko_search_ui/utils.py:2498
+#: weko_search_ui/utils.py:2525
+#, python-brace-format
 msgid "{} is required item."
 msgstr ""
 
-#: weko_search_ui/utils.py:2501
+#: weko_search_ui/utils.py:2528
+#, python-brace-format
 msgid "Please set \"public\" or \"private\" for {}."
 msgstr ""
 
-#: weko_search_ui/utils.py:2542
+#: weko_search_ui/utils.py:2569
+#, python-brace-format
 msgid "The specified {} does not exist in system."
 msgstr ""
 
-#: weko_search_ui/utils.py:2552
+#: weko_search_ui/utils.py:2579
+#, python-brace-format
 msgid "Specified {} does not match with existing index."
 msgstr ""
 
-#: weko_search_ui/utils.py:2596
+#: weko_search_ui/utils.py:2623
 msgid "Your role cannot register items in this index."
 msgstr ""
 
-#: weko_search_ui/utils.py:2617
+#: weko_search_ui/utils.py:2644
 msgid "Both of IndexID and POS_INDEX are not being set."
 msgstr ""
 
-#: weko_search_ui/utils.py:2663 weko_search_ui/utils.py:2688
+#: weko_search_ui/utils.py:2690 weko_search_ui/utils.py:2715
+#, python-brace-format
 msgid "Specified {} is invalid."
 msgstr ""
 
-#: weko_search_ui/utils.py:2730 weko_search_ui/utils.py:2763
-#: weko_search_ui/utils.py:2855 weko_search_ui/utils.py:2925
-#: weko_search_ui/utils.py:2929 weko_search_ui/utils.py:2951
-#: weko_search_ui/utils.py:2975
+#: weko_search_ui/utils.py:2757 weko_search_ui/utils.py:2790
+#: weko_search_ui/utils.py:2882 weko_search_ui/utils.py:2952
+#: weko_search_ui/utils.py:2956 weko_search_ui/utils.py:2978
+#: weko_search_ui/utils.py:3002
+#, python-brace-format
 msgid "Please specify {}."
 msgstr ""
 
-#: weko_search_ui/utils.py:2733 weko_search_ui/utils.py:2932
+#: weko_search_ui/utils.py:2760 weko_search_ui/utils.py:2960
+#, python-brace-format
 msgid "The specified {} exceeds the maximum length."
 msgstr ""
 
-#: weko_search_ui/utils.py:2748 weko_search_ui/utils.py:2906
-#: weko_search_ui/utils.py:2916 weko_search_ui/utils.py:2947
+#: weko_search_ui/utils.py:2775 weko_search_ui/utils.py:2933
+#: weko_search_ui/utils.py:2943 weko_search_ui/utils.py:2974
+#, python-brace-format
 msgid "Specified Prefix of {} is incorrect."
 msgstr ""
 
-#: weko_search_ui/utils.py:2756 weko_search_ui/utils.py:2900
-#: weko_search_ui/utils.py:2909
+#: weko_search_ui/utils.py:2783 weko_search_ui/utils.py:2927
+#: weko_search_ui/utils.py:2936
+#, python-brace-format
 msgid "{} cannot be set."
 msgstr ""
 
-#: weko_search_ui/utils.py:2765 weko_search_ui/utils.py:2769
-#: weko_search_ui/utils.py:2838 weko_search_ui/utils.py:2977
+#: weko_search_ui/utils.py:2793 weko_search_ui/utils.py:2797
+#: weko_search_ui/utils.py:2865 weko_search_ui/utils.py:3005
+#, python-brace-format
 msgid "Specified {} is different from existing {}."
 msgstr ""
 
-#: weko_search_ui/utils.py:2789
+#: weko_search_ui/utils.py:2817
 msgid ""
 "When assigning a DOI to an item, it must be associated with an index "
 "whose index status is \"Public\" and Harvest Publishing is \"Public\"."
 msgstr ""
 
-#: weko_search_ui/utils.py:2794
+#: weko_search_ui/utils.py:2822
 msgid ""
 "Since the item has a DOI, it must be associated with an index whose index"
 " status is \"Public\" and whose Harvest Publishing is \"Public\"."
 msgstr ""
 
-#: weko_search_ui/utils.py:2805
+#: weko_search_ui/utils.py:2832
 msgid "You cannot keep an item private because it has a DOI."
 msgstr ""
 
-#: weko_search_ui/utils.py:2859 weko_search_ui/utils.py:4079
+#: weko_search_ui/utils.py:2887 weko_search_ui/utils.py:4106
 msgid "DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."
 msgstr ""
 
-#: weko_search_ui/utils.py:3010
+#: weko_search_ui/utils.py:3037
+#, python-brace-format
 msgid "Item Link type: '{}' is not one of {}."
 msgstr ""
 
-#: weko_search_ui/utils.py:3014
+#: weko_search_ui/utils.py:3041
 msgid "Please specify Item URL for item link."
 msgstr ""
 
-#: weko_search_ui/utils.py:3028
+#: weko_search_ui/utils.py:3055
 msgid "Specified Item Link URI and system URI do not match."
 msgstr ""
 
-#: weko_search_ui/utils.py:3034
+#: weko_search_ui/utils.py:3061
 msgid "Linking item does not exist in the system."
 msgstr ""
 
-#: weko_search_ui/utils.py:3037
+#: weko_search_ui/utils.py:3064
 msgid "Linking item already deleted in the system."
 msgstr ""
 
-#: weko_search_ui/utils.py:3076
+#: weko_search_ui/utils.py:3103
 msgid "It is not allowed to create links to the item itself."
 msgstr ""
 
-#: weko_search_ui/utils.py:3081
+#: weko_search_ui/utils.py:3108
+#, python-brace-format
 msgid "It is not allowed to create links other than {} between split items."
 msgstr ""
 
-#: weko_search_ui/utils.py:3117
+#: weko_search_ui/utils.py:3144
 msgid "Duplicate Item Link."
 msgstr ""
 
-#: weko_search_ui/utils.py:3456
+#: weko_search_ui/utils.py:3483
+#, python-brace-format
 msgid ""
 "One of the following required values ​​has not been "
 "registered.<br/>{}<br/>"
 msgstr ""
 
-#: weko_search_ui/utils.py:3461
+#: weko_search_ui/utils.py:3489
+#, python-brace-format
 msgid ""
 "The mapping of required items for DOI validation is not set. Please "
 "recheck the following mapping settings.<br/>{}"
 msgstr ""
 
-#: weko_search_ui/utils.py:3471
+#: weko_search_ui/utils.py:3498
+#, python-brace-format
 msgid "The following metadata are required.<br/>{}"
 msgstr ""
 
-#: weko_search_ui/utils.py:3476
+#: weko_search_ui/utils.py:3504
+#, python-brace-format
 msgid "One of the following metadata is required.<br/>{}<br/>"
 msgstr ""
 
-#: weko_search_ui/utils.py:3539 weko_search_ui/utils.py:3551
+#: weko_search_ui/utils.py:3567 weko_search_ui/utils.py:3579
 msgid "Please specify the date with any format of YYYY-MM-DD, YYYY-MM, YYYY."
 msgstr ""
 
-#: weko_search_ui/utils.py:3545
+#: weko_search_ui/utils.py:3572
+#, python-brace-format
 msgid "Replace value of {} from {} to {}."
 msgstr ""
 
-#: weko_search_ui/utils.py:3568
+#: weko_search_ui/utils.py:3595
 msgid "Please specify PubDate with YYYY-MM-DD."
 msgstr ""
 
-#: weko_search_ui/utils.py:3598
+#: weko_search_ui/utils.py:3625
 msgid "ID is specified for the newly registered item. Ignore the ID and register."
 msgstr ""
 
-#: weko_search_ui/utils.py:3681
+#: weko_search_ui/utils.py:3708
 msgid "Please specify Open Access Date with YYYY-MM-DD."
 msgstr ""
 
-#: weko_search_ui/utils.py:3918 weko_search_ui/utils.py:4064
-#: weko_search_ui/utils.py:4070
+#: weko_search_ui/utils.py:3945 weko_search_ui/utils.py:4091
+#: weko_search_ui/utils.py:4097
 msgid "Please specify DOI prefix/suffix."
 msgstr ""
 
-#: weko_search_ui/utils.py:4056
+#: weko_search_ui/utils.py:4083
 msgid "The specified DOI is wrong and fixed with the registered DOI."
 msgstr ""
 
-#: weko_search_ui/utils.py:4059
+#: weko_search_ui/utils.py:4086
 msgid ""
 "The specified DOI RA is wrong and fixed with the correct DOI RA of the "
 "registered DOI."
 msgstr ""
 
-#: weko_search_ui/utils.py:4066 weko_search_ui/utils.py:4072
+#: weko_search_ui/utils.py:4093 weko_search_ui/utils.py:4099
 msgid "Please specify DOI suffix."
 msgstr ""
 
-#: weko_search_ui/utils.py:4075
+#: weko_search_ui/utils.py:4102
 msgid "Do not specify DOI suffix."
 msgstr ""
 
-#: weko_search_ui/utils.py:4081
+#: weko_search_ui/utils.py:4108
 msgid "Specified Prefix of DOI is incorrect."
 msgstr ""
 
-#: weko_search_ui/utils.py:4113
+#: weko_search_ui/utils.py:4141
 msgid ""
 "Please specify the image file(gif, jpg, jpe, jpeg, png, bmp, tiff, tif) "
 "for the thumbnail."
 msgstr ""
 
-#: weko_search_ui/utils.py:5229
+#: weko_search_ui/utils.py:5256
+#, python-brace-format
 msgid "The file specified in ({}) does not exist."
 msgstr ""
 
-#: weko_search_ui/utils.py:5233
+#: weko_search_ui/utils.py:5261
+#, python-brace-format
 msgid ""
 "The file specified in ({}) does not exist.<br/>The file will not be "
 "updated. Update only the metadata with csv/tsv contents."
 msgstr ""
 
-#: weko_search_ui/utils.py:5520
+#: weko_search_ui/utils.py:5547
+#, python-brace-format
 msgid "The file name specified in {} and {} do not match."
 msgstr ""
 

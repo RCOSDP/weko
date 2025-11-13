@@ -102,3 +102,11 @@ test/dummyfile/data
 
 # inbox
 inbox/
+
+
+nginx/*.cer
+nginx/keys/*.crt
+nginx/keys/*.csr
+nginx/keys/*.key 
+nginx/*-metadata.xml
+
