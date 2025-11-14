@@ -1076,7 +1076,13 @@ class Indexes(object):
 
     @classmethod
     def get_account_group(cls):
-        """Get account group."""
+        """
+        Retrieve the list of groups to which the current user belongs.
+
+        Returns:
+            list: A list of dictionaries, each representing a group with its attributes.
+                  The list also includes a dictionary for the "No Group" (id: -89).
+        """
         def _get_dict(x):
             dt = dict()
             for k, v in x.__dict__.items():

@@ -311,7 +311,23 @@ def get_user_groups():
     return grps
 
 def check_index_permission_by_role_and_group(user_role, roles, user_group, groups):
+    """
+    Check if a user has permission to access an index based on roles and groups.
 
+    Args:
+        user_role (tuple): A tuple where the first element is a boolean indicating
+            if the user has administrator privileges, and the second element is a list
+            of role IDs assigned to the user.
+        roles (list or str): A list of role IDs (or a comma-separated string of IDs)
+            that are permitted to access the index.
+        user_group (list): A list of group IDs to which the user belongs.
+        groups (list or str): A list of group IDs (or a comma-separated string of IDs)
+            that are permitted to access the index.
+
+    Returns:
+        bool: True if the user has permission to access the index, False otherwise.
+    """
+    # Administrator users are always granted access.
     if user_role[0]:
         return True
 
@@ -324,7 +340,8 @@ def check_index_permission_by_role_and_group(user_role, roles, user_group, group
         ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
     ).all()
 
-    role_groups = [str(lst.id) for lst in without_map_role if "_groups_" in lst.name]
+    role_groups = [str(lst.id) for lst in without_map_role
+                   if "_groups_" in lst.name]
     without_map_role = [str(r.id) for r in without_map_role]
     # Guest, Authenticated User
     without_map_role.extend(['-98', '-99'])
@@ -345,24 +362,53 @@ def check_index_permission_by_role_and_group(user_role, roles, user_group, group
                         if r in without_map_role and r in role_groups]
 
     return check_roles(user_role_list, index_role_list) and \
-        check_groups(user_group_list, index_group_list, user_role_group, index_role_group)
+        check_groups(user_group_list, index_group_list,
+                     user_role_group, index_role_group)
 
 
 def check_roles(user_role_list, index_role_list):
+    """
+    Determine whether the user has access permission based on role IDs.
+
+    Args:
+        user_role_list (list): List of role IDs (as strings) assigned to the user.
+        index_role_list (list): List of role IDs (as strings) configured for the index.
+
+    Returns:
+        bool: True if at least one role ID in user_role_list matches an ID in index_role_list, otherwise False.
+    """
     if current_user.is_authenticated:
+        # Authenticated User
         user_role_list.append('-98')
     else:
+        # Guest
         user_role_list.append('-99')
     return any(r in index_role_list for r in user_role_list)
 
 
-def check_groups(user_group, index_group_list, user_role_group, index_role_group):
-    if current_user.is_authenticated and not user_group and not user_role_group:
-        user_group.append('-89')
-    elif not current_user.is_authenticated:
-        user_group.append('-89')
+def check_groups(user_group_list, index_group_list,
+                 user_role_group, index_role_group):
+    """
+    Determine whether the user has access permission based on group and role group IDs.
 
-    group_perm = any(r in user_group for r in index_group_list)
+    Args:
+        user_group (list): List of group IDs (as strings) to which the user belongs.
+        index_group_list (list): List of group IDs (as strings) configured for the index.
+        user_role_group (list): List of role group IDs (as strings) assigned to the user.
+        index_role_group (list): List of role group IDs (as strings) configured for the index.
+
+    Returns:
+        bool: True if at least one group ID in user_group matches index_group_list,
+              or at least one role group ID in user_role_group matches index_role_group.
+              Otherwise, returns False.
+    """
+    # append "No Group"
+    if current_user.is_authenticated and not user_group_list and not user_role_group:
+        user_group_list.append('-89')
+    elif not current_user.is_authenticated:
+        user_group_list.append('-89')
+
+    group_perm = any(r in user_group_list for r in index_group_list)
     role_group_perm = any(r in user_role_group for r in index_role_group)
     return group_perm or role_group_perm
 
