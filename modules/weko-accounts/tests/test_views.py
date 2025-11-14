@@ -7,7 +7,7 @@ from flask import url_for,request,make_response,current_app,Flask
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
 from flask_security import url_for_security
-from mock import patch
+from unittest.mock import patch
 from invenio_accounts.models import User
 from weko_accounts.api import ShibUser
 from weko_accounts.models import ShibbolethUser
