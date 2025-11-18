@@ -472,7 +472,6 @@ class RecordIndexer(object):
         from weko_deposit.api import WekoIndexer # avoid circular import
         try:
             record_id = payload['id']
-            record_id = None
             record = Record.get_record(record_id)
 
             indexer = WekoIndexer()
