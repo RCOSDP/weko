@@ -359,7 +359,6 @@ class RecordIndexer(object):
                             else:
                                 error_type = str(err_info)
                             click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
-                        fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es(self.success_ids)
         if unprocessed == 0:
@@ -424,8 +423,9 @@ class RecordIndexer(object):
                 else:
                     yield self._index_action(payload, with_deleted=with_deleted)
                 message.ack()
-            except NoResultFound:
+            except NoResultFound as ne:
                 message.reject()
+                current_app.logger.error(f"type:{type(ne).__name__}, message:{str(ne)}\n{traceback.format_exc()}")
             except SQLAlchemyError:
                 db.session.rollback()
                 current_app.logger.error(
@@ -470,50 +470,47 @@ class RecordIndexer(object):
             Exception: If the record cannot be retrieved or processed.
         """
         from weko_deposit.api import WekoIndexer # avoid circular import
-        try:
-            record_id = payload['id']
-            record = Record.get_record(record_id)
+        record_id = payload['id']
+        record = Record.get_record(record_id)
 
-            indexer = WekoIndexer()
-            indexer.get_es_index()
-            res = indexer.get_metadata_by_item_id(record_id)
+        indexer = WekoIndexer()
+        indexer.get_es_index()
+        res = indexer.get_metadata_by_item_id(record_id, is_ignore=True)
+        if res["found"] is True:
             es_version = res.get('_version')
 
             if record.model.version_id < es_version:
                 record.model.version_id = es_version
 
-            self.count = self.count + 1
-            click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
+        self.count = self.count + 1
+        click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')
 
-            self.latest_item_id = record_id
-            index, doc_type = self.record_to_index(record)
+        self.latest_item_id = record_id
+        index, doc_type = self.record_to_index(record)
 
-            arguments = {}
-            body = self._prepare_record(record, index, doc_type, arguments, with_deleted=with_deleted)
+        arguments = {}
+        body = self._prepare_record(record, index, doc_type, arguments, with_deleted=with_deleted)
 
-            body_size = len(json.dumps(body))
-            max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
+        body_size = len(json.dumps(body))
+        max_body_size = current_app.config['INDEXER_MAX_BODY_SIZE']
 
-            if body_size>max_body_size:
-                if 'content' in body:
-                    for i in range(len(body['content'])):
-                        body['content'][i]['file'] = ""
+        if body_size>max_body_size:
+            if 'content' in body:
+                for i in range(len(body['content'])):
+                    body['content'][i]['file'] = ""
 
-            action = {
-                '_op_type': 'index',
-                '_index': index,
-                '_type': doc_type,
-                '_id': str(record.id),
-                '_version': record.model.version_id,
-                '_version_type': self._version_type,
-                '_source': body
-            }
-            action.update(arguments)
-            db.session.commit()
-            return action
-
-        except Exception as e:
-            raise Exception(f"Failed to create Elasticsearch index action for id: {record_id}. Reason: {str(e)}") from e
+        action = {
+            '_op_type': 'index',
+            '_index': index,
+            '_type': doc_type,
+            '_id': str(record.id),
+            '_version': record.model.version_id,
+            '_version_type': self._version_type,
+            '_source': body
+        }
+        action.update(arguments)
+        db.session.commit()
+        return action
 
     @staticmethod
     def _prepare_record(record, index, doc_type, arguments=None, **kwargs):
