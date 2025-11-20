@@ -8,7 +8,8 @@ from invenio_db import db
 import properties
 from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
-from tools import updateRestrictedRecords, update_weko_links
+from tools import updateRestrictedRecords
+# from tools import updateRestrictedRecords, update_weko_links
 from fix_metadata_53602 import main as fix_metadata_53602_main
 from invenio_files_rest.models import (
     timestamp_before_update as ifr_timestamp_before_update,
@@ -67,8 +68,8 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_time = show_exec_time(current_time, "register_properties_only_specified")
         renew_all_item_types() # 更新されたプロパティを使用してアイテムタイプの更新
         current_time = show_exec_time(current_time, "renew_all_item_types")
-        update_weko_links.main(batch_size=batch_size)
-        current_time = show_exec_time(current_time, "update_weko_links")
+        # update_weko_links.main(batch_size=batch_size)
+        # current_time = show_exec_time(current_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
         update_feedback_mail_list_to_db.main() # 著者DBのweko idの変更。それに伴うメタデータの変更
         current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
