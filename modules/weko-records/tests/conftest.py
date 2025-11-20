@@ -418,34 +418,38 @@ def db_register(app, db, users, records, action_data, item_type):
                 \"givenNameLang\": \"ja\"}], \"creatorAlternatives\": [{}], \"creatorAffiliations\":\
                 [{\"affiliationNames\": [], \"affiliationNameIdentifiers\": []}], \"creatorMails\": [{}]},\
                 {\"nameIdentifiers\": [{\"nameIdentifierScheme\": \"WEKO\", \"nameIdentifier\": \"111\",\
-                \"nameIdentifierURI\": \"\"}, {\"nameIdentifierScheme\": \"ORCID\", \"nameIdentifier\": \"111\", \"nameIdentifierURI\": \"https://orcid.org/111\"}], \"creatorNames\": [{}], \"familyNames\": [{}], \"givenNames\": [{}], \"creatorAlternatives\": [{}], \"creatorAffiliations\": [{\"affiliationNameIdentifiers\": [{}], \"affiliationNames\": [{}]}], \"creatorMails\": [{}]}], \"item_30002_contributor3\": [{\"nameIdentifiers\": [{}], \"contributorNames\": [{}], \"familyNames\": [{}], \"givenNames\": [{}], \"contributorAlternatives\": [{}], \"contributorAffiliations\": [{\"contributorAffiliationNameIdentifiers\": [{}], \"contributorAffiliationNames\": [{}]}], \"contributorMails\": [{}]}], \"item_30002_rights6\": [{}], \"item_30002_rights_holder7\": [{\"nameIdentifiers\": [{}], \"rightHolderNames\": [{}]}], \"item_30002_subject8\": [{}], \"item_30002_description9\": [{}], \"item_30002_publisher10\": [{}], \"item_30002_date11\": [{}], \"item_30002_language12\": [{}], \"item_30002_identifier16\": [{}], \"item_30002_relation18\": [{\"subitem_relation_name\": [{}]}], \"item_30002_temporal19\": [{}], \"item_30002_geolocation20\": [{\"subitem_geolocation_place\": [{}]}], \"item_30002_funding_reference21\": [{\"subitem_funder_names\": [{}], \"subitem_funding_streams\": [{}], \"subitem_award_titles\": [{}]}], \"item_30002_source_identifier22\": [{}], \"item_30002_source_title23\": [{}], \"item_30002_degree_name31\": [{}], \"item_30002_degree_grantor33\": [{\"subitem_degreegrantor_identifier\": [{}], \"subitem_degreegrantor\": [{}]}], \"item_30002_conference34\": [{\"subitem_conference_names\": [{}], \"subitem_conference_sponsors\": [{}], \"subitem_conference_venues\": [{}], \"subitem_conference_places\": [{}]}], \"item_30002_file35\": [{\"filesize\": [{}], \"fileDate\": [{}]}], \"item_30002_heading36\": [{}], \"item_30002_holding_agent_name37\": [{\"holding_agent_names\": [{}]}], \"item_30002_original_language43\": [{}], \"item_30002_dcterms_extent46\": [{\"publisher_names\": [{}], \"publisher_descriptions\": [{}], \"publisher_locations\": [{}], \"publication_places\": [{}]}], \"item_30002_publisher_information45\": [{}], \"item_30002_catalog39\": [{\"catalog_contributors\": [{\"contributor_names\": [{}]}], \"catalog_identifiers\": [{}], \"catalog_titles\": [{}], \"catalog_subjects\": [{}], \"catalog_licenses\": [{}], \"catalog_rights\": [{}], \"catalog_access_rights\": [{}]}], \"item_30002_jpcoar_format40\": [{}], \"item_30002_volume_title44\": [{}], \"item_30002_edition41\": [{}], \"item_30002_dcterms_date38\": [{}], \"item_30002_bibliographic_information29\": {\"bibliographic_titles\": [{}]}, \"item_30002_resource_type13\": {\"resourcetype\": \"data paper\", \"resourceuri\": \"http://purl.org/coar/resource_type/c_beb9\"}, \"shared_user_ids\": []}, \"files\": [], \"endpoints\": {\"initialization\": \"/api/deposits/items\"}, \
-                \"weko_link\": {\"1\": \"11\"}}"
-                )
-    activity_without_weko_link = Activity(activity_id='2',workflow_id=1, flow_id=flow_define.id,
-                item_id=_pid2,
-                action_id=1, activity_login_user=1,
-                activity_update_user=1,
-                activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
-                activity_community_id=3,
-                activity_confirm_term_of_use=True,
-                title='test', shared_user_ids=[], extra_info={},
-                action_order=1,
-                temp_data="{\"metainfo\": {\"pubdate\": \"2025-03-13\", \"item_30002_title0\": \
-                [{\"subitem_title\": \"test\", \"subitem_title_language\": \"ja\"}], \
-                \"item_30002_alternative_title1\": [{}], \"item_30002_creator2\": \
-                [{\"nameIdentifiers\": [{\"nameIdentifier\": \"11\", \"nameIdentifierScheme\":\
-                \"WEKO\", \"nameIdentifierURI\": \"\"}], \"creatorNames\": [{\"creatorName\": \
-                \"test, jiro\", \"creatorNameLang\": \"ja\"}], \"familyNames\": [{\"familyName\":\
-                \"test\", \"familyNameLang\": \"ja\"}], \"givenNames\": [{\"givenName\": \"jiro\", \
-                \"givenNameLang\": \"ja\"}], \"creatorAlternatives\": [{}], \"creatorAffiliations\":\
-                [{\"affiliationNames\": [], \"affiliationNameIdentifiers\": []}], \"creatorMails\": [{}]},\
-                {\"nameIdentifiers\": [{\"nameIdentifierScheme\": \"WEKO\", \"nameIdentifier\": \"111\",\
-                \"nameIdentifierURI\": \"\"}, {\"nameIdentifierScheme\": \"ORCID\", \"nameIdentifier\": \"111\", \"nameIdentifierURI\": \"https://orcid.org/111\"}], \"creatorNames\": [{}], \"familyNames\": [{}], \"givenNames\": [{}], \"creatorAlternatives\": [{}], \"creatorAffiliations\": [{\"affiliationNameIdentifiers\": [{}], \"affiliationNames\": [{}]}], \"creatorMails\": [{}]}], \"item_30002_contributor3\": [{\"nameIdentifiers\": [{}], \"contributorNames\": [{}], \"familyNames\": [{}], \"givenNames\": [{}], \"contributorAlternatives\": [{}], \"contributorAffiliations\": [{\"contributorAffiliationNameIdentifiers\": [{}], \"contributorAffiliationNames\": [{}]}], \"contributorMails\": [{}]}], \"item_30002_rights6\": [{}], \"item_30002_rights_holder7\": [{\"nameIdentifiers\": [{}], \"rightHolderNames\": [{}]}], \"item_30002_subject8\": [{}], \"item_30002_description9\": [{}], \"item_30002_publisher10\": [{}], \"item_30002_date11\": [{}], \"item_30002_language12\": [{}], \"item_30002_identifier16\": [{}], \"item_30002_relation18\": [{\"subitem_relation_name\": [{}]}], \"item_30002_temporal19\": [{}], \"item_30002_geolocation20\": [{\"subitem_geolocation_place\": [{}]}], \"item_30002_funding_reference21\": [{\"subitem_funder_names\": [{}], \"subitem_funding_streams\": [{}], \"subitem_award_titles\": [{}]}], \"item_30002_source_identifier22\": [{}], \"item_30002_source_title23\": [{}], \"item_30002_degree_name31\": [{}], \"item_30002_degree_grantor33\": [{\"subitem_degreegrantor_identifier\": [{}], \"subitem_degreegrantor\": [{}]}], \"item_30002_conference34\": [{\"subitem_conference_names\": [{}], \"subitem_conference_sponsors\": [{}], \"subitem_conference_venues\": [{}], \"subitem_conference_places\": [{}]}], \"item_30002_file35\": [{\"filesize\": [{}], \"fileDate\": [{}]}], \"item_30002_heading36\": [{}], \"item_30002_holding_agent_name37\": [{\"holding_agent_names\": [{}]}], \"item_30002_original_language43\": [{}], \"item_30002_dcterms_extent46\": [{\"publisher_names\": [{}], \"publisher_descriptions\": [{}], \"publisher_locations\": [{}], \"publication_places\": [{}]}], \"item_30002_publisher_information45\": [{}], \"item_30002_catalog39\": [{\"catalog_contributors\": [{\"contributor_names\": [{}]}], \"catalog_identifiers\": [{}], \"catalog_titles\": [{}], \"catalog_subjects\": [{}], \"catalog_licenses\": [{}], \"catalog_rights\": [{}], \"catalog_access_rights\": [{}]}], \"item_30002_jpcoar_format40\": [{}], \"item_30002_volume_title44\": [{}], \"item_30002_edition41\": [{}], \"item_30002_dcterms_date38\": [{}], \"item_30002_bibliographic_information29\": {\"bibliographic_titles\": [{}]}, \"item_30002_resource_type13\": {\"resourcetype\": \"data paper\", \"resourceuri\": \"http://purl.org/coar/resource_type/c_beb9\"}, \"shared_user_ids\": []}, \"files\": [], \"endpoints\": {\"initialization\": \"/api/deposits/items\"}}"
+                \"nameIdentifierURI\": \"\"}, {\"nameIdentifierScheme\": \"ORCID\", \"nameIdentifier\": \"111\",\
+                \"nameIdentifierURI\": \"https://orcid.org/111\"}], \"creatorNames\": [{}], \"familyNames\": [{}],\
+                \"givenNames\": [{}], \"creatorAlternatives\": [{}], \"creatorAffiliations\": [{\"affiliationNameIdentifiers\": [{}],\
+                \"affiliationNames\": [{}]}], \"creatorMails\": [{}]}], \"item_30002_contributor3\": [{\"nameIdentifiers\": [{}],\
+                \"contributorNames\": [{}], \"familyNames\": [{}], \"givenNames\": [{}], \"contributorAlternatives\": [{}],\
+                \"contributorAffiliations\": [{\"contributorAffiliationNameIdentifiers\": [{}],\
+                \"contributorAffiliationNames\": [{}]}], \"contributorMails\": [{}]}], \"item_30002_rights6\": [{}],\
+                \"item_30002_rights_holder7\": [{\"nameIdentifiers\": [{}], \"rightHolderNames\": [{}]}], \"item_30002_subject8\": [{}],\
+                \"item_30002_description9\": [{}], \"item_30002_publisher10\": [{}], \"item_30002_date11\": [{}],\
+                \"item_30002_language12\": [{}], \"item_30002_identifier16\": [{}], \"item_30002_relation18\": [{\"subitem_relation_name\": [{}]}],\
+                \"item_30002_temporal19\": [{}], \"item_30002_geolocation20\": [{\"subitem_geolocation_place\": [{}]}],\
+                \"item_30002_funding_reference21\": [{\"subitem_funder_names\": [{}], \"subitem_funding_streams\": [{}],\
+                \"subitem_award_titles\": [{}]}], \"item_30002_source_identifier22\": [{}], \"item_30002_source_title23\": [{}],\
+                \"item_30002_degree_name31\": [{}], \"item_30002_degree_grantor33\": [{\"subitem_degreegrantor_identifier\": [{}],\
+                \"subitem_degreegrantor\": [{}]}], \"item_30002_conference34\": [{\"subitem_conference_names\": [{}],\
+                \"subitem_conference_sponsors\": [{}], \"subitem_conference_venues\": [{}], \"subitem_conference_places\": [{}]}],\
+                \"item_30002_file35\": [{\"filesize\": [{}], \"fileDate\": [{}]}], \"item_30002_heading36\": [{}],\
+                \"item_30002_holding_agent_name37\": [{\"holding_agent_names\": [{}]}], \"item_30002_original_language43\": [{}],\
+                \"item_30002_dcterms_extent46\": [{\"publisher_names\": [{}], \"publisher_descriptions\": [{}],\
+                \"publisher_locations\": [{}], \"publication_places\": [{}]}], \"item_30002_publisher_information45\": [{}],\
+                \"item_30002_catalog39\": [{\"catalog_contributors\": [{\"contributor_names\": [{}]}], \"catalog_identifiers\": [{}],\
+                \"catalog_titles\": [{}], \"catalog_subjects\": [{}], \"catalog_licenses\": [{}], \"catalog_rights\": [{}],\
+                \"catalog_access_rights\": [{}]}], \"item_30002_jpcoar_format40\": [{}], \"item_30002_volume_title44\": [{}],\
+                \"item_30002_edition41\": [{}], \"item_30002_dcterms_date38\": [{}],\
+                \"item_30002_bibliographic_information29\": {\"bibliographic_titles\": [{}]},\
+                \"item_30002_resource_type13\": {\"resourcetype\": \"data paper\",\
+                \"resourceuri\": \"http://purl.org/coar/resource_type/c_beb9\"}, \"shared_user_ids\": []}, \"files\": [],\
+                \"endpoints\": {\"initialization\": \"/api/deposits/items\"}"
                 )
     with db.session.begin_nested():
         db.session.add(workflow)
         db.session.add(activity)
-        db.session.add(activity_without_weko_link)
     db.session.commit()
 
     activity_action = ActivityAction(activity_id=activity.activity_id,

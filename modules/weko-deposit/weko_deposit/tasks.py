@@ -259,11 +259,11 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
     update_es_authorinfo = []
     for item in search['hits']['hits']:
         item_id = item['_source']['control_number']
-        object_uuid, record_ids, author_link, weko_link = \
+        object_uuid, record_ids, author_link = \
             _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         if object_uuid:
             update_es_authorinfo.append({
-                'id': object_uuid, 'author_link': list(author_link), 'weko_link': weko_link
+                'id': object_uuid, 'author_link': list(author_link)
             })
     db.session.commit()
     # update record to ES
@@ -300,10 +300,10 @@ def _process(data_size, data_from, process_counter, target, origin_pkid_list, ke
             while True:
                 try:
                     dep = WekoDeposit.get_record(d['id'])
-                    dep.update_author_link_and_weko_link(d['author_link'], d["weko_link"])
+                    dep.update_author_link(d['author_link'])
                     break
                 except Exception as e:
-                    current_app.logger.error("Failed to update record to ES. method:update_author_link_and_weko_link err:{}".format(e))
+                    current_app.logger.error("Failed to update record to ES. method:update_author_link err:{}".format(e))
                     current_app.logger.error("retrys:{} sleep{}".format(count, sleep_time))
                     if sleep_time > max_back_off_time:
                         raise e
@@ -325,19 +325,6 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
         dep = WekoDeposit.get_record(pid.object_uuid)
         author_link = set()
         author_data = {}
-        current_weko_link = dep.get("weko_link", {})
-        weko_link = copy.deepcopy(current_weko_link)
-
-        # targetを用いてweko_linkを新しくする。
-        if target:
-            # weko_idを取得する。
-            target_pk_id = target["pk_id"]
-            author_id_info = target["authorIdInfo"]
-            for i in author_id_info:
-                # idTypeが1の場合、weko_idを取得し、weko_linkを更新する。
-                if i.get('idType') == '1':
-                    weko_link[target_pk_id] = i.get('authorId')
-                    break
         for k, v in dep.items():
             if isinstance(v, dict) \
                 and v.get('attribute_value_mlt') \
@@ -359,20 +346,12 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
                         change_flag = False
                         for id in data.get('nameIdentifiers', []):
                             if id.get('nameIdentifierScheme', '') == 'WEKO':
-
-                                # author_link.add(id['nameIdentifier'])
-                                # 1.current_weko_linkの値にdataのweko_idが含まれているかを確認する。
-                                # 2.weko_idが含まれている場合、current_weko_linkでそのweko_id対応するpk_idを取得する。
-                                pk_ids = [k for k, v in current_weko_link.items() if v == id.get("nameIdentifier")]
-                                if pk_ids:
-                                    pk_id = pk_ids[0]
-                                    author_link.add(pk_id)
-                                    # 3.origin_pkid_listにpk_idが含まれているかを確認する。
-                                    if pk_id in origin_pkid_list:
-                                        # 4.含まれている場合change_flagをTrueにする。
-                                        change_flag = True
-                                        record_ids.append(pid.object_uuid)
-                                        break
+                                author_link.add(id['nameIdentifier'])
+                                if id['nameIdentifier'] in origin_pkid_list:
+                                    origin_id = id['nameIdentifier']
+                                    change_flag = True
+                                    record_ids.append(pid.object_uuid)
+                                    break
                             else:
                                 continue
                         if change_flag:
@@ -384,24 +363,27 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
                                 new_meta)
                             author_data.update(
                                 {k: dep[k]['attribute_value_mlt']})
+                            if origin_id != target_id:
+                                temp_list.append(origin_id)
+                                author_link.remove(origin_id)
+                                author_link.add(target_id)
 
         dep['author_link'] = list(author_link)
-        dep["weko_link"] = weko_link
-
+        
         dep.update_item_by_task()
         obj = ItemsMetadata.get_record(pid.object_uuid)
         obj.update(author_data)
         obj.commit()
         process_counter[SUCCESS_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": ""})
-        return pid.object_uuid, record_ids, author_link, weko_link
+        return pid.object_uuid, record_ids, author_link
     except PIDDoesNotExistError as pid_error:
         current_app.logger.error("PID {} does not exist.".format(item_id))
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
-        return None, set(), {}, {}
+        return None, set()
     except Exception as ex:
         current_app.logger.error(ex)
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
-        return None, set(), {}, {}
+        return None, set()
 
 def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_data, force_change=False):
     target_id = None

@@ -1755,51 +1755,6 @@ def import_affiliation_id_to_system(affiliation_id):
             traceback.print_exc(file=sys.stdout)
             raise
 
-def update_data_for_weko_link(data, weko_link):
-    """Update weko_link based on authors table and update data if different.
-
-    Args:
-        data (dict): Metadata, especially from workflowactivity temp_data column.
-        weko_link (dict): weko_link mapping.
-    """
-    old_weko_link = weko_link
-    weko_link = copy.deepcopy(old_weko_link)
-    # Update weko_link with new values.
-    for pk_id in weko_link.keys():
-        author = Authors.get_author_by_id(pk_id)
-        if author:
-            # Get weko_id.
-            author_id_info = author["authorIdInfo"]
-            for i in author_id_info:
-                # If idType is 1, get weko_id and update weko_link.
-                if i.get('idType') == '1':
-                    weko_link[pk_id] = i.get('authorId')
-                    break
-    if weko_link == old_weko_link:
-        # If weko_link has not changed, do nothing.
-        return
-    # If weko_link has changed, update metadata.
-    for x_key, x_value in data.items():
-        if not isinstance(x_value, list):
-            continue
-        for y_index, y in enumerate(x_value, start=0):
-            if not isinstance(y, dict):
-                continue
-            for y_key, y_value in y.items():
-                if not y_key == "nameIdentifiers":
-                    continue
-                for z_index, z in enumerate(y_value, start=0):
-                    if (
-                        z.get("nameIdentifierScheme","") != "WEKO"
-                        or z.get("nameIdentifier") not in old_weko_link.values()
-                    ):
-                        continue
-                    # Get pk_id whose value matches weko_id from weko_link.
-                    pk_id = [
-                        k for k, v in old_weko_link.items()
-                        if v == z.get("nameIdentifier")
-                    ][0]
-                    z["nameIdentifier"] = weko_link.get(pk_id)
 
 def get_check_base_name():
     """Get base name for check file.

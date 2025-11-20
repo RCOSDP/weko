@@ -127,7 +127,6 @@ from weko_items_ui.utils import (
     write_bibtex_files,
     write_files,
     get_file_download_data,
-    get_weko_link,
     check_duplicate,
     create_item_deleted_data,
     create_direct_registered_data,
@@ -11263,85 +11262,6 @@ def test_get_file_download_data(app, client, records):
         record = results[5]["record"]
         with pytest.raises(AvailableFilesNotFoundRESTError):
             get_file_download_data(record.id, record, filenames)
-
-# def get_weko_link(metadata):
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_weko_link(app, client, users, db_records, mocker):
-    mocker.patch("weko_items_ui.utils.WekoAuthors.get_pk_id_by_weko_id",side_effect=["2","0"])
-    res = get_weko_link(
-        {
-            "metainfo": {
-                "item_30002_creator2": [
-                    {
-                        "nameIdentifiers": [
-                            {
-                                "nameIdentifier": "8",
-                                "nameIdentifierScheme": "WEKO",
-                                "nameIdentifierURI": "",
-                            }
-                        ]
-                    }
-                ],
-                "item_30003_creator2": [
-                    {
-                        "nameIdentifiers": [
-                            {
-                                "nameIdentifier": "8",
-                                "nameIdentifierScheme": "WEKO",
-                                "nameIdentifierURI": "",
-                            }
-                        ]
-                    }
-                ],
-                "item_30004_creator2": [
-                    {
-                        "nameIdentifiers": [
-                            {
-                                "nameIdentifier": "12",
-                                "nameIdentifierScheme": "WEKO",
-                                "nameIdentifierURI": "",
-                            }
-                        ]
-                    }
-                ]
-            },
-            "files": [],
-            "endpoints": {"initialization": "/api/deposits/items"},
-        }
-    )
-    assert res == {"2": "8"}
-    res = get_weko_link(
-        {
-            "metainfo": {
-                "item_30002_creator2": [
-                    {
-                        "nameIdentifiers": [
-                            {
-                                "nameIdentifier": "8",
-                                "nameIdentifierScheme": "OTHER",
-                                "nameIdentifierURI": "",
-                            }
-                        ]
-                    }
-                ]
-            },
-            "files": [],
-            "endpoints": {"initialization": "/api/deposits/items"},
-        }
-    )
-    assert res == {}
-
-    # not isinstance(x, list) is true
-    res = get_weko_link({"metainfo": {"field1": "string_value"}})
-    assert res == {}
-
-    # not isinstance(y, dict) is true
-    res = get_weko_link({"metainfo": {"field1": ["string_value"]}})
-    assert res == {}
-
-    # not key == "nameIdentifiers" is true
-    res = get_weko_link({"metainfo": {"field1": [{"field2": {}}]}})
-    assert res == {}
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_get_duplicate_fields -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_duplicate_fields():

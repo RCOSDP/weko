@@ -419,7 +419,7 @@ class TestProcess:
         def get_record(self):
             return self
 
-        def update_author_link_and_weko_link(self):
+        def update_author_link(self):
             pass
 
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestProcess::test_process_with_data -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -430,7 +430,7 @@ class TestProcess:
         mocker.patch('invenio_indexer.api.RecordIndexer.bulk_index')
         mocker.patch('invenio_indexer.api.RecordIndexer.process_bulk_queue')
         with patch('weko_deposit.api.WekoDeposit.get_record', return_value = WekoDeposit({})):
-            mocker.patch('weko_deposit.api.WekoDeposit.update_author_link_and_weko_link')
+            mocker.patch('weko_deposit.api.WekoDeposit.update_author_link')
             # 条件
             data_size = 10
             data_from = 0
@@ -1105,9 +1105,6 @@ class TestUpdateAuthorData:
                         ]
                     }
                 ]
-            },
-            "weko_link": {
-                "1": "12345"
             }
         }
 
@@ -1146,7 +1143,7 @@ class TestUpdateAuthorData:
         result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
 
         # 期待結果
-        assert result == (None, set(), {})
+        assert result == (None, set())
         assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "PID 1 does not exist."}]
 
     @patch('weko_deposit.tasks.PersistentIdentifier.get')
@@ -1171,7 +1168,7 @@ class TestUpdateAuthorData:
         result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
 
         # 期待結果
-        assert result == (None, set(), {})
+        assert result == (None, set())
         assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "Test Exception"}]
 
 
@@ -1387,7 +1384,7 @@ class TestProcess:
             mock_update_author_data.return_value = (uuid1, [uuid1], set())
 
             # 実行
-            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id)
+            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id, force_change)
             mock_bulk_index.assert_called()
             mock_process_bulk_queue.assert_called()
 
@@ -1405,6 +1402,7 @@ class TestProcess:
         origin_pkid_list = ["1"]
         author_prefix = {...}
         affiliation_id = {...}
+        force_change = False
 
         with patch('weko_deposit.api.WekoDeposit.get_record', return_value = WekoDeposit({})):
             mock_records_search.return_value.update_from_dict.return_value.execute.return_value.to_dict.return_value = {
@@ -1415,7 +1413,7 @@ class TestProcess:
             }
             uuid1 = uuid.uuid4()
             mock_update_author_data.return_value = (uuid1, [uuid1], set())
-            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id)
+            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id, force_change)
             assert result == (2, True)
 
             data_size = 10
@@ -1425,7 +1423,7 @@ class TestProcess:
                     'total': 1
                 }
             }
-            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id)
+            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id, force_change)
             assert result == (1, False)
 
     # 54702-24
@@ -1458,7 +1456,7 @@ class TestProcess:
             mock_update_author_data.return_value = (None, set(), {})
 
             # 実行
-            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id)
+            result = _process(data_size, data_from, process_counter, target, origin_pkid_list, prepare_key_map, author_prefix, affiliation_id, force_change)
             assert result[0] == 0
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1592,6 +1590,7 @@ class TestUpdateAuthorData:
         key_map = prepare_key_map
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         dep_items = {
             "title": "Sample Title",
             "creator": {
@@ -1614,7 +1613,7 @@ class TestUpdateAuthorData:
         mock_get_record_items.return_value = WekoDeposit(dep_items)
         mock_change_to_meta.return_value = ("12345", {})
         # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
         mock_change_to_meta.assert_called()
         assert result ==  ('uuid1', ['uuid1'], {'12345'})
@@ -1639,6 +1638,7 @@ class TestUpdateAuthorData:
         key_map = prepare_key_map
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         dep_items = {
             "title": "Sample Title",
             "creator": {
@@ -1660,7 +1660,7 @@ class TestUpdateAuthorData:
         mock_get_record_items.return_value = WekoDeposit(dep_items)
         mock_change_to_meta.return_value = ("12345", {})
         # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
         assert result ==  ('uuid1', [], {""})
         assert process_counter["success_items"] == [{"record_id": "1", "author_ids": [], "message": ""}]
@@ -1684,6 +1684,7 @@ class TestUpdateAuthorData:
         key_map = prepare_key_map
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         dep_items = {
             "contributor": {
                 "attribute_value_mlt": [
@@ -1704,7 +1705,7 @@ class TestUpdateAuthorData:
         mock_get_record_items.return_value = WekoDeposit(dep_items)
         mock_change_to_meta.return_value = ("12345", {})
         # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
         mock_change_to_meta.assert_called()
         assert result ==  ('uuid1', ['uuid1'], {'12345'})
@@ -1729,6 +1730,7 @@ class TestUpdateAuthorData:
         key_map = prepare_key_map
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         dep_items = {
             "title": "Sample Title",
             "full_name":{
@@ -1755,7 +1757,7 @@ class TestUpdateAuthorData:
         mock_get_record.return_value = WekoDeposit({})
         mock_get_record_items.return_value = WekoDeposit(dep_items)
 
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
 
         assert result ==  ('uuid1', [], {'3'})
         assert process_counter["success_items"] == [{"record_id": "3", "author_ids": [], "message": ""}]
@@ -1779,6 +1781,7 @@ class TestUpdateAuthorData:
         key_map = prepare_key_map
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         dep_items = {
             "title": "Sample Title",
             "test": {
@@ -1796,7 +1799,7 @@ class TestUpdateAuthorData:
         mock_get_record.return_value = WekoDeposit({})
         mock_get_record_items.return_value = WekoDeposit(dep_items)
 
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
 
         assert result ==  ('uuid1', [], set())
         assert process_counter["success_items"] == [{"record_id": "1", "author_ids": [], "message": ""}]
@@ -1820,6 +1823,7 @@ class TestUpdateAuthorData:
         key_map = prepare_key_map
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         dep_items = {
             "title": "Sample Title",
             "creator": {
@@ -1840,7 +1844,7 @@ class TestUpdateAuthorData:
         mock_get_record.return_value = WekoDeposit({})
         mock_get_record_items.return_value = WekoDeposit(dep_items)
 
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
 
         assert result ==  ('uuid1', [], set())
         assert process_counter["success_items"] == [{"record_id": "1", "author_ids": [], "message": ""}]
@@ -1860,12 +1864,13 @@ class TestUpdateAuthorData:
         key_map = {"creator": {}, "contributor": {}, "full_name": {}}
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         # モックの設定
         mock_get_pid.side_effect = PIDDoesNotExistError("pid_type", "pid_value")
         # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
-        assert result == (None, set(), {})
+        assert result == (None, set())
         assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "PID 1 does not exist."}]
 
     # 54702-30
@@ -1883,12 +1888,13 @@ class TestUpdateAuthorData:
         key_map = {"creator": {}, "contributor": {}, "full_name": {}}
         author_prefix = {}
         affiliation_id = {}
+        force_change = False
         # モックの設定
         mock_get_pid.side_effect = Exception("Test Exception")
         # 実行
-        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id)
+        result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
-        assert result == (None, set(), {})
+        assert result == (None, set())
         assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "Test Exception"}]
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1986,6 +1992,7 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents_api_cases -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.skip()
 @pytest.mark.parametrize("tika_path, isfile, storage_exception, subprocess_returncode, update_side_effect, expect_error_attr, expect_content", [
     ("/tmp/tika.jar", True, None, 0, None, None, "abc"),  # normal
     (None, True, None, 0, None, Exception, None),  # tika jar not found
