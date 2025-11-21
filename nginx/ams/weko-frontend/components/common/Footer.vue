@@ -23,11 +23,13 @@
               <span>FAQ</span>
             </NuxtLink>
           </li> -->
+          <!--
           <li class="cursor-pointer">
             <NuxtLink class="underline" to="" event="" @click="throughDblClick(`${appConf.amsPath ?? ''}/contact`)">
               <span>CONTACT</span>
             </NuxtLink>
           </li>
+          -->
         </ul>
         <ul class="text-white text-sm">
           <!-- <li class="mb-1.5">

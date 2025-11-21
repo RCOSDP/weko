@@ -20,7 +20,7 @@ export default defineNuxtConfig({
     buildAssetsDir: '/ams/_nuxt/',
     head: {
       htmlAttrs: { lang: 'ja' },
-      title: 'AMS-alpha',
+      title: 'Mebyo Data Catalog DB',
       meta: [
         { charset: 'utf-8' },
         { name: 'keywords', content: '' },
@@ -45,7 +45,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       clientId: 'KVKymVW0sVb8nFSXqCgS96UjbZ9ZhreyT0Nt2VxB',
-      redirectURI: 'http://ams.ir.rcos.nii.ac.jp/',
+      redirectURI: 'https://ams.ir.rcos.nii.ac.jp/',
       apiTimeout: 10000, // api response timeout (ms)
       tokenRefreshLimit: 600, // refresh access token before time (s)
       contact: {

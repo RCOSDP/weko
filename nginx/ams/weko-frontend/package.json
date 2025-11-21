@@ -1,5 +1,5 @@
 {
-  "name": "ams-alpha",
+  "name": "mebyo-data-catalog-db",
   "private": true,
   "scripts": {
     "dev": "nuxt dev",

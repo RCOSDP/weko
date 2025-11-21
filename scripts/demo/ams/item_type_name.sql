@@ -21,7 +21,7 @@ SET row_security = off;
 --
 
 INSERT INTO public.item_type_name (created, updated, id, name, has_site_license, is_active) VALUES
-('2025-02-25 04:05:58.871334', '2025-02-25 04:05:58.871341', 51000, '未病アイテムタイプ', true, true)
+('2025-02-25 04:05:58.871334', '2025-02-25 04:05:58.871341', 32001, '未病アイテムタイプ', true, true)
 ON CONFLICT (id) DO UPDATE SET
   created = EXCLUDED.created,
   updated = EXCLUDED.updated,

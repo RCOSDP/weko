@@ -2,7 +2,10 @@
   <div class="relative flex flex-col justify-center h-screen bg-miby-dark-blue">
     <div class="w-full m-auto mb-5 flex justify-center cursor-pointer">
       <NuxtLink to="" event="" @click="throughDblClick">
+        <!--
         <img class="scale-150" :src="`${appConf.amsImage ?? '/img'}/logo/logo_w.svg`" alt="AMS Logo" />
+        -->
+        <h1 class="text-5xl text-center font-medium text-white">Mebyo Data Catalog DB</h1>
       </NuxtLink>
     </div>
     <div

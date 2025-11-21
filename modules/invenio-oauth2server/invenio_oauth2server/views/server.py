@@ -120,6 +120,7 @@ def access_token():
     # Return None or a dictionary. Dictionary will be merged with token
     # returned to the client requesting the access token.
     # Response is in application/json
+    
     return None
 
 

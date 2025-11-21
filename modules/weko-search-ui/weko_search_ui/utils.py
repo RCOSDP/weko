@@ -921,10 +921,14 @@ def check_jsonld_import_items(
                 .format(item_type.item_type_name.name)
             )
 
+        _json_ld = {}
         with open(f"{data_path}/{json_name}", "r") as f:
-            json_ld = json.load(f)
+            _json_ld = json.load(f)
         mapper.data_path = data_path
+        # Temporary fix for pipe character
+        json_ld = json.loads((json.dumps(_json_ld, ensure_ascii=False)).replace("|", "｜"))
         item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",

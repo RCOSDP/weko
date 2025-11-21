@@ -467,7 +467,7 @@ def post_service_document():
 @oauth2.require_oauth()
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id, actions_scope.id)
-@require_oauth_scopes(item_update_scope.id)
+# @require_oauth_scopes(item_update_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
 @check_on_behalf_of()
 @check_package_contents()
