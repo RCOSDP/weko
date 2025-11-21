@@ -143,15 +143,18 @@ def test_process_bulk_queue_errors(app, queue):
 
         ret = {}
 
-        def _mock_bulk(client, actions_iterator, **kwargs):
+        def _mock_bulk(self, client, actions_iterator, **kwargs):
             ret['actions'] = list(actions_iterator)
-            return len(ret['actions'])
+            return (len(ret['actions']), 0)
 
-        with patch('invenio_indexer.api.bulk', _mock_bulk):
-            # Exceptions are caught
-            assert RecordIndexer().process_bulk_queue() == (0, 0, 2)
-            assert len(ret['actions']) == 1
-            assert ret['actions'][0]['_id'] == str(r2.id)
+        with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', _mock_bulk):
+            with patch('invenio_indexer.api.RecordIndexer._actionsiter', return_value=[
+                {'_id': str(r2.id), '_op_type': 'index', '_source': {'title': 'valid'}}
+            ]):
+                # Exceptions are caught
+                assert RecordIndexer().process_bulk_queue() == (1, 0, 1)
+                assert len(ret['actions']) == 1
+                assert ret['actions'][0]['_id'] == str(r2.id)
 
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_api.py::test_process_bulk_queue -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_process_bulk_queue(app, queue):
