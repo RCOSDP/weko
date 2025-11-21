@@ -1992,7 +1992,6 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents_api_cases -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-@pytest.mark.skip()
 @pytest.mark.parametrize("tika_path, isfile, storage_exception, subprocess_returncode, update_side_effect, expect_error_attr, expect_content", [
     ("/tmp/tika.jar", True, None, 0, None, None, "abc"),  # normal
     (None, True, None, 0, None, Exception, None),  # tika jar not found
