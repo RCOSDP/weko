@@ -384,7 +384,7 @@ services:
     environment:
       - NODE_TLS_REJECT_UNAUTHORIZED=0
     extra_hosts:
-      - ams.ir.rcos.nii.ac.jp:127.0.0.1
+      - mebyo.ir.rcos.nii.ac.jp:127.0.0.1
 
 #  certbot:
 #    image: certbot/certbot:latest

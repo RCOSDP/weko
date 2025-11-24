@@ -1,4 +1,4 @@
-const weko = 'ams.ir.rcos.nii.ac.jp';
+const weko = 'mebyo.ir.rcos.nii.ac.jp';
 
 export default defineAppConfig({
   wekoOrigin: 'https://' + weko,
@@ -8,10 +8,10 @@ export default defineAppConfig({
   amsApi: '/api/ams',
   export: {
     jpcoar:
-      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:ams.ir.rcos.nii.ac.jp:',
+      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:mebyo.ir.rcos.nii.ac.jp:',
     dublincore:
-      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:ams.ir.rcos.nii.ac.jp:',
-    ddi: 'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:ams.ir.rcos.nii.ac.jp:'
+      'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:mebyo.ir.rcos.nii.ac.jp:',
+    ddi: 'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:mebyo.ir.rcos.nii.ac.jp:'
   },
   /** RO-Crate Mapping setting */
   roCrate: {
