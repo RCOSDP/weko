@@ -224,7 +224,7 @@ class AuthorUpdateRequestSchema(Schema):
     force_change = fields.Bool()
     """Flag to force change"""
 
-    author = fields.Nested(AuthorUpdateSchema, required=True)
+    author = fields.Nested(AuthorSchema, required=True)
     """Updated author information."""
 
     class Meta:
