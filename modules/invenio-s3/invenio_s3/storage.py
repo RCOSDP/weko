@@ -188,12 +188,18 @@ class S3FSFileStorage(PyFSFileStorage):
         as_attachment=False,
     ):
         """Send the file to the client."""
-        s3_send_file_directly = current_app.config.get('S3_SEND_FILE_DIRECTLY', None)
-        default_location = Location.query.filter_by(default=True).first()
+        s3_send_file_directly = current_app.config.get(
+            "S3_SEND_FILE_DIRECTLY", False
+        )
 
-        if (default_location.type == 's3'
-            or default_location.type == 's3_vh'):
-            s3_send_file_directly = default_location.s3_send_file_directly
+        current_app.logger.debug(f"self.location: {self.location}")
+
+        s3_type_values = [
+            current_app.config.get("S3_LOCATION_TYPE_S3_PATH_VALUE"),
+            current_app.config.get("S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE")
+        ]
+        if self.location and (self.location.type in s3_type_values):
+            s3_send_file_directly = self.location.s3_send_file_directly
 
         if s3_send_file_directly:
             return super(S3FSFileStorage, self).send_file(

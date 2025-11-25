@@ -510,7 +510,6 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
             workflow_id=latest_activity.workflow_id
         )
         current_app.logger.debug(f"workflow: {workflow}")
-        print(workflow.location_id)
         location_id = workflow.location_id if workflow else None
         if location_id:
             location = Location.query.get(location_id)
