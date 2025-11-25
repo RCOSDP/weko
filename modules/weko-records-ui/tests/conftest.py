@@ -108,6 +108,7 @@ from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName, SiteLic
 from weko_records_ui.config import WEKO_ADMIN_PDFCOVERPAGE_TEMPLATE,RECORDS_UI_ENDPOINTS,WEKO_RECORDS_UI_SECRET_KEY,WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN
 from weko_records_ui.models import FileSecretDownload, PDFCoverPageSettings,FileOnetimeDownload, FilePermission, RocrateMapping
 from weko_records_ui.utils import create_download_url
+from weko_user_profiles.models import UserProfile
 
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -6356,3 +6357,51 @@ def communities2(app, indices, users, db):
     db.session.add(community)
     db.session.commit()
     return [community]
+
+@pytest.fixture()
+def users_storage_info(db, users):
+    """Create user profile for storage."""
+
+    users_info = {
+        "s3_storage_user": {
+            "user_info": users[1], # Repository Administrator
+            "profile_obj": UserProfile(
+                user_id=users[1]["id"], # Repository Administrator
+                _username="testuser_s3",
+                _displayname="Repository Admin",
+                fullname="Test User",
+                language="ja",
+                university="Test University",
+                department="Test Department",
+                position="Test Position",
+                access_key="access_key_12345",
+                secret_key="secret_key_12345",
+                s3_endpoint_url="https://s3.ap-southeast-2.amazonaws.com/", # Example S3 endpoint
+                s3_region_name="ap-southeast-2",
+            ),
+        },
+        "not_s3_storage_user": {
+            "user_info": users[2], # System Administrator
+            "profile_obj": UserProfile(
+                user_id=users[2]["id"], # System Administrator
+                _username="testuser_not_s3",
+                _displayname="System Admin",
+                fullname="Test User System",
+                language="ja",
+                university="Test University",
+                department="Test Department",
+                position="Test Position",
+                access_key="access_key_12345",
+                secret_key="secret_key_12345",
+                s3_endpoint_url="https://s3.custom.endpoint.com/", # not S3
+                s3_region_name="custom region",
+            ),
+        }
+    }
+
+    with db.session.begin_nested():
+        for user_info in users_info.values():
+            db.session.add(user_info["profile_obj"])
+    db.session.commit()
+
+    yield users_info
