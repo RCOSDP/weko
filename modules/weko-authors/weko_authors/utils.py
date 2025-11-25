@@ -52,7 +52,7 @@ from invenio_indexer.api import RecordIndexer
 
 from .contrib.validation import (
     validate_by_extend_validator, validate_external_author_identifier,
-    validate_map, validate_required, check_weko_id_is_exits_for_import
+    validate_map, validate_required
 )
 from .api import WekoAuthors
 from .errors import AuthorsValidationError, AuthorsPermissionError
@@ -159,82 +159,6 @@ def check_email_existed(email: str):
             'email': email,
             'author_id': ''
         }
-
-def validate_weko_id(weko_id, pk_id = None):
-    """Validate WEKO ID.
-
-    Args:
-        weko_id (str): WEKO ID.
-        pk_id (str, optional): Primary key ID.
-
-    Returns:
-        tuple: (bool, str or None)
-    """
-    if not bool(re.fullmatch(r'[0-9]+', weko_id)):
-        return False, "not half digit"
-
-    try:
-        result = check_weko_id_is_exists(weko_id, pk_id)
-    except Exception as ex:
-        current_app.logger.error(ex)
-        raise ex
-
-    if result == True:
-        return False, "already exists"
-    return True, None
-
-def check_weko_id_is_exists(weko_id, pk_id = None):
-    """Check if weko_id exists in Elasticsearch.
-
-    If author_id is the same as pk_id, skip checking.
-    weko_id is the value of authorId where authorIdInfo.Idtype is 1.
-
-    Args:
-        weko_id (str): WEKO ID.
-        pk_id (str, optional): Primary key ID.
-
-    Returns:
-        bool: True if exists, False otherwise.
-    """
-    query = {
-        "_source": ["pk_id", "authorIdInfo"],  # Get Author id info field only
-        "query": {
-            "bool": {
-                "must": [
-                    {
-                        "term": {
-                            "authorIdInfo.authorId": weko_id
-                        }
-                    },
-                    {"term": {"gather_flg": {"value": 0}}}
-                ],
-                "must_not": [
-                    {"term": {"is_deleted": True}}
-                ]
-            }
-        }
-    }
-
-    # search from elasticsearch
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        body=query
-    )
-
-    # if same weko_id exists, return True
-    for res in result['hits']['hits']:
-        # if same author_id exists, skip checking
-        if pk_id and pk_id == res['_source']['pk_id']:
-            continue
-        author_id_info_from_es = res['_source']['authorIdInfo']
-        for info in author_id_info_from_es:
-            if info.get('idType') == '1':
-                author_id = info.get('authorId')
-                if author_id == weko_id:
-                    return True
-    return False
-
 
 def check_period_date(data):
     """Check period date.
@@ -893,18 +817,12 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
         errors = []
         warnings = []
 
-        pk_id = item.get('pk_id')
-        weko_id = item.get("weko_id")
-        current_weko_id = WekoAuthors.get_weko_id_by_pk_id(pk_id)
-        item["current_weko_id"] = current_weko_id
-        errors_msg = check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id)
-        if errors_msg:
-            errors.extend(errors_msg)
+        weko_id = item.get('pk_id')
 
         # check duplication WEKO ID
-        if pk_id and pk_id not in list_import_id:
-            list_import_id.append(pk_id)
-        elif pk_id:
+        if weko_id and weko_id not in list_import_id:
+            list_import_id.append(weko_id)
+        elif weko_id:
             errors.append(_('There is duplicated data in the {} file.').format(file_format))
 
         # set status
@@ -915,11 +833,11 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
             if item.get('status') == 'new':
                 item["communityIds"] = validate_community_ids(community_ids, is_create=True)
             elif item.get('status') == 'update':
-                old = Authors.query.get(pk_id)
+                old = Authors.query.get('pk_id')
                 old_community_ids = [c.id for c in old.communities]
                 item["communityIds"] = validate_community_ids(community_ids, old_ids=old_community_ids)
             elif item.get('status') == 'deleted':
-                check, message = check_delete_author(pk_id)
+                check, message = check_delete_author('pk_id')
                 if not check:
                     errors.append(message)
         except AuthorsValidationError as e:
@@ -1223,7 +1141,7 @@ def band_check_file_for_user(max_page):
     try:
         with open(check_file_path, 'w', newline='', encoding='utf-8') as file:
             writer = csv.writer(file, delimiter='\t')
-            writer.writerow(["No.", "Current WEKO ID", "New WEKO ID", "full_name", "MailAddress", "Check Result"])
+            writer.writerow(["No.", "WEKO ID", "full_name", "MailAddress", "Check Result"])
             for i in range(1, max_page+1):
                 part_check_file_name = f"{check_file_name}-part{i}"
                 check_file_part_path = os.path.join(temp_folder_path, part_check_file_name)
@@ -1243,15 +1161,13 @@ def band_check_file_for_user(max_page):
                             else:
                                 full_name_info += f"\n{full_name}"
 
-                    current_weko_id = entry.get("current_weko_id", "")
-                    new_weko_id = entry.get("weko_id", "")
                     email = ""
                     if entry.get("emailInfo", [{}]):
                         email_info = entry.get("emailInfo", [{}])[0]
                         email = email_info.get("email", "")
                     check_result = get_check_result(entry)
 
-                    writer.writerow([index, current_weko_id, new_weko_id, full_name_info, email, check_result])
+                    writer.writerow([index, pk_id, full_name_info, email, check_result])
     except Exception as ex:
         raise
 
@@ -1361,7 +1277,7 @@ def set_record_status(file_format, list_existed_author_id, item, errors, warning
     """Set status to import data."""
     item['status'] = 'new'
     pk_id = item.get('pk_id')
-    err_msg = _("Specified Author ID does not exist.")
+    err_msg = _("Specified WEKO ID does not exist.")
     if item.get('is_deleted', '') == 'D':
         item['status'] = 'deleted'
         if not pk_id or list_existed_author_id.get(pk_id) is None:
@@ -1454,7 +1370,7 @@ def prepare_import_data(max_page_for_import_tab):
     return authors, reached_point, count
 
 def import_author_to_system(
-    author, status, weko_id, force_change_mode, request_info=None
+    author, status, force_change_mode, request_info=None
 ):
     """Import author to DB and ES.
 
@@ -1471,8 +1387,6 @@ def import_author_to_system(
     from weko_logging.activity_logger import UserActivityLogger
     if author:
         try:
-            check_weko_id = check_weko_id_is_exists(weko_id, author.get('pk_id'))
-
             author["is_deleted"] = True if author.get("is_deleted") else False
             if not author.get('authorIdInfo'):
                 author["authorIdInfo"] = []
@@ -1486,35 +1400,21 @@ def import_author_to_system(
                     nameInfo["fullName"] = fullName
 
             if status == 'new':
-                if check_weko_id:
-                    current_app.logger.error("WekoID is duplicated")
-                    raise Exception({'error_id': "WekoID is duplicated"})
-                author["authorIdInfo"].insert(
-                    0,
-                    {
-                        "idType": "1",
-                        "authorId": weko_id,
-                        "authorIdShowFlg": "true"
-                    }
-                )
                 WekoAuthors.create(author)
             else:
                 if status == 'deleted' \
                         and get_count_item_link(author['pk_id']) > 0:
                     raise Exception({'error_id': 'delete_author_link'})
 
-                if check_weko_id:
-                    current_app.logger.error("WekoID is duplicated")
-                    raise Exception({'error_id': "WekoID is duplicated"})
                 author["authorIdInfo"].insert(
                     0,
                     {
                         "idType": "1",
-                        "authorId": weko_id,
+                        "authorId": author['pk_id'],
                         "authorIdShowFlg": "true"
                     }
                 )
-                WekoAuthors.update(author['pk_id'], author, force_change_mode)
+                WekoAuthors.update(author['pk_id'], author)
             db.session.commit()
             if status == "new":
                 UserActivityLogger.info(operation="AUTHOR_CREATE", request_info=request_info)
@@ -1576,20 +1476,16 @@ def create_result_file_for_user(json):
         with open(result_file_path, "w", encoding="utf-8") as result_file:
             writer = csv.writer(result_file, delimiter='\t')
             # write header
-            writer.writerow([
-                "No.", "Start Date", "End Date",
-                "Previous WEKO ID", "New WEKO ID", "full_name", "Status"
-            ])
+            writer.writerow(["No.", "Start Date", "End Date", "WEKO ID", "full_name", "Status"])
             # write the json sent from the front desk.
             for data in json:
                 number = data.get("No.", "")
                 start_date = data.get("Start Date", "")
                 end_date = data.get("End Date", "")
-                prev_weko_id = data.get("Previous WEKO ID", "")
-                new_weko_id = data.get("New WEKO ID", "")
+                weko_id = data.get("WEKO ID", "")
                 full_name = data.get("full_name", "")
                 status = data.get("Status", "")
-                writer.writerow([number, start_date, end_date, prev_weko_id, new_weko_id, full_name, status])
+                writer.writerow([number, start_date, end_date, weko_id, full_name, status])
             count = len(json) + 1
             with open(result_over_max_file_path, "r", encoding="utf-8") as file:
                 file_reader = csv.reader(file, dialect='excel', delimiter='\t')

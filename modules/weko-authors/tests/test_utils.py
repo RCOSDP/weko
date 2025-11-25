@@ -587,7 +587,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -604,8 +603,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "communityIds":[]
         }
     ]
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
     mock_author = mocker.patch("weko_authors.utils.Authors")
     mock_author.query.return_value.get.return_value = [MagicMock(communities=MagicMock(id="community_id"))]
     mocker.patch("weko_authors.utils.validate_community_ids", return_value=[])
@@ -653,13 +650,10 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         },
     ]
     list_import_id = []
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
     test = [
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -678,7 +672,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -756,7 +749,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "",
@@ -774,8 +766,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "communityIds": []
         }
     ]
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
     assert result == test
 
@@ -833,7 +823,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -851,8 +840,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "communityIds": []
         }
     ]
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
     assert result == test
 
@@ -922,7 +909,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
     test = [
         {
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -936,13 +922,11 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "emailInfo": [{"email": "test.taro@test.org"}],
             "is_deleted": "",
             "status": "new",
-            "errors": ["Specified WEKO ID already exist.", "validator error"],
+            "errors": ["validator error"],
             "warnings": ["idType warning"],
             "communityIds": []
         }
     ]
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=["Specified WEKO ID already exist."])
     mocker.patch("weko_authors.utils.validate_by_extend_validator",return_value=["validator error"])
     mocker.patch("weko_authors.utils.validate_external_author_identifier",return_value="idType warning")
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
@@ -1015,7 +999,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -1032,8 +1015,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "communityIds": []
         }
     ]
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
     mocker.patch("weko_authors.utils.validate_by_extend_validator",return_value=[])
     mocker.patch("weko_authors.utils.validate_external_author_identifier",return_value="")
     mocker.patch("weko_authors.utils.autofill_data")
@@ -1105,7 +1086,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -1188,7 +1168,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -1204,8 +1183,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
             "status": "deleted"
         }
     ]
-    mocker.patch("weko_authors.utils.WekoAuthors.get_weko_id_by_pk_id",return_value="1")
-    mocker.patch("weko_authors.utils.check_weko_id_is_exits_for_import",return_value=[])
     mocker.patch("weko_authors.utils.get_count_item_link", return_value=0)
     mocker.patch("weko_authors.utils.check_delete_author", return_value=(True, None))
     result = validate_import_data(file_format,file_data,mapping_ids,mapping,list_import_id)
@@ -1274,7 +1251,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -1359,7 +1335,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -1443,7 +1418,6 @@ def test_validate_import_data(authors_prefix_settings,mocker):
         {
             "pk_id": "1",
             "weko_id": "1",
-            "current_weko_id": "1",
             "authorNameInfo": [
                 {
                     "familyName": "テスト",
@@ -1627,7 +1601,7 @@ def test_set_record_status():
     errors = []
     warnings = []
     set_record_status(file_format,existed_authors_id,item,errors,warnings)
-    assert errors == ["Specified Author ID does not exist."]
+    assert errors == ["Specified WEKO ID does not exist."]
     assert warnings == []
 
     # is_deleted, existed_authors_id.pk_id is None
@@ -1636,7 +1610,7 @@ def test_set_record_status():
     warnings = []
     set_record_status(file_format,existed_authors_id,item,errors,warnings)
     assert item["status"] == "deleted"
-    assert errors == ["Specified Author ID does not exist."]
+    assert errors == ["Specified WEKO ID does not exist."]
     assert warnings == []
 
     existed_authors_id = {"1":True}
@@ -1662,8 +1636,7 @@ def test_flatten_authors_mapping():
     data = WEKO_AUTHORS_FILE_MAPPING
 
     test_all=[
-        {'key': 'pk_id', 'label': {'en': 'Author ID', 'jp': '著者ID'}, 'mask': {}, 'validation': {}, 'autofill': ''},
-        {'key': 'weko_id', 'label': {'en': 'WEKO ID', 'jp': 'WEKO ID'}, 'mask': {}, 'validation': {'validator': {'class_name': 'weko_authors.contrib.validation', 'func_name': 'validate_digits_for_wekoid'}}, 'autofill': ''},
+        {'key': 'pk_id', 'label': {'en': 'WEKO ID', 'jp': 'WEKO ID'}, 'mask': {}, 'validation': {}, 'autofill': ''},
         {"key":"authorNameInfo[0].familyName","label":{"en":"Family Name","jp":"姓"},"mask":{},"validation":{},"autofill":""},
         {"key":"authorNameInfo[0].firstName","label":{"en":"Given Name","jp":"名"},"mask":{},"validation":{},"autofill":""},
         {"key":"authorNameInfo[0].language","label":{"en":"Language","jp":"言語"},"mask":{},"validation":{'map': ['ja', 'ja-Kana', 'en', 'fr','it', 'de', 'es', 'zh-cn', 'zh-tw','ru', 'la', 'ms', 'eo', 'ar', 'el', 'ko']},"autofill":""},
@@ -1677,7 +1650,6 @@ def test_flatten_authors_mapping():
     ]
 
     test_keys = ["pk_id",
-                 'weko_id',
                  "authorNameInfo[0].familyName",
                  "authorNameInfo[0].firstName",
                  "authorNameInfo[0].language",
@@ -1710,22 +1682,18 @@ def test_import_author_to_system(app, mocker):
         'authorIdInfo': [],
         'emailInfo': []
     }
-    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id, \
-         patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+    with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
          patch('weko_authors.utils.db.session') as mock_session:
 
-        mock_check_weko_id.return_value = False
-        import_author_to_system(author, status, weko_id, force_change_mode)
-        mock_check_weko_id.assert_called_once_with(weko_id, '1')
+        import_author_to_system(author, status, force_change_mode)
         mock_weko_authors.create.assert_called_once()
         actual_author = mock_weko_authors.create.call_args[0][0]
 
-        assert actual_author == {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}], 'is_deleted': False, 'authorIdInfo': [{'idType': '1', 'authorId': '1234', 'authorIdShowFlg': 'true'}], 'emailInfo': []}
+        assert actual_author == {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}], 'is_deleted': False, 'authorIdInfo': [], 'emailInfo': []}
         mock_session.commit.assert_called_once()
 
     author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
     status = 'update'
-    weko_id = '1234'
     force_change_mode = False
     test = {
         'pk_id': '1',
@@ -1734,19 +1702,16 @@ def test_import_author_to_system(app, mocker):
         'authorIdInfo': [
             {
                 "idType": "1",
-                "authorId": "1234",
+                "authorId": "1",
                 "authorIdShowFlg": "true"
             }
         ],
         'emailInfo': []
     }
-    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id, \
-         patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+    with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
          patch('weko_authors.utils.db.session') as mock_session:
 
-        mock_check_weko_id.return_value = False
-        import_author_to_system(author, status, weko_id, force_change_mode)
-        mock_check_weko_id.assert_called_once_with(weko_id, '1')
+        import_author_to_system(author, status, force_change_mode)
         mock_weko_authors.update.assert_called_once()
         update_args = mock_weko_authors.update.call_args
         actual_author = update_args[0][1]
@@ -1756,7 +1721,6 @@ def test_import_author_to_system(app, mocker):
 
     author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
     status = 'deleted'
-    weko_id = '1234'
     force_change_mode = False
     test = {
         'pk_id': '1',
@@ -1765,21 +1729,18 @@ def test_import_author_to_system(app, mocker):
         'authorIdInfo': [
             {
                 "idType": "1",
-                "authorId": "1234",
+                "authorId": "1",
                 "authorIdShowFlg": "true"
             }
         ],
         'emailInfo': []
     }
-    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id, \
-         patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
+    with patch('weko_authors.utils.WekoAuthors') as mock_weko_authors, \
          patch('weko_authors.utils.db.session') as mock_session, \
          patch('weko_authors.utils.get_count_item_link') as mock_get_count_item_link:
 
-        mock_check_weko_id.return_value = False
         mock_get_count_item_link.return_value = 0
-        import_author_to_system(author, status, weko_id, force_change_mode)
-        mock_check_weko_id.assert_called_once_with(weko_id, '1')
+        import_author_to_system(author, status, force_change_mode)
         mock_weko_authors.update.assert_called_once()
         update_args = mock_weko_authors.update.call_args
         actual_author = update_args[0][1]
@@ -1788,39 +1749,16 @@ def test_import_author_to_system(app, mocker):
         mock_session.commit.assert_called_once()
 
     author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
-    status = 'new'
-    weko_id = '1234'
-    force_change_mode = False
-    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id:
-        with pytest.raises(Exception) as ex:
-            mock_check_weko_id.return_value = True
-            import_author_to_system(author, status, weko_id, force_change_mode)
-            assert ex.value.args[0]['error_id'] == "WekoID is duplicated"
-            assert str(ex.value) == {'error_id': "WekoID is duplicated"}
-
-    author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
     status = 'deleted'
     weko_id = '1234'
     force_change_mode = False
-    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id,\
-        patch('weko_authors.utils.get_count_item_link') as mock_get_count_item_link:
+    with patch('weko_authors.utils.get_count_item_link') as mock_get_count_item_link:
         with pytest.raises(Exception) as ex:
-            mock_check_weko_id.return_value = False
             mock_get_count_item_link.return_value = 1
-            import_author_to_system(author, status, weko_id, force_change_mode)
+            import_author_to_system(author, status, force_change_mode)
             assert ex.value.args[0]['error_id'] == "delete_author_link"
             assert str(ex.value) == {'error_id': "delete_author_link"}
 
-    author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
-    status = 'update'
-    weko_id = '1234'
-    force_change_mode = False
-    with patch('weko_authors.utils.check_weko_id_is_exists') as mock_check_weko_id:
-        with pytest.raises(Exception) as ex:
-            mock_check_weko_id.return_value = True
-            import_author_to_system(author, status, weko_id, force_change_mode)
-            assert ex.value.args[0]['error_id'] == "WekoID is duplicated"
-            assert str(ex.value) == {'error_id': "WekoID is duplicated"}
 
 # def get_count_item_link(pk_id):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::test_get_count_item_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1877,87 +1815,10 @@ def test_count_authors(app2, esindex2):
     # 6 Not register author data
     assert count_authors()['count'] == 0
 
-from weko_authors.utils import validate_weko_id, check_weko_id_is_exists, check_period_date, delete_export_url,\
+from weko_authors.utils import check_period_date, delete_export_url,\
     handle_exception, export_prefix,check_file_name, clean_deep
 from redis.exceptions import RedisError
 from sqlalchemy.exc import SQLAlchemyError
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestValidateWekoId -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-class TestValidateWekoId:
-    # 正常系
-    def test_validate_weko_id_valid(self, app):
-        with patch("weko_authors.utils.check_weko_id_is_exists", return_value=False):
-            result = validate_weko_id("12345")
-            assert result == (True, None)
-
-    # 異常系
-    def test_validate_weko_id_not_half_digit(self, app):
-        result = validate_weko_id("abcde")
-        assert result == (False, "not half digit")
-
-    # 異常系
-    def test_validate_weko_id_already_exists(self, app):
-        with patch("weko_authors.utils.check_weko_id_is_exists", return_value=True):
-            result = validate_weko_id("12345")
-            assert result == (False, "already exists")
-
-    # 異常系
-    def test_validate_weko_id_exception(self, app):
-        with patch("weko_authors.utils.check_weko_id_is_exists", side_effect=Exception("Test Exception")):
-            with pytest.raises(Exception, match="Test Exception"):
-                validate_weko_id("12345")
-
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCheckWekoIdIsExists -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-class TestCheckWekoIdIsExists:
-    # 正常系: weko_idが存在しない場合
-    def test_check_weko_id_is_exists_not_exist(self, app):
-        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
-            mock_indexer = MockIndexer.return_value
-            mock_indexer.client.search.return_value = {'hits': {'hits': []}}
-            assert check_weko_id_is_exists("12345") == False
-
-    # 正常系: weko_idが存在するが、pk_idが一致する場合
-    def test_check_weko_id_is_exists_exist_same_pk_id(self, app):
-        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
-            mock_indexer = MockIndexer.return_value
-            mock_indexer.client.search.return_value = {
-                'hits': {
-                    'hits': [
-                        {
-                            '_source': {
-                                'pk_id': '1',
-                                'authorIdInfo': [{'idType': '1', 'authorId': '12345'}]
-                            }
-                        }
-                    ]
-                }
-            }
-            assert check_weko_id_is_exists("12345", pk_id="1") == False
-
-    # 異常系: weko_idが存在する場合
-    def test_check_weko_id_is_exists_exist(self, app):
-        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
-            mock_indexer = MockIndexer.return_value
-            mock_indexer.client.search.return_value = {
-                'hits': {
-                    'hits': [
-                        {
-                            '_source': {
-                                'pk_id': '2',
-                                'authorIdInfo': [{'idType': '1', 'authorId': '12345'}]
-                            }
-                        }
-                    ]
-                }
-            }
-            assert check_weko_id_is_exists("12345") == True
-
-    # 異常系: Elasticsearchクライアントが例外をスローする場合
-    def test_check_weko_id_is_exists_exception(self, app):
-        with patch('weko_authors.utils.RecordIndexer') as MockIndexer:
-            mock_indexer = MockIndexer.return_value
-            mock_indexer.client.search.side_effect = Exception("Elasticsearch error")
-            with pytest.raises(Exception):
-                check_weko_id_is_exists("12345")
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestCheckPeriodDate -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 class TestCheckPeriodDate:
@@ -3500,8 +3361,7 @@ def test_create_result_file_for_user(app, mocker):
             "No.": "1",
             "Start Date": "2025-01-01",
             "End Date": "2025-01-02",
-            "Previous WEKO ID": "123",
-            "New WEKO ID": "456",
+            "WEKO ID": "123",
             "full_name": "テスト 太郎",
             "Status": "success",
         }
@@ -3511,8 +3371,7 @@ def test_create_result_file_for_user(app, mocker):
             "No.": "1",
             "Start Date": "2025-01-01",
             "End Date": "2025-01-02",
-            "Previous WEKO ID": "123",
-            "New WEKO ID": "456",
+            "WEKO ID": "123",
             "full_name": "テスト 太郎",
             "Status": "success",
         }
@@ -3525,8 +3384,8 @@ def test_create_result_file_for_user(app, mocker):
     create_result_file_for_user(json)
     open.assert_any_call({"key":"cache_result_over_max_file_path_key"}, "r", encoding="utf-8")
     csv_writer = csv.writer.return_value
-    csv_writer.writerow.assert_any_call(["No.", "Start Date", "End Date", "Previous WEKO ID", "New WEKO ID", "full_name", "Status"])
-    csv_writer.writerow.assert_any_call(['1', '2025-01-01', '2025-01-02', '123', '456', 'テスト 太郎', 'success'])
+    csv_writer.writerow.assert_any_call(["No.", "Start Date", "End Date", "WEKO ID", "full_name", "Status"])
+    csv_writer.writerow.assert_any_call(['1', '2025-01-01', '2025-01-02', '123', 'テスト 太郎', 'success'])
 
     # Exception
     mock_logger = mocker.patch("weko_authors.utils.current_app.logger")

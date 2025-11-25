@@ -471,7 +471,7 @@ class TestProcess:
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_update_authorInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_update_authorInfo(app, db, records,mocker):
     app.config.update(WEKO_SEARCH_MAX_RESULT=1)
-    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link_and_weko_link")
+    mocker.patch("weko_deposit.tasks.WekoDeposit.update_author_link")
     mock_recordssearch = MagicMock(side_effect=MockRecordsSearch)
     with patch("weko_deposit.tasks.RecordsSearch", mock_recordssearch):
         with patch("weko_deposit.tasks.RecordIndexer", MockRecordIndexer):

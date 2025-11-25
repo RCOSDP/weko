@@ -125,38 +125,6 @@ def test_create_author(client, users, mocker):
     assert res.status_code == 200
     assert get_json(res) == {"msg": "Header Error"}
 
-    # 条件: WEKO IDが設定されていない場合
-    # 入力: authorIdInfoにidTypeが1のauthorIdが存在しない
-    # 期待結果: ステータスコード500、メッセージ"Please set WEKO ID."
-    input_data = {
-        "authorIdInfo": [{"idType": "2", "authorId": "0123"}]
-    }
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "Please set WEKO ID."}
-
-    # 条件: WEKO IDが半角数字でない場合
-    # 入力: authorIdInfoにidTypeが1のauthorIdが半角数字でない
-    # 期待結果: ステータスコード500、メッセージ"Please set the WEKOID in the half digit."
-    input_data = {
-        "authorIdInfo": [{"idType": "1", "authorId": "abc"}]
-    }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(False, "not half digit"))
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "Please set the WEKOID in the half digit."}
-
-    # 条件: WEKO IDが既に存在する場合
-    # 入力: authorIdInfoにidTypeが1のauthorIdが既に存在する
-    # 期待結果: ステータスコード500、メッセージ"The value is already in use as WEKO ID."
-    input_data = {
-        "authorIdInfo": [{"idType": "1", "authorId": "123"}]
-    }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(False, "already exists"))
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "The value is already in use as WEKO ID."}
-
     # 条件: affiliation start dateとend dateがyyyy-MM-dd形式でない場合
     # 入力: affiliation start dateとend dateがyyyy-MM-dd形式でない
     # 期待結果: ステータスコード500、メッセージ"Please set the affiliation start date and end date in the format yyyy-MM-dd."
@@ -164,7 +132,6 @@ def test_create_author(client, users, mocker):
         "authorIdInfo": [{"idType": "1", "authorId": "123"}],
         "affiliationInfo": [{"startDate": "2021/01/01", "endDate": "2021/12/31"}]
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(False, "not date format"))
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
@@ -177,7 +144,6 @@ def test_create_author(client, users, mocker):
         "authorIdInfo": [{"idType": "1", "authorId": "123"}],
         "affiliationInfo": [{"startDate": "2022-01-01", "endDate": "2021-12-31"}]
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(False, "start is after end"))
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
@@ -190,7 +156,6 @@ def test_create_author(client, users, mocker):
         "authorIdInfo": [{"idType": "1", "authorId": "123"}],
         "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}]
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.create', return_value=None)
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
@@ -204,21 +169,8 @@ def test_create_author(client, users, mocker):
         "authorIdInfo": [{"idType": "1", "authorId": "123"}],
         "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}]
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.create', side_effect=Exception("test_error"))
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "Failed"}
-
-    # 条件: validate_weko_idで例外が発生する場合
-    # 入力: 正常なauthorIdInfoとaffiliationInfo
-    # 期待結果: ステータスコード500、メッセージ"Failed"
-    input_data = {
-        "authorIdInfo": [{"idType": "1", "authorId": "123"}],
-        "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}]
-    }
-    mocker.patch('weko_authors.views.validate_weko_id', side_effect=Exception("test_error"))
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
     assert get_json(res) == {"msg": "Failed"}
@@ -231,7 +183,6 @@ def test_create_author(client, users, mocker):
         "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}],
         "communityIds": ["invalid_id"]
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.create', return_value=None)
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 400
@@ -283,50 +234,6 @@ def test_update_author(client, users, mocker):
     assert res.status_code == 200
     assert get_json(res) == {"msg": "Header Error"}
 
-    # 条件: WEKO IDが設定されていない場合
-    # 入力: authorIdInfoにidTypeが1のauthorIdが存在しない
-    # 期待結果: ステータスコード500、メッセージ"Please set WEKO ID."
-    input_data = {
-            "forceChangeFlag": "false",
-            "author":{
-            "pk_id": "1",
-            "authorIdInfo": [{"idType": "2", "authorId": "0123"}]
-            }
-        }
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "Please set WEKO ID."}
-
-    # 条件: WEKO IDが半角数字でない場合
-    # 入力: authorIdInfoにidTypeが1のauthorIdが半角数字でない
-    # 期待結果: ステータスコード500、メッセージ"Please set the WEKOID in the half digit."
-    input_data = {
-        "forceChangeFlag": "false",
-        "author":{
-        "pk_id": "1",
-        "authorIdInfo": [{"idType": "1", "authorId": "abc"}]
-        }
-    }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(False, "not half digit"))
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "Please set the WEKOID in the half digit."}
-
-    # 条件: WEKO IDが既に存在する場合
-    # 入力: authorIdInfoにidTypeが1のauthorIdが既に存在する
-    # 期待結果: ステータスコード500、メッセージ"The value is already in use as WEKO ID."
-    input_data = {
-        "forceChangeFlag": "false",
-        "author":{
-            "pk_id": "1",
-            "authorIdInfo": [{"idType": "1", "authorId": "123"}]
-        }
-    }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(False, "already exists"))
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "The value is already in use as WEKO ID."}
-
     # 条件: affiliation start dateとend dateがyyyy-MM-dd形式でない場合
     # 入力: affiliation start dateとend dateがyyyy-MM-dd形式でない
     # 期待結果: ステータスコード500、メッセージ"Please set the affiliation start date and end date in the format yyyy-MM-dd."
@@ -338,7 +245,6 @@ def test_update_author(client, users, mocker):
             "affiliationInfo": [{"startDate": "2021/01/01", "endDate": "2021/12/31"}]
         }
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(False, "not date format"))
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
@@ -355,7 +261,6 @@ def test_update_author(client, users, mocker):
             "affiliationInfo": [{"startDate": "2022-01-01", "endDate": "2021-12-31"}]
         }
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(False, "start is after end"))
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
@@ -372,7 +277,6 @@ def test_update_author(client, users, mocker):
             "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}]
         }
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.update', return_value=None)
     mock_author = mocker.patch("weko_authors.views.Authors")
@@ -392,25 +296,8 @@ def test_update_author(client, users, mocker):
             "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}]
         }
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.check_period_date', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.update', side_effect=Exception("test_error"))
-    res = client.post(url, data=json.dumps(input_data), content_type='application/json')
-    assert res.status_code == 500
-    assert get_json(res) == {"msg": "Failed"}
-
-    # 条件: validate_weko_idで例外が発生する場合
-    # 入力: 正常なauthorIdInfoとaffiliationInfo
-    # 期待結果: ステータスコード500、メッセージ"Failed"
-    input_data = {
-        "forceChangeFlag": "false",
-        "author":{
-            "pk_id": "1",
-            "authorIdInfo": [{"idType": "1", "authorId": "123"}],
-            "affiliationInfo": [{"startDate": "2021-01-01", "endDate": "2021-12-31"}]
-        }
-    }
-    mocker.patch('weko_authors.views.validate_weko_id', side_effect=Exception("test_error"))
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 500
     assert get_json(res) == {"msg": "Failed"}
@@ -427,7 +314,6 @@ def test_update_author(client, users, mocker):
             "communityIds": ["invalid_id"]
         }
     }
-    mocker.patch('weko_authors.views.validate_weko_id', return_value=(True, ""))
     mocker.patch('weko_authors.views.WekoAuthors.update', return_value=None)
     res = client.post(url, data=json.dumps(input_data), content_type='application/json')
     assert res.status_code == 400
@@ -1797,64 +1683,3 @@ def test_dbsession_clean(app, db):
     dbsession_clean(Exception)
     assert ItemTypeName.query.filter_by(id=3).first() is None
 
-
-#     def get_max_weko_id():
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_max_weko_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_get_max_weko_id(client, users, mocker ):
-    class MockClient():
-        def __init__(self,data):
-            self.data = data
-        def search(self,index=None,body=None,scroll='2m'):
-            return self.data[index]
-        def scroll(self,scroll_id='scroll_id',scroll='2m'):
-            self.data['test-authors']['hits'] ={"hits":{"hits":[]}}
-            return self.data['test-authors']['hits']
-
-    url = url_for("weko_authors.get_max_weko_id")
-    login_user_via_session(client=client, email=users[0]['email'])
-
-    data = {
-    "test-authors": {
-        "hits": {
-            "hits": [
-                {"_source": {"authorIdInfo": [{"authorId": "2",'idType': '1'}]}, 'pk_id': 'xxx'}
-            ]
-        },
-        "_scroll_id": "AAA"
-    },
-    "test-weko": {
-        "hits": {
-            "total": 1
-        }
-    }
-    }
-
-    record_indexer = RecordIndexer()
-    record_indexer.client=MockClient(data)
-    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
-    test = {'max_author_id': 2}
-    res = client.get(url)
-    assert get_json(res) == test
-
-    data_2 = {
-    "test-authors": {
-        "hits": {
-            "hits": [
-                {"_source": {}, 'pk_id': 'xxx'}
-            ]
-        },
-        "_scroll_id": "AAA"
-    },
-    "test-weko": {
-        "hits": {
-            "total": 1
-        }
-    }
-    }
-
-    record_indexer = RecordIndexer()
-    record_indexer.client=MockClient(data_2)
-    mocker.patch("weko_authors.views.RecordIndexer",return_value=record_indexer)
-    test = {'max_author_id': 0}
-    res = client.get(url)
-    assert get_json(res) == test

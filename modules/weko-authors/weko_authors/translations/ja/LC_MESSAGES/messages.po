@@ -179,8 +179,8 @@ msgid "Delete"
 msgstr ""
 
 #: weko_authors/utils.py:1364
-msgid "Specified Author ID does not exist."
-msgstr "指定されたpk_idが存在していません。"
+msgid "Specified WEKO ID does not exist."
+msgstr "指定されたWEKO IDが存在していません。"
 
 #: weko_authors/utils.py:1376
 msgid ""
@@ -295,10 +295,6 @@ msgstr ""
 #: weko_authors/contrib/validation.py:243
 msgid "External author identifier exists in DB.<br/>{}"
 msgstr "外部著者識別子がDBに存在しています。<br/>{}"
-
-#: weko_authors/contrib/validation.py:274
-msgid "Specified WEKO ID already exist."
-msgstr ""
 
 #: weko_authors/static/js/weko_authors/app-author-import.chunk.js:2
 msgid "TYPED_ARRAY_TAG"
