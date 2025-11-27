@@ -9,7 +9,7 @@ from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
 from invenio_records_rest.utils import check_elasticsearch
 from weko_authors.rest import (
-    create_blueprint,
+    create_blueprint, AuthorDBManagementAPI
 )
 
 import urllib.parse
@@ -326,6 +326,27 @@ class TestAuthorDBManagementAPI:
         data = self.valid_author_data("ORCID", "")
         data["author"]["communityIds"] = community_ids
         return data
+    
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_check_author_id_info -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
+    def test_check_author_id_info(self, app):
+        api = AuthorDBManagementAPI()
+        # author_data does not have authorIdInfo
+        author_data = {'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        api.check_author_id_info(author_data)
+        expect = {'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}], 'authorIdInfo': []}
+        assert author_data == expect
+
+        # author_data has authorIdInfo and the idType is not "1(WEKO)"
+        author_data = {'authorIdInfo': [{'idType': '2','authorId': '0000-0001-2345-6789'}],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        api.check_author_id_info(author_data)
+        expect = {'authorIdInfo': [{'idType': '2','authorId': '0000-0001-2345-6789'}],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        assert author_data == expect
+
+        # author_data has authorIdInfo but the idType is "1(WEKO)"
+        author_data = {'authorIdInfo': [{'idType': '1','authorId': '1'}],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        api.check_author_id_info(author_data)
+        expect = {'authorIdInfo': [],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        assert author_data == expect
 
 
     @pytest.mark.parametrize('base_app',[dict(

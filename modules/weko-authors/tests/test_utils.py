@@ -1910,9 +1910,9 @@ class TestHandleException:
         with patch('weko_authors.utils.current_app') as mock_app, patch('weko_authors.utils.update_cache_data') as mock_update_cache:
             mock_app.logger = MagicMock()
             with pytest.raises(Exception):
-                handle_exception(Exception("Test error"), attempt=2, retrys=3, interval=1, stop_point=5)
+                handle_exception(Exception("Test error"), attempt=2, retrys=3, interval=1, stop_point=5, user_id=1)
             mock_update_cache.assert_called_once_with(
-                mock_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"],
+                f'{mock_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_1',
                 5,
                 mock_app.config["WEKO_AUTHORS_CACHE_TTL"]
             )
@@ -2172,7 +2172,8 @@ class TestExportAuthors:
             0,
             3,
             1,
-            stop_point=0
+            stop_point=0,
+            user_id=1
         )
 
 
@@ -2201,7 +2202,8 @@ class TestExportAuthors:
             0,
             3,
             1,
-            stop_point=0
+            stop_point=0,
+            user_id=1
         )
 
     # .tox/c1/bin/pytest --cov=weko_authors tests/test_utils.py::TestExportAuthors::test_timeout_error_on_author_info_with_retry_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
