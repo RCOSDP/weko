@@ -70,7 +70,7 @@ def export_all(export_target, user_id):
 
 
 @shared_task
-def import_author(author, request_info):
+def import_author(author, force_change_mode, request_info):
     """Import Author.
 
     Args:
@@ -90,7 +90,7 @@ def import_author(author, request_info):
         # Retry processing in case of connection error
         for attempt in range(retrys):
             try:
-                import_author_to_system(author, status)
+                import_author_to_system(author, status, force_change_mode)
                 result['status'] = states.SUCCESS
                 break
             except SQLAlchemyError as ex:
