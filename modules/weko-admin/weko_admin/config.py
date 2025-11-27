@@ -1263,10 +1263,6 @@ WEKO_ADMIN_SEARCH_OPTIONS = {
                 'en': 'Communities',
                 'ja': 'コミュニティ一覧を表示する'
             }},
-            {'id': '3', 'contents': {
-                'en': 'Web content',
-                'ja': 'ウェブコンテンツを表示する'
-            }},
         ],
         "init_disp_index_disp_method": [
             {'id': '0', 'contents': {
@@ -1380,7 +1376,6 @@ WEKO_ADMIN_CACHE_TEMP_DIR_INFO_KEY_DEFAULT = 'cache::temp_dir_info'
 WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 """ If True, enable regex function in crawler list processing. """
 
-
 WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False
 """Whether system can edit mail template or not."""
 
@@ -1389,7 +1384,3 @@ WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
 """CRIS Linkage Settings template."""
-
-WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS = False
-""" If True, Web content can be displayed on the TOP screen.. """
-
