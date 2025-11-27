@@ -833,11 +833,11 @@ def validate_import_data(file_format, file_data, mapping_ids, mapping, list_impo
             if item.get('status') == 'new':
                 item["communityIds"] = validate_community_ids(community_ids, is_create=True)
             elif item.get('status') == 'update':
-                old = Authors.query.get('pk_id')
+                old = Authors.query.get(weko_id)
                 old_community_ids = [c.id for c in old.communities]
                 item["communityIds"] = validate_community_ids(community_ids, old_ids=old_community_ids)
             elif item.get('status') == 'deleted':
-                check, message = check_delete_author('pk_id')
+                check, message = check_delete_author(weko_id)
                 if not check:
                     errors.append(message)
         except AuthorsValidationError as e:
