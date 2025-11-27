@@ -264,27 +264,7 @@ class ExportView(BaseView):
         """Resume export progress."""
         user_id = current_user.get_id()
         delete_export_url(user_id)
-        temp_folder_path = os.path.join(
-            tempfile.gettempdir(),
-            current_app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR")
-        )
-        os.makedirs(temp_folder_path, exist_ok=True)
-        prefix = (
-            current_app.config["WEKO_AUTHORS_EXPORT_TMP_PREFIX"]
-            + str(user_id) + "_"
-            + datetime.datetime.now().strftime("%Y%m%d%H%M")
-        )
 
-        with tempfile.NamedTemporaryFile(
-            dir=temp_folder_path, prefix=prefix, suffix='.tsv', mode='w+', 
-            delete=False
-        ) as temp_file:
-            temp_file_path = temp_file.name
-        update_cache_data(
-            f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_TEMP_FILE_PATH_KEY"]}_{user_id}',
-            temp_file_path,
-            current_app.config["WEKO_AUTHORS_CACHE_TTL"]
-        )
         task = export_all.delay("author_db", user_id)
         set_export_status(user_id, task_id=task.id)
         return jsonify({

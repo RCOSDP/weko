@@ -397,6 +397,9 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
             author_data = self.process_authors_data_before(author_data)
 
+            # Remove authorIdInfo with idType '1(WEKO)'
+            self.check_author_id_info(author_data)
+
             WekoAuthors.create(author_data)
 
             # Prepare response
@@ -467,6 +470,17 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             ) from ex
 
         return request_data
+    
+    def check_author_id_info(self, author_data):
+        """Remove authorIdInfo with idType '1(WEKO)'.
+        
+        Args:
+            author_data (dict): The author data containing authorIdInfo.
+        """
+        author_id_info = author_data.get("authorIdInfo", [])
+        author_data["authorIdInfo"] = [
+            info for info in author_id_info if info.get('idType') != "1"
+        ]
 
     def put_v1(self, **kwargs):
         """Handle PUT request for author update."""

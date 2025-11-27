@@ -244,7 +244,7 @@ def delete_export_url(user_id):
     key = f'{current_app.config.get("WEKO_AUTHORS_EXPORT_CACHE_URL_KEY")}_{user_id}'
     current_cache.delete(key)
 
-def handle_exception(ex, attempt, retrys, interval, stop_point=0):
+def handle_exception(ex, attempt, retrys, interval, stop_point=0, user_id=0):
     """Manage sleep and retries.
 
     Args:
@@ -253,6 +253,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
         retrys (int): Number of retries.
         interval (int): Retry interval.
         stop_point (int, optional): Stop point. Defaults to 0.
+        user_id (int, optional): User ID. Defaults to 0.
     """
     current_app.logger.error(ex)
     # Raise the exception for the last retry
@@ -260,7 +261,7 @@ def handle_exception(ex, attempt, retrys, interval, stop_point=0):
         current_app.logger.info(f"Connection failed, Stop export.")
         if stop_point != 0:
             update_cache_data(
-                current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"],
+                f'{current_app.config["WEKO_AUTHORS_EXPORT_CACHE_STOP_POINT_KEY"]}_{user_id}',
                 stop_point,
                 current_app.config["WEKO_AUTHORS_CACHE_TTL"]
                 )
@@ -347,13 +348,13 @@ def export_authors(user_id):
                     break
                 except SQLAlchemyError as ex:
                     traceback.print_exc(file=stdout)
-                    handle_exception(ex, attempt, retrys, interval, stop_point=i)
+                    handle_exception(ex, attempt, retrys, interval, stop_point=i, user_id=user_id)
                 except RedisError as ex:
                     traceback.print_exc(file=stdout)
-                    handle_exception(ex, attempt, retrys, interval, stop_point=i)
+                    handle_exception(ex, attempt, retrys, interval, stop_point=i, user_id=user_id)
                 except TimeoutError as ex:
                     traceback.print_exc(file=stdout)
-                    handle_exception(ex, attempt, retrys, interval, stop_point=i)
+                    handle_exception(ex, attempt, retrys, interval, stop_point=i, user_id=user_id)
             # Write to temporary file
             write_to_tempfile(i, row_header, row_label_en, row_label_jp, row_data, user_id)
         # Save the completed temporary file to file instance
