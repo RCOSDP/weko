@@ -10,7 +10,6 @@
 import copy
 import pickle
 import traceback
-import json
 from datetime import MINYEAR, datetime, timedelta
 
 from flask import current_app, request, url_for
@@ -21,7 +20,6 @@ from invenio_db import db
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PIDStatus
 from invenio_records.models import RecordMetadata
-from invenio_files_rest.models import Bucket, FileInstance, Location, ObjectVersion
 from lxml import etree
 from lxml.etree import Element, ElementTree, SubElement
 from sqlalchemy.orm.exc import NoResultFound
@@ -35,7 +33,7 @@ from .fetchers import oaiid_fetcher
 from .models import OAISet
 from .provider import OAIIDProvider
 from .query import get_records
-from .resumption_token import serialize, serialize_file_response
+from .resumption_token import serialize
 from .utils import HARVEST_PRIVATE, OUTPUT_HARVEST, PRIVATE_INDEX, \
     datetime_to_datestamp, get_index_state, get_index_state_by_id, \
     handle_license_free, is_output_harvest, serializer, get_community_index_from_set
@@ -61,7 +59,6 @@ DATETIME_FORMATS = {
     'YYYY-MM-DDThh:mm:ssZ': '%Y-%m-%dT%H:%M:%SZ',
     'YYYY-MM-DD': '%Y-%m-%d',
 }
-OAIPMH_FOLDER_NAME = 'OAI_SERVER_FILE_CREATE'
 
 
 def envelope(**kwargs):
@@ -583,9 +580,6 @@ def listidentifiers(**kwargs):
 def listrecords(**kwargs):
     """Create OAI-PMH response for verb ListRecords."""
     current_app.logger.debug("kwargs: {}".format(kwargs))
-    if _use_file_data(**kwargs):
-        return _create_response_from_file(**kwargs)
-
     record_dumper = serializer(kwargs['metadataPrefix'])
     e_tree, e_listrecords = verb(**kwargs)
 
@@ -655,27 +649,13 @@ def listrecords(**kwargs):
                     is_pubdate_in_future(record):
                 e_record = SubElement(
                     e_listrecords, etree.QName(NS_OAIPMH, 'record'))
-
-                # When called from a batch of file creation for ListRecords,
-                # the set information is embedded at delete.
-                if kwargs.get('url') == 'batch':
-                    _sets = list(set(r['json']['_source'].get('path', []) +
-                                 r['json']['_source']['_oai'].get('sets', [])))
-                    header(
-                        e_record,
-                        identifier=pid.pid_value,
-                        datestamp=record.updated,
-                        sets=_sets,
-                        deleted=True
-                    )
-                else:
-                    header(
-                        e_record,
-                        identifier=pid.pid_value,
-                        #datestamp=r['updated'],
-                        datestamp=record.updated,
-                        deleted=True
-                    )
+                header(
+                    e_record,
+                    identifier=pid.pid_value,
+                    #datestamp=r['updated'],
+                    datestamp=record.updated,
+                    deleted=True
+                )
             else:
                 etree_record = pickle.loads(pickle.dumps(record, -1))
                 if not etree_record.get('system_identifier_doi', None):

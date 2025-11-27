@@ -9,28 +9,16 @@
 """Task for OAI."""
 
 from time import sleep
-import datetime
-import json
-import io
-import traceback
 
-from lxml import etree
 from celery import group, shared_task
 from flask import current_app
 from flask_celeryext import RequestContextTask
-from itsdangerous import URLSafeTimedSerializer
 from invenio_db import db
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.api import Record
-from invenio_files_rest.models import Bucket, FileInstance, Location, ObjectVersion
 
 from .query import get_affected_records
-from .response import listrecords
-from .utils import datetime_to_datestamp
-
-OAIPMH_FOLDER_NAME = 'OAI_SERVER_FILE_CREATE'
-NS_OAIPMH = 'http://www.openarchives.org/OAI/2.0/'
 
 try:
     from itertools import zip_longest
@@ -431,3 +419,4 @@ def update_data_json_data(data_json_obj, data_json, batch_time,
         current_app.logger.error(traceback.format_exc())
         current_app.logger.error('ERR_IOS-002: IO error occurred.')
         raise e
+

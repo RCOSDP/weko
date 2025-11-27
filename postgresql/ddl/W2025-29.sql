@@ -1,37 +1,61 @@
 BEGIN;
+DO $$
+DECLARE
+    updated_cnt int;
+BEGIN
+RAISE NOTICE 'Start: Migration W2025-29.sql';
 
 -- converted from alembic revisions
 
--- modules/invenio-accounts/invenio_accounts/alembic/b5c2d8a5bf90_create_invenio_accounts_branch.py
-ALTER TABLE accounts_user_session_activity ADD COLUMN orgniazation_name VARCHAR(255);
+RAISE NOTICE 'Start: Alembic migration';
 
+-- modules/invenio-accounts
+RAISE NOTICE 'Migration for module invenio-accounts';
+-- modules/invenio-accounts/invenio_accounts/alembic/b5c2d8a5bf90_create_invenio_accounts_branch.py
+ALTER TABLE accounts_user_session_activity ADD COLUMN IF NOT EXISTS orgniazation_name VARCHAR(255);
+
+-- modules/invenio-communities
+RAISE NOTICE 'Migration for module invenio-communities';
 -- modules/invenio-communities/invenio_communities/alembic/d2d56dc5e385_add_column.py
-ALTER TABLE communities_community ADD COLUMN thumbnail_path TEXT DEFAULT '';
-ALTER TABLE communities_community ADD COLUMN login_menu_enabled BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE communities_community ADD COLUMN catalog_json JSONB DEFAULT '[]'::JSONB;
-ALTER TABLE communities_community ADD COLUMN cnri TEXT;
+ALTER TABLE communities_community ADD COLUMN IF NOT EXISTS thumbnail_path TEXT DEFAULT '';
+ALTER TABLE communities_community ADD COLUMN IF NOT EXISTS login_menu_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE communities_community ADD COLUMN IF NOT EXISTS catalog_json JSONB DEFAULT '[]'::JSONB;
+ALTER TABLE communities_community ADD COLUMN IF NOT EXISTS cnri TEXT;
 
 -- modules/invenio-communities/invenio_communities/alembic/1b352b00f1ed_add_columns.py
-ALTER TABLE communities_community ADD COLUMN content_policy TEXT DEFAULT '';
-ALTER TABLE communities_community ADD COLUMN group_id INTEGER;
-ALTER TABLE communities_community ADD CONSTRAINT fk_communities_community_group_id_accounts_role FOREIGN KEY (group_id) REFERENCES accounts_role(id);
+ALTER TABLE communities_community ADD COLUMN IF NOT EXISTS content_policy TEXT DEFAULT '';
+ALTER TABLE communities_community ADD COLUMN IF NOT EXISTS group_id INTEGER;
+PERFORM 1 FROM information_schema.table_constraints WHERE constraint_schema = 'public' AND table_name = 'communities_community' AND constraint_name = 'fk_communities_community_group_id_accounts_role' AND constraint_type = 'FOREIGN KEY';
+IF NOT FOUND THEN
+    ALTER TABLE communities_community ADD CONSTRAINT fk_communities_community_group_id_accounts_role FOREIGN KEY (group_id) REFERENCES accounts_role(id);
+    RAISE NOTICE 'ADD CONSTRAINT fk_communities_community_group_id_accounts_role: created successfully';
+ELSE
+    RAISE NOTICE 'ADD CONSTRAINT fk_communities_community_group_id_accounts_role: already exists, skipping';
+END IF;
 
+-- modules/invenio-files-rest
+RAISE NOTICE 'Migration for module invenio-files-rest';
 -- modules/invenio-files-rest/invenio_files_rest/alembic/8644b32a3eec_add_column_files_location.py
-ALTER TABLE files_location ADD COLUMN s3_default_block_size BIGINT;
-ALTER TABLE files_location ADD COLUMN s3_maximum_number_of_parts BIGINT;
-ALTER TABLE files_location ADD COLUMN s3_region_name VARCHAR(128);
-ALTER TABLE files_location ADD COLUMN s3_signature_version VARCHAR(20);
-ALTER TABLE files_location ADD COLUMN s3_url_expiration BIGINT;
+ALTER TABLE files_location ADD COLUMN IF NOT EXISTS s3_default_block_size BIGINT;
+ALTER TABLE files_location ADD COLUMN IF NOT EXISTS s3_maximum_number_of_parts BIGINT;
+ALTER TABLE files_location ADD COLUMN IF NOT EXISTS s3_region_name VARCHAR(128);
+ALTER TABLE files_location ADD COLUMN IF NOT EXISTS s3_signature_version VARCHAR(20);
+ALTER TABLE files_location ADD COLUMN IF NOT EXISTS s3_url_expiration BIGINT;
 -- Apply s3v4 to all existing data
 UPDATE files_location SET s3_signature_version = 's3v4';
+-- Get number of updated records
+GET DIAGNOSTICS updated_cnt = ROW_COUNT;
+RAISE NOTICE 'Updated % records in files_location to set s3_signature_version to s3v4', updated_cnt;
 
+-- modules/invenio-mail
+RAISE NOTICE 'Migration for module invenio-mail';
 -- modules/invenio-mail/invenio_mail/alembic/ddbb24276fdc_create_mail_templates_table.py
-CREATE TABLE mail_template_genres (
+CREATE TABLE IF NOT EXISTS mail_template_genres (
     id SERIAL,
     name VARCHAR(255) NOT NULL DEFAULT '',
     CONSTRAINT pk_mail_template_genres PRIMARY KEY (id)
 );
-CREATE TABLE mail_templates (
+CREATE TABLE IF NOT EXISTS mail_templates (
     id SERIAL,
     mail_subject VARCHAR(255),
     mail_body TEXT,
@@ -46,8 +70,14 @@ CREATE TABLE mail_templates (
 );
 
 -- modules/invenio-mail/invenio_mail/alembic/b1495e98969b_create_mailtemplateusers.py
-CREATE TYPE mailtype AS ENUM ('recipient', 'cc', 'bcc');
-CREATE TABLE mail_template_users (
+PERFORM 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = current_schema() AND t.typname = 'mailtype';
+IF NOT FOUND THEN
+    CREATE TYPE mailtype AS ENUM ('recipient', 'cc', 'bcc');
+    RAISE NOTICE 'CREATE TYPE mailtype: created successfully';
+ELSE
+    RAISE NOTICE 'CREATE TYPE mailtype: already exists, skipping';
+END IF;
+CREATE TABLE IF NOT EXISTS mail_template_users (
     created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     template_id INTEGER NOT NULL,
@@ -60,19 +90,23 @@ CREATE TABLE mail_template_users (
         FOREIGN KEY (user_id) REFERENCES accounts_user(id) ON DELETE CASCADE
 );
 
+-- modules/weko-admin
+RAISE NOTICE 'Migration for module weko-admin';
 -- modules/weko-admin/weko_admin/alembic/7dc0b1ab5631_add_columns.py
-ALTER TABLE feedback_email_setting ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
-ALTER TABLE feedback_mail_history ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
-ALTER TABLE stats_email_address ADD COLUMN repository_id VARCHAR(100) DEFAULT 'Root Index';
+ALTER TABLE feedback_email_setting ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE feedback_mail_history ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE stats_email_address ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) DEFAULT 'Root Index';
 
+-- modules/weko-authors
+RAISE NOTICE 'Migration for module weko-authors';
 -- modules/weko-authors/weko_authors/alembic/1e377b157a5d_add_repository_id_column.py
 -- If updating v1.0.8 to v2.0.0 or later, please make sure to not use this query.
--- ALTER TABLE authors ADD COLUMN repository_id JSONB;
--- ALTER TABLE authors_affiliation_settings ADD COLUMN repository_id JSONB;
--- ALTER TABLE authors_prefix_settings ADD COLUMN repository_id JSONB;
+-- ALTER TABLE authors ADD COLUMN IF NOT EXISTS repository_id JSONB;
+-- ALTER TABLE authors_affiliation_settings ADD COLUMN IF NOT EXISTS repository_id JSONB;
+-- ALTER TABLE authors_prefix_settings ADD COLUMN IF NOT EXISTS repository_id JSONB;
 
 -- modules/weko-authors/weko_authors/alembic/b2ce1889616c_create_author_community_relation_tables.py
-CREATE TABLE author_affiliation_community_relations (
+CREATE TABLE IF NOT EXISTS author_affiliation_community_relations (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     affiliation_id BIGINT NOT NULL,
@@ -83,7 +117,7 @@ CREATE TABLE author_affiliation_community_relations (
         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
     CONSTRAINT pk_author_affiliation_community_relations PRIMARY KEY (affiliation_id, community_id)
 );
-CREATE TABLE author_community_relations (
+CREATE TABLE IF NOT EXISTS author_community_relations (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     author_id BIGINT NOT NULL,
@@ -94,7 +128,7 @@ CREATE TABLE author_community_relations (
         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE CASCADE,
     CONSTRAINT pk_author_community_relations PRIMARY KEY (author_id, community_id)
 );
-CREATE TABLE author_prefix_community_relations (
+CREATE TABLE IF NOT EXISTS author_prefix_community_relations (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     prefix_id BIGINT NOT NULL,
@@ -106,16 +140,20 @@ CREATE TABLE author_prefix_community_relations (
     CONSTRAINT pk_author_prefix_community_relations PRIMARY KEY (prefix_id, community_id)
 );
 
+-- modules/weko-index-tree
+RAISE NOTICE 'Migration for module weko-index-tree';
 -- modules/weko-index-tree/weko_index_tree/alembic/efd70c593f4b_update_index.py
-ALTER TABLE index ADD COLUMN index_url TEXT;
-ALTER TABLE index ADD COLUMN cnri TEXT;
+ALTER TABLE index ADD COLUMN IF NOT EXISTS index_url TEXT;
+ALTER TABLE index ADD COLUMN IF NOT EXISTS cnri TEXT;
 
 -- modules/weko-indextree-journal/weko_indextree_journal/alembic/b6cb93e7e896_add_column.py
-ALTER TABLE journal ADD COLUMN abstract TEXT DEFAULT '';
-ALTER TABLE journal ADD COLUMN code_issnl TEXT DEFAULT '';
+ALTER TABLE journal ADD COLUMN IF NOT EXISTS abstract TEXT DEFAULT '';
+ALTER TABLE journal ADD COLUMN IF NOT EXISTS code_issnl TEXT DEFAULT '';
 
+-- modules/weko-logging
+RAISE NOTICE 'Migration for module weko-logging';
 -- modules/weko-logging/weko_logging/alembic/9135a3e69760_create_user_activity_log_table.py
-CREATE TABLE user_activity_logs (
+CREATE TABLE IF NOT EXISTS user_activity_logs (
     id SERIAL,
     date TIMESTAMP NOT NULL,
     user_id INTEGER,
@@ -129,10 +167,12 @@ CREATE TABLE user_activity_logs (
     CONSTRAINT fk_user_activity_community_id
         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE SET NULL
 );
-CREATE SEQUENCE user_activity_log_group_id_seq;
+CREATE SEQUENCE IF NOT EXISTS user_activity_log_group_id_seq;
 
+-- modules/weko-notifications
+RAISE NOTICE 'Migration for module weko-notifications';
 -- modules/weko-notifications/weko_notifications/alembic/9ef65066e0d3_create_notifications_user_settings_table.py
-CREATE TABLE notifications_user_settings (
+CREATE TABLE IF NOT EXISTS notifications_user_settings (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
@@ -145,12 +185,14 @@ CREATE TABLE notifications_user_settings (
         FOREIGN KEY (user_profile_id) REFERENCES userprofiles_userprofile(user_id)
 );
 
+-- modules/weko-records
+RAISE NOTICE 'Migration for module weko-records';
 -- modules/weko-records/weko_records/alembic/1619a115156f_add_repository_id_column.py
-ALTER TABLE feedback_mail_list ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
-ALTER TABLE sitelicense_info ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE feedback_mail_list ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE sitelicense_info ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
 
 -- modules/weko-records/weko_records/alembic/89c58783bf65_create_jsonld_mappings_table.py
-CREATE TABLE jsonld_mappings (
+CREATE TABLE IF NOT EXISTS jsonld_mappings (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     id SERIAL NOT NULL,
@@ -163,8 +205,8 @@ CREATE TABLE jsonld_mappings (
     CONSTRAINT fk_jsonld_mappings_item_type_id_item_type
         FOREIGN KEY (item_type_id) REFERENCES item_type(id)
 );
-CREATE INDEX ix_jsonld_mappings_item_type_id ON jsonld_mappings (item_type_id);
-CREATE TABLE jsonld_mappings_version (
+CREATE INDEX IF NOT EXISTS ix_jsonld_mappings_item_type_id ON jsonld_mappings (item_type_id);
+CREATE TABLE IF NOT EXISTS jsonld_mappings_version (
     created TIMESTAMP,
     updated TIMESTAMP,
     id INTEGER NOT NULL,
@@ -178,13 +220,13 @@ CREATE TABLE jsonld_mappings_version (
     operation_type SMALLINT NOT NULL,
     CONSTRAINT pk_jsonld_mappings_version PRIMARY KEY (id, transaction_id)
 );
-CREATE INDEX ix_jsonld_mappings_version_transaction_id ON jsonld_mappings_version (transaction_id);
-CREATE INDEX ix_jsonld_mappings_version_item_type_id ON jsonld_mappings_version (item_type_id);
-CREATE INDEX ix_jsonld_mappings_version_operation_type ON jsonld_mappings_version (operation_type);
-CREATE INDEX ix_jsonld_mappings_version_end_transaction_id ON jsonld_mappings_version (end_transaction_id);
+CREATE INDEX IF NOT EXISTS ix_jsonld_mappings_version_transaction_id ON jsonld_mappings_version (transaction_id);
+CREATE INDEX IF NOT EXISTS ix_jsonld_mappings_version_item_type_id ON jsonld_mappings_version (item_type_id);
+CREATE INDEX IF NOT EXISTS ix_jsonld_mappings_version_operation_type ON jsonld_mappings_version (operation_type);
+CREATE INDEX IF NOT EXISTS ix_jsonld_mappings_version_end_transaction_id ON jsonld_mappings_version (end_transaction_id);
 
 -- modules/weko-records/weko_records/alembic/e3b07ec6e628_add_oa_status_table.py
-CREATE TABLE oa_status (
+CREATE TABLE IF NOT EXISTS oa_status (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     oa_article_id INTEGER NOT NULL,
@@ -193,7 +235,10 @@ CREATE TABLE oa_status (
     CONSTRAINT pk_oa_status PRIMARY KEY (oa_article_id)
 );
 
+-- modules/weko-records-ui
+RAISE NOTICE 'Migration for module weko-records-ui';
 -- modules/weko-records-ui/weko_records_ui/alembic/e0b1ef08d08c_create_file_url_download_log_table.py
+DROP TABLE IF EXISTS file_url_download_log;
 DROP TABLE IF EXISTS file_onetime_download;
 CREATE TABLE file_onetime_download (
     created TIMESTAMP NOT NULL,
@@ -234,9 +279,21 @@ CREATE TABLE file_secret_download (
     CONSTRAINT check_download_limit_positive CHECK (download_limit > 0),
     CONSTRAINT check_download_count_limit CHECK (download_count <= download_limit)
 );
-CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
-CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
-CREATE TABLE file_url_download_log (
+PERFORM 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = current_schema() AND t.typname = 'urltype';
+IF NOT FOUND THEN
+    CREATE TYPE urltype AS ENUM ('SECRET', 'ONETIME');
+    RAISE NOTICE 'CREATE TYPE urltype: created successfully';
+ELSE
+    RAISE NOTICE 'CREATE TYPE urltype: already exists, skipping';
+END IF;
+PERFORM 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = current_schema() AND t.typname = 'accessstatus';
+IF NOT FOUND THEN
+    CREATE TYPE accessstatus AS ENUM ('OPEN_NO', 'OPEN_DATE', 'OPEN_RESTRICTED');
+    RAISE NOTICE 'CREATE TYPE accessstatus: created successfully';
+ELSE
+    RAISE NOTICE 'CREATE TYPE accessstatus: already exists, skipping';
+END IF;
+CREATE TABLE IF NOT EXISTS file_url_download_log (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     id SERIAL,
@@ -266,8 +323,10 @@ CREATE TABLE file_url_download_log (
     )
 );
 
+-- modules/weko-swordserver
+RAISE NOTICE 'Migration for module weko-swordserver';
 -- modules/weko-swordserver/weko_swordserver/alembic/ce82f0d78dcb_create_sword_clients_table.py
-CREATE TABLE sword_clients (
+CREATE TABLE IF NOT EXISTS sword_clients (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     id SERIAL NOT NULL,
@@ -286,22 +345,26 @@ CREATE TABLE sword_clients (
     CONSTRAINT fk_sword_clients_workflow_id_workflow_workflow
         FOREIGN KEY (workflow_id) REFERENCES workflow_workflow(id)
 );
-CREATE UNIQUE INDEX ix_sword_clients_client_id ON sword_clients (client_id);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_sword_clients_client_id ON sword_clients (client_id);
 
+-- modules/weko-user-profiles
+RAISE NOTICE 'Migration for module weko-user-profiles';
 -- modules/weko-user-profiles/weko_user_profiles/alembic/ac4ff52361f4_add_column_userprofile.py
-ALTER TABLE userprofiles_userprofile ADD COLUMN s3_endpoint_url VARCHAR(128);
-ALTER TABLE userprofiles_userprofile ADD COLUMN s3_region_name VARCHAR(128);
-ALTER TABLE userprofiles_userprofile ADD COLUMN access_key VARCHAR(128);
-ALTER TABLE userprofiles_userprofile ADD COLUMN secret_key VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS s3_endpoint_url VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS s3_region_name VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS access_key VARCHAR(128);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS secret_key VARCHAR(128);
 
 -- modules/weko-user-profiles/weko_user_profiles/alembic/250f0661704b_userprofiles_userprofile.py
-ALTER TABLE userprofiles_userprofile ADD COLUMN item13 VARCHAR(255);
-ALTER TABLE userprofiles_userprofile ADD COLUMN item14 VARCHAR(255);
-ALTER TABLE userprofiles_userprofile ADD COLUMN item15 VARCHAR(255);
-ALTER TABLE userprofiles_userprofile ADD COLUMN item16 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item13 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item14 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item15 VARCHAR(255);
+ALTER TABLE userprofiles_userprofile ADD COLUMN IF NOT EXISTS item16 VARCHAR(255);
 
+-- modules/weko-workflow
+RAISE NOTICE 'Migration for module weko-workflow';
 -- modules/weko-workflow/weko_workflow/alembic/841860bb1333_add_activity_request_mail.py
-CREATE TABLE workflow_activity_request_mail (
+CREATE TABLE IF NOT EXISTS workflow_activity_request_mail (
     status VARCHAR(1) NOT NULL,
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
@@ -311,30 +374,39 @@ CREATE TABLE workflow_activity_request_mail (
     request_maillist JSONB,
     CONSTRAINT pk_workflow_activity_request_mail PRIMARY KEY (id)
 );
-CREATE INDEX ix_workflow_activity_request_mail_activity_id ON workflow_activity_request_mail (activity_id);
+CREATE INDEX IF NOT EXISTS ix_workflow_activity_request_mail_activity_id ON workflow_activity_request_mail (activity_id);
 
 -- modules/weko-workflow/weko_workflow/alembic/a560202ff0ac_add_columns_for_deleting_items.py
-ALTER TABLE workflow_flow_define ADD COLUMN flow_type SMALLINT;
+ALTER TABLE workflow_flow_define ADD COLUMN IF NOT EXISTS flow_type SMALLINT;
 UPDATE workflow_flow_define SET flow_type = 1;
+-- Get number of updated records
+GET DIAGNOSTICS updated_cnt = ROW_COUNT;
+RAISE NOTICE 'Updated % records in workflow_flow_define to set flow_type to 1', updated_cnt;
 ALTER TABLE workflow_flow_define ALTER COLUMN flow_type SET NOT NULL;
-ALTER TABLE workflow_workflow ADD COLUMN delete_flow_id INTEGER;
-ALTER TABLE workflow_workflow
-ADD CONSTRAINT fk_workflow_workflow_delete_flow_id_workflow_flow_define
-FOREIGN KEY (delete_flow_id) REFERENCES workflow_flow_define(id) ON DELETE SET NULL;
+ALTER TABLE workflow_workflow ADD COLUMN IF NOT EXISTS delete_flow_id INTEGER;
+PERFORM 1 FROM information_schema.table_constraints WHERE constraint_schema = 'public' AND table_name = 'workflow_workflow' AND constraint_name = 'fk_workflow_workflow_delete_flow_id_workflow_flow_define' AND constraint_type = 'FOREIGN KEY';
+IF NOT FOUND THEN
+    ALTER TABLE workflow_workflow ADD CONSTRAINT fk_workflow_workflow_delete_flow_id_workflow_flow_define FOREIGN KEY (delete_flow_id) REFERENCES workflow_flow_define(id) ON DELETE SET NULL;
+    RAISE NOTICE 'ADD CONSTRAINT fk_workflow_workflow_delete_flow_id_workflow_flow_define: created successfully';
+ELSE
+    RAISE NOTICE 'ADD CONSTRAINT fk_workflow_workflow_delete_flow_id_workflow_flow_define: already exists, skipping';
+END IF;
 
 -- modules/weko-workflow/weko_workflow/alembic/f312b8c2839a_add_columns.py
-ALTER TABLE workflow_flow_define ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
-ALTER TABLE workflow_workflow ADD COLUMN repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE workflow_flow_define ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
+ALTER TABLE workflow_workflow ADD COLUMN IF NOT EXISTS repository_id VARCHAR(100) NOT NULL DEFAULT 'Root Index';
 
+-- modules/weko-workspace
+RAISE NOTICE 'Migration for module weko-workspace';
 -- modules/weko-workspace/weko_workspace/alembic/197013eb095f_add_tables_for_weko_workspace.py
-CREATE TABLE workspace_default_conditions (
+CREATE TABLE IF NOT EXISTS workspace_default_conditions (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
     default_con JSONB NOT NULL,
     CONSTRAINT pk_workspace_default_conditions PRIMARY KEY (user_id)
 );
-CREATE TABLE workspace_status_management (
+CREATE TABLE IF NOT EXISTS workspace_status_management (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     user_id INTEGER NOT NULL,
@@ -344,12 +416,16 @@ CREATE TABLE workspace_status_management (
     CONSTRAINT pk_workspace_status_management PRIMARY KEY (user_id, recid)
 );
 
+RAISE NOTICE 'End: Alembic migration';
+
 -- combined sql files
 
 -- W2023-23-item-application.sql
 
--- public.workflow_activity_item_application definition
-CREATE TABLE public.workflow_activity_item_application (
+RAISE NOTICE 'Start: restricted access migration';
+
+-- workflow_activity_item_application definition
+CREATE TABLE IF NOT EXISTS workflow_activity_item_application (
 	status varchar(1) NOT NULL,
 	created timestamp NOT NULL,
 	updated timestamp NOT NULL,
@@ -359,10 +435,10 @@ CREATE TABLE public.workflow_activity_item_application (
 	display_item_application_button bool NOT NULL,
 	CONSTRAINT pk_workflow_activity_item_application PRIMARY KEY (id)
 );
-CREATE INDEX ix_workflow_activity_item_application_activity_id ON public.workflow_activity_item_application USING btree (activity_id);
+CREATE INDEX IF NOT EXISTS ix_workflow_activity_item_application_activity_id ON workflow_activity_item_application USING btree (activity_id);
 
--- public.item_application definition
-CREATE TABLE public.item_application (
+-- item_application definition
+CREATE TABLE IF NOT EXISTS item_application (
 	created timestamp NOT NULL,
 	updated timestamp NOT NULL,
 	id serial4 NOT NULL,
@@ -373,18 +449,19 @@ CREATE TABLE public.item_application (
 
 -- mail_template.sql
 
-INSERT INTO public.mail_template_genres
+INSERT INTO mail_template_genres
 	(id, name)
 	VALUES
 		(1, 'Notification of secret URL provision'),
 		(2, 'Guidance to the application form'),
-		(3, 'Others');
+		(3, 'Others')
+    ON CONFLICT (id) DO NOTHING;
 
 --
 -- Data for Name: mail_templates; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-INSERT INTO public.mail_templates
+INSERT INTO mail_templates
     (id, mail_subject, mail_body, default_mail, genre_id)
 VALUES
     (1, '利用申請登録のご案内／Register Application for Use', '[restricted_site_name_ja]です。
@@ -452,7 +529,7 @@ Title of research：[restricted_research_title]
 Dataset requested ：[restricted_data_name]
 Application date：[restricted_application_date]
 
-You will be notified once the application is approved. 
+You will be notified once the application is approved.
 
 Please do not reply to this email as it has been sent automatically.
 Please direct all inquiries to the following address.
@@ -975,7 +1052,7 @@ Title of research：[restricted_research_title]
 Dataset requested ：[restricted_data_name]
 Application date：[restricted_application_date]
 
-You will be notified once the application is approved. 
+You will be notified once the application is approved.
 
 Please do not reply to this email as it has been sent automatically.
 Please direct all inquiries to the following address.
@@ -1090,18 +1167,19 @@ Please do not reply to this email as it has been sent automatically.
 If you received this message in error, please notify the [restricted_site_name_en]
 
 [restricted_site_name_en]：[restricted_site_url]
-E-mail：[restricted_site_mail]', true, 3);
+E-mail：[restricted_site_mail]', true, 3)
+ON CONFLICT (id) DO NOTHING;
 
 --
 -- Name: mail_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
 --
 
-SELECT pg_catalog.setval('public.mail_templates_id_seq', 15, true);
+PERFORM pg_catalog.setval('mail_templates_id_seq', 15, true);
 
 -- W2023-23-request_mail.sql
 
--- public.request_mail_list definition
-CREATE TABLE public.request_mail_list (
+-- request_mail_list definition
+CREATE TABLE IF NOT EXISTS request_mail_list (
 	created timestamp NOT NULL,
 	updated timestamp NOT NULL,
 	id serial4 NOT NULL,
@@ -1110,77 +1188,90 @@ CREATE TABLE public.request_mail_list (
 	CONSTRAINT pk_request_mail_list PRIMARY KEY (id)
 );
 
--- public.workflow_flow_action_role definition
-ALTER TABLE public.workflow_flow_action_role ADD action_request_mail Boolean NOT NULL DEFAULT false;
+-- workflow_flow_action_role definition
+ALTER TABLE workflow_flow_action_role ADD COLUMN IF NOT EXISTS action_request_mail Boolean NOT NULL DEFAULT false;
 
 -- W2023-21 workflow_flow_action_role.sql
 
-ALTER TABLE public.workflow_flow_action_role ADD column action_item_registrant Boolean NOT NULL DEFAULT false;
+ALTER TABLE workflow_flow_action_role ADD COLUMN IF NOT EXISTS action_item_registrant Boolean NOT NULL DEFAULT false;
 
 -- W2023-21 update_resticted_items.sql
 
 -- 1. Add "shared_user_ids" column into workflow_activity table
-ALTER TABLE
-	workflow_activity
-ADD
-	shared_user_ids jsonb NULL;
+ALTER TABLE workflow_activity ADD COLUMN IF NOT EXISTS shared_user_ids jsonb NULL;
 
+RAISE NOTICE 'Update shared_user_ids column in workflow_activity table';
 -- 2. Update "shared_user_ids" with "shared_user_id column"
-UPDATE
-	workflow_activity
-SET
-	shared_user_ids = json_build_array(json_build_object('user', shared_user_id))
-WHERE
-	shared_user_ids IS NULL
-	AND (
-		shared_user_id IS NOT NULL
-		AND shared_user_id > 0
-	);
+PERFORM 1 FROM information_schema.columns WHERE column_name = 'shared_user_id' AND table_name = 'workflow_activity';
+IF FOUND THEN
+    UPDATE
+        workflow_activity
+    SET
+        shared_user_ids = json_build_array(json_build_object('user', shared_user_id))
+    WHERE
+        shared_user_ids IS NULL
+        AND (
+            shared_user_id IS NOT NULL
+            AND shared_user_id > 0
+        );
+    -- Log the number of updated rows
+    GET DIAGNOSTICS updated_cnt = ROW_COUNT;
+    RAISE NOTICE 'Updated % rows in workflow_activity table', updated_cnt;
+ELSE
+    RAISE NOTICE 'Skipped: shared_user_id column not found in workflow_activity table';
+END IF;
 
 --3. Drop "shared_user_ids" column
-ALTER TABLE
-	workflow_activity DROP COLUMN shared_user_id;
+ALTER TABLE workflow_activity DROP COLUMN IF EXISTS shared_user_id;
+
+RAISE NOTICE 'End: Restricted access migration';
 
 -- WOA-06-jsonld_mapping.sql
 
-INSERT INTO public.jsonld_mappings(created, updated, id, name, mapping, item_type_id, version_id, is_deleted) VALUES ('2025-03-21 17:00:00.000000', '2025-03-21 17:00:00.000000', 30001, 'デフォルトマッピング（シンプル）', '{"PubDate": "datePublished", "Title": "dc:title", "Title.タイトル": "dc:title.value", "Title.言語": "dc:title.language", "Alternative Title": "dcterms:alternative", "Alternative Title.その他のタイトル": "dcterms:alternative.value", "Alternative Title.言語": "dcterms:alternative.language", "Creator": "jpcoar:creator", "Creator.作成者名": "jpcoar:creator.jpcoar:givenName", "Creator.作成者名.名": "jpcoar:creator.jpcoar:givenName.value", "Creator.作成者名.言語": "jpcoar:creator.jpcoar:givenName.language", "Creator.作成者タイプ": "jpcoar:creator.creatorType", "Creator.作成者姓": "jpcoar:creator.jpcoar:familyName", "Creator.作成者姓.姓": "jpcoar:creator.jpcoar:familyName.value", "Creator.作成者姓.言語": "jpcoar:creator.jpcoar:familyName.language", "Creator.作成者メールアドレス": "jpcoar:creator.email", "Creator.作成者メールアドレス.メールアドレス": "jpcoar:creator.email.value", "Creator.作成者姓名": "jpcoar:creator.jpcoar:creatorName", "Creator.作成者姓名.姓名": "jpcoar:creator.jpcoar:creatorName.value", "Creator.作成者姓名.言語": "jpcoar:creator.jpcoar:creatorName.language", "Creator.作成者姓名.名前タイプ": "jpcoar:creator.jpcoar:creatorName.nameType", "Creator.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier", "Creator.作成者識別子.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier.value", "Creator.作成者識別子.作成者識別子URI": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者識別子.作成者識別子Scheme": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者所属": "jpcoar:creator.jpcoar:affiliation", "Creator.作成者所属.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName", "Creator.作成者所属.所属機関名.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.value", "Creator.作成者所属.所属機関名.言語": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.language", "Creator.作成者所属.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier", "Creator.作成者所属.所属機関識別子.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Creator.作成者所属.所属機関識別子.所属機関識別子URI": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者別名": "jpcoar:creator.jpcoar:creatorAlternative", "Creator.作成者別名.別名": "jpcoar:creator.jpcoar:creatorAlternative.value", "Creator.作成者別名.言語": "jpcoar:creator.jpcoar:creatorAlternative.language", "Contributor": "jpcoar:contributor", "Contributor.寄与者名": "jpcoar:contributor.jpcoar:givenName", "Contributor.寄与者名.名": "jpcoar:contributor.jpcoar:givenName.value", "Contributor.寄与者名.言語": "jpcoar:contributor.jpcoar:givenName.language", "Contributor.寄与者タイプ": "jpcoar:contributor.contributorType", "Contributor.寄与者姓": "jpcoar:contributor.jpcoar:familyName", "Contributor.寄与者姓.姓": "jpcoar:contributor.jpcoar:familyName.value", "Contributor.寄与者姓.言語": "jpcoar:contributor.jpcoar:familyName.language", "Contributor.寄与者メールアドレス": "jpcoar:contributor.email", "Contributor.寄与者メールアドレス.メールアドレス": "jpcoar:contributor.email.value", "Contributor.寄与者姓名": "jpcoar:contributor.jpcoar:contributorName", "Contributor.寄与者姓名.姓名": "jpcoar:contributor.jpcoar:contributorName.value", "Contributor.寄与者姓名.言語": "jpcoar:contributor.jpcoar:contributorName.language", "Contributor.寄与者姓名.名前タイプ": "jpcoar:contributor.jpcoar:contributorName.nameType", "Contributor.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier", "Contributor.寄与者識別子.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier.value", "Contributor.寄与者識別子.寄与者識別子URI": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者識別子.寄与者識別子Scheme": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者所属": "jpcoar:contributor.jpcoar:affiliation", "Contributor.寄与者所属.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName", "Contributor.寄与者所属.所属機関名.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.value", "Contributor.寄与者所属.所属機関名.言語": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.language", "Contributor.寄与者所属.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier", "Contributor.寄与者所属.所属機関識別子.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Contributor.寄与者所属.所属機関識別子.所属機関識別子URI": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者別名": "jpcoar:contributor.jpcoar:contributorAlternative", "Contributor.寄与者別名.別名": "jpcoar:contributor.jpcoar:contributorAlternative.value", "Contributor.寄与者別名.言語": "jpcoar:contributor.jpcoar:contributorAlternative.language", "Access Rights": "dcterms:accessRights", "Access Rights.アクセス権": "dcterms:accessRights.value", "Access Rights.アクセス権URI": "dcterms:accessRights.rdf:resource", "Rights": "dc:rights", "Rights.権利情報": "dc:rights.value", "Rights.言語": "dc:rights.language", "Rights.権利情報Resource": "dc:rights.rdf:resource", "Rights Holder": "jpcoar:rightsHolder", "Rights Holder.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier", "Rights Holder.権利者識別子.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier.value", "Rights Holder.権利者識別子.権利者識別子Scheme": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierScheme", "Rights Holder.権利者識別子.権利者識別子URI": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierURI", "Rights Holder.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName", "Rights Holder.権利者名.言語": "jpcoar:rightsHolder.jpcoar:rightsHolderName.value", "Rights Holder.権利者名.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName.language", "Subject": "jpcoar:subject", "Subject.主題": "jpcoar:subject.value", "Subject.言語": "jpcoar:subject.language", "Subject.主題Scheme": "jpcoar:subject.subjectScheme", "Subject.主題URI": "jpcoar:subject.subjectURI", "Description": "datacite:description", "Description.内容記述": "datacite:description.value", "Description.言語": "datacite:description.language", "Description.内容記述タイプ": "datacite:description.descriptionType", "Publisher": "dc:publisher", "Publisher.出版者": "dc:publisher.value", "Publisher.言語": "dc:publisher.language", "Language": "dc:language", "Language.言語": "dc:language.value", "Resource Type": "dc:type", "Resource Type.資源タイプ識別子": "dc:type.value", "Resource Type.資源タイプ": "dc:type.rdf:resource", "Version Type": "oaire:version", "Version Type.査読の有無": "oaire:version.itemReviewed", "Version Type.出版タイプResource": "oaire:version.rdf:resource", "Version Type.出版タイプ": "oaire:version.value", "Identifier Registration": "jpcoar:identifierRegistration", "Identifier Registration.ID登録": "jpcoar:identifierRegistration.value", "Identifier Registration.ID登録タイプ": "jpcoar:identifierRegistration.identifierType", "Relation": "jpcoar:relation", "Relation.関連名称": "jpcoar:relation.jpcoar:relatedTitle", "Relation.関連名称.言語": "jpcoar:relation.jpcoar:relatedTitle.language", "Relation.関連名称.関連名称": "jpcoar:relation.jpcoar:relatedTitle.value", "Relation.関連タイプ": "jpcoar:relation.relationType", "Relation.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier", "Relation.関連識別子.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier.value", "Relation.関連識別子.識別子タイプ": "jpcoar:relation.jpcoar:relatedIdentifier.identifierType", "Funding Reference": "jpcoar:fundingReference", "Funding Reference.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber", "Funding Reference.研究課題番号.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber.value", "Funding Reference.研究課題番号.研究課題番号タイプ": "jpcoar:fundingReference.jpcoar:awardNumber.awardNumberType", "Funding Reference.研究課題番号.研究課題番号URI": "jpcoar:fundingReference.jpcoar:awardNumber.awardURI", "Funding Reference.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle", "Funding Reference.研究課題名.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle.value", "Funding Reference.研究課題名.言語": "jpcoar:fundingReference.jpcoar:awardTitle.language", "Funding Reference.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier", "Funding Reference.助成機関識別子.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier.value", "Funding Reference.助成機関識別子.識別子タイプ": "jpcoar:fundingReference.jpcoar:funderIdentifier.funderIdentifierType", "Funding Reference.助成機関名": "jpcoar:fundingReference.jpcoar:funderName", "Funding Reference.助成機関名.助成機関名": "jpcoar:fundingReference.jpcoar:funderName.value", "Funding Reference.助成機関名.言語": "jpcoar:fundingReference.jpcoar:funderName.language", "Funding Reference.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier", "Funding Reference.プログラム情報識別子.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.value", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプ": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierType", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプURI": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierTypeURI", "Funding Reference.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream", "Funding Reference.プログラム情報.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream.value", "Funding Reference.プログラム情報.言語": "jpcoar:fundingReference.jpcoar:fundingStream.language", "Source Identifier": "jpcoar:sourceIdentifier", "Source Identifier.収録物識別子": "jpcoar:sourceIdentifier.value", "Source Identifier.収録物識別子タイプ": "jpcoar:sourceIdentifier.identifierType", "Bibliographic Information": "dcterms:medium", "Bibliographic Information.発行日": "dcterms:medium.datePublished", "Bibliographic Information.発行日.日付": "dcterms:medium.datePublished.value", "Bibliographic Information.発行日.日付タイプ": "dcterms:medium.datePublished.dateType", "Bibliographic Information.ページ数": "dcterms:medium.issueNumber", "Bibliographic Information.終了ページ": "dcterms:medium.numberOfPages", "Bibliographic Information.開始ページ": "dcterms:medium.pageEnd", "Bibliographic Information.号": "dcterms:medium.pageStart", "Bibliographic Information.巻": "dcterms:medium.volumeNumber", "Bibliographic Information.雑誌名": "dcterms:medium.name", "Bibliographic Information.雑誌名.タイトル": "dcterms:medium.name.value", "Bibliographic Information.雑誌名.言語": "dcterms:medium.name.language", "Dissertation Number": "dcndl:dissertationNumber", "Dissertation Number.学位授与番号": "dcndl:dissertationNumber.value", "Degree Name": "dcndl:degreeName", "Degree Name.学位名": "dcndl:degreeName.value", "Degree Name.言語": "dcndl:degreeName.language", "Date Granted": "dcndl:dateGranted", "Date Granted.学位授与年月日": "dcndl:dateGranted.value", "Degree Grantor": "jpcoar:degreeGrantor", "Degree Grantor.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName", "Degree Grantor.学位授与機関名.言語": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.language", "Degree Grantor.学位授与機関名.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.value", "Degree Grantor.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier", "Degree Grantor.学位授与機関識別子.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.value", "Degree Grantor.学位授与機関識別子.学位授与機関識別子Scheme": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.nameIdentifierScheme", "File": "hasPart", "File.アクセス": "hasPart.dcterms:accessRights", "File.公開日.タイプ": "$Available", "File.公開日.公開日": "hasPart.datePublished", "File.表示形式": "hasPart.jpcoar:format", "File.日付": "hasPart.datacite:date", "File.日付.日付タイプ": "hasPart.datacite:date.dateType", "File.日付.日付": "hasPart.datacite:date.value", "File.ファイル名": "hasPart.name", "File.サイズ": "hasPart.jpcoar:extent", "File.サイズ.サイズ": "hasPart.jpcoar:extent.value", "File.フォーマット": "hasPart.jpcoar:mimeType", "File.グループ": "hasPart.department", "File.ライセンス": "hasPart.license", "File.本文URL": "hasPart.jpcoar:URI", "File.本文URL.ラベル": "hasPart.@id", "File.本文URL.オブジェクトタイプ": "hasPart.jpcoar:URI.objectType", "File.本文URL.本文URL": "hasPart.jpcoar:URI.value", "File.バージョン情報": "hasPart.datacite:version", "Heading": "headline", "Heading.大見出し": "headline.value", "Heading.小見出し": "headline.alternativeHeadline", "Heading.言語": "headline.language"}', 30001, 1, false);
-INSERT INTO public.jsonld_mappings(created, updated, id, name, mapping, item_type_id, version_id, is_deleted) VALUES ('2025-03-21 17:00:00.000000', '2025-03-21 17:00:00.000000', 30002, 'デフォルトマッピング（フル）', '{"PubDate": "datePublished", "Title": "dc:title", "Title.タイトル": "dc:title.value", "Title.言語": "dc:title.language", "Alternative Title": "dcterms:alternative", "Alternative Title.その他のタイトル": "dcterms:alternative.value", "Alternative Title.言語": "dcterms:alternative.language", "Creator": "jpcoar:creator", "Creator.作成者名": "jpcoar:creator.jpcoar:givenName", "Creator.作成者名.名": "jpcoar:creator.jpcoar:givenName.value", "Creator.作成者名.言語": "jpcoar:creator.jpcoar:givenName.language", "Creator.作成者タイプ": "jpcoar:creator.creatorType", "Creator.作成者姓": "jpcoar:creator.jpcoar:familyName", "Creator.作成者姓.姓": "jpcoar:creator.jpcoar:familyName.value", "Creator.作成者姓.言語": "jpcoar:creator.jpcoar:familyName.language", "Creator.作成者メールアドレス": "jpcoar:creator.email", "Creator.作成者メールアドレス.メールアドレス": "jpcoar:creator.email.value", "Creator.作成者姓名": "jpcoar:creator.jpcoar:creatorName", "Creator.作成者姓名.姓名": "jpcoar:creator.jpcoar:creatorName.value", "Creator.作成者姓名.言語": "jpcoar:creator.jpcoar:creatorName.language", "Creator.作成者姓名.名前タイプ": "jpcoar:creator.jpcoar:creatorName.nameType", "Creator.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier", "Creator.作成者識別子.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier.value", "Creator.作成者識別子.作成者識別子URI": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者識別子.作成者識別子Scheme": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者所属": "jpcoar:creator.jpcoar:affiliation", "Creator.作成者所属.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName", "Creator.作成者所属.所属機関名.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.value", "Creator.作成者所属.所属機関名.言語": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.language", "Creator.作成者所属.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier", "Creator.作成者所属.所属機関識別子.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Creator.作成者所属.所属機関識別子.所属機関識別子URI": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者別名": "jpcoar:creator.jpcoar:creatorAlternative", "Creator.作成者別名.別名": "jpcoar:creator.jpcoar:creatorAlternative.value", "Creator.作成者別名.言語": "jpcoar:creator.jpcoar:creatorAlternative.language", "Contributor": "jpcoar:contributor", "Contributor.寄与者名": "jpcoar:contributor.jpcoar:givenName", "Contributor.寄与者名.名": "jpcoar:contributor.jpcoar:givenName.value", "Contributor.寄与者名.言語": "jpcoar:contributor.jpcoar:givenName.language", "Contributor.寄与者タイプ": "jpcoar:contributor.contributorType", "Contributor.寄与者姓": "jpcoar:contributor.jpcoar:familyName", "Contributor.寄与者姓.姓": "jpcoar:contributor.jpcoar:familyName.value", "Contributor.寄与者姓.言語": "jpcoar:contributor.jpcoar:familyName.language", "Contributor.寄与者メールアドレス": "jpcoar:contributor.email", "Contributor.寄与者メールアドレス.メールアドレス": "jpcoar:contributor.email.value", "Contributor.寄与者姓名": "jpcoar:contributor.jpcoar:contributorName", "Contributor.寄与者姓名.姓名": "jpcoar:contributor.jpcoar:contributorName.value", "Contributor.寄与者姓名.言語": "jpcoar:contributor.jpcoar:contributorName.language", "Contributor.寄与者姓名.名前タイプ": "jpcoar:contributor.jpcoar:contributorName.nameType", "Contributor.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier", "Contributor.寄与者識別子.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier.value", "Contributor.寄与者識別子.寄与者識別子URI": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者識別子.寄与者識別子Scheme": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者所属": "jpcoar:contributor.jpcoar:affiliation", "Contributor.寄与者所属.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName", "Contributor.寄与者所属.所属機関名.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.value", "Contributor.寄与者所属.所属機関名.言語": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.language", "Contributor.寄与者所属.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier", "Contributor.寄与者所属.所属機関識別子.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Contributor.寄与者所属.所属機関識別子.所属機関識別子URI": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者別名": "jpcoar:contributor.jpcoar:contributorAlternative", "Contributor.寄与者別名.別名": "jpcoar:contributor.jpcoar:contributorAlternative.value", "Contributor.寄与者別名.言語": "jpcoar:contributor.jpcoar:contributorAlternative.language", "Access Rights": "dcterms:accessRights", "Access Rights.アクセス権": "dcterms:accessRights.value", "Access Rights.アクセス権URI": "dcterms:accessRights.rdf:resource", "APC": "rioxxterms:apc", "APC.APC": "rioxxterms:apc.value", "Rights": "dc:rights", "Rights.権利情報": "dc:rights.value", "Rights.言語": "dc:rights.language", "Rights.権利情報Resource": "dc:rights.rdf:resource", "Rights Holder": "jpcoar:rightsHolder", "Rights Holder.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier", "Rights Holder.権利者識別子.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier.value", "Rights Holder.権利者識別子.権利者識別子Scheme": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierScheme", "Rights Holder.権利者識別子.権利者識別子URI": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierURI", "Rights Holder.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName", "Rights Holder.権利者名.言語": "jpcoar:rightsHolder.jpcoar:rightsHolderName.value", "Rights Holder.権利者名.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName.language", "Subject": "jpcoar:subject", "Subject.主題": "jpcoar:subject.value", "Subject.言語": "jpcoar:subject.language", "Subject.主題Scheme": "jpcoar:subject.subjectScheme", "Subject.主題URI": "jpcoar:subject.subjectURI", "Description": "datacite:description", "Description.内容記述": "datacite:description.value", "Description.言語": "datacite:description.language", "Description.内容記述タイプ": "datacite:description.descriptionType", "Publisher": "dc:publisher", "Publisher.出版者": "dc:publisher.value", "Publisher.言語": "dc:publisher.language", "Date": "datacite:date", "Date.日付": "datacite:date.value", "Date.日付タイプ": "datacite:date.dateType", "Language": "dc:language", "Language.言語": "dc:language.value", "Resource Type": "dc:type", "Resource Type.資源タイプ": "dc:type.value", "Resource Type.資源タイプ識別子": "dc:type.rdf:resource", "Version": "datacite:version", "Version.バージョン情報": "datacite:version.value", "Version Type": "oaire:version", "Version Type.査読の有無": "oaire:version.itemReviewed", "Version Type.出版タイプResource": "oaire:version.rdf:resource", "Version Type.出版タイプ": "oaire:version.value", "Identifier": "jpcoar:identifier", "Identifier.識別子タイプ": "jpcoar:identifier.identifierType", "Identifier.識別子": "jpcoar:identifier.value", "Identifier Registration": "jpcoar:identifierRegistration", "Identifier Registration.ID登録": "jpcoar:identifierRegistration.value", "Identifier Registration.ID登録タイプ": "jpcoar:identifierRegistration.identifierType", "Relation": "jpcoar:relation", "Relation.関連名称": "jpcoar:relation.jpcoar:relatedTitle", "Relation.関連名称.言語": "jpcoar:relation.jpcoar:relatedTitle.language", "Relation.関連名称.関連名称": "jpcoar:relation.jpcoar:relatedTitle.value", "Relation.関連タイプ": "jpcoar:relation.relationType", "Relation.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier", "Relation.関連識別子.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier.value", "Relation.関連識別子.識別子タイプ": "jpcoar:relation.jpcoar:relatedIdentifier.identifierType", "Temporal": "dcterms:temporal", "Temporal.言語": "dcterms:temporal.language", "Temporal.時間的範囲": "dcterms:temporal.value", "Geo Location": "datacite:geoLocation", "Geo Location.位置情報（空間）": "datacite:geoLocation.datacite:geoLocationBox", "Geo Location.位置情報（空間）.東部経度": "datacite:geoLocation.datacite:geoLocationBox.datacite:eastBoundLongitude", "Geo Location.位置情報（空間）.北部緯度": "datacite:geoLocation.datacite:geoLocationBox.datacite:northBoundLatitude", "Geo Location.位置情報（空間）.南部緯度": "datacite:geoLocation.datacite:geoLocationBox.datacite:southBoundLatitude", "Geo Location.位置情報（空間）.西部経度": "datacite:geoLocation.datacite:geoLocationBox.datacite:westBoundLongitude", "Geo Location.位置情報（自由記述）": "datacite:geoLocation.datacite:geoLocationPlace", "Geo Location.位置情報（自由記述）.位置情報（自由記述）": "datacite:geoLocation.datacite:geoLocationPlace.value", "Geo Location.位置情報（点）": "datacite:geoLocation.datacite:geoLocationPoint", "Geo Location.位置情報（点）.緯度": "datacite:geoLocation.datacite:geoLocationPoint.datacite:pointLatitude", "Geo Location.位置情報（点）.経度": "datacite:geoLocation.datacite:geoLocationPoint.datacite:pointLongitude", "Funding Reference": "jpcoar:fundingReference", "Funding Reference.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber", "Funding Reference.研究課題番号.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber.value", "Funding Reference.研究課題番号.研究課題番号タイプ": "jpcoar:fundingReference.jpcoar:awardNumber.awardNumberType", "Funding Reference.研究課題番号.研究課題番号URI": "jpcoar:fundingReference.jpcoar:awardNumber.awardURI", "Funding Reference.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle", "Funding Reference.研究課題名.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle.value", "Funding Reference.研究課題名.言語": "jpcoar:fundingReference.jpcoar:awardTitle.language", "Funding Reference.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier", "Funding Reference.助成機関識別子.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier.value", "Funding Reference.助成機関識別子.識別子タイプ": "jpcoar:fundingReference.jpcoar:funderIdentifier.funderIdentifierType", "Funding Reference.助成機関名": "jpcoar:fundingReference.jpcoar:funderName", "Funding Reference.助成機関名.助成機関名": "jpcoar:fundingReference.jpcoar:funderName.value", "Funding Reference.助成機関名.言語": "jpcoar:fundingReference.jpcoar:funderName.language", "Funding Reference.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier", "Funding Reference.プログラム情報識別子.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.value", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプ": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierType", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプURI": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierTypeURI", "Funding Reference.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream", "Funding Reference.プログラム情報.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream.value", "Funding Reference.プログラム情報.言語": "jpcoar:fundingReference.jpcoar:fundingStream.language", "Source Identifier": "jpcoar:sourceIdentifier", "Source Identifier.収録物識別子": "jpcoar:sourceIdentifier.value", "Source Identifier.収録物識別子タイプ": "jpcoar:sourceIdentifier.identifierType", "Source Title": "jpcoar:sourceTitle", "Source Title.収録物名": "jpcoar:sourceTitle.value", "Source Title.言語": "jpcoar:sourceTitle.language", "Volume Number": "jpcoar:volume", "Volume Number.巻": "jpcoar:volume.value", "Issue Number": "jpcoar:issue", "Issue Number.号": "jpcoar:issue.value", "Number of Pages": "jpcoar:numPages", "Number of Pages.ページ数": "jpcoar:numPages.value", "Page Start": "jpcoar:pageStart", "Page Start.開始ページ": "jpcoar:pageStart.value", "Page End": "jpcoar:pageEnd", "Page End.終了ページ": "jpcoar:pageEnd.value", "Bibliographic Information": "dcterms:medium", "Bibliographic Information.発行日": "dcterms:medium.datePublished", "Bibliographic Information.発行日.日付": "dcterms:medium.datePublished.value", "Bibliographic Information.発行日.日付タイプ": "dcterms:medium.datePublished.dateType", "Bibliographic Information.号": "dcterms:medium.issueNumber", "Bibliographic Information.ページ数": "dcterms:medium.numberOfPages", "Bibliographic Information.終了ページ": "dcterms:medium.pageEnd", "Bibliographic Information.開始ページ": "dcterms:medium.pageStart", "Bibliographic Information.巻": "dcterms:medium.volumeNumber", "Bibliographic Information.雑誌名": "dcterms:medium.name", "Bibliographic Information.雑誌名.タイトル": "dcterms:medium.name.value", "Bibliographic Information.雑誌名.言語": "dcterms:medium.name.language", "Dissertation Number": "dcndl:dissertationNumber", "Dissertation Number.学位授与番号": "dcndl:dissertationNumber.value", "Degree Name": "dcndl:degreeName", "Degree Name.学位名": "dcndl:degreeName.value", "Degree Name.言語": "dcndl:degreeName.language", "Date Granted": "dcndl:dateGranted", "Date Granted.学位授与年月日": "dcndl:dateGranted.value", "Degree Grantor": "jpcoar:degreeGrantor", "Degree Grantor.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName", "Degree Grantor.学位授与機関名.言語": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.language", "Degree Grantor.学位授与機関名.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.value", "Degree Grantor.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier", "Degree Grantor.学位授与機関識別子.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.value", "Degree Grantor.学位授与機関識別子.学位授与機関識別子Scheme": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.nameIdentifierScheme", "Conference": "jpcoar:conference", "Conference.開催国": "jpcoar:conference.jpcoar:conferenceCountry", "Conference.開催期間": "jpcoar:conference.jpcoar:conferenceDate.language", "Conference.開催期間.言語": "jpcoar:conference.jpcoar:conferenceDate", "Conference.開催期間.終了日": "jpcoar:conference.jpcoar:conferenceDate.endDay", "Conference.開催期間.終了月": "jpcoar:conference.jpcoar:conferenceDate.endMonth", "Conference.開催期間.終了年": "jpcoar:conference.jpcoar:conferenceDate.endYear", "Conference.開催期間.開催期間": "jpcoar:conference.jpcoar:conferenceDate.value", "Conference.開催期間.開始日": "jpcoar:conference.jpcoar:conferenceDate.startDay", "Conference.開催期間.開始月": "jpcoar:conference.jpcoar:conferenceDate.startMonth", "Conference.開催期間.開始年": "jpcoar:conference.jpcoar:conferenceDate.startYear", "Conference.会議名": "jpcoar:conference.jpcoar:conferenceName", "Conference.会議名.会議名": "jpcoar:conference.jpcoar:conferenceName.value", "Conference.会議名.言語": "jpcoar:conference.jpcoar:conferenceName.language", "Conference.開催地": "jpcoar:conference.jpcoar:conferencePlace", "Conference.開催地.開催地": "jpcoar:conference.jpcoar:conferencePlace.value", "Conference.開催地.言語": "jpcoar:conference.jpcoar:conferencePlace.language", "Conference.回次": "jpcoar:conference.jpcoar:conferenceSequence", "Conference.主催機関": "jpcoar:conference.jpcoar:conferenceSponsor", "Conference.主催機関.主催機関": "jpcoar:conference.jpcoar:conferenceSponsor.value", "Conference.主催機関.言語": "jpcoar:conference.jpcoar:conferenceSponsor.language", "Conference.開催会場": "jpcoar:conference.jpcoar:conferenceVenue", "Conference.開催会場.開催会場": "jpcoar:conference.jpcoar:conferenceVenue.value", "Conference.開催会場.言語": "jpcoar:conference.jpcoar:conferenceVenue.language", "File": "hasPart", "File.アクセス": "hasPart.dcterms:accessRights", "File.公開日.タイプ": "$Available", "File.公開日.公開日": "hasPart.datePublished", "File.表示形式": "hasPart.jpcoar:format", "File.日付": "hasPart.datacite:date", "File.日付.日付タイプ": "hasPart.datacite:date.dateType", "File.日付.日付": "hasPart.datacite:date.value", "File.ファイル名": "hasPart.name", "File.サイズ": "hasPart.jpcoar:extent", "File.サイズ.サイズ": "hasPart.jpcoar:extent.value", "File.フォーマット": "hasPart.jpcoar:mimeType", "File.グループ": "hasPart.department", "File.ライセンス": "hasPart.license", "File.本文URL": "hasPart.jpcoar:URI", "File.本文URL.ラベル": "hasPart.@id", "File.本文URL.オブジェクトタイプ": "hasPart.jpcoar:URI.objectType", "File.本文URL.本文URL": "hasPart.jpcoar:URI.value", "File.バージョン情報": "hasPart.datacite:version", "Heading": "headline", "Heading.大見出し": "headline.value", "Heading.小見出し": "headline.alternativeHeadline", "Heading.言語": "headline.language", "所蔵機関": "jpcoar:holdingAgent", "所蔵機関.所蔵機関識別子": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier", "所蔵機関.所蔵機関識別子.所蔵機関識別子スキーマ": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier.nameIdentifierScheme", "所蔵機関.所蔵機関識別子.所蔵機関識別子URI": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier.nameIdentifierURI", "所蔵機関.所蔵機関識別子.所蔵機関識別子": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier.value", "所蔵機関.所蔵機関名": "jpcoar:holdingAgent.jpcoar:holdingAgentName", "所蔵機関.所蔵機関名.所蔵機関名": "jpcoar:holdingAgent.jpcoar:holdingAgentName.value", "所蔵機関.所蔵機関名.Language": "jpcoar:holdingAgent.jpcoar:holdingAgentName.language", "日付（リテラル）": "dcterms:date", "日付（リテラル）.日付（リテラル）": "dcterms:date.value", "日付（リテラル）.言語": "dcterms:date.language", "データセットシリーズ": "jpcoar:datasetSeries", "データセットシリーズ.Dataset Series": "jpcoar:datasetSeries.value", "出版者情報": "jpcoar:publisher", "出版者情報.出版地（国名コード）": "jpcoar:publisher.dcndl:publicationPlace", "出版者情報.出版地（国名コード）.出版地（国名コード）": "jpcoar:publisher.dcndl:publicationPlace.value", "出版者情報.出版者注記": "jpcoar:publisher.jpcoar:publisherDescription", "出版者情報.出版者注記.出版者注記": "jpcoar:publisher.jpcoar:publisherDescription.value", "出版者情報.出版者注記.言語": "jpcoar:publisher.jpcoar:publisherDescription.language", "出版者情報.出版地": "jpcoar:publisher.dcndl:location", "出版者情報.出版地.出版地": "jpcoar:publisher.dcndl:location.value", "出版者情報.出版者名": "jpcoar:publisher.jpcoar:publisherName", "出版者情報.出版者名.出版者名": "jpcoar:publisher.jpcoar:publisherName.value", "出版者情報.出版者名.言語": "jpcoar:publisher.jpcoar:publisherName.language", "大きさ": "dcterms:extent", "大きさ.Extent": "dcterms:extent.value", "大きさ.Language": "dcterms:extent.language", "カタログ": "jpcoar:catalog", "カタログ.Access Rights": "jpcoar:catalog.dcterms:accessRights", "カタログ.Access Rights.Access Rights": "jpcoar:catalog.dcterms:accessRights.value", "カタログ.Access Rights.RDF Resource": "jpcoar:catalog.dcterms:accessRights.rdf:resource", "カタログ.Contributor": "jpcoar:catalog.jpcoar:contributor", "カタログ.Contributor.Contributor Name": "jpcoar:catalog.jpcoar:contributor.jpcoar:contributorName", "カタログ.Contributor.Contributor Name.Contributor Name": "jpcoar:catalog.jpcoar:contributor.jpcoar:contributorName.value", "カタログ.Contributor.Contributor Name.Language": "jpcoar:catalog.jpcoar:contributor.jpcoar:contributorName.language", "カタログ.Contributor.Contributor Type": "jpcoar:catalog.jpcoar:contributor.contributorType", "カタログ.Description": "jpcoar:catalog.datacite:description", "カタログ.Description.Description": "jpcoar:catalog.datacite:description.value", "カタログ.Description.Language": "jpcoar:catalog.datacite:description.language", "カタログ.Description.Description Type": "jpcoar:catalog.datacite:description.descriptionType", "カタログ.File": "jpcoar:catalog.jpcoar:file", "カタログ.File.Object Type": "jpcoar:catalog.jpcoar:file.objectType", "カタログ.File.File URI": "jpcoar:catalog.jpcoar:file.jpcoar:URI", "カタログ.Identifier": "jpcoar:catalog.jpcoar:identifier", "カタログ.Identifier.Identifier": "jpcoar:catalog.jpcoar:identifier.value", "カタログ.Identifier.Identifier Type": "jpcoar:catalog.jpcoar:identifier.identifierType", "カタログ.License": "jpcoar:catalog.jpcoar:license", "カタログ.License.License": "jpcoar:catalog.jpcoar:license.value", "カタログ.License.Language": "jpcoar:catalog.jpcoar:license.language", "カタログ.License.RDF Resource": "jpcoar:catalog.jpcoar:license.rdf:resource", "カタログ.License.License Type": "jpcoar:catalog.jpcoar:license.licenseType", "カタログ.Rights": "jpcoar:catalog.dc:rights", "カタログ.Rights.Language": "jpcoar:catalog.dc:rights.language", "カタログ.Rights.RDF Resource": "jpcoar:catalog.dc:rights.rdf:resource", "カタログ.Rights.Rights": "jpcoar:catalog.dc:rights.value", "カタログ.Subject": "jpcoar:catalog.jpcoar:subject", "カタログ.Subject.Subject": "jpcoar:catalog.jpcoar:subject.value", "カタログ.Subject.Language": "jpcoar:catalog.jpcoar:subject.language", "カタログ.Subject.Subject Scheme": "jpcoar:catalog.jpcoar:subject.subjectScheme", "カタログ.Subject.Subject URI": "jpcoar:catalog.jpcoar:subject.subjectURI", "カタログ.Title": "jpcoar:catalog.dc:title", "カタログ.Title.Title": "jpcoar:catalog.dc:title.value", "カタログ.Title.Language": "jpcoar:catalog.dc:title.language", "原文の言語": "dcndl:originalLanguage", "原文の言語.Original Language": "dcndl:originalLanguage.value", "原文の言語.Language": "dcndl:originalLanguage.language", "部編名": "dcndl:volumeTitle", "部編名.部編名": "dcndl:volumeTitle.value", "部編名.Language": "dcndl:volumeTitle.language", "版": "dcndl:edition", "版.版": "dcndl:edition.value", "版.言語": "dcndl:edition.language", "物理的形態": "jpcoar:format", "物理的形態.物理的形態": "jpcoar:format.value", "物理的形態.Language": "jpcoar:format.language"}' , 30002, 1, false);
+RAISE NOTICE 'Create default jsonld mapping';
+INSERT INTO jsonld_mappings(created, updated, id, name, mapping, item_type_id, version_id, is_deleted) VALUES ('2025-03-21 17:00:00.000000', '2025-03-21 17:00:00.000000', 30001, 'デフォルトマッピング（シンプル）', '{"PubDate": "datePublished", "Title": "dc:title", "Title.タイトル": "dc:title.value", "Title.言語": "dc:title.language", "Alternative Title": "dcterms:alternative", "Alternative Title.その他のタイトル": "dcterms:alternative.value", "Alternative Title.言語": "dcterms:alternative.language", "Creator": "jpcoar:creator", "Creator.作成者名": "jpcoar:creator.jpcoar:givenName", "Creator.作成者名.名": "jpcoar:creator.jpcoar:givenName.value", "Creator.作成者名.言語": "jpcoar:creator.jpcoar:givenName.language", "Creator.作成者タイプ": "jpcoar:creator.creatorType", "Creator.作成者姓": "jpcoar:creator.jpcoar:familyName", "Creator.作成者姓.姓": "jpcoar:creator.jpcoar:familyName.value", "Creator.作成者姓.言語": "jpcoar:creator.jpcoar:familyName.language", "Creator.作成者メールアドレス": "jpcoar:creator.email", "Creator.作成者メールアドレス.メールアドレス": "jpcoar:creator.email.value", "Creator.作成者姓名": "jpcoar:creator.jpcoar:creatorName", "Creator.作成者姓名.姓名": "jpcoar:creator.jpcoar:creatorName.value", "Creator.作成者姓名.言語": "jpcoar:creator.jpcoar:creatorName.language", "Creator.作成者姓名.名前タイプ": "jpcoar:creator.jpcoar:creatorName.nameType", "Creator.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier", "Creator.作成者識別子.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier.value", "Creator.作成者識別子.作成者識別子URI": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者識別子.作成者識別子Scheme": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者所属": "jpcoar:creator.jpcoar:affiliation", "Creator.作成者所属.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName", "Creator.作成者所属.所属機関名.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.value", "Creator.作成者所属.所属機関名.言語": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.language", "Creator.作成者所属.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier", "Creator.作成者所属.所属機関識別子.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Creator.作成者所属.所属機関識別子.所属機関識別子URI": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者別名": "jpcoar:creator.jpcoar:creatorAlternative", "Creator.作成者別名.別名": "jpcoar:creator.jpcoar:creatorAlternative.value", "Creator.作成者別名.言語": "jpcoar:creator.jpcoar:creatorAlternative.language", "Contributor": "jpcoar:contributor", "Contributor.寄与者名": "jpcoar:contributor.jpcoar:givenName", "Contributor.寄与者名.名": "jpcoar:contributor.jpcoar:givenName.value", "Contributor.寄与者名.言語": "jpcoar:contributor.jpcoar:givenName.language", "Contributor.寄与者タイプ": "jpcoar:contributor.contributorType", "Contributor.寄与者姓": "jpcoar:contributor.jpcoar:familyName", "Contributor.寄与者姓.姓": "jpcoar:contributor.jpcoar:familyName.value", "Contributor.寄与者姓.言語": "jpcoar:contributor.jpcoar:familyName.language", "Contributor.寄与者メールアドレス": "jpcoar:contributor.email", "Contributor.寄与者メールアドレス.メールアドレス": "jpcoar:contributor.email.value", "Contributor.寄与者姓名": "jpcoar:contributor.jpcoar:contributorName", "Contributor.寄与者姓名.姓名": "jpcoar:contributor.jpcoar:contributorName.value", "Contributor.寄与者姓名.言語": "jpcoar:contributor.jpcoar:contributorName.language", "Contributor.寄与者姓名.名前タイプ": "jpcoar:contributor.jpcoar:contributorName.nameType", "Contributor.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier", "Contributor.寄与者識別子.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier.value", "Contributor.寄与者識別子.寄与者識別子URI": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者識別子.寄与者識別子Scheme": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者所属": "jpcoar:contributor.jpcoar:affiliation", "Contributor.寄与者所属.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName", "Contributor.寄与者所属.所属機関名.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.value", "Contributor.寄与者所属.所属機関名.言語": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.language", "Contributor.寄与者所属.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier", "Contributor.寄与者所属.所属機関識別子.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Contributor.寄与者所属.所属機関識別子.所属機関識別子URI": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者別名": "jpcoar:contributor.jpcoar:contributorAlternative", "Contributor.寄与者別名.別名": "jpcoar:contributor.jpcoar:contributorAlternative.value", "Contributor.寄与者別名.言語": "jpcoar:contributor.jpcoar:contributorAlternative.language", "Access Rights": "dcterms:accessRights", "Access Rights.アクセス権": "dcterms:accessRights.value", "Access Rights.アクセス権URI": "dcterms:accessRights.rdf:resource", "Rights": "dc:rights", "Rights.権利情報": "dc:rights.value", "Rights.言語": "dc:rights.language", "Rights.権利情報Resource": "dc:rights.rdf:resource", "Rights Holder": "jpcoar:rightsHolder", "Rights Holder.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier", "Rights Holder.権利者識別子.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier.value", "Rights Holder.権利者識別子.権利者識別子Scheme": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierScheme", "Rights Holder.権利者識別子.権利者識別子URI": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierURI", "Rights Holder.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName", "Rights Holder.権利者名.言語": "jpcoar:rightsHolder.jpcoar:rightsHolderName.value", "Rights Holder.権利者名.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName.language", "Subject": "jpcoar:subject", "Subject.主題": "jpcoar:subject.value", "Subject.言語": "jpcoar:subject.language", "Subject.主題Scheme": "jpcoar:subject.subjectScheme", "Subject.主題URI": "jpcoar:subject.subjectURI", "Description": "datacite:description", "Description.内容記述": "datacite:description.value", "Description.言語": "datacite:description.language", "Description.内容記述タイプ": "datacite:description.descriptionType", "Publisher": "dc:publisher", "Publisher.出版者": "dc:publisher.value", "Publisher.言語": "dc:publisher.language", "Language": "dc:language", "Language.言語": "dc:language.value", "Resource Type": "dc:type", "Resource Type.資源タイプ識別子": "dc:type.value", "Resource Type.資源タイプ": "dc:type.rdf:resource", "Version Type": "oaire:version", "Version Type.査読の有無": "oaire:version.itemReviewed", "Version Type.出版タイプResource": "oaire:version.rdf:resource", "Version Type.出版タイプ": "oaire:version.value", "Identifier Registration": "jpcoar:identifierRegistration", "Identifier Registration.ID登録": "jpcoar:identifierRegistration.value", "Identifier Registration.ID登録タイプ": "jpcoar:identifierRegistration.identifierType", "Relation": "jpcoar:relation", "Relation.関連名称": "jpcoar:relation.jpcoar:relatedTitle", "Relation.関連名称.言語": "jpcoar:relation.jpcoar:relatedTitle.language", "Relation.関連名称.関連名称": "jpcoar:relation.jpcoar:relatedTitle.value", "Relation.関連タイプ": "jpcoar:relation.relationType", "Relation.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier", "Relation.関連識別子.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier.value", "Relation.関連識別子.識別子タイプ": "jpcoar:relation.jpcoar:relatedIdentifier.identifierType", "Funding Reference": "jpcoar:fundingReference", "Funding Reference.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber", "Funding Reference.研究課題番号.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber.value", "Funding Reference.研究課題番号.研究課題番号タイプ": "jpcoar:fundingReference.jpcoar:awardNumber.awardNumberType", "Funding Reference.研究課題番号.研究課題番号URI": "jpcoar:fundingReference.jpcoar:awardNumber.awardURI", "Funding Reference.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle", "Funding Reference.研究課題名.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle.value", "Funding Reference.研究課題名.言語": "jpcoar:fundingReference.jpcoar:awardTitle.language", "Funding Reference.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier", "Funding Reference.助成機関識別子.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier.value", "Funding Reference.助成機関識別子.識別子タイプ": "jpcoar:fundingReference.jpcoar:funderIdentifier.funderIdentifierType", "Funding Reference.助成機関名": "jpcoar:fundingReference.jpcoar:funderName", "Funding Reference.助成機関名.助成機関名": "jpcoar:fundingReference.jpcoar:funderName.value", "Funding Reference.助成機関名.言語": "jpcoar:fundingReference.jpcoar:funderName.language", "Funding Reference.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier", "Funding Reference.プログラム情報識別子.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.value", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプ": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierType", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプURI": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierTypeURI", "Funding Reference.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream", "Funding Reference.プログラム情報.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream.value", "Funding Reference.プログラム情報.言語": "jpcoar:fundingReference.jpcoar:fundingStream.language", "Source Identifier": "jpcoar:sourceIdentifier", "Source Identifier.収録物識別子": "jpcoar:sourceIdentifier.value", "Source Identifier.収録物識別子タイプ": "jpcoar:sourceIdentifier.identifierType", "Bibliographic Information": "dcterms:medium", "Bibliographic Information.発行日": "dcterms:medium.datePublished", "Bibliographic Information.発行日.日付": "dcterms:medium.datePublished.value", "Bibliographic Information.発行日.日付タイプ": "dcterms:medium.datePublished.dateType", "Bibliographic Information.ページ数": "dcterms:medium.issueNumber", "Bibliographic Information.終了ページ": "dcterms:medium.numberOfPages", "Bibliographic Information.開始ページ": "dcterms:medium.pageEnd", "Bibliographic Information.号": "dcterms:medium.pageStart", "Bibliographic Information.巻": "dcterms:medium.volumeNumber", "Bibliographic Information.雑誌名": "dcterms:medium.name", "Bibliographic Information.雑誌名.タイトル": "dcterms:medium.name.value", "Bibliographic Information.雑誌名.言語": "dcterms:medium.name.language", "Dissertation Number": "dcndl:dissertationNumber", "Dissertation Number.学位授与番号": "dcndl:dissertationNumber.value", "Degree Name": "dcndl:degreeName", "Degree Name.学位名": "dcndl:degreeName.value", "Degree Name.言語": "dcndl:degreeName.language", "Date Granted": "dcndl:dateGranted", "Date Granted.学位授与年月日": "dcndl:dateGranted.value", "Degree Grantor": "jpcoar:degreeGrantor", "Degree Grantor.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName", "Degree Grantor.学位授与機関名.言語": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.language", "Degree Grantor.学位授与機関名.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.value", "Degree Grantor.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier", "Degree Grantor.学位授与機関識別子.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.value", "Degree Grantor.学位授与機関識別子.学位授与機関識別子Scheme": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.nameIdentifierScheme", "File": "hasPart", "File.アクセス": "hasPart.dcterms:accessRights", "File.公開日.タイプ": "$Available", "File.公開日.公開日": "hasPart.datePublished", "File.表示形式": "hasPart.jpcoar:format", "File.日付": "hasPart.datacite:date", "File.日付.日付タイプ": "hasPart.datacite:date.dateType", "File.日付.日付": "hasPart.datacite:date.value", "File.ファイル名": "hasPart.name", "File.サイズ": "hasPart.jpcoar:extent", "File.サイズ.サイズ": "hasPart.jpcoar:extent.value", "File.フォーマット": "hasPart.jpcoar:mimeType", "File.グループ": "hasPart.department", "File.ライセンス": "hasPart.license", "File.本文URL": "hasPart.jpcoar:URI", "File.本文URL.ラベル": "hasPart.@id", "File.本文URL.オブジェクトタイプ": "hasPart.jpcoar:URI.objectType", "File.本文URL.本文URL": "hasPart.jpcoar:URI.value", "File.バージョン情報": "hasPart.datacite:version", "Heading": "headline", "Heading.大見出し": "headline.value", "Heading.小見出し": "headline.alternativeHeadline", "Heading.言語": "headline.language"}', 30001, 1, false) ON CONFLICT (id) DO NOTHING;
+INSERT INTO jsonld_mappings(created, updated, id, name, mapping, item_type_id, version_id, is_deleted) VALUES ('2025-03-21 17:00:00.000000', '2025-03-21 17:00:00.000000', 30002, 'デフォルトマッピング（フル）', '{"PubDate": "datePublished", "Title": "dc:title", "Title.タイトル": "dc:title.value", "Title.言語": "dc:title.language", "Alternative Title": "dcterms:alternative", "Alternative Title.その他のタイトル": "dcterms:alternative.value", "Alternative Title.言語": "dcterms:alternative.language", "Creator": "jpcoar:creator", "Creator.作成者名": "jpcoar:creator.jpcoar:givenName", "Creator.作成者名.名": "jpcoar:creator.jpcoar:givenName.value", "Creator.作成者名.言語": "jpcoar:creator.jpcoar:givenName.language", "Creator.作成者タイプ": "jpcoar:creator.creatorType", "Creator.作成者姓": "jpcoar:creator.jpcoar:familyName", "Creator.作成者姓.姓": "jpcoar:creator.jpcoar:familyName.value", "Creator.作成者姓.言語": "jpcoar:creator.jpcoar:familyName.language", "Creator.作成者メールアドレス": "jpcoar:creator.email", "Creator.作成者メールアドレス.メールアドレス": "jpcoar:creator.email.value", "Creator.作成者姓名": "jpcoar:creator.jpcoar:creatorName", "Creator.作成者姓名.姓名": "jpcoar:creator.jpcoar:creatorName.value", "Creator.作成者姓名.言語": "jpcoar:creator.jpcoar:creatorName.language", "Creator.作成者姓名.名前タイプ": "jpcoar:creator.jpcoar:creatorName.nameType", "Creator.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier", "Creator.作成者識別子.作成者識別子": "jpcoar:creator.jpcoar:nameIdentifier.value", "Creator.作成者識別子.作成者識別子URI": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者識別子.作成者識別子Scheme": "jpcoar:creator.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者所属": "jpcoar:creator.jpcoar:affiliation", "Creator.作成者所属.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName", "Creator.作成者所属.所属機関名.所属機関名": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.value", "Creator.作成者所属.所属機関名.言語": "jpcoar:creator.jpcoar:affiliation.jpcoar:affiliationName.language", "Creator.作成者所属.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier", "Creator.作成者所属.所属機関識別子.所属機関識別子": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Creator.作成者所属.所属機関識別子.所属機関識別子URI": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Creator.作成者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:creator.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Creator.作成者別名": "jpcoar:creator.jpcoar:creatorAlternative", "Creator.作成者別名.別名": "jpcoar:creator.jpcoar:creatorAlternative.value", "Creator.作成者別名.言語": "jpcoar:creator.jpcoar:creatorAlternative.language", "Contributor": "jpcoar:contributor", "Contributor.寄与者名": "jpcoar:contributor.jpcoar:givenName", "Contributor.寄与者名.名": "jpcoar:contributor.jpcoar:givenName.value", "Contributor.寄与者名.言語": "jpcoar:contributor.jpcoar:givenName.language", "Contributor.寄与者タイプ": "jpcoar:contributor.contributorType", "Contributor.寄与者姓": "jpcoar:contributor.jpcoar:familyName", "Contributor.寄与者姓.姓": "jpcoar:contributor.jpcoar:familyName.value", "Contributor.寄与者姓.言語": "jpcoar:contributor.jpcoar:familyName.language", "Contributor.寄与者メールアドレス": "jpcoar:contributor.email", "Contributor.寄与者メールアドレス.メールアドレス": "jpcoar:contributor.email.value", "Contributor.寄与者姓名": "jpcoar:contributor.jpcoar:contributorName", "Contributor.寄与者姓名.姓名": "jpcoar:contributor.jpcoar:contributorName.value", "Contributor.寄与者姓名.言語": "jpcoar:contributor.jpcoar:contributorName.language", "Contributor.寄与者姓名.名前タイプ": "jpcoar:contributor.jpcoar:contributorName.nameType", "Contributor.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier", "Contributor.寄与者識別子.寄与者識別子": "jpcoar:contributor.jpcoar:nameIdentifier.value", "Contributor.寄与者識別子.寄与者識別子URI": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者識別子.寄与者識別子Scheme": "jpcoar:contributor.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者所属": "jpcoar:contributor.jpcoar:affiliation", "Contributor.寄与者所属.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName", "Contributor.寄与者所属.所属機関名.所属機関名": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.value", "Contributor.寄与者所属.所属機関名.言語": "jpcoar:contributor.jpcoar:affiliationjpcoar:affiliationName.language", "Contributor.寄与者所属.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier", "Contributor.寄与者所属.所属機関識別子.所属機関識別子": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.value", "Contributor.寄与者所属.所属機関識別子.所属機関識別子URI": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierURI", "Contributor.寄与者所属.所属機関識別子.所属機関識別子Scheme": "jpcoar:contributor.jpcoar:affiliation.jpcoar:nameIdentifier.nameIdentifierScheme", "Contributor.寄与者別名": "jpcoar:contributor.jpcoar:contributorAlternative", "Contributor.寄与者別名.別名": "jpcoar:contributor.jpcoar:contributorAlternative.value", "Contributor.寄与者別名.言語": "jpcoar:contributor.jpcoar:contributorAlternative.language", "Access Rights": "dcterms:accessRights", "Access Rights.アクセス権": "dcterms:accessRights.value", "Access Rights.アクセス権URI": "dcterms:accessRights.rdf:resource", "APC": "rioxxterms:apc", "APC.APC": "rioxxterms:apc.value", "Rights": "dc:rights", "Rights.権利情報": "dc:rights.value", "Rights.言語": "dc:rights.language", "Rights.権利情報Resource": "dc:rights.rdf:resource", "Rights Holder": "jpcoar:rightsHolder", "Rights Holder.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier", "Rights Holder.権利者識別子.権利者識別子": "jpcoar:rightsHolder.jpcoar:nameIdentifier.value", "Rights Holder.権利者識別子.権利者識別子Scheme": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierScheme", "Rights Holder.権利者識別子.権利者識別子URI": "jpcoar:rightsHolder.jpcoar:nameIdentifier.nameIdentifierURI", "Rights Holder.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName", "Rights Holder.権利者名.言語": "jpcoar:rightsHolder.jpcoar:rightsHolderName.value", "Rights Holder.権利者名.権利者名": "jpcoar:rightsHolder.jpcoar:rightsHolderName.language", "Subject": "jpcoar:subject", "Subject.主題": "jpcoar:subject.value", "Subject.言語": "jpcoar:subject.language", "Subject.主題Scheme": "jpcoar:subject.subjectScheme", "Subject.主題URI": "jpcoar:subject.subjectURI", "Description": "datacite:description", "Description.内容記述": "datacite:description.value", "Description.言語": "datacite:description.language", "Description.内容記述タイプ": "datacite:description.descriptionType", "Publisher": "dc:publisher", "Publisher.出版者": "dc:publisher.value", "Publisher.言語": "dc:publisher.language", "Date": "datacite:date", "Date.日付": "datacite:date.value", "Date.日付タイプ": "datacite:date.dateType", "Language": "dc:language", "Language.言語": "dc:language.value", "Resource Type": "dc:type", "Resource Type.資源タイプ": "dc:type.value", "Resource Type.資源タイプ識別子": "dc:type.rdf:resource", "Version": "datacite:version", "Version.バージョン情報": "datacite:version.value", "Version Type": "oaire:version", "Version Type.査読の有無": "oaire:version.itemReviewed", "Version Type.出版タイプResource": "oaire:version.rdf:resource", "Version Type.出版タイプ": "oaire:version.value", "Identifier": "jpcoar:identifier", "Identifier.識別子タイプ": "jpcoar:identifier.identifierType", "Identifier.識別子": "jpcoar:identifier.value", "Identifier Registration": "jpcoar:identifierRegistration", "Identifier Registration.ID登録": "jpcoar:identifierRegistration.value", "Identifier Registration.ID登録タイプ": "jpcoar:identifierRegistration.identifierType", "Relation": "jpcoar:relation", "Relation.関連名称": "jpcoar:relation.jpcoar:relatedTitle", "Relation.関連名称.言語": "jpcoar:relation.jpcoar:relatedTitle.language", "Relation.関連名称.関連名称": "jpcoar:relation.jpcoar:relatedTitle.value", "Relation.関連タイプ": "jpcoar:relation.relationType", "Relation.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier", "Relation.関連識別子.関連識別子": "jpcoar:relation.jpcoar:relatedIdentifier.value", "Relation.関連識別子.識別子タイプ": "jpcoar:relation.jpcoar:relatedIdentifier.identifierType", "Temporal": "dcterms:temporal", "Temporal.言語": "dcterms:temporal.language", "Temporal.時間的範囲": "dcterms:temporal.value", "Geo Location": "datacite:geoLocation", "Geo Location.位置情報（空間）": "datacite:geoLocation.datacite:geoLocationBox", "Geo Location.位置情報（空間）.東部経度": "datacite:geoLocation.datacite:geoLocationBox.datacite:eastBoundLongitude", "Geo Location.位置情報（空間）.北部緯度": "datacite:geoLocation.datacite:geoLocationBox.datacite:northBoundLatitude", "Geo Location.位置情報（空間）.南部緯度": "datacite:geoLocation.datacite:geoLocationBox.datacite:southBoundLatitude", "Geo Location.位置情報（空間）.西部経度": "datacite:geoLocation.datacite:geoLocationBox.datacite:westBoundLongitude", "Geo Location.位置情報（自由記述）": "datacite:geoLocation.datacite:geoLocationPlace", "Geo Location.位置情報（自由記述）.位置情報（自由記述）": "datacite:geoLocation.datacite:geoLocationPlace.value", "Geo Location.位置情報（点）": "datacite:geoLocation.datacite:geoLocationPoint", "Geo Location.位置情報（点）.緯度": "datacite:geoLocation.datacite:geoLocationPoint.datacite:pointLatitude", "Geo Location.位置情報（点）.経度": "datacite:geoLocation.datacite:geoLocationPoint.datacite:pointLongitude", "Funding Reference": "jpcoar:fundingReference", "Funding Reference.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber", "Funding Reference.研究課題番号.研究課題番号": "jpcoar:fundingReference.jpcoar:awardNumber.value", "Funding Reference.研究課題番号.研究課題番号タイプ": "jpcoar:fundingReference.jpcoar:awardNumber.awardNumberType", "Funding Reference.研究課題番号.研究課題番号URI": "jpcoar:fundingReference.jpcoar:awardNumber.awardURI", "Funding Reference.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle", "Funding Reference.研究課題名.研究課題名": "jpcoar:fundingReference.jpcoar:awardTitle.value", "Funding Reference.研究課題名.言語": "jpcoar:fundingReference.jpcoar:awardTitle.language", "Funding Reference.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier", "Funding Reference.助成機関識別子.助成機関識別子": "jpcoar:fundingReference.jpcoar:funderIdentifier.value", "Funding Reference.助成機関識別子.識別子タイプ": "jpcoar:fundingReference.jpcoar:funderIdentifier.funderIdentifierType", "Funding Reference.助成機関名": "jpcoar:fundingReference.jpcoar:funderName", "Funding Reference.助成機関名.助成機関名": "jpcoar:fundingReference.jpcoar:funderName.value", "Funding Reference.助成機関名.言語": "jpcoar:fundingReference.jpcoar:funderName.language", "Funding Reference.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier", "Funding Reference.プログラム情報識別子.プログラム情報識別子": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.value", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプ": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierType", "Funding Reference.プログラム情報識別子.プログラム情報識別子タイプURI": "jpcoar:fundingReference.jpcoar:fundingStreamIdentifier.fundingStreamIdentifierTypeURI", "Funding Reference.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream", "Funding Reference.プログラム情報.プログラム情報": "jpcoar:fundingReference.jpcoar:fundingStream.value", "Funding Reference.プログラム情報.言語": "jpcoar:fundingReference.jpcoar:fundingStream.language", "Source Identifier": "jpcoar:sourceIdentifier", "Source Identifier.収録物識別子": "jpcoar:sourceIdentifier.value", "Source Identifier.収録物識別子タイプ": "jpcoar:sourceIdentifier.identifierType", "Source Title": "jpcoar:sourceTitle", "Source Title.収録物名": "jpcoar:sourceTitle.value", "Source Title.言語": "jpcoar:sourceTitle.language", "Volume Number": "jpcoar:volume", "Volume Number.巻": "jpcoar:volume.value", "Issue Number": "jpcoar:issue", "Issue Number.号": "jpcoar:issue.value", "Number of Pages": "jpcoar:numPages", "Number of Pages.ページ数": "jpcoar:numPages.value", "Page Start": "jpcoar:pageStart", "Page Start.開始ページ": "jpcoar:pageStart.value", "Page End": "jpcoar:pageEnd", "Page End.終了ページ": "jpcoar:pageEnd.value", "Bibliographic Information": "dcterms:medium", "Bibliographic Information.発行日": "dcterms:medium.datePublished", "Bibliographic Information.発行日.日付": "dcterms:medium.datePublished.value", "Bibliographic Information.発行日.日付タイプ": "dcterms:medium.datePublished.dateType", "Bibliographic Information.号": "dcterms:medium.issueNumber", "Bibliographic Information.ページ数": "dcterms:medium.numberOfPages", "Bibliographic Information.終了ページ": "dcterms:medium.pageEnd", "Bibliographic Information.開始ページ": "dcterms:medium.pageStart", "Bibliographic Information.巻": "dcterms:medium.volumeNumber", "Bibliographic Information.雑誌名": "dcterms:medium.name", "Bibliographic Information.雑誌名.タイトル": "dcterms:medium.name.value", "Bibliographic Information.雑誌名.言語": "dcterms:medium.name.language", "Dissertation Number": "dcndl:dissertationNumber", "Dissertation Number.学位授与番号": "dcndl:dissertationNumber.value", "Degree Name": "dcndl:degreeName", "Degree Name.学位名": "dcndl:degreeName.value", "Degree Name.言語": "dcndl:degreeName.language", "Date Granted": "dcndl:dateGranted", "Date Granted.学位授与年月日": "dcndl:dateGranted.value", "Degree Grantor": "jpcoar:degreeGrantor", "Degree Grantor.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName", "Degree Grantor.学位授与機関名.言語": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.language", "Degree Grantor.学位授与機関名.学位授与機関名": "jpcoar:degreeGrantor.jpcoar:degreeGrantorName.value", "Degree Grantor.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier", "Degree Grantor.学位授与機関識別子.学位授与機関識別子": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.value", "Degree Grantor.学位授与機関識別子.学位授与機関識別子Scheme": "jpcoar:degreeGrantor.jpcoar:nameIdentifier.nameIdentifierScheme", "Conference": "jpcoar:conference", "Conference.開催国": "jpcoar:conference.jpcoar:conferenceCountry", "Conference.開催期間": "jpcoar:conference.jpcoar:conferenceDate.language", "Conference.開催期間.言語": "jpcoar:conference.jpcoar:conferenceDate", "Conference.開催期間.終了日": "jpcoar:conference.jpcoar:conferenceDate.endDay", "Conference.開催期間.終了月": "jpcoar:conference.jpcoar:conferenceDate.endMonth", "Conference.開催期間.終了年": "jpcoar:conference.jpcoar:conferenceDate.endYear", "Conference.開催期間.開催期間": "jpcoar:conference.jpcoar:conferenceDate.value", "Conference.開催期間.開始日": "jpcoar:conference.jpcoar:conferenceDate.startDay", "Conference.開催期間.開始月": "jpcoar:conference.jpcoar:conferenceDate.startMonth", "Conference.開催期間.開始年": "jpcoar:conference.jpcoar:conferenceDate.startYear", "Conference.会議名": "jpcoar:conference.jpcoar:conferenceName", "Conference.会議名.会議名": "jpcoar:conference.jpcoar:conferenceName.value", "Conference.会議名.言語": "jpcoar:conference.jpcoar:conferenceName.language", "Conference.開催地": "jpcoar:conference.jpcoar:conferencePlace", "Conference.開催地.開催地": "jpcoar:conference.jpcoar:conferencePlace.value", "Conference.開催地.言語": "jpcoar:conference.jpcoar:conferencePlace.language", "Conference.回次": "jpcoar:conference.jpcoar:conferenceSequence", "Conference.主催機関": "jpcoar:conference.jpcoar:conferenceSponsor", "Conference.主催機関.主催機関": "jpcoar:conference.jpcoar:conferenceSponsor.value", "Conference.主催機関.言語": "jpcoar:conference.jpcoar:conferenceSponsor.language", "Conference.開催会場": "jpcoar:conference.jpcoar:conferenceVenue", "Conference.開催会場.開催会場": "jpcoar:conference.jpcoar:conferenceVenue.value", "Conference.開催会場.言語": "jpcoar:conference.jpcoar:conferenceVenue.language", "File": "hasPart", "File.アクセス": "hasPart.dcterms:accessRights", "File.公開日.タイプ": "$Available", "File.公開日.公開日": "hasPart.datePublished", "File.表示形式": "hasPart.jpcoar:format", "File.日付": "hasPart.datacite:date", "File.日付.日付タイプ": "hasPart.datacite:date.dateType", "File.日付.日付": "hasPart.datacite:date.value", "File.ファイル名": "hasPart.name", "File.サイズ": "hasPart.jpcoar:extent", "File.サイズ.サイズ": "hasPart.jpcoar:extent.value", "File.フォーマット": "hasPart.jpcoar:mimeType", "File.グループ": "hasPart.department", "File.ライセンス": "hasPart.license", "File.本文URL": "hasPart.jpcoar:URI", "File.本文URL.ラベル": "hasPart.@id", "File.本文URL.オブジェクトタイプ": "hasPart.jpcoar:URI.objectType", "File.本文URL.本文URL": "hasPart.jpcoar:URI.value", "File.バージョン情報": "hasPart.datacite:version", "Heading": "headline", "Heading.大見出し": "headline.value", "Heading.小見出し": "headline.alternativeHeadline", "Heading.言語": "headline.language", "所蔵機関": "jpcoar:holdingAgent", "所蔵機関.所蔵機関識別子": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier", "所蔵機関.所蔵機関識別子.所蔵機関識別子スキーマ": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier.nameIdentifierScheme", "所蔵機関.所蔵機関識別子.所蔵機関識別子URI": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier.nameIdentifierURI", "所蔵機関.所蔵機関識別子.所蔵機関識別子": "jpcoar:holdingAgent.jpcoar:holdingAgentNameIdentifier.value", "所蔵機関.所蔵機関名": "jpcoar:holdingAgent.jpcoar:holdingAgentName", "所蔵機関.所蔵機関名.所蔵機関名": "jpcoar:holdingAgent.jpcoar:holdingAgentName.value", "所蔵機関.所蔵機関名.Language": "jpcoar:holdingAgent.jpcoar:holdingAgentName.language", "日付（リテラル）": "dcterms:date", "日付（リテラル）.日付（リテラル）": "dcterms:date.value", "日付（リテラル）.言語": "dcterms:date.language", "データセットシリーズ": "jpcoar:datasetSeries", "データセットシリーズ.Dataset Series": "jpcoar:datasetSeries.value", "出版者情報": "jpcoar:publisher", "出版者情報.出版地（国名コード）": "jpcoar:publisher.dcndl:publicationPlace", "出版者情報.出版地（国名コード）.出版地（国名コード）": "jpcoar:publisher.dcndl:publicationPlace.value", "出版者情報.出版者注記": "jpcoar:publisher.jpcoar:publisherDescription", "出版者情報.出版者注記.出版者注記": "jpcoar:publisher.jpcoar:publisherDescription.value", "出版者情報.出版者注記.言語": "jpcoar:publisher.jpcoar:publisherDescription.language", "出版者情報.出版地": "jpcoar:publisher.dcndl:location", "出版者情報.出版地.出版地": "jpcoar:publisher.dcndl:location.value", "出版者情報.出版者名": "jpcoar:publisher.jpcoar:publisherName", "出版者情報.出版者名.出版者名": "jpcoar:publisher.jpcoar:publisherName.value", "出版者情報.出版者名.言語": "jpcoar:publisher.jpcoar:publisherName.language", "大きさ": "dcterms:extent", "大きさ.Extent": "dcterms:extent.value", "大きさ.Language": "dcterms:extent.language", "カタログ": "jpcoar:catalog", "カタログ.Access Rights": "jpcoar:catalog.dcterms:accessRights", "カタログ.Access Rights.Access Rights": "jpcoar:catalog.dcterms:accessRights.value", "カタログ.Access Rights.RDF Resource": "jpcoar:catalog.dcterms:accessRights.rdf:resource", "カタログ.Contributor": "jpcoar:catalog.jpcoar:contributor", "カタログ.Contributor.Contributor Name": "jpcoar:catalog.jpcoar:contributor.jpcoar:contributorName", "カタログ.Contributor.Contributor Name.Contributor Name": "jpcoar:catalog.jpcoar:contributor.jpcoar:contributorName.value", "カタログ.Contributor.Contributor Name.Language": "jpcoar:catalog.jpcoar:contributor.jpcoar:contributorName.language", "カタログ.Contributor.Contributor Type": "jpcoar:catalog.jpcoar:contributor.contributorType", "カタログ.Description": "jpcoar:catalog.datacite:description", "カタログ.Description.Description": "jpcoar:catalog.datacite:description.value", "カタログ.Description.Language": "jpcoar:catalog.datacite:description.language", "カタログ.Description.Description Type": "jpcoar:catalog.datacite:description.descriptionType", "カタログ.File": "jpcoar:catalog.jpcoar:file", "カタログ.File.Object Type": "jpcoar:catalog.jpcoar:file.objectType", "カタログ.File.File URI": "jpcoar:catalog.jpcoar:file.jpcoar:URI", "カタログ.Identifier": "jpcoar:catalog.jpcoar:identifier", "カタログ.Identifier.Identifier": "jpcoar:catalog.jpcoar:identifier.value", "カタログ.Identifier.Identifier Type": "jpcoar:catalog.jpcoar:identifier.identifierType", "カタログ.License": "jpcoar:catalog.jpcoar:license", "カタログ.License.License": "jpcoar:catalog.jpcoar:license.value", "カタログ.License.Language": "jpcoar:catalog.jpcoar:license.language", "カタログ.License.RDF Resource": "jpcoar:catalog.jpcoar:license.rdf:resource", "カタログ.License.License Type": "jpcoar:catalog.jpcoar:license.licenseType", "カタログ.Rights": "jpcoar:catalog.dc:rights", "カタログ.Rights.Language": "jpcoar:catalog.dc:rights.language", "カタログ.Rights.RDF Resource": "jpcoar:catalog.dc:rights.rdf:resource", "カタログ.Rights.Rights": "jpcoar:catalog.dc:rights.value", "カタログ.Subject": "jpcoar:catalog.jpcoar:subject", "カタログ.Subject.Subject": "jpcoar:catalog.jpcoar:subject.value", "カタログ.Subject.Language": "jpcoar:catalog.jpcoar:subject.language", "カタログ.Subject.Subject Scheme": "jpcoar:catalog.jpcoar:subject.subjectScheme", "カタログ.Subject.Subject URI": "jpcoar:catalog.jpcoar:subject.subjectURI", "カタログ.Title": "jpcoar:catalog.dc:title", "カタログ.Title.Title": "jpcoar:catalog.dc:title.value", "カタログ.Title.Language": "jpcoar:catalog.dc:title.language", "原文の言語": "dcndl:originalLanguage", "原文の言語.Original Language": "dcndl:originalLanguage.value", "原文の言語.Language": "dcndl:originalLanguage.language", "部編名": "dcndl:volumeTitle", "部編名.部編名": "dcndl:volumeTitle.value", "部編名.Language": "dcndl:volumeTitle.language", "版": "dcndl:edition", "版.版": "dcndl:edition.value", "版.言語": "dcndl:edition.language", "物理的形態": "jpcoar:format", "物理的形態.物理的形態": "jpcoar:format.value", "物理的形態.Language": "jpcoar:format.language"}' , 30002, 1, false) ON CONFLICT (id) DO NOTHING;
 
 -- fix_issue_37736.sql
 
 -- Decided not to delete
--- ALTER TABLE site_info DROP COLUMN addthis_user_id;
+-- ALTER TABLE site_info DROP COLUMN IF EXISTS addthis_user_id;
 
 -- fix_issue_39700.sql
 
+RAISE NOTICE 'Update admin_lang_settings';
 --VARCHAR型カラムの文字数を変更する
 ALTER TABLE admin_lang_settings ALTER COLUMN lang_code TYPE character varying(5);
 
 --「zh」を「zh-cn」に変更する
 UPDATE admin_lang_settings SET lang_code = 'zh-cn', lang_name = '中文 (簡体)' WHERE lang_code = 'zh';
+-- Get number of rows updated
+GET DIAGNOSTICS updated_cnt = ROW_COUNT;
+RAISE NOTICE 'Updated % rows in admin_lang_settings from zh to zh-cn', updated_cnt;
 
 --「zh-tw」を追加する
 INSERT INTO admin_lang_settings (lang_code, lang_name, is_registered, sequence, is_active)
 SELECT 'zh-tw', '中文 (繁体)', 'false', 0, 'true' FROM (SELECT COUNT(*) as count FROM admin_lang_settings WHERE lang_code in ('zh-cn','zh-tw')) c WHERE c.count = 1;
 
 -- 202409_BioResource_ddl.sql
-
-ALTER TABLE facet_search_setting ADD COLUMN search_condition character varying(3) DEFAULT 'OR' NOT NULL;
+RAISE NOTICE 'Migration for BioResource';
+ALTER TABLE facet_search_setting ADD COLUMN IF NOT EXISTS search_condition character varying(3) DEFAULT 'OR' NOT NULL;
 ALTER TABLE resync_indexes ALTER COLUMN saving_format TYPE character varying(20);
 
 -- v1.0.8.sql
+RAISE NOTICE 'Migration for v1.0.8';
+ALTER TABLE feedback_mail_list ADD COLUMN IF NOT EXISTS account_author text NOT NULL DEFAULT '';
+ALTER TABLE index ADD COLUMN IF NOT EXISTS is_deleted boolean DEFAULT false;
 
-ALTER TABLE public.feedback_mail_list ADD COLUMN account_author text NOT NULL DEFAULT '';
-ALTER TABLE public.index ADD COLUMN is_deleted boolean DEFAULT false;
-
--- public.authors_prefix_settings.sql
-
-INSERT INTO public.authors_prefix_settings(name, scheme, url, created, updated) VALUES 
-('researchmap', 'researchmap', 'https://researchmap.jp/##', TIMESTAMP '2024-01-01 00:00:00.000', TIMESTAMP '2024-01-01 00:00:00.000');
+-- authors_prefix_settings.sql
+RAISE NOTICE 'Migration for authors_prefix_settings';
+INSERT INTO authors_prefix_settings(name, scheme, url, created, updated) VALUES
+('researchmap', 'researchmap', 'https://researchmap.jp/##', TIMESTAMP '2024-01-01 00:00:00.000', TIMESTAMP '2024-01-01 00:00:00.000')
+ON CONFLICT (scheme) DO NOTHING;
 
 -- update records metadata (restricted access)
 -- weko_shared_id -> weko_shared_ids, owner -> owners
-
+RAISE NOTICE 'Update records metadata (weko_shared_id -> weko_shared_ids, owner -> owners)';
 UPDATE records_metadata
 SET json = (
 	json #- '{weko_shared_id}'
@@ -1209,11 +1300,14 @@ SET json = (
 				'owners', jsonb_build_array((json #>> '{owner}')::numeric)
 			)
 	)
-) WHERE json ? 'owner';
+) WHERE json ? 'owner' AND NOT json ? 'weko_shared_ids' AND NOT json ? 'owners';
+-- Get number of rows updated
+GET DIAGNOSTICS updated_cnt = ROW_COUNT;
+RAISE NOTICE 'Updated % rows in records_metadata', updated_cnt;
 
 -- update item metadata (restricted access)
 -- shared_user_id -> shared_user_ids/weko_shared_ids, owner -> owner
-
+RAISE NOTICE 'Update item metadata (shared_user_id -> shared_user_ids/weko_shared_ids, owner -> owner)';
 UPDATE item_metadata
 SET json = (
 	json #- '{shared_user_id}'
@@ -1236,11 +1330,14 @@ SET json = (
 			END,
 		'owner', (json #>> '{owner}')::numeric
 	)
-);
+) WHERE NOT json ? 'weko_shared_ids';
+-- Get number of rows updated
+GET DIAGNOSTICS updated_cnt = ROW_COUNT;
+RAISE NOTICE 'Updated % rows in item_metadata', updated_cnt;
 
 -- researchmap
-
-CREATE TABLE cris_linkage_result (
+RAISE NOTICE 'Migration for researchmap';
+CREATE TABLE IF NOT EXISTS cris_linkage_result (
     created TIMESTAMP NOT NULL,
     updated TIMESTAMP NOT NULL,
     recid INTEGER NOT NULL,
@@ -1256,4 +1353,6 @@ CREATE TABLE cris_linkage_result (
         FOREIGN KEY (last_linked_item) REFERENCES item_metadata(id)
 );
 
+RAISE NOTICE 'End execution: Migration W2025-29.sql';
+END $$;
 COMMIT;
