@@ -21,6 +21,7 @@
 """Database models for user profiles."""
 
 from flask import current_app
+from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import User
 from invenio_db import db
 from invenio_files_rest.utils import create_boto3_s3_client

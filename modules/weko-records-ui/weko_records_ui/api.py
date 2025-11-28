@@ -557,14 +557,14 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
 
         # AWSクライアントの設定
         bucket_name = None
-        file_key = None
+        prev_file_key = None
         file_instance_uri = org_fileinstance.uri
         parsed_uri = urlparse(file_instance_uri.strip())
         if location.type == "s3":
             # Get source bucket name and file key
             # ex: s3://bucket_name/prefix/file_name
             bucket_name = parsed_uri.netloc
-            file_key = parsed_uri.path.lstrip("/")
+            prev_file_key = parsed_uri.path.lstrip("/")
         else:
             if parsed_uri.netloc.startswith("s3."):
                 # https://s3.region-code.amazonaws.com/bucket-name/key-name
@@ -581,16 +581,15 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                 parts = netloc.split(".")
                 bucket_name = parts[0]
 
-            if len(prev_file_key.split("/")) > len(new_file_key.split("/")):
-                # Adjust new_file_key depth to match prev_file_key depth
-                new_key_depth = len(new_file_key.split("/"))
-                prev_key_parts = prev_file_key.split("/")
-                new_file_key = "/".join(
-                    *prev_key_parts[:-new_key_depth], new_file_key
-                )
+        if len(prev_file_key.split("/")) > len(new_file_key.split("/")):
+            # Adjust new_file_key depth to match prev_file_key depth
+            new_key_depth = len(new_file_key.split("/"))
+            prev_key_parts = prev_file_key.split("/")
+            new_file_key = "/".join(
+                prev_key_parts[:-new_key_depth]) + new_file_key
 
-        if not bucket_name or not file_key:
-            raise Exception(_("The source file cannot be found."))
+        if not bucket_name or not new_file_key:
+            raise Exception(_("The file cannot be found."))
 
         try:
             s3_client = location.create_s3_client()

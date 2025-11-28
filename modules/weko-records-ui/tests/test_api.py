@@ -281,7 +281,7 @@ def test_get_item_provide_list(mocker, db):
 
 # def get_s3_bucket_list():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_get_s3_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_s3_bucket_list(app, db, users, user_profiles_info, client, mocker):
+def test_get_s3_bucket_list(app, db, users, client, mocker):
     class FakeUser(UserMixin):
         def __init__(self, id):
             self.id = id
@@ -545,6 +545,88 @@ def test_copy_bucket_to_s3(
         mock_profile_boto3_client.copy.assert_called_once()
         mock_profile_boto3_client.copy.reset_mock()
 
+    # Test Case (Pos): source_location is None
+    mock_file_instance_s3.get_location_by_file_instance.return_value = None
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == f"https://s3.{s3_storage_region_name}.amazonaws.com/sample1/helloworld.pdf"
+        mock_profile_boto3_client.copy.assert_not_called()
+        mock_profile_boto3_client.copy.reset_mock()
+    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3_vh
+
+    # Test Case (Pos): bucket_region is None
+    mock_profile_boto3_client.get_bucket_location.return_value = {
+        "LocationConstraint": None
+    }
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == f"https://s3.{s3_storage_region_name}.amazonaws.com/sample1/helloworld.pdf"
+        mock_profile_boto3_client.copy.assert_called_once()
+        mock_profile_boto3_client.copy.reset_mock()
+    mock_profile_boto3_client.get_bucket_location.return_value = {
+        "LocationConstraint": s3_storage_user_profile.s3_region_name
+    }
+
+    # Test Case (Pos): can_use_virtual_hosted_style
+    mock_profile_boto3_client.meta.endpoint_url = "https://s3.ap-southeast-2.amazonaws.com"
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == f"https://sample1.s3.{s3_storage_region_name}.amazonaws.com/helloworld.pdf"
+        mock_profile_boto3_client.copy.assert_called_once()
+        mock_profile_boto3_client.copy.reset_mock()
+    mock_profile_boto3_client.meta.endpoint_url = s3_storage_user_profile.s3_endpoint_url
+
+    # Test Case (Pos): netloc startswith "s3."
+    mock_file_instance_s3.uri = "https://s3.ap-southeast-2.amazonaws.com/bucket_name/file_name"
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == f"https://s3.{s3_storage_region_name}.amazonaws.com/sample1/helloworld.pdf"
+        mock_profile_boto3_client.copy.assert_called_once()
+        mock_profile_boto3_client.copy.reset_mock()
+    mock_file_instance_s3.uri = "s3://bucket-name/helloworld.pdf"
+
+    # Test Case (Neg): location type is other
+    loc_s3_other = Location(
+        name="testloc-s3-vh",
+        uri="https://bucket-name.s3.us-west-2.amazonaws.com/",
+        default=False,
+        type="s3_other",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3_other
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        with pytest.raises(Exception) as e:
+            uri = copy_bucket_to_s3(
+                pid=1, filename="helloworld.pdf",
+                org_bucket_id=records_buckets.bucket_id,
+                checked="create", bucket_name="sample1"
+            )
+            assert "The source bucket or file key is not set." in e
+        mock_profile_boto3_client.copy.reset_mock()
+
     # Test Case (Neg): s3 to s3, head object not found
     mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3
     mocker_boto3_client_src.head_object.side_effect = Exception("Not found")
@@ -627,7 +709,7 @@ def test_create_storage_bucket_success_default_region(mocker):
 
     # Should not raise
     create_storage_bucket(mock_s3_client, "https://s3.amazonaws.com", None, "test-bucket")
-    mock_s3_client.create_bucket.assert_called_once_with(Bucket="test-bucket", CreateBucketConfiguration={"LocationConstraint": "us-east-1"})
+    mock_s3_client.create_bucket.assert_called_once_with(Bucket="test-bucket")
     mock_s3_client.put_public_access_block.assert_called_once_with(
         Bucket="test-bucket",
         PublicAccessBlockConfiguration={
@@ -731,7 +813,7 @@ def test_bucket_exists(mocker):
 
 # def get_file_place_info(org_pid, org_bucket_id, file_name):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_get_file_place_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_info(app, db, users, user_profiles, client, records, mocker):
+def test_get_file_place_info(app, db, users, client, records, mocker):
     # Get pid and records_buckets
     pid = PersistentIdentifier.query.filter_by(
         pid_type="recid", pid_value='1'
@@ -852,6 +934,7 @@ def test_get_file_place_info(app, db, users, user_profiles, client, records, moc
 
             # ex: s3://bucket_name/file_name
             mock_location = Location()
+            mock_location.id = 1
             mock_location.uri="s3://test/"
             mock_location.access_key="access_key"
             mock_location.secret_key="secret_key"
@@ -859,51 +942,121 @@ def test_get_file_place_info(app, db, users, user_profiles, client, records, moc
             mock_location.s3_endpoint_url="https://test.s3.ap-southeast-2.amazonaws.com/"
             mock_cls_location.query.get.return_value = mock_location
 
-            actual = get_file_place_info(
-                org_pid=1,
-                org_bucket_id=records_buckets.bucket_id,
-                file_name='helloworld.pdf'
-            )
-            mock_cls_workactivity.assert_called_once()
-            mock_instance_workactivity.get_workflow_activity_by_item_id.assert_called_once()
-            mock_cls_workflow.assert_called_once()
-            mock_instance_workflow.get_workflow_by_id.assert_called_once_with(workflow_id=2)
-            mock_cls_location.query.get.assert_called_once_with(3)
-            assert actual[0] == 'S3' # file_place
-            assert actual[1] == mock_response # url
-            assert actual[2] == records_buckets.bucket_id # new_bucket_id
-            assert actual[3] is not None # new_version_id
+            with patch('weko_records_ui.api.FileInstance.get') as mock_file_instance:
+                file_instance = FileInstance.create()
+                file_instance.uri = "s3://test"
+                mock_file_instance.return_value = file_instance
+                actual = get_file_place_info(
+                    org_pid=1,
+                    org_bucket_id=records_buckets.bucket_id,
+                    file_name='helloworld.pdf'
+                )
+                mock_cls_workactivity.assert_called_once()
+                mock_instance_workactivity.get_workflow_activity_by_item_id.assert_called_once()
+                mock_cls_workflow.assert_called_once()
+                mock_instance_workflow.get_workflow_by_id.assert_called_once_with(workflow_id=2)
+                mock_cls_location.query.get.assert_called_once_with(3)
 
-        # location type:s3_path
-        # ex: https://bucket_name.s3.us-east-1.amazonaws.com/file_name
-        l2=Location.get_default()
-        l2.uri='https://test.s3.ap-southeast-2.amazonaws.com/'
-        l2.access_key='access_key'
-        l2.secret_key='secret_key'
-        l2.type='s3_path'
-        l2.s3_endpoint_url='https://test.s3.ap-southeast-2.amazonaws.com/'
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value='1'
+                ).first()
+                records_buckets = RecordsBuckets.query.filter_by(
+                    record_id=pid.object_uuid).first()
+                assert actual[0] == 'S3' # file_place
+                assert actual[1] == mock_response # url
+                assert actual[2] is not None # new_bucket_id
+                assert actual[3] is not None # new_version_id
 
-        with patch('boto3.client') as mock_client:
-            instance = mock_client.return_value
-            instance.generate_presigned_url.return_value = mock_response
+                # Test case (Pos): location type = s3_vh
+                mock_cls_workactivity.reset_mock()
+                mock_instance_workactivity.get_workflow_activity_by_item_id.reset_mock()
+                mock_cls_workflow.reset_mock()
+                mock_instance_workflow.reset_mock()
+                mock_cls_location.reset_mock()
 
-            file_place, url, new_bucket_id, new_version_id  = get_file_place_info(org_pid=1,
-                                                                                  org_bucket_id=records_buckets.bucket_id,
-                                                                                  file_name='helloworld.pdf')
-            assert file_place == 'S3'
+                mock_location.type="s3_vh"
+                mock_location.s3_endpoint_url="https://bucket_name.s3.us-east-1.amazonaws.com/"
+                mock_cls_location.query.get.return_value = mock_location
 
-        # ex: https://s3.amazonaws.com/bucket_name/file_name
-        l2.uri='https://s3.ap-southeast-2.amazonaws.com/test/'
-        l2.s3_endpoint_url='https://s3.ap-southeast-2.amazonaws.com/test/'
+                file_instance.uri = "https://bucket_name.s3.us-east-1.amazonaws.com"
+                mock_file_instance.return_value = file_instance
+                actual = get_file_place_info(
+                    org_pid=1,
+                    org_bucket_id=records_buckets.bucket_id,
+                    file_name='helloworld.pdf'
+                )
+                mock_cls_workactivity.assert_called_once()
+                mock_instance_workactivity.get_workflow_activity_by_item_id.assert_called_once()
+                mock_cls_workflow.assert_called_once()
+                mock_instance_workflow.get_workflow_by_id.assert_called_once_with(workflow_id=2)
+                mock_cls_location.query.get.assert_called_once_with(3)
 
-        with patch('boto3.client') as mock_client:
-            instance = mock_client.return_value
-            instance.generate_presigned_url.return_value = mock_response
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value='1'
+                ).first()
+                records_buckets = RecordsBuckets.query.filter_by(
+                    record_id=pid.object_uuid).first()
+                assert actual[0] == 'S3' # file_place
+                assert actual[1] == mock_response # url
+                assert actual[2] is not None # new_bucket_id
+                assert actual[3] is not None # new_version_id
 
-            file_place, url, new_bucket_id, new_version_id  = get_file_place_info(org_pid=1,
-                                                                                  org_bucket_id=records_buckets.bucket_id,
-                                                                                  file_name='helloworld.pdf')
-            assert file_place == 'S3'
+                # Test case (Pos): location type = s3_path
+                mock_cls_workactivity.reset_mock()
+                mock_instance_workactivity.get_workflow_activity_by_item_id.reset_mock()
+                mock_cls_workflow.reset_mock()
+                mock_instance_workflow.reset_mock()
+                mock_cls_location.reset_mock()
+
+                mock_location.type="s3_path"
+                mock_location.s3_endpoint_url="https://s3.ap-southeast-2.amazonaws.com/test/"
+                mock_cls_location.query.get.return_value = mock_location
+
+                file_instance.uri = "https://s3.ap-southeast-2.amazonaws.com/test/a/b/c/d/e/f"
+                mock_file_instance.return_value = file_instance
+
+                actual = get_file_place_info(
+                    org_pid=1,
+                    org_bucket_id=records_buckets.bucket_id,
+                    file_name='helloworld.pdf'
+                )
+                mock_cls_workactivity.assert_called_once()
+                mock_instance_workactivity.get_workflow_activity_by_item_id.assert_called_once()
+                mock_cls_workflow.assert_called_once()
+                mock_instance_workflow.get_workflow_by_id.assert_called_once_with(workflow_id=2)
+                mock_cls_location.query.get.assert_called_once_with(3)
+
+                pid = PersistentIdentifier.query.filter_by(
+                    pid_type="recid", pid_value='1'
+                ).first()
+                records_buckets = RecordsBuckets.query.filter_by(
+                    record_id=pid.object_uuid).first()
+                assert actual[0] == 'S3' # file_place
+                assert actual[1] == mock_response # url
+                assert actual[2] is not None # new_bucket_id
+                assert actual[3] is not None # new_version_id
+
+                # Test Case (Neg): error in generating url
+                mock_generate_presigned_url.generate_presigned_url.side_effect \
+                    = Exception("error")
+                with pytest.raises(Exception) as e:
+                    actual = get_file_place_info(
+                        org_pid=1,
+                        org_bucket_id=records_buckets.bucket_id,
+                        file_name='helloworld.pdf'
+                    )
+                assert "Unexpected error occurred." in str(e.value)
+
+                # Test Case (Neg): without bucket name
+                file_instance.uri = "https://s3.ap-southeast-2.amazonaws.com"
+                mock_file_instance.return_value = file_instance
+                with pytest.raises(Exception) as e:
+                    actual = get_file_place_info(
+                        org_pid=1,
+                        org_bucket_id=records_buckets.bucket_id,
+                        file_name='helloworld.pdf'
+                    )
+                assert "The file cannot be found." in str(e.value)
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_replace_file_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
