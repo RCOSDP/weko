@@ -897,37 +897,86 @@ def test_check_task_end(app):
 
 # def check_tmp_file_time_for_author():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_tmp_file_time_for_author -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture):
-    mock_file_path = '/mock/path/to/file'
+def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture, mocker):
+    tmp_dir = "/code/tmp/"
+    import os
+    os.makedirs(tmp_dir, exist_ok=True)
+    mocker.patch("weko_authors.tasks.tempfile.gettempdir", return_value=tmp_dir)
+    export_tmp_dir = os.path.join(tmp_dir, app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR"))
+    import_tmp_dir = os.path.join(tmp_dir, app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR"))
+
+    def create_tmp_file(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as f:
+            f.write('test')
+    def create_tmp_files():
+        os.makedirs(export_tmp_dir, exist_ok=True)
+        os.makedirs(import_tmp_dir, exist_ok=True)
+        create_tmp_file(os.path.join(export_tmp_dir, "test_file1"))
+        create_tmp_file(os.path.join(export_tmp_dir, "test_file2"))
+        create_tmp_file(os.path.join(import_tmp_dir, "test_file1"))
+        create_tmp_file(os.path.join(import_tmp_dir, "test_file2"))
+
+    # Create a temporary file in the following format:
+    # code
+    #   └─ tmp
+    #       ├─ export_author
+    #       │    ├─ test_file1
+    #       │    └─ test_file2
+    #       └─ import_author
+    #            ├─ test_file1
+    #            └─ test_file2
+    
+    # Partial deletion
+    create_tmp_files()
+    now = datetime.now(timezone.utc)
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    with patch('glob.glob', return_value=[mock_file_path]), \
-        patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
-        patch('os.remove') as mock_remove,\
-        patch('os.rmdir') as mock_rmdir,\
-        patch('os.path.exists'),\
-        patch('os.listdir', return_value=[]):
-
+    mock_getmtime = [
+        (mock_current_time - timedelta(seconds=3600)).timestamp(),
+        (now- timedelta(seconds=3600)).timestamp(),
+        (mock_current_time - timedelta(seconds=3600)).timestamp(),
+        (now- timedelta(seconds=3600)).timestamp()
+    ]
+    with patch('os.path.getmtime', side_effect=mock_getmtime):
         check_tmp_file_time_for_author()
-        mock_remove.assert_called()
-        mock_rmdir.assert_called()
-
-    mock_current_time = datetime.now(timezone.utc)
-    with patch('glob.glob', return_value=[mock_file_path]), \
-        patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
-        patch('os.remove') as mock_remove,\
-        patch('os.rmdir') as mock_rmdir,\
-        patch('os.path.exists', result_value = True),\
-        patch('os.listdir', return_value=["a"]):
-
-        check_tmp_file_time_for_author()
-        mock_remove.assert_not_called()
-        mock_rmdir.assert_not_called()
-
+        assert not os.path.exists(os.path.join(export_tmp_dir, "test_file1"))
+        assert os.path.exists(os.path.join(export_tmp_dir, "test_file2"))
+        assert os.path.isdir(export_tmp_dir)
+        assert not os.path.exists(os.path.join(import_tmp_dir, "test_file1"))
+        assert os.path.exists(os.path.join(import_tmp_dir, "test_file2"))
+        assert os.path.isdir(import_tmp_dir)
+    # cleanup
+    import shutil
+    shutil.rmtree(export_tmp_dir, ignore_errors=True)
+    shutil.rmtree(import_tmp_dir, ignore_errors=True)
+    
+    # all deletion
+    create_tmp_files()
+    now = datetime.now(timezone.utc)
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    with patch('glob.glob', return_value=[mock_file_path]), \
-        patch('os.path.getmtime', return_value=(mock_current_time - timedelta(seconds=3600)).timestamp()), \
-        patch('os.remove', side_effect=OSError) as mock_remove,\
-        patch('os.listdir', return_value=["a"]):
+    mock_getmtime = [(mock_current_time - timedelta(seconds=3600)).timestamp()] * 4
+    with patch('os.path.getmtime', side_effect=mock_getmtime):
+        check_tmp_file_time_for_author()
+        assert not os.path.exists(os.path.join(export_tmp_dir, "test_file1"))
+        assert not os.path.exists(os.path.join(export_tmp_dir, "test_file2"))
+        assert not os.path.isdir(export_tmp_dir)
+        assert not os.path.exists(os.path.join(import_tmp_dir, "test_file1"))
+        assert not os.path.exists(os.path.join(import_tmp_dir, "test_file2"))
+        assert not os.path.isdir(import_tmp_dir)
+    # cleanup
+    shutil.rmtree(export_tmp_dir, ignore_errors=True)
+    shutil.rmtree(import_tmp_dir, ignore_errors=True)
+    
+    # error cases
+    create_tmp_files()
+    now = datetime.now(timezone.utc)
+    mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+    mock_getmtime = [(mock_current_time - timedelta(seconds=3600)).timestamp()] * 4
+    with patch('os.path.getmtime', side_effect=mock_getmtime), \
+        patch('os.remove', side_effect=OSError):
         caplog.set_level(logging.ERROR)
-
         check_tmp_file_time_for_author()
+    # cleanup
+    shutil.rmtree(export_tmp_dir, ignore_errors=True)
+    shutil.rmtree(import_tmp_dir, ignore_errors=True)
+    shutil.rmtree(tmp_dir, ignore_errors=True)

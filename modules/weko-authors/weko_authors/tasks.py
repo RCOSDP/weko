@@ -549,9 +549,9 @@ def check_tmp_file_time_for_author():
     # Check if the directory is empty, and if it is, remove the directory
     if (
         os.path.exists(export_temp_dir)
-        and not os.listdir(export_temp_file)
+        and not os.listdir(export_temp_dir)
     ):
-        os.rmdir(export_temp_file)
+        os.rmdir(export_temp_dir)
 
     # Delete temporary files for author import
     for d in glob.glob(import_temp_file):
@@ -564,6 +564,6 @@ def check_tmp_file_time_for_author():
     # Check if the directory is empty, and if it is, remove the directory
     if (
         os.path.exists(import_temp_dir)
-        and not os.listdir(import_temp_file)
+        and not os.listdir(import_temp_dir)
     ):
-        os.rmdir(import_temp_file)
+        os.rmdir(import_temp_dir)
