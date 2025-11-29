@@ -78,7 +78,7 @@ def _is_crawler(user_info):
 
             if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
                 bot_regex_str = connection.get(restricted_agent_list.list_url)
-                if bot_regex_str == "":
+                if bot_regex_str is None or bot_regex_str == "":
                     current_app.logger.info("Crawler List is expired : " + str(restricted_agent_list.list_url))
                     empty_list = True
             else:
@@ -91,27 +91,32 @@ def _is_crawler(user_info):
             empty_list = True
 
         if  empty_list:
-            raw_res = requests.get(restricted_agent_list.list_url).text
+            res = requests.get(restricted_agent_list.list_url)
+            if res.status_code == 200:
+                raw_res = res.text
+            else:
+                raw_res=""
             if not raw_res:
                 continue
 
-            crawler_list = raw_res.split('\n')
+            crawler_list = raw_res.splitlines()
             if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
-                crawler_list = [agent.lower() for agent in crawler_list if agent and not agent.startswith('#')]
+                crawler_list = [agent for agent in crawler_list if not agent.startswith('#') and not agent.startswith('+')]
                 bot_regex_str = '|'.join(crawler_list)
                 connection.set(restricted_agent_list.list_url, bot_regex_str)
                 connection.expire(restricted_agent_list.list_url, current_app.config["CRAWLER_REDIS_TTL"])
+                bot_regex_str = connection.get(restricted_agent_list.list_url)
             else:
                 crawler_list = [agent for agent in crawler_list if not agent.startswith('#')]
                 for restrict_ip in crawler_list:
                     connection.sadd(restricted_agent_list.list_url,restrict_ip)
                 connection.expire(restricted_agent_list.list_url, current_app.config["CRAWLER_REDIS_TTL"])
-                restrict_list = set(crawler_list)
-
+                restrict_list = connection.smembers(restricted_agent_list.list_url)
+        
         if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
             if bot_regex_str and (
-                re.search(bot_regex_str, user_info['user_agent'].lower()) or
-                re.search(bot_regex_str, user_info['ip_address'].lower())
+                re.search(bot_regex_str, (user_info['user_agent'])) or
+                re.search(bot_regex_str, (user_info['ip_address']))
             ):
                 return True
         else:
