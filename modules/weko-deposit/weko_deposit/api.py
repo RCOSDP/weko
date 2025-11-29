@@ -385,16 +385,19 @@ class WekoIndexer(RecordIndexer):
 
             self.client.clear_scroll(scroll_id=scroll_id)
 
-    def get_metadata_by_item_id(self, item_id):
+    def get_metadata_by_item_id(self, item_id, is_ignore=False):
         """Get metadata of item by id from ES.
 
         :param item_id: Item ID (UUID).
         :return: Metadata.
         """
         self.get_es_index()
-        return self.client.get(index=self.es_index,
-                               doc_type=self.es_doc_type,
-                               id=str(item_id))
+        args = {"index": self.es_index,
+                "doc_type": self.es_doc_type,
+                "id": str(item_id)}
+        if is_ignore:
+            args["ignore"] = [404]
+        return self.client.get(**args)
 
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
