@@ -61,6 +61,25 @@ def is_restricted_user(user_info):
     return (restricted_ip or is_crawler)
 
 
+
+def smart_search(pattern, text):
+    """
+    Smart search that handles both bytes and str types for pattern and text.
+    
+    :param pattern: The regex pattern to search for (str or bytes).
+    :param text: The text to search within (str or bytes).
+    :return: Match object or None.
+    """
+
+    # textがbytesなら、patternもbytesにエンコード
+    if isinstance(text, bytes) and isinstance(pattern, str):
+        pattern = pattern.encode('utf-8')
+    # textがstrなら、patternもstrにデコード（patternがbytesの場合）
+    elif isinstance(text, str) and isinstance(pattern, bytes):
+        pattern = pattern.decode('utf-8')
+        
+    return re.search(pattern, text)
+
 def _is_crawler(user_info):
     """Check if user agent is contained in URLs.
 
@@ -115,8 +134,8 @@ def _is_crawler(user_info):
         
         if current_app.config['WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST']:
             if bot_regex_str and (
-                re.search(bot_regex_str, (user_info['user_agent'])) or
-                re.search(bot_regex_str, (user_info['ip_address']))
+                smart_search(bot_regex_str, (user_info['user_agent']).encode('utf-8')) or
+                smart_search(bot_regex_str, (user_info['ip_address']).encode('utf-8'))
             ):
                 return True
         else:

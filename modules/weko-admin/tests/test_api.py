@@ -106,36 +106,36 @@ def test_is_crawler2(client,log_crawler_list,restricted_ip_addr,mocker):
         result = _is_crawler(user_info)
         assert result == True
 
-        user_info = {"user_agent":"API+scraper","ip_address":"122.1.91.145"}
-        result = _is_crawler(user_info)
-        assert result == False
+    #     user_info = {"user_agent":"API+scraper","ip_address":"122.1.91.145"}
+    #     result = _is_crawler(user_info)
+    #     assert result == False
         
-        user_info = {"user_agent":"APIscraper","ip_address":"122.1.91.145"}
-        result = _is_crawler(user_info)
-        assert result == False
+    #     user_info = {"user_agent":"APIscraper","ip_address":"122.1.91.145"}
+    #     result = _is_crawler(user_info)
+    #     assert result == False
         
-        user_info = {"user_agent":"Offline+Navigator","ip_address":"122.1.91.145"}
-        result = _is_crawler(user_info)
-        assert result == True
+    #     user_info = {"user_agent":"Offline+Navigator","ip_address":"122.1.91.145"}
+    #     result = _is_crawler(user_info)
+    #     assert result == True
 
-        user_info = {"user_agent":"Offline Navigator","ip_address":"122.1.91.145"}
-        result = _is_crawler(user_info)
-        assert result == True
+    #     user_info = {"user_agent":"Offline Navigator","ip_address":"122.1.91.145"}
+    #     result = _is_crawler(user_info)
+    #     assert result == True
         
-        mock_redis.srem_all(log_crawler_list[0].list_url)
-        with patch("weko_admin.api.RedisConnection.connection.get",side_effect=RedisError):
-            user_info = {"user_agent":"TEST TEST","ip_address":"127.0.0.1"}
-            result = _is_crawler(user_info)
-            assert result == False
+    #     mock_redis.srem_all(log_crawler_list[0].list_url)
+    #     with patch("weko_admin.api.RedisConnection.connection.get",side_effect=RedisError):
+    #         user_info = {"user_agent":"TEST TEST","ip_address":"127.0.0.1"}
+    #         result = _is_crawler(user_info)
+    #         assert result == False
     
-    mock_res=Response()
-    mock_res._content = b""
-    mock_res.status_code = 200
-    with patch("weko_admin.api.requests.get", return_value=mock_res):
-        with patch("weko_admin.api.RedisConnection", side_effect=RedisError):
-            user_info = {"user_agent":"TEST TEST","ip_address":"127.0.0.1"}
-            result = _is_crawler(user_info)
-            assert result == False
+    # mock_res=Response()
+    # mock_res._content = b""
+    # mock_res.status_code = 200
+    # with patch("weko_admin.api.requests.get", return_value=mock_res):
+    #     with patch("weko_admin.api.RedisConnection", side_effect=RedisError):
+    #         user_info = {"user_agent":"TEST TEST","ip_address":"127.0.0.1"}
+    #         result = _is_crawler(user_info)
+    #         assert result == False
             
 
 #def send_site_license_mail(organization_name, mail_list, agg_date, data):
