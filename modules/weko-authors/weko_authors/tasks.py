@@ -90,7 +90,7 @@ def import_author(author, force_change_mode, request_info):
         # Retry processing in case of connection error
         for attempt in range(retrys):
             try:
-                import_author_to_system(author, status, force_change_mode)
+                import_author_to_system(author, status, force_change_mode, request_info=request_info)
                 result['status'] = states.SUCCESS
                 break
             except SQLAlchemyError as ex:

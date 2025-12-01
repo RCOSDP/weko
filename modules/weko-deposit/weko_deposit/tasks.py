@@ -379,11 +379,11 @@ def _update_author_data(item_id, record_ids, process_counter, target, origin_pki
     except PIDDoesNotExistError as pid_error:
         current_app.logger.error("PID {} does not exist.".format(item_id))
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": "PID {} does not exist.".format(item_id)})
-        return None, set()
+        return None, set(), {}
     except Exception as ex:
         current_app.logger.error(ex)
         process_counter[FAIL_LABEL].append({"record_id": item_id, "author_ids": temp_list, "message": str(ex)})
-        return None, set()
+        return None, set(), {}
 
 def _change_to_meta(target, author_prefix, affiliation_id, key_map, item_names_data, force_change=False):
     target_id = None
