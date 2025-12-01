@@ -40,7 +40,7 @@ from weko_admin.config import (
 )
 from weko_authors.api import WekoAuthors
 from weko_authors.utils import (
-    validate_weko_id, check_period_date, validate_community_ids, check_delete_author
+    check_period_date, validate_community_ids, check_delete_author
 )
 
 from .errors import (
@@ -387,7 +387,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 prefix_schemes, affiliation_schemes
             )
 
-            self.validate_author_data(author_data, author_data.get("pk_id"))
             try:
                 author_data["communityIds"] = validate_community_ids(
                     author_data.get("communityIds", []), is_create=True
@@ -397,7 +396,9 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 raise
 
             author_data = self.process_authors_data_before(author_data)
-            self.handle_weko_id(author_data)
+
+            # Remove authorIdInfo with idType '1(WEKO)'
+            self.check_author_id_info(author_data)
 
             WekoAuthors.create(author_data)
 
@@ -430,34 +431,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             current_app.logger.error(f"Unexpected error. {ex}")
             traceback.print_exc()
             raise InternalServerError("Internal server error.")
-
-    def validate_author_data(self, author_data, pk_id=None):
-        """Validate author data.
-        Args:
-            author_data (dict): The author data to validate.
-            pk_id (str, optional): The primary key ID of the author.
-
-        Raises:
-            InvalidDataRESTError: If the author data is invalid.
-        """
-        for auth_id in author_data.get("authorIdInfo", []):
-            id_type = auth_id.get("idType")
-            author_id = auth_id.get("authorId")
-            current_app.logger.debug(f"Validating author ID: {author_id} with type: {id_type}")
-            if id_type == "WEKO":
-                current_app.logger.debug(f"Validating WEKO ID: {author_id}")
-                is_valid, error_msg = validate_weko_id(author_id, pk_id)
-                if not is_valid and error_msg == "not half digit":
-                    current_app.logger.error("The WEKO ID must be numeric characters only.")
-                    raise InvalidDataRESTError(
-                        description="Bad Request: The WEKO ID must be numeric characters only."
-                    )
-                if not is_valid and error_msg == "already exists":
-                    current_app.logger.error("The value is already in use as WEKO ID.")
-                    raise InvalidDataRESTError(
-                        description="Bad Request: The value is already in use as WEKO ID."
-                    )
-
 
     def validate_request(self, request, schema):
         """Validate the request.
@@ -497,53 +470,17 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             ) from ex
 
         return request_data
-
-    def handle_weko_id(self, author_data):
+    
+    def check_author_id_info(self, author_data):
+        """Remove authorIdInfo with idType '1(WEKO)'.
+        
+        Args:
+            author_data (dict): The author data containing authorIdInfo.
+        """
         author_id_info = author_data.get("authorIdInfo", [])
-        has_weko_id = any(auth_id.get("idType") == "1" for auth_id in author_id_info)
-
-        if not has_weko_id:
-            search_index = current_app.config.get("WEKO_AUTHORS_ES_INDEX_NAME")
-
-            query = {
-                "size": 0,
-                "aggs": {
-                    "max_weko_id": {
-                        "max": {
-                            "script": {
-                                "source": """
-                                    int maxId = 0;
-                                    for (def entry : params._source.authorIdInfo) {
-                                        if (entry.idType == '1') {
-                                            try {
-                                                int id = Integer.parseInt(entry.authorId);
-                                                if (id > maxId) maxId = id;
-                                            } catch (Exception e) {
-                                                // Ignore non-numeric values
-                                            }
-                                        }
-                                    }
-                                    return maxId;
-                                """,
-                                "lang": "painless"
-                            }
-                        }
-                    }
-                }
-            }
-
-            search_results = current_search_client.search(index=search_index, body=query)
-            max_weko_id = search_results["aggregations"]["max_weko_id"]["value"] or 0
-
-            new_weko_id = str(int(max_weko_id) + 1)
-
-            author_id_info.append({
-                "idType": "1",
-                "authorId": new_weko_id,
-                "authorIdShowFlg": "true"
-            })
-
-        author_data["authorIdInfo"] = author_id_info
+        author_data["authorIdInfo"] = [
+            info for info in author_id_info if info.get('idType') != "1"
+        ]
 
     def put_v1(self, **kwargs):
         """Handle PUT request for author update."""
@@ -602,7 +539,6 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
 
-            self.validate_author_data(author_data, pk_id)
             community_ids = author_data.get("communityIds", [])
             if author_by_pk:
                 old = author_by_pk

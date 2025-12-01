@@ -80,22 +80,10 @@ WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL = 5
 
 WEKO_AUTHORS_FILE_MAPPING = [
     {
-        "json_id": "pk_id",
-        "label_en": "Author ID",
-        "label_jp": "著者ID"
+        'label_en': 'WEKO ID',
+        'label_jp': 'WEKO ID',
+        'json_id': 'pk_id'
     },
-    {
-        "json_id": "weko_id",
-        "label_en": "WEKO ID",
-        "label_jp": "WEKO ID",
-        'validation': {
-            'validator': {
-                'class_name': 'weko_authors.contrib.validation',
-                'func_name': 'validate_digits_for_wekoid'
-            }
-        }
-    },
-
     {
         'json_id': 'authorNameInfo',
         'child': [

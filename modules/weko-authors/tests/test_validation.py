@@ -8,10 +8,8 @@ from weko_authors.contrib.validation import (
     validate_identifier_scheme,
     validate_external_author_identifier,
     validate_affiliation_period_end,
-    validate_digits_for_wekoid,
     validate_affiliation_identifier_scheme,
     validate_affiliation_period_start,
-    check_weko_id_is_exits_for_import
 )
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -304,30 +302,6 @@ class TestValidateAffiliationPeriodEnd:
         assert len(result) == 2
         assert "Period end must be after Period start." in result
 
-
-# def validate_digits_for_wekoid(items, values=[])
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py::test_validate_digits_for_wekoid -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_validate_digits_for_wekoid():
-    items = 'items'
-    values = [
-        {'value': '111'},
-    ]
-    result = validate_digits_for_wekoid(items, values)
-    assert result == []
-
-    values_2 = [
-        {'value': ''},
-    ]
-    result = validate_digits_for_wekoid(items, values_2)
-    assert result == ["WEKO ID is required item."]
-
-    values_3 = [
-        {'value': '１１１'},
-    ]
-    result = validate_digits_for_wekoid(items, values_3)
-    assert result == ["WEKO ID is Half-width digits only"]
-
-
     # def validate_affiliation_identifier_scheme(item, values=[])
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py::test_validate_affiliation_identifier_scheme -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_validate_affiliation_identifier_scheme(authors_affiliation_settings):
@@ -361,31 +335,3 @@ def test_validate_affiliation_period_start(authors):
     ]
     result = validate_affiliation_period_start(item, values_2)
     assert result == ["External Affiliation Period must be in the format: yyyy-MM-dd, blank. 2025317"]
-
-
-#    def check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id={})
-# .tox/c1/bin/pytest --cov=weko_authors tests/test_validation.py::test_check_weko_id_is_exits_for_import -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_check_weko_id_is_exits_for_import(authors):
-    pk_id = '2'
-    weko_id = '1'
-    existed_external_authors_id = {
-        '1': {},
-    }
-    result = check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id)
-    assert result == []
-
-    pk_id = '2'
-    weko_id = '1'
-    existed_external_authors_id = {
-        '1': {'1': ["2"],},
-    }
-    result = check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id)
-    assert result == []
-
-    pk_id = '3'
-    weko_id = '1'
-    existed_external_authors_id = {
-        '1': {'1': ["2"],},
-    }
-    result = check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id)
-    assert result == ["Specified WEKO ID already exist."]

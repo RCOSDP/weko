@@ -40,7 +40,7 @@ from .errors import AuthorsValidationError
 from .permissions import author_permission
 from .utils import (
     get_author_prefix_obj, get_author_affiliation_obj, get_count_item_link,
-    validate_weko_id, check_period_date, validate_community_ids,
+    check_period_date, validate_community_ids,
     get_managed_community, check_delete_author, check_delete_prefix,
     check_delete_affiliation
 )
@@ -72,33 +72,10 @@ def create():
         return jsonify(msg=_('Header Error'))
 
     data = request.get_json()
+    data["is_deleted"] = "false"
     activity_id = request.args.get('activity_id')
 
-    # weko_idを取得する。
-    author_id_info = data["authorIdInfo"]
-    weko_id = None
-    for i in author_id_info:
-        if i.get('idType') == '1':
-            weko_id = i.get('authorId')
-    if not weko_id:
-        return jsonify(msg=_('Please set WEKO ID.')), 500
-
-    #weko_idのバリーデーションチェック
-    try:
-        result_weko_id_check = validate_weko_id(weko_id)
-        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
-            # weko_idが半角数字でない場合はエラーを返す
-            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
-        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
-            # weko_idが既に存在する場合はエラーを返す
-            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
-    except Exception as ex:
-        current_app.logger.error(ex)
-        traceback.print_exc()
-        return jsonify(msg=_('Failed')), 500
-
-
-    #periodのバリーデーションチェック
+    #periodのバリデーションチェック
     result_period_check = check_period_date(data)
     if result_period_check[0] == False and result_period_check[1] == "not date format":
         return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
@@ -140,28 +117,10 @@ def update_author():
     req = request.get_json()
     data = req["author"]
     force_change_flag = request.get_json()["forceChangeFlag"]
-    # weko_idを取得する。
-    weko_id = None
-    author_id_info = data["authorIdInfo"]
-    for i in author_id_info:
-        if i.get('idType') == '1':
-            weko_id = i.get('authorId')
-    if not weko_id:
-        return jsonify(msg=_('Please set WEKO ID.')), 500
     pk_id = data["pk_id"]
 
     try:
-        #weko_idのバリーデーションチェック
-        result_weko_id_check = validate_weko_id(weko_id, pk_id)
-
-        if result_weko_id_check[0] == False and result_weko_id_check[1] == "not half digit":
-            # weko_idが半角数字でない場合はエラーを返す
-            return jsonify(msg=_('Please set the WEKOID in the half digit.')), 500
-        elif result_weko_id_check[0] == False and result_weko_id_check[1] == "already exists":
-            # weko_idが既に存在する場合はエラーを返す
-            return jsonify(msg=_('The value is already in use as WEKO ID.')), 500
-
-        #periodのバリーデーションチェック
+        #periodのバリデーションチェック
         result_period_check = check_period_date(data)
         if result_period_check[0] == False and result_period_check[1] == "not date format":
             return jsonify(msg=_('Please set the affiliation start date and end date in the format yyyy-MM-dd.')), 500
@@ -367,50 +326,6 @@ def getById():
         body=body
     )
     return json.dumps(result)
-
-@blueprint_api.route("/get_max_weko_id", methods=['GET'])
-@login_required
-def get_max_weko_id():
-    """Get max weko id."""
-    query = {
-        "_source": ["authorIdInfo"],  # authorIdInfoフィールドのみを取得
-        "query": {
-            "bool": {
-                "must": [
-                    {"term": {"gather_flg": {"value": 0}}}
-                ],
-                "must_not": [
-                    {"term": {"is_deleted": True}}
-                ]
-            }
-        },
-        "size": 1000  # スクロールごとに取得するドキュメント数
-    }
-
-    indexer = RecordIndexer()
-    result = indexer.client.search(
-        index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-        body=query,
-        scroll='2m'  # スクロールの有効期限
-    )
-
-    max_author_id = 0
-    scroll_id = result['_scroll_id']
-
-    while len(result['hits']['hits']) > 0:
-        for hit in result['hits']['hits']:
-            author_id_info = hit['_source'].get('authorIdInfo', [])
-            for info in author_id_info:
-                if info.get('idType') == '1':
-                    author_id = int(info.get('authorId'))
-                    if author_id > max_author_id:
-                        max_author_id = author_id
-        result = indexer.client.scroll(
-            scroll_id=scroll_id,
-            scroll='2m'
-        )
-
-    return jsonify(max_author_id=max_author_id)
 
 @blueprint_api.route("/input", methods=['POST'])
 @login_required

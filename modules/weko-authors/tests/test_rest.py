@@ -9,7 +9,7 @@ from invenio_deposit.utils import check_oauth2_scope_write, \
     check_oauth2_scope_write_elasticsearch
 from invenio_records_rest.utils import check_elasticsearch
 from weko_authors.rest import (
-    create_blueprint,
+    create_blueprint, AuthorDBManagementAPI
 )
 
 import urllib.parse
@@ -215,8 +215,6 @@ class TestAuthorDBManagementAPI:
         self.run_post_author(app, client_api, auth_headers_sysadmin, {}, 400, "Bad Request: Invalid payload, {'author': ['Missing data for required field.']}")  # 空のリクエスト
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": None}, 400, "Bad Request: Invalid payload, {'author': ['Field may not be null.']}")  # authorがNone
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "ORCID"}]}}, 400, "Both 'idType' and 'authorId' must be provided together.")  # idTypeのみ指定
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "WEKO", "authorId": "A1"}]}}, 400, "The WEKO ID must be numeric characters only.")  # WEKO IDが数字以外
-        self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorIdInfo": [{"idType": "WEKO", "authorId": "1"}]}}, 400, "The value is already in use as WEKO ID.")  # 既存のWEKO ID
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"authorNameInfo": [{"firstName": "John", "familyName": "Doe"}]}}, 400, "If 'firstName' or 'familyName' is provided, 'language' must also be specified.")  # language未指定
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": "InvalidFormat"}}, 400, "Bad Request: Invalid payload, {'author': {'affiliationInfo': ['Not a valid list.']}}")  # affiliationInfoがリストでない
         self.run_post_author(app, client_api, auth_headers_sysadmin, {"author": {"affiliationInfo": ["InvalidFormat"]}}, 400, "Bad Request: Invalid payload, {'author': {'affiliationInfo': {0: {'_schema': ['Invalid input type.']}}}}")  # affiliationInfoのフォーマット不正
@@ -230,8 +228,6 @@ class TestAuthorDBManagementAPI:
         # システムエラーの確認
         # DBエラーや例外発生時の動作を確認
         self.run_post_author_db_error(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""))  # DBエラー発生時
-        with patch("invenio_search.current_search_client.search", side_effect=Exception):
-            self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 500)  # 検索時に例外が発生した場合
         with patch("weko_authors.utils.get_author_prefix_obj", return_value=None):
             self.run_post_author(app, client_api, auth_headers_sysadmin, self.valid_author_data("ORCID", ""), 500)  # 著者プレフィックス取得時に例外が発生した場合
         with patch("weko_authors.utils.get_author_affiliation_obj", return_value=None):
@@ -330,6 +326,27 @@ class TestAuthorDBManagementAPI:
         data = self.valid_author_data("ORCID", "")
         data["author"]["communityIds"] = community_ids
         return data
+    
+    # .tox/c1/bin/pytest --cov=weko_authors tests/test_rest.py::TestAuthorDBManagementAPI::test_check_author_id_info -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace | tee log.log
+    def test_check_author_id_info(self, app):
+        api = AuthorDBManagementAPI()
+        # author_data does not have authorIdInfo
+        author_data = {'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        api.check_author_id_info(author_data)
+        expect = {'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}], 'authorIdInfo': []}
+        assert author_data == expect
+
+        # author_data has authorIdInfo and the idType is not "1(WEKO)"
+        author_data = {'authorIdInfo': [{'idType': '2','authorId': '0000-0001-2345-6789'}],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        api.check_author_id_info(author_data)
+        expect = {'authorIdInfo': [{'idType': '2','authorId': '0000-0001-2345-6789'}],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        assert author_data == expect
+
+        # author_data has authorIdInfo but the idType is "1(WEKO)"
+        author_data = {'authorIdInfo': [{'idType': '1','authorId': '1'}],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        api.check_author_id_info(author_data)
+        expect = {'authorIdInfo': [],'authorNameInfo': [{'language': 'ja','firstName': '太郎','familyName': '山田'}]}
+        assert author_data == expect
 
 
     @pytest.mark.parametrize('base_app',[dict(
@@ -361,21 +378,6 @@ class TestAuthorDBManagementAPI:
             self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["community1", "community2", "community3"]), es_id, 200, "Author successfully updated.")
             self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community(["community1", "community1"]), es_id, 200, "Author successfully updated.")
             self.run_put_author(app, client_api, auth_headers_sysadmin, self.valid_update_data_with_community([]), es_id, 200, "Author successfully updated.")
-
-
-            data_no_weko = {
-                "author": {
-                    "emailInfo": [{"email": "updated@xxx.co.jp"}],
-                    "authorIdInfo": [{"idType": "ORCID", "authorId": "5", "authorIdShowFlg": "true"}],
-                    "authorNameInfo": [{"language": "en", "firstName": "Jane", "familyName": "Smith", "nameFormat": "familyNmAndNm", "nameShowFlg": "true"}],
-                    "affiliationInfo": [{
-                        "identifierInfo": [{"affiliationId": "https://ror.org/5678", "affiliationIdType": "ISNI", "identifierShowFlg": "true"}],
-                        "affiliationNameInfo": [{"affiliationName": "NII", "affiliationNameLang": "en", "affiliationNameShowFlg": "true"}],
-                        "affiliationPeriodInfo": [{"periodStart": "2025-02-01", "periodEnd": "2025-04-01"}]
-                    }]
-                }
-            }
-            self.run_put_author(app, client_api, auth_headers_sysadmin, data_no_weko, 1, 400, "At least one WEKO ID must be provided in update.")
 
             # 認証なしのリクエストが拒否されることを確認
             self.run_put_author_unauthorized(app, client_api)
