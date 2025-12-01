@@ -755,8 +755,8 @@ class TestImportView():
         current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],
                           {"key":"result_summary_key"})
         mocker.patch("weko_authors.admin.prepare_import_data",return_value=([
-                {"pk_id": "test_id0", "current_weko_id": "1000", "weko_id": "1000"},
-                {"pk_id": "test_id1", "current_weko_id": "1001", "weko_id": "1001"},
+                {"pk_id": "test_id0", "weko_id": "1000"},
+                {"pk_id": "test_id1", "weko_id": "1001"},
             ], 1, 1))
         mocker.patch("weko_authors.admin.group.apply_async",return_value=MockTaskGroup())
         res = client.post(url, data=json.dumps(data), content_type='application/json')
@@ -769,22 +769,18 @@ class TestImportView():
                     {
                         "task_id": 0,
                         "record_id": "test_id0",
-                        "previous_weko_id": "1000",
-                        "new_weko_id": "1000",
                         "status": "PENDING",
                     },
                     {
                         "task_id": 1,
                         "record_id": "test_id1",
-                        "previous_weko_id": "1001",
-                        "new_weko_id": "1001",
                         "status": "PENDING",
                     },
                 ],
             },
             "records": [
-                {"pk_id": "test_id0", "current_weko_id": "1000", "weko_id": "1000"},
-                {"pk_id": "test_id1", "current_weko_id": "1001", "weko_id": "1001"},
+                {"pk_id": "test_id0", "weko_id": "1000"},
+                {"pk_id": "test_id1", "weko_id": "1001"},
             ],
         }
         assert json.loads(res.data) == test
@@ -817,8 +813,8 @@ class TestImportView():
         current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY"], None)
         current_cache.set(current_app.config["WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY"],None)
         mocker.patch("weko_authors.admin.prepare_import_data",return_value=([
-                {"pk_id": "test_id0", "current_weko_id": "1000", "weko_id": "1000"},
-                {"pk_id": "test_id1", "current_weko_id": "1001", "weko_id": "1001"},
+                {"pk_id": "test_id0", "weko_id": "1000"},
+                {"pk_id": "test_id1", "weko_id": "1001"},
             ], 1, 2000))
         mocker.patch("weko_authors.admin.group.apply_async",return_value=MockTaskGroup())
         mock_task = MagicMock()
@@ -835,24 +831,21 @@ class TestImportView():
                     {
                         "task_id": 0,
                         "record_id": "test_id0",
-                        "previous_weko_id": "1000",
-                        "new_weko_id": "1000",
                         "status": "PENDING",
                     },
                     {
                         "task_id": 1,
                         "record_id": "test_id1",
-                        "previous_weko_id": "1001",
-                        "new_weko_id": "1001",
                         "status": "PENDING",
                     },
                 ],
             },
             "records": [
-                {"pk_id": "test_id0", "current_weko_id": "1000", "weko_id": "1000"},
-                {"pk_id": "test_id1", "current_weko_id": "1001", "weko_id": "1001"},
+                {"pk_id": "test_id0", "weko_id": "1000"},
+                {"pk_id": "test_id1", "weko_id": "1001"},
             ],
         }
+
         assert json.loads(res.data) == test
 
         #  Exception (result_over_max_file_path is true)

@@ -53,7 +53,7 @@ def test_export_all(app,mocker):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_01_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_01_import_author(app):
     with patch("weko_authors.tasks.import_author_to_system"):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
+        result = import_author({"status":"", "weko_id":""}, True)
         assert result["status"] == "SUCCESS"
 
 
@@ -61,7 +61,7 @@ def test_01_import_author(app):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_02_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_02_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=SQLAlchemyError("SQLAlchemyError")):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
+        result = import_author({"status":"", "weko_id":""}, True)
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'SQLAlchemyError')] * 6
     assert info_logs == expected
@@ -72,7 +72,7 @@ def test_02_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_03_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_03_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=ElasticsearchException("ElasticsearchException")):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
+        result = import_author({"status":"", "weko_id":""}, True)
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'ElasticsearchException')] * 6
     assert info_logs == expected
@@ -83,7 +83,7 @@ def test_03_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_04_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_04_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError("TimeoutError")):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
+        result = import_author({"status":"", "weko_id":""}, True)
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'TimeoutError')] * 6
     assert info_logs == expected
@@ -94,7 +94,7 @@ def test_04_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_05_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_05_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError({"error_id": 123, "message": "An error occurred"})):
-        result = import_author({"status":"", "weko_id":"", "current_weko_id":""}, True, {})
+        result = import_author({"status":"", "weko_id":""}, True)
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'An error occurred'}")] * 6
     assert info_logs == expected
@@ -220,14 +220,14 @@ class TestImportAuthorsFromTempFiles:
 
         # 一時ファイルの内容をモック
         part1_data = [
-            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": "1000"},
-            {"pk_id": 2, "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}], "status": "update", "weko_id": "1002", "current_weko_id": "1002"},
-            {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003", "current_weko_id": ""},
-            {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
+            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001"},
+            {"pk_id": 2, "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}], "status": "update", "weko_id": "1002"},
+            {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003"},
+            {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004"},
         ]
 
         part2_data = [
-            {"pk_id": 5, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
+            {"pk_id": 5, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004"},
         ]
 
         # ファイル読み込みのモック
@@ -284,11 +284,11 @@ class TestImportAuthorsFromTempFiles:
 
         # 一時ファイルの内容をモック（5人の著者）
         part1_data = [
-            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": ""},
-            {"pk_id": 2, "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}], "status": "update", "weko_id": "1002", "current_weko_id": "1002"},
-            {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003", "current_weko_id": ""},
-            {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
-            {"pk_id": 5, "authorNameInfo": [{"familyName": "Wang", "firstName": "Chen"}], "status": "new", "weko_id": "1005", "current_weko_id": "", "errors":["error"]}
+            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001"},
+            {"pk_id": 2, "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}], "status": "update", "weko_id": "1002"},
+            {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003"},
+            {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004"},
+            {"pk_id": 5, "authorNameInfo": [{"familyName": "Wang", "firstName": "Chen"}], "status": "new", "weko_id": "1005", "errors":["error"]}
         ]
 
         # ファイル読み込みのモック
@@ -334,11 +334,11 @@ class TestImportAuthorsFromTempFiles:
         max_part = 1
         # 一時ファイルの内容をモック（5人の著者）
         part1_data = [
-            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": ""},
-            {"pk_id": 2, "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}], "status": "update", "weko_id": "1002", "current_weko_id": "1002"},
-            {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003", "current_weko_id": ""},
-            {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004", "current_weko_id": "1004"},
-            {"pk_id": 5, "authorNameInfo": [{"familyName": "Wang", "firstName": "Chen"}], "status": "new", "weko_id": "1005", "current_weko_id": "", "errors":["error"]}
+            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001"},
+            {"pk_id": 2, "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}], "status": "update", "weko_id": "1002"},
+            {"pk_id": 3, "authorNameInfo": [{"familyName": "Brown", "firstName": "Bob"}], "status": "new", "weko_id": "1003"},
+            {"pk_id": 4, "authorNameInfo": [{"familyName": "Lee", "firstName": "Alice"}], "status": "update", "weko_id": "1004"},
+            {"pk_id": 5, "authorNameInfo": [{"familyName": "Wang", "firstName": "Chen"}], "status": "new", "weko_id": "1005", "errors":["error"]}
         ]
 
         # ファイル読み込みのモック
@@ -419,7 +419,7 @@ class TestImportAuthorsFromTempFiles:
 
         # 一時ファイルの内容をモック
         part1_data = [
-            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001", "current_weko_id": ""}
+            {"pk_id": 1, "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}], "status": "new", "weko_id": "1001"}
         ]
 
         # ファイル読み込みのモック
@@ -499,14 +499,12 @@ class TestImportAuthorsForOverMax:
         mock_group_obj, mock_task = mock_group
         author1 = {
             "pk_id": 1,
-            "current_weko_id": None,
             "weko_id": "author1",
             "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}],
             "status": "new"
         }
         author2 = {
             "pk_id": 2,
-            "current_weko_id": "old_author2",
             "weko_id": "author2",
             "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}],
             "status": "update"
@@ -566,14 +564,12 @@ class TestImportAuthorsForOverMax:
         mock_group_obj, mock_task = mock_group
         author1 = {
             "pk_id": 1,
-            "current_weko_id": None,
             "weko_id": "author1",
             "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}],
             "status": "new"
         }
         author2 = {
             "pk_id": 2,
-            "current_weko_id": "old_author2",
             "weko_id": "author2",
             "authorNameInfo": [{"familyName": "Smith", "firstName": "Jane"}],
             "status": "update"
@@ -628,7 +624,6 @@ class TestImportAuthorsForOverMax:
         mock_group_obj, mock_task = mock_group
         author = {
             "pk_id": 1,
-            "current_weko_id": None,
             "weko_id": "author1",
             "authorNameInfo": [{"familyName": "Doe", "firstName": "John"}],
             "status": "new"
@@ -677,7 +672,6 @@ class TestImportAuthorsForOverMax:
         mock_group_obj, mock_task = mock_group
         author = {
             "pk_id": 1,
-            "current_weko_id": None,
             "weko_id": "author1",
             "authorNameInfo": [{"familyName": "Doe", "firstName": "John"},
                             {"familyName": "山田", "firstName": "太郎"},
@@ -722,7 +716,6 @@ class TestImportAuthorsForOverMax:
         mock_group_obj, mock_task = mock_group
         author = {
             "pk_id": 1,
-            "current_weko_id": None,
             "weko_id": "author1",
             "authorNameInfo": [{"familyName": "Doe", "firstName": "John"},
                             {"familyName": "山田", "firstName": "太郎"},

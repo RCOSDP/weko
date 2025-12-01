@@ -519,8 +519,6 @@ class ImportView(BaseView):
                 tasks.append({
                     'task_id': task.task_id,
                     'record_id': records[idx].get('pk_id'),
-                    'previous_weko_id': records[idx].get('current_weko_id'),
-                    'new_weko_id': records[idx].get('weko_id'),
                     'status': 'PENDING'
                 })
                 task_ids.append(task.task_id)
