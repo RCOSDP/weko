@@ -1415,7 +1415,7 @@ def import_author_to_system(
                         "authorIdShowFlg": "true"
                     }
                 )
-                WekoAuthors.update(author['pk_id'], author)
+                WekoAuthors.update(author['pk_id'], author, force_change_mode)
             db.session.commit()
             if status == "new":
                 UserActivityLogger.info(operation="AUTHOR_CREATE", request_info=request_info)
