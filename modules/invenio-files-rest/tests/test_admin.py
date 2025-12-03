@@ -250,6 +250,14 @@ class TestLocationModelView():
             view = LocationModelView(Location, db.session)
             assert view.can_create
 
+        # Test Case (Pos): Community Administrator can not create
+        mock_role_repoad = MagicMock()
+        mock_role_repoad.name = 'Community Administrator'
+        mock_user.roles = [mock_role_repoad]
+        with patch('invenio_files_rest.admin.current_user', mock_user):
+            view = LocationModelView(Location, db.session)
+            assert not view.can_create
+
         # Test Case (Pos): user without role can not create
         mock_user = MagicMock()
         mock_user.roles = []
@@ -280,6 +288,14 @@ class TestLocationModelView():
             view = LocationModelView(Location, db.session)
             assert view.can_edit
 
+        # Test Case (Pos): Community Administrator can not create
+        mock_role_repoad = MagicMock()
+        mock_role_repoad.name = 'Community Administrator'
+        mock_user.roles = [mock_role_repoad]
+        with patch('invenio_files_rest.admin.current_user', mock_user):
+            view = LocationModelView(Location, db.session)
+            assert not view.can_edit
+
         # Test Case (Pos): user without role can not edit
         mock_user = MagicMock()
         mock_user.roles = []
@@ -309,6 +325,14 @@ class TestLocationModelView():
         with patch('invenio_files_rest.admin.current_user', mock_user):
             view = LocationModelView(Location, db.session)
             assert view.can_delete
+
+        # Test Case (Pos): Community Administrator can not delete
+        mock_role_repoad = MagicMock()
+        mock_role_repoad.name = 'Community Administrator'
+        mock_user.roles = [mock_role_repoad]
+        with patch('invenio_files_rest.admin.current_user', mock_user):
+            view = LocationModelView(Location, db.session)
+            assert not view.can_delete
 
         # Test Case (Pos): user without role can not delete
         mock_user = MagicMock()

@@ -624,7 +624,7 @@ def test_copy_bucket_to_s3(
                 org_bucket_id=records_buckets.bucket_id,
                 checked="create", bucket_name="sample1"
             )
-            assert "The source bucket or file key is not set." in e
+        assert "The source bucket or file key is not set." in str(e.value)
         mock_profile_boto3_client.copy.reset_mock()
 
     # Test Case (Neg): s3 to s3, head object not found

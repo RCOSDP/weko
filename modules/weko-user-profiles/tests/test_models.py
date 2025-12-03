@@ -253,7 +253,7 @@ def test_create_s3_client(app, mocker):
     profile = UserProfile()
     with pytest.raises(Exception) as ex:
         profile.create_s3_client()
-        assert "S3 setting none. Please check your profile." in str(ex)
+    assert "S3 setting none. Please check your profile." in str(ex.value)
 
     # Test Case (Pos): S3 setting is OK
     profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com",
