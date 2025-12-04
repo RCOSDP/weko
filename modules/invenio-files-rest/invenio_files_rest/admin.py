@@ -146,8 +146,6 @@ class LocationModelView(ModelView):
 
     _system_role = os.environ.get('INVENIO_ROLE_SYSTEM',
                                   'System Administrator')
-    _repoadmin_role = os.environ.get('INVENIO_ROLE_REPOSITORY',
-                                    'Repository Administrator')
     @expose('/')
     def index_view(self):
         """Override index view to add custom logic.
@@ -291,20 +289,17 @@ class LocationModelView(ModelView):
     @property
     def can_create(self):
         """Check permission for creating."""
-        return {self._system_role, self._repoadmin_role} & \
-            set([role.name for role in current_user.roles])
+        return self._system_role in [role.name for role in current_user.roles]
 
     @property
     def can_edit(self):
         """Check permission for Editing."""
-        return {self._system_role, self._repoadmin_role} & \
-            set([role.name for role in current_user.roles])
+        return self._system_role in [role.name for role in current_user.roles]
 
     @property
     def can_delete(self):
         """Check permission for Deleting."""
-        return {self._system_role, self._repoadmin_role} & \
-            set([role.name for role in current_user.roles])
+        return self._system_role in [role.name for role in current_user.roles]
 
 
 class BucketModelView(ModelView):
