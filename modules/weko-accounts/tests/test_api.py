@@ -6,6 +6,7 @@ from flask import session,current_app
 from flask_login.utils import login_user
 from invenio_accounts.models import Role, User
 from weko_user_profiles.models import UserProfile
+from sqlalchemy.exc import SQLAlchemyError
 from weko_accounts.models import ShibbolethUser
 from weko_accounts.api import ShibUser,get_user_info_by_role_name
 
@@ -100,11 +101,19 @@ class TestShibUser:
 #    def get_relation_info(self):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_get_relation_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
     def test_get_relation_info(self,app,db,users):
-        
+
         user1 = users[0]["obj"]
         user2 = users[1]["obj"]
+
         attr = {
-            "shib_eppn":"test_eppn"
+            "shib_eppn": "test_eppn",
+            "shib_mail": None,
+            "shib_user_name": None,
+            "shib_role_authority_name": None,
+            "shib_page_name": None,
+            "shib_active_flag": None,
+            "shib_ip_range_flag": None,
+            "shib_organization": None
         }
         s_user1 = ShibbolethUser(weko_uid=user1.id,weko_user=user1,**attr)
         db.session.add(s_user1)
@@ -112,15 +121,6 @@ class TestShibUser:
 
         # exist shib_eppn,exist shib_user.weko_user,not exist self.user
         # attribute does not exist
-        attr = {
-            "shib_eppn":"test_eppn",
-            "shib_mail":None,
-            "shib_user_name":None,
-            "shib_role_authority_name":None,
-            "shib_page_name":None,
-            "shib_active_flag":None,
-            "shib_ip_range_flag":None,
-        }
         shibuser = ShibUser(attr)
         result = shibuser.get_relation_info()
         assert result.shib_mail == None
@@ -129,6 +129,7 @@ class TestShibUser:
         assert result.shib_page_name == None
         assert result.shib_active_flag == None
         assert result.shib_ip_range_flag == None
+        assert result.shib_organization == None
 
         # attribute exists
         attr = {
@@ -139,6 +140,7 @@ class TestShibUser:
             "shib_page_name":"shib page",
             "shib_active_flag":"TRUE",
             "shib_ip_range_flag":"TRUE",
+            "shib_organization":"shib org"
         }
         shibuser = ShibUser(attr)
         result = shibuser.get_relation_info()
@@ -148,11 +150,18 @@ class TestShibUser:
         assert result.shib_page_name == "shib page"
         assert result.shib_active_flag == "TRUE"
         assert result.shib_ip_range_flag == "TRUE"
-        
+        assert result.shib_organization == "shib org"
+
         # not exist shib_eppn,not exist shib_user.weko_user
         attr = {
             "shib_eppn":"",
-            "shib_user_name":"shib name2"
+            "shib_user_name":"shib name2",
+            "shib_mail":None,
+            "shib_role_authority_name":None,
+            "shib_page_name":None,
+            "shib_active_flag":None,
+            "shib_ip_range_flag":None,
+            "shib_organization":None
         }
         s_user2 = ShibbolethUser(**attr)
         db.session.add(s_user2)
@@ -161,15 +170,15 @@ class TestShibUser:
         result = shibuser.get_relation_info()
         assert result == None
         
-        # not exist shib_eppn, exist shib_user.weko_user,exist self.user, raise Exception
+        # not exist shib_eppn, exist shib_user.weko_user,exist self.user, raise SQLAlchemyError
         s_user2.weko_user = user2
         s_user2.weko_uid = user2.id
         db.session.merge(s_user2)
         db.session.commit()
         shibuser.user = user2
-        with patch("weko_accounts.api.db.session.commit",side_effect=Exception):
-            result = shibuser.get_relation_info()
-            assert result == None
+        with patch("weko_accounts.api.db.session.commit",side_effect=SQLAlchemyError):
+            with pytest.raises(SQLAlchemyError):
+                shibuser.get_relation_info()
 #    def check_weko_user(self, account, pwd):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUser::test_check_weko_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
     def test_check_weko_user(self,app,users):
