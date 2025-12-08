@@ -1262,3 +1262,5 @@ def index_issn(app,db):
     db.session.add(index_metadata4)
     db.session.add(index_metadata5)
     db.session.add(index_metadata6)
+
+    db.session.commit()
