@@ -95,7 +95,6 @@ def form(
                 },
             ],
             "key": key.replace("[]", ""),
-            "type": "fieldset",
             "title": "データセットシリーズ",
             "title_i18n": {"en": "", "ja": "データセットシリーズ"},
         }
