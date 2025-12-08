@@ -827,35 +827,35 @@ AFFILIATION_SCHEME_LBL = [
     "GRID【非推奨】",
     "ROR",
 ]
-AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID", "ROR"]
-CREATOR_IDENTIFIER_SCHEMA_LBL = [
-    "",
-    "e-Rad",
-    "e-Rad_Researcher",
-    "NRID【非推奨】",
-    "ORCID",
-    "ISNI",
-    "VIAF",
-    "AID",
-    "kakenhi【非推奨】",
-    "Ringgold",
-    "GRID【非推奨】",
-    "ROR",
-    "WEKO"
-]
-CREATOR_IDENTIFIER_SCHEMA_VAL = [
-None,
-"e-Rad_Researcher",
-"e-Rad",
-"NRID",
-"ORCID",
-"ISNI",
-"VIAF",
-"AID",
-"kakenhi",
-"Ringgold",
-"GRID",
-"ROR","WEKO"]
+# AFFILIATION_SCHEME_VAL = [None, "kakenhi", "ISNI", "Ringgold", "GRID", "ROR"]
+# CREATOR_IDENTIFIER_SCHEMA_LBL = [
+#     "",
+#     "e-Rad",
+#     "e-Rad_Researcher",
+#     "NRID【非推奨】",
+#     "ORCID",
+#     "ISNI",
+#     "VIAF",
+#     "AID",
+#     "kakenhi【非推奨】",
+#     "Ringgold",
+#     "GRID【非推奨】",
+#     "ROR",
+#     "WEKO"
+# ]
+# CREATOR_IDENTIFIER_SCHEMA_VAL = [
+# None,
+# "e-Rad_Researcher",
+# "e-Rad",
+# "NRID",
+# "ORCID",
+# "ISNI",
+# "VIAF",
+# "AID",
+# "kakenhi",
+# "Ringgold",
+# "GRID",
+# "ROR","WEKO"]
 DATE_TYPE_VAL = [
     None,
     "Accepted",
