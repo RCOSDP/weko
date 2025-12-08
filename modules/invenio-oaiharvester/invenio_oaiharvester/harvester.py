@@ -188,7 +188,7 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
 
     if subschema:
         if subschema.get('items', {}).get('properties', None):
-            if oai_key and oai_key in metadata:
+            if oai_key and metadata and oai_key in metadata:
                 if isinstance(metadata[oai_key], list):
                     _tmp = []
                     for m in metadata[oai_key]:
@@ -217,7 +217,7 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
             else:
                 current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
         elif subschema.get('properties', None):
-            if oai_key and oai_key in metadata:
+            if oai_key and metadata and oai_key in metadata:
                 if subitem_key in subitems:
                     _tmp = subitems[subitem_key]
                 else:
@@ -252,7 +252,7 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                     subitems[subitem_key] = metadata.get(oai_key)
                 else:
                     current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
-            elif isinstance(metadata, str) and oai_key == TEXT:
+            elif isinstance(metadata, str):
                 subitems[subitem_key] = metadata
             elif isinstance(metadata, list) and len(metadata) > 0:
                 subitems[subitem_key] = metadata[0]
@@ -1048,9 +1048,13 @@ def add_degree_name(schema, mapping, res, metadata):
     parsing_metadata(mapping, schema, patterns, metadata, res)
 
 
-def add_funding_reference(schema, mapping, res, metadata):
+def add_funding_reference(version, schema, mapping, res, metadata):
     """Add the grant information if you have received \
     financial support (funding) to create the resource."""
+    fId_value = "jpcoar:funderIdentifier.#text" if version == "2.0" else "datacite:funderIdentifier.#text"
+    fId_type = "jpcoar:funderIdentifier.@funderIdentifierType" if version == "2.0" else "datacite:funderIdentifier.@funderIdentifierType"
+    aNum_value = "jpcoar:awardNumber.#text" if version == "2.0" else "datacite:awardNumber.#text"
+    aNum_uri = "jpcoar:awardNumber.@awardURI" if version == "2.0" else "datacite:awardNumber.@awardURI"
     patterns = [
         (
             'fundingReference.funderName.@value',
@@ -1062,11 +1066,11 @@ def add_funding_reference(schema, mapping, res, metadata):
         ),
         (
             'fundingReference.funderIdentifier.@value',
-            'jpcoar:funderIdentifier.#text'
+            fId_value
         ),
         (
             'fundingReference.funderIdentifier.@attributes.funderIdentifierType',
-            'jpcoar:funderIdentifier.@funderIdentifierType'
+            fId_type
         ),
         (
             'fundingReference.funderIdentifier.@attributes.funderIdentifierTypeURI',
@@ -1094,11 +1098,11 @@ def add_funding_reference(schema, mapping, res, metadata):
         ),
         (
             'fundingReference.awardNumber.@value',
-            'jpcoar:awardNumber.#text'
+            aNum_value
         ),
         (
             'fundingReference.awardNumber.@attributes.awardURI',
-            'jpcoar:awardNumber.@awardURI'
+            aNum_uri
         ),
         (
             'fundingReference.awardNumber.@attributes.awardNumberType',
@@ -1596,7 +1600,7 @@ class DCMapper(BaseMapper):
         """Init."""
         super().__init__(xml)
 
-    def map(self):
+    def map(self, version=""):
         """Get map."""
         if self.is_deleted():
             return {}
@@ -1645,7 +1649,7 @@ class JPCOARMapper(BaseMapper):
         """Init."""
         super().__init__(xml)
 
-    def map(self):
+    def map(self, version):
         """Get map."""
         if self.is_deleted():
             return {}
@@ -1655,8 +1659,9 @@ class JPCOARMapper(BaseMapper):
         res = {'$schema': self.itemtype.id,
                'pubdate': str(self.datestamp())}
 
+        schema = "jpcoar_mapping" if version == "2.0" else "jpcoar_v1_mapping"
         item_type_mapping = Mapping.get_record(self.itemtype.id)
-        item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
+        item_map = get_full_mapping(item_type_mapping, schema)
 
         args = [self.itemtype.schema.get('properties'), item_map, res]
 
@@ -1708,7 +1713,7 @@ class JPCOARMapper(BaseMapper):
             'datacite:geoLocation':
                 partial(add_geo_location, *args),
             'jpcoar:fundingReference':
-                partial(add_funding_reference, *args),
+                partial(add_funding_reference, version, *args),
             'jpcoar:sourceIdentifier':
                 partial(add_source_identifier, *args),
             'jpcoar:sourceTitle':
@@ -2011,7 +2016,7 @@ class DDIMapper(BaseMapper):
         """Map itemtype."""
         self.itemtype = BaseMapper.itemtype_map['Harvesting DDI']
 
-    def map(self):
+    def map(self, version=""):
         """Get map."""
         if self.is_deleted():
             return {}
@@ -2253,7 +2258,7 @@ class BIOSAMPLEMapper(JsonMapper):
         """Init."""
         super().__init__(json, 'Biosample')
 
-    def map(self):
+    def map(self, version=""):
         if self.is_deleted():
             return {}
 
@@ -2319,7 +2324,7 @@ class BIOPROJECTMapper(JsonMapper):
         """Init."""
         super().__init__(json, 'Bioproject')
 
-    def map(self):
+    def map(self, version=""):
         if self.is_deleted():
             return {}
 

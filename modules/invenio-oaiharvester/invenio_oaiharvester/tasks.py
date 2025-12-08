@@ -162,6 +162,7 @@ def process_item(record, harvesting, counter, request_info):
     event = ItemEvents.INIT
 
     xml = etree.tostring(record, encoding='utf-8').decode()
+    version = ""
     # current_app.logger.debug('[{0}] [{1}] Processing xml: {2}'.format(
     #    0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
@@ -169,8 +170,10 @@ def process_item(record, harvesting, counter, request_info):
     elif harvesting.metadata_prefix == 'jpcoar' or \
             harvesting.metadata_prefix == 'jpcoar_1.0':
         mapper = JPCOARMapper(xml)
+        version = "1.0"
     elif harvesting.metadata_prefix == 'jpcoar_2.0':
         mapper = JPCOARMapper(xml)
+        version = "2.0"
     elif harvesting.metadata_prefix == 'oai_ddi25' or \
             harvesting.metadata_prefix == 'ddi':
         mapper = DDIMapper(xml)
@@ -220,7 +223,7 @@ def process_item(record, harvesting, counter, request_info):
         if dep.pid.status == PIDStatus.DELETED:
             recid.status = PIDStatus.DELETED
             restore(recid.pid_value)
-        json_data = mapper.map()
+        json_data = mapper.map(version)
         if not json_data:
             return
 
