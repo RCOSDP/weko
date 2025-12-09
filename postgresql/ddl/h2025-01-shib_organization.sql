@@ -1,0 +1,1 @@
+ALTER TABLE shibboleth_user ADD COLUMN shib_organization VARCHAR(255);

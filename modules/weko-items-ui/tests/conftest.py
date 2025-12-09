@@ -345,26 +345,31 @@ def db(app):
 
 @pytest.fixture()
 def esindex(app,db_records):
+    current_search_client.indices.delete(index='test-*')
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
+    with open("tests/data/mappings/record-view-v1.json","r") as f:
+        mapping_record_view = json.load(f)
 
     search = LocalProxy(lambda: app.extensions["invenio-search"])
 
     with app.test_request_context():
-        search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
-        search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        current_search_client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
+        current_search_client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
         # print(current_search_client.indices.get_alias())
+        current_search_client.indices.create("test-stats-record-view-000001",body=mapping_record_view)
+        current_search_client.indices.put_alias(index="test-stats-record-view-000001",name="test-stats-record-view")
     
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
+        current_search_client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
     
-
-    yield search
+    yield current_search_client
 
     with app.test_request_context():
-        search.client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
-        search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
-        
+        current_search_client.indices.delete_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
+        current_search_client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+        #current_search_client.indices.delete_alias(index="test-stats-record-view-000001",name="test-stats-record-view")
+        #current_search_client.indices.delete(index="test-stats-record-view-000001", ignore=[400,400])
 
 
 @pytest.fixture()

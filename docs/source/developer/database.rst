@@ -6161,7 +6161,7 @@ shibboleth_user
      - 
    * - shib_eppn
      - shib_eppn
-     - VARCHAR(128)
+     - VARCHAR(2310)
      - True
      - False
      - None
@@ -6189,7 +6189,7 @@ shibboleth_user
      - 
    * - shib_page_name
      - shib_page_name
-     - VARCHAR(255)
+     - VARCHAR(1024)
      - False
      - False
      - None
@@ -6217,6 +6217,13 @@ shibboleth_user
      - 
    * - shib_ip_range_flag
      - shib_ip_range_flag
+     - VARCHAR(255)
+     - False
+     - False
+     - None
+     - 
+   * - shib_organization
+     - shib_organization
      - VARCHAR(255)
      - False
      - False

@@ -565,7 +565,7 @@ class OpenSearchDetailData:
             self._set_source_identifier(fe, item_map, item_metadata)
 
             # Set volume
-            _volume = 'volume'
+            _volume = 'volume.@value'
             if _volume in item_map:
                 volume_key = item_map[_volume]
                 item_id = volume_key.split('.')[0]
@@ -586,7 +586,7 @@ class OpenSearchDetailData:
                             fe.prism.volume(volumes)
 
             # Set number
-            _issue = 'issue'
+            _issue = 'issue.@value'
             if _issue in item_map:
                 issue_key = item_map[_issue]
                 item_id = issue_key.split('.')[0]
@@ -608,7 +608,7 @@ class OpenSearchDetailData:
                             fe.prism.number(issues)
 
             # Set startingPage
-            _page_start = 'pageStart'
+            _page_start = 'pageStart.@value'
             if _page_start in item_map:
                 page_start_key = item_map[_page_start]
                 item_id = page_start_key.split('.')[0]
@@ -630,7 +630,7 @@ class OpenSearchDetailData:
                             fe.prism.startingPage(page_starts)
 
             # Set endingPage
-            _page_end = 'pageEnd'
+            _page_end = 'pageEnd.@value'
             if _page_end in item_map:
                 page_end_key = item_map[_page_end]
                 item_id = page_end_key.split('.')[0]
