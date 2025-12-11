@@ -4035,7 +4035,8 @@ def edit_item_direct_after_login(pid_value):
             recid.object_uuid
         )
         workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                item_type_id)
+                                                item_type_id,
+                                                with_deleted=False)
         if not workflow:
             return render_template("weko_theme/error.html",
                     error="Workflow setting does not exist."), 400
