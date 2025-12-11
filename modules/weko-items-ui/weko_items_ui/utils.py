@@ -5625,8 +5625,8 @@ def set_prefix_scheme_to_form(prop_type, form_data, prefix_list, affiliation_lis
                             key_list[prop_type]["aids_key"] in aids["key"] and \
                             "items" in aids:
                         for aid in aids["items"]:
-                            if "key" in aid and key_list[prop_type]["aid_key"] in aid:
-                                id["titleMap"] = affiliation_list
+                            if "key" in aid and key_list[prop_type]["aid_key"] in aid["key"]:
+                                aid["titleMap"] = affiliation_list
                                 change_aid = True
                             if change_aid:
                                 break
