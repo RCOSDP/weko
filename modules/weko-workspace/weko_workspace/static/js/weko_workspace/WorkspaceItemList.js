@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const handleFilter = async (e) => {
         e.preventDefault();
         const jsonTemplate = generateJsonTemplate();
-        await refreshPage('/workspace', 'POST', jsonTemplate);
+        await refreshPage('/workspace/', 'POST', jsonTemplate);
         closeFilter();
       };
 
@@ -446,11 +446,11 @@ document.addEventListener('DOMContentLoaded', function () {
           const data = await fetchJsonResponse('/workspace/save_filters', 'POST', jsonTemplate);
           alert(data.message);
           closeFilter();
-          await refreshPage('/workspace', 'GET');
+          await refreshPage('/workspace/', 'GET');
         } catch (error) {
           alert(error.message);
           closeFilter();
-          await refreshPage('/workspace', 'GET');
+          await refreshPage('/workspace/', 'GET');
           console.error('保存エラー:', error);
         }
       };
@@ -462,11 +462,11 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await fetchJsonResponse('/workspace/reset_filters', 'DELETE');
             alert(data.message);
             closeFilter();
-            await refreshPage('/workspace', 'GET');
+            await refreshPage('/workspace/', 'GET');
           } catch (error) {
             alert(error.message);
             closeFilter();
-            await refreshPage('/workspace', 'GET');
+            await refreshPage('/workspace/', 'GET');
             console.error('リセットエラー:', error);
           }
         }
