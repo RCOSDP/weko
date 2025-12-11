@@ -1606,7 +1606,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.is_item_owner = true;
           // ----
         } else {
-          if (!enable_multi_contributors || (recordModel.shared_user_ids && recordModel.shared_user_ids.length > 0 && recordModel.shared_user_ids != -1)) {
+          if (recordModel.shared_user_ids && recordModel.shared_user_ids.length > 0 && recordModel.shared_user_ids != -1) {
             // Call rest api to get user information
             let shared_user_ids_query = '';
             for(id of recordModel.shared_user_ids) {
