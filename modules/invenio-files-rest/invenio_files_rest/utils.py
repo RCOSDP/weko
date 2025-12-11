@@ -8,7 +8,11 @@
 
 """Implementation of various utility functions."""
 import mimetypes
+import re
+from urllib.parse import urlparse
 
+import boto3
+from botocore.config import Config
 import base64
 import six
 import sqlalchemy as sa
@@ -166,3 +170,57 @@ def update_ogp_image(ogp_image, file_uri):
             src.set_contents(file)
 
     return src.uri if src else None
+
+
+def create_boto3_s3_client(access_key, secret_key, region_name=None,
+                           endpoint_url=None, client_config={}):
+    """Create boto3 S3 client.
+    Args:
+        access_key (str): S3 access key.
+        secret_key (str): S3 secret key.
+        region_name (str): S3 region name.
+        endpoint_url (str): S3 endpoint URL.
+        client_config (dict): Additional client configuration parameters.
+    Returns:
+        boto3.client: Boto3 S3 client instance.
+    """
+    # Check if S3 credentials are configured
+    if not (access_key and secret_key):
+        return None
+
+    # Build client kwargs
+    session_kwargs = {
+        "aws_access_key_id": access_key,
+        "aws_secret_access_key": secret_key,
+    }
+
+    session = boto3.session.Session(**session_kwargs)
+
+    client_kwargs = {}
+    if client_config:
+        client_kwargs["config"] = Config(**client_config)
+    # Check endpoint
+    if endpoint_url:
+        parsed_url = urlparse(endpoint_url)
+        is_aws = re.match(r'.*\.amazonaws\.com$', parsed_url.netloc)
+        current_app.logger.debug(
+            "Endpoint URL '%s' is AWS: %s", endpoint_url, is_aws)
+        # Only set endpoint_url if it matches the pattern
+        # Note: AWS S3 requires no endpoint_url for standard regions
+        if not is_aws:
+            client_kwargs["endpoint_url"] = endpoint_url
+        elif not region_name:
+            # get region from endpoint url for aws s3
+            # ex: s3.us-west-2.amazonaws.com
+            pattern = r'^s3[.-](?P<region>[a-z0-9-]+)\.amazonaws\.com$'
+            result = re.match(pattern, parsed_url.netloc)
+            if result:
+                region_name = result.group('region') or None
+
+    # Check region
+    if region_name:
+        client_kwargs["region_name"] = region_name
+
+    # Create S3 client
+    s3_client = session.client("s3", **client_kwargs)
+    return s3_client
