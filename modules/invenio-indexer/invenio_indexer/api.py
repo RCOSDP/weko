@@ -228,99 +228,82 @@ class RecordIndexer(object):
         fail = 0
         unprocessed = 0
         self.count = 0
-        self.success_ids = []
         self.target_chunks = 0
         messages_count = 0
         count = (success,fail)
         req_timeout = current_app.config['INDEXER_BULK_REQUEST_TIMEOUT']
-        with current_celery_app.pool.acquire(block=True) as conn:
-            # check
-            b4_queues_cnt = 0
-            with conn.channel() as chan:
-                name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, b4_queues_cnt, consumers))
-            consumer = Consumer(
-                connection=conn,
-                queue=self.mq_queue.name,
-                exchange=self.mq_exchange.name,
-                routing_key=self.mq_routing_key,
-            )
-            es_bulk_kwargs = es_bulk_kwargs or {}
-            default_kwargs = {
-                'raise_on_error': True,
-                'raise_on_exception': True,
-                'chunk_size': 500,
-                'max_chunk_bytes': 104857600,
-                'max_retries': 0,
-                'initial_backoff': 2,
-                'max_backoff': 600,
-                'stats_only': False
-            }
-            es_bulk_kwargs = {**default_kwargs, **es_bulk_kwargs}
-            with consumer:
-                try:
-                    messages = list(consumer.iterqueue())
-                    messages_count = len(messages)
-                    self.target_chunks = math.ceil(messages_count / es_bulk_kwargs["chunk_size"])
-                    click.secho("messages count:{}, target chunks:{}".format(messages_count, self.target_chunks),fg='green')
-                    _success,_fail  = self.reindex_bulk(
-                        self.client,
-                        self._actionsiter(messages, with_deleted=with_deleted),
-                        request_timeout=req_timeout,
-                        # raise_on_error=True,
-                        # raise_on_exception=True,
-                        **es_bulk_kwargs
-                    )
-                    update_pdf_contents_es(self.success_ids)
-                    success = _success
-                    if isinstance(_fail, list):
-                        fail = len(_fail)
-                        for error in _fail:
-                            click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
-                    else:
-                        fail = _fail
-                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
-                except BulkIndexError as be:
-                    with conn.channel() as chan:
-                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
-                    fail = len(be.errors)
-                    success = self.count - fail
-                    unprocessed = messages_count - self.count
-                    update_pdf_contents_es(self.success_ids)
-                    for error in be.errors:
-                        err = error['index']
-                        err_info = err.get('error')
-                        if isinstance(err_info, dict):
-                            error_type = err_info.get('type', 'unknown')
-                        else:
-                            error_type = str(err_info)
-                        click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
-                except (BulkConnectionTimeout, ConnectionTimeout) as ce:
-                    click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
-                    click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg='red')
-                    click.secho("processing: {}".format(self.count),fg='red')
-                    click.secho("latest processing id: {}".format(self.latest_item_id),fg='red')
-                    if '_success' in locals() or '_fail' in locals():
+        while True:
+            self.success_ids = []
+            with current_celery_app.pool.acquire(block=True) as conn:
+                # check
+                b4_queues_cnt = 0
+                with conn.channel() as chan:
+                    name, b4_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                    current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, b4_queues_cnt, consumers))
+                    if b4_queues_cnt == 0:
+                        break
+                consumer = Consumer(
+                    connection=conn,
+                    queue=self.mq_queue.name,
+                    exchange=self.mq_exchange.name,
+                    routing_key=self.mq_routing_key,
+                )
+                es_bulk_kwargs = es_bulk_kwargs or {}
+                default_kwargs = {
+                    'raise_on_error': True,
+                    'raise_on_exception': True,
+                    'chunk_size': 500,
+                    'max_chunk_bytes': 104857600,
+                    'max_retries': 0,
+                    'initial_backoff': 2,
+                    'max_backoff': 600,
+                    'stats_only': False
+                }
+                es_bulk_kwargs = {**default_kwargs, **es_bulk_kwargs}
+                with consumer:
+                    try:
+                        messages = list(consumer.iterqueue(limit=es_bulk_kwargs["chunk_size"]))
+                        messages_count = len(messages)
+                        self.target_chunks = math.ceil(messages_count / es_bulk_kwargs["chunk_size"])
+                        click.secho("messages count:{}, target chunks:{}".format(messages_count, self.target_chunks),fg='green')
+                        _success,_fail  = self.reindex_bulk(
+                            self.client,
+                            self._actionsiter(messages, with_deleted=with_deleted),
+                            request_timeout=req_timeout,
+                            # raise_on_error=True,
+                            # raise_on_exception=True,
+                            **es_bulk_kwargs
+                        )
+                        update_pdf_contents_es(self.success_ids)
                         success = _success
-                        fail = _fail
-                        errors = []
-                        if isinstance(fail, list):
-                            errors = fail
-                    else:
-                        success = ce.success if hasattr(ce, 'success') else 0
-                        fail = ce.failed if hasattr(ce, 'failed') else 0
-                        errors = ce.errors if hasattr(ce, 'errors') else []
-                    if len(errors) > 0:
-                        for error in errors:
+                        if isinstance(_fail, list):
+                            fail = len(_fail)
+                            for error in _fail:
+                                click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
+                        else:
+                            fail = _fail
+                        unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                    except BulkIndexError as be:
+                        with conn.channel() as chan:
+                            name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                            current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                        fail = len(be.errors)
+                        success = self.count - fail
+                        unprocessed = messages_count - self.count
+                        update_pdf_contents_es(self.success_ids)
+                        for error in be.errors:
+                            err = error['index']
+                            err_info = err.get('error')
+                            if isinstance(err_info, dict):
+                                error_type = err_info.get('type', 'unknown')
+                            else:
+                                error_type = str(err_info)
                             click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
-                        fail = len(errors)
-                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
-                    update_pdf_contents_es(self.success_ids)
-                except (BulkConnectionError, ConnectionError) as ce:
-                    with conn.channel() as chan:
-                        name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
-                        current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                    except (BulkConnectionTimeout, ConnectionTimeout) as ce:
+                        click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
+                        click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg='red')
+                        click.secho("processing: {}".format(self.count),fg='red')
+                        click.secho("latest processing id: {}".format(self.latest_item_id),fg='red')
                         if '_success' in locals() or '_fail' in locals():
                             success = _success
                             fail = _fail
@@ -337,30 +320,51 @@ class RecordIndexer(object):
                             fail = len(errors)
                         unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                         update_pdf_contents_es(self.success_ids)
-                except (BulkException, Exception) as e:
-                    current_app.logger.error(e)
-                    current_app.logger.error(traceback.format_exc())
-                    if '_success'  in locals() or '_fail' in locals():
-                        success = _success
-                        fail = _fail
-                        errors = []
-                        if isinstance(fail, list):
-                            errors = fail
-                    else:
-                        success = e.success if hasattr(e, 'success') else 0
-                        fail = e.failed if hasattr(e, 'failed') else 0
-                        errors = e.errors if hasattr(e, 'errors') else []
-                    if len(errors) > 0:
-                        for error in errors:
-                            err = error['index']
-                            err_info = err.get('error')
-                            if isinstance(err_info, dict):
-                                error_type = err_info.get('type', 'unknown')
+                    except (BulkConnectionError, ConnectionError) as ce:
+                        with conn.channel() as chan:
+                            name, af_queues_cnt, consumers = chan.queue_declare(queue=current_app.config['INDEXER_MQ_ROUTING_KEY'], passive=True)
+                            current_app.logger.debug("name:{}, queues:{}, consumers:{}".format(name, af_queues_cnt, consumers))
+                            if '_success' in locals() or '_fail' in locals():
+                                success = _success
+                                fail = _fail
+                                errors = []
+                                if isinstance(fail, list):
+                                    errors = fail
                             else:
-                                error_type = str(err_info)
-                            click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
-                    unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
-                    update_pdf_contents_es(self.success_ids)
+                                success = ce.success if hasattr(ce, 'success') else 0
+                                fail = ce.failed if hasattr(ce, 'failed') else 0
+                                errors = ce.errors if hasattr(ce, 'errors') else []
+                            if len(errors) > 0:
+                                for error in errors:
+                                    click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
+                                fail = len(errors)
+                            unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                            update_pdf_contents_es(self.success_ids)
+                    except (BulkException, Exception) as e:
+                        current_app.logger.error(e)
+                        current_app.logger.error(traceback.format_exc())
+                        if '_success'  in locals() or '_fail' in locals():
+                            success = _success
+                            fail = _fail
+                            errors = []
+                            if isinstance(fail, list):
+                                errors = fail
+                        else:
+                            success = e.success if hasattr(e, 'success') else 0
+                            fail = e.failed if hasattr(e, 'failed') else 0
+                            errors = e.errors if hasattr(e, 'errors') else []
+                        if len(errors) > 0:
+                            for error in errors:
+                                err = error['index']
+                                err_info = err.get('error')
+                                error_type =""
+                                if isinstance(err_info, dict):
+                                    error_type = err_info.get('type', 'unknown')
+                                else:
+                                    error_type = str(err_info)
+                                click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error_type, error['index']['error'].get('reason', '')), fg='red')
+                        unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
+                        update_pdf_contents_es(self.success_ids)
         if unprocessed == 0:
             count = (success,fail)
             click.secho("count(success, error): {}".format(count),fg='green')
