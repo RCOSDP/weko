@@ -5566,8 +5566,6 @@ def set_scheme_by_author_table(data_type, meta_list, result):
             key_list["contributor"]["key"] = key
         elif data and "input_type" in data and data["input_type"] == "cus_{}".format(rightsHolder_id):
             key_list["rightsHolder"]["key"] = key
-        else:
-            continue
     
     if key_list["creator"]["key"] or key_list["contributor"]["key"] or key_list["rightsHolder"]["key"]:
         prefix_scheme = WekoAuthors.get_scheme_of_id_prefix()
@@ -5598,8 +5596,6 @@ def set_scheme_to_form(form_data, prefix_scheme, affiliation_scheme, key_list):
             set_prefix_scheme_to_form("contributor", value, prefix_list, affiliation_list, key_list)
         elif value["key"] == key_list["rightsHolder"]["key"]:
             set_prefix_scheme_to_form("rightsHolder", value, prefix_list, affiliation_list, key_list)
-        else:
-            continue
 
 
 def set_prefix_scheme_to_form(prop_type, form_data, prefix_list, affiliation_list, key_list):
