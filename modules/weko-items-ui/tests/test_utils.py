@@ -135,6 +135,7 @@ from weko_items_ui.utils import (
     send_mail_from_notification_info,
     get_notification_targets,
     get_duplicate_fields,
+    set_scheme_by_author_table
 )
 from weko_items_ui.config import WEKO_ITEMS_UI_DEFAULT_MAX_EXPORT_NUM,WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE
 from invenio_indexer.api import RecordIndexer
@@ -11791,3 +11792,866 @@ def test_get_notification_targets(app, users, db_records2, db_userprofile, db_no
         result = get_notification_targets(deposit, user_id, [])
     assert result == {}
 
+
+# def set_scheme_by_author_table(data_type, meta_list, result)
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_set_scheme_by_author_table -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_set_scheme_by_author_table(app, mocker):
+    prefix_mock = mocker.patch("weko_authors.api.WekoAuthors.get_scheme_of_id_prefix", return_value=["prefix1", "prefix2", "prefix3【非推奨】"])
+    affiliaiton_mock = mocker.patch("weko_authors.api.WekoAuthors.get_scheme_of_affiliaiton_id", return_value=["affiliaiton1", "affiliaiton2", "affiliaiton3【非推奨】"])
+    # case 1
+    meta_list = {
+        "item_creator": {
+            "input_type": "cus_1038"
+        }
+    }
+    form_data = [
+        {
+            "items":[
+                {
+                    "items":[
+                    {
+                        "key":"item_creator[].nameIdentifiers[].nameIdentifierScheme",
+                        "titleMap":[]
+                    },
+                    {
+                        "key":"item_creator[].nameIdentifiers[].test"
+                    }
+                    ],
+                    "key":"item_creator[].nameIdentifiers"
+                },
+                {
+                    "items":[
+                    {
+                        "items":[
+                            {
+                                "key":"item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme",
+                                "titleMap":[]
+                            },
+                            {
+                                "key":"item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].test"
+                            }
+                        ],
+                        "key":"item_creator[].creatorAffiliations[].affiliationNameIdentifiers"
+                    },
+                    {
+                        "key":"item_creator[].creatorAffiliations.test"
+                    }
+                    ],
+                    "key":"item_creator[].creatorAffiliations"
+                }
+            ],
+            "key":"item_creator"
+        }
+    ]
+    res = set_scheme_by_author_table("form", meta_list, form_data)
+    assert res == [
+        {
+            "items":[
+                {
+                    "items":[
+                        {
+                            "key":"item_creator[].nameIdentifiers[].nameIdentifierScheme",
+                            "titleMap":[
+                                {
+                                    "name":"prefix1",
+                                    "value":"prefix1"
+                                },
+                                {
+                                    "name":"prefix2",
+                                    "value":"prefix2"
+                                },
+                                {
+                                    "name":"prefix3【非推奨】",
+                                    "value":"prefix3"
+                                }
+                            ]
+                        },
+                        {
+                            "key":"item_creator[].nameIdentifiers[].test"
+                        }
+                    ],
+                    "key":"item_creator[].nameIdentifiers"
+                },
+                {
+                    "items":[
+                        {
+                            "items":[
+                                {
+                                    "key":"item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme",
+                                    "titleMap":[
+                                        {
+                                            "name":"affiliaiton1",
+                                            "value":"affiliaiton1"
+                                        },
+                                        {
+                                            "name":"affiliaiton2",
+                                            "value":"affiliaiton2"
+                                        },
+                                        {
+                                            "name":"affiliaiton3【非推奨】",
+                                            "value":"affiliaiton3"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "key":"item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].test"
+                                }
+                            ],
+                            "key":"item_creator[].creatorAffiliations[].affiliationNameIdentifiers"
+                        },
+                        {
+                            "key":"item_creator[].creatorAffiliations.test"
+                        }
+                    ],
+                    "key":"item_creator[].creatorAffiliations"
+                }
+            ],
+            "key":"item_creator"
+        }
+    ]
+
+    # case 3
+    schema_data = {
+        "properties":{
+            "item_creator":{
+                "items":{
+                    "properties":{
+                    "creatorAffiliations":{
+                        "items":{
+                            "properties":{
+                                "affiliationNameIdentifiers":{
+                                "items":{
+                                    "properties":{
+                                        "test":{
+                                            "format":"text",
+                                            "title":"test",
+                                            "type":"string"
+                                        },
+                                        "affiliationNameIdentifierScheme":{
+                                            "enum":[],
+                                            "format":"select",
+                                            "title":"所属機関識別子Scheme",
+                                            "type":["null", "string"]
+                                        }
+                                    }
+                                }
+                                }
+                            }
+                        }
+                    },
+                    "nameIdentifiers":{
+                        "items":{
+                            "properties":{
+                                "nameIdentifier":{
+                                "format":"text",
+                                "title":"test",
+                                "type":"string"
+                                },
+                                "nameIdentifierScheme":{
+                                "enum":[],
+                                "format":"select",
+                                "title":"作成者識別子Scheme",
+                                "type":["null", "string"]
+                                }
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+        }
+    }
+    res = set_scheme_by_author_table("schema", meta_list, schema_data)
+    assert res == {
+        "properties":{
+            "item_creator":{
+                "items":{
+                    "properties":{
+                    "creatorAffiliations":{
+                        "items":{
+                            "properties":{
+                                "affiliationNameIdentifiers":{
+                                "items":{
+                                    "properties":{
+                                        "test":{
+                                            "format":"text",
+                                            "title":"test",
+                                            "type":"string"
+                                        },
+                                        "affiliationNameIdentifierScheme":{
+                                            "enum":[None, "affiliaiton1", "affiliaiton2", "affiliaiton3"],
+                                            "format":"select",
+                                            "title":"所属機関識別子Scheme",
+                                            "type":["null", "string"]
+                                        }
+                                    }
+                                }
+                                }
+                            }
+                        }
+                    },
+                    "nameIdentifiers":{
+                        "items":{
+                            "properties":{
+                                "nameIdentifier":{
+                                "format":"text",
+                                "title":"test",
+                                "type":"string"
+                                },
+                                "nameIdentifierScheme":{
+                                "enum":[None, "prefix1", "prefix2", "prefix3"],
+                                "format":"select",
+                                "title":"作成者識別子Scheme",
+                                "type":["null", "string"]
+                                }
+                            }
+                        }
+                    }
+                    }
+                }
+            }
+        }
+    }
+
+    # case 2
+    meta_list = {
+        "item_contributor": {
+            "input_type": "cus_1039"
+        },
+        "item_rightsHolder": {
+            "input_type": "cus_1008"
+        }
+    }
+    form_data = [
+        {
+            "items": []
+        },
+        {
+            "items": [],
+            "key": "test"
+        },
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_contributor[].nameIdentifiers[].test1" 
+                },
+                {
+                    "key": "item_contributor[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": []
+                },
+                {
+                    "key": "item_contributor[].nameIdentifiers[].test2" 
+                }
+                ], 
+                "key": "item_contributor[].nameIdentifiers"
+            }, 
+            {
+                "items": [
+                {
+                    "key": "item_contributor[].contributorAffiliations.test1"
+                },
+                {
+                    "items": [
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].test1"
+                    },
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationScheme", 
+                        "titleMap": []
+                    },
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].test2"
+                    }
+                    ], 
+                    "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers"
+                },
+                {
+                    "key": "item_contributor[].contributorAffiliations.test2"
+                }
+                ], 
+                "key": "item_contributor[].contributorAffiliations"
+            }
+            ],
+            "key": "item_contributor"
+        },
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_rightsHolder[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": []
+                },
+                {
+                    "key": "item_rightsHolder[].nameIdentifiers[].test" 
+                }
+                ], 
+                "key": "item_rightsHolder[].nameIdentifiers"
+            }, 
+            {
+                "key": "item_rightsHolder[].test"
+            }
+            ],
+            "key": "item_rightsHolder"
+        }
+    ]
+    res = set_scheme_by_author_table("form", meta_list, form_data)
+    assert res == [
+        {
+            "items": []
+        },
+        {
+            "items": [],
+            "key": "test"
+        },
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_contributor[].nameIdentifiers[].test1" 
+                },
+                {
+                    "key": "item_contributor[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": [
+                    {"name": "prefix1", "value": "prefix1"},
+                    {"name": "prefix2", "value": "prefix2"},
+                    {"name": "prefix3【非推奨】", "value": "prefix3"}
+                    ]
+                },
+                {
+                    "key": "item_contributor[].nameIdentifiers[].test2" 
+                }
+                ], 
+                "key": "item_contributor[].nameIdentifiers"
+            }, 
+            {
+                "items": [
+                {
+                    "key": "item_contributor[].contributorAffiliations.test1"
+                },
+                {
+                    "items": [
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].test1"
+                    },
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationScheme", 
+                        "titleMap": [
+                        {"name": "affiliaiton1", "value": "affiliaiton1"},
+                        {"name": "affiliaiton2", "value": "affiliaiton2"},
+                        {"name": "affiliaiton3【非推奨】", "value": "affiliaiton3"}
+                        ]
+                    },
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].test2"
+                    }
+                    ], 
+                    "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers"
+                },
+                {
+                    "key": "item_contributor[].contributorAffiliations.test2"
+                }
+                ], 
+                "key": "item_contributor[].contributorAffiliations"
+            }
+            ],
+            "key": "item_contributor"
+        },
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_rightsHolder[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": [
+                    {"name": "prefix1", "value": "prefix1"},
+                    {"name": "prefix2", "value": "prefix2"},
+                    {"name": "prefix3【非推奨】", "value": "prefix3"}
+                    ]
+                },
+                {
+                    "key": "item_rightsHolder[].nameIdentifiers[].test" 
+                }
+                ], 
+                "key": "item_rightsHolder[].nameIdentifiers"
+            }, 
+            {
+                "key": "item_rightsHolder[].test"
+            }
+            ],
+            "key": "item_rightsHolder"
+        }
+    ]
+
+    # case 4
+    schema_data = {
+        "properties":{
+            "item_contributor":{
+                "items":{
+                    "properties":{
+                        "contributorAffiliations":{
+                            "items":{
+                                "properties":{
+                                    "contributorAffiliationNameIdentifiers":{
+                                        "items":{
+                                            "properties":{
+                                                "test":{
+                                                    "format":"text",
+                                                    "title":"test",
+                                                    "type":"string"
+                                                },
+                                                "contributorAffiliationScheme":{
+                                                    "enum":[],
+                                                    "format":"select",
+                                                    "title":"所属機関識別子Scheme",
+                                                    "type":["null", "string"]
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        "nameIdentifiers":{
+                            "items":{
+                                "properties":{
+                                    "nameIdentifier":{
+                                    "format":"text",
+                                    "title":"test",
+                                    "type":"string"
+                                    },
+                                    "nameIdentifierScheme":{
+                                    "enum":[],
+                                    "format":"select",
+                                    "title":"寄与者識別子Scheme",
+                                    "type":["null", "string"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "item_rightsHolder":{
+                "items":{
+                    "properties":{
+                        "nameIdentifiers":{
+                            "items":{
+                                "properties":{
+                                    "nameIdentifier":{
+                                        "format":"text",
+                                        "title":"test",
+                                        "type":"string"
+                                    },
+                                        "nameIdentifierScheme":{
+                                        "enum":[],
+                                        "format":"select",
+                                        "title":"権利者識別子Scheme",
+                                        "type":["null", "string"]
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    res = set_scheme_by_author_table("schema", meta_list, schema_data)
+    assert res == {
+        "properties": {
+            "item_contributor": {
+            "items": {
+                "properties": {
+                "contributorAffiliations": {
+                    "items": {
+                    "properties": {
+                        "contributorAffiliationNameIdentifiers": {
+                        "items": { 
+                            "properties": {
+                            "test": {
+                                "format": "text", 
+                                "title": "test",
+                                "type": "string"
+                            }, 
+                            "contributorAffiliationScheme": {
+                                "enum": [None, "affiliaiton1", "affiliaiton2", "affiliaiton3"], 
+                                "format": "select", 
+                                "title": "所属機関識別子Scheme", 
+                                "type": ["null", "string"]
+                            }
+                            }
+                        }
+                        }
+                    }
+                    }
+                }, 
+                "nameIdentifiers": { 
+                    "items": {
+                    "properties": {
+                        "nameIdentifier": {
+                        "format": "text", 
+                        "title": "test", 
+                        "type": "string"
+                        }, 
+                        "nameIdentifierScheme": {
+                        "enum": [None, "prefix1", "prefix2", "prefix3"],
+                        "format": "select", 
+                        "title": "寄与者識別子Scheme", 
+                        "type": ["null", "string"]
+                        }
+                    }
+                    }
+                }
+                }
+            }
+            },
+            "item_rightsHolder": {
+            "items": {
+                "properties": { 
+                "nameIdentifiers": { 
+                    "items": {
+                    "properties": {
+                        "nameIdentifier": {
+                        "format": "text", 
+                        "title": "test", 
+                        "type": "string"
+                        }, 
+                        "nameIdentifierScheme": {
+                        "enum": [None, "prefix1", "prefix2", "prefix3"],
+                        "format": "select", 
+                        "title": "権利者識別子Scheme", 
+                        "type": ["null", "string"]
+                        }
+                    }
+                    }
+                }
+                }
+            }
+            }
+        }
+    }
+
+    # case 5
+    meta_list = {
+        "item_test": {
+            "input_type": "cus_1001"
+        }
+    }
+    form_data = [{
+        "items": [
+            {
+            "items": [
+                {
+                "key": "item_creator[].nameIdentifiers[].nameIdentifierScheme", 
+                "titleMap": []
+                },
+                {
+                "key": "item_creator[].nameIdentifiers[].test" 
+                }
+            ], 
+            "key": "item_creator[].nameIdentifiers"
+            }, 
+            {
+            "items": [
+                {
+                "items": [
+                    {
+                    "key": "item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme", 
+                    "titleMap": []
+                    },
+                    {
+                    "key": "item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].test"
+                    }
+                ], 
+                "key": "item_creator[].creatorAffiliations[].affiliationNameIdentifiers"
+                },
+                {
+                "key": "item_creator[].creatorAffiliations.test"
+                }
+            ], 
+            "key": "item_creator[].creatorAffiliations"
+            }
+        ],
+        "key": "item_creator"
+    }]
+    res = set_scheme_by_author_table("form", meta_list, form_data)
+    assert res == form_data
+
+    # case 6
+    meta_list = {
+        "item_creator": {}
+    }
+    schema_data = {
+        "properties": {
+            "item_test": {
+            "items": {
+                "properties": {
+                "creatorAffiliations": {
+                    "items": {
+                    "properties": {
+                        "affiliationNameIdentifiers": {
+                        "items": { 
+                            "properties": {
+                            "test": {
+                                "format": "text", 
+                                "title": "test",
+                                "type": "string"
+                            }, 
+                            "affiliationNameIdentifierScheme": {
+                                "enum": [], 
+                                "format": "select", 
+                                "title": "所属機関識別子Scheme", 
+                                "type": ["null", "string"]
+                            }
+                            }
+                        }
+                        }
+                    }
+                    }
+                }, 
+                "nameIdentifiers": { 
+                    "items": {
+                    "properties": {
+                        "nameIdentifier": {
+                        "format": "text", 
+                        "title": "test", 
+                        "type": "string"
+                        }, 
+                        "nameIdentifierScheme": {
+                        "enum": [],
+                        "format": "select", 
+                        "title": "識別子Scheme", 
+                        "type": ["null", "string"]
+                        }
+                    }
+                    }
+                }
+                }
+            }
+            }
+        }
+    }
+    res = set_scheme_by_author_table("schema", meta_list, schema_data)
+    assert res == schema_data
+
+    # case 7
+    meta_list = {
+        "item_test1": {"input_type": "cus_1001"},
+        "item_creator": {"input_type": "cus_1038"},
+        "item_contributor": {"input_type": "cus_1039"},
+        "item_rightsHolder": {"input_type": "cus_1008"},
+        "item_test2": {"input_type": "cus_1002"}
+    }
+    form_data = [
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_creator[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": []
+                },
+                {
+                    "key": "item_creator[].nameIdentifiers[].test" 
+                }
+                ], 
+                "key": "item_creator[].nameIdentifiers"
+            }, 
+            {
+                "items": [
+                {
+                    "items": [
+                    {
+                        "key": "item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme", 
+                        "titleMap": []
+                    },
+                    {
+                        "key": "item_creator[].creatorAffiliations[].affiliationNameIdentifiers[].test"
+                    }
+                    ], 
+                    "key": "item_creator[].creatorAffiliations[].affiliationNameIdentifiers"
+                },
+                {
+                    "key": "item_creator[].creatorAffiliations.test"
+                }
+                ], 
+                "key": "item_creator[].creatorAffiliations"
+            }
+            ],
+            "key": "item_creator"
+        },
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_contributor[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": []
+                },
+                {
+                    "key": "item_contributor[].nameIdentifiers[].test" 
+                }
+                ], 
+                "key": "item_contributor[].nameIdentifiers"
+            }, 
+            {
+                "items": [
+                {
+                    "items": [
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].contributorAffiliationScheme", 
+                        "titleMap": []
+                    },
+                    {
+                        "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers[].test"
+                    }
+                    ], 
+                    "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers"
+                },
+                {
+                    "key": "item_contributor[].contributorAffiliations.test"
+                }
+                ], 
+                "key": "item_contributor[].contributorAffiliations"
+            }
+            ],
+            "key": "item_contributor"
+        },
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_rightsHolder[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": []
+                },
+                {
+                    "key": "item_rightsHolder[].nameIdentifiers[].test" 
+                }
+                ], 
+                "key": "item_rightsHolder[].nameIdentifiers"
+            }, 
+            {
+                "key": "item_rightsHolder[].test"
+            }
+            ],
+            "key": "item_rightsHolder"
+        }
+    ]
+    res = set_scheme_by_author_table("test", meta_list, form_data)
+    assert res == form_data
+
+    # case 8
+    meta_list = {
+        "item_creator": {
+            "input_type": "cus_1038"
+        }
+    }
+    form_data = [{"key": "item_creator"}]
+    res = set_scheme_by_author_table("form", meta_list, form_data)
+    assert res == form_data
+
+    # case 9
+    meta_list = {
+        "item_contributor": {
+            "input_type": "cus_1039"
+        },
+        "item_rightsHolder": {
+            "input_type": "cus_1008"
+        }
+    }
+    form_data = [
+        {
+            "items": [
+            {
+                "items": [
+                {
+                    "key": "item_contributor[].nameIdentifiers[].nameIdentifierScheme", 
+                    "titleMap": []
+                }
+                ], 
+                "key": "item_contributor[].nameIdentifiers"
+            }, 
+            {
+                "items": [
+                {
+                    "items": [], 
+                    "key": "item_contributor[].contributorAffiliations[].contributorAffiliationNameIdentifiers"
+                }
+                ], 
+                "key": "item_contributor[].contributorAffiliations"
+            }
+            ],
+            "key": "item_contributor"
+        },
+        {
+            "items": [],
+            "key": "item_rightsHolder"
+        }
+    ]
+    res = set_scheme_by_author_table("form", meta_list, form_data)
+    assert res == form_data
+
+    # case 10
+    meta_list = {
+        "item_creator": {
+            "input_type": "cus_1038"
+        }
+    }
+    form_data = [{
+        "items": [
+            {
+            "items": [], 
+            "key": "item_creator[].nameIdentifiers"
+            }, 
+            {
+            "items": [], 
+            "key": "item_creator[].creatorAffiliations"
+            }
+        ],
+        "key": "item_creator"
+    }]
+    res = set_scheme_by_author_table("form", meta_list, form_data)
+    assert res == form_data
+
+    # case 11
+    meta_list = {
+        "item_creator": {
+            "input_type": "cus_1038"
+        }
+    }
+    schema_data = {}
+    res = set_scheme_by_author_table("schema", meta_list, schema_data)
+    assert res == schema_data
+
+    # case 12
+    meta_list = {
+        "item_contributor": {
+            "input_type": "cus_1039"
+        },
+        "item_rightsHolder": {
+            "input_type": "cus_1008"
+        }
+    }
+    schema_data = {
+        "properties": {
+            "item_contributor": {
+            "items": {}
+            },
+            "item_rightsHolder": {
+            "items": {
+                "properties": { 
+                "nameIdentifiers": { 
+                    "items": {}
+                }
+                }
+            }
+            }
+        }
+    }
+    res = set_scheme_by_author_table("schema", meta_list, schema_data)
+    assert res == schema_data
