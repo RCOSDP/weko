@@ -1,8 +1,10 @@
+import datetime
 import json
 import pytest
 from flask import current_app, url_for
 import os
 import shutil
+import uuid
 from mock import patch, MagicMock
 
 from flask_oauthlib.provider import OAuth2Provider
@@ -138,6 +140,24 @@ def test_need_record_permission(i18n_app):
 def test_create_blueprint(i18n_app, app):
     endpoints = app.config['WEKO_SEARCH_REST_ENDPOINTS']
     assert create_blueprint(app, endpoints)
+
+
+# def json_serialize(obj):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::test_json_serialize -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_json_serialize():
+    from weko_index_tree.rest import json_serialize
+
+    # Test Case (Pos): Serialize datetime and uuid objects
+    uuid_data = uuid.uuid4()
+    json_data = {
+        "uuid": uuid_data,
+        "date": datetime.datetime(2024, 1, 1, 12, 0, 0)
+    }
+    actual = json.dumps(json_data, default=json_serialize)
+    assert actual == json.dumps({
+        "uuid": str(uuid_data),
+        "date": "20240101"
+    })
 
 
 # class IndexActionResource(ContentNegotiatedMethodView):

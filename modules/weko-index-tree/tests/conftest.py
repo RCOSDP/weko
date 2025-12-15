@@ -876,6 +876,7 @@ def indices_for_api(app, db):
             browsing_group="",
             contribute_group="",
             public_state=True,
+            public_date=datetime(2025, 3, 1, 0, 0, 0, 0),
             harvest_public_state=True,
             owner_user_id=1,
             created=datetime(2025, 3, 3, 4, 1, 40, 933902),
