@@ -264,6 +264,8 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
                 )
                 continue
 
+            # Convert item_type_id to str
+            item_type_id = str(item_type_id)
             try:
                 # item_type_id の情報をキャッシュ
                 if item_type_id not in check_item_keys:
