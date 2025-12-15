@@ -143,7 +143,7 @@ def parse_args():
         raise
 
 def get_item_type_info(check_item_keys: dict, item_type_id: str, check_prop_ids: dict):
-     # アイテムタイプ情報を取得
+    # アイテムタイプ情報を取得
     item_type = ItemTypes.get_by_id(item_type_id)
     if not item_type:
         check_item_keys[item_type_id] = {}
@@ -251,11 +251,21 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
             query = query.filter(ItemMetadata.updated < endDate)
         if itemTypeId:
             query = query.filter(ItemMetadata.item_type_id == itemTypeId)
-        uuids = [(str(x.id), str(x.item_type_id)) for x in query.all()]
+        uuids = [(str(x.id), x.item_type_id) for x in query.all()]
 
         # 各UUID処理
         for uuid, item_type_id in uuids:
             change_flag = False
+
+            # Check item_type_id is None
+            if not item_type_id:
+                current_app.logger.warning(
+                    f"[SKIP] item_metadata:{uuid} (item_type_id is None)"
+                )
+                continue
+
+            # Convert item_type_id to str
+            item_type_id = str(item_type_id)
             try:
                 # item_type_id の情報をキャッシュ
                 if item_type_id not in check_item_keys:
