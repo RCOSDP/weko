@@ -84,7 +84,8 @@ def schema(title="", multi_flag=multiple_flag):
                                 "type": ["null", "string"],
                                 "format": "select",
                                 "title": "権利者識別子Scheme",
-                                "enum": config.CREATOR_IDENTIFIER_SCHEMA_VAL,
+                                "enum": []
+                                # "enum": config.CREATOR_IDENTIFIER_SCHEMA_VAL,
                             },
                             "nameIdentifier": {
                                 "format": "text",
@@ -151,7 +152,8 @@ def form(
                                 "en": "Right Holder Name Identifier Scheme",
                                 "ja": "権利者識別子Scheme",
                             },
-                            "titleMap": make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
+                            "titleMap": [],
+                            # "titleMap": make_title_map(config.CREATOR_IDENTIFIER_SCHEMA_LBL, config.CREATOR_IDENTIFIER_SCHEMA_VAL),
                             "type": "select",
                         },
 

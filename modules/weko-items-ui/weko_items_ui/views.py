@@ -81,7 +81,8 @@ from .utils import (
     translate_schema_form, translate_validation_message, update_index_tree_for_record,
     update_json_schema_by_activity_id, update_schema_form_by_activity_id,
     update_sub_items_by_user_role, validate_form_input_data, validate_user,
-    validate_user_mail_and_index, is_duplicate_record, lock_item_will_be_edit
+    validate_user_mail_and_index, is_duplicate_record, lock_item_will_be_edit,
+    set_scheme_by_author_table
 )
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
@@ -403,7 +404,9 @@ def get_json_schema(item_type_id=0, activity_id=""):
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
-            result = ItemTypes.get_record(item_type_id)
+            item_type_data = ItemTypes.get_by_id(item_type_id)
+            result = item_type_data.schema
+            meta_list = item_type_data.render["meta_list"]
             properties = result.get('properties')
             if 'filemeta' in json.dumps(result):
                 group_list = Group.get_group_list()
@@ -425,6 +428,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
         json_schema = result
         # Remove excluded item in json_schema
         remove_excluded_items_in_json_schema(item_type_id, json_schema)
+        set_scheme_by_author_table("schema", meta_list, json_schema)
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error(
@@ -452,6 +456,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
             return '["*"]'
         schema_form = result.form
         filemeta_form = schema_form[0]
+        meta_list = result.render["meta_list"]
         if 'filemeta' == filemeta_form.get('key'):
             group_list = Group.get_group_list()
             filemeta_form_group = filemeta_form.get('items')[-1]
@@ -484,6 +489,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
             if updated_schema_form:
                 schema_form = updated_schema_form
 
+        set_scheme_by_author_table("form", meta_list, schema_form)
         return jsonify(schema_form)
     except BaseException:
         current_app.logger.error(
