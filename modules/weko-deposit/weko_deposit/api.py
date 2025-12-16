@@ -1025,7 +1025,7 @@ class WekoDeposit(Deposit):
                                                  self.revision_id)
                     # Upload pdf file content to Elasticsearch
                     from .tasks import extract_pdf_and_update_file_contents
-                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)))
+                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)), countdown=10)
                 except TransportError as err:
                     if self.jrc.get('content'):
                         for content in self.jrc['content']:
