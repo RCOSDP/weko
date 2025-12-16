@@ -1220,20 +1220,51 @@ class TestWekoDeposit:
         _, records = es_records
         record = records[0]
         deposit = record['deposit']
+        # case 1
         deposit.delete_by_index_tree_id('1',['2'])
         check_status(2, "R")
+        rec = WekoRecord.get_record_by_pid(2)
+        assert rec['path'] == ['1']
+        assert rec['_oai']['sets'] == ['1']
 
         time.sleep(1)
+        # case 2
         deposit.delete_by_index_tree_id('1',[])
         check_status(2, "D")
+        rec = WekoRecord.get_record_by_pid(2)
+        assert rec['path'] == []
+        assert rec['_oai']['sets'] == []
 
+        # case 3
         # not delete item
         deposit.delete_by_index_tree_id('3',[]) # 10.1 in 3
         check_status(10, "R")
+        rec = WekoRecord.get_record_by_pid(10)
+        assert rec['path'] == ['4']
+        assert rec['_oai']['sets'] == ['4']
 
+        # case 4
         # delete item
         deposit.delete_by_index_tree_id('4',[]) # 10, 10.2 in 4
         check_status(10, "D")
+        rec = WekoRecord.get_record_by_pid(10)
+        assert rec['path'] == []
+        assert rec['_oai']['sets'] == []
+
+        # case 5
+        deposit.delete_by_index_tree_id('',[])
+        check_status(3, "R")
+        rec = WekoRecord.get_record_by_pid(3)
+        assert rec['path'] == ['2']
+        assert rec['_oai']['sets'] == ['2']
+
+        # case 6
+        deposit.delete_by_index_tree_id('5',[])
+        check_status(11, "R")
+        rec = WekoRecord.get_record_by_pid(11)
+        assert rec['path'] == ["11"]
+        assert 'sets' not in rec['_oai']
+
 
     # def update_pid_by_index_tree_id(self, path):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_pid_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
