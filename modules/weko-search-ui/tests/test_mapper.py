@@ -4740,7 +4740,6 @@ class TestJsonLdMapper:
             "@id": "#additional",
             "value": "This is an extra field for testing."
         })
-
         with app.test_request_context():
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
             item_metadatas, format = mapper.to_item_metadata(json_ld)
@@ -4772,6 +4771,7 @@ class TestJsonLdMapper:
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
         json_mapping["Extra"] = "item_1744171568909"
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
+
         with app.test_request_context():
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
             item_metadatas, format = mapper.to_item_metadata(json_ld)
