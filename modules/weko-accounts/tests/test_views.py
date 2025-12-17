@@ -1208,6 +1208,7 @@ def test_shib_sp_login(client, redis_connect,mocker, db, users):
     assert res.status_code == 302
     assert res.headers['Location'] == url_for("security.login", _external=True)
 
+
 #def shib_stub_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_stub_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_stub_login(client,mocker):

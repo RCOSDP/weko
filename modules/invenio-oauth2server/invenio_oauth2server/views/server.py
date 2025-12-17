@@ -43,7 +43,7 @@ def login_oauth2_user(valid, oauth):
         oauth.user.login_via_oauth2 = True
         _request_ctx_stack.top.user = oauth.user
         identity_changed.send(current_app._get_current_object(),
-                      identity=Identity(oauth.user.id))
+                              identity=Identity(oauth.user.id))
     return valid, oauth
 
 
