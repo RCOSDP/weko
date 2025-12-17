@@ -7,7 +7,8 @@ from flask import url_for,request,make_response,current_app,Flask
 from flask_login.utils import login_user,logout_user
 from flask_menu import current_menu
 from flask_security import url_for_security
-from mock import patch
+from unittest.mock import patch
+from invenio_accounts.models import User
 from weko_accounts.api import ShibUser
 from weko_accounts.models import ShibbolethUser
 from weko_accounts.views import (
@@ -17,7 +18,8 @@ from weko_accounts.views import (
     find_user_by_email,
     shib_sp_login,
     _adjust_shib_admin_DB,
-    generate_ams_login_url
+    generate_ams_login_url,
+    urlencode
 )
 from weko_admin.models import AdminSettings
 
@@ -94,11 +96,11 @@ def test_redirect_method(app,mocker):
         )
         mock_render = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
         _redirect_method(False)
-        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.py")
+        mock_render.assert_called_with("http://test_server.localdomain/secure/login.py")
 
         mock_render = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
         _redirect_method(True)
-        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.py?next="+url)
+        mock_render.assert_called_with("http://test_server.localdomain/secure/login.py?next="+url)
 
     url = 'ams'
     with app.test_request_context(url):
@@ -1221,7 +1223,7 @@ def test_shib_stub_login(client,mocker):
     # WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED is true
     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
     res = client.get(url)
-    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.py?next=/next_page")
 
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED=False
@@ -1230,8 +1232,14 @@ def test_shib_stub_login(client,mocker):
     mock_render_template = mocker.patch("weko_accounts.views.render_template",
                                         return_value=make_response())
     res = client.get(url)
-    mock_render_template.assert_called_with('weko_accounts/login_shibuser_pattern_1.html',
-                                            module_name="WEKO-Accounts")
+    mock_render_template.assert_called_with(
+        'weko_accounts/login_shibuser_pattern_1.html',
+        module_name="WEKO-Accounts",
+        return_url='http://test_server.localdomain/secure/login.py',
+        sp_entityID='https://localhost/shibboleth-sp',
+        sp_handlerURL='https://localhost/Shibboleth.sso'
+    )
+
 
 #def shib_logout():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_logout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1240,6 +1248,7 @@ def test_shib_logout(client, users, mocker):
         mocker.patch("weko_accounts.views.ShibUser.shib_user_logout")
         res = client.get(url_for("weko_accounts.shib_logout"))
         assert res.data == bytes("logout success","utf-8")
+
 
 # def find_user_by_email(shib_attributes):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_find_user_by_email -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -1252,3 +1261,13 @@ def test_find_user_by_email(app, users):
 
         user = find_user_by_email({"shib_mail": "invalid.email@nii.ac.jp"})
         assert user is None
+
+
+# def urlencode(value):
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_urlencode -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_urlencode(app):
+    app.jinja_env.filters["urlencode"] = urlencode
+    # test urlencode
+    template = app.jinja_env.from_string('{{"http://localhost:5000/weko/accounts/shib/login?SHIB_ATTR_SESSION_ID=1111&next=/next_page"|urlencode}}')
+    actual = template.render()
+    assert actual == "http%3A%2F%2Flocalhost%3A5000%2Fweko%2Faccounts%2Fshib%2Flogin%3FSHIB_ATTR_SESSION_ID%3D1111%26next%3D%2Fnext_page"

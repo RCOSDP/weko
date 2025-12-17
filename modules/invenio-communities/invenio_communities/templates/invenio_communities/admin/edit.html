@@ -124,6 +124,8 @@
     <script>
       $(document).ready(function(){
           $("#id").prop('readonly', true)
+          $("#title").prop('placeholder', 'Please enter title (maximum characters:255)')
+          $("#title").prop('maxlength', 255)
           $("#cnri").prop('readonly', true)
           $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
       });
@@ -131,8 +133,10 @@
   {% else %}
     <script>
       $(document).ready(function(){
-          $("#id").prop('placeholder', 'Please select ID')
+          $("#id").prop('placeholder', 'Please enter ID (maximum characters:100)')
           $("#id").prop('maxlength', 100)
+          $("#title").prop('placeholder', 'Please enter title (maximum characters:255)')
+          $("#title").prop('maxlength', 255)
           $("#cnri").prop('readonly', true)
           $("#thumbnail").prop('accept', "image/png, image/jpeg, image/jpg,")
       });

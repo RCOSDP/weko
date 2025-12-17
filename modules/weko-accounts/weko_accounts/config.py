@@ -122,26 +122,26 @@ WEKO_ACCOUNTS_GENERAL_ROLE = 'Contributor'
 """Default role."""
 
 WEKO_ACCOUNTS_GAKUNIN_ROLE = {
-  'defaultRole': 'Contributor',
-  'organizationName': []
+    'defaultRole': 'Contributor',
+    'organizationName': []
 }
 """Gakunin Default role."""
 
 WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE = {
-  'defaultRole': 'Repository Administrator',
-  'organizationName': []
+    'defaultRole': 'Repository Administrator',
+    'organizationName': []
 }
 """Orthros (Inside) Default role."""
 
 WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE = {
-  'defaultRole': 'Community Administrator',
-  'organizationName': []
+    'defaultRole': 'Community Administrator',
+    'organizationName': []
 }
 """Orthros (Outside) Default role."""
 
 WEKO_ACCOUNTS_EXTRA_ROLE = {
-  'defaultRole': 'None', # ロール無
-  'organizationName': []
+    'defaultRole': 'None',  # ロール無
+    'organizationName': []
 }
 """Extra Default role."""
 
@@ -192,7 +192,7 @@ WEKO_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 """Default rate limit per endpoint for one user in the WEKO API."""
 
 
-WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = False
+WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = True
 """Skip shibboleth confirmation page."""
 
 WEKO_ACCOUNTS_IDP_ENTITY_ID = ''
@@ -205,8 +205,10 @@ WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING = {}
 #}
 
 WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS = False
+"""Bind Gakunin mAP groups to WEKO groups."""
 
 WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX = "_gakunin_groups"
+"""Suffix for Gakunin group names."""
 
 WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "prefix":"jc",
@@ -218,6 +220,7 @@ WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
         "contributor":"Contributor",
     }
 }
+"""Patterns for Gakunin group names."""
 
 WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION =False
 """閲覧権限のデフォルト権限を設定する"""

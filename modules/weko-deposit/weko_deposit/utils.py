@@ -18,12 +18,14 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+import traceback
+from sqlalchemy.orm.exc import NoResultFound
+from flask import current_app
 from .tasks import extract_pdf_and_update_file_contents
 from .api import WekoDeposit
 import pypdfium2
 import os
 import subprocess
-
 
 def update_pdf_contents_es(record_ids):
     """register the contents of the record PDF file in elasticsearch
@@ -32,9 +34,13 @@ def update_pdf_contents_es(record_ids):
     """
     deposits = WekoDeposit.get_records(record_ids)
     for dep in deposits:
-        file_infos = dep.get_pdf_info()
-        extract_pdf_and_update_file_contents.apply_async((file_infos, str(dep.id)))
-
+        try:
+            file_infos = dep.get_pdf_info()
+            extract_pdf_and_update_file_contents.apply_async((
+                file_infos, str(dep.id)))
+        except NoResultFound:
+            current_app.logger.error(f"Record with UUID: {dep.id} was not found in the item_metadata table.")
+            traceback.print_exc()
 
 def extract_text_from_pdf(filepath, max_size):
     """Read PDF file and extract text.
@@ -70,7 +76,6 @@ def extract_text_from_pdf(filepath, max_size):
             reader.close()
 
     return data
-
 
 def extract_text_with_tika(filepath, max_size):
     """Read non-PDF file and extract text.

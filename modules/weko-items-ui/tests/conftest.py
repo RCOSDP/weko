@@ -52,6 +52,7 @@ from invenio_deposit.config import (
 )
 from invenio_files_rest.models import Location, Bucket,ObjectVersion
 from invenio_records_files.api import RecordsBuckets
+from invenio_records_ui import InvenioRecordsUI
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.config import FILES_REST_STORAGE_CLASS_LIST
 from invenio_files_rest.models import Location
@@ -71,7 +72,8 @@ from invenio_stats import InvenioStats
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
-from weko_admin.models import SessionLifetime,RankingSettings,AdminSettings
+from weko_admin.models import SessionLifetime,RankingSettings,Identifier,AdminSettings
+from weko_accounts import WekoAccounts
 from weko_deposit import WekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as aWekoDeposit
@@ -158,10 +160,33 @@ def base_app(instance_path):
         WEKO_PERMISSION_ROLE_COMMUNITY=["Community Administrator"],
         THEME_SITEURL="https://localhost",
         WEKO_THEME_DEFAULT_COMMUNITY="Root Index",
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
+        WEKO_SCHEMA_DDI_SCHEMA_NAME = 'ddi_mapping',
+        WEKO_SCHEMA_VERSION_TYPE={
+            "modified": "oaire:versiontype",
+            "original": "oaire:version"
+        },
+        WEKO_SCHEMA_PUBLISHER_TYPE={
+            "modified": "jpcoar:publisher_jpcoar",
+            "original": "jpcoar:publisher"
+        },
+        WEKO_SCHEMA_DATE_TYPE={
+            "modified": "dcterms:date_dcterms",
+            "original": "dcterms:date"
+        },
+        WEKO_SCHEMA_UI_LIST_SCHEME=[
+            'e-Rad', 'e-Rad_Researcher','NRID', 'ORCID', 'ISNI', 'VIAF', 'AID',
+            'kakenhi', 'Ringgold', 'GRID', 'ROR'
+        ],
+        WEKO_SCHEMA_UI_LIST_SCHEME_AFFILIATION = [
+            'ISNI', 'kakenhi', 'Ringgold', 'GRID','ROR'
+        ],
         #  WEKO_ITEMS_UI_BASE_TEMPLATE = 'weko_items_ui/base.html',
         #  WEKO_ITEMS_UI_INDEX_TEMPLATE= 'weko_items_ui/item_index.html',
         CACHE_TYPE="redis",
+        CACHE_REDIS_HOST="redis",
         ACCOUNTS_SESSION_REDIS_DB_NO=1,
+        WEKO_SCHEMA_CACHE_PREFIX="cache_{schema_name}",
         REDIS_PORT="6379",
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
@@ -207,7 +232,7 @@ def base_app(instance_path):
         EMAIL_DISPLAY_FLG = True,
         SEARCH_UI_SEARCH_INDEX="test-weko",
         WEKO_USERPROFILES_GENERAL_ROLE=WEKO_USERPROFILES_GENERAL_ROLE,
-        CACHE_REDIS_DB = 0,
+        CACHE_REDIS_DB = 2,
         WEKO_DEPOSIT_ITEMS_CACHE_PREFIX=WEKO_DEPOSIT_ITEMS_CACHE_PREFIX,
         INDEXER_DEFAULT_DOCTYPE=INDEXER_DEFAULT_DOCTYPE,
         INDEXER_FILE_DOC_TYPE=INDEXER_FILE_DOC_TYPE,
@@ -226,8 +251,6 @@ def base_app(instance_path):
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator",
         WEKO_ADMIN_PERMISSION_ROLE_REPO = "Repository Administrator",
         WEKO_AUTHORS_ES_INDEX_NAME='test-authors',
-        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME='jpcoar_v1_mapping',
-        WEKO_SCHEMA_DDI_SCHEMA_NAME='ddi_mapping',
     )
 
     app_.config['WEKO_SEARCH_REST_ENDPOINTS']['recid']['search_index']='test-weko'
@@ -246,11 +269,13 @@ def base_app(instance_path):
     InvenioAccess(app_)
     InvenioPIDStore(app_)
     InvenioRecords(app_)
+    InvenioRecordsUI(app_)
     InvenioFilesREST(app_)
     InvenioJSONSchemas(app_)
     InvenioSearch(app_)
     InvenioStats(app_)
     Menu(app_)
+    WekoAccounts(app_)
     WekoRecords(app_)
     WekoDeposit(app_)
     WekoWorkflow(app_)
@@ -303,34 +328,20 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    else:
+        db_.drop_all()
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
 
 @pytest.fixture()
-def esindex(app,db_records):
+def esindex(app,db_records, es):
     index_name = app.config["INDEXER_DEFAULT_INDEX"]
-    alias_name = "test-weko"
-
-    with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
-
-    search = LocalProxy(lambda: app.extensions["invenio-search"])
-
-    with app.test_request_context():
-        search.client.indices.create(index=index_name, body=mapping, ignore=[400])
-        search.client.indices.put_alias(index=index_name, name=alias_name)
-        # print(current_search_client.indices.get_alias())
 
     for depid, recid, parent, doi, record, item in db_records:
-        search.client.index(index=index_name, doc_type='item-v1.0.0', id=record.id, body=record, refresh='true')
-
-    yield search
-
-    with app.test_request_context():
-        search.client.indices.delete_alias(index=index_name, name=alias_name)
-        search.client.indices.delete(index=index_name, ignore=[400, 404])
+        es.index(index=index_name, doc_type='item-v1.0.0', id=record.id, body=record, refresh='true')
+    return es
 
 @pytest.fixture()
 def redis_connect(app):
@@ -343,24 +354,28 @@ def without_remove_session(app):
         yield
 
 @pytest.fixture()
-def esindex2(app):
+def es(app):
     from invenio_search import current_search_client as client
-    index_name = app.config["SEARCH_UI_SEARCH_INDEX"]
-    alias_name = "test-items-alias"
-
+    client.indices.delete(index="test-*")
+    record_index_name = app.config["INDEXER_DEFAULT_INDEX"]
+    record_alias_name = app.config["SEARCH_UI_SEARCH_INDEX"]
+    author_index_name = "{}-authors-author-v1.0.0".format(
+            'test'
+        )
+    author_alias_name = app.config["WEKO_AUTHORS_ES_INDEX_NAME"]
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
-        mapping = json.load(f)
-
+        record_mapping = json.load(f)
+    with open("tests/data/mappings/author-v1.0.0.json","r") as f:
+        author_mapping = json.load(f)
     with app.test_request_context():
-        client.indices.create(index=index_name, body=mapping, ignore=[400])
-        client.indices.put_alias(index=index_name, name=alias_name)
+        client.indices.create(index=record_index_name, body=record_mapping, ignore=[400])
+        client.indices.put_alias(index=record_index_name, name=record_alias_name)
+        client.indices.create(index=author_index_name, body=author_mapping, ignore=[400])
+        client.indices.put_alias(index=author_index_name, name=author_alias_name)
 
     yield client
 
-    with app.test_request_context():
-        client.indices.delete_alias(index=index_name, name=alias_name)
-        client.indices.delete(index=index_name, ignore=[400, 404])
-
+    client.indices.delete(index="test-*")
 
 @pytest.fixture()
 def users(app, db):
@@ -382,9 +397,9 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
+        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
+        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
 
     role_count = Role.query.filter_by(name="System Administrator").count()
     if role_count != 1:
@@ -491,6 +506,94 @@ def users(app, db):
         {"email": user.email, "id": user.id, "obj": user},
     ]
 
+@pytest.fixture()
+def users_1(app, db):
+    """Create users."""
+    ds = app.extensions["invenio-accounts"].datastore
+    user_count = User.query.filter_by(email="user@test.org").count()
+    if user_count != 1:
+        sysadmin = create_test_user(email="wekosoftware@ivis.co.jp")
+        repoadmin = create_test_user(email="repoadmin@example.org")
+    else:
+        sysadmin = User.query.filter_by(email="wekosoftware@ivis.co.jp").first()
+        repoadmin = User.query.filter_by(email="repoadmin@example.org").first()
+
+    role_count = Role.query.filter_by(name="System Administrator").count()
+    if role_count != 1:
+        sysadmin_role = ds.create_role(name="System Administrator")
+        repoadmin_role = ds.create_role(name="Repository Administrator")
+    else:
+        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
+        repoadmin_role = Role.query.filter_by(name="Repository Administrator").first()
+
+    # Assign access authorization
+    with db.session.begin_nested():
+        action_users = [
+            ActionUsers(action="superuser-access", user=sysadmin),
+        ]
+        db.session.add_all(action_users)
+        action_roles = [
+            ActionRoles(action="superuser-access", role=sysadmin_role),
+            ActionRoles(action="admin-access", role=repoadmin_role),
+            ActionRoles(action="schema-access", role=repoadmin_role),
+            ActionRoles(action="index-tree-access", role=repoadmin_role),
+            ActionRoles(action="indextree-journal-access", role=repoadmin_role),
+            ActionRoles(action="item-type-access", role=repoadmin_role),
+            ActionRoles(action="item-access", role=repoadmin_role),
+            ActionRoles(action="files-rest-bucket-update", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-delete-version", role=repoadmin_role),
+            ActionRoles(action="files-rest-object-read", role=repoadmin_role),
+            ActionRoles(action="search-access", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+            ActionRoles(action="download-original-pdf-access", role=repoadmin_role),
+            ActionRoles(action="author-access", role=repoadmin_role),
+            ActionRoles(action="items-autofill", role=repoadmin_role),
+            ActionRoles(action="stats-api-access", role=repoadmin_role),
+            ActionRoles(action="read-style-action", role=repoadmin_role),
+            ActionRoles(action="update-style-action", role=repoadmin_role),
+            ActionRoles(action="detail-page-acces", role=repoadmin_role),
+        ]
+        db.session.add_all(action_roles)
+        ds.add_role_to_user(sysadmin, sysadmin_role)
+        ds.add_role_to_user(repoadmin, repoadmin_role)
+
+    return [
+        {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
+        {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin}
+    ]
+
+@pytest.fixture()
+def identifier(db):
+    identifier_info = {
+        "Root Index":{
+            "JaLC": "1234",
+            "Crossref": "2345",
+            "DataCite": "3456",
+            "NDL JaLC": "4567",
+        }
+    }
+    identifiers = []
+    for index, info in identifier_info.items():
+        identifiers.append(Identifier(
+            repository=index,
+            jalc_flag=True,
+            jalc_crossref_flag=True,
+            jalc_datacite_flag=True,
+            ndl_jalc_flag=True,
+            jalc_doi=info["JaLC"],
+            jalc_crossref_doi=info["Crossref"],
+            jalc_datacite_doi=info["DataCite"],
+            ndl_jalc_doi=info["NDL JaLC"],
+            suffix="",
+            created_userId=1,
+            created_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+            updated_userId=1,
+            updated_date=datetime.strptime("2018/07/28 0:00:00", "%Y/%m/%d %H:%M:%S"),
+        ))
+    db.session.add_all(identifiers)
+    db.session.commit()
+    return identifier_info
 
 
 @pytest.fixture()
@@ -527,6 +630,8 @@ def db_oaischema(app, db):
     with db.session.begin_nested():
         db.session.add(oaischema)
 
+    return oaischema
+
 
 @pytest.fixture()
 def db_userprofile(app, db):
@@ -537,6 +642,7 @@ def db_userprofile(app, db):
             p = UserProfile()
             p.user_id = user.id
             p._username = (user.email).split("@")[0]
+            p._displayname = (user.email).split("@")[0]
             profiles[user.email] = p
             db.session.add(p)
     return profiles
@@ -709,6 +815,48 @@ def db_itemtype5(app, db):
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
 
 @pytest.fixture()
+def db_itemtype6(app, db):
+    item_type_name = ItemTypeName(id=6,
+        name="テストアイテムタイプ6", has_site_license=True, is_active=True
+    )
+    item_type_schema = dict()
+    with open("tests/data/itemtype5_schema.json", "r") as f:
+        item_type_schema = json.load(f)
+
+    item_type_form = dict()
+    with open("tests/data/itemtype5_form.json", "r") as f:
+        item_type_form = json.load(f)
+
+    item_type_render = dict()
+    with open("tests/data/itemtype5_render.json", "r") as f:
+        item_type_render = json.load(f)
+
+    item_type_mapping = dict()
+    with open("tests/data/itemtype5_mapping.json", "r") as f:
+        item_type_mapping = json.load(f)
+
+    item_type = ItemType(
+        id=6,
+        name_id=6,
+        harvesting_type=True,
+        schema=item_type_schema,
+        form=item_type_form,
+        render=item_type_render,
+        tag=1,
+        version_id=1,
+        is_deleted=False,
+    )
+
+    item_type_mapping = ItemTypeMapping(id=6,item_type_id=6, mapping=item_type_mapping)
+
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+        db.session.add(item_type)
+        db.session.add(item_type_mapping)
+
+    return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
+
+@pytest.fixture()
 def db_itemtype(app, db):
     item_type_name = ItemTypeName(id=1,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
@@ -850,7 +998,7 @@ def db_records_researchmap(db ,instance_path,users,db_author ,db_activity ,db_ad
     # with db.session.begin_nested():
     #     depid, recid, parent, doi, record, item = db_records[0]
     #     object_uuid = recid.object_uuid
-    #     # PersistentIdentifier.create('recid',1,None,object_type='rec',object_uuid=object_uuid)   
+    #     # PersistentIdentifier.create('recid',1,None,object_type='rec',object_uuid=object_uuid)
     #     # db.session.add(ItemMetadata(id=object_uuid , item_type_id=1 ,version_id=uuid.uuid4()))
     # db.session.commit()
 
@@ -1020,7 +1168,7 @@ def db_workflow(app, db, db_itemtype, users):
         activity_community_id=3,
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1082,7 +1230,7 @@ def db_activity(db, db_records, db_itemtype, db_workflow, users):
         ),
         activity_confirm_term_of_use=True,
         title="test",
-        shared_user_id=-1,
+        shared_user_ids=[],
         extra_info={},
         action_order=6,
     )
@@ -1123,7 +1271,7 @@ def db_author(db):
         db.session.add(affiliation_prefix3)
         db.session.add(affiliation_prefix4)
         db.session.add(author1)
-    
+
     return {"author_prefix":[prefix1,prefix2,prefix3,prefix4,prefix5,prefix6],"affiliation_prefix":[affiliation_prefix1,affiliation_prefix2,affiliation_prefix3,affiliation_prefix4],"author":[author1]}
 
 @pytest.fixture()
@@ -1156,7 +1304,7 @@ def db_ranking(db):
 
 @pytest.fixture()
 def db_itemtype_15(app, db):
-    item_type_name = ItemTypeName(id=1,
+    item_type_name = ItemTypeName(id=15,
         name="テストアイテムタイプ", has_site_license=True, is_active=True
     )
     item_type_schema = {
@@ -22358,8 +22506,8 @@ def db_itemtype_15(app, db):
         },
     }
     item_type = ItemType(
-        id=1,
-        name_id=1,
+        id=15,
+        name_id=15,
         harvesting_type=True,
         schema=item_type_schema,
         form=item_type_form,
@@ -22369,7 +22517,7 @@ def db_itemtype_15(app, db):
         is_deleted=False,
     )
 
-    item_type_mapping = ItemTypeMapping(id=1,item_type_id=1, mapping=item_type_mapping)
+    item_type_mapping = ItemTypeMapping(id=15,item_type_id=15, mapping=item_type_mapping)
 
     with db.session.begin_nested():
         db.session.add(item_type_name)
@@ -22380,7 +22528,7 @@ def db_itemtype_15(app, db):
 
 
 @pytest.fixture()
-def records(db, esindex2, instance_path):#, indextree, location, itemtypes, db_oaischema):
+def records(db, es, instance_path):#, indextree, location, itemtypes, db_oaischema):
     indexer = WekoIndexer()
     indexer.get_es_index()
 
@@ -22510,7 +22658,7 @@ def make_record(db, indexer, i, files, thumbnail=None):
         "item_type_id": "1",
         "publish_date": "2024-01-31",
         "publish_status": "0",
-        "weko_shared_id": -1,
+        "weko_shared_ids": [],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -23308,3 +23456,11 @@ def db_approval_action(db, db_workflow, users):
         "flow_action": flow_action,
         "flow_action_role": flow_action_role,
     }
+
+@pytest.fixture()
+def restricted_settings(db):
+    AdminSettings.update(
+        "restricted_access",
+        {"item_application": {"application_item_types": [1], "item_application_enable": True}, "display_request_form": True},
+        id=10
+    )

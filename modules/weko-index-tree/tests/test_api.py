@@ -84,19 +84,22 @@ def test_indexes_create(app, db, users, test_indices):
 
             with patch("weko_index_tree.api.db.session.commit", side_effect=Exception):
                 res = Indexes.create(3, {
-                    'id': 33,
+                    'id': 41,
                     'parent': 3,
                     'value': 'Create index test3',
                 })
                 assert res==False
 
             with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, 'uix_position')):
-                res = Indexes.create(3, {
-                    'id': 33,
-                    'parent': 3,
-                    'value': 'Create index test3',
-                })
-                assert res==False
+                with patch("weko_logging.activity_logger.UserActivityLogger.error") as mock_log_err:
+                    mock_log_err.return_value = None
+                    res = Indexes.create(3, {
+                        'id': 41,
+                        'parent': 3,
+                        'value': 'Create index test3',
+                    })
+                    assert res==False
+                    mock_log_err.assert_called_once()
 
             res = Indexes.create(10, {
                 'id': 101,
@@ -113,13 +116,14 @@ def test_indexes_create(app, db, users, test_indices):
 
             app.config['WEKO_HANDLE_ALLOW_REGISTER_CNRI'] = True
             app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = '/code/modules/resources/handle_creds.json'
-            with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
-                res = Indexes.create(2, {
-                    'id': 1044,
-                    'parent': 104,
-                    'value': 'Create index test10',
-                })
-            assert res==True
+            with app.test_request_context('/admin/'):
+                with patch("weko_handle.api.Handle.register_handle", return_value='1234567890/1'):
+                    res = Indexes.create(2, {
+                        'id': 1044,
+                        'parent': 104,
+                        'value': 'Create index test10',
+                    })
+                    assert res==True
 
             with patch("weko_handle.api.Handle.register_handle", return_value= None):
                 res = Indexes.create(2, {
@@ -351,12 +355,12 @@ def test_indexes_move(app, db, users, communities, test_indices):
                 res = Indexes.move(22, **_data)
                 assert res['is_ok']==False
                 assert res['msg']=="The index cannot be kept private because there are links from items that have a DOI."
-            
+
             _index = dict(Indexes.get_index(1))
             assert _index["parent"] == 0
             assert _index["position"] == 0
 
-            # 
+            #
             _data = {
                 'pre_parent': "0",
                 'parent': "0",
@@ -375,7 +379,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
             res = Indexes.move(1, **_data)
             assert res['is_ok']==True
             assert res['msg']==''
-            
+
             _index = dict(Indexes.get_index(1))
             assert _index["parent"] == 0
             assert _index["position"] == 3
@@ -389,7 +393,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
             res = Indexes.move(1, **_data)
             assert res['is_ok']==True
             assert res['msg']==''
-            
+
             _index = dict(Indexes.get_index(1))
             assert _index["parent"] == 0
             assert _index["position"] == 0
@@ -422,7 +426,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
                     }
                     res = Indexes.move(1, **_data)
                     assert res['is_ok']==False
-            
+
             with patch("weko_index_tree.api.db.session.commit", side_effect=IntegrityError(None, None, None)):
                 # move index 1 Exception
                 _data = {
@@ -485,7 +489,7 @@ def test_indexes_move(app, db, users, communities, test_indices):
                     res = Indexes.move(3, **_data)
                     assert res['is_ok']==True
                     assert res['msg']==''
-                    
+
                     _index = dict(Indexes.get_index(3))
                     assert _index["parent"] == 2
                     assert _index["position"] == 1
@@ -611,7 +615,7 @@ def test_update_set_info(i18n_app, db, users, test_indices):
     index_info["index_name"] = "TEST"
     with patch("weko_index_tree.tasks.update_oaiset_setting.delay",side_effect = MagicMock()):
         Indexes.update_set_info(index_info)
-    
+
 #.tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_filter_roles -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_filter_roles(app, mocker):
     with app.app_context():
@@ -642,18 +646,18 @@ def test_filter_roles(app, mocker):
         filtered_roles, excluded_roles = Indexes.filter_roles(roles)
 
         # 結果の検証
-        assert len(filtered_roles) == 2
-        assert filtered_roles[0]["name"] == "key_value_role"
-        assert filtered_roles[1]["name"] == "group_value_role"
-        assert len(excluded_roles) == 8
+        assert len(filtered_roles) == 1
+        assert filtered_roles[0]["name"] == "group_value_role"
+        assert len(excluded_roles) == 9
         assert excluded_roles[0]["name"] == "Contributor"
         assert excluded_roles[1]["name"] == "Community Administrator"
         assert excluded_roles[2]["name"] == "Repository Administrator"
         assert excluded_roles[3]["name"] == "System Administrator"
-        assert excluded_roles[4]["name"] == "group_key_test_role"
+        assert excluded_roles[4]["name"] == "key_value_role"
         assert excluded_roles[5]["name"] == "Authenticated User"
         assert excluded_roles[6]["name"] == "Guest"
         assert excluded_roles[7]["name"] == "General"
+        assert excluded_roles[8]["name"] == "group_key_test_role"
 
         # リスト以外の値を渡すテストケース
         non_list_value = "not_a_list"
@@ -672,6 +676,34 @@ def test_filter_roles(app, mocker):
 
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_Indexes_get_public_indexes_list -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_Indexes_get_public_indexes_list(i18n_app, db):
+    def make_index(id, parent, position, index_name, index_name_english,public_state,public_date):
+        return Index(
+            id=id,
+            parent=parent,position=position,
+            index_name=index_name,index_name_english=index_name_english,
+            public_state=public_state,public_date=public_date
+        )
+
+    with db.session.begin_nested():
+        db.session.add(make_index(1,0,0,'公開','publish',True,None))
+        db.session.add(make_index(11,1,0,'公開_公開','publish',True,None))
+        db.session.add(make_index(12,1,1,'公開_未公開','publish_notpublish',False,None))
+        db.session.add(make_index(13,1,2,'公開_未来公開','publish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.add(make_index(2,0,1,'非公開','notpublish',False,None))
+        db.session.add(make_index(21,2,0,'非公開_公開','notpublish_publish',True,None))
+        db.session.add(make_index(22,2,1,'非公開_非公開','notpublish_notpublish',False,None))
+        db.session.add(make_index(23,2,2,'非公開_未来公開','notpublish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.add(make_index(3,0,2,'未来公開','feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.add(make_index(31,3,0,'未来公開_公開','feature_publish',True,None))
+        db.session.add(make_index(32,3,1,'未来公開_非公開','feature_notpublish',False,None))
+        db.session.add(make_index(33,3,2,'未来公開_未来公開','feature_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+    db.session.commit()
+
+    result = Indexes.get_public_indexes_list()
+    assert result == ["1", "11"]
+
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_indexes_get_index_tree -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, test_indices, communities, mocker):
     os.environ['INVENIO_WEB_HOST_NAME'] = "test"
@@ -717,6 +749,25 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_browsing_tree(1)
         assert len(res)==1
 
+        # get_browsing_reset_tree
+        with patch("weko_index_tree.api.RedisConnection", side_effect=RedisError):
+            res = Indexes.get_browsing_reset_tree(0)
+            assert len(res)==3
+
+        with patch("weko_index_tree.api.RedisConnection", side_effect=KeyError):
+            res = Indexes.get_browsing_reset_tree(0)
+            assert len(res)==3
+
+        res = Indexes.get_browsing_reset_tree(0)
+        assert len(res)==3
+        assert len(res[2].get("children"))==0
+        assert "browsing_group" not in res[2]
+        assert "browsing_role" not in res[2]
+        assert "contribute_group" not in res[2]
+        assert "contribute_role" not in res[2]
+        assert "public_date" not in res[2]
+        assert "public_state" not in res[2]
+
         # get_more_browsing_tree
         res = Indexes.get_more_browsing_tree()
         assert len(res)==3
@@ -736,9 +787,32 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_browsing_tree_ignore_more(1)
         assert len(res)==1
 
+        # get_browsing_reset_tree_ignore_more
+        with patch("weko_index_tree.api.RedisConnection", side_effect=RedisError):
+            res = Indexes.get_browsing_reset_tree_ignore_more(0)
+            assert len(res)==3
+
+        with patch("weko_index_tree.api.RedisConnection", side_effect=KeyError):
+            res = Indexes.get_browsing_reset_tree_ignore_more(0)
+            assert len(res)==3
+
+        res = Indexes.get_browsing_reset_tree_ignore_more(0)
+        assert len(res)==3
+        assert len(res[2].get("children"))==0
+        assert "browsing_group" not in res[2]
+        assert "browsing_role" not in res[2]
+        assert "contribute_group" not in res[2]
+        assert "contribute_role" not in res[2]
+        assert "public_date" not in res[2]
+        assert "public_state" not in res[2]
+
         # get_browsing_tree_paths
         res = Indexes.get_browsing_tree_paths(None)
         assert res==['1', '1/11', '2', '2/21', '2/22', '3']
+
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            res = Indexes.get_browsing_tree_paths(None)
+            assert res==['1', '1/11', '2', '2/21', '2/22', '3', '3/31']
 
         res = Indexes.get_browsing_tree_paths(11)
         assert res==['11']
@@ -771,9 +845,9 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
 
         # get_index_with_role
         res = Indexes.get_index_with_role(1)
-        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [],'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 1_ja', 'index_link_name_english': 'Test index link 1_en', 'index_name': 'テストインデックス 1', 'index_name_english': 'Test index 1', 'is_deleted': False, 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False, 'cnri': '', 'index_url': ''}
+        assert res=={'biblio_flag': False, 'browsing_group': {'allow': [],'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': True, 'display_format': '1', 'display_no': 0, 'harvest_public_state': True, 'harvest_spec': '', 'id': 1, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 1_ja', 'index_link_name_english': 'Test index link 1_en', 'index_name': 'テストインデックス 1', 'index_name_english': 'Test index 1', 'is_deleted': False, 'more_check': False, 'online_issn': '1234-5678', 'owner_user_id': 0, 'parent': 0, 'position': 0, 'public_date': '20220101', 'public_state': True, 'recursive_browsing_group': True, 'recursive_browsing_role': True, 'recursive_contribute_group': True, 'recursive_contribute_role': True, 'recursive_coverpage_check': True, 'recursive_public_state': False, 'rss_status': False, 'cnri': '', 'index_url': ''}
         res = Indexes.get_index_with_role(22)
-        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': [{'id': '6gr', 'name': 'Original Role'}]}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 22_ja', 'index_link_name_english': 'Test index link 22_en', 'index_name': 'テストインデックス 22', 'index_name_english': 'Test index 22', 'is_deleted': False, 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False, 'cnri': '', 'index_url': ''}
+        assert res=={'biblio_flag': True, 'browsing_group': {'allow': [], 'deny': []}, 'browsing_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 4, 'name': 'Community Administrator'}, {'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}, {'id': -98, 'name': 'Authenticated User'}]}, 'comment': '', 'contribute_group': {'allow': [], 'deny': []}, 'contribute_role': {'allow': [{'id': 3, 'name': 'Contributor'}, {'id': 4, 'name': 'Community Administrator'}, {'id': -98, 'name': 'Authenticated User'}, {'id': -99, 'name': 'Guest'}], 'deny': [{'id': 5, 'name': 'General'}, {'id': 6, 'name': 'Original Role'}]}, 'coverpage_state': False, 'display_format': '1', 'display_no': 1, 'harvest_public_state': True, 'harvest_spec': '', 'id': 22, 'image_name': '', 'index_link_enabled': True, 'index_link_name': 'Test index link 22_ja', 'index_link_name_english': 'Test index link 22_en', 'index_name': 'テストインデックス 22', 'index_name_english': 'Test index 22', 'is_deleted': False, 'more_check': False, 'online_issn': '', 'owner_user_id': 0, 'parent': 2, 'position': 1, 'public_date': '', 'public_state': True, 'recursive_browsing_group': False, 'recursive_browsing_role': False, 'recursive_contribute_group': False, 'recursive_contribute_role': False, 'recursive_coverpage_check': False, 'recursive_public_state': True, 'rss_status': False, 'cnri': '', 'index_url': ''}
 
         with patch("weko_index_tree.api.Indexes.get_account_role", return_value=[]):
             res = Indexes.get_index_with_role(1)
@@ -782,7 +856,7 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         with patch("weko_groups.models.Group.query") as mock_query:
             mock_query.all.return_value = [Group(id="g1", name="g1"), Group(id="g2", name="g2"), Group(id="g3", name="g3")]
             res = Indexes.get_index_with_role(1)
-            assert res["browsing_group"]==res["contribute_group"]=={'allow': [{'id': "g1", 'name': 'g1'}, {'id': "g2", 'name': 'g2'}], 'deny': [{'id': "g3", 'name': 'g3'} ,{'id': '6gr', 'name': 'Original Role'}]}
+            assert res["browsing_group"]==res["contribute_group"]=={'allow': [{'id': "g1", 'name': 'g1'}, {'id': "g2", 'name': 'g2'}], 'deny': [{'id': "g3", 'name': 'g3'}]}
 
         # get_index
         res = Indexes.get_index(2)
@@ -1101,7 +1175,7 @@ def test_get_index_with_role_group(app, db, mocker):
         index_data = {
             'id': 1,
             'browsing_role': '3,-99,9',
-            'contribute_role': '3,4,-98,-99',
+            'contribute_role': '3,-99,9',
             'browsing_group': '1,2',
             'contribute_group': '1,2',
             'public_date': datetime(2022, 1, 1),
@@ -1117,7 +1191,7 @@ def test_get_index_with_role_group(app, db, mocker):
             {"id": 6, "name": "group_key_test_role"},
             {"id": 7, "name": "key_value_role"},
             {"id": 8, "name": "group_value_role"},
-            {"id": 9, "name": "jc_xxx_groups_user1"},
+            {"id": 9, "name": "group_xxx_key_user1"},
             {"id": 10, "name": "System Administrator"},
         ]
         mocker.patch.object(Indexes, 'get_account_role', return_value=roles)
@@ -1133,10 +1207,10 @@ def test_get_index_with_role_group(app, db, mocker):
         result = Indexes.get_index_with_role(1)
 
         # 結果の検証
-        assert result['browsing_group']['allow'] ==  [{'id': '9gr', 'name': 'jc_xxx_groups_user1'}]
-        assert result['browsing_group']['deny'] == [{'id': '7gr', 'name': 'key_value_role'},{'id': '8gr', 'name': 'group_value_role'}]
-        assert result['contribute_group']['allow'] ==  [{'id': '9gr', 'name': 'jc_xxx_groups_user1'}]
-        assert result['contribute_group']['deny'] == [{'id': '7gr', 'name': 'key_value_role'},{'id': '8gr', 'name': 'group_value_role'}]
+        assert result['browsing_group']['allow'] ==  []
+        assert result['browsing_group']['deny'] == [{'id': '8gr', 'name': 'group_value_role'}]
+        assert result['contribute_group']['allow'] ==  []
+        assert result['contribute_group']['deny'] == [{'id': '8gr', 'name': 'group_value_role'}]
 
         # 結果が空の場合のテストケース
         mocker.patch.object(Indexes, 'get_account_role', return_value=[])

@@ -321,6 +321,8 @@ class ShibUser(object):
 
         try:
             if current_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS']:
+                if self.shib_user:
+                    self.shib_user.shib_roles.clear()
                 roles_add = self._get_roles_to_add()
                 if not self._find_organization_name():
                     self._assign_roles_to_user(roles_add)
@@ -512,7 +514,14 @@ def get_user_info_by_role_name(role_name):
 
 
 def sync_shib_gakunin_map_groups():
-    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic."""
+    """Handle SHIB_BIND_GAKUNIN_MAP_GROUPS logic.
+
+    Get group identifier for Gakunin mAP from the Redis cache
+    and update the prefixed role accordingly.
+
+    Returns:
+        set[str]: Set of group identifiers in the Gakunin mAP from Redis cache.
+    """
     try:
         # Entity ID → Redisのキーに変換
         fqdn = create_fqdn_from_entity_id()
@@ -521,7 +530,15 @@ def sync_shib_gakunin_map_groups():
         # create Redis key
         redis_key = fqdn + suffix
         datastore = RedisConnection().connection(db=current_app.config['GROUP_INFO_REDIS_DB'])
-        map_group_list = set(id.decode('utf-8') for id in datastore.lrange(redis_key, 0, -1))
+        map_group_cache = datastore.hgetall(redis_key)
+        if not map_group_cache:
+            # key not found
+            return
+        map_group_list = {
+            group_id for group_id in
+            map_group_cache[b"groups"].decode("utf-8").split(",")
+            if group_id
+        }
 
         # get roles
         roles = Role.query.all()
@@ -531,13 +548,18 @@ def sync_shib_gakunin_map_groups():
             update_roles(map_group_list, roles)
     except KeyError as ke:
         current_app.logger.error(f"Missing key in request headers: {ke}")
+        traceback.print_exc()
         raise
     except redis.ConnectionError as rce:
         current_app.logger.error(f"Redis connection error: {rce}")
+        traceback.print_exc()
         raise
     except Exception as ex:
         current_app.logger.error(f"Unexpected error: {ex}")
+        traceback.print_exc()
         raise
+
+    return map_group_list
 
 
 def update_roles(map_group_list, roles, indices=[]):

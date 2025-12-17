@@ -36,6 +36,7 @@ from flask_babelex import gettext as _
 from flask_babelex import get_locale as get_current_locale
 from flask_login import current_user
 from marshmallow import ValidationError
+from sqlalchemy import or_
 from sqlalchemy.exc import SQLAlchemyError
 from werkzeug.exceptions import BadRequest
 from werkzeug.http import generate_etag
@@ -66,6 +67,7 @@ from .scopes import (
 )
 from .utils import (
     check_doi_in_index, check_index_permissions, can_admin_access_index,
+    delete_index_reset_trees_from_redis, delete_index_reset_ignore_more_trees_from_redis,
     is_index_locked, perform_delete_index, save_index_trees_to_redis, reset_tree
 )
 from .schema import IndexCreateRequestSchema, IndexUpdateRequestSchema
@@ -262,6 +264,21 @@ def create_blueprint(app, endpoints):
     return blueprint
 
 
+def json_serialize(obj):
+    """Serialize object to JSON.
+
+    Args:
+        obj: The object to serialize.
+
+    Returns:
+        str: The serialized JSON string.
+    """
+    if isinstance(obj, (datetime, date)):
+        return obj.strftime("%Y%m%d")
+    else:
+        return str(obj)
+
+
 class IndexActionResource(ContentNegotiatedMethodView):
     """Index create update delete view."""
 
@@ -317,7 +334,10 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 indexes = [i.id for i in Indexes.get_all_parent_indexes(index_id)]
                 comm_data = Community.query.filter(
                     Community.root_node_id.in_(indexes),
-                    Community.id_role.in_(role_ids)
+                    or_(
+                        Community.group_id.in_(role_ids),
+                        Community.id_role.in_(role_ids)
+                    )
                 ).all()
                 if comm_data:
                     can_edit = True
@@ -356,6 +376,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
+                delete_index_reset_trees_from_redis(lang_code)
+                delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
         return make_response(
             jsonify({'status': status, 'message': msg, 'errors': errors}),
@@ -423,6 +445,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                     save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
+                delete_index_reset_trees_from_redis(lang_code)
+                delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
         return make_response(jsonify(
             {'status': status, 'message': msg, 'errors': errors,
@@ -456,6 +480,8 @@ class IndexActionResource(ContentNegotiatedMethodView):
                 save_index_trees_to_redis(tree_ja, lang=lang_code)
             else:
                 save_index_trees_to_redis(tree, lang=lang_code)
+            delete_index_reset_trees_from_redis(lang_code)
+            delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
         return make_response(jsonify(
             {'status': 200, 'message': msg, 'errors': errors}), 200)
@@ -505,10 +531,31 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     if len(i['children']) > 0:
                         _check_edit_permission(is_admin, i['children'], can_edit_indexes)
 
+        def _is_decendent(index_node_id, possible_ancestor_ids):
+            """Check if the index_node_id is a descendant of any node in possible_ancestor_ids.
+            Args:
+                index_node_id (int): The ID of the index node to check.
+                possible_ancestor_ids (list): A list of possible ancestor node IDs.
+            Returns:
+                bool: True if index_node_id is a descendant of any node in possible_ancestor_ids, False otherwise.
+            """
+            target_node = self.record_class.get_index(index_node_id)
+            parent_node_id = target_node.parent
+            while parent_node_id is not None and parent_node_id != 0:
+                # If the parent node is one of possible ancestors, return True
+                if parent_node_id in possible_ancestor_ids:
+                    return True
+                # Move to the next parent node
+                target_node = self.record_class.get_index(parent_node_id)
+                if target_node is None:
+                    break
+                parent_node_id = target_node.parent
+            return False
+
         from invenio_communities.models import Community
         try:
             action = request.values.get('action')
-            comm_id = request.values.get('community')
+            comm_id = request.values.get('c')
 
             more_id_list = request.values.get('more_ids')
             more_ids = []
@@ -528,8 +575,10 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                     tree = self.record_class.get_contribute_tree(pid)
             elif action and 'browsing' in action and comm_id is None:
                 if more_id_list is None:
-                    tree = self.record_class.get_browsing_tree()
-
+                    if current_user and current_user.is_authenticated:
+                        tree = self.record_class.get_browsing_tree()
+                    else:
+                        tree = self.record_class.get_browsing_reset_tree()
                 else:
                     tree = self.record_class.get_more_browsing_tree(
                         more_ids=more_ids)
@@ -560,19 +609,29 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                             role_ids.append(role.id)
                 if role_ids:
                     from invenio_communities.models import Community
-                    comm_list = Community.query.filter(
-                        Community.group_id.in_(role_ids)
+                    communities = Community.get_by_user(
+                        role_ids, with_deleted=True
                     ).all()
+                    top_community_nodes = []
+                    if len (communities) < 2:
+                        top_community_nodes = communities
+                    else:
+                        for community in communities:
+                            possible_ancestor_ids = [
+                                c.root_node_id for c in communities
+                                if c.id != community.id
+                            ]
+                            if not _is_decendent(
+                                community.root_node_id, possible_ancestor_ids
+                            ):
+                                top_community_nodes.append(community)
+
                     check_list = []
-                    for comm in comm_list:
-                        indexes = [
-                            i.id for i in Indexes.get_all_parent_indexes(comm.root_node_id)
-                            if i.parent == 0
-                        ]
-                        for index_id in indexes:
-                            if index_id not in check_list:
-                                tree += self.record_class.get_index_tree(index_id)
-                                check_list.append(index_id)
+                    for comm in top_community_nodes:
+                        index_id = comm.root_node_id
+                        if index_id not in check_list:
+                            tree += self.record_class.get_index_tree(index_id)
+                            check_list.append(index_id)
 
             return make_response(jsonify(tree), 200)
         except Exception as ex:
@@ -614,6 +673,8 @@ class IndexTreeActionResource(ContentNegotiatedMethodView):
                         save_index_trees_to_redis(tree_ja, lang=lang_code)
                 else:
                     save_index_trees_to_redis(tree, lang=lang_code)
+                delete_index_reset_trees_from_redis(lang_code)
+                delete_index_reset_ignore_more_trees_from_redis(lang_code)
         return make_response(
             jsonify({'status': status, 'message': msg}), status)
 
@@ -723,7 +784,8 @@ class GetIndex(ContentNegotiatedMethodView):
             # Create Response
             res = Response(
                 response=json.dumps(
-                    result_tree, indent=indent, default=json_serialize),
+                    result_tree, indent=indent, default=json_serialize
+                ),
                 status=200,
                 content_type='application/json')
             res.set_etag(etag)
@@ -959,21 +1021,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         """Get index tree."""
-
-        def json_serialize(obj):
-            """Serialize object to JSON.
-
-            Args:
-                obj: The object to serialize.
-
-            Returns:
-                str: The serialized JSON string.
-            """
-            if isinstance(obj, (datetime, date)):
-                return obj.strftime("%Y%m%d")
-            else:
-                return str(obj)
-
         try:
             pid = kwargs.get('index_id')
 
@@ -1085,6 +1132,10 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 merged_children.append(merge_nodes(children_ja.get(cid), children_en.get(cid)))
             merged_node["children"] = merged_children
 
+            # Ensure public_date is empty string if None
+            if "public_date" in merged_node and merged_node["public_date"] is None:
+                merged_node["public_date"] = ""
+
             return merged_node
 
         return {"index": merge_nodes(tree_ja["index"], tree_en["index"])}
@@ -1137,18 +1188,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
             index_data = {
                 **index_info,
-                **({"browsing_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["browsing_group"].split(",")
-                    ]
-                }} if "browsing_group" in index_info else {}),
-                **({"contribute_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["contribute_group"].split(",")
-                    ]
-                }} if "contribute_group" in index_info else {})
+                **self._get_allowed_group_roles(index_info)
             }
 
             updated_index = self.record_class.update(index_id, **index_data)
@@ -1207,8 +1247,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 "updated": updated_index.updated.isoformat(),
                 **{
                     "public_date": updated_index.public_date.strftime("%Y%m%d")
-                    if updated_index.public_date
-                    else {}
+                    if updated_index.public_date else ""
                 },
             }
         }
@@ -1242,18 +1281,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         try:
             index_data = {
                 **index_info,
-                **({"browsing_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["browsing_group"].split(",")
-                    ]
-                }} if "browsing_group" in index_info else {}),
-                **({"contribute_group": {
-                    "allow": [
-                        {"id": role}
-                        for role in index_info["contribute_group"].split(",")
-                    ]
-                }} if "contribute_group" in index_info else {})
+                **self._get_allowed_group_roles(index_info)
             }
 
             index = self.record_class.get_index(index_id)
@@ -1329,8 +1357,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 "updated": updated_index.updated.isoformat(),
                 **{
                     "public_date": updated_index.public_date.strftime("%Y%m%d")
-                    if updated_index.public_date
-                    else {}
+                    if updated_index.public_date else ""
                 },
             }
         }
@@ -1510,3 +1537,37 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 save_index_trees_to_redis(tree_ja, lang=lang_code)
             else:
                 save_index_trees_to_redis(tree, lang=lang_code)
+
+
+    def _get_allowed_group_roles(self, index_info):
+        """Convert group strings to allowed group roles.
+        Args:
+            index_info (dict): The index information containing group strings.
+        Returns:
+            dict: A dictionary with allowed group roles.
+        """
+        def _get_allowed_list(self, group_str):
+            """Convert group string to allowed group roles."""
+            return {
+                "allow": [{"id": role} for role in group_str.split(",")]
+            } if group_str else {}
+
+        # Convert group strings to allowed group roles
+        allowed_roles_groups = {}
+        if "browsing_group" in index_info:
+            allowed_roles_groups["browsing_group"] = _get_allowed_list(
+                self, index_info["browsing_group"]
+            )
+        if "contribute_group" in index_info:
+            allowed_roles_groups["contribute_group"] = _get_allowed_list(
+                self, index_info["contribute_group"]
+            )
+        if "browsing_role" in index_info:
+            allowed_roles_groups["browsing_role"] = _get_allowed_list(
+                self, index_info["browsing_role"]
+            )
+        if "contribute_role" in index_info:
+            allowed_roles_groups["contribute_role"] = _get_allowed_list(
+                self, index_info["contribute_role"]
+            )
+        return allowed_roles_groups

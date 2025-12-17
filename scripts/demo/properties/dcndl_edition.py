@@ -25,7 +25,7 @@ mapping = {
     "junii2_mapping": "",
     "lido_mapping": "",
     "lom_mapping": "",
-    "oai_dc_mapping": {"publisher": {"@value": "subitem_publisher"}},
+    "oai_dc_mapping": "",
     "spase_mapping": "",
 }
 

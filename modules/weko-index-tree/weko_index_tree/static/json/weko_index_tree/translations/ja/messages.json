@@ -55,6 +55,10 @@
         null,
         "子インデックスの公開日にも再帰的に反映させる"
     ],
+    "example": [
+        null,
+        "例:20180628"
+    ],
     "Harvest_Publish": [
         null,
         "ハーベスト公開"
@@ -62,6 +66,22 @@
     "Harvest_Message": [
         null,
         "所属しているアイテムのメタデータを外部に公開しない場合はチェックをOFFにしてください"
+    ],
+    "Harvest_check_message": [
+        null,
+        "公開設定を有効にすると、インデックスに登録されているアイテムの情報が外部に公開されます。公開設定を有効化しますか。"
+    ],
+    "Harvest_checkbox": [
+        null,
+        "公開設定を有効化する"
+    ],
+    "btn_message_enable": [
+        null,
+        "有効化する"
+    ],
+    "btn_message_close": [
+        null,
+        "閉じる"
     ],
     "Online_Issn": [
         null,

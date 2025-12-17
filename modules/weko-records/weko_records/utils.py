@@ -41,12 +41,33 @@ from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_schema_ui.schema import SchemaTree
 from weko_authors.api import WekoAuthors
-from weko_authors.utils import update_data_for_weko_link
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 from sqlalchemy import null
 
-def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True):
+def get_author_link(author_link, value):
+    """Get author link data."""
+    if isinstance(value, list):
+        for v in value:
+            if (
+                "nameIdentifiers" in v
+                and len(v["nameIdentifiers"]) > 0
+                and "nameIdentifierScheme" in v["nameIdentifiers"][0]
+                and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+                and "nameIdentifier" in v["nameIdentifiers"][0]
+            ):
+                author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
+    elif (
+        isinstance(value, dict)
+        and "nameIdentifiers" in value
+        and len(value["nameIdentifiers"]) > 0
+        and "nameIdentifierScheme" in value["nameIdentifiers"][0]
+        and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
+        and "nameIdentifier" in value["nameIdentifiers"][0]
+    ):
+        author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
+
+def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True, creator_id=None):
     """Convert the item data and mapping to jpcoar.
 
     :param data: json from item form post.
@@ -54,54 +75,15 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     :param owner_id: record owner.
     :return: dc, jrc, is_edit
     """
-    # Avoid circular imports
-    from weko_workflow.models import Activity
-    activity = Activity.query.filter(
-        Activity.item_id == pid.object_uuid,
-        Activity.temp_data != null()
-    ).first()
-    if activity and activity.temp_data:
-        temp_data = json.loads(activity.temp_data)
-        if "weko_link" in temp_data and temp_data["weko_link"] != {}:
-            update_data_for_weko_link(data, temp_data["weko_link"])
 
-
-    def _get_author_link(author_link, weko_link, value):
-        """Get author link data."""
-        if isinstance(value, list):
-            for v in value:
-                if (
-                    "nameIdentifiers" in v
-                    and len(v["nameIdentifiers"]) > 0
-                    and "nameIdentifierScheme" in v["nameIdentifiers"][0]
-                    and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
-                ):
-                    weko_id = v["nameIdentifiers"][0]["nameIdentifier"]
-                    pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
-                    if int(pk_id) > 0:
-                        author_link.append(pk_id)
-                        weko_link[str(pk_id)] = weko_id
-        elif (
-            isinstance(value, dict)
-            and "nameIdentifiers" in value
-            and len(value["nameIdentifiers"]) > 0
-            and "nameIdentifierScheme" in value["nameIdentifiers"][0]
-            and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
-        ):
-            weko_id = value["nameIdentifiers"][0]["nameIdentifier"]
-            pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
-            if int(pk_id) > 0:
-                author_link.append(pk_id)
-                weko_link[str(pk_id)] = weko_id
-
-    def _set_shared_id(data):
-        """set weko_shared_id from shared_user_id"""
-        weko_shared_id = data.get("weko_shared_id", -1)
-        shared_user_id = data.get("shared_user_id", -1)
+    def _set_shared_ids(data):
+        """set weko_shared_ids from shared_user_ids"""
+        weko_shared_ids = data.get("weko_shared_ids", [])
+        shared_user_ids = data.get("shared_user_ids", [])
 
         return {
-            "weko_shared_id": weko_shared_id
-            if shared_user_id == -1 else shared_user_id
+            "weko_shared_ids": weko_shared_ids
+            if not shared_user_ids else shared_user_ids
         }
 
     dc = OrderedDict()
@@ -135,11 +117,9 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     mp = mjson.dumps()
     data.get("$schema")
     author_link = []
-    weko_link= {}
     for k, v in data.items():
-        if k != "pubdate":
-            if k == "$schema" or mp.get(k) is None:
-                continue
+        if k == "$schema" or mp.get(k) is None:
+            continue
 
         item.clear()
         try:
@@ -182,14 +162,14 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
-                _get_author_link(author_link, weko_link, v)
+                get_author_link(author_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
-            _get_author_link(author_link, weko_link, v)
+            get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
@@ -209,10 +189,12 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     if list_key:
         for key in list_key:
             del jrc[key]
+
+    # このIF分は意味がない
     if dc:
         # get the tile name to detail page
         title = data.get("title")
-
+        weko_shared_ids = data.get("shared_user_ids", [])
         if "control_number" in dc:
             del dc["control_number"]
 
@@ -220,7 +202,7 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         dc.update(dict(item_type_id=item_type_id))
         dc.update(dict(control_number=pid))
         dc.update(dict(author_link=author_link))
-        dc.update(dict(weko_link=weko_link))
+        dc.update(dict(weko_shared_ids=weko_shared_ids))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -269,34 +251,34 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
         jrc.update(dict(author_link=author_link))
-        jrc.update(dict(weko_link=weko_link))
 
         # save items's creator to check permission
-        if current_user:
+        if current_user and current_user.get_id() is not None:
             current_user_id = current_user.get_id()
         else:
             current_user_id = "1"
-        if current_user_id:
-            # jrc is saved on elastic
-            jrc_weko_creator_id = jrc.get("weko_creator_id", None)
-            if not jrc_weko_creator_id:
-                # in case first time create record
-                jrc.update(dict(weko_creator_id=owner_id or current_user_id))
-                jrc.update(_set_shared_id(data))
-            else:
-                # incase record is end and someone is updating record
-                if current_user_id == int(jrc_weko_creator_id):
-                    # just allow owner update shared_user_id
-                    jrc.update(_set_shared_id(data))
 
-            # dc js saved on postgresql
-            dc_owner = dc.get("owner", None)
-            if not dc_owner:
-                dc.update(_set_shared_id(data))
-                dc.update(dict(owner=owner_id or current_user_id))
-            else:
-                if current_user_id == int(dc_owner):
-                    dc.update(_set_shared_id(data))
+        # jrc is saved on elastic
+        jrc_weko_creator_id = jrc.get("weko_creator_id", None)
+        if not jrc_weko_creator_id:
+            # in case first time create record
+            jrc.update(dict(weko_creator_id=creator_id or current_user_id))
+        else:
+            # just allow owner update shared_user_ids
+            jrc.update(dict(weko_creator_id=jrc_weko_creator_id))
+        jrc.update(_set_shared_ids(data))
+        if owner_id:
+            jrc.update(dict(owner=int(owner_id)))
+            jrc.update(dict(owners=[int(owner_id)]))
+
+        # dc js saved on postgresql
+        dc.update(_set_shared_ids(data))
+        if not owner_id:
+            dc.update(dict(owner=int(current_user_id)))
+            dc.update(dict(owners=[int(current_user_id)]))
+        else:
+            dc.update(dict(owner=int(owner_id)))
+            dc.update(dict(owners=[int(owner_id)]))
 
     del ojson, mjson, item
     return dc, jrc, is_edit
@@ -344,7 +326,15 @@ def copy_field_test(dc, map, jrc, iid=None):
                                         b = None
                                         if idx < len(_lte):
                                             b = _lte[idx]
-                                        ranges.append(convert_range_value(a, b))
+                                        try:
+                                            ranges.append(convert_range_value(a, b))
+                                        except:
+                                            _error_col = val.get("path", {}).get("gte") \
+                                                if val.get("path", {}).get("gte") else val.get("path", {}).get("lte")
+                                            raise ValueError(
+                                                "can not convert to range value. start:{} end:{}. column: {}".format(
+                                                    a, b, _error_col)
+                                            )
                                 if len(ranges) > 0:
                                     value_range = {id: ranges}
                                     jrc.update(value_range)
@@ -363,7 +353,15 @@ def copy_field_test(dc, map, jrc, iid=None):
                                         b = None
                                         if idx < len(_lte):
                                             b = _lte[idx]
-                                        dateRanges.append(convert_date_range_value(a, b))
+                                        try:
+                                            dateRanges.append(convert_date_range_value(a, b))
+                                        except:
+                                            _error_col = val.get("path", {}).get("gte") \
+                                                if val.get("path", {}).get("gte") else val.get("path", {}).get("lte")
+                                            raise ValueError(
+                                                "can not convert to range value. start:{} end:{}. column: {}".format(
+                                                    a, b, _error_col)
+                                            )
                                 if len(dateRanges) > 0:
                                     value_range = {id: dateRanges}
                                     jrc.update(value_range)
@@ -435,20 +433,13 @@ def convert_range_value(start, end=None):
             else:
                 ret = {_start: end, _end: start}
         else:
-            try:
-                a = float(start)
-                b = float(end)
+            a = float(start)
+            b = float(end)
 
-                if a < b:
-                    ret = {_start: start, _end: end}
-                else:
-                    ret = {_start: end, _end: start}
-            except ValueError:
-                current_app.logger.exception(
-                    "can not convert to range value. start:{0} end:{1}".format(
-                        start, end
-                    )
-                )
+            if a < b:
+                ret = {_start: start, _end: end}
+            else:
+                ret = {_start: end, _end: start}
     return ret
 
 
@@ -511,18 +502,22 @@ def makeDateRangeValue(start, end):
     a = None
     b = None
     if p2.match(start):
-        a = time.strptime(start, "%Y-%m-%d")
+        _s = start.split('-')
+        a = time.strptime('{:0>4}-{}-{}'.format(_s[0], _s[1], _s[2]), "%Y-%m-%d")
     elif p3.match(start):
-        a = time.strptime(start, "%Y-%m")
+        _s = start.split('-')
+        a = time.strptime('{:0>4}-{}'.format(_s[0], _s[1]), "%Y-%m")
     elif p4.match(start):
-        a = time.strptime(start, "%Y")
+        a = time.strptime('{:0>4}'.format(start), "%Y")
 
     if p2.match(end):
-        b = time.strptime(end, "%Y-%m-%d")
+        _e = end.split('-')
+        b = time.strptime('{:0>4}-{}-{}'.format(_e[0], _e[1], _e[2]), "%Y-%m-%d")
     elif p3.match(end):
-        b = time.strptime(end, "%Y-%m")
+        _e = end.split('-')
+        b = time.strptime('{:0>4}-{}'.format(_e[0], _e[1]), "%Y-%m")
     elif p4.match(end):
-        b = time.strptime(end, "%Y")
+        b = time.strptime('{:0>4}'.format(end), "%Y")
 
     if a is not None and b is not None:
         if a < b:
@@ -989,6 +984,11 @@ async def sort_meta_data_by_options(
                     result = get_author_comment(
                         data_result, key, result, is_specify_newline_array
                     )
+                elif "is_biographic_prop" in data_result[key] \
+                        and data_result[key].pop("is_biographic_prop"):
+                    for k, v in data_result[key].items():
+                        if "value" in v:
+                            result.append(v["value"])
                 else:
                     if "lang_id" in data_result[key]:
                         lang_id = (
@@ -2306,28 +2306,40 @@ def selected_value_by_language(
                             ):
                                 noreturn = True
                                 break
-                            if len(lg) > 0:
+                            if lg:
                                 value = check_info_in_metadata(
                                     lang_key, val_key, lg, _item_metadata
                                 )
                                 if value is not None:
                                     result = value
+                                    break
                         if noreturn:
                             result = None
                     # 1st value when registering without language
                     if not result and len(value_array) > 0:
                         result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
-            if not result:
+            if result:
                 break
-        if not result:
+        if result:
+            break
+
+    if not result:
+        for val_key in val_key_list:
+            val_parent_key = val_key.split(".")[0]
+            val_sub_key = val_key.split(".")[-1]
+            prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+            for h in hide_list:
+                if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                    prop_hidden = True
+
             if (
                 (value_array is not None and len(value_array) > 0)
                 and isinstance(lang_selected, str)
                 and not prop_hidden
             ):
                 result = check_info_in_metadata('', val_key, None, _item_metadata)
-        if result:
-            break
+            if result:
+                break
     return result
 
 
@@ -2392,7 +2404,8 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                             return s.get(str_key_val[-1])
             elif isinstance(save, dict):
                 if (
-                    save.get(str_key_lang[-1])
+                    len(str_key_lang) > 0
+                    and save.get(str_key_lang[-1])
                     and save.get(str_key_val[-1])
                     and save.get(str_key_lang[-1]).strip() == str_lang.strip()
                 ):
@@ -2432,10 +2445,10 @@ def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
                     data_result = {**data_result, **{save_key: {}}}
                 if (
                     save_key in data_result.keys()
-                    and (j["title"].strip() in "Language")
-                    or (j["title_ja"].strip() in "Language")
-                    or (j["title_ja"].strip() in "言語")
-                    or (j["title"].strip() in "言語")
+                    and (j["title"].strip() == "Language")
+                    or (j["title_ja"].strip() == "Language")
+                    or (j["title_ja"].strip() == "言語")
+                    or (j["title"].strip() == "言語")
                 ):
                     data_result[save_key] = {
                         **data_result[save_key],
@@ -2784,7 +2797,12 @@ def add_biographic(
     )
     stt_key.append(bibliographic_key)
     is_specify_newline_array.append({s["key"]: True})
-    data_result.update({bibliographic_key: {s["key"]: {"value": [bibliographic]}}})
+    data_result.update({
+        bibliographic_key: {
+            s["key"]: {"value": bibliographic},
+            "is_biographic_prop": True
+        }
+    })
 
     return stt_key, data_result, is_specify_newline_array
 

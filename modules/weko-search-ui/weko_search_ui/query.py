@@ -24,7 +24,6 @@ import json
 import re
 import sys
 from datetime import datetime
-from datetime import timezone
 from functools import partial
 
 from elasticsearch_dsl.query import Bool, Q
@@ -121,7 +120,7 @@ def get_permission_filter(index_id: str = None, is_community=False):
             user_terms = Q("terms", publish_status=[
                 PublishStatus.PUBLIC.value, PublishStatus.PRIVATE.value])
             creator_user_match = Q("match", weko_creator_id=user_id)
-            shared_user_match = Q("match", weko_shared_id=user_id)
+            shared_user_match = Q("terms", weko_shared_ids=[user_id])
             shuld = []
             shuld.append(Q("bool", must=[user_terms, creator_user_match]))
             shuld.append(Q("bool", must=[user_terms, shared_user_match]))
@@ -173,7 +172,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         :return: Query parser.
         """
 
-        def _get_keywords_query(k, v):
+        def _get_keywords_query(k, v, params):
             qry = None
             kv = (
                 params.get("lang") if k == "language" else params.get(k)
@@ -251,9 +250,16 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                         ]
 
                         for j in kvl:
-                            name_dict = dict(operator="and")
-                            name_dict.update(dict(query=j))
-                            shud.append(Q("match", **{key: name_dict}))
+
+                            if j == "other" and k=="language":
+                                source = "boolean flg=false; for(lang in doc['language']){if (!params.param1.contains(lang)){flg=true;}} return flg;"
+                                params = {"param1":vlst}
+                                script = Q("script",script={"source":source,"params":params})
+                                shud.append(Q("bool",filter=script))
+                            else:
+                                name_dict = dict(operator="and")
+                                name_dict.update(dict(query=j))
+                                shud.append(Q("match", **{key: name_dict}))
 
                         if shud:
                             return Q("bool", should=shud)
@@ -269,7 +275,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
             return qry
 
-        def _get_object_query(k, v):
+        def _get_object_query(k, v, params):
             # text value
             kv = params.get(k)
             if not kv:
@@ -303,7 +309,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                         )
             return None
 
-        def _get_nested_query(k, v):
+        def _get_nested_query(k, v, params):
             # text value
             kv = params.get(k)
 
@@ -339,12 +345,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                                             # attribute conditon
                                             field_name = alst[0] + "." + val_attr_lst[0]
                                             if "=*" in alst[1]:
+                                                name = alst[0] + "." + val_attr_lst[0]
                                                 qt = [
-                                                    Q("exists", field=field_name)
-                                                ]
-                                            else:
-                                                qt = [
-                                                    Q("term", **{field_name: val_attr_lst[1]})
+                                                    Q("term", **{name: key})
                                                 ]
 
                                             split_text_list = _split_text_by_or(kv)
@@ -423,7 +426,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
             return Q("bool", should=shuld) if shuld else None
 
-        def _get_date_query(k, v):
+        def _get_date_query(k, v, params):
             """[summary]
 
             Args:
@@ -505,7 +508,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             current_app.logger.debug(qry)
             return qry
 
-        def _get_text_query(k, v):
+        def _get_text_query(k, v, params):
             qry = None
             kv = (
                 params.get("lang") if k == "language" else params.get(k)
@@ -531,7 +534,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("bool", should=should_list, minimum_should_match=1)
             return qry
 
-        def _get_range_query(k, v):
+        def _get_range_query(k, v, params):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
@@ -549,7 +552,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
                     qry = Q("range", **{v[1]: qv})
             return qry
 
-        def _get_geo_distance_query(k, v):
+        def _get_geo_distance_query(k, v, params):
 
             qry = None
 
@@ -570,7 +573,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
             return qry
 
-        def _get_geo_shape_query(k, v):
+        def _get_geo_shape_query(k, v, params):
             qry = None
 
             if isinstance(v, list) and len(v) >= 2:
@@ -617,47 +620,47 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
 
         try:
             for k, v in ks.items():
-                qy = _get_keywords_query(k, v)
+                qy = _get_keywords_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kn.items():
-                qy = _get_nested_query(k, v)
+                qy = _get_nested_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kd.items():
-                qy = _get_date_query(k, v)
+                qy = _get_date_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in ko.items():
-                qy = _get_object_query(k, v)
+                qy = _get_object_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
             for k, v in kt.items():
-                qy = _get_text_query(k, v)
+                qy = _get_text_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
             for k, v in kr.items():
-                qy = _get_range_query(k, v)
+                qy = _get_range_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kgd.items():
-                qy = _get_geo_distance_query(k, v)
+                qy = _get_geo_distance_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
 
             for k, v in kgs.items():
-                qy = _get_geo_shape_query(k, v)
+                qy = _get_geo_shape_query(k, v, params)
 
                 if qy:
                     mut.append(qy)
@@ -800,7 +803,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
     comm_ide = request.values.get("provisional_communities")
 
     # simple search
-    comm_id_simple = request.values.get("community")
+    comm_id_simple = request.values.get("c")
 
     # add by ryuu at 1004 end
     if comm_id_simple:

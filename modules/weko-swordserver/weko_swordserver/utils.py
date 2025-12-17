@@ -23,9 +23,12 @@ from invenio_pidstore.resolver import Resolver
 
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
-from weko_deposit.api import WekoDeposit
+from weko_deposit.api import WekoDeposit, WekoRecord
 
-from weko_items_ui.utils import check_item_is_being_edit
+from weko_items_ui.utils import (
+    check_item_is_being_edit, send_mail_direct_registered, send_mail_item_deleted
+)
+from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import soft_delete
 from weko_search_ui.config import SWORD_METADATA_FILE, ROCRATE_METADATA_FILE
 from weko_search_ui.utils import (
@@ -38,7 +41,7 @@ from weko_workflow.utils import check_an_item_is_locked
 
 from .api import SwordClient
 from .errors import ErrorType, WekoSwordserverException
-
+from invenio_db import db
 
 def check_import_file_format(file, packaging):
     """Check inport file format.
@@ -118,45 +121,45 @@ def check_import_file_format(file, packaging):
     return file_format
 
 
-def get_shared_id_from_on_behalf_of(on_behalf_of):
-    """Get shared ID from on-behalf-of.
+def get_shared_ids_from_on_behalf_of(on_behalf_of):
+    """Get shared IDs from on-behalf-of.
 
-    Get shared ID from on-behalf-of.
+    Get shared IDs from on-behalf-of.
     If on-behalf-of is not shared ID, return None.
 
     Args:
         on_behalf_of (str): On-behalf-of in request
 
     Returns:
-        int: Shared user ID
+        list: Shared user IDs
 
     Raises:
         WekoSwordserverException:
             - If no user found by On-Behalf-Of.
             - If an error occurs while searching user by On-Behalf-Of.
     """
-    shared_id = -1
+    shared_ids = []
     if on_behalf_of is None:
-        return shared_id
+        return shared_ids
 
     try:
         # get weko user id from email
         user = User.query.filter_by(email=on_behalf_of).one_or_none()
-        shared_id = int(user.id) if user is not None else None
-        if shared_id is None:
+        shared_ids = [int(user.id)] if user is not None else []
+        if not shared_ids:
             # get weko user id from personal access token
             token = (
                 Token.query
                 .filter_by(access_token=on_behalf_of).one_or_none()
             )
-            shared_id = int(token.user_id) if token is not None else None
-        if shared_id is None:
+            shared_ids = [int(token.user_id)] if token is not None else []
+        if not shared_ids:
             # get weko user id from shibboleth user eppn
             shib_user = (
                 ShibbolethUser.query
                 .filter_by(shib_eppn=on_behalf_of).one()
             )
-            shared_id = int(shib_user.weko_uid)
+            shared_ids = [int(shib_user.weko_uid)]
     except NoResultFound as ex:
         msg = "No user found by On-Behalf-Of."
         current_app.logger.error(msg)
@@ -173,7 +176,7 @@ def get_shared_id_from_on_behalf_of(on_behalf_of):
             "Failed to get shared ID from On-Behalf-Of.",
             errorType=ErrorType.ServerError
         ) from ex
-    return shared_id
+    return shared_ids
 
 
 def is_valid_file_hash(expected_hash, file):
@@ -203,7 +206,7 @@ def is_valid_file_hash(expected_hash, file):
 
 
 def check_import_items(
-    file, file_format, is_change_identifier=False, shared_id=-1, **kwargs
+    file, file_format, is_change_identifier=False, shared_ids=[], **kwargs
 ):
     """Check metadata file for import.
 
@@ -214,7 +217,7 @@ def check_import_items(
         file_format (str): File format. "TSV/CSV", "XML" or "JSON-LD".
         is_change_identifier (bool, optional):
             Change Identifier Mode. Defaults to False.
-        shared_id (int, optional): Contributor ID. Defaults to -1.
+        shared_ids (list, optional): Contributor IDs. Defaults to an empty list.
         **kwargs: Additional arguments.
             - client_id (str): Client ID.
             - packaging (str): Packaging type.
@@ -243,7 +246,7 @@ def check_import_items(
 
     if file_format == "TSV/CSV":
         check_result.update(
-            check_tsv_import_items(file, is_change_identifier, shared_id=shared_id)
+            check_tsv_import_items(file, is_change_identifier, shared_ids=shared_ids)
         )
 
         if registration_type == "Workflow":
@@ -304,7 +307,7 @@ def check_import_items(
 
         item_type_id = workflow.itemtype_id
         check_result.update(
-            check_xml_import_items(file, item_type_id, shared_id=shared_id)
+            check_xml_import_items(file, item_type_id, shared_ids=shared_ids)
         )
         check_result.update({"workflow_id": workflow_id})
 
@@ -358,7 +361,7 @@ def check_import_items(
         validate_bagit = current_app.config["WEKO_SWORDSERVER_BAGIT_VERIFICATION"]
         check_result.update(
             check_jsonld_import_items(
-                file, packaging, mapping_id, meta_data_api, shared_id,
+                file, packaging, mapping_id, meta_data_api, shared_ids,
                 validate_bagit=validate_bagit,
                 is_change_identifier=is_change_identifier
             )
@@ -535,3 +538,35 @@ def delete_item_directly(recid, request_info=None):
         )
 
     soft_delete(recid)
+    db.session.commit()
+
+
+def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
+    """Notify about item.
+
+    Notify about item for import or delete.
+
+    Args:
+        case (str): Case of notification. "import", "update" or "delete".
+        recid (str): Record ID.
+        user_id (int): User ID.
+        record (WekoRecord, optional): WekoRecord instance. Defaults to None.
+        shared_ids (list, optional): Contributor IDs. Defaults to an empty list.
+    """
+    if not current_app.config.get("WEKO_NOTIFICATIONS"):
+        return
+
+    if not record:
+        record = WekoRecord.get_record_by_pid(recid)
+
+    if case in ["import", "update"]:
+        notify_item_imported(
+            user_id, recid, user_id, record["item_title"], shared_ids
+        )
+        send_mail_direct_registered(recid, record, user_id, shared_ids)
+
+    if case == "delete":
+        notify_item_deleted(
+            user_id, recid, user_id, record["item_title"], shared_ids
+        )
+        send_mail_item_deleted(recid, record, user_id, shared_ids)

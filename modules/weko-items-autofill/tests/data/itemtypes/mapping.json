@@ -132,5 +132,6 @@
     },
     "test_item15":{
         "jpcoar_mapping":{"volume": { "@value": "test15_subitem1" } }
-    }
+    },
+    "test_itemxx":""
 }

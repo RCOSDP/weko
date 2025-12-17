@@ -336,7 +336,7 @@ $(document).ready(function () {
     // jpcoar sub_list logic
     sub_jpcoar_items = page_global.schema_prop[schema_name_str][jpcoar_key];
     page_global.sub_jpcoar_list=[];
-    if(schema_name_str === "jpcoar_mapping"){
+    if(schema_name_str === "jpcoar_mapping" || schema_name_str === "jpcoar_v1_mapping"){
       make_list_jpcoar(sub_jpcoar_items, jpcoar_key);
     }else{
       make_list_ddi(sub_jpcoar_items, jpcoar_key);

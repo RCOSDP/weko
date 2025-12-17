@@ -21,6 +21,7 @@ docutils==0.15.2
 cachelib==0.1
 captcha==0.4
 cachetools==4.2.4
+captcha==0.4
 cchardet==2.1.1
 celery==4.4.4
 certifi==2017.11.5
@@ -49,7 +50,7 @@ entrypoints==0.2.3
 feedgen==0.7.0
 filelock==3.4.1
 Flask==1.1.0
-Flask-Admin==1.5.3
+flask-admin==1.5.4
 Flask-Alembic==2.0.1
 Flask-Assets==0.12
 Flask-BabelEx==0.9.4

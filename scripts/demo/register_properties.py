@@ -5,7 +5,7 @@ from properties import property_config
 from sqlalchemy.dialects.postgresql import Insert
 from invenio_db import db
 from weko_records.models import ItemTypeProperty
-
+from flask import current_app
 
 def main():
     try:
@@ -83,9 +83,12 @@ def register_properties_from_folder(exclusion_list, specified_list=[]):
         db.session.execute(upsert_stmt(), prop_list)
         # db.session.execute(ItemTypeProperty.__table__.insert(), prop_list)
     db.session.execute("SELECT setval('item_type_property_id_seq', 10000, true);")
+    
 
     reg_list.sort()
-    print('Processed id list: ', reg_list)
+    # current_app.logger.info('Processed id list: ', reg_list)
+    for p in reg_list:
+        current_app.logger.info(f"[FIX] item_type_property:{p}")
 
 def upsert_stmt():
     """upsert_stmt

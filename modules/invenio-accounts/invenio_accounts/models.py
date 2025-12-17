@@ -18,6 +18,8 @@ from invenio_db import db
 from sqlalchemy.orm import validates
 from sqlalchemy_utils import IPAddressType, Timestamp
 
+from invenio_mail.models import MailTemplateUsers
+
 userrole = db.Table(
     'accounts_userrole',
     db.Column('user_id', db.Integer(), db.ForeignKey(
@@ -83,6 +85,8 @@ class User(db.Model, UserMixin):
     roles = db.relationship('Role', secondary=userrole,
                             backref=db.backref('users', lazy='dynamic'))
     """List of the user's roles."""
+
+    template = db.relationship('MailTemplateUsers', cascade='all, delete')
 
     @validates('last_login_ip', 'current_login_ip')
     def validate_ip(self, key, value):

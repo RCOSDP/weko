@@ -100,14 +100,16 @@ def test_lifetime(client,users,db,mocker):
         form="lifetime"
     )
     mock_flash.assert_called_with("Session lifetime was updated.",category="success")
-
     # method is POST, submit is not lifitime
+    SessionLifetime.query.delete()
+    db.session.add(SessionLifetime(lifetime=100))
+    db.session.commit()
     mock_render = mocker.patch("weko_admin.views.render_template",return_value=make_response())
-    res = client.post(url,data={"submit":"not lifetime"})
+    res = client.post(url,data={"submit":"not lifetime","lifetimeRadios":"45"})
     assert res.status_code == 200
     mock_render.assert_called_with(
         "weko_admin/settings/lifetime.html",
-        current_lifetime="45",
+        current_lifetime="100",
         map_lifetime=[("15",_("15 mins")),("30",_("30 mins")),("45",_("45 mins")),("60",_("60 mins")),
                       ("180",_("180 mins")),("360",_("360 mins")),("720",_("720 mins")),("1440",_("1440 mins"))],
         form="not lifetime"
@@ -184,7 +186,7 @@ def test_save_lang_list_acl(api,users,index,is_permission):
     url = url_for("weko_admin.save_lang_list")
     login_user_via_session(client=api, email=users[index]["email"])
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        with patch("weko_admin.views.delete_index_trees_from_redis"):
+        with patch("weko_index_tree.utils.delete_index_trees_from_redis"):
             res = api.post(url,data=json.dumps({}),
                             content_type="application/json")
             assert_role(res,is_permission)
@@ -193,7 +195,7 @@ def test_save_lang_list_acl(api,users,index,is_permission):
 def test_save_lang_list_acl_guest(api, users):
     url = url_for("weko_admin.save_lang_list")
     with patch("weko_admin.views.update_admin_lang_setting", return_value=""):
-        with patch("weko_admin.views.delete_index_trees_from_redis"):
+        with patch("weko_index_tree.utils.delete_index_trees_from_redis"):
             res = api.post(url,data=json.dumps({}),
                               content_type="application/json")
             assert res.status_code == 302
@@ -206,6 +208,10 @@ def test_save_lang_list(api, users, redis_connect):
     login_user_via_session(client=api, email=users[0]["email"])
     redis_connect.put("index_tree_view_test_ja","test_ja_index_tree".encode("UTF-8"),ttl_secs=30)
     redis_connect.put("index_tree_view_test_en","test_en_index_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_view_test_ja","test_ja_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_view_test_en","test_en_index_reset_tree".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_ignore_more_view_test_ja","test_ja_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
+    redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
     # content_type != application/json
     res = api.post(url,data="test_data",content_type="plain/text")
     assert response_data(res) == {"msg":"Header Error"}
@@ -216,6 +222,10 @@ def test_save_lang_list(api, users, redis_connect):
         res = api.post(url,json=data)
         assert redis_connect.redis.exists("index_tree_view_test_ja") == True
         assert redis_connect.redis.exists("index_tree_view_test_en") == False
+        assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == True
+        assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
+        assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == True
+        assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_en") == False
         assert response_data(res) == {"msg":"success"}
 
 
@@ -301,7 +311,7 @@ def test_save_api_cert_data(api, users):
             data = {"api_code":"crf","cert_data":"test_cert_data"}
             res = api.post(url,json=data)
             assert response_data(res) == {"results":"success","error":""}
-    
+
     # api_code is 'oaa'
     with patch("weko_admin.views.save_api_certification",return_value={"results":"success","error":""}):
         data = {"api_code":"oaa","cert_data":"test_cert_data"}
@@ -720,16 +730,15 @@ def test_get_site_info(api,db,users,site_info,mocker):
     with patch("weko_admin.views.SiteInfo.get",return_value=None):
         res = api.get(url)
         assert res.status_code == 200
-        assert response_data(res) == {"google_tracking_id_user":"test_google_tracking_id","addthis_user_id":"test_addthis_user_id"}
+        assert response_data(res) == {"google_tracking_id_user":"test_google_tracking_id"}
 
         current_app.config.pop("GOOGLE_TRACKING_ID_USER")
-        current_app.config.pop("ADDTHIS_USER_ID")
         res = api.get(url)
         assert res.status_code == 200
         assert response_data(res) == {}
 
     current_app.config["GOOGLE_TRACKING_ID_USER"] = "test_tracking_id"
-    current_app.config["ADDTHIS_USER_ID"] = "ra-5d8af23e9a3a2633"
+
     test = {
         "copy_right":"test_copy_right1",
         "description":"test site info1.",
@@ -739,7 +748,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "site_name":[{"name":"name11"}],
         "notify":{"name":"notify11"},
         "google_tracking_id_user":"11",
-        "addthis_user_id":"12",
         "ogp_image":"http://test_server/api/admin/ogp_image",
         "ogp_image_name":"test ogp image name1"
     }
@@ -756,7 +764,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "site_name":{"name":"name21"},
         "notify":{"name":"notify21"},
         "google_tracking_id_user":None,
-        "addthis_user_id":None,
     }
     SiteInfo.query.delete()
     db.session.commit()
@@ -767,7 +774,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
     assert response_data(res) == test
 
     current_app.config.pop("GOOGLE_TRACKING_ID_USER")
-    current_app.config.pop("ADDTHIS_USER_ID")
     test = {
         "copy_right":"test_copy_right2",
         "description":"test site info2.",
@@ -777,7 +783,6 @@ def test_get_site_info(api,db,users,site_info,mocker):
         "site_name":{"name":"name21"},
         "notify":{"name":"notify21"},
         "google_tracking_id_user":None,
-        "addthis_user_id":None,
     }
     res = api.get(url)
     assert response_data(res) == test
@@ -902,7 +907,7 @@ def test_get_usage_report_activities(api,users,mocker):
     res = api.get(url,query_string={"page":3,"size":10})
     assert response_data(res) == {"page":1,"size":10,"activities":[],"number_of_pages":0}
 
-    res = api.post(url,json={"page":3,"size":10,"activity_ids":[1]})
+    res = api.post(url,json={"page":3,"size":10,"activity_ids":["1"]})
     assert response_data(res) == {"page":1,"size":10,"activities":[],"number_of_pages":0}
 
 
@@ -931,7 +936,7 @@ def test_send_mail_reminder_usage_report_guest(api):
 def test_send_mail_reminder_usage_report(api,users,mocker):
     login_user_via_session(client=api, email=users[0]["email"])
     class MockUsage:
-        def send_reminder_mail(self,activity_id):
+        def send_reminder_mail(self,activities_id,mail_id=None,activities=None,forced_send=False):
             return True
     mocker.patch("weko_admin.views.UsageReport",return_value=MockUsage())
 
@@ -1056,3 +1061,32 @@ def test_dbsession_clean(app, db):
     db.session.add(itemtype_name3)
     dbsession_clean(Exception)
     assert ItemTypeName.query.filter_by(id=3).first() is None
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_send_profile_settings_save -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_send_profile_settings_save(api, users):
+    url = url_for("weko_admin.send_profile_settings_save")
+    login_user_via_session(client=api, email=users[0]["email"])
+
+    # 正常系テスト
+    valid_data = {
+        "profiles_templates": {
+            "fullname": {"label_name": "Full Name", "visible": True, "format": "text", "options": []},
+            "university": {"label_name": "University", "visible": True, "format": "text", "options": []}
+        }
+    }
+
+    with patch("weko_admin.models.AdminSettings.update", return_value=True):
+        res = api.post(url, json=valid_data)
+        assert response_data(res) == {"status": "success", "msg": "Settings updated successfully"}
+
+    # 無効なデータテスト
+    invalid_data = {}
+
+    res = api.post(url, json=invalid_data)
+    assert response_data(res) == {"status": "error", "msg": "Invalid data"}
+
+    # 例外発生時のテスト
+    with patch("weko_admin.models.AdminSettings.update", side_effect=Exception('DB error')):
+        res = api.post(url, json=valid_data)
+        assert response_data(res) == {"status": "error", "msg": "Failed to update settings"}

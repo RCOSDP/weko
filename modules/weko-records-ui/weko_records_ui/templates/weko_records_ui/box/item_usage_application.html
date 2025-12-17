@@ -1,0 +1,203 @@
+{#
+    # This file is part of WEKO3.
+    # Copyright (C) 2024 National Institute of Informatics.
+    #
+    # WEKO3 is free software; you can redistribute it
+    # and/or modify it under the terms of the GNU General Public License as
+    # published by the Free Software Foundation; either version 2 of the
+    # License, or (at your option) any later version.
+    #
+    # WEKO3 is distributed in the hope that it will be
+    # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+    # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+    # General Public License for more details.
+    #
+    # You should have received a copy of the GNU General Public License
+    # along with WEKO3; if not, write to the
+    # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+    # MA 02111-1307, USA.
+    #}
+    
+    {% macro check_item_application(record, community, url_for_security) %}
+    <input id="non-role-msg" type="hidden" value="{{restricted_errorMsg}}" />
+    {% set is_guest = False %}
+    {% set termsDescription, workflow_id = record | get_item_usage_workflow %}
+    {% set dummy_filename =  'recid/' + (record.recid|string) %}
+    {% if workflow_id %}
+      {% if not session['user_id'] %}
+        {% set is_guest = True %}
+        {% set href_url = url_for_security('login', next=request.path) %}
+        {% set start_guest_wf = workflow_id is not none %}
+        {% if start_guest_wf %}
+          {% set workflow_detail, is_terms_only = workflow_id | get_workflow_detail() %}
+          {% set item_type_id = workflow_detail.itemtype_id %}
+          {% set flow_id = workflow_detail.flow_id %}
+        {% endif %}
+        {% if is_terms_only %}
+        <div class="well well2">
+          <a class="btn btn-primary request-button btn-lg center-block non-role-btn">
+            <span class="glyphicon glyphicon-download-alt icon-space"></span>
+            {{ _('Apply JGSS') }}
+          </a>
+        </div>
+        {% elif termsDescription and start_guest_wf %}
+        <div class="well well2">
+          <a
+            class="term-condtion-modal btn btn-primary request-button btn-lg center-block"
+            href=""
+            data-modal-id="#term_and_condtion_modal"
+          >
+            <span class="glyphicon glyphicon-download-alt icon-space"></span>
+            {{ _('Apply JGSS') }}
+          </a>
+          <a
+            id="btn-start-guest-wf"
+            class="btn-start-guest-wf hide btn btn-primary request-button btn-lg center-block"
+            data-guest_filename_data="{{ dummy_filename }}"
+            data-guest_workflow_id="{{ workflow_id }}"
+            data-guest_itemtype_id="{{ item_type_id }}"
+            data-guest_flow_id="{{ flow_id }}"
+            data-guest_data_type_title="{{ record.item_title }}"
+            data-guest_record_id="{{ record.recid }}"
+          >
+            <span class="glyphicon glyphicon-download-alt icon-space"></span>
+            {{ _('Apply JGSS') }}
+          </a>
+        </div>
+        {% else %}
+          {% set btn_class = "btn btn-primary request-button btn-lg center-block" %}
+          {% if start_guest_wf %}
+            {% set btn_class = btn_class + " btn-start-guest-wf" %}
+          {% endif %}
+          {% if not start_guest_wf %}
+          <div class="well well2">
+            <a class="btn btn-primary request-button btn-lg center-block non-role-btn">
+              <span class="glyphicon glyphicon-download-alt icon-space"></span>
+              {{ _('Apply JGSS') }}
+            </a>
+          </div>
+          {% else %}
+          <div class="well well2">
+            <a
+              class="{{ btn_class }}"
+              data-guest_filename_data="{{ dummy_filename }}"
+              data-guest_workflow_id="{{ workflow_id }}"
+              data-guest_itemtype_id="{{ item_type_id }}"
+              data-guest_flow_id="{{ flow_id }}"
+              data-guest_data_type_title="{{ record.item_title }}"
+              data-guest_record_id="{{ record.recid }}">
+              <span class="glyphicon glyphicon-download-alt icon-space"></span>
+              {{ _('Apply JGSS') }}
+            </a>
+          </div>
+          {% endif %}
+        {% endif %}
+      {% else %}
+        {% set workflow_id = '' %}
+        {% set termsDescription, usage_workflow_id = record | get_item_usage_workflow %}
+        {% if not usage_workflow_id %}
+          <div class="well well2">
+            <a class="btn btn-primary request-button btn-lg center-block non-role-btn">
+              <span class="glyphicon glyphicon-download-alt icon-space"></span>
+              {{ _('Apply JGSS') }}
+            </a>
+          </div>
+        {% elif usage_workflow_id %}
+          {% set workflow_id = usage_workflow_id %}
+          {% set workflow_detail, is_terms_only = workflow_id | get_workflow_detail() %}
+          {% set data_item_type_id = workflow_detail.itemtype_id %}
+          {% set data_flow_id = workflow_detail.flow_id %}
+          {% set itemtitle = record.item_title %}
+          <input type="hidden" id="data_type_title" name="data_type_title" value='{{ itemtitle }}'>
+          <div class="hide" id="post_uri">
+            {{ url_for('weko_workflow.init_activity') }}
+          </div>
+          <div class="hide" id="item_type_{{ workflow_id }}" data-itemtype-id={{ data_item_type_id }}></div>
+          <div class="hide" id="flow_{{ workflow_id }}" data-flow-id={{ data_flow_id }}></div>
+          <div id="recid" class="hide">{{ record.recid }}</div>
+          {% if is_terms_only %}
+            <div class="well well2">
+              <a class="btn btn-primary request-button btn-lg center-block non-role-btn">
+                <span class="glyphicon glyphicon-download-alt icon-space"></span>
+                {{ _('Apply JGSS') }}
+              </a>
+            </div>
+          {% elif termsDescription %}
+            <div class="well well2">
+              <a
+                class="btn btn-primary request-button btn-lg center-block term-condtion-modal"
+                href=""
+                data-modal-id="#term_and_condtion_modal">
+                <span class="glyphicon glyphicon-download-alt icon-space"></span>
+                  {{ _('Apply JGSS') }}
+              </a>
+              <a
+                id="btn-start-workflow"
+                class="hide btn-start-workflow"
+                href="{{ href_url }}"
+                data-workflow-id="{{ workflow_id }}"
+                data-record-id="{{ record.recid }}"
+                data-itemtitle="{{ itemtitle|urlencode }}"
+                {% if community %} data-community="{{ community.id }}" {% endif %}>
+                <span class="glyphicon glyphicon-download-alt icon-space"></span>
+                  {{ _('Apply JGSS') }}
+              </a>
+            </div>
+          {% else %}
+            <div class="well well2">
+              <a
+                id="btn-begin-{{ workflow_id }}"
+                class="btn btn-primary request-button btn-lg center-block btn-start-workflow"
+                href="{{ href_url }}"
+                data-workflow-id="{{ workflow_id }}"
+                data-record-id="{{ record.recid }}"
+                data-itemtitle="{{ itemtitle|urlencode }}"
+                {% if community %} data-community="{{ community.id }}" {% endif %}
+              >
+                  <span class="action-icon fa fa-download"></span>
+                  {{ _('Apply JGSS') }}
+              </a>
+            </div>
+          {% endif %}
+        {% endif %}
+      {% endif %}
+    
+      <!-- Modal -->
+      {% if termsDescription != '' %}
+      <div class="modal fade" id="term_and_condtion_modal" tabindex="-1" role="dialog"
+        aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h3 class="modal-title" id="exampleModalLongTitle">{{ _('Terms and Conditions') }}</h3>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+            <div class="modal-body">
+              <div class="panel panel-default panel-body" style="overflow-y: auto; max-height:400px;">
+                <div class="form-check">
+                  <span class="action-name" id="terms" style="white-space: pre-wrap;">{{ termsDescription }}</span>
+    
+                  <div style="position: relative;">
+                    <input type="checkbox" class="pointer term_checked" id="term_checked" name="term_check">
+                    <input type="hidden" name="title" value="{{ itemTitle }}">
+                    <label class="form-check-label pointer" for="term_checked"
+                      style="position: absolute;top: 1px;left: 20px;">
+                      {{ _('I have read and agreed to the Terms and Conditions') }}
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button id="print-btn" type="button" class="btn btn-primary">{{ _('Print Terms and Conditions') }}</button>
+              <button id="term_next" data-guest={{ is_guest }} type="button" class="term_next btn btn-primary disabled"
+                disabled>{{ _('Next') }}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    {% endif %}
+    {% endmacro %}

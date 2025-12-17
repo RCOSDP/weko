@@ -93,32 +93,6 @@ def validate_map(values=[], _map=[]):
                 errors_key.append(val['key'])
     return errors_key
 
-def validate_digits_for_wekoid(items, values=[]):
-    """
-    weko_idについてのバリデーションチェックします。
-    以下の場合にエラーを追加します。
-    ・weko_idが存在しない場合
-    ・weko_idが半角数字でない場合
-
-    Args:
-        item (dict): インポートされるデータをdictに直したもの、ここでは使わない
-        values (list, optional): List values with key path. Defaults to [].
-
-    Returns:
-        list: List errors message.
-    """
-    errors = []
-    err_msg_format = _("WEKO ID is Half-width digits only")
-    err_msg = _("WEKO ID is required item.")
-    for val in values:
-        weko_id = val["value"]
-        if weko_id:
-            if not bool(re.fullmatch(r'[0-9]+', weko_id)):
-                errors.append(err_msg_format)
-        else:
-            errors.append(err_msg)
-    return errors
-
 def validate_identifier_scheme(item, values=[]):
     """Validate Identifier Scheme.
 
@@ -243,36 +217,17 @@ def validate_external_author_identifier(item, values=[],
     msg = _('External author identifier exists in DB.<br/>{}')
     for val in values:
         reduce_keys = val['reduce_keys']
-        idType = reduce(getitem, reduce_keys[:-1], item)['idType']
-        authorId = reduce(getitem, reduce_keys[:-1], item)['authorId']
-        if idType and authorId:
+        author_info = reduce(getitem, reduce_keys[:-1], item)
+        id_type = author_info.get("idType")
+        author_id = author_info.get("authorId")
+        if id_type and author_id:
             weko_ids_has_authorId = existed_external_authors_id \
-                .get(idType, {}) \
-                .get(authorId, [])
+                .get(id_type, {}) \
+                .get(author_id, [])
             if weko_ids_has_authorId \
                     and item.get('pk_id') not in weko_ids_has_authorId:
-                warnings.append(authorId)
+                warnings.append(author_id)
     if warnings:
         return msg.format('<br/>'.join(warnings))
     return None
 
-
-def check_weko_id_is_exits_for_import(pk_id, weko_id, existed_external_authors_id={}):
-    """weko_idがexisted_external_authors_idに存在するか確認します。
-    存在し、かつpk_idが一致しなかった場合、エラーを出します。
-
-    Args:
-        pk_id (str): pk_id
-        weko_id (str): weko_id
-        existed_external_authors_id (dict, optional): (object, optional): Existed external
-                            author id. Defaults to {}.
-
-    Returns:
-        list: List metadata paths are errors.
-    """
-    errors = []
-    err_msg = _("Specified WEKO ID already exist.")
-    exists_id = existed_external_authors_id["1"].get(weko_id)
-    if exists_id and not (pk_id in exists_id) :
-        errors.append(err_msg)
-    return errors

@@ -22,18 +22,11 @@
     <div id="search_res">
       <div class="panel panel-default">
         <div role="navigation" style="display: flex; flex-direction: column; width: 300px;">
-          <input type="button" id="btn_export" value="{{_('Export Item List')}}"
-            style="margin-bottom: 10px; width: 50%; text-align: left;" />
-            <input id="Option_Label" type="hidden" value="{{_('Please select the following option:')}}" />
-            <input id="Item_Selected" type="hidden" value="{{_('Selected Items')}}" />
-            <input id="Item_All" type="hidden" value="{{_('All Items')}}" />
-            <input id="Item_Cancel" type="hidden" value="{{_('Cancel')}}" />
-            <input id="No_Items" type="hidden" value="{{_('Error: There is no Selected items. Please check the item you want to export')}}" />
           <div id="search-container"></div>
           <input type="hidden" id="placeholder" value="{{_('Please press Enter after inputting to search.')}}" />
             <input type="hidden" id="showNoResultsMsg" value="{{_('No results found matching your search criteria.')}}" />
           </div>
-          <span><strong>{{username}}</strong></span>
+          <span style="margin-left: 5px;"><strong>{{username}}</strong></span>
         </div>
         <div id="search-result-body" class="panel-body">
           <div id="index_item_list">
@@ -44,6 +37,12 @@
                   <a href="{{ url_for('weko_workspace.itemregister') }}" class="btn btn-primary">
                     <i class="bi bi-folder-plus"></i>
                   </a>
+                  <input type="button" id="btn_export" value="{{_('Export Item List')}}" class="btn btn-primary" />
+                  <input id="Option_Label" type="hidden" value="{{_('Please select the following option:')}}" />
+                  <input id="Item_Selected" type="hidden" value="{{_('Selected Items')}}" />
+                  <input id="Item_All" type="hidden" value="{{_('All Items')}}" />
+                  <input id="Item_Cancel" type="hidden" value="{{_('Cancel')}}" />
+                  <input id="No_Items" type="hidden" value="{{_('Error: There is no Selected items. Please check the item you want to export')}}" />
                 </div>
               </div>
               <div class="pull-right">

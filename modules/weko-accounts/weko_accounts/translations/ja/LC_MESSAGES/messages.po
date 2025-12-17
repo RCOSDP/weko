@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-accounts 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-06-26 15:54+0900\n"
+"POT-Creation-Date: 2025-10-03 11:39+0900\n"
 "PO-Revision-Date: 2018-01-19 13:59+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -71,11 +71,11 @@ msgstr "設定"
 msgid "Shibboleth"
 msgstr "Shibboleth"
 
-#: weko_accounts/api.py:251
+#: weko_accounts/api.py:281
 msgid "Can't get relation Weko User."
 msgstr ""
 
-#: weko_accounts/api.py:277 weko_accounts/views.py:471
+#: weko_accounts/api.py:307 weko_accounts/views.py:471
 msgid "Failed to login."
 msgstr "ログインに失敗しました。"
 
@@ -90,7 +90,7 @@ msgstr "翻訳文字列"
 msgid "%(icon)s Administration"
 msgstr ""
 
-#: weko_accounts/views.py:170 weko_accounts/views.py:542
+#: weko_accounts/views.py:170 weko_accounts/views.py:546
 msgid "WEKO-Accounts"
 msgstr "WEKOアカウント"
 

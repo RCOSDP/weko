@@ -1056,38 +1056,14 @@ RESOURCE_TYPE_V2_MAP = {
 }
 
 
-class BaseMapper:
-    """BaseMapper."""
-
-    itemtype_map = {}
-    identifiers = []
-
-    @classmethod
-    def update_itemtype_map(cls):
-        """Update itemtype map."""
-        for t in ItemTypes.get_all(with_deleted=False):
-            cls.itemtype_map[t.item_type_name.name] = t
+class JPCOARV2Mapper:
+    """JPCOAR V2 Mapper."""
 
     def __init__(self, xml):
         """Init."""
         self.xml = xml
         self.json = xmltodict.parse(xml) if xml else {}
-        if not BaseMapper.itemtype_map:
-            BaseMapper.update_itemtype_map()
-
         self.itemtype = None
-        for item in BaseMapper.itemtype_map:
-            if "Others" == item or "Multiple" == item:
-                self.itemtype = BaseMapper.itemtype_map.get(item)
-                break
-
-
-class JPCOARV2Mapper(BaseMapper):
-    """JPCOAR V2 Mapper."""
-
-    def __init__(self, xml):
-        """Init."""
-        super().__init__(xml)
 
     def map(self, item_type_name):
         """Get map."""
@@ -1095,7 +1071,7 @@ class JPCOARV2Mapper(BaseMapper):
         if not item_type_name or not self.json or "jpcoar:jpcoar" not in self.json.keys():
             return default_metadata
 
-        self.itemtype = self.itemtype_map.get(item_type_name)
+        self.itemtype = ItemTypes.get_by_name(item_type_name)
 
         if not self.itemtype:
             return default_metadata
@@ -1168,7 +1144,7 @@ class JPCOARV2Mapper(BaseMapper):
         return res
 
 
-class JsonMapper(BaseMapper):
+class JsonMapper:
     """ Mapper to map from Json format file to ItemType.
 
         The original file to be mapped by this Mapper is assumed to be a
@@ -1413,7 +1389,9 @@ class JsonLdMapper(JsonMapper):
         Args:
             json_ld (dict): metadata with json-ld format.
         Returns:
-            list[dict]: list of mapped metadata.
+            tuple (list[dict], str):
+                - list[dict]: list of mapped metadata.
+                - str: format of the metadata. "ro-crate" or "sword-bagit".
         """
         metadatas, format = self._deconstruct_json_ld(json_ld)
         list_items = [
@@ -1521,22 +1499,22 @@ class JsonLdMapper(JsonMapper):
                     ))
             else:
                 # item metadata
-                meta_props = META_KEY.split(".")
-                PROP_PATH = properties_mapping[META_PATH]
-                prop_props = PROP_PATH.split(".")
                 if META_VALUE is None or META_VALUE == "":
                     # If the value is None or empty, skip setting metadata
                     continue
                 if not isinstance(META_VALUE, (str, int, float, bool)):
                     META_VALUE = str(META_VALUE)
-                # META_KEY="dc:type.@id", meta_props=["dc:type","@id"],
-                # PROP_PATH=item_30001_resource_type11.resourceuri, prop_props=["item_30001_resource_type11","resourceuri"]
                 try:
-                    adjusted_meta_key = self._align_index(META_KEY, properties_mapping)
-                    valid_path = self._check_settable_path(adjusted_meta_key)
+                    destination_path = self._resolve_mapping_destination(
+                        META_KEY, properties_mapping
+                    )
+                    # META_KEY="dc:type.@id"
+                    # → destination_key=item_30001_resource_type11.resourceuri
+                    valid_path = self._check_settable_path(destination_path)
                     if valid_path:
                         set_by_jsonpath(
-                            mapped_metadata, valid_path, META_VALUE, fixed_properties=fixed_properties
+                            mapped_metadata, valid_path, META_VALUE,
+                            fixed_properties=fixed_properties
                         )
                     else:
                         missing_metadata[META_KEY] = META_VALUE
@@ -1557,7 +1535,7 @@ class JsonLdMapper(JsonMapper):
                     traceback.print_exc()
 
         # Check if "Extra" prepared in itemtype schema form item_map
-        if "Extra" in item_map:
+        if "Extra" in item_map and missing_metadata:
             extra_key = item_map["Extra"]
             prop_type = self._get_property_type(extra_key)
             if prop_type == "array":
@@ -1568,7 +1546,9 @@ class JsonLdMapper(JsonMapper):
                     {interim: json.dumps(missing_metadata, ensure_ascii=False)}
                 ]
             else:
-                mapped_metadata[item_map.get("Extra")] = json.dumps(missing_metadata, ensure_ascii=False)
+                mapped_metadata[item_map.get("Extra")] = json.dumps(
+                    missing_metadata, ensure_ascii=False
+                )
             system_info["warnings"] = [
                 _("Metadata which could not be mapped to item type will be set in 'Extra'.")
             ] + system_info["warnings"]
@@ -1681,21 +1661,19 @@ class JsonLdMapper(JsonMapper):
         if not extracted:
             raise ValueError("Invalid json-ld format: Metadata is not found.")
 
-        def _resolve_link(parent, key, value):
+        def _resolve_link(value):
             """Resolve links in json-ld metadata and restore hierarchy."""
             if isinstance(value, dict):
                 if len(value) == 1 and "@id" in value and value["@id"] in extracted:
-                    parent[key] = extracted[value["@id"]]
+                    return _resolve_link(extracted[value["@id"]])
                 else:
-                    for k, v in value.items():
-                        _resolve_link(value, k, v)
+                    return {k: _resolve_link(v) for k, v in value.items()}
             elif isinstance(value, list):
-                for i, v in enumerate(value):
-                    _resolve_link(value, i, v)
+                return [_resolve_link(v) for v in value]
+            else:
+                return value
 
-        # Restore metadata to tree structure by tracing "@id" in linked data
-        for key, value in extracted.items():
-            _resolve_link(extracted, key, value)
+        extracted = {k: _resolve_link(v) for k, v in extracted.items()}
 
         list_extracted = []
         if format == "ro-crate":
@@ -1714,12 +1692,12 @@ class JsonLdMapper(JsonMapper):
             metadata = self._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
-                {"id": extracted["identifier"]}
-                if "identifier" in extracted else {}
+                {"id": metadata.pop("identifier")}
+                if "identifier" in metadata else {}
             )
             system_info.update(
-                {"uri": extracted["uri"]}
-                if "uri" in extracted else {}
+                {"uri": metadata.pop("uri")}
+                if "uri" in metadata else {}
             )
 
             list_grant = extracted.get("wk:grant", [])
@@ -1727,13 +1705,13 @@ class JsonLdMapper(JsonMapper):
                 raise ValueError(
                     "Invalid json-ld format: wk:grant is not a list."
                 )
-            for grant in extracted.get("wk:grant", []):
+            for grant in list_grant:
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "HDL":
                     system_info["cnri"] = grant.get("@id").lstrip("#")
                     break
-            for grant in extracted.get("wk:grant", []):
+            for grant in list_grant:
                 if not isinstance(grant, dict):
                     continue
                 if grant.get("jpcoar:identifier") == "DOI":
@@ -1810,12 +1788,11 @@ class JsonLdMapper(JsonMapper):
 
         return return_data
 
+    def _resolve_mapping_destination(self, metadata_key, properties_mapping):
+        """Resolve mapping destination path.
 
-    def _align_index(self, metadata_key, properties_mapping):
-        """Map path between json-ld and itemtype metadata.
-
-        Align the indexes of the path and item type path in the json-ld
-        based on the mapping.
+        Searches for the path within the item type metadata corresponding to
+        the specified JSON-LD metadata key, taking into account existing indexes.
 
         Args:
             metadata_key (str): path in json-ld metadata.
@@ -2409,23 +2386,24 @@ class JsonLdMapper(JsonMapper):
         # Extra
         if "Extra" in item_map:
             extra_key = item_map["Extra"]
-            # case: "Extra" is list
-            # If not list, pass this process.
-            extra_key_head = item_map["Extra"]
-            if not metadata_to_map.get(extra_key):
-                extra_schema = self.itemtype.schema["properties"].get(
-                    extra_key_head).get("items").get("properties")
-                interim = list(extra_schema.keys())[0]
-                extra_key = extra_key_head + "[0]." + interim
+            prop_type = self._get_property_type(extra_key)
+            if prop_type == "array":
+                extra_key_head = item_map["Extra"]
+                if not metadata_to_map.get(extra_key):
+                    extra_schema = self.itemtype.schema["properties"].get(
+                        extra_key_head).get("items", {}).get("properties")
+                    interim = list(extra_schema.keys())[0] if extra_schema else ""
+                    extra_key = extra_key_head + "[0]." + interim
             str_extra_dict = metadata_to_map.get(extra_key)
-            extra_entity = {
-                "description": "Metadata which is not able to be mapped",
-                "value": str_extra_dict
-            }
-            add_entity(
-                rocrate.root_dataset, "additionalProperty", gen_id("extra"),
-                "PropertyValue", extra_entity
-            )
+            if str_extra_dict:
+                extra_entity = {
+                    "description": "Metadata which is not able to be mapped",
+                    "value": str_extra_dict
+                }
+                add_entity(
+                    rocrate.root_dataset, "additionalProperty", gen_id("extra"),
+                    "PropertyValue", extra_entity
+                )
 
         # wk:itemLinks
         list_item_link_info = ItemLink.get_item_link_info(recid)

@@ -4,13 +4,11 @@ import xmltodict
 import uuid
 import json
 from datetime import date
-from mock import patch
-from unittest.mock import MagicMock
+from unittest.mock import patch, MagicMock
 from collections import OrderedDict
 from pypdfium2 import PdfiumError
 
 from weko_records.api import Mapping
-from weko_records.models import ItemType,ItemTypeName
 from weko_records.serializers.utils import get_full_mapping
 from weko_search_ui.mapper import (
     get_subitem_text_key,
@@ -61,10 +59,10 @@ from weko_search_ui.mapper import (
     add_file,
     add_identifier,
     add_catalog,
-    BaseMapper,
     JPCOARV2Mapper,
     JsonMapper,
-    JsonLdMapper
+    JsonLdMapper,
+    set_by_jsonpath,
 )
 from .helpers import json_data
 
@@ -283,7 +281,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"text": "value"},
-            {"test_key":"value"}
+            {}
         ),
         pytest.param(
             # Case09: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -292,7 +290,7 @@ def test_subitem_recs(app):
             "test.#text",
             ["test_key"],
             {"test": [{"#text": "value"}, {"#text": "value2"}]},
-            {}
+            {"test_key":"value"}
         ),
         pytest.param(
             # Case10: "properties" in schema (len(keys) == 1 and "." in value, len(value.split(".")) > 2)
@@ -3293,7 +3291,7 @@ def test_add_file(mapper_jpcoar):
     # Case04: Parse empty file
     res = {}
     add_file(schema, mapping, res, [])
-    assert res == {'file_path': [],}
+    assert res == {}
 
 
 # def add_catalog(schema, mapping, res, metadata):
@@ -3649,13 +3647,12 @@ def test_add_catalog():
     assert res == {}
 
 
-# class BaseMapper:
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestBaseMapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-class TestBaseMapper:
-#     def update_itemtype_map(cls):
-#     def __init__(self, xml):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestBaseMapper::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_init(self,app,db):
+# class JPCOARV2Mapper(BaseMapper):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+class TestJPCOARV2Mapper:
+    # def __init__(self, xml):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_init(self):
         xml_str="""
         <jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd">
             <dc:title xml:lang="ja">test full item</dc:title>
@@ -3768,45 +3765,11 @@ class TestBaseMapper:
             </jpcoar:file>
         </jpcoar:jpcoar>"""
         # not exist item_type with name "Multiple" or "Others"
-        item_type_name1 = ItemTypeName(
-            id=10, name="test_itemtype", has_site_license=True, is_active=True
-        )
-        item_type1 = ItemType(
-            id=10,name_id=10,harvesting_type=True,schema={},form={},render={},tag=1,version_id=1,is_deleted=False,
-        )
-        db.session.add(item_type_name1)
-        db.session.add(item_type1)
-        db.session.commit()
-        mapper = BaseMapper(xml_str)
+        mapper = JPCOARV2Mapper(xml_str)
+        assert mapper.xml == xml_str
+        assert mapper.json == xmltodict.parse(xml_str)
         assert mapper.itemtype is None
 
-        # exist item_type with name "Multiple" or "Others"
-        item_type_name2 = ItemTypeName(
-            id=11, name="Multiple", has_site_license=True, is_active=True
-        )
-        item_type2 = ItemType(
-            id=11,name_id=11,harvesting_type=True,schema={},form={},render={},tag=1,version_id=1,is_deleted=False,
-        )
-        db.session.add(item_type_name2)
-        db.session.add(item_type2)
-        db.session.commit()
-        BaseMapper.update_itemtype_map()
-        mapper = BaseMapper(xml_str)
-        assert mapper.itemtype == item_type2
-
-
-# update_itemtype_map(cls)
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestBaseMapper::test_update_itemtype_map -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-    def test_update_itemtype_map(self, db_itemtype_jpcoar):
-        BaseMapper.update_itemtype_map()
-        item_type_name = db_itemtype_jpcoar["item_type_multiple_name"].name
-        assert item_type_name in BaseMapper.itemtype_map
-        assert type(BaseMapper.itemtype_map[item_type_name]) == ItemType
-
-
-# class JPCOARV2Mapper(BaseMapper):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-class TestJPCOARV2Mapper:
 #     def map(self):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJPCOARV2Mapper::test_map -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_map(self,db_itemtype):
@@ -4785,7 +4748,6 @@ class TestJsonLdMapper:
             assert isinstance(json.loads(item_metadata["item_1754636750964"]), dict)
 
         schema = json_data("data/jsonld/item_type_schema.json")
-        schema = json_data("data/jsonld/item_type_schema.json")
         schema["properties"].update({
             "item_1744171568909": {
                 "type": "array",
@@ -4807,6 +4769,7 @@ class TestJsonLdMapper:
         item_type_mapping2.model.mapping = mapping
         db.session.commit()
         json_mapping = json_data("data/jsonld/ro-crate_mapping.json")
+        json_mapping["Extra"] = "item_1744171568909"
         json_ld = json_data("data/jsonld/ro-crate-metadata2.json")
         with app.test_request_context():
             mapper = JsonLdMapper(item_type2.model.id, json_mapping)
@@ -5109,19 +5072,36 @@ class TestJsonLdMapper:
             assert file_1["name"] == "data.csv"
 
         # case Extra(attribute_value_mlt)
-        key = "item_1744171568909"
-        multi_metadata = {
-            "attribute_name": "Extra",
-            "attribute_value_mlt": [
-                {
-                    "interim": "エクストラ_multi"
-                }
-            ]
-        }
-        schema = json_data("data/jsonld/item_type_schema_multi.json")
+        schema = json_data("data/jsonld/item_type_schema.json")
+        schema["properties"].update({
+            "item_1744171568909": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "interim": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "title": "Extra",
+                "maxItems": 9999,
+                "minItems": 1
+            }
+        })
         item_type2.model.schema = schema
         db.session.commit()
-        metadata.update(**{key:multi_metadata})
+        extra_metadata = {
+            "item_1744171568909": {
+                "attribute_name": "Extra",
+                "attribute_value_mlt": [
+                    {
+                        "interim": "エクストラ_multi"
+                    }
+                ]
+            }
+        }
+        metadata.update(extra_metadata)
 
         rocrate = JsonLdMapper(
             item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
@@ -5164,17 +5144,26 @@ class TestJsonLdMapper:
         assert file_0["name"] == "sample.rst"
         assert file_1["name"] == "data.csv"
         # Extra
-        assert extra["value"] == multi_metadata["attribute_value_mlt"][0]['interim']
+        assert extra["value"] == extra_metadata["item_1744171568909"]["attribute_value_mlt"][0]['interim']
 
         # case Extra(attribute_value)
-        single_metadata = {
-            "attribute_name": "extra_field",
-            "attribute_value": "エクストラ_single"
-        }
-        metadata.update(**{key:single_metadata})
-        schema = json_data("data/jsonld/item_type_schema_multi.json")
+        schema = json_data("data/jsonld/item_type_schema.json")
+        schema["properties"].update({
+            "item_1754636750964": {
+                "type": "string",
+                "title": "Extra",
+                "format": "textarea"
+            }
+        })
         item_type2.model.schema = schema
         db.session.commit()
+        extra_metadata = {
+            "item_1754636750964": {
+                "attribute_name": "extra_field",
+                "attribute_value": "エクストラ_single"
+            }
+        }
+        metadata.update(extra_metadata)
 
         rocrate = JsonLdMapper(
             item_type2.model.id, json_mapping).to_rocrate_metadata(metadata)
@@ -5217,7 +5206,7 @@ class TestJsonLdMapper:
         assert file_0["name"] == "sample.rst"
         assert file_1["name"] == "data.csv"
         # Extra(attribute_value)
-        assert extra["value"] == single_metadata["attribute_value"]
+        assert extra["value"] == extra_metadata["item_1754636750964"]["attribute_value"]
 
 
     # def is_valid(self):
@@ -5255,7 +5244,6 @@ class TestJsonLdMapper:
     # def to_item_metadata(self, json_ld):
     # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_to_item_metadata_ams_dict -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_to_item_metadata_ams_dict(self, app, db, item_type2):
-        app.config.update({"WEKO_SWORDSERVER_METADATA_FILE_ROCRATE": "ro-crate-metadata.json"})
         json_mapping = json_data("data/ams/jsonld_mapping_dict.json")
         json_ld = json_data("data/ams/ro-crate-metadata_dict.json")
 
@@ -5392,3 +5380,87 @@ class TestJsonLdMapper:
 
         extract_text = mapper.extract_text_from_files("sample.other")
         assert extract_text == ""
+def test_set_by_jsonpath():
+    data = {}
+
+    set_by_jsonpath(data, "pubdate", "2025-06-12")
+    assert data["pubdate"] == "2025-06-12"
+
+    set_by_jsonpath(data, "item_1.subitem_1", "value_1")
+    assert data["item_1"]["subitem_1"] == "value_1"
+
+    set_by_jsonpath(data, "item_1.subitem_2.subsubitem_1", "value_2", {"item_1": {"subitem_2": {"default_factory": "default_value"}}})
+    assert data["item_1"]["subitem_2"]["default_factory"] == "default_value"
+    assert data["item_1"]["subitem_2"]["subsubitem_1"] == "value_2"
+
+    with pytest.raises(TypeError):
+        set_by_jsonpath(data, "item_1[0].subitem_invalid", "value_invalid")
+
+
+    set_by_jsonpath(data, "item_2[0].subitem_3", "value_2")
+    assert data["item_2"][0]["subitem_3"] == "value_2"
+
+    set_by_jsonpath(data, "item_2[1].subitem_4", "value_3")
+    assert data["item_2"][1]["subitem_4"] == "value_3"
+
+    with pytest.raises(ValueError):
+        set_by_jsonpath(data, "item_2[2.subitem_4", "value_3")
+
+    with pytest.raises(ValueError):
+        set_by_jsonpath(data, "item_2[foo].subitem_invalid", "value_invalid")
+
+    set_by_jsonpath(data, "item_3[0].subitem_5.subsubitem_2", "value_4")
+    assert data["item_3"][0]["subitem_5"]["subsubitem_2"] == "value_4"
+
+    set_by_jsonpath(data, "item_3[1].subitem_5.subsubitem_3", "value_5")
+    assert data["item_3"][1]["subitem_5"]["subsubitem_3"] == "value_5"
+
+    set_by_jsonpath(data, "item_3[1].subitem_6[0].subsubitem_4", "value_6", {"item_3.subitem_6": {"default_factory": "default_value"}})
+    assert data["item_3"][1]["subitem_6"][0]["subsubitem_4"] == "value_6"
+    assert data["item_3"][1]["subitem_6"][0]["default_factory"] == "default_value"
+
+    with pytest.raises(TypeError):
+        set_by_jsonpath(data, "item_3.subitem_invalid", "value_invalid")
+
+    with pytest.raises(ValueError):
+        set_by_jsonpath(data, "", "value_invalid")
+
+    assert data == {
+        "pubdate": "2025-06-12",
+        "item_1": {
+            "subitem_1": "value_1",
+            "subitem_2": "value_2"
+        },
+        "item_2": [
+            {
+                "subitem_3": "value_2"
+            },
+            {
+                "subitem_4": "value_3"
+            }
+        ],
+        "item_3": [
+            {
+                "subitem_5": {
+                    "subsubitem_2": "value_4"
+                }
+            },
+            {
+                "subitem_5": {
+                    "subsubitem_3": "value_5"
+                },
+                "subitem_6": [
+                    {
+                        "subsubitem_4": "value_6",
+                        "default_factory": "default_value"
+                    }
+                ]
+            }
+        ]
+    }
+
+    set_by_jsonpath(data, "item_4.subitem_6[1]", "value_7")
+    assert data["item_4"]["subitem_6"][0] == None
+    assert data["item_4"]["subitem_6"][1] == "value_7"
+
+    set_by_jsonpath(data, "item_4.subitem_6[1]", "value_7")

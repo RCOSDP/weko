@@ -227,7 +227,9 @@ def test_create_view_WidgetSettingView(i18n_app, view_instance):
         view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
         view_instance.can_create = can_create
 
-        assert view_instance.create_view()
+        with patch("flask.render_template", return_value="dummy"):
+            with patch("flask_admin.base.render_template", return_value="dummy"):
+                assert view_instance.create_view()
 
 
 # WidgetSettingView.edit_view ~ ERROR jinja2.exceptions.TemplateSyntaxError: Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.
@@ -311,9 +313,9 @@ def test_details_view_WidgetSettingView(i18n_app, view_instance):
                 view_instance.admin = MagicMock()
                 view_instance.admin.base_template = "weko_gridlayout/admin/widget_design.html"
                 view_instance.can_view_details = can_view_details_F
-
-                view_instance.can_view_details = can_view_details_F
-                assert view_instance.details_view()
+                with patch("flask.render_template", return_value="dummy"):
+                    with patch("flask_admin.base.render_template", return_value="dummy"):
+                        assert view_instance.details_view()
 
 
 # WidgetSettingView.action_delete

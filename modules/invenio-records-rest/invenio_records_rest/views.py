@@ -417,20 +417,18 @@ def verify_record_permission(permission_factory, record):
         if not current_user.is_authenticated:
             abort(401)
         abort(403)
-        from weko_records_ui.permissions import check_publish_status,check_created_id
-        from weko_index_tree.utils import get_user_roles
-        is_admin = False
-        is_owner = False
-        roles = get_user_roles()
-        current_app.logger.error("roles :{}".format(roles))
-        if roles[0]:
-            is_admin = True
-        if check_created_id(record):
-            is_owner = True
-        is_public = check_publish_status(record)
-        if not is_public and not is_admin and not is_owner:
-                abort(403)
-
+    from weko_records_ui.permissions import check_publish_status,check_created_id
+    from weko_index_tree.utils import get_user_roles
+    is_admin = False
+    is_owner = False
+    roles = get_user_roles()
+    if roles[0]:
+        is_admin = True
+    if check_created_id(record):
+        is_owner = True
+    is_public = check_publish_status(record)
+    if not is_public and not is_admin and not is_owner:
+        abort(403)
 
 def need_record_permission(factory_name):
     """Decorator checking that the user has the required permissions on record.
@@ -1127,8 +1125,8 @@ class RecordResource(ContentNegotiatedMethodView):
                 from invenio_communities.models import Community
                 from weko_index_tree.api import Indexes
 
-                comm_list = Community.query.filter(
-                    Community.id_role.in_(role_ids)
+                comm_list = Community.get_by_user(
+                    role_ids, with_deleted=True
                 ).all()
                 for comm in comm_list:
                     for index in Indexes.get_self_list(comm.root_node_id):

@@ -342,6 +342,37 @@ class Location(db.Model, Timestamp):
         """Return query that fetches all locations."""
         return Location.query.all()
 
+    def create_s3_client(self):
+        """Create S3 client.
+
+        Returns:
+            boto3.client: S3 client.
+        """
+        from invenio_files_rest.utils import create_boto3_s3_client
+        # Build client config
+        client_config = {
+            "signature_version": self.s3_signature_version,
+            "connect_timeout": self.s3_url_expiration or 60,
+            "s3": {
+                "addressing_style": "auto",
+            }
+        }
+
+        # Adjust addressing style based on location type
+        if self.type == current_app.config.get(
+            "FILES_REST_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE"):
+            client_config["s3"]["addressing_style"] = "virtual"
+        elif self.type == current_app.config.get(
+            "FILES_REST_LOCATION_TYPE_S3_PATH_VALUE"):
+            client_config["s3"]["addressing_style"] = "path"
+
+        return create_boto3_s3_client(
+            self.access_key, self.secret_key,
+            region_name=self.s3_region_name,
+            endpoint_url=self.s3_endpoint_url,
+            client_config=client_config
+        )
+
     def __repr__(self):
         """Return representation of location."""
         return self.name
@@ -777,7 +808,7 @@ class FileInstance(db.Model, Timestamp):
     @classmethod
     def get_location_all(cls):
         """Get all location ."""
-        return db.session.query(Location)
+        return db.session.query(Location).all()
 
     @classmethod
     def create(cls):

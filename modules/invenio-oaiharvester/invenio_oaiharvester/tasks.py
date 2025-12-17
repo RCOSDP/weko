@@ -162,6 +162,7 @@ def process_item(record, harvesting, counter, request_info):
     event = ItemEvents.INIT
 
     xml = etree.tostring(record, encoding='utf-8').decode()
+    version = ""
     # current_app.logger.debug('[{0}] [{1}] Processing xml: {2}'.format(
     #    0, 'Harvesting', xml))
     if harvesting.metadata_prefix == 'oai_dc':
@@ -169,8 +170,10 @@ def process_item(record, harvesting, counter, request_info):
     elif harvesting.metadata_prefix == 'jpcoar' or \
             harvesting.metadata_prefix == 'jpcoar_1.0':
         mapper = JPCOARMapper(xml)
+        version = "1.0"
     elif harvesting.metadata_prefix == 'jpcoar_2.0':
         mapper = JPCOARMapper(xml)
+        version = "2.0"
     elif harvesting.metadata_prefix == 'oai_ddi25' or \
             harvesting.metadata_prefix == 'ddi':
         mapper = DDIMapper(xml)
@@ -220,7 +223,7 @@ def process_item(record, harvesting, counter, request_info):
         if dep.pid.status == PIDStatus.DELETED:
             recid.status = PIDStatus.DELETED
             restore(recid.pid_value)
-        json_data = mapper.map()
+        json_data = mapper.map(version)
         if not json_data:
             return
 
@@ -445,6 +448,7 @@ def run_harvesting(id, start_time, user_data, request_info):
             nonlocal pause
             pause = True
         signal.signal(signal.SIGTERM, sigterm_handler)
+        _errormsg = []
         while True:
             records, rtoken = harvester_list_records(
                 harvesting.base_url,
@@ -459,6 +463,9 @@ def run_harvesting(id, start_time, user_data, request_info):
                 try:
                     process_item(record, harvesting, counter, request_info)
                     db.session.commit()
+                except ValueError as ex:
+                    _errormsg.append(str(ex))
+                    event_counter('error_items', counter)
                 except Exception as ex:
                     current_app.logger.debug(traceback.format_exc())
                     current_app.logger.error(
@@ -473,6 +480,8 @@ def run_harvesting(id, start_time, user_data, request_info):
             elif pause is True:
                 harvest_log.status = 'Suspended'
                 break
+        if _errormsg:
+            harvest_log.errmsg = '\n'.join(_errormsg)[:255]
     except Exception as ex:
         db.session.rollback()
         harvest_log.status = 'Failed'

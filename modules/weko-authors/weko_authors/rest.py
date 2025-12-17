@@ -35,13 +35,18 @@ from invenio_oauth2server import require_api_auth, require_oauth_scopes
 
 from weko_accounts.utils import roles_required, limiter
 from weko_admin.config import (
-    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO,
+    WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
 )
 from weko_authors.api import WekoAuthors
-from weko_authors.utils import validate_weko_id, check_period_date
+from weko_authors.utils import (
+    check_period_date, validate_community_ids, check_delete_author
+)
 
 from .errors import (
-    VersionNotFoundRESTError, InvalidDataRESTError, AuthorBaseRESTError, AuthorNotFoundRESTError, AuthorInternalServerError
+    VersionNotFoundRESTError, InvalidDataRESTError, AuthorBaseRESTError,
+    AuthorNotFoundRESTError, AuthorInternalServerError, AuthorsPermissionError,
+    AuthorsValidationError
 )
 from .scopes import (
     author_search_scope,
@@ -181,7 +186,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_search_scope.id)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @limiter.limit('')
     def get(self, **kwargs):
         """Handle GET request."""
@@ -194,7 +199,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_create_scope.id)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @limiter.limit('')
     def post(self, **kwargs):
         """Handle GET request."""
@@ -207,7 +212,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_update_scope.id)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @limiter.limit('')
     def put(self, **kwargs):
         """Handle GET request."""
@@ -220,7 +225,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_delete_scope.id)
-    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
     @limiter.limit('')
     def delete(self, **kwargs):
         """Handle GET request."""
@@ -240,6 +245,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             familyname = request.args.get("familyname")
             idtype = request.args.get("idtype")
             authorid = request.args.get("authorid")
+            communityid = request.args.get("communityid")
 
             if (idtype and not authorid) or (authorid and not idtype):
                 raise BadRequest("Both 'idtype' and 'authorid' must be specified together or omitted.")
@@ -261,6 +267,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                     }
                 }
             }
+
+            if communityid:
+                search_query["query"]["bool"]["must"].append({
+                    "term": {"communityIds": communityid}
+                })
 
             if fullname:
                 parts = fullname.split(" ", 1)
@@ -307,11 +318,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
 
         except BadRequest as e:
-            traceback.format_exc()
+            traceback.print_exc()
             raise BadRequest(str(e))
         except Exception as e:
             current_app.logger.error(f"Unexpected error. {e}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise InternalServerError("Internal server error.")
 
     def process_authors_data_before(self, author_data):
@@ -355,94 +366,71 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
         return author_data
 
     def remove_filed_no_need(self,data):
-        keys_to_keep = {"emailInfo", "authorIdInfo", "authorNameInfo", "affiliationInfo"}
+        keys_to_keep = {"emailInfo", "authorIdInfo", "authorNameInfo", "affiliationInfo", "communityIds"}
         return {k: v for k, v in data.items() if k in keys_to_keep}
 
 
     def post_v1(self, **kwargs):
         """Handle POST request for author registration."""
-        import uuid
-        from weko_authors.models import Authors
         lang_options_list = [
-                "ja", "ja-Kana", "en", "fr", "it", "de", "es",
-                "zh-cn", "zh-tw", "ru", "la", "ms", "eo", "ar",
-                "el", "ko"
-            ]
+            "ja", "ja-Kana", "en", "fr", "it", "de", "es",
+            "zh-cn", "zh-tw", "ru", "la", "ms", "eo", "ar",
+            "el", "ko"
+        ]
         try:
+            # Validate and preprocess request data
             data = self.validate_request(request, AuthorCreateRequestSchema)
             author_data = data.get("author")
-            prefix_schemes,affiliation_schemes = self.get_all_schemes()
+            prefix_schemes, affiliation_schemes = self.get_all_schemes()
             self.validate_request_data(
                 self.extract_data(author_data), lang_options_list,
                 prefix_schemes, affiliation_schemes
             )
 
-            self.validate_author_data(author_data, author_data.get("pk_id"))
+            try:
+                author_data["communityIds"] = validate_community_ids(
+                    author_data.get("communityIds", []), is_create=True
+                )
+            except AuthorsValidationError as ex:
+                current_app.logger.error(f"Community IDs validation error: {ex.description}")
+                raise
 
             author_data = self.process_authors_data_before(author_data)
 
-            self.handle_weko_id(author_data)
+            # Remove authorIdInfo with idType '1(WEKO)'
+            self.check_author_id_info(author_data)
 
-            es_id = str(uuid.uuid4())
-            author_data["id"] = es_id
+            WekoAuthors.create(author_data)
 
-            with db.session.begin_nested():
-                new_id = Authors.get_sequence(db.session)
-                author_data["pk_id"] = str(new_id)
-                author_record = Authors(id=new_id, json=author_data, is_deleted=False)
-                db.session.add(author_record)
+            # Prepare response
+            doc = current_search_client.get(
+                index=current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"],
+                id=author_data["id"], doc_type="_doc"
+            )
+            result = doc.get("_source", {})
 
-            author_data["gather_flg"] = 0
-            author_data["is_deleted"] = False
-            author_data.pop("id")
-
-            search_index = current_app.config["WEKO_AUTHORS_ES_INDEX_NAME"]
-            current_search_client.index(index=search_index, id=es_id, body=author_data, doc_type="_doc")
+            author_data = self.process_authors_data_after(result)
+            author_data = self.remove_filed_no_need(author_data)
             return Response(
-                            response=json.dumps({"message": "Author successfully registered.", "author": self.process_authors_data_after(author_data)}),
-                            status=200,
-                            content_type='application/json'
-                        )
+                response=json.dumps({
+                    "message": "Author successfully registered.",
+                    "author": author_data
+                }),
+                status=200,
+                content_type='application/json'
+            )
 
         except AuthorBaseRESTError as ex:
             raise ex
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise InternalServerError("Database error.")
         except Exception as ex:
             current_app.logger.error(f"Unexpected error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise InternalServerError("Internal server error.")
-
-    def validate_author_data(self, author_data, pk_id=None):
-        """Validate author data.
-        Args:
-            author_data (dict): The author data to validate.
-            pk_id (str, optional): The primary key ID of the author.
-
-        Raises:
-            InvalidDataRESTError: If the author data is invalid.
-        """
-        for auth_id in author_data.get("authorIdInfo", []):
-            id_type = auth_id.get("idType")
-            author_id = auth_id.get("authorId")
-            current_app.logger.debug(f"Validating author ID: {author_id} with type: {id_type}")
-            if id_type == "WEKO":
-                current_app.logger.debug(f"Validating WEKO ID: {author_id}")
-                is_valid, error_msg = validate_weko_id(author_id, pk_id)
-                if not is_valid and error_msg == "not half digit":
-                    current_app.logger.error("The WEKO ID must be numeric characters only.")
-                    raise InvalidDataRESTError(
-                        description="Bad Request: The WEKO ID must be numeric characters only."
-                    )
-                if not is_valid and error_msg == "already exists":
-                    current_app.logger.error("The value is already in use as WEKO ID.")
-                    raise InvalidDataRESTError(
-                        description="Bad Request: The value is already in use as WEKO ID."
-                    )
-
 
     def validate_request(self, request, schema):
         """Validate the request.
@@ -482,53 +470,17 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             ) from ex
 
         return request_data
-
-    def handle_weko_id(self, author_data):
+    
+    def check_author_id_info(self, author_data):
+        """Remove authorIdInfo with idType '1(WEKO)'.
+        
+        Args:
+            author_data (dict): The author data containing authorIdInfo.
+        """
         author_id_info = author_data.get("authorIdInfo", [])
-        has_weko_id = any(auth_id.get("idType") == "1" for auth_id in author_id_info)
-
-        if not has_weko_id:
-            search_index = current_app.config.get("WEKO_AUTHORS_ES_INDEX_NAME")
-
-            query = {
-                "size": 0,
-                "aggs": {
-                    "max_weko_id": {
-                        "max": {
-                            "script": {
-                                "source": """
-                                    int maxId = 0;
-                                    for (def entry : params._source.authorIdInfo) {
-                                        if (entry.idType == '1') {
-                                            try {
-                                                int id = Integer.parseInt(entry.authorId);
-                                                if (id > maxId) maxId = id;
-                                            } catch (Exception e) {
-                                                // Ignore non-numeric values
-                                            }
-                                        }
-                                    }
-                                    return maxId;
-                                """,
-                                "lang": "painless"
-                            }
-                        }
-                    }
-                }
-            }
-
-            search_results = current_search_client.search(index=search_index, body=query)
-            max_weko_id = search_results["aggregations"]["max_weko_id"]["value"] or 0
-
-            new_weko_id = str(int(max_weko_id) + 1)
-
-            author_id_info.append({
-                "idType": "1",
-                "authorId": new_weko_id,
-                "authorIdShowFlg": "true"
-            })
-
-        author_data["authorIdInfo"] = author_id_info
+        author_data["authorIdInfo"] = [
+            info for info in author_id_info if info.get('idType') != "1"
+        ]
 
     def put_v1(self, **kwargs):
         """Handle PUT request for author update."""
@@ -587,7 +539,18 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             if author_by_es and not pk_id:
                 pk_id = author_by_es.get("pk_id")
 
-            self.validate_author_data(author_data, pk_id)
+            community_ids = author_data.get("communityIds", [])
+            if author_by_pk:
+                old = author_by_pk
+            else:
+                old = Authors.query.get(pk_id)
+            old_community_ids = [c.id for c in old.communities]
+            try:
+                author_data["communityIds"] = validate_community_ids(
+                    community_ids, old_ids=old_community_ids)
+            except AuthorsValidationError as ex:
+                current_app.logger.error(f"Community IDs validation error: {ex.description}")
+                raise
 
             # scheme -> id
             author_data = self.process_authors_data_before(author_data)
@@ -614,7 +577,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
 
         except AuthorBaseRESTError as ex:
-            traceback.format_exc()
+            traceback.print_exc()
             raise
         except SQLAlchemyError as ex:
             db.session.rollback()
@@ -624,7 +587,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             )
         except Exception as ex:
             current_app.logger.exception(f"Unexpected error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise AuthorInternalServerError(
                 description="Failed to update author."
             )
@@ -757,6 +720,11 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
                 pk_id = author_by_es.get("pk_id")
                 author_by_pk = Authors.query.filter_by(id=pk_id).first()
 
+            check, message = check_delete_author(pk_id)
+            if not check:
+                current_app.logger.error(message)
+                raise AuthorsPermissionError(description=message)
+
             if author_by_pk:
                 author_by_pk.is_deleted = True
                 db.session.commit()
@@ -771,18 +739,18 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
             return self.make_response(200)
 
         except AuthorBaseRESTError as ex:
-            traceback.format_exc()
+            traceback.print_exc()
             raise
         except SQLAlchemyError as ex:
             db.session.rollback()
             current_app.logger.error(f"Database error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise AuthorInternalServerError(
                 description="Failed to delete author."
             )
         except Exception as ex:
             current_app.logger.error(f"Unexpected error. {ex}")
-            traceback.format_exc()
+            traceback.print_exc()
             raise AuthorInternalServerError(
                 description="Failed to delete author."
             )

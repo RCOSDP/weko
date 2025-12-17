@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_files_rest.models import FileInstance
 from invenio_i18n.ext import current_i18n
 from weko_admin.api import TempDirInfo
+from weko_admin.models import AdminSettings
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
@@ -284,10 +285,10 @@ class ItemManagementBulkSearch(BaseView):
             )
             else None
         )
-        if "community" in get_args:
+        if "c" in get_args:
             from weko_workflow.api import GetCommunity
 
-            comm = GetCommunity.get_community_by_id(request.args.get("community"))
+            comm = GetCommunity.get_community_by_id(request.args.get("c"))
             ctx = {"community": comm}
             if comm is not None:
                 community_id = comm.id
@@ -316,7 +317,7 @@ class ItemManagementBulkSearch(BaseView):
                     recursive_tree = Indexes.get_recursive_tree(q)
 
                     if current_tree is not None:
-                        tree_items = get_tree_items(current_tree.id)
+                        tree_items = get_tree_items(current_tree.id, 1)
                         has_items = len(tree_items) > 0
                         if recursive_tree is not None:
                             has_child_trees = len(recursive_tree) > 1
@@ -393,8 +394,8 @@ class ItemImportView(BaseView):
                     role_ids.append(role.id)
         if role_ids:
             from invenio_communities.models import Community
-            comm_data = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_data = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_data:
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
@@ -554,18 +555,14 @@ class ItemImportView(BaseView):
                 item_id = task_item.get("item_id", None)
                 if not item_id and task.result:
                     item_id = task.result.get("recid", None)
-                result.append(
-                    dict(
-                        **{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": item_id,
-                        }
-                    )
-                )
+                result.append({
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": item_id,
+                })
                 status = (
                     "doing"
                     if not (task.successful() or task.failed()) or status == "doing"
@@ -585,7 +582,10 @@ class ItemImportView(BaseView):
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(
+                data.get("list_result"),
+                list(map(lambda x: str(x) , WEKO_IMPORT_LIST_NAME))
+            )
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),
@@ -626,8 +626,30 @@ class ItemImportView(BaseView):
                     ]
                     ids_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_ID, -1))
                     names_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_NAME, -1))
-                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
                     options_line = pickle.loads(pickle.dumps(WEKO_EXPORT_TEMPLATE_BASIC_OPTION, -1))
+
+                    # check restricted access settings
+                    restricted_access_settings = AdminSettings.get("restricted_access", dict_to_object=False)
+                    if restricted_access_settings:
+                        # no content item application
+                        item_application_settings = restricted_access_settings.get("item_application", {})
+                        if item_application_settings.get("item_application_enable", False) \
+                            and item_type.id in item_application_settings.get("application_item_types", []):
+                            ids_line = ids_line[0:6] + [
+                                ".item_application.workflow", ".item_application.terms",".item_application.termsDescription"
+                            ] + ids_line[6:]
+                            names_line = names_line[0:6] + [
+                                ".ITEM_APPLICATION.WORKFLOW", ".ITEM_APPLICATION.TERMS", ".ITEM_APPLICATION.TERMS_DESCRIPTION",
+                            ] + names_line[6:]
+                            options_line = options_line[0:6] + ["", "", ""] + options_line[6:]
+
+                        # request form
+                        if restricted_access_settings.get("display_request_form", False):
+                            ids_line.insert(6, ".request_mail[0]")
+                            names_line.insert(6, ".REQUEST_MAIL[0]")
+                            options_line.insert(6, "Allow Multiple")
+
+                    systems_line = ["#"] + ["" for _ in range(len(ids_line) - 1)]
 
                     item_type = item_type.render
                     meta_list = {
@@ -820,8 +842,8 @@ class ItemRocrateImportView(BaseView):
                     role_ids.append(role.id)
         if role_ids:
             from invenio_communities.models import Community
-            comm_data = Community.query.filter(
-                Community.id_role.in_(role_ids)
+            comm_data = Community.get_by_user(
+                role_ids, with_deleted=True
             ).all()
             for comm in comm_data:
                 can_edit_indexes += [i.cid for i in Indexes.get_self_list(comm.root_node_id)]
@@ -1000,18 +1022,14 @@ class ItemRocrateImportView(BaseView):
                 item_id = task_item.get("item_id", None)
                 if not item_id and task.result:
                     item_id = task.result.get("recid", None)
-                result.append(
-                    dict(
-                        **{
-                            "task_status": task.status,
-                            "task_result": task.result,
-                            "start_date": start_date,
-                            "end_date": task_item.get("end_date") or end_date,
-                            "task_id": task_id,
-                            "item_id": item_id,
-                        }
-                    )
-                )
+                result.append({
+                    "task_status": task.status,
+                    "task_result": task.result,
+                    "start_date": start_date,
+                    "end_date": task_item.get("end_date") or end_date,
+                    "task_id": task_id,
+                    "item_id": item_id,
+                })
                 status = (
                     "doing"
                     if not (task.successful() or task.failed()) or status == "doing"
@@ -1034,7 +1052,10 @@ class ItemRocrateImportView(BaseView):
         file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
         file_name = "List_Download {}.{}".format(now, file_format)
         if data:
-            output_file = make_stats_file(data.get("list_result"), WEKO_IMPORT_LIST_NAME)
+            output_file = make_stats_file(
+                data.get("list_result"),
+                list(map(lambda x: str(x) , WEKO_IMPORT_LIST_NAME))
+            )
             return Response(
                 output_file.getvalue(),
                 mimetype="text/{}".format(file_format),
@@ -1153,6 +1174,8 @@ class ItemBulkExport(BaseView):
     @expose("/check_export_status", methods=["GET"])
     def check_export_status(self):
         """Check export status."""
+        if not current_user.is_authenticated:
+            abort(302)
         check_celery = check_celery_is_run()
         check_life_time = check_session_lifetime()
         export_status, download_uri, message, run_message, \

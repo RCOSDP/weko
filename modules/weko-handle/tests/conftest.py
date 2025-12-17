@@ -102,6 +102,7 @@ def base_app(instance_path):
     Babel(app_)
     InvenioDB(app_)
     WekoHandle(app_)
+    app_.register_blueprint(blueprint)
 
     return app_
 

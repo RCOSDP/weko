@@ -24,6 +24,7 @@ from flask import Flask
 from flask_security import Security, SQLAlchemyUserDatastore
 from unittest.mock import patch
 from invenio_accounts.models import User, Role
+from invenio_i18n import InvenioI18N
 from weko_accounts import WekoAccounts
 
 
@@ -49,6 +50,7 @@ def test_init():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_weko_accounts.py::test_init_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_init_login(db, users):
     app = Flask('testapp')
+    InvenioI18N(app)
     user_datastore = SQLAlchemyUserDatastore(db, User, Role)
     security = Security(app, user_datastore)
 

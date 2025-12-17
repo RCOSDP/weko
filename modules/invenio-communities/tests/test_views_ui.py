@@ -244,20 +244,20 @@ def test_dbsession_clean(app, db):
     db.session.add(index)
     db.session.commit()
     # exist exception
-    com1 = Community(id=1,id_role=1,id_user=1,root_node_id=1,title="com1",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
+    com1 = Community(id="1",id_role=1,id_user=1,root_node_id=1,title="com1",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
     db.session.add(com1)
     dbsession_clean(None)
-    assert Community.query.filter_by(id=1).first().title =="com1"
+    assert Community.query.filter_by(id="1").first().title =="com1"
 
     # raise Exception
-    com2 = Community(id=2,id_role=1,id_user=1,root_node_id=1,title="com2",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
+    com2 = Community(id="2",id_role=1,id_user=1,root_node_id=1,title="com2",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
     db.session.add(com2)
     with patch("invenio_mail.views.db.session.commit",side_effect=Exception):
         dbsession_clean(None)
-        assert Community.query.filter_by(id=2).first() is None
+        assert Community.query.filter_by(id="2").first() is None
 
     # not exist exception
-    config3 = Community(id=3,id_role=1,id_user=1,root_node_id=1,title="com3",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
+    config3 = Community(id="3",id_role=1,id_user=1,root_node_id=1,title="com3",page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False)
     db.session.add(config3)
     dbsession_clean(Exception)
-    assert Community.query.filter_by(id=3).first() is None
+    assert Community.query.filter_by(id="3").first() is None

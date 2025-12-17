@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-oaiharvester 1.0.0a4.dev20171205\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-06-13 07:47+0000\n"
+"POT-Creation-Date: 2025-10-03 14:05+0900\n"
 "PO-Revision-Date: 2019-06-13 07:47+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,28 +19,60 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: invenio_oaiharvester/admin.py:68
+#: invenio_oaiharvester/admin.py:74
 msgid "Run"
 msgstr "実行"
 
-#: invenio_oaiharvester/admin.py:71
+#: invenio_oaiharvester/admin.py:77
 msgid "Resume"
 msgstr "再開"
 
-#: invenio_oaiharvester/admin.py:75
+#: invenio_oaiharvester/admin.py:81
 msgid "Pause"
 msgstr "中断"
 
-#: invenio_oaiharvester/admin.py:79
+#: invenio_oaiharvester/admin.py:85
 msgid "Clear"
 msgstr "クリア"
 
-#: invenio_oaiharvester/admin.py:172
+#: invenio_oaiharvester/admin.py:226
+msgid "Monday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:226
+msgid "Tuesday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:226
+msgid "Wednesday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:227
+msgid "Thursday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:227
+msgid "Friday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:228
+msgid "Saturday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:229
+msgid "Sunday"
+msgstr ""
+
+#: invenio_oaiharvester/admin.py:302
 msgid "OAI-PMH"
 msgstr ""
 
-#: invenio_oaiharvester/admin.py:173
+#: invenio_oaiharvester/admin.py:303
 msgid "Harvesting"
+msgstr ""
+
+#: invenio_oaiharvester/api.py:179
+msgid "Running"
 msgstr ""
 
 #: invenio_oaiharvester/api.py:181
@@ -59,75 +91,170 @@ msgstr "キャンセル"
 msgid "Failed"
 msgstr "失敗"
 
-#: invenio_oaiharvester/api.py:189
-msgid "harvester running status"
-msgstr "ハーベスタ実行状況"
+#: invenio_oaiharvester/api.py:190
+msgid "Hervesting Result"
+msgstr "ハーベスタ実行結果"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:29
-msgid "Organization Name"
-msgstr "機関名"
+#: invenio_oaiharvester/api.py:202
+msgid "Difference"
+msgstr ""
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:34
-msgid "Result"
-msgstr "処理結果"
+#: invenio_oaiharvester/api.py:204
+msgid "Bulk"
+msgstr ""
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:44
-msgid "Repository Name"
-msgstr "対象リポジトリ名"
-
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:49
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:31
 msgid "Start Time"
 msgstr "開始時間"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:54
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:32
 msgid "End Time"
 msgstr "終了時間"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:59
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:33
+msgid "Status"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:34
 msgid "Processed Items"
 msgstr "処理件数"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:64
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:35
 msgid "Created Items"
 msgstr "登録件数"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:69
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:36
 msgid "Updated Items"
 msgstr "更新件数"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:74
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:37
 msgid "Deleted Items"
 msgstr "削除件数"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:79
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:38
 msgid "Error Items"
 msgstr "エラー件数"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:84
-msgid "Base Url"
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:39
+msgid "Error Message, Url"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:53
+msgid "Setting"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/details.html:60
+msgid "Close"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:30
+msgid "Schedule"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:36
+msgid "Harvesting Interval"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:43
+msgid "Frequency"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:47
+msgid "Details"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:99
+msgid "On"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:104
+msgid "Off"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:112
+msgid "Save"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:125
+msgid "Confirmation"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/edit.html:126
+msgid "Are you sure you want to save changes?"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:27
+msgid "This mail has a harvesting result."
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:28
+msgid ""
+"If you no longer need to recieve this feedback mail anymore, please "
+"contact the repository manager."
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:31
+msgid "Result"
+msgstr "処理結果"
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:41
+msgid "Repository"
+msgstr "対象リポジトリ名"
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:46
+msgid "Start"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:51
+msgid "End"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:56
+msgid "Num of Items"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:61
+msgid "Registerd"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:66
+msgid "Updated"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:71
+msgid "Deleted"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:76
+msgid "Error"
+msgstr ""
+
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:81
+msgid "Base URL"
 msgstr "ベースURL"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:89
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:86
 msgid "From Date"
 msgstr ""
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:94
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:91
 msgid "Until Date"
 msgstr ""
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:99
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:96
 msgid "Set Spec"
 msgstr ""
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:104
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:101
 msgid "Metadata Prefix"
 msgstr "metadataPrefix"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:109
-msgid "Target Index.Index Name"
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:106
+msgid "Target Index"
 msgstr "登録先インデックス"
 
-#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:114
+#: invenio_oaiharvester/templates/invenio_oaiharvester/run_stat_mail.html:111
 msgid "Update Style"
 msgstr ""
+
 

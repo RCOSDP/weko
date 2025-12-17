@@ -29,22 +29,28 @@ def test_init_config(app):
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_audit.py::test_init_logger -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging
 def test_init_logger(app):
     test = WekoLoggingUserActivity()
+    from logging import _checkLevel
+    logglevel = app.config.get(
+            "WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING", {}
+        ).get("log_level", "ERROR").upper()
 
     # Test Case 1: When the logger is not initialized
     test.init_logger(app)
     logger_sample = logging.getLogger("user-activity")
     assert isinstance(app.extensions["weko-logging-activity"], type(logger_sample))
-    assert len(logger_sample.handlers) == 3
-    assert isinstance(logger_sample.handlers[0], UserActivityLogHandler)
-    assert logger_sample.handlers[0].level == logging.ERROR
+    assert len(logger_sample.handlers) == 2
+    assert isinstance(logger_sample.handlers[0], logging.StreamHandler)
+    assert isinstance(logger_sample.handlers[1], UserActivityLogHandler)
+    assert logger_sample.handlers[0].level == getattr(logging, logglevel)
 
     # Test Case 2: When the logger is initialized
     test.init_logger(app)
     logger_sample = logging.getLogger("user-activity")
     assert isinstance(app.extensions["weko-logging-activity"], type(logger_sample))
-    assert len(logger_sample.handlers) == 3
+    assert len(logger_sample.handlers) == 2
     assert isinstance(logger_sample.handlers[0], logging.StreamHandler)
-    assert logger_sample.handlers[0].level == logging.ERROR
+    assert isinstance(logger_sample.handlers[1], UserActivityLogHandler)
+    assert logger_sample.handlers[0].level == getattr(logging, logglevel)
     assert logger_sample.handlers[0].formatter._fmt == "[%(asctime)s] - %(levelname)s - %(filename)s - %(name)s - %(funcName)s - %(message)s [in %(pathname)s:%(lineno)d]"
 
 

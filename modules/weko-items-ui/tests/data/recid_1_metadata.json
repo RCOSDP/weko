@@ -770,7 +770,7 @@
           "ja_conference paperITEM00000001(public_open_access_open_access_simple)"
         ],
         "weko_creator_id": "1",
-        "weko_shared_id": -1
+        "weko_shared_ids": []
       },
       "_oai": {
         "id": "oai:weko3.example.org:00000001",
@@ -1053,7 +1053,7 @@
         "1"
       ],
       "weko_creator_id": "1",
-      "weko_shared_id": -1
+      "weko_shared_ids": []
     }
   ],
   "updated": "2022-08-26T12:57:36.376731+00:00"

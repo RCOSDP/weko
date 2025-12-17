@@ -1,8 +1,8 @@
 from logging import exception
 import pytest
 import redis
-from datetime import datetime
-from mock import patch, MagicMock
+from datetime import datetime, timezone
+from unittest.mock import patch, MagicMock
 from flask import session,current_app,Flask
 from flask_login.utils import login_user
 from invenio_accounts.models import Role, User,userrole
@@ -19,8 +19,9 @@ from weko_accounts.api import (
     remove_contribute_role,
     bind_roles_to_indices,
     create_fqdn_from_entity_id
-) 
+)
 from invenio_db import db as db_
+from invenio_db import InvenioDB
 from invenio_accounts import InvenioAccounts
 from weko_index_tree.models import Index
 
@@ -42,7 +43,7 @@ class TestShibUser:
         # get is_member_of and type is list
         attr = {
             "shib_eppn":"test_eppn",
-            "shib_is_member_of": ["https://example.com/gr/xxx", 
+            "shib_is_member_of": ["https://example.com/gr/xxx",
                                   "https://example.com/gr/yyy"]
         }
         shibuser = ShibUser(attr)
@@ -436,8 +437,7 @@ class TestShibUser:
 #    def check_in(self):
 class TestShibUserExtra:
     @pytest.fixture
-    def app(self,db):
-        app = Flask(__name__)
+    def extra_app(self,app,db):
         app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = True
         app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'] = {
             'test_entity_id': ['role1', 'role2']
@@ -455,7 +455,6 @@ class TestShibUserExtra:
         app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'test_entity_id'
         app.config['CACHE_REDIS_DB'] = 1
-        InvenioAccounts(app)
         # db_.init_app(app)
         # with app.app_context():
         #     db_.create_all()
@@ -498,12 +497,12 @@ class TestShibUserExtra:
         return shib_user_instance
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_check_in -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_check_in(self, app, mocker):
+    def test_check_in(self, extra_app, mocker):
         shibuser = ShibUser({})
         shibuser.user = MagicMock(spec=User)
         shibuser.user.roles = MagicMock()
 
-        with app.app_context():
+        with extra_app.app_context():
             # prepare mock objects
             mock_assign_user_role = mocker.patch('weko_accounts.api.ShibUser.assign_user_role')
             mock_get_roles_to_add = mocker.patch('weko_accounts.api.ShibUser._get_roles_to_add')
@@ -524,7 +523,7 @@ class TestShibUserExtra:
 
             # assign_user_role returns True and WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS is False
             mock_assign_user_role.return_value = (True, "")
-            app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = False
+            extra_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = False
             result = shibuser.check_in()
             assert result is None
             shibuser.user.roles.clear.assert_called_once()
@@ -536,7 +535,7 @@ class TestShibUserExtra:
             mocker.resetall()
 
             # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS is True and _find_organization_name returns True
-            app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = True
+            extra_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = True
             mock_get_roles_to_add.return_value = ['role1', 'role2']
             mock_find_organization_name.return_value = True
             result = shibuser.check_in()
@@ -550,10 +549,13 @@ class TestShibUserExtra:
             mocker.resetall()
 
             # _find_organization_name returns False
+            shibuser.shib_user = MagicMock(spec=ShibbolethUser)
+            shibuser.shib_user.shib_roles = MagicMock()
             mock_find_organization_name.return_value = False
             result = shibuser.check_in()
             assert result is None
             shibuser.user.roles.clear.assert_called_once()
+            shibuser.shib_user.shib_roles.clear.assert_called_once()
             mock_assign_user_role.assert_called_once()
             mock_get_roles_to_add.assert_called_once()
             mock_find_organization_name.assert_called_once()
@@ -574,7 +576,7 @@ class TestShibUserExtra:
             mocker.resetall()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_get_roles_to_add -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_get_roles_to_add(self, app):
+    def test_get_roles_to_add(self, extra_app):
         shibuser = ShibUser({
             'shib_is_member_of': ['role1'],
             'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'idp_test',
@@ -583,7 +585,7 @@ class TestShibUserExtra:
             }
         })
 
-        with app.app_context():
+        with extra_app.app_context():
             # WEKO_SHIB_ATTR_IS_MEMBER_OFがリストの場合のテスト
             roles = shibuser._get_roles_to_add()
             assert roles == ['role1']
@@ -595,19 +597,19 @@ class TestShibUserExtra:
                 assert roles == ['isMemberOf is not a list']
 
             # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがNoneの場合のテスト
-            app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = False
+            extra_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = False
             roles = shibuser._get_roles_to_add()
             assert roles == []
 
             # WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPSがNoneの場合のテスト
-            app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = None
+            extra_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = None
             roles = shibuser._get_roles_to_add()
             assert roles == []
 
             # isMemberOfが空の場合のテスト
-            app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = True
-            app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'test_entity_id'
-            app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'] = {
+            extra_app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = True
+            extra_app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'test_entity_id'
+            extra_app.config['WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING'] = {
                 'test_entity_id': ['default_role']
             }
             shibuser.is_member_of = []
@@ -615,13 +617,13 @@ class TestShibUserExtra:
             assert roles == ['default_role']
 
             #WEKO_ACCOUNTS_IDP_ENTITY_IDが設定されていない場合のテスト
-            app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = None
+            extra_app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = None
             with pytest.raises(KeyError, match='WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'):
                 shibuser._get_roles_to_add()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_find_organization_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_find_organization_name(self, shib_user_a, app, weko_roles, mocker):
-        with app.app_context():
+    def test_find_organization_name(self, shib_user_a, extra_app, weko_roles, mocker):
+        with extra_app.app_context():
             with patch('weko_accounts.api.db.session') as mock_db_session, \
                 patch('weko_accounts.api.current_app') as mock_current_app, \
                 patch('weko_accounts.api._datastore.add_role_to_user') as mock_add_role_to_user, \
@@ -719,8 +721,8 @@ class TestShibUserExtra:
                 assert mock_current_app.logger.error.call_count == 1
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_assign_roles_to_user(self, shib_user_a, app, mocker):
-        with app.app_context():
+    def test_assign_roles_to_user(self, shib_user_a, extra_app, mocker):
+        with extra_app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
                 patch('weko_accounts.api._datastore') as mock_datastore, \
                 patch('weko_accounts.api.db.session') as mock_db_session, \
@@ -762,8 +764,8 @@ class TestShibUserExtra:
                 assert mock_db_session.commit.call_count == 1
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_with_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_assign_roles_to_user_with_roles(self,shib_user_a, app):
-        with app.app_context():
+    def test_assign_roles_to_user_with_roles(self,shib_user_a, extra_app):
+        with extra_app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
                 patch('weko_accounts.api._datastore') as mock_datastore, \
                 patch('weko_accounts.api.db.session') as mock_db_session, \
@@ -805,8 +807,8 @@ class TestShibUserExtra:
                 assert mock_db_session.commit.call_count == 1
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_assign_roles_to_user_exception -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_assign_roles_to_user_exception(self, shib_user_a, app, mocker):
-        with app.app_context():
+    def test_assign_roles_to_user_exception(self, shib_user_a, extra_app, mocker):
+        with extra_app.app_context():
             with patch('weko_accounts.api.Role') as mock_role, \
                 patch('weko_accounts.api._datastore') as mock_datastore, \
                 patch('weko_accounts.api.db.session') as mock_db_session, \
@@ -847,7 +849,7 @@ class TestShibUserExtra:
                 assert mock_db_session.rollback.call_count == 1
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_get_organization_from_api -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
-    def test_get_organization_from_api(self, app):
+    def test_get_organization_from_api(self, extra_app):
         """
         PeopleAPIからorganization_nameを取得するメソッドテスト
         """
@@ -867,7 +869,7 @@ class TestShibUserExtra:
         }
         group_id = "test_group_id"
         shibuser = ShibUser({})
-        with app.app_context():
+        with extra_app.app_context():
             with patch('requests.get') as mock_get, \
                 patch('weko_accounts.api.current_app') as mock_current_app:
                     mock_current_app.config = {
@@ -952,6 +954,7 @@ def test_get_user_info_by_role_name(users):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_success -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_connect):
+    cache_roles = {'role1', 'role3'}
     redis = group_info_redis_connect.redis
     with app.test_request_context('/sync', method='POST'):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
@@ -960,14 +963,16 @@ def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_conn
 
             # Redisから取得するグループリストとデータベースのロールリストが異なる場合
             redis.delete('example_com_gakunin_groups')
-            redis.rpush('example_com_gakunin_groups', 'role1', 'role3')
+            updated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            redis.hset('example_com_gakunin_groups', "updated_at", updated_at)
+            redis.hset('example_com_gakunin_groups', "groups", ','.join(cache_roles))
             mock_role1 = MagicMock()
             mock_role1.name = 'role1'
             mock_role2 = MagicMock()
             mock_role2.name = 'role2'
             mock_role.query.all.return_value = [mock_role1, mock_role2]
 
-            sync_shib_gakunin_map_groups()
+            assert sync_shib_gakunin_map_groups() == cache_roles
 
             # update_rolesが呼び出されることを確認
             mock_update_roles.assert_called_once_with(
@@ -975,6 +980,7 @@ def test_sync_shib_gakunin_map_groups_success(app, client, group_info_redis_conn
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_no_update_needed -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_redis_connect):
+    cache_roles = {'role1', 'role2'}
     redis = group_info_redis_connect.redis
     with app.test_request_context('/sync', method='POST'):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = 'https://example.com'
@@ -983,25 +989,28 @@ def test_sync_shib_gakunin_map_groups_no_update_needed(app, client, group_info_r
 
             # Redisから取得するグループリストとデータベースのロールリストが同じ場合
             redis.delete('example_com_gakunin_groups')
-            redis.rpush('example_com_gakunin_groups', 'role1', 'role2')
+            updated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+            redis.hset('example_com_gakunin_groups', "updated_at", updated_at)
+            redis.hset('example_com_gakunin_groups', "groups", ','.join(cache_roles))
             mock_role1 = MagicMock()
             mock_role1.name = 'role1'
             mock_role2 = MagicMock()
             mock_role2.name = 'role2'
             mock_role.query.all.return_value = [mock_role1, mock_role2]
 
-            sync_shib_gakunin_map_groups()
+            assert sync_shib_gakunin_map_groups() == cache_roles
 
             # update_rolesが呼び出されないことを確認
             mock_update_roles.assert_not_called()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_key_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_key_error(app, client):
-    with app.test_request_context('/sync', method='POST'):
-        with patch('weko_accounts.api.current_app.logger') as mock_logger:
-            with pytest.raises(KeyError):
-                sync_shib_gakunin_map_groups()
-            mock_logger.error.assert_called_once()
+    with app.test_request_context('/sync', method='POST'), \
+            patch('weko_accounts.api.create_fqdn_from_entity_id', side_effect=KeyError('WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config')), \
+            patch('weko_accounts.api.current_app.logger') as mock_logger:
+        with pytest.raises(KeyError):
+            sync_shib_gakunin_map_groups()
+        mock_logger.error.assert_called_once()
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_sync_shib_gakunin_map_groups_redis_connection_error -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_sync_shib_gakunin_map_groups_redis_connection_error(app, client):
@@ -1061,6 +1070,7 @@ def test_update_roles(app, db, mocker):
         remove_role_ids = [r.id for r in existing_roles if r.name == 'jc_group4']
         mock_bind.assert_called_once_with([], new_roles, remove_role_ids)
 
+        existing_roles = Role.query.all()
         with patch('weko_accounts.api.db.session.commit', side_effect=Exception("Test exception")),\
             patch('weko_accounts.api.current_app.logger') as mock_logger:
             with pytest.raises(Exception):

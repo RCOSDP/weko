@@ -307,7 +307,7 @@
                         "title": [
                             "メタボリックシンドロームモデルマウスの多臓器遺伝子発現量データ"
                         ],
-                        "weko_shared_id": -1
+                        "weko_shared_ids": []
                     },
                     "weko_creator_id": "1",
                     "_updated": "2023-09-07T00:47:31.583844+00:00",
@@ -349,7 +349,7 @@
                     },
                     "_created": "2023-09-07T00:46:48.216930+00:00",
                     "control_number": "1",
-                    "weko_shared_id": -1,
+                    "weko_shared_ids": [],
                     "relation_version_is_last": true,
                     "publish_date": "2023-09-07",
                     "publish_status": "0"

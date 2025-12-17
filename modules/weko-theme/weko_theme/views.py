@@ -114,10 +114,6 @@ def get_site_info(site_info):
         google_tracking_id_user = site_info.google_tracking_id_user if site_info.google_tracking_id_user else current_app.config['GOOGLE_TRACKING_ID_USER']
     except BaseException:
         google_tracking_id_user = ""
-    try:
-        addthis_user_id = site_info.addthis_user_id if site_info.addthis_user_id else current_app.config['ADDTHIS_USER_ID']
-    except BaseException:
-        addthis_user_id = ""
     
     title = get_site_name_for_current_language(site_name) \
         or current_app.config['THEME_SITENAME']
@@ -151,7 +147,6 @@ def get_site_info(site_info):
         'enable_notify': current_app.config[
             "WEKO_ADMIN_ENABLE_LOGIN_INSTRUCTIONS"],
         'google_tracking_id_user': google_tracking_id_user if google_tracking_id_user else "",
-        'addthis_user_id':addthis_user_id if addthis_user_id else ""
     }
     return result
 

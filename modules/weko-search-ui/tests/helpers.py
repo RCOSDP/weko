@@ -5,13 +5,14 @@ import uuid
 from datetime import date
 from os.path import dirname, join
 import bagit
-from bagit import _, open_text_file
+from bagit import open_text_file
 
 from invenio_db import db
 from invenio_records import Record
-from weko_records.api import ItemsMetadata, WekoRecord
-from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from weko_deposit.api import WekoDeposit
+from weko_records.api import ItemsMetadata
+from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
+
+from weko_deposit.api import WekoDeposit, WekoRecord
 from invenio_pidrelations.models import PIDRelation
 
 def json_data(filename):
@@ -52,6 +53,42 @@ def create_record(record_data, item_data):
     return depid, recid,parent,doi,record, item
 
 
+def create_record2(record_data, item_data):
+    with db.session.begin_nested():
+        record_data = copy.deepcopy(record_data)
+        item_data = copy.deepcopy(item_data)
+        rec_uuid = uuid.uuid4()
+        recid = PersistentIdentifier.create('recid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        depid = PersistentIdentifier.create('depid', record_data["recid"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        rel = PIDRelation.create(recid,depid,3)
+        db.session.add(rel)
+        parent=None
+        doi = None
+
+        if '.' in record_data["recid"]:
+            parent = PersistentIdentifier.get("recid",int(float(record_data["recid"])))
+            recid_p = PIDRelation.get_child_relations(parent).one_or_none()
+            PIDRelation.create(recid_p.parent, recid,2)
+        else:
+            parent = PersistentIdentifier.create('parent', "parent:{}".format(record_data["recid"]),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            rel = PIDRelation.create(parent, recid,2,0)
+            db.session.add(rel)
+            RecordIdentifier.next()
+        if record_data.get("_oai").get("id"):
+            oaiid = PersistentIdentifier.create('oai', record_data["_oai"]["id"],pid_provider="oai",object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+            hvstid = PersistentIdentifier.create('hvstid', record_data["_oai"]["id"],object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        if "item_1612345678910" in record_data:
+            for i in range(len(record_data["item_1612345678910"]["attribute_value_mlt"])):
+                data = record_data["item_1612345678910"]["attribute_value_mlt"][i]
+                PersistentIdentifier.create(data.get("subitem_16345678901234").lower(),data.get("subitem_1623456789123"),object_type='rec', object_uuid=rec_uuid,status=PIDStatus.REGISTERED)
+        record = WekoRecord.create(record_data, id_=rec_uuid)
+        item = ItemsMetadata.create(item_data, id_=rec_uuid)
+        deposit = WekoDeposit(record, record.model)
+
+        deposit.commit()
+
+    return recid, depid, record, item, parent, doi, deposit
+
 
 def bagify(
     bag_dir, bag_info=None, processes=1, checksums=None, encoding="utf-8"
@@ -80,50 +117,48 @@ def bagify(
     cwd = os.path.abspath(os.path.curdir)
 
     if cwd.startswith(bag_dir) and cwd != bag_dir:
-        raise RuntimeError(
-            _("Bagging a parent of the current directory is not supported")
-        )
+        raise RuntimeError("Bagging a parent of the current directory is not supported")
 
-    bagit.LOGGER.info(_("Creating tag for directory %s"), bag_dir)
+    bagit.LOGGER.info("Creating tag for directory %s", bag_dir)
 
     if not os.path.isdir(bag_dir):
-        bagit.LOGGER.error(_("Bag directory %s does not exist"), bag_dir)
-        raise RuntimeError(_("Bag directory %s does not exist") % bag_dir)
+        bagit.LOGGER.error("Bag directory %s does not exist", bag_dir)
+        raise RuntimeError("Bag directory %s does not exist" % bag_dir)
 
     old_dir = os.path.abspath(os.path.curdir)
 
     if not os.path.exists(os.path.join(bag_dir, "data")):
-        bagit.LOGGER.error(_("Bag directory %s does not contain a data directory"), bag_dir)
-        raise RuntimeError(_("Bag directory %s does not contain a data directory") % bag_dir)
+        bagit.LOGGER.error("Bag directory %s does not contain a data directory", bag_dir)
+        raise RuntimeError("Bag directory %s does not contain a data directory" % bag_dir)
 
     try:
         unbaggable = bagit._can_bag(bag_dir)
 
         if unbaggable:
             bagit.LOGGER.error(
-                _("Unable to write to the following directories and files:\n%s"),
+                "Unable to write to the following directories and files:\n%s",
                 unbaggable,
             )
-            raise bagit.BagError(_("Missing permissions to move all files and directories"))
+            raise bagit.BagError("Missing permissions to move all files and directories")
 
         unreadable_dirs, unreadable_files = bagit._can_read(bag_dir)
 
         if unreadable_dirs or unreadable_files:
             if unreadable_dirs:
                 bagit.LOGGER.error(
-                    _("The following directories do not have read permissions:\n%s"),
+                    "The following directories do not have read permissions:\n%s",
                     unreadable_dirs,
                 )
             if unreadable_files:
                 bagit.LOGGER.error(
-                    _("The following files do not have read permissions:\n%s"),
+                    "The following files do not have read permissions:\n%s",
                     unreadable_files,
                 )
             raise bagit.BagError(
-                _("Read permissions are required to calculate file fixities")
+                "Read permissions are required to calculate file fixities"
             )
         else:
-            bagit.LOGGER.info(_("Creating data directory"))
+            bagit.LOGGER.info("Creating data directory")
 
             os.chdir(bag_dir)
             cwd = os.getcwd()
@@ -140,12 +175,12 @@ def bagify(
                 "data", processes, algorithms=checksums, encoding=encoding
             )
 
-            bagit.LOGGER.info(_("Creating bagit.txt"))
+            bagit.LOGGER.info("Creating bagit.txt")
             txt = """BagIt-Version: 0.97\nTag-File-Character-Encoding: UTF-8\n"""
             with bagit.open_text_file("bagit.txt", "w") as bagit_file:
                 bagit_file.write(txt)
 
-            bagit.LOGGER.info(_("Creating bag-info.txt"))
+            bagit.LOGGER.info("Creating bag-info.txt")
             if bag_info is None:
                 bag_info = {}
 
@@ -164,7 +199,7 @@ def bagify(
             for algorithm in checksums:
                 bagit._make_tagmanifest_file(algorithm, bag_dir, encoding="utf-8")
     except Exception:
-        bagit.LOGGER.exception(_("An error occurred creating a bag in %s"), bag_dir)
+        bagit.LOGGER.exception("An error occurred creating a bag in %s", bag_dir)
         raise
     finally:
         os.chdir(old_dir)

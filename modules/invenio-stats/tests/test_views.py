@@ -186,6 +186,23 @@ def test_query_record_view_count_error(client, db, records):
         url_for('invenio_stats.get_record_view_count', record_id=_uuid))
     assert res.status_code==200
 
+    # GET:Invalid uuid
+    res = client.get(
+        url_for('invenio_stats.get_record_view_count', record_id='test'))
+    assert res.status_code==400
+
+    # POST:Invalid uuid
+    res = client.post(
+        url_for('invenio_stats.get_record_view_count', record_id='test'),
+        data=json.dumps({'date': 'total'}),
+        content_type='application/json',
+    )
+    assert res.status_code==400
+
+    # POST:Invalid request data
+    res = client.post('/api/stats/{}'.format(_uuid))
+    assert res.status_code==400
+
 
 # class QueryFileStatsCount(WekoQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_file_stats_count -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp

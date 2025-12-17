@@ -77,7 +77,7 @@ class WidgetItemServices:
             'message': '',
             'success': False
         }
-        if not data:
+        if not data or not data.get('data'):
             result['message'] = 'No data saved!'
             return result
         widget_data = data.get('data')
@@ -656,10 +656,11 @@ class WidgetDesignServices:
                         WidgetItemServices.get_widget_data_by_widget_id(
                             item.get('widget_id'))
                     item.update(widget_item.get('settings'))
-                    if item.get('type') == \
-                            WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE \
-                            and not item.get('created_date'):
-                        item['created_date'] = date.today().strftime("%Y-%m-%d")
+                    if item.get('type') == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
+                        today = date.today().strftime("%Y-%m-%d")
+                        item['created_date'] = today
+                        if not item.get('count_start_date'):
+                            item['count_start_date'] = item['created_date'] if item.get('created_date') else today
             setting_data = json.dumps(json_data)
 
             # Main contents can only be in one page design or main design
@@ -795,7 +796,7 @@ class WidgetDesignServices:
                             return True
             return False
         except Exception as e:
-            current_app.logger.error('Failed to validate record: ', e)
+            current_app.logger.error('Failed to validate record: %s', e)
             return True
 
 
@@ -1040,7 +1041,7 @@ class WidgetDesignPageServices:
                 url = '/'
                 if repository_id != current_app.config[
                         'WEKO_THEME_DEFAULT_COMMUNITY']:
-                    url += '?community=' + repository_id
+                    url += '?c=' + repository_id
                 result['data'] = {
                     'id': page_id,
                     'title': 'Main Layout',

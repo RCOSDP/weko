@@ -12,7 +12,29 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixed
 ### Security
 
-## [v1.0.7b] [v1.0.8b] [v1.0.9b] 2025-01-06 
+## [v1.0.8a] 2025-07-08
+### Fixed
+- Fixed an issue where the tika library was not included in the Docker image.
+
+
+## [v1.0.8] 2025-05-20
+### Changed
+- Improved an issue where the Tika process consumed excessive memory.
+- Optimized inefficient logic in index display processing to improve rendering speed.
+- Changed the timeout duration for Elasticsearch index creation from 30 seconds to 2 minutes.
+### Fixed
+- Fixed a problem where bulk import/export operations failed due to database connection timeouts.
+- Fixed a 500 error caused by citation formatting for records.
+- Resolved an issue where users could not edit items due to a message stating "Another activity is already open" caused by expired DB sessions.
+- Fixed a problem where Redis TTL was set to unlimited, causing activity locks.
+- Fixed an issue where accessing an activity sometimes showed a popup: "The item you are editing has already been deleted."
+- Fixed a 500 error caused by unexpected query parameters.
+- Fixed a 500 error occurring at /items/export.
+- Fixed a 500 error occurring at /admin/load_widget_design_setting.
+- Fixed a 500 error occurring at /get_uri.
+- Fixed a 500 error occurring at /api/stats/<record_id>.
+
+## [v1.0.7b] 2025-01-06 
 ### Changed
 - Improved data compatibility with migrated institutions. 
 - Added the function to specify an itemtype ID as a target for reindexing. 
@@ -129,8 +151,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed a persistent loading issue in the item type edit screen.
 - Resolved an issue where Publish Status did not display in item detail screens after login.
 
-[v1.0.9] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.9
-[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.8
 [v1.0.7] https://github.com/RCOSDP/weko/compare/v0.9.6...v1.0.7
 [v1.0.7a] https://github.com/RCOSDP/weko/compare/v1.0.7...v1.0.7a
 [v1.0.7a2] https://github.com/RCOSDP/weko/compare/v1.0.7a...v1.0.7a2
+[v1.0.7b] https://github.com/RCOSDP/weko/compare/v1.0.7a2...v1.0.7b
+[v1.0.8] https://github.com/RCOSDP/weko/compare/v1.0.7b...v1.0.8
+[v1.0.8a] https://github.com/RCOSDP/weko/compare/v1.0.8...v1.0.8a

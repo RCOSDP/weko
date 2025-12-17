@@ -33,6 +33,7 @@ from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest.models import Location
+from invenio_oauth2server import InvenioOAuth2Server
 
 from weko_search_ui.config import INDEXER_DEFAULT_DOCTYPE,INDEXER_FILE_DOC_TYPE
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
@@ -103,6 +104,7 @@ def base_app(instance_path):
             "System Administrator",
             "Repository Administrator",
         ],
+        WEKO_PERMISSION_ROLE_COMMUNITY="Community Administrator",
         WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,
         WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS = WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS
     )
@@ -112,6 +114,7 @@ def base_app(instance_path):
     InvenioAccess(app_)
     #search = InvenioSearch(app_)
     InvenioCache(app_)
+    InvenioOAuth2Server(app_)
     #WekoSearchUI(app_)
     WekoRecordsUI(app_)
     WekoItemsAutofill(app_)

@@ -54,7 +54,6 @@ provision_web_common_ubuntu14 () {
     # Point the security repository to the archive
     sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list
 
-
     # sphinxdoc-install-useful-system-tools-ubuntu14-begin
     # update list of available packages:
     $sudo apt-get -y update --allow-releaseinfo-change

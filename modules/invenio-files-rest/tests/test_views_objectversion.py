@@ -14,7 +14,7 @@ import pytest
 from datetime import timedelta
 from flask import url_for
 from fs.opener import opener
-from mock import patch
+from unittest.mock import patch
 from six import BytesIO
 from tests.testutils import BadBytesIO, login_user
 
@@ -261,7 +261,7 @@ def test_put_fail(client, bucket, permissions, get_sha256, get_json):
         'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
 
     login_user(client, permissions['location'])
-    with patch("invenio_files_rest.views.db.session.commit", side_effect=Exception('')):
+    with patch("invenio_files_rest.views.db.session.commit", side_effect=[Exception(''), None]):
         resp = client.put(
             object_url,
             input_stream=BytesIO(data),

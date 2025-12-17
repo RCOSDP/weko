@@ -1,0 +1,15 @@
+{
+    "pubdate": "2024-12-23",
+    "item_30002_title0": [
+        {
+            "subitem_title": "テストタイトル",
+            "subitem_title_language": "ja"
+        }
+    ],
+    "item_30002_resource_type13": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_9999",
+        "resourcetype": "no resource type"
+    },
+    "$schema": "/items/jsonschema/30002",
+    "shared_user_id": -1
+}

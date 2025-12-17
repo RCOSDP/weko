@@ -50,7 +50,8 @@ from .models import Index
 from .utils import cached_index_tree_json, check_doi_in_index, \
     check_restrict_doi_with_indexes, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
-    get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis
+    get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis, \
+    save_index_reset_trees_to_redis, save_index_reset_trees_ignore_more_to_redis
 
 
 class Indexes(object):
@@ -227,7 +228,7 @@ class Indexes(object):
                         if isinstance(v, str) and len(v) == 0:
                             continue
                     if isinstance(v, dict):
-                        v = ",".join(map(lambda x: str(x["id"]), v["allow"]))
+                        v = ",".join(map(lambda x: str(x["id"]), v.get("allow", [])))
                     if isinstance(v, str) and "public_date" in k:
                         if len(v) > 0:
                             v = datetime.strptime(v, "%Y%m%d")
@@ -240,30 +241,50 @@ class Indexes(object):
                         continue
                     setattr(index, k, v)
 
+                index_setting ={}
+                # get browsing role and contribute role from browsing group and contribute group
+                index_setting["browsing_role_ids"] = [
+                    str(role.get("id")) for role in \
+                        data.get("browsing_role", {}).get("allow", [])
+                ]
+                index_setting["contribute_role_ids"] = [
+                    str(role.get("id")) for role in \
+                        data.get("contribute_role", {}).get("allow", [])
+                ]
+
                 # browsing_group と contribute_group の allow リストから "gr" を削除して browsing_role と contribute_role に追加
-                browsing_group_allow = data.get("browsing_group", {}).get("allow", [])
-                contribute_group_allow = data.get("contribute_group", {}).get("allow", [])
+                browsing_allowed_mix_group_ids = [
+                    str(group.get("id")) for group in \
+                        data.get("browsing_group", {}).get("allow", [])
+                ]
+                index_setting["browsing_gakunin_group_ids"] = [
+                    group_id.replace("gr", "") for group_id in \
+                        browsing_allowed_mix_group_ids if "gr" in group_id
+                ]
+                index_setting["browsing_group_ids"] = [
+                    group_id for group_id in browsing_allowed_mix_group_ids if "gr" not in group_id
+                ]
+                contribute_allowed_mix_group_ids = [
+                    str(group.get("id")) for group in \
+                        data.get("contribute_group", {}).get("allow", [])
+                ]
+                index_setting["contribute_gakunin_group_ids"] = [
+                    group_id.replace("gr", "") for group_id in \
+                        contribute_allowed_mix_group_ids if "gr" in group_id
+                ]
+                index_setting["contribute_group_ids"] = [
+                    group_id for group_id in \
+                        contribute_allowed_mix_group_ids if "gr" not in group_id
+                ]
 
-                browsing_role_ids = [str(group["id"]).replace("gr", "") for group in browsing_group_allow if "gr" in str(group["id"])]
-                contribute_role_ids = [str(group["id"]).replace("gr", "") for group in contribute_group_allow if "gr" in str(group["id"])]
-
-                # 現在の browsing_role と contribute_role に追加
-                current_browsing_role = index.browsing_role.split(",") if index.browsing_role else []
-                current_contribute_role = index.contribute_role.split(",") if index.contribute_role else []
-
-                updated_browsing_role = list(set(current_browsing_role + browsing_role_ids))
-                updated_contribute_role = list(set(current_contribute_role + contribute_role_ids))
-
-                index.browsing_role = ",".join(updated_browsing_role)
-                index.contribute_role = ",".join(updated_contribute_role)
-
-                # browsing_group と contribute_group の allow リストから "gr" を除外
-                updated_browsing_group_allow = [group for group in browsing_group_allow if "gr" not in str(group["id"])]
-                updated_contribute_group_allow = [group for group in contribute_group_allow if "gr" not in str(group["id"])]
-
-                # 更新された browsing_group と contribute_group をインデックスに設定
-                index.browsing_group = ",".join([str(group["id"]) for group in updated_browsing_group_allow])
-                index.contribute_group = ",".join([str(group["id"]) for group in updated_contribute_group_allow])
+                if data.keys() & set(["browsing_role", "browsing_group"]):
+                    cls.update_browsing_roles_groups(
+                        index, index_setting, True, True
+                    )
+                if data.keys() & set(["contribute_role", "contribute_group"]):
+                    cls.update_contribute_roles_groups(
+                        index, index_setting, True, True
+                    )
 
                 recs_group = {
                     "recursive_coverpage_check": partial(
@@ -273,18 +294,6 @@ class Indexes(object):
                         cls.set_public_state_resc, index_id,
                         getattr(index, "public_state"),
                         getattr(index, "public_date")),
-                    "recursive_browsing_group": partial(
-                        cls.set_browsing_group_resc, index_id,
-                        getattr(index, "browsing_group")),
-                    "recursive_browsing_role": partial(
-                        cls.set_browsing_role_resc, index_id,
-                        getattr(index, "browsing_role")),
-                    "recursive_contribute_group": partial(
-                        cls.set_contribute_group_resc, index_id,
-                        getattr(index, "contribute_group")),
-                    "recursive_contribute_role": partial(
-                        cls.set_contribute_role_resc, index_id,
-                        getattr(index, "contribute_role")),
                     "biblio_flag": partial(
                         cls.set_online_issn_resc, index_id,
                         getattr(index, "online_issn"))
@@ -294,6 +303,20 @@ class Indexes(object):
                         recur_update_func()
                     setattr(index, recur_key, False)
                 index.owner_user_id = current_user.get_id()
+                if index.recursive_browsing_role or index.recursive_browsing_group:
+                    cls.set_browsing_roles_and_groups_resc(
+                        index.id, index_setting,
+                        index.recursive_browsing_role, index.recursive_browsing_group
+                    )
+                    index.recursive_browsing_role = False
+                    index.recursive_browsing_group = False
+                if index.recursive_contribute_role or index.recursive_contribute_group:
+                    cls.set_contribute_roles_and_groups_resc(
+                        index.id, index_setting,
+                        index.recursive_contribute_role, index.recursive_contribute_group
+                    )
+                    index.recursive_contribute_role = False
+                    index.recursive_contribute_group = False
                 db.session.merge(index)
             db.session.commit()
             cls.update_set_info(index)
@@ -510,8 +533,8 @@ class Indexes(object):
                 if not ret['is_ok'] and role_ids:
                     can_edit_list = []
                     from invenio_communities.models import Community
-                    comm_data = Community.query.filter(
-                        Community.id_role.in_(role_ids)
+                    comm_data = Community.get_by_user(
+                        role_ids, with_deleted=True
                     ).all()
                     for comm in comm_data:
                         can_edit_list += [i.cid for i in cls.get_self_list(comm.root_node_id)]
@@ -672,6 +695,29 @@ class Indexes(object):
         return tree
 
     @classmethod
+    def get_browsing_reset_tree(cls, pid=0):
+        """Get browsing reset_tree."""
+        try:
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(
+                db=current_app.config["CACHE_REDIS_DB"], kv=True
+            )
+            v = datastore.get(
+                "index_reset_tree_view_"
+                + os.environ.get("INVENIO_WEB_HOST_NAME")
+                + "_"
+                + current_i18n.language
+            ).decode("UTF-8")
+            tree = json.loads(str(v))
+        except RedisError:
+            tree = cls.get_browsing_tree(pid)
+            save_index_reset_trees_to_redis(tree)
+        except KeyError:
+            tree = cls.get_browsing_tree(pid)
+            save_index_reset_trees_to_redis(tree)
+        return tree
+
+    @classmethod
     def get_more_browsing_tree(cls, pid=0, more_ids=[]):
         """Get more browsing tree."""
         tree = cls.get_index_tree(pid)
@@ -699,6 +745,29 @@ class Indexes(object):
         return tree
 
     @classmethod
+    def get_browsing_reset_tree_ignore_more(cls, pid=0):
+        """Get browsing reset tree ignore more."""
+        try:
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(
+                db=current_app.config["CACHE_REDIS_DB"], kv=True
+            )
+            v = datastore.get(
+                "index_reset_tree_ignore_more_view_"
+                + os.environ.get("INVENIO_WEB_HOST_NAME")
+                + "_"
+                + current_i18n.language
+            ).decode("UTF-8")
+            tree = json.loads(str(v))
+        except RedisError:
+            tree = cls.get_browsing_tree_ignore_more(pid)
+            save_index_reset_trees_ignore_more_to_redis(tree)
+        except KeyError:
+            tree = cls.get_browsing_tree_ignore_more(pid)
+            save_index_reset_trees_ignore_more_to_redis(tree)
+        return tree
+
+    @classmethod
     def get_browsing_tree_paths(cls, index_id: int = 0):
         """Get browsing tree paths.
 
@@ -711,7 +780,12 @@ class Indexes(object):
         """
         if not index_id:
             index_id = 0
-        tree = cls.get_browsing_tree_ignore_more(index_id)
+        if current_user and current_user.is_authenticated:
+            tree = cls.get_browsing_tree_ignore_more(index_id)
+        elif index_id == 0:
+            tree = cls.get_browsing_reset_tree_ignore_more(index_id)
+        else:
+            tree = cls.get_browsing_tree_ignore_more(index_id)
         return get_index_id_list(tree, [])
 
     @classmethod
@@ -762,33 +836,45 @@ class Indexes(object):
 
     @classmethod
     def filter_roles(cls, roles):
-        """特定の条件に基づいてロールをフィルタリングします。
-
+        """Filter roles to gakunin_map group roles, gakunin_map general roles, other roles.
+        
         Args:
-            roles (list): フィルタリング対象のロールのリスト。
-
+            roles (list): List of role dictionaries to be filtered.
         Returns:
-            tuple: 2つのリストを含むタプル。
-                - filtered_roles: 特定の条件を満たすロールのリスト。
-                - excluded_roles: 特定の条件を満たさないロールのリスト。
+            tuple: A tuple containing two lists:
+                - List of roles that are gakunin_map group roles.
+                - List of roles that are either other roles or gakunin_map general roles.
+        Raises:
+            TypeError: If the input is not a list.
         """
         if not isinstance(roles, list):
             raise TypeError("roles must be a list")
 
-        roles_gakunin_map_group = []
+        gakunin_map_role_groups = []
+        gakunin_map_general_groups = []
         other_roles = []
 
-        gakunin_map_prefix = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['prefix']
-        role_keyword = current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']
-        default_weko_role_names = current_app.config['WEKO_PERMISSION_ROLE_USER'] + ['Authenticated User', 'Guest']
+        gakunin_map_pattern = current_app.config.get(
+            "WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT", {}
+        )
+
+        gakunin_map_prefix = gakunin_map_pattern.get("prefix", "jc")
+        role_keyword = gakunin_map_pattern.get("role_keyword", "roles")
+
         for role in roles:
-            # ロール名が設定されたキーワードに含まれていない、かつロール名が設定されたプレフィックスに含まれていない、かつロール名が'WEKO_PERMISSION_ROLE_USER','Authenticated User','Guest'のいずれでもないことを確認します。
-            if not (role["name"].startswith(gakunin_map_prefix) and role_keyword in role["name"]) and \
-                    role["name"] not in default_weko_role_names:
-                roles_gakunin_map_group.append({'id': role['id'], 'name': role['name']})
+            role_name = role.get("name", "")
+            role_info = {"id": role.get("id"), "name": role_name}
+            if role_name.startswith(gakunin_map_prefix):
+                if role_keyword in role_name:
+                    # gakunin_map group role
+                    gakunin_map_role_groups.append(role)
+                else:
+                    # gakunin_map general role
+                    gakunin_map_general_groups.append(role)
             else:
-                other_roles.append({'id': role['id'], 'name': role['name']})
-        return roles_gakunin_map_group, other_roles
+                other_roles.append(role)
+
+        return gakunin_map_general_groups, other_roles + gakunin_map_role_groups
 
     @classmethod
     def get_index_with_role(cls, index_id):
@@ -2113,3 +2199,115 @@ class Indexes(object):
                 continue
             bind_roles.append(role)
         return bind_roles
+    
+    @classmethod
+    def update_browsing_roles_groups(cls, current_index, index_setting,
+                                     update_browsing_role, update_browsing_groups):
+        """
+        Set browsing roles and groups for all index's children.
+        Args:
+            current_index: current index object
+            index_setting: index setting object
+            update_browsing_role: update browsing role flag
+            update_browsing_groups: update browsing group flag
+        """
+        # if not update browsing roles and groups
+        if not update_browsing_role and not update_browsing_groups:
+            return
+        
+        browsing_roles = set(
+            current_index.browsing_role.split(",") if current_index.browsing_role else []
+        )
+        browsing_groups = set(
+            current_index.browsing_group.split(",") if current_index.browsing_group else []
+        )
+        # if update browsing roles
+        if update_browsing_role:
+            browsing_roles = set(index_setting.get('browsing_role_ids', []))
+
+        # if update browsing groups
+        if update_browsing_groups:
+            browsing_roles = browsing_roles.union(
+                set(index_setting.get('browsing_gakunin_group_ids', []))
+            )
+            browsing_groups = set(index_setting.get('browsing_group_ids', []))
+
+        # update browsing roles and groups
+        current_index.browsing_role = ",".join(list(browsing_roles))
+        current_index.browsing_group = ",".join(list(browsing_groups))
+
+
+    @classmethod
+    def set_browsing_roles_and_groups_resc(cls, index_id, index_setting,
+                                           update_browsing_role, update_browsing_groups):
+        """
+        Set browsing roles and groups for all index's children.
+        Args:
+            index_id: search index id
+            index_setting: index setting object
+            update_browsing_role: update browsing role flag
+            update_browsing_groups: update browsing group flag
+        """
+        indices = Index.query.filter_by(parent=index_id).all()
+        for index in indices:
+            cls.update_browsing_roles_groups(
+                index, index_setting, update_browsing_role, update_browsing_groups)
+            cls.set_browsing_roles_and_groups_resc(
+                index.id, index_setting, update_browsing_role, update_browsing_groups)
+
+
+    @classmethod
+    def update_contribute_roles_groups(cls, current_index, index_setting,
+                                       update_contribute_role, update_contribute_groups):
+        """
+        Set contribute roles and groups for all index's children.
+        Args:
+            current_index: current index object
+            index_setting: index setting object
+            update_contribute_role: update contribute role flag
+            update_contribute_groups: update contribute group flag
+        """
+        # if not update contribute roles and groups
+        if not update_contribute_role and not update_contribute_groups:
+            return
+        
+        contribute_roles = set(
+            current_index.contribute_role.split(",") if current_index.contribute_role else []
+        )
+        contribute_groups = set(
+            current_index.contribute_group.split(",") if current_index.contribute_group else []
+        )
+        
+        # if update contribute roles
+        if update_contribute_role:
+            contribute_roles = set(index_setting.get('contribute_role_ids', []))
+        
+        # if update contribute groups
+        if update_contribute_groups:
+            contribute_roles = contribute_roles.union(
+                set(index_setting.get('contribute_gakunin_group_ids', []))
+            )
+            contribute_groups = set(index_setting.get('contribute_group_ids', []))
+
+        # update contribute roles and groups
+        current_index.contribute_role = ",".join(list(contribute_roles))
+        current_index.contribute_group = ",".join(list(contribute_groups))
+
+
+    @classmethod
+    def set_contribute_roles_and_groups_resc(cls, index_id, index_setting,
+                                             update_browsing_role, update_browsing_groups):
+        """
+        Set contribute roles and groups for all index's children.
+        Args:
+            index_id: search index id
+            index_setting: index setting object
+            update_contribute_role: update contribute role flag
+            update_contribute_groups: update contribute group flag
+        """
+        indices = Index.query.filter_by(parent=index_id).all()
+        for index in indices:
+            cls.update_contribute_roles_groups(
+                index, index_setting, update_browsing_role, update_browsing_groups)
+            cls.set_contribute_roles_and_groups_resc(
+                index.id, index_setting, update_browsing_role, update_browsing_groups)

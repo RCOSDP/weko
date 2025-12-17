@@ -26,8 +26,9 @@ import traceback
 
 from flask import (
     abort, current_app, flash, json, jsonify, redirect,
-    request, session, url_for, send_file
+    request, session, url_for, send_file, Response
 )
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.expression import null
 from flask_admin import BaseView, expose
 from flask_babelex import gettext as _
@@ -130,97 +131,106 @@ class ItemTypeMetaDataView(BaseView):
         """Soft-delete an item type."""
         check = is_import_running()
         if check == "is_import_running":
-            flash(_('Item type cannot be deleted becase import is in progress.'), 'error')
-            return jsonify(code=-1)
+            current_app.logger.error("Import is running. Failed to delete item type.")
+            flash(_('Cannot delete item type. Import is in progress.'), 'error')
+            abort(400)
 
-        if item_type_id > 0:
-            record = ItemTypes.get_record(id_=item_type_id)
-            if record is not None:
-                # Check harvesting_type
-                if record.model.harvesting_type:
-                    flash(_('Cannot delete Item type for Harvesting.'), 'error')
-                    return jsonify(code=-1)
-                # Get all versions
-                all_records = ItemTypes.get_records_by_name_id(
-                    name_id=record.model.name_id
-                )
-                # Check that item type is already registered to an item or not
-                for item in all_records:
-                    items = ItemsMetadata.get_registered_item_metadata(
-                        item_type_id=item.id)
-                    if len(items) > 0:
-                        flash(
-                            _('Cannot delete due to child existing item types.'),
-                            'error'
-                        )
-                        return jsonify(code=-1)
-                # Check that item type is used SWORD API
-                jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
-                for jsonld_mapping in jsonld_mappings:
-                    if SwordClient.get_clients_by_mapping_id(jsonld_mapping.id):
-                        current_app.logger.info("Item type is used SWORD API.")
-                        flash(
-                            _('Cannot delete due to SWORD API is using this item types.'),
-                            'error'
-                        )
-                        return jsonify(code=-1)
+        record = ItemTypes.get_record(id_=item_type_id)
+        if record is None:
+            current_app.logger.error(f"Item type not found: {item_type_id}")
+            flash(_('Item type not found.'), 'error')
+            return Response(status=404)
 
-                # Get item type name
-                item_type_name = ItemTypeNames.get_record(
-                    id_=record.model.name_id)
-                if all_records and item_type_name:
-                    try:
-                        # Delete item type name
-                        ItemTypeNames.delete(item_type_name)
-                        # Delete item typea
-                        for k in all_records:
-                            k.delete()
-                        db.session.commit()
-                        current_app.logger.info(
-                            f"Item type deleted: {item_type_name.name}"
-                        )
-                    except Exception:
-                        db.session.rollback()
-                        exec_info = sys.exc_info()
-                        tb_info = traceback.format_tb(exec_info[2])
-                        current_app.logger.error(
-                            "Unexpected error: {}".format(exec_info))
-                        UserActivityLogger.error(
-                            operation="ITEM_TYPE_DELETE",
-                            target_key=item_type_id,
-                            remarks=tb_info[0]
-                        )
-                        traceback.print_exc()
-                        flash(_('Failed to delete Item type.'), 'error')
-                        return jsonify(code=-1)
+        # Check harvesting_type
+        if record.model.harvesting_type:
+            current_app.logger.error(
+                f"Item type {item_type_id} is used for harvesting."
+            )
+            flash(_('Cannot delete item type. It is used for harvesting.'), 'error')
+            abort(400)
+        # Get records by item type name
+        list_item_type = ItemTypes.get_records_by_name_id(
+            name_id=record.model.name_id
+        )
+        list_item_exist = [
+            item_type for item_type in list_item_type
+            if ItemsMetadata.count_registered_item_metadata(item_type.id) > 0
+        ]
+        # Check that item type is already registered to an item or not
+        if list_item_exist:
+            current_app.logger.error(
+                f"Item type {item_type_id} is used in item metadata."
+            )
+            flash(
+                _('Cannot delete item type. Item of this type already exists.'),
+                'error'
+            )
+            abort(400)
+        # Check that item type is used in workflow
+        workflow = WorkFlow()
+        workflow_list = workflow.get_workflow_by_itemtype_id(item_type_id)
+        if workflow_list:
+            current_app.logger.error(f"Item type {item_type_id} is used in workflow.")
+            flash(
+                _('Cannot delete item type. It is used in some workflows.'),
+                'error'
+            )
+            abort(400)
 
-                    for jsonld_mapping in jsonld_mappings:
-                        try:
-                            # Delete itemtype JOSN-LD mapping
-                            JsonldMapping.delete(jsonld_mapping.id)
-                            db.session.commit()
-                            current_app.logger.info(
-                                f"JSON-LD mapping deleted: {jsonld_mapping.name}"
-                            )
-                        except Exception:
-                            db.session.rollback()
-                            current_app.logger.error(
-                                "Failed to delete Item type JSON-LD mapping: {}"
-                                .format(jsonld_mapping.name)
-                            )
-                            traceback.print_exc()
+        # Check that item type is used SWORD API
+        jsonld_mappings = JsonldMapping.get_by_itemtype_id(item_type_id)
+        used_jsonld_mappings = [
+            mapping for mapping in jsonld_mappings
+            if SwordClient.get_clients_by_mapping_id(mapping.id)
+        ]
+        if used_jsonld_mappings:
+            current_app.logger.error(
+                "Item type {} is used SWORD API."
+                .format(record.model.item_type_name)
+            )
+            flash(_(
+                'Cannot delete item type. It is used in SWORD API JSON-LD '
+                'import settings.'
+            ), 'error')
+            abort(400)
 
-                    current_app.logger.debug(
-                        'Itemtype delete: {}'.format(item_type_id))
-                    UserActivityLogger.info(
-                        operation="ITEM_TYPE_DELETE",
-                        target_key=item_type_id
-                    )
-                    flash(_('Deleted Item type successfully.'))
-                    return jsonify(code=0)
-        flash(_('An error has occurred.'), 'error')
-        return jsonify(code=-1)
+        try:
+            # Delete item type name
+            ItemTypeNames.delete(record.model.name_id)
+            # Delete item typea
+            for item_type in list_item_type:
+                item_type.delete()
+            # Delete itemtype JOSN-LD mapping
+            for mapping in jsonld_mappings:
+                JsonldMapping.delete(mapping.id)
+            db.session.commit()
+            current_app.logger.info(
+                f"Item type deleted: {record.model.item_type_name}"
+            )
+            current_app.logger.debug(
+                'Itemtype delete: {}'.format(item_type_id))
+            UserActivityLogger.info(
+                operation="ITEM_TYPE_DELETE",
+                target_key=item_type_id
+            )
+        except SQLAlchemyError:
+            db.session.rollback()
+            traceback.print_exc()
+            current_app.logger.error(
+                f"Failed to delete item type: {item_type_id}."
+            )
+            exec_info = sys.exc_info()
+            tb_info = traceback.format_tb(exec_info[2])
+            UserActivityLogger.error(
+                operation="ITEM_TYPE_DELETE",
+                target_key=item_type_id,
+                remarks=tb_info[0]
+            )
+            flash(_('Unexpected error. Failed to delete item type.'), 'error')
+            abort(500)
 
+        flash(_('Deleted Item type successfully.'))
+        return Response(status=204)
 
     @expose('/register', methods=['POST'])
     @expose('/<int:item_type_id>/register', methods=['POST'])
@@ -419,7 +429,7 @@ class ItemTypeMetaDataView(BaseView):
             else:
                 lists['defaults'] = {
                     '0': {
-                        'name': _('Date (Type-less）'),
+                        'name': _('Date (Type-less)'),
                         'value': 'datetime'}}
         else:
             if current_app.config['WEKO_ITEMTYPES_UI_SHOW_DEFAULT_PROPERTIES']:
@@ -427,7 +437,7 @@ class ItemTypeMetaDataView(BaseView):
             else:
                 lists['defaults'] = {
                     '0': {
-                        'name': _('Date (Type-less）'),
+                        'name': _('Date (Type-less)'),
                         'value': 'datetime'}}
 
         return jsonify(lists)
@@ -436,7 +446,7 @@ class ItemTypeMetaDataView(BaseView):
     def export(self,item_type_id):
         item_types = ItemTypes.get_by_id(id_=item_type_id)
 
-        # 存在しないアイテムタイプ、削除済みアイテムタイプ、ハーベスト用アイテムタイプの場合はエクスポート不可。エラー画面を表示する。
+        # Error if the item type is non-existent, deleted, or for harvesting
         if item_types is None or item_types.harvesting_type is True :
             current_app.logger.error('item_type_id={} is cannot export.'.format(item_type_id))
             return self.render(
@@ -449,18 +459,34 @@ class ItemTypeMetaDataView(BaseView):
         item_type_mappings = Mapping.get_record(item_type_id)
         fp = io.BytesIO()
         with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
-            # zipファイルにJSON文字列を追加
-            new_zip.writestr("ItemType.json", ItemTypeSchema().dumps(item_types).data.encode().decode('unicode-escape').encode())
-            new_zip.writestr("ItemTypeName.json", ItemTypeNameSchema().dumps(item_type_names).data.encode().decode('unicode-escape').encode())
-            new_zip.writestr("ItemTypeMapping.json", ItemTypeMappingSchema().dumps(item_type_mappings.model).data.encode().decode('unicode-escape').encode())
-            json_str = ""
+            # Output JSON data to a ZIP file
+            item_type_json = json.dumps(
+                ItemTypeSchema().dump(item_types).data,
+                ensure_ascii=False)
+            name_json = json.dumps(
+                ItemTypeNameSchema().dump(item_type_names).data,
+                ensure_ascii=False)
+            mapping_json = json.dumps(
+                ItemTypeMappingSchema().dump(item_type_mappings.model).data,
+                ensure_ascii=False)
+            properties_json = ""
             for item_type_property in item_type_properties :
-                prop_str = ItemTypePropertySchema().dumps(item_type_property).data
-                if len(json_str) > 0:
-                    json_str += ","
-                json_str += prop_str
-            json_str = "[" + json_str + "]"
-            new_zip.writestr("ItemTypeProperty.json", json_str.encode().decode('unicode-escape').encode())
+                property_json = json.dumps(
+                    ItemTypePropertySchema().dump(item_type_property).data,
+                    ensure_ascii=False
+                )
+                if len(properties_json) > 0:
+                    properties_json += ","
+                properties_json += property_json
+            properties_json = "[" + properties_json + "]"
+            new_zip.writestr(
+                "ItemType.json", item_type_json.encode('utf-8'))
+            new_zip.writestr(
+                "ItemTypeName.json", name_json.encode('utf-8'))
+            new_zip.writestr(
+                "ItemTypeMapping.json", mapping_json.encode('utf-8'))
+            new_zip.writestr(
+                "ItemTypeProperty.json", properties_json.encode('utf-8'))
         fp.seek(0)
         return send_file(
             fp ,
@@ -476,13 +502,15 @@ class ItemTypeMetaDataView(BaseView):
         item_type_id = 0
 
         # Get request data
-        item_type_name = request.form['item_type_name']
-        input_file = request.files['file']
-        if len(item_type_name) == 0:
+        item_type_name = request.form.get('item_type_name')
+        input_file = request.files.get('file')
+
+        # Error if the data is incomplete
+        if not item_type_name:
             return jsonify(msg=_('No item type name Error'))
-        if input_file is None:
+        if not input_file:
             return jsonify(msg=_('No file Error'))
-        if input_file.mimetype is None:
+        if not input_file.mimetype:
             current_app.logger.debug(input_file.mimetype)
             return jsonify(msg=_('Illegal mimetype Error'))
 
@@ -492,60 +520,139 @@ class ItemTypeMetaDataView(BaseView):
             return jsonify(msg=_('Failed to issue log group ID.'))
 
         try:
-            readable_files = ["ItemType.json", "ItemTypeName.json", "ItemTypeMapping.json", "ItemTypeProperty.json"]
+            readable_files = [
+                'ItemType.json',
+                'ItemTypeName.json',
+                'ItemTypeMapping.json',
+                'ItemTypeProperty.json'
+            ]
             import_data = {
-                "ItemType":null,
-                "ItemTypeName":null,
-                "ItemTypeMapping":null,
-                "ItemTypeProperty":null,
+                'ItemType': None,
+                'ItemTypeName': None,
+                'ItemTypeMapping': None,
+                'ItemTypeProperty': None,
             }
-            with ZipFile(input_file, 'r') as import_zip:
+            with ZipFile(input_file) as import_zip:
                 # Check JSON files in ZipFile
-                current_app.logger.debug("Unzip requested file...")
+                current_app.logger.debug('Unzip requested file...')
                 for file_name in import_zip.namelist():
-                    current_app.logger.debug("Read file:" + file_name)
+                    current_app.logger.debug('Read file: ' + file_name)
                     if file_name not in readable_files:
-                        current_app.logger.debug(file_name + " is ignored.")
+                        current_app.logger.debug(file_name + ' is ignored.')
                     else:
                         with import_zip.open(file_name, 'r') as json_file:
                             json_obj = json.load(json_file)
-                            if file_name == "ItemType.json":
-                                import_data["ItemType"] = json_obj
-                                #print(json_obj)
-                            elif file_name == "ItemTypeName.json":
-                                import_data["ItemTypeName"] = json_obj
-                                #print(json_obj)
-                            elif file_name == "ItemTypeMapping.json":
-                                import_data["ItemTypeMapping"] = json_obj
-                                #print(json_obj)
-                            elif file_name == "ItemTypeProperty.json":
-                                import_data["ItemTypeProperty"] = json_obj
-                                #print(json_obj)
+                            if file_name == 'ItemType.json':
+                                import_data['ItemType'] = json_obj
+                            elif file_name == 'ItemTypeName.json':
+                                import_data['ItemTypeName'] = json_obj
+                            elif file_name == 'ItemTypeMapping.json':
+                                import_data['ItemTypeMapping'] = json_obj
+                            else:
+                                import_data['ItemTypeProperty'] = json_obj
 
-            # ZIPファイル内に規定のアイテムタイプデータが無ければエラー
-            if import_data["ItemType"] is null or import_data["ItemTypeName"] is null or import_data["ItemTypeMapping"] is null or import_data["ItemTypeProperty"] is null :
+            if (
+                import_data['ItemType'] is None or
+                import_data['ItemTypeName'] is None or
+                import_data['ItemTypeMapping'] is None or
+                import_data['ItemTypeProperty'] is None
+            ):
                 raise ValueError('Zip file contents invalid.')
 
+            # Data of properties related to the item type
+            render = import_data['ItemType'].get('render')
+            if not render:
+                raise ValueError(
+                    '"render" is missing or invalid in ItemType.json.'
+                )
 
-            json_schema = fix_json_schema(import_data["ItemType"].get('schema'))
-            json_form = import_data["ItemType"].get('form')
+            # Property numbers to identify property IDs
+            table_row_ids = render.get('table_row')
+            if not table_row_ids:
+                raise ValueError(
+                    '"table_row" is missing or invalid in "render".'
+                )
+
+            # Property data including ID and more
+            meta_list = render.get('meta_list')
+            if not meta_list:
+                raise ValueError(
+                    '"meta_list" is missing or invalid in "render".'
+                )
+
+            json_schema = fix_json_schema(
+                import_data['ItemType'].get('schema')
+            )
+            json_form = import_data['ItemType'].get('form')
             json_schema = update_required_schema_not_exist_in_form(
-                json_schema, json_form)
+                json_schema,
+                json_form
+            )
 
             if not json_schema:
                 raise ValueError('Schema is in wrong format.')
 
-            record = ItemTypes.update(id_=0,
-                                      name=item_type_name,
-                                      schema=json_schema,
-                                      form=json_form,
-                                      render=import_data["ItemType"].get('render'))
+            importing_props = {
+                prop.get('id'): prop
+                for prop in import_data['ItemTypeProperty']
+            }
+            new_prop_ids = []
+            duplicated_prop_ids = []
+            for row_id in table_row_ids:
+                # Extract the property ID from 'input_type'
+                input_type = meta_list.get(row_id).get('input_type')
+                default_type_list = [
+                    t.get('value')
+                    for t in current_app.config['WEKO_ITEMTYPES_UI_DEFAULT_PROPERTIES'].values()
+                ]
+                if input_type in default_type_list:
+                    continue
+                prop_id = int(input_type[4:])
+                record = ItemTypeProps.get_record(prop_id)
+
+                if not record:
+                    new_prop_ids.append(prop_id)
+                else:
+                    importing_prop = importing_props.get(prop_id)
+                    importing_updated = (
+                        importing_prop.get('updated').split('+')[0])
+                    record_updated = record.updated.isoformat()
+                    if importing_updated != record_updated:
+                        duplicated_prop_ids.append(prop_id)
+
+            forced_import = current_app.config[
+                'WEKO_ITEMTYPES_UI_FORCED_IMPORT_ENABLED'
+            ]
+
+            if new_prop_ids and not forced_import:
+                raise ValueError(_('Unregistered properties detected.'))
+
+            # Get data of new property from ItemTypeProperty.json
+            property_data = import_data['ItemTypeProperty']
+            for prop_id in new_prop_ids:
+                prop = [x for x in property_data if x.get('id') == prop_id][0]
+                # Create new property record using the data
+                ItemTypeProps.create_with_property_id(property_id=prop_id,
+                                     name=prop.get('name'),
+                                     schema=prop.get('schema'),
+                                     form_single=prop.get('form'),
+                                     form_array=prop.get('forms'))
+            # Create new item type record(not update)
+            record = ItemTypes.update(
+                id_=0,
+                name=item_type_name,
+                schema=json_schema,
+                form=json_form,
+                render=import_data['ItemType'].get('render')
+            )
             upgrade_version = current_app.config[
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
             item_type_id=record.model.id
-            Mapping.create(item_type_id=item_type_id,
-                               mapping=import_data["ItemTypeMapping"].get('mapping'))
+            Mapping.create(
+                item_type_id=item_type_id,
+                mapping=import_data['ItemTypeMapping'].get('mapping')
+            )
 
             ItemTypeEditHistory.create_or_update(
                 item_type_id=item_type_id,
@@ -566,15 +673,34 @@ class ItemTypeMetaDataView(BaseView):
         except Exception as ex:
             db.session.rollback()
             traceback.print_exc()
-            default_msg = _('Failed to import Item type.')
+            default_msg = _('Failed to import the item type.')
             response = jsonify(msg='{} {}'.format(default_msg, str(ex)))
             response.status_code = 400
             return response
+
         current_app.logger.debug('itemtype import: {}'.format(item_type_id))
-        flash(_('Successfuly import Item type.'))
+        flash(_('The item type imported successfully.'))
         redirect_url = url_for('.index', item_type_id=item_type_id)
-        return jsonify(msg=_('Successfuly import Item type.'),
-                       redirect_url=redirect_url)
+
+        if duplicated_prop_ids:
+            duplicated_props = {
+                prop_id: importing_props[prop_id]
+                for prop_id in duplicated_prop_ids
+            }
+            response = jsonify(
+                msg=_(
+                    'The item type imported successfully, but these property '
+                    'IDs were duplicated and were not imported:'
+                ),
+                duplicated_props=duplicated_props,
+                redirect_url=redirect_url
+            )
+        else:
+            response = jsonify(
+                msg=_('The item type imported successfully.'),
+                redirect_url=redirect_url
+            )
+        return response
 
 class ItemTypeSchema(SQLAlchemyAutoSchema):
     class Meta:

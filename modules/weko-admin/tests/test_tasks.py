@@ -75,6 +75,9 @@ def test_check_send_all_reports(app, admin_settings, mocker):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_tasks.py::test_send_feedback_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_send_feedback_mail(app, mocker):
     mock_send = mocker.patch("weko_admin.tasks.StatisticMail.send_mail_to_all")
+    setting=Mock()
+    setting.is_sending_feedback=True
+    mocker.patch("weko_admin.models.FeedbackMailSetting.get_feedback_email_setting_by_repo",return_value=[setting])
     send_feedback_mail()
     mock_send.assert_called()
 

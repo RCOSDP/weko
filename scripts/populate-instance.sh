@@ -154,7 +154,7 @@ curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/_ilm/policy/weko_stats_p
 event_list=('celery-task' 'item-create' 'top-view' 'record-view' 'file-download' 'file-preview' 'search')
 for event_name in ${event_list[@]}
 do
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'-000001?timeout=2m' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-events-stats-'${event_name}'": {
@@ -162,7 +162,7 @@ do
       }
     }
   }'
-  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001' -H 'Content-Type: application/json' -d '
+  curl -XPUT 'http://'${INVENIO_ELASTICSEARCH_HOST}':9200/'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'-000001?timeout=2m' -H 'Content-Type: application/json' -d '
   {
     "aliases": {
       "'${SEARCH_INDEX_PREFIX}'-stats-'${event_name}'": {
@@ -263,6 +263,12 @@ ${INVENIO_WEB_INSTANCE} access \
        role "${INVENIO_ROLE_CONTRIBUTOR}"
 
 ${INVENIO_WEB_INSTANCE} access \
+       allow "files-rest-object-read-version" \
+       role "${INVENIO_ROLE_REPOSITORY}" \
+       role "${INVENIO_ROLE_COMMUNITY}" \
+       role "${INVENIO_ROLE_CONTRIBUTOR}"
+
+${INVENIO_WEB_INSTANCE} access \
        allow "search-access" \
        role "${INVENIO_ROLE_REPOSITORY}" \
        role "${INVENIO_ROLE_COMMUNITY}" \
@@ -312,7 +318,10 @@ ${INVENIO_WEB_INSTANCE} language create \
         --active --registered "en" "English" 001
 
 ${INVENIO_WEB_INSTANCE} language create \
-        --active "zh" "中文" 000
+        --active "zh-cn" "中文 (簡体)" 000
+
+${INVENIO_WEB_INSTANCE} language create \
+        --active "zh-tw" "中文 (繁体)" 000
 
 ${INVENIO_WEB_INSTANCE} language create \
         --active "id" "Indonesia" 000
@@ -464,13 +473,21 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "ROR" "ROR" "https://ror.org/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "ISNI" "ISNI" "http://www.isni.org/isni/##"
+       "e-Rad_Researcher" "e-Rad_Researcher" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "VIAF" "VIAF" "https://viaf.org/viaf/##"
+       "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##"
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "ISNI" "ISNI" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "VIAF" "VIAF" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "AID" "AID" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "e-Rad_Researcher" "e-Rad_Researcher" ""
+       "kakenhi" "kakenhi【非推奨】" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "Ringgold" "Ringgold" ""
+${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
+       "GRID" "GRID【非推奨】" "" 
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "researchmap" "researchmap" "https://researchmap.jp/##"
 # create-default-authors-prefix-settings-end

@@ -243,7 +243,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         page = request.values.get("page", 1, type=int)
         size = request.values.get("size", 20, type=int)
         is_search = request.values.get("is_search", 0 ,type=int ) #toppage and search_page is 1
-        community_id = request.values.get("community")
+        community_id = request.values.get("c")
         params = {}
         facets = get_facet_search_query()
         search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
@@ -283,6 +283,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 else:
                     search = search.post_filter({"terms": {query_key: params[param]}})
         search_result = search.execute()
+
         # Generate links for prev/next
         urlkwargs.update(
             size=size,
@@ -318,7 +319,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         rd["aggregations"]["aggregations"] = pickle.loads(pickle.dumps(agp, -1))
         nlst = []
         items_count = dict()
-        public_indexes = Indexes.get_public_indexes_list()
+        public_indexes = set(Indexes.get_public_indexes_list())
         recorrect_private_items_count(agp)
         for i in agp:
             items_count[i["key"]] = {
@@ -431,6 +432,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     nlst.append(current_idx)
         agp.clear()
         # process index tree image info
+        custom_sort_data = None
         if len(nlst):
             index_id = nlst[0].get("key").split("/")[-1]
             index_info = Indexes.get_index(index_id=index_id)
@@ -439,11 +441,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 nlst[0]["img"] = index_info.image_name
             nlst[0]["display_format"] = index_info.display_format
             nlst[0]["rss_status"] = index_info.rss_status
+            if index_id == q:
+                custom_sort_data = index_info
         # Update rss_status for index child
         for idx in range(0, len(nlst)):
             index_id = nlst[idx].get("key").split("/")[-1]
             index_info = Indexes.get_index(index_id=index_id)
             nlst[idx]["rss_status"] = index_info.rss_status
+            if index_id == q:
+                custom_sort_data = index_info
         agp.append(nlst)
         for hit in rd["hits"]["hits"]:
             try:
@@ -453,9 +459,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 hit["_source"]["_comment"] = _comment
                 # Register custom_sort
                 cn = hit["_source"]["control_number"]
-                if index_info.item_custom_sort.get(cn):
+                if custom_sort_data and custom_sort_data.item_custom_sort.get(cn):
                     hit["_source"]["custom_sort"] = {
-                        str(index_info.id): str(index_info.item_custom_sort.get(cn))
+                        str(custom_sort_data.id): str(custom_sort_data.item_custom_sort.get(cn))
                     }
             except Exception:
                 pass

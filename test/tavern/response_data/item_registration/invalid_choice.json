@@ -1,0 +1,61 @@
+{
+    "init": {
+        "code": 0,
+        "msg": "success",
+        "data": {
+            "redirect": "/workflow/activity/detail/A-{}-00001"
+        }
+    },
+    "author_prefix_settings": [
+        {
+            "name": "WEKO",
+            "scheme": "WEKO",
+            "url": ""
+        },
+        {
+            "name": "ORCID",
+            "scheme": "ORCID",
+            "url": "https://orcid.org/##"
+        },
+        {
+            "name": "CiNii",
+            "scheme": "CiNii",
+            "url": "https://ci.nii.ac.jp/author/##"
+        },
+        {
+            "name": "KAKEN2",
+            "scheme": "KAKEN2",
+            "url": "https://nrid.nii.ac.jp/nrid/##"
+        },
+        {
+            "name": "ROR",
+            "scheme": "ROR",
+            "url": "https://ror.org/##"
+        },
+        {
+            "name": "ISNI",
+            "scheme": "ISNI",
+            "url": "http://www.isni.org/isni/##"
+        },
+        {
+            "name": "VIAF",
+            "scheme": "VIAF",
+            "url": "https://viaf.org/viaf/##"
+        },
+        {
+            "name": "AID",
+            "scheme": "AID",
+            "url": ""
+        },
+        {
+            "name": "e-Rad_Researcher",
+            "scheme": "e-Rad_Researcher",
+            "url": ""
+        }
+    ],
+    "grouplist": {},
+    "validate": {
+        "is_valid": false,
+        "error": "'no resource type' is not one of [None, 'conference paper', 'data paper', 'departmental bulletin paper', 'editorial', 'journal', 'journal article', 'newspaper', 'review article', 'other periodical', 'software paper', 'article', 'book', 'book part', 'cartographic material', 'map', 'conference output', 'conference presentation', 'conference proceedings', 'conference poster', 'aggregated data', 'clinical trial data', 'compiled data', 'dataset', 'encoded data', 'experimental data', 'genomic data', 'geospatial data', 'laboratory notebook', 'measurement and test data', 'observational data', 'recorded data', 'simulation data', 'survey data', 'image', 'still image', 'moving image', 'video', 'lecture', 'design patent', 'patent', 'PCT application', 'plant patent', 'plant variety protection', 'software patent', 'trademark', 'utility model', 'report', 'research report', 'technical report', 'policy report', 'working paper', 'data management plan', 'sound', 'thesis', 'bachelor thesis', 'master thesis', 'doctoral thesis', 'commentary', 'design', 'industrial design', 'interactive resource', 'layout design', 'learning object', 'manuscript', 'musical notation', 'peer review', 'research proposal', 'research protocol', 'software', 'source code', 'technical documentation', 'transcription', 'workflow', 'other']"
+    }
+}

@@ -57,7 +57,7 @@ setup_requires = [
 install_requires = [
     'Flask-BabelEx>=0.9.2',
     'invenio-previewer>=1.0.0a11',
-    'PyPDF2>=1.26.0',
+    'pypdf>=4.3.1,<5.0.0',
     'invenio-pidrelations>=1.0.0a3',
     'invenio-records>=1.0.0b4',
 ]
@@ -90,7 +90,7 @@ setup(
             'weko_records_ui = weko_records_ui:WekoRecordsUI',
         ],
         'invenio_base.api_apps': [
-            'weko_records_ui_rest = weko_records_ui.ext:WekoRecordsREST',
+            'weko_records_ui_rest = weko_records_ui:WekoRecordsREST',
             'weko_records_ui_cites_rest = weko_records_ui:WekoRecordsCitesREST',
         ],
         'invenio_admin.views': [

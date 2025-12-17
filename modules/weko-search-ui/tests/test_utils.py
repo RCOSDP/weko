@@ -1,7 +1,6 @@
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 
 import copy
-from io import StringIO
 import json
 import os
 import re
@@ -10,48 +9,48 @@ import time
 import unittest
 import uuid
 import zipfile
+from datetime import datetime, timedelta
 import redis
 import bagit
+from io import StringIO
+
 import pytest
-from elasticsearch import ElasticsearchException, NotFoundError
-from unittest.mock import MagicMock, Mock, patch, mock_open
-from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch, mock_open
 
 from flask import current_app, make_response, request
-from flask_babelex import Babel
 from flask_login import current_user
-
-from sqlalchemy import func as _func
+from werkzeug.exceptions import BadRequest, Forbidden, NotFound
+from elasticsearch import helpers, ElasticsearchException, NotFoundError
+from elasticsearch_dsl import Search
 from sqlalchemy.exc import SQLAlchemyError
+
+from invenio_accounts.testutils import login_user_via_session
+from invenio_db import db as iv_db
 from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
-from invenio_records.api import Record
-from invenio_records.models import RecordMetadata
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
-from invenio_db import db as iv_db
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
+
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoDeposit, WekoIndexer, WekoRecord as d_wekorecord
 from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 from weko_records.api import ItemsMetadata, JsonldMapping, WekoRecord
-from weko_records.models import ItemMetadata
 from weko_records.models import ItemType
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.config import WEKO_SCHEMA_RELATION_TYPE
+from weko_workflow.errors import WekoWorkflowException
+from weko_workflow.headless.activity import HeadlessActivity
+from weko_workflow.models import Activity, WorkFlow
 
 
-from weko_search_ui import WekoSearchUI
 from weko_search_ui.config import (
     ACCESS_RIGHT_TYPE_URI,
     RESOURCE_TYPE_URI,
     VERSION_TYPE_URI,
     WEKO_SEARCH_UI_BULK_EXPORT_URI,
     WEKO_SEARCH_UI_BULK_EXPORT_TASK,
-    WEKO_IMPORT_SYSTEM_ITEMS,
-    WEKO_REPO_USER,
-    WEKO_SYS_USER,
 )
 from weko_search_ui.utils import (
     DefaultOrderedDict,
@@ -61,9 +60,10 @@ from weko_search_ui.utils import (
     check_xml_import_items,
     check_index_access_permissions,
     check_permission,
+    check_provide_in_system,
     check_sub_item_is_system,
+    check_terms_in_system,
     clean_thumbnail_file,
-    convert_nested_item_to_list,
     create_deposit,
     create_flow_define,
     create_work_flow,
@@ -74,6 +74,7 @@ from weko_search_ui.utils import (
     delete_items_with_activity,
     delete_task_id_cache_on_missing_meta,
     delete_records,
+    execute_search_with_pagination,
     export_all,
     get_retry_info,
     generate_metadata_from_jpcoar,
@@ -100,6 +101,9 @@ from weko_search_ui.utils import (
     getEncode,
     handle_check_and_prepare_feedback_mail,
     handle_check_and_prepare_request_mail,
+    handle_check_and_prepare_item_application,
+    check_exists_file_name,
+    check_terms_in_system_for_item_application,
     handle_check_and_prepare_index_tree,
     handle_check_and_prepare_publish_status,
     handle_check_cnri,
@@ -110,6 +114,7 @@ from weko_search_ui.utils import (
     handle_check_doi_ra,
     handle_check_duplication_item_id,
     handle_check_duplicate_item_link,
+    handle_check_duplicate_record,
     handle_check_exist_record,
     handle_check_file_content,
     handle_check_file_metadata,
@@ -119,6 +124,7 @@ from weko_search_ui.utils import (
     handle_check_item_is_locked,
     handle_check_item_link,
     handle_check_metadata_not_existed,
+    handle_check_restricted_access_property,
     handle_check_thumbnail,
     handle_check_thumbnail_file_type,
     handle_check_authors_prefix,
@@ -135,7 +141,7 @@ from weko_search_ui.utils import (
     handle_remove_es_metadata,
     handle_save_bagit,
     handle_set_change_identifier_flag,
-    handle_shared_id,
+    handle_shared_ids,
     handle_validate_item_import,
     handle_workflow,
     handle_flatten_data_encode_filename,
@@ -170,14 +176,9 @@ from weko_search_ui.utils import (
     get_priority,
     get_record_ids
 )
-from werkzeug.exceptions import NotFound
 
-from weko_workflow.errors import WekoWorkflowException
-from weko_workflow.headless.activity import HeadlessActivity
-from weko_workflow.models import Activity
 
 from .helpers import json_data
-
 
 
 FIXTURE_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data")
@@ -242,9 +243,62 @@ def clear_test_data():
     PersistentIdentifier.query.delete()
     iv_db.session.commit()
 
+
+# def execute_search_with_pagination(search_instance, get_all=False, size=None):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_execute_search_with_pagination -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_execute_search_with_pagination(i18n_app, indices, users, db_records, mocker, esindex):
+    i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
+    i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
+    i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+
+    mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
+
+    def _generate_es_data(num, start_datetime=datetime.now()):
+        for i in range(num):
+            doc = {
+                "_index": i18n_app.config.get("INDEXER_DEFAULT_INDEX", "test-weko-item-v1.0.0"),
+                "_type": "item-v1.0.0",
+                "_id": f"2d1a2520-9080-437f-a304-230adc8{i:05d}",
+                "_source": {
+                    "_item_metadata": {
+                        "title": [f"test_title_{i}"],
+                    },
+                    "relation_version_is_last": True,
+                    "path": ["66"],
+                    "control_number": f"{i:05d}",
+                    "_created": (start_datetime + timedelta(seconds=i)).isoformat(),
+                    "publish_status": "0",
+                },
+                "sort": i,
+            }
+            yield doc
+
+    generate_data_num = 20005
+    preset_records_num = len(db_records)
+    expected_data_num = generate_data_num + preset_records_num
+    helpers.bulk(esindex, _generate_es_data(generate_data_num), refresh='true')
+    i18n_app.config['RECORDS_REST_SORT_OPTIONS'] = {"test-weko":{"controlnumber":{"title":"ID","fields": ["control_number"],"default_order": "asc","order": 2}}}
+    search = Search(using=esindex, index=i18n_app.config.get("INDEXER_DEFAULT_INDEX", "test-weko-item-v1.0.0"))
+    search._sort.append( {"_created": {"order": "asc", "unmapped_type": "long"}})
+
+    with i18n_app.test_request_context(query_string={"sort": "control_number", "q": "66"}):
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            # max_result_size < 0
+            assert len(execute_search_with_pagination(search, max_result_size=-1)) == expected_data_num
+            # max_result_size   default
+            assert len(execute_search_with_pagination(search)) == 10000
+            # max_result_size = 1
+            assert len(execute_search_with_pagination(search, max_result_size=1)) == 1
+            # max_result_size = 15000
+            assert len(execute_search_with_pagination(search, max_result_size=15000)) == 15000
+            # max_result_size = 30000
+            assert len(execute_search_with_pagination(search, max_result_size=30000)) == expected_data_num
+
+
+# def execute_search_with_pagination(search_instance, get_all=False, size=None):
 # def get_tree_items(index_tree_id): ERROR ~ AttributeError: '_AppCtxGlobals' object has no attribute 'identity'
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_tree_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_get_tree_items(i18n_app, indices, users, mocker):
+def test_get_tree_items(i18n_app, indices, users, mocker, esindex):
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
     i18n_app.config['OAISERVER_ES_MAX_CLAUSE_COUNT'] = 1
     i18n_app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
@@ -260,6 +314,8 @@ def test_get_tree_items(i18n_app, indices, users, mocker):
                 return self.data
         def __init__(self,data):
             self.data=data
+        def extra(self,size):
+            return self
         def execute(self):
             return self.MockExecute(self.data)
     def mock_search_factory(self, search,index_id=None):
@@ -269,6 +325,15 @@ def test_get_tree_items(i18n_app, indices, users, mocker):
     ):
         # with patch("weko_search_ui.query.item_path_search_factory", return_value="{'abc': 123}"):
         assert get_tree_items(33)
+
+    with i18n_app.test_client() as client:
+        login_user_via_session(client, users[3]["obj"])
+        with patch("weko_search_ui.utils.item_path_search_factory") as mock_item_path_search_factory, \
+                patch("weko_search_ui.utils.execute_search_with_pagination") as mock_execute_search_with_pagination:
+            mock_item_path_search_factory.return_value = MagicMock(), None
+            assert get_tree_items(33, 1000)
+            mock_item_path_search_factory.assert_called_once()
+            mock_execute_search_with_pagination.assert_called_once_with(mock_item_path_search_factory.return_value[0], 1000)
 
 
 # def delete_records(index_tree_id, ignore_items):
@@ -317,7 +382,12 @@ def test_get_journal_info(i18n_app, indices, client_request_args, mocker):
         mock_abort = mocker.patch("weko_search_ui.utils.abort",return_value=make_response())
         # Will result in an error for coverage of the except part
         assert get_journal_info(33)
-        mock_abort.assert_called_with(500)
+
+    with patch(
+        "weko_indextree_journal.api.Journals.get_journal_by_index_id",
+        return_value=None,
+    ):
+        assert get_journal_info(33) == None
 
 
 # def check_permission():
@@ -383,6 +453,7 @@ def test_parse_to_json_form(i18n_app, record_with_metadata):
 # def check_tsv_import_items(file, is_change_identifier: bool, is_gakuninrdm=False,
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_tsv_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_check_tsv_import_items(i18n_app):
+    # test is_gakuninrdm = False
     current_path = os.path.dirname(os.path.abspath(__file__))
     file_name = "sample_file.zip"
     file_path = os.path.join(current_path, "data", "sample_file", file_name)
@@ -453,6 +524,7 @@ def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
             mocker.patch("weko_search_ui.utils.handle_check_doi")
             mocker.patch("weko_search_ui.utils.handle_check_authors_prefix")
             mocker.patch("weko_search_ui.utils.handle_check_authors_affiliation")
+            mocker.patch("weko_search_ui.utils.handle_check_restricted_access_property")
 
             for file in test_importdata:
 
@@ -469,7 +541,7 @@ def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
 
                 # for FileNotFoundError
                 if order_if == 3:
-                    with patch("weko_search_ui.utils.list",return_value=None):
+                    with patch("weko_search_ui.utils.os.listdir",return_value=[]):
                         ret = check_tsv_import_items(file, False, False)
                         assert ret["error"]=='The csv/tsv file was not found in the specified file import00.zip. Check if the directory structure is correct.'
 
@@ -485,7 +557,7 @@ def test_check_tsv_import_items2(app,test_importdata,mocker,db, order_if):
 
                 # for tsv
                 if order_if == 6:
-                    with patch("weko_search_ui.utils.list",return_value=['items.tsv']):
+                    with patch("weko_search_ui.utils.os.listdir",return_value=['items.tsv']):
                         ret = check_tsv_import_items(file,False,False)
                         assert "error" not in ret
 
@@ -665,7 +737,7 @@ def test_generate_metadata_from_jpcoar(app, db_itemtype_jpcoar):
         }
 
 
-# def check_jsonld_import_items(file, packaging, mapping_id, meta_data_api=None,shared_id=-1, validate_bagit=True, is_change_identifier=False):
+# def check_jsonld_import_items(file, packaging, mapping_id, meta_data_api=None,shared_ids=-1, validate_bagit=True, is_change_identifier=False):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_jsonld_import_items -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_type_mapping2, ro_crate, mocker):
     schema = json_data("data/jsonld/item_type_schema_full.json")
@@ -683,8 +755,10 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
     mocker.patch("weko_search_ui.utils.handle_check_doi")
     mocker.patch("weko_search_ui.utils.handle_check_authors_prefix")
     mocker.patch("weko_search_ui.utils.handle_check_authors_affiliation")
+    mocker.patch("weko_search_ui.utils.handle_check_restricted_access_property")
 
-    result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+
+    result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[])
     assert result["data_path"].startswith('/var/tmp/weko_import_')
     assert result["item_type_id"] == item_type2.id
     assert result["list_record"][0]["item_type_id"] == item_type2.id
@@ -694,15 +768,16 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
     assert result.get("error") is None
 
     with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=zipfile.BadZipFile):
-        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
-        assert result["error"] == "The format of the specified file {filename} dose not support import. Please specify a zip file.".format(filename=os.path.basename(ro_crate))
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[])
+        assert result["error"] == "指定されたファイル{filename}の形式はインポートに対応していません。zip形式のファイルを指定してください。".format(filename=os.path.basename(ro_crate))
         assert "data_path" not in result
         assert "item_type_id" not in result
         assert "list_record" not in result
+        time.sleep(0.1)
 
 
     with patch("weko_search_ui.utils.zipfile.ZipFile",side_effect=UnicodeDecodeError("uni", b'\xe3\x81\xad\xe3\x81\x93',2,4,"cp932 cant decode")):
-        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[])
         assert result["error"] == "cp932 cant decode"
         assert "data_path" not in result
         assert "item_type_id" not in result
@@ -710,7 +785,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         time.sleep(0.1)
 
     with patch("weko_search_ui.utils.bagit.Bag.validate",side_effect=bagit.BagValidationError("Bag validation error")):
-        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1, validate_bagit=False)
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[], validate_bagit=False)
         assert result["data_path"].startswith('/var/tmp/weko_import_')
         assert result["item_type_id"] == item_type2.id
         assert result["list_record"][0]["item_type_id"] == item_type2.id
@@ -719,7 +794,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         assert result["list_record"][0].get("errors") is None
         assert result.get("error") is None
 
-        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[])
         assert result["error"] == "Bag validation error"
 
     from werkzeug.datastructures import FileStorage
@@ -727,7 +802,7 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         file = FileStorage(
             stream=f, filename=os.path.basename(ro_crate), content_type="application/zip"
         )
-        result = check_jsonld_import_items(file, "SimpleZip", obj.id, shared_id=-1)
+        result = check_jsonld_import_items(file, "SimpleZip", obj.id, shared_ids=[])
         assert result["data_path"].startswith('/var/tmp/weko_import_')
         assert result["item_type_id"] == item_type2.id
         assert result["list_record"][0]["item_type_id"] == item_type2.id
@@ -737,32 +812,33 @@ def test_check_jsonld_import_items(i18n_app, db, test_indices, item_type2, item_
         assert result.get("error") is None
 
     with patch("weko_search_ui.utils.JsonLdMapper.validate", return_value=["something wrong"]):
-        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
-        assert result["error"] == "Mapping is invalid for item type {}.".format(item_type2.model.item_type_name.name)
+        result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[])
+        assert result["error"] == "予期しないエラーが発生しました。 Mapping is invalid for item type {}.".format(item_type2.model.item_type_name.name)
 
     JsonldMapping.delete(obj.id)
-    result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_id=-1)
-    assert result["error"] == "Metadata mapping not defined for registration your item."
+    db.session.commit()
+    result = check_jsonld_import_items(ro_crate, "SimpleZip", obj.id, shared_ids=[])
+    assert result["error"] == "予期しないエラーが発生しました。 Metadata mapping not defined for registration your item."
 
     # print(f"result: {json.dumps(result, indent=2, ensure_ascii=False)}")
 
 
-# def handle_shared_id(list_record, shared_id=-1):
-# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_shared_id():
+# def handle_shared_ids(list_record, shared_ids=[]):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_shared_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_shared_ids():
     with open("tests/data/list_records/list_records.json", "r") as json_file:
         list_record = json.load(json_file)
 
-    assert "weko_shared_id" not in list_record[0]["metadata"]
+    assert "weko_shared_ids" not in list_record[0]["metadata"]
 
-    handle_shared_id(list_record, shared_id="3")
-    assert "weko_shared_id" not in list_record[0]["metadata"]
+    handle_shared_ids(list_record, shared_ids=["3"])
+    assert "weko_shared_ids" not in list_record[0]["metadata"]
 
-    handle_shared_id(list_record)
-    assert list_record[0]["metadata"]["weko_shared_id"] == -1
+    handle_shared_ids(list_record)
+    assert "weko_shared_ids" not in list_record[0]["metadata"]
 
-    handle_shared_id(list_record, shared_id=3)
-    assert list_record[0]["metadata"]["weko_shared_id"] == 3
+    handle_shared_ids(list_record, shared_ids=[3])
+    assert list_record[0]["metadata"]["weko_shared_ids"] == [3]
 
 
 # def handle_save_bagit(list_record, file, data_path, filename):
@@ -862,7 +938,7 @@ def test_read_stats_file(i18n_app, db_itemtype, users):
         "schema": "test",
         "is_lastest": "test",
         "name": "test",
-        "item_type_id": "test",
+        "item_type_id": "1000",
     }
 
     with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
@@ -881,7 +957,7 @@ def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
     item_type_info = {
         "schema": "/items/jsonschema/test",
         "is_lastest": "test",
-        "name": "テストアイテムタイプ",
+        "name": "テストアイテムタイプ_1000",
         "item_type_id": "test",
     }
 
@@ -898,7 +974,7 @@ def test_read_jpcoar_xml_file(i18n_app, db_itemtype, users):
                     "$schema": item_type_info['schema'],
                     "item_type_name": item_type_info['name'],
                     "item_type_id": item_type_info['item_type_id'],
-                    "file_path": [],
+                    "file_path": ['test1.txt', 'test2', 'test3.png'],
                 }
             ],
             'item_type_schema': item_type_info['schema']
@@ -1080,6 +1156,40 @@ def test_get_item_type(mocker_itemtype):
 
     assert get_item_type(0) == {}
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_duplicate_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# def handle_check_duplicate_record(list_record):
+def test_handle_check_duplicate_record(app):
+    record = {"metadata": {"title": "Title 1"}}
+    expect = {"metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    record = {"id": "1", "metadata": {"title": "Title 1"}}
+    expect = {"id": "1", "metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    record = {"id": "invalid", "metadata": {"title": "Title 1"}}
+    expect = {"id": "invalid", "metadata": {"title": "Title 1"}}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = False, [], []
+        handle_check_duplicate_record([record])
+    assert mock_is_duplicate.call_count == 1
+    assert record == expect
+
+    link = "https://example.com/duplicate/1"
+    record = {"metadata": {"title": "Title 1"}}
+    expect = {"metadata": {"title": "Title 1"}, "warning": f'The same item may have been registered.<br><a href="{link}" target="_blank">{link}</a><br>'}
+    with patch("weko_items_ui.utils.is_duplicate_item") as mock_is_duplicate:
+        mock_is_duplicate.return_value = True, ["1"], [link]
+        handle_check_duplicate_record([record])
+
 
 # def handle_check_exist_record(list_record) -> list:
 def test_handle_check_exist_record(app):
@@ -1254,10 +1364,12 @@ def find_and_update_location_size():
                 loc.size = row[1]
 """
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_records):
+def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_records, mocker):
     item = es_records["results"][0]["item"]
     root_path = os.path.dirname(os.path.abspath(__file__))
-
+    item["$schema"] = "/items/jsonschema/1000"
+    item["item_type_id"] = 1000
+    mock_commit = mocker.patch('weko_deposit.api.WekoDeposit.commit', return_value=None)
     with patch("invenio_files_rest.utils.find_and_update_location_size"):
         assert register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
 
@@ -1267,22 +1379,81 @@ def test_register_item_metadata2(i18n_app, es_item_file_pipeline, deposit, es_re
     item = es_records["results"][0]["item"]
     item["item_type_id"] = 1000
     item["$schema"] = "/items/jsonschema/1000"
-    item["metadata"]["item_1617605131499"] = item["metadata"]["item_1617605131499"]["attribute_value_mlt"]
+    item["metadata"]["item_1617605131499"] = item["metadata"]["item_1617605131499"][0]["attribute_value_mlt"]
     root_path = os.path.dirname(os.path.abspath(__file__))
 
-    with patch("weko_search_ui.utils.find_and_update_location_size"):
-        with patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None):
-            with patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
-                with patch("weko_search_ui.utils.RequestMailList.delete_without_commit") as delete_request_mail:
-                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
-                        delete_request_mail.assert_called()
+    with patch("weko_search_ui.utils.find_and_update_location_size"), \
+            patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None), \
+            patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+        with patch("weko_search_ui.utils.RequestMailList.delete_without_commit") as delete_request_mail:
+                register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+                delete_request_mail.assert_called()
 
-                item["metadata"]["request_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
-                item["metadata"]["feedback_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
-                with patch("weko_search_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
-                    with patch("weko_search_ui.utils.RequestMailList.update") as update_request_mail:
-                        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
-                        update_request_mail.assert_called()
+        item["metadata"]["request_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+        item["metadata"]["feedback_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+        with patch("weko_search_ui.utils.WekoDeposit.merge_data_to_record_without_version"), \
+                patch("weko_search_ui.utils.AdminSettings.get", return_value={"display_request_form": True}), \
+                patch("weko_search_ui.utils.RequestMailList.update") as update_request_mail:
+            register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+            update_request_mail.assert_called()
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# @pytest.mark.parametrize('order_if', [1,2])
+@pytest.mark.parametrize('order_if', [1,2,3,4])
+def test_register_item_metadata3(i18n_app, es_item_file_pipeline, deposit, es_records2, db_index, es, db, mocker, order_if):
+    item = es_records2["results"][0]["item"]
+    item["item_type_id"] = 1000
+    item["$schema"] = "/items/jsonschema/1000"
+    root_path = os.path.dirname(os.path.abspath(__file__))
+    if order_if == 1:
+        with patch("weko_search_ui.utils.find_and_update_location_size", return_value=None), \
+                patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}), \
+                patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None), \
+                patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None):
+            remove_request = mocker.patch("weko_search_ui.utils.WekoDeposit.remove_request_mail")
+            delete_item_application = mocker.patch("weko_search_ui.utils.ItemApplication.delete_without_commit")
+            register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
+            remove_request.assert_called()
+            delete_item_application.assert_called()
+
+    item["metadata"]["request_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+    item["metadata"]["feedback_mail_list"]=[{"email": "contributor@test.org", "author_id": ""}]
+    item["item_application"]={"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+    item["status"]="keep"
+
+    item["identifier_key"]="item_1617186331708"
+    with patch("weko_search_ui.utils.find_and_update_location_size", return_value=None), \
+            patch("weko_deposit.api.Indexes.get_path_list", return_value={"","",""}), \
+            patch("weko_search_ui.utils.WekoDeposit.commit", return_value=None), \
+            patch("weko_search_ui.utils.WekoDeposit.publish_without_commit", return_value=None), \
+            patch('weko_search_ui.utils.FeedbackMailList.update') as mock_feedback_mail:
+        if order_if == 2:
+            mocker.patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value=[{"version_id":"1.2"}])
+            item["pid"]=None
+            register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
+            mock_feedback_mail.assert_called()
+        if order_if == 3:
+            mocker.patch("weko_search_ui.utils.WekoDeposit.get_file_data", return_value=[{"version_id":None}])
+            register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
+            mock_feedback_mail.assert_called()
+        if order_if == 4:
+            with patch("weko_search_ui.utils.WekoDeposit.update_feedback_mail"), \
+                    patch("weko_search_ui.utils.AdminSettings.get", return_value={"display_request_form": True, "item_application": {"item_application_enable": True, "application_item_types": [1000]}}), \
+                    patch("weko_search_ui.utils.WekoDeposit.update_request_mail") as mock_update_request, \
+                    patch("weko_search_ui.utils.ItemApplication.update") as mock_update_item_application, \
+                    patch("weko_search_ui.utils.WekoDeposit.newversion") as mock_newversion, \
+                    patch("weko_search_ui.utils.ItemLink.update"):
+                item["pid"]=None
+                item["status"]="new"
+                mock_newdep = MagicMock(spec=WekoDeposit)
+                mock_newdep.id = 1
+
+                mock_newversion.return_value = mock_newdep
+
+                register_item_metadata(item, root_path, item['owner'], is_gakuninrdm=False)
+                mock_update_request.assert_called()
+                mock_feedback_mail.assert_called()
+                mock_update_item_application.assert_called()
 
 
 # def update_publish_status(item_id, status):
@@ -1380,128 +1551,106 @@ def test_send_item_created_event_to_es(
 def test_import_items_to_system(i18n_app, db, es_item_file_pipeline, es_records, app, mocker):
     item = es_records["results"][0]["item"]
     db.session.commit()
-    with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
-        with patch("weko_search_ui.utils.register_item_doi", return_value={}):
-            with patch(
-                "weko_search_ui.utils.register_item_update_publish_status",
-                return_value={},
-            ):
-                with patch(
-                    "weko_search_ui.utils.create_deposit", return_value=item["id"]
-                ):
-                    with patch(
-                        "weko_search_ui.utils.send_item_created_event_to_es",
-                        return_value=item["id"],
-                    ):
-                        with patch(
-                            "weko_workflow.utils.get_cache_data", return_value=["sample"]
-                        ):
-                            # with i18n_app.test_request_context():
-                            with patch("weko_search_ui.utils.current_app") as c:
-                                
-                                c.logger.error = MagicMock(return_value = None)
-                                
-                                # SQLAlchemyError
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError("SQLAlchemyError")):
-                                    assert import_items_to_system(item).get("success") == False
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError()):
-                                    assert import_items_to_system(item).get("success") == False
-                                    
-                                # ElasticsearchException 
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = ElasticsearchException({"error_id": "sample"})):
-                                    assert import_items_to_system(item).get("success") == False
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = ElasticsearchException()):
-                                    assert import_items_to_system(item).get("success") == False
+    with patch("weko_search_ui.utils.register_item_metadata", return_value={}), \
+            patch("weko_search_ui.utils.register_item_doi", return_value={}), \
+            patch("weko_search_ui.utils.register_item_update_publish_status", return_value={}), \
+            patch("weko_search_ui.utils.create_deposit", return_value=item["id"]), \
+            patch("weko_search_ui.utils.send_item_created_event_to_es", return_value=item["id"]), \
+            patch("weko_workflow.utils.get_cache_data", return_value=["sample"]):
 
-                                # redis.RedisError
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = redis.RedisError({"error_id": "sample"})):
-                                    assert import_items_to_system(item).get("success") == False
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = redis.RedisError()):
-                                    assert import_items_to_system(item).get("success") == False
 
-                                # BaseException
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = BaseException({"error_id": "sample"})):
-                                    assert import_items_to_system(item).get("success") == False
-                                with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = BaseException()):
-                                    assert import_items_to_system(item).get("success") == False
+        # SQLAlchemyError
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError("SQLAlchemyError")), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = SQLAlchemyError()), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
 
-    with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
-        with patch("weko_search_ui.utils.register_item_doi", return_value={}):
-            with patch(
-                "weko_search_ui.utils.register_item_update_publish_status",
-                return_value={},
-            ):
-                with patch(
-                    "weko_search_ui.utils.create_deposit", return_value=item["id"]
-                ):
-                    with patch(
-                        "weko_search_ui.utils.send_item_created_event_to_es",
-                        return_value=item["id"],
-                    ):
-                         with patch(
-                            "weko_search_ui.utils.get_cache_data", return_value=["sample"]
-                        ):
-                            request_info = { 
-                                "remote_addr": None, 
-                                "referrer": None, 
-                                "hostname": "TEST_SERVER", 
-                                "user_id": 1 
-                            }
-                            assert not import_items_to_system(None, request_info = request_info)
-                            with patch("invenio_files_rest.storage.pyfs.PyFSFileStorage._get_fs") as g:
-                                g.return_value = (g, "sample")
-                                g.exists = MagicMock(return_value = True)
-                                g.delete = MagicMock(return_value = None)
-                                assert import_items_to_system(item)
-                            item["status"] = "new"
-                            
-                            assert import_items_to_system(item).get("success") == False
+        # ElasticsearchException
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = ElasticsearchException({"error_id": "sample"})), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = ElasticsearchException()), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
+        # redis.RedisError
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = redis.RedisError({"error_id": "sample"})), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = redis.RedisError()), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
+        # BaseException
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = Exception({"error_id": "is_duplicated_doi"})), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
+        with patch("weko_search_ui.utils.handle_check_item_is_locked", side_effect = Exception()), \
+                patch("weko_workflow.utils.UserActivityLogger.error") as mock_error_logger:
+            assert import_items_to_system(item).get("success") == False
+            mock_error_logger.assert_called()
 
-                    assert import_items_to_system(
-                        item
-                    )  
+    with patch("weko_search_ui.utils.register_item_metadata", return_value={}), \
+            patch("weko_search_ui.utils.register_item_doi", return_value={}), \
+            patch("weko_search_ui.utils.register_item_update_publish_status", return_value={}), \
+            patch("weko_search_ui.utils.create_deposit", return_value=item["id"]), \
+            patch("weko_search_ui.utils.send_item_created_event_to_es", return_value=item["id"]):
+        with patch("weko_search_ui.utils.get_cache_data", return_value=["sample"]):
+            request_info = {
+                "remote_addr": None,
+                "referrer": None,
+                "hostname": "TEST_SERVER",
+                "user_id": 1
+            }
+            assert not import_items_to_system(None, request_info = request_info)
+            with patch("invenio_files_rest.storage.pyfs.PyFSFileStorage._get_fs") as g:
+                g.return_value = (g, "sample")
+                g.exists = MagicMock(return_value = True)
+                g.delete = MagicMock(return_value = None)
+                assert import_items_to_system(item)
+            item["status"] = "new"
+
+            assert import_items_to_system(item).get("success") == False
+
+        assert import_items_to_system(item).get("success") == False
+
 
     item = es_records["results"][0]
     item['item']['researchmap_linkage'] = "researchmap"
 
-    with patch("weko_search_ui.utils.register_item_metadata", return_value={}):
-        with patch("weko_search_ui.utils.register_item_doi", return_value={}):
-            with patch(
-                "weko_search_ui.utils.register_item_update_publish_status",
-                return_value={},
-            ):
-                with patch(
-                    "weko_search_ui.utils.create_deposit", return_value=item["deposit"]
-                ):
-                    with patch(
-                        "weko_search_ui.utils.send_item_created_event_to_es",
-                        return_value=item["item"]["id"],
-                    ):
-                        with patch(
-                            "weko_workflow.utils.get_cache_data", return_value=True
-                        ):
-                            with patch("weko_search_ui.utils.call_external_system") as mock_external:
-                                item["item"]["status"] = "edited"
-                                assert import_items_to_system(item["item"])
-                                mock_external.assert_called()
-                                assert mock_external.call_args[1]["old_record"] is not None
-                                assert mock_external.call_args[1]["new_record"] is not None
-                            with patch("weko_search_ui.utils.call_external_system") as mock_external:
-                                item["item"]["status"] = "new"
-                                assert import_items_to_system(item["item"],request_info=None, is_gakuninrdm=True)
-                                assert mock_external.call_args[1]["old_record"] is None
-                                assert mock_external.call_args[1]["new_record"] is not None
-                                mock_external.assert_called()
-                            with patch("weko_search_ui.utils.call_external_system") as mock_external:
-                                app.config.update(WEKO_HANDLE_ALLOW_REGISTER_CNRI=None)
-                                assert import_items_to_system(item["item"],request_info=None, is_gakuninrdm=True)
-                                assert mock_external.call_args[1]["old_record"] is None
-                                assert mock_external.call_args[1]["new_record"] is not None
-                                mock_external.assert_called()
+    with patch("weko_search_ui.utils.register_item_metadata", return_value={}), \
+            patch("weko_search_ui.utils.register_item_doi", return_value={}), \
+            patch("weko_search_ui.utils.register_item_update_publish_status", return_value={}), \
+            patch("weko_search_ui.utils.create_deposit", return_value=item["deposit"]):
+        with patch("weko_search_ui.utils.send_item_created_event_to_es", return_value=item["item"]["id"]):
+            with patch("weko_workflow.utils.get_cache_data", return_value=True):
+                with patch("weko_search_ui.utils.call_external_system") as mock_external:
+                    item["item"]["status"] = "edited"
+                    assert import_items_to_system(item["item"])
+                    mock_external.assert_called()
+                    assert mock_external.call_args[1]["old_record"] is not None
+                    assert mock_external.call_args[1]["new_record"] is not None
+                with patch("weko_search_ui.utils.call_external_system") as mock_external:
+                    item["item"]["status"] = "new"
+                    assert import_items_to_system(item["item"],request_info=None, is_gakuninrdm=True)
+                    assert mock_external.call_args[1]["old_record"] is None
+                    assert mock_external.call_args[1]["new_record"] is not None
+                    mock_external.assert_called()
+                with patch("weko_search_ui.utils.call_external_system") as mock_external:
+                    app.config.update(WEKO_HANDLE_ALLOW_REGISTER_CNRI=None)
+                    assert import_items_to_system(item["item"],request_info=None, is_gakuninrdm=True)
+                    assert mock_external.call_args[1]["old_record"] is None
+                    assert mock_external.call_args[1]["new_record"] is not None
+                    mock_external.assert_called()
 
-                    assert import_items_to_system(
-                        item["item"]
-                    )  # Will result in error but will cover exception part
+        assert import_items_to_system(item["item"])  # Will result in error but will cover exception part
 
 
 # def import_items_to_activity(item, request_info):
@@ -1564,7 +1713,7 @@ def test_import_items_to_activity(i18n_app, es_item_file_pipeline, es_records, d
 def test_delete_items_with_activity(i18n_app, es_item_file_pipeline, es_records, db_workflow, mocker):
     request_info = {
         "user_id": 1,
-        "shared_id": -1,
+        "shared_ids": None,
         "community": "test_community",
     }
 
@@ -1594,13 +1743,14 @@ def test_delete_items_with_activity(i18n_app, es_item_file_pipeline, es_records,
         assert action == "end_action"
         mock_init_activity.assert_called_once_with(
             user_id=request_info["user_id"], community=request_info["community"], item_id="2000001",
-            shared_id=request_info["shared_id"], for_delete=True
+            shared_ids=request_info["shared_ids"], for_delete=True
         )
 
 
 # def handle_item_title(list_record):
-def test_handle_item_title(i18n_app, es_item_file_pipeline, es_records):
+def test_handle_item_title(i18n_app, db_itemtype, es_item_file_pipeline, es_records):
     list_record = [es_records["results"][0]["item"]]
+    list_record[0]["item_type_id"] = db_itemtype["item_type"].id
 
     # Doesn't return any value
     assert not handle_item_title(list_record)
@@ -1699,7 +1849,6 @@ def test_handle_check_and_prepare_feedback_mail(i18n_app, record_with_metadata, 
     # Doesn't return any value
     assert not handle_check_and_prepare_feedback_mail([record])
 
-
 # def handle_check_and_prepare_request_mail(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata, es_authors_index):
@@ -1724,6 +1873,92 @@ def test_handle_check_and_prepare_request_mail(i18n_app, record_with_metadata, e
     assert not handle_check_and_prepare_request_mail([record])
     assert record["errors"] == ['指定されたtestは不正です。']
 
+# def handle_check_and_prepare_item_application(list_record):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_and_prepare_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_and_prepare_item_application(i18n_app, db, record_with_metadata):
+    list_record = [record_with_metadata[0]]
+
+    # Doesn't return any value
+    assert not handle_check_and_prepare_item_application(list_record)
+
+    # 正常系
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["metadata"]["item_application"] == {"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}
+
+    # 正常系 item_applicationのworkflowが存在しない
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"terms":"term_free", "termsDescription":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert not record["metadata"].get("item_application", "")
+
+    # 正常系 item_applicationのtermsが存在しない。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "termsDescription":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert not record["metadata"].get("item_application", "")
+
+    # 異常系 ファイル情報を持っている。
+    record = {"metadata":{}, "file_path":"/recid15/test.txt", "item_application":{"workflow":"1", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
+    handle_check_and_prepare_item_application([record])
+    assert record["errors"][0] == "コンテンツファイル情報がある場合、利用規約は設定できません。"
+
+    # 異常系 workflowが文字列である。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"not_exist", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
+
+    # 異常系 workflowがシステムに存在しないworkflowである。
+    workflow = WorkFlow(id=1)
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"999999999999", "terms":"term_free", "termsDescription":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する提供方法はシステムに存在しません。"
+
+    # 異常系 termsが存在しないtermsである。
+    with patch("weko_search_ui.utils.WorkFlowApi.get_workflow_list", return_value=[workflow]):
+        record = {"metadata":{}, "item_application":{"workflow":"1", "terms":"not_exist", "termsDescription":"利用規約自由入力"}}
+        handle_check_and_prepare_item_application([record])
+        assert record["errors"][0] == "指定する利用規約はシステムに存在しません。"
+
+
+# def check_exists_file_name(item):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_exists_file_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_exists_file_name(i18n_app, record_with_metadata):
+    item = record_with_metadata[0]
+    # *.filenameに値が存在する。
+    assert check_exists_file_name(item)
+
+    # *.filenameに値が存在しない。
+    item = {"metadata":{"filename_test":[{"filename":""}]}}
+    assert not check_exists_file_name(item)
+
+# def check_terms_in_system_for_item_application(terms):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_terms_in_system_for_item_application -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_terms_in_system_for_item_application():
+    terms_list = [{"key":"1234567890", "content":{"en":{},"ja":{}}}]
+    with patch("weko_search_ui.utils.get_restricted_access", return_value=terms_list):
+        # temrsが空文字
+        assert check_terms_in_system_for_item_application("")
+
+        # termsが自由入力
+        assert check_terms_in_system_for_item_application("term_free")
+
+        # termsが存在するkey
+        assert check_terms_in_system_for_item_application("1234567890")
+
+        # termsが存在しないkey
+        assert not check_terms_in_system_for_item_application("not_exists")
+
+    # get_restricted_accessがNoneを返す場合
+    with patch("weko_search_ui.utils.get_restricted_access", return_value=None):
+        assert not check_terms_in_system_for_item_application("1234567890")
 
 # def handle_set_change_identifier_flag(list_record, is_change_identifier):
 def test_handle_set_change_identifier_flag(i18n_app, record_with_metadata):
@@ -1763,7 +1998,8 @@ def test_handle_check_doi_indexes(i18n_app, es_item_file_pipeline, es_records):
 
 
 # def handle_check_doi_ra(list_record):
-def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi_ra -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_doi_ra(app, db, es_item_file_pipeline, es_records,identifier, mocker):
     # list_record = [es_records['results'][0]['item']]
     item = MagicMock()
 
@@ -1777,83 +2013,370 @@ def test_handle_check_doi_ra(i18n_app, es_item_file_pipeline, es_records):
             # Doesn't return any value
             assert not handle_check_doi_ra([item])
 
+    def create_record_with_doi(recid, doi_type, doi_value=""):
+        """create item with doi"""
+        from tests.helpers import create_record
+        doi_prefix = identifier["Root Index"].get(doi_type,"")
+        if not doi_value:
+            doi_value = "{prefix}/{suffix}".format(
+                prefix=doi_prefix,
+                suffix="{:010}".format(recid)
+            )
+        record_tmp = {"_oai": {"id": "oai:weko3.example.org:{:08}".format(recid), "sets": ["1"]}, "path": ["1"], "owner": "1", "recid": str(recid), "title": [f"record_with_doi: {recid}"], "pubdate": {"attribute_name": "PubDate", "attribute_value": "2022-08-20"}, "_buckets": {"deposit": "3e99cfca-098b-42ed-b8a0-20ddd09b3e02"}, "_deposit": {"id": str(recid), "pid": {"type": "depid", "value": str(recid), "revision_id": 0}, "owner": "1", "owners": [1], "status": "draft", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}}, "item_title": f"record_with_doi: {recid}", "author_link": [], "item_type_id": "1", "publish_date": "2022-08-20", "publish_status": "0", "weko_shared_id": -1, "item_1617186331708": {"attribute_name": "Title", "attribute_value_mlt": [{"subitem_1551255647225": f"record_with_doi: {recid}", "subitem_1551255648112": "ja"}]}, "item_1617258105262": {"attribute_name": "Resource Type", "attribute_value_mlt": [{"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"}]}, "item_1617186819068":{"attribute_name":"","attribute_value_mlt":[{"subitem_identifier_reg_text":doi_value,"subitem_identifier_reg_type":doi_type}]},"relation_version_is_last": True}
+        item_tmp = {"id": str(recid), "pid": {"type": "depid", "value": str(recid), "revision_id": 0}, "lang": "ja", "owner": "1", "title": f"record_with_doi: {recid}", "owners": [1], "status": "published", "$schema": "/items/jsonschema/1", "pubdate": "2022-08-20", "created_by": 1, "owners_ext": {"email": "wekosoftware@nii.ac.jp", "username": "", "displayname": ""}, "shared_user_id": -1, "item_1617186331708": [{"subitem_1551255647225": f"record_with_doi: {recid}", "subitem_1551255648112": "ja"}], "item_1617258105262": {"resourceuri": "http://purl.org/coar/resource_type/c_5794", "resourcetype": "conference paper"},"item_1617186819068":[{"subitem_identifier_reg_text":doi_value,"subitem_identifier_reg_type":doi_type}]}
+        _,pid_recid,_,_,_,_ = create_record(record_tmp, item_tmp)
+        doi = PersistentIdentifier.query.filter_by(pid_type="doi",pid_value="https://doi.org/10.xyz/{:010}".format(recid)).one_or_none()
+        doi_url = f"https://doi.org/{doi_value}"
+        if doi:
+            doi.pid_value = doi_url
+            db.session.merge(doi)
+        else:
+            doi = PersistentIdentifier.create("doi",doi_url,object_type="rec",object_uuid=pid_recid.object_uuid,status=PIDStatus.REGISTERED)
+            db.session.add(doi)
+        db.session.commit()
+
+    create_record_with_doi(10, "JaLC") # JaLC DOI
+    create_record_with_doi(11, "Crossref") # Crossref
+    create_record_with_doi(12, "DataCite") # DataCite
+    create_record_with_doi(13, "NDL JaLC") # NDL JaLC
+    create_record_with_doi(14, "JaLC","xyz.jalc/0000000014") # JaLC, NDL JaLC prefix
+    mocker.patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None)
+    mocker.patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", side_effect=[("xyz.jalc/000000010",("DataCite",)), ("xyz.jalc/000000010",("JaLC",)), ("xyz.ndl/0000000014",(None,))])
+    item = [
+        {"errors":[],"doi":"xyz.jalc/0000000010", "status":"new"}, # exist doi, not exist doi_ra
+        {"errors":[],"doi":"xyz.jalc/0000000010", "doi_ra":"wrong doi", "status":"new"},# wrong doi_ra
+        {"errors":[],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"NDL JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"14", "is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+    ]
+
+    test = [
+        {"errors":["Please specify DOI_RA."], "doi":"xyz.jalc/0000000010", "status":"new"}, # exist doi, not exist doi_ra
+        {"errors":["DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."],"doi":"xyz.jalc/0000000010", "doi_ra":"wrong doi", "status":"new", "ignore_check_doi_prefix": True},# wrong doi_ra
+        {"errors":["Specified DOI_RA is different from existing DOI_RA."],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"10","doi":"xyz.jalc/000000010", "doi_ra":"NDL JaLC","is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+        {"errors":[],"id":"14", "is_change_identifier":False,"status":"keep"}, # exist doi, exist doi_ra
+    ]
+    with patch("weko_search_ui.utils.handle_doi_required_check",return_value=False):
+        handle_check_doi_ra(item)
+        assert item == test
+
 
 # def handle_check_doi(list_record):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_doi(app,identifier):
-    filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data",
-        "list_records",
-        "list_records.json",
-    )
-    with open(filepath, encoding="utf-8") as f:
-        list_record = json.load(f)
+    list_record = json_data("data/list_records/list_records.json")
     assert handle_check_doi(list_record) == None
 
     # case new items with doi_ra
-    filepath = os.path.join(
-        os.path.dirname(os.path.realpath(__file__)),
-        "data",
-        "list_records",
-        "b4_handle_check_doi.json",
-    )
-    with open(filepath, encoding="utf-8") as f:
-        list_record = json.load(f)
+    list_record = json_data("data/list_records/b4_handle_check_doi.json")
     assert handle_check_doi(list_record) == None
 
-    # item = {
-    #     "doi_ra": "JaLC",
-    #     "is_change_identifier": True,
-    #     "status": "new"
-    # }
-    item = MagicMock()
-    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value="1"):
-        assert not handle_check_doi([item])
+    # item status is not new
+    # change identifier mode on, but not specified DOI
+    item = {"id": "1", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Please specify DOI."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    #item2 = {"doi_ra": "JaLC", "is_change_identifier": False, "status": "keep"}
-    #mock = MagicMock()
-    #mock2 = MagicMock()
-    #mock3 = MagicMock()
-    #mock2.object_uuid = mock3
-    #mock.pid_recid = mock2
+    # change identifier mode on, but specified DOI exceeds the maximum length
+    item = {"id": "2", "status": "Keep", "doi": "a"*300, "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["The specified DOI exceeds the maximum length."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    ## def myfunc():
-    ##     return 1,2
-    ## mock.get_idt_registration_data = myfunc
+    # change identifier mode on, but specified DOI prefix is incorrect
+    item = {"id": "3", "status": "Keep", "doi": "wrong_prefix/", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Specified Prefix of DOI is incorrect."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    #with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=mock):
-    #    # with patch("weko_workflow.utils.IdentifierHandle", return_value=mock):
-    #    assert not handle_check_doi([item2])
+    # change identifier mode on, but specified DOI suffix is not specified
+    item = {"id": "4", "status": "Keep", "doi": "xyz.jalc/", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Please specify DOI suffix."]}
+    handle_check_doi([item])
+    assert item == expect
 
-    item = [
-        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False},
-        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False},
-        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
-        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    # change identifier mode on, but suffix of DOI is empty
+    item = {"id": "4", "status": "Keep", "doi": "xyz.jalc", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item , "errors":["Please specify DOI suffix."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, specified DOI is correct
+    item = {"id": "5", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = mock_record.pid_recid.object_uuid
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, but specified DOI is used already
+    item = {"id": "6", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."]}
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = uuid.uuid4()
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, but specified DOI already withdrawn
+    item = {"id": "7", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI was withdrawn. Please specify another DOI."]}
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.DELETED
+    mock_doi.object_uuid = mock_record.pid_recid.object_uuid
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode on, but specified DOI is used already and SQLAlchemyError
+    item = {"id": "x", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."] }
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = mock_record.pid_recid.object_uuid
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=SQLAlchemyError()), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
+        handle_check_doi([item])
+    assert item == expect
+
+    # item status is new
+    item = {"status":"new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}
+    expect = { **item, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."]}
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_doi = MagicMock()
+    mock_doi.status = PIDStatus.REGISTERED
+    mock_doi.object_uuid = uuid.uuid4()
+    with patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", return_value=[mock_doi]):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified doi
+    item = {"status": "new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI prefix is incorrect
+    item = {"status": "new", "doi": "wrong_prefix/", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "doi_suffix_not_existed": True, "errors": ["Specified Prefix of DOI is incorrect."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI prefix is incorrect and ignore_check_doi_prefix is True
+    item = {"status": "new", "doi": "wrong_prefix/", "doi_ra": "JaLC", "is_change_identifier": False, "ignore_check_doi_prefix": True}
+    expect = { **item, "doi_suffix_not_existed": True}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI suffix is empty
+    item = {"status": "new", "doi": "xyz.jalc/", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "doi_suffix_not_existed": True, }
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, only RA is specified
+    item = {"status": "new", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI suffix is empty, RA is NDL JaLC
+    item = {"status": "new", "doi": "xyz.ndl", "doi_ra": "NDL JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, but specified DOI prefix is incorrect
+    item = {"status": "new", "doi": "wrong_prefix/12345", "doi_ra": "NDL JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["Specified Prefix of DOI is incorrect."]}
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off
+    # any valid DOI specified by the user can be registered if NDL JaLC is selected
+    item = {"status": "new", "doi": "xyz.ndl/12345", "doi_ra": "NDL JaLC", "is_change_identifier": False}
+    expect = { **item }
+    handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, no DOI registered, only specified RA
+    item = {"id": "8", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(None, None)):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, no DOI registered but specified doi
+    item = {"id": "8", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(None, None)):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, no DOI registered but specified doi, SQLAlchemyError
+    item = {"id": "8", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=SQLAlchemyError()):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI registered in record metadata, specified DOI and match doi
+    item = {"id": "9", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12345"
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(mock_record.pid_doi.pid_value, "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI registered in record metadata, specified DOI and not match doi
+    item = {"id": "10", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["Specified DOI is different from existing DOI."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi.pid_value = "https://doi.org/mis.jalc/12345"
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(mock_record.pid_doi.pid_value, "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI registered in record metadata, specified RA but DOI empty
+    item = {"id": "11", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["Please specify DOI."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi.pid_value = "https://doi.org/mis.jalc/12345"
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=(mock_record.pid_doi.pid_value, "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI not registered, but DOI exists in record metadata and specified DOI
+    item = {"id": "12", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item, "errors": ["DOI cannot be set."] }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=("some_doi", "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # change identifier mode off, item status is not new, DOI not registered, but DOI exists in record metadata and specified RA, not specified DOI
+    item = {"id": "13", "status": "Keep", "doi": "", "doi_ra": "JaLC", "is_change_identifier": False}
+    expect = { **item }
+    mock_record = MagicMock()
+    mock_record.pid_recid.object_uuid = uuid.uuid4()
+    mock_record.pid_doi = None
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", return_value=mock_record), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.get_idt_registration_data", return_value=("some_doi", "JaLC")):
+        handle_check_doi([item])
+    assert item == expect
+
+    # not specified RA
+    item = {"id": "13", "status": "Keep", "doi": "", "doi_ra": "", "is_change_identifier": False}
+    expect = { **item }
+    handle_check_doi([item])
+    assert item == expect
+
+
+    # duplicate check inside import file
+    list_record = [
+        {"status": "new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate with existing item: id 17
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate in import items: index 2
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate in import items: index 1
+        {"status": "new", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate in import items: id 18
+        {"id": "15", "status": "Keep", "doi": "xyz.jalc/12346", "doi_ra": "JaLC", "is_change_identifier": True}, # existing item
+        {"id": "16", "status": "Keep", "doi": "xyz.jalc/12347", "doi_ra": "JaLC", "is_change_identifier": True}, # existing item
+        {"id": "17", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True}, # duplicate with new import item: index 0
+        {"id": "18", "status": "Keep", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True}, # change doi, but duplicate in import items: index 3
     ]
-    test = [
-        {"id":"1","doi":"","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI."]},
-        {"id":"2","doi":"a"*300,"doi_ra":"JaLC","is_change_identifier":True,"errors":["The specified DOI exceeds the maximum length."]},
-        {"id":"3","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"4","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":True,"errors":["Please specify DOI suffix."]},
-        {"id":"5","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":True},
-        {"id":"6","status":"new","doi":"xyz.jalc/12345","doi_ra":"JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
-        {"id":"7","status":"new","doi":"wrong_prefix/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"8","status":"new","doi":"xyz.jalc/","doi_ra":"JaLC","is_change_identifier":False,"doi_suffix_not_existed":True},
-        {"id":"9","status":"new","doi":"xyz.ndl","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["DOI cannot be set."]},
-        {"id":"10","status":"new","doi":"wrong_prefix/12345","doi_ra":"NDL JaLC","is_change_identifier":False,"errors":["Specified Prefix of DOI is incorrect."]},
-        {"id":"11","status":"new","doi":"xyz.ndl/12345","doi_ra":"NDL JaLC","is_change_identifier":False},
+    expect = [
+        {"status": "new", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI has been used already for another item. Please specify another DOI."]},
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
+        {"status": "new", "doi": "xyz.jalc/12344", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
+        {"status": "new", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
+        {"id": "15", "status": "Keep", "doi": "xyz.jalc/12346", "doi_ra": "JaLC", "is_change_identifier": True},
+        {"id": "16", "status": "Keep", "doi": "xyz.jalc/12347", "doi_ra": "JaLC", "is_change_identifier": True},
+        {"id": "17", "status": "Keep", "doi": "xyz.jalc/12345", "doi_ra": "JaLC", "is_change_identifier": True},
+        {"id": "18", "status": "Keep", "doi": "xyz.jalc/12348", "doi_ra": "JaLC", "is_change_identifier": True, "errors": ["Specified DOI is duplicated with another import item. Please specify another DOI."]},
     ]
-    handle_check_doi(item)
-    assert item == test
+
+    def mock_get_record_by_pid(recid):
+        record = MagicMock()
+        record.pid_recid.object_uuid = "uuid-{}".format(recid)
+        if recid == "15":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12346"
+        elif recid == "16":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12347"
+        elif recid == "17":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12345"
+        elif recid == "18":
+            record.pid_doi.pid_value = "https://doi.org/xyz.jalc/12399"
+        return record
+
+    def mock_doi_check_pidstore_exist(type, doi_link):
+        doi = MagicMock()
+        if doi_link == "https://doi.org/xyz.jalc/12345":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-17"
+            return [doi]
+        elif doi_link == "https://doi.org/xyz.jalc/12346":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-15"
+            return [doi]
+        elif doi_link == "https://doi.org/xyz.jalc/12399":
+            doi.status = PIDStatus.REGISTERED
+            doi.object_uuid = "uuid-18"
+            return [doi]
+        return []
+
+    with patch("weko_search_ui.utils.WekoRecord.get_record_by_pid", side_effect=mock_get_record_by_pid), \
+            patch("weko_search_ui.utils.IdentifierHandle.__init__", return_value=None), \
+            patch("weko_search_ui.utils.IdentifierHandle.check_pidstore_exist", side_effect=mock_doi_check_pidstore_exist):
+        handle_check_doi(list_record)
+    for record, expected in zip(list_record, expect):
+        assert record == expected
 
 
 # def handle_check_item_link(list_record):
@@ -2142,21 +2665,46 @@ def test_handle_check_duplicate_item_link(app):
     assert not list_record[0].get("errors")
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_operation_flags -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
-def test_handle_check_operation_flags():
+def test_handle_check_operation_flags(tmpdir):
+    tmp_dir = tmpdir.mkdir("test")
+    with open(os.path.join(tmp_dir, "test_1.txt"), "w") as f11, \
+            open(os.path.join(tmp_dir, "test_1.csv"), "w") as f12:
+        f11.write("This is a test file.")
+        f12.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_2.txt"), "w") as f21, \
+            open(os.path.join(tmp_dir, "test_2.csv"), "w") as f22:
+        f21.write("This is a test file.")
+        f22.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_3.txt"), "w") as f31, \
+            open(os.path.join(tmp_dir, "test_3.csv"), "w") as f32:
+        f31.write("This is a test file.")
+        f32.write("This is a test file.")
+    with open(os.path.join(tmp_dir, "test_4.txt"), "w") as f41, \
+            open(os.path.join(tmp_dir, "test_4.csv"), "w") as f42:
+        f41.write("This is a test file.")
+        f42.write("This is a test file.")
+
+    assert len(os.listdir(tmp_dir)) == 8
+
     list_record = [
-        {"metadata_replace": True, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"file_path":["/test/test.txt", "test/test.csv"]},
+        {"status": "new", "metadata_replace": True, "file_path":["test_1.txt", "test_1.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": True, "file_path":["test_2.txt", "test_2.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": False, "file_path":["test_3.txt", "test_3.csv", "https://..."]},
+        {"status": "Upgrede", "file_path":["test_4.txt", "test_4.csv"]},
     ]
 
     test = [
-        {"metadata_replace": True, "file_path":[]},
-        {"metadata_replace": False, "file_path":["/test/test.txt", "test/test.csv"]},
-        {"file_path":["/test/test.txt", "test/test.csv"]},
+        {"status": "new", "metadata_replace": True, "file_path":["test_1.txt", "test_1.csv", "https://..."], "errors": ["'wk:metadataReplace' flag cannot be used when registering an item."]},
+        {"status": "Keep", "metadata_replace": True, "file_path":["test_2.txt", "test_2.csv", "https://..."]},
+        {"status": "Keep", "metadata_replace": False, "file_path":["test_3.txt", "test_3.csv", "https://..."]},
+        {"status": "Upgrede", "file_path":["test_4.txt", "test_4.csv"]},
     ]
 
-    handle_check_operation_flags(list_record)
+    handle_check_operation_flags(list_record, tmp_dir)
     assert list_record == test
+    assert not os.path.isfile(os.path.join(tmp_dir, "test_2.txt"))
+    assert not os.path.isfile(os.path.join(tmp_dir, "test_2.csv"))
+    assert len(os.listdir(tmp_dir)) == 6
 
 # def register_item_handle(item):
 def test_register_item_handle(i18n_app, es_item_file_pipeline, es_records):
@@ -2297,7 +2845,6 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
             register_item_doi(item)
             mock_save.assert_not_called()
 
-
     # is_change_identifier is True, pid_value.endswith is False, doi_duplicated is True
     item = {
         "id":"2",
@@ -2384,6 +2931,7 @@ def test_register_item_doi(i18n_app, db_activity, identifier, mocker):
                 assert args[2] == test_data
 
     # is_change_identifier is False, doi_ra is NDL, doi_duplicated is True
+    mock_without_version.pid_doi = None
     item = {
         "id":"7",
         "is_change_identifier":False,
@@ -2455,7 +3003,7 @@ def test_handle_doi_required_check(
 
     record2 = {
         "id": 1,
-        "item_type_id": 1,
+        "item_type_id": db_itemtype["item_type"].id,
         "metadata": {"a": 1},
         "doi_ra": "JaLC",
         "file_path": "a b c d",
@@ -2469,13 +3017,13 @@ def test_handle_doi_required_check(
         "either_key": "either_key",
     }
     with patch(
-        "weko_workflow.utils.item_metadata_validation", return_value=error_list_dict
+        "weko_search_ui.utils.item_metadata_validation", return_value={"invalid": ""}
     ):
         # Should have no return value
         assert not handle_doi_required_check(record)
 
     with patch(
-        "weko_workflow.utils.item_metadata_validation", return_value=error_list_dict
+        "weko_search_ui.utils.item_metadata_validation", return_value=error_list_dict
     ):
         assert handle_doi_required_check(record2)
 
@@ -2552,6 +3100,7 @@ def test_get_list_key_of_iso_date():
         "item_1617187056579.bibliographicIssueDates.bibliographicIssueDate",
         "item_1617187136212.subitem_1551256096004",
         "item_1617605131499.fileDate.fileDateValue",
+        "item_1617605131499.date[0].dateValue"
     ]
     with open(form, encoding="utf-8") as f:
         df = json.load(f)
@@ -2768,8 +3317,9 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     item["is_change_identifier"]=False
     item["warnings"]=[]
     item["errors"]=[]
-    items_result.append(item)
     item2 = copy.deepcopy(item)
+    item["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]="JaLC"
+    items_result.append(item)
     del item2["metadata"]["item_1617186819068"]
     item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
     item2["metadata"]["item_1617258105262"]["resourceuri"] = ""
@@ -2795,8 +3345,9 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     item["is_change_identifier"]=False
     item["warnings"]=[]
     item["errors"]=["Please specify DOI prefix/suffix."]
-    items_result.append(item)
     item2 = copy.deepcopy(item)
+    item["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]="JaLC"
+    items_result.append(item)
     item2["errors"] = []
     del item2["metadata"]["item_1617186819068"]
     item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
@@ -2823,8 +3374,9 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     item["is_change_identifier"]=False
     item["warnings"]=[]
     item["errors"]=["Please specify DOI suffix."]
-    items_result.append(item)
     item2 = copy.deepcopy(item)
+    item["metadata"]["item_1617186819068"]["subitem_identifier_reg_type"]="JaLC"
+    items_result.append(item)
     item2["errors"] = []
     del item2["metadata"]["item_1617186819068"]
     item2["metadata"]["item_1617186476635"]["subitem_1600958577026"] = ""
@@ -2834,26 +3386,13 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
     mock_record = MagicMock()
     mock_doi = MagicMock()
     mock_record.pid_doi=None
-    #mock_doi.pid_value=
-    # with open("items.json","w") as f:
-    #     json.dump(items,f)
-
-    # with open("items_result.json","w") as f:
-    #     json.dump(items_result,f)
-
-    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items.json")
-    # with open(filepath,encoding="utf-8") as f:
-    #     items = json.load(f)
-
-    # filepath = os.path.join(os.path.dirname(os.path.realpath(__file__)),"data/handle_fill_system_item/items_result.json")
-    # with open(filepath,encoding="utf-8") as f:
-    #     items_result = json.load(f)
     mocker.patch("weko_deposit.api.WekoRecord.get_record_by_pid",return_value=mock_record)
     with app.test_request_context():
         with set_locale("en"):
             handle_fill_system_item(items)
-            assert len(items) == len(items_result)
-            assert items == items_result
+    assert len(items) == len(items_result)
+    for i, (item, items_r) in enumerate(zip(items, items_result)):
+        assert item == items_r
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -3079,8 +3618,8 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (None,{"cnri":"test_cnri","doi": "xyz.jalc/abc","doi_ra":"JaLC","doi2": None,"doi_ra2":None},{"cnri":"test_cnri","doi": "xyz.jalc/abc","doi_ra":"JaLC","doi2": "xyz.jalc/abc","doi_ra2":"JaLC"},[],[],True,True),
         (None,{"cnri":"test_cnri","doi": "","doi_ra":"","doi2": None,"doi_ra2":None},{"cnri":"test_cnri","doi": "","doi_ra":"","doi2": None,"doi_ra2":None},[],[],True,True),
     ])
-@pytest.mark.skip("Run time is too long and all tests failed.")
-def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,warnings,errors,is_change_identifier,is_register_cnri):
+# @pytest.mark.skip("Run time is too long and all tests failed.")
+def test_handle_fill_system_item3(app,doi_records, mocker_itemtype, item_id,before_doi,after_doi,warnings,errors,is_change_identifier,is_register_cnri, mocker):
     app.config.update(
         WEKO_HANDLE_ALLOW_REGISTER_CRNI=is_register_cnri
     )
@@ -3113,7 +3652,17 @@ def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,w
             "item_type_id": 1,
             "$schema": "https://localhost:8443/items/jsonschema/1",
         }
-
+    mapping = {
+        "title.@value": "item_1617186331708.subitem_1551255647225",
+        "title.@language": "item_1617186331708.subitem_1551255648112",
+        "type.@value": "item_1617258105262.resourcetype",
+        "type.@attributes.rdf:resource": "item_1617258105262.resourceuri",
+        "file.URI.@value": "item_1617605131499.url.url",
+        "file.extent.@value": "item_1617605131499.filesize.value",
+        "file.mimeType.@value": "item_1617605131499.format",
+        "identifierRegistration.@attributes.identifierType": "item_1617186819068.subitem_identifier_reg_type"
+    }
+    mocker.patch("weko_search_ui.utils.get_mapping", return_value=mapping)
     if item_id:
         before["id"] = "{}".format(item_id)
         before["uri"] = "https://localhost:8443/records/{}".format(item_id)
@@ -3206,7 +3755,7 @@ def test_handle_fill_system_item3(app,doi_records,item_id,before_doi,after_doi,w
 
 # def get_thumbnail_key(item_type_id=0):
 def test_get_thumbnail_key(i18n_app, db_itemtype, db_workflow):
-    assert get_thumbnail_key(item_type_id=1)
+    assert get_thumbnail_key(item_type_id=1000)
 
 
 # def handle_check_thumbnail_file_type(thumbnail_paths):
@@ -3735,7 +4284,9 @@ def test_write_files(db_activity, i18n_app, users, redis_connect, mocker, item_t
         now = datetime.now()
         mocker_datetime = mocker.patch('weko_search_ui.utils.datetime')
         mocker_datetime.now.return_value = now
-        with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC):
+        with patch('weko_search_ui.utils.pytz.timezone', return_value=pytz.UTC), \
+                patch("weko_items_ui.utils.make_stats_file_with_permission", return_value=((["keys"], ["labels"], ["is_systems"], ["options"]), {"record": "data"})), \
+                patch("weko_items_ui.utils.package_export_file", return_value=MagicMock()):
             assert write_files(item_datas, "tests/data/write_files", current_user.get_id(), 0)
 
         # result is False
@@ -3756,7 +4307,7 @@ def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
         file_json = {
             'start_time': '2024/05/21 14:23:46',
             'finish_time': '',
-            'export_path': '',
+            'export_path': 'export/path/test.zip',
             'cancel_flg': False,
             'write_file_status': {
                 '1': 'started'
@@ -3765,32 +4316,33 @@ def test_cancel_export_all(i18n_app, users, redis_connect, mocker):
         file_result_json = {
             'start_time': '2024/05/21 14:23:46',
             'finish_time': '',
-            'export_path': '',
+            'export_path': 'export/path/test.zip',
             'cancel_flg': True,
             'write_file_status': {
-                '1': 'started'
+                '1': 'canceled'
             }
         }
         datastore = redis_connect
         datastore.put(cache_key, "test_task_key".encode("utf-8"), ttl_secs=30)
 
         # export_status is True
-        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None,None,None)):
+        with patch("weko_search_ui.utils.get_export_status", return_value=(True,None,None,None,None,None,None)), \
+                patch("weko_search_ui.utils.shutil.rmtree") as mock_rmtree:
             datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
             mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
-            mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
+            mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache_on_revoke.apply_async")
             result = cancel_export_all()
             assert result == True
             ds_file_json = datastore.get(file_cache_key).decode('utf-8')
             assert json.loads(ds_file_json) == file_result_json
             mock_revoke.assert_called_with("test_task_key",terminate=True)
             mock_delete_id.assert_called_with(args=("test_task_key","admin_cache_KEY_EXPORT_ALL_5"),countdown=60)
-
+            mock_rmtree.assert_called_with('export/path/test.zip')
         # export_status is False
         with patch("weko_search_ui.utils.get_export_status", return_value=(False,None,None,None,None,None,None)):
             datastore.put(file_cache_key, json.dumps(file_json).encode('utf-8'), ttl_secs=30)
             mock_revoke = mocker.patch("weko_search_ui.utils.revoke")
-            mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache.apply_async")
+            mock_delete_id = mocker.patch("weko_search_ui.utils.delete_task_id_cache_on_revoke.apply_async")
             result = cancel_export_all()
             assert result == True
             ds_file_json = datastore.get(file_cache_key).decode('utf-8')
@@ -4045,8 +4597,6 @@ def test_get_export_status(i18n_app, users, redis_connect,mocker, location):
             assert result == (False, "test_uri", "test_msg", "test_run_msg", "", "", "")
 
 
-
-
 # def handle_check_item_is_locked(item):
 def test_handle_check_item_is_locked(i18n_app, db_activity):
     # Doesn't return any value
@@ -4085,12 +4635,47 @@ def test_handle_remove_es_metadata(i18n_app, es_item_file_pipeline, es_records):
 
 
 # def check_index_access_permissions(func):
-@check_index_access_permissions
-def test_check_index_access_permissions(i18n_app, client_request_args, users):
-    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-
+def test_check_index_access_permissions(i18n_app, client, client_request_args, users):
+    @check_index_access_permissions
+    def test_function():
         # Test is successful if there are no errors
-        assert True
+        return True
+
+    with i18n_app.test_request_context("/?q=0"):
+        assert test_function()
+
+    with i18n_app.test_request_context("/?search_type=2&q=a"):
+        with pytest.raises(BadRequest):
+            test_function()
+
+    with i18n_app.test_request_context("/?search_type=2&q=0"):
+        assert test_function()
+
+    with i18n_app.test_request_context("/?search_type=2&q=0"), \
+            patch("flask_login.utils._get_user", return_value=users[3]["obj"]), \
+            patch("weko_search_ui.utils.check_index_permissions", return_value=False):
+        with pytest.raises(Forbidden):
+            test_function()
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_index_access_permissions_issue_50659 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
+def test_check_index_access_permissions_issue_50659(i18n_app, client_request_args, users):
+    @check_index_access_permissions
+    def test_function():
+        return True
+
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        with patch("flask.request.args", new_callable=lambda: {"search_type": "2", "q": "0"}):
+            assert test_function() == True
+
+        # args not have q
+        with patch("flask.request.args", new_callable=lambda: {"search_type": "2"}):
+            with pytest.raises(BadRequest):
+                test_function()
+
+        # q is not digit
+        with patch("flask.request.args", new_callable=lambda: {"search_type": "2", "q": "test"}):
+            with pytest.raises(BadRequest):
+                test_function()
 
 
 # def handle_check_file_metadata(list_record, data_path):
@@ -4102,6 +4687,178 @@ def test_handle_check_file_metadata(i18n_app, record_with_metadata):
     assert not handle_check_file_metadata(list_record, data_path)
 
     # with patch("weko_search_ui.utils.handle_check_file_content", return_value=):
+
+# def handle_check_restricted_access_property(list_record)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_restricted_access_property_en -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_restricted_access_property_en(app, db, users, record_restricted, terms, db_itemtype_restricted_access, db_workflow):
+    # 利用規約(terms)が設定されていない。提供(provide)が設定されていない。
+    list_record = [record_restricted[0]]
+    handle_check_restricted_access_property(list_record)
+    assert list_record[0]["errors"] == None
+
+    # 利用規約(terms)に存在する規約が設定されている。提供(provide)が設定されていない。
+    list_record = [record_restricted[1]]
+    handle_check_restricted_access_property(list_record)
+    assert list_record[0]["errors"] == None
+
+    # 利用規約(terms)が設定されていない。提供(provide)に存在するロールID、ワークフローが設定されている。
+    list_record = [record_restricted[2]]
+    handle_check_restricted_access_property(list_record)
+    assert list_record[0]["errors"] == None
+
+    restricted_access_json ={
+            "key": "168065611041",
+            "content": {
+                "en": {
+                    "title": "Privacy Policy for WEKO3",
+                    "content": "Privacy Policyobligations"
+                },
+                "ja": {
+                    "title": "利用規約",
+                    "content": "利用規約本文"
+                }
+            },
+            "existed": True
+        }
+
+    ################################
+    # 英語モード
+    ################################
+    with app.test_request_context():
+        with set_locale("en"):
+            with patch("weko_admin.utils.get_restricted_access", return_value=restricted_access_json):
+                # 利用規約(terms)に存在しない利用規約が設定されている。提供(provide)が設定されていない。
+                list_record = [record_restricted[3]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["The specified terms does not exist in the system"]
+
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
+                list_record = [record_restricted[4]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["The specified provinding method does not exist in the system"]
+
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないロールが設定されている。
+                list_record = [record_restricted[5]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["The specified provinding method does not exist in the system"]
+
+# def handle_check_restricted_access_property(list_record)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_restricted_access_property_ja -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_restricted_access_property_ja(app, db, users, record_restricted, terms, db_itemtype_restricted_access, db_workflow):
+    restricted_access_json ={
+            "key": "168065611041",
+            "content": {
+                "en": {
+                    "title": "Privacy Policy for WEKO3",
+                    "content": "Privacy Policyobligations"
+                },
+                "ja": {
+                    "title": "利用規約",
+                    "content": "利用規約本文"
+                }
+            },
+            "existed": True
+        }
+    ################################
+    # 日本語モード
+    ################################
+    with app.test_request_context():
+        with set_locale("ja"):
+            with patch("weko_admin.utils.get_restricted_access", return_value=restricted_access_json):
+                # 利用規約(terms)に存在しない利用規約が設定されている。提供(provide)が設定されていない。
+                list_record = [record_restricted[3]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["指定する利用規約はシステムに存在しません。"]
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないワークフローが設定されている。
+                list_record = [record_restricted[4]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["指定する提供方法はシステムに存在しません。"]
+
+                # 利用規約(terms)が設定されていない。提供(provide)に存在しないロールが設定されている。
+                list_record = [record_restricted[5]]
+                handle_check_restricted_access_property(list_record)
+                assert list_record[0]["errors"] == ["指定する提供方法はシステムに存在しません。"]
+
+# def check_terms_in_system(key, item_index, item)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_terms_in_system -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_terms_in_system(terms, record_restricted):
+    # 正常系
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    assert check_terms_in_system(key, item) == True
+
+    # metadataにkeyが存在しない
+    key = "item_111111111111"
+    item = record_restricted[1]
+    assert check_terms_in_system(key, item) == False
+
+    # metadataにtermsが存在しない
+    key = "item_1685583796047"
+    item = record_restricted[8]
+    assert check_terms_in_system(key, item) == True
+
+    # metadataにtermsが自由入力の場合
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    item['metadata'][key][0]['terms'] = 'term_free'
+    assert check_terms_in_system(key, item) == True
+
+    # "terms": システムに存在しない適当な値
+    key = "item_1685583796047"
+    item = record_restricted[3]
+    assert check_terms_in_system(key, item) == False
+
+    # "terms": システムに存在しない適当な値
+    # get_restricted_accessをスタブにし、戻り値をNoneにする。
+    with patch('weko_admin.utils.get_restricted_access',return_value=None):
+        key = "item_1685583796047"
+        item = record_restricted[3]
+        assert check_terms_in_system(key, item) == False
+
+# def check_provide_in_system(key, item_index, item, provides)
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_provide_in_system -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_check_provide_in_system(users, db_workflow, record_restricted):
+    # "provide": [ {"workflow: システムに存在するワークフローID"},{"role", システムに存在するロールID} ]
+    # 引数のprovides= itemに設定したprovideを設定する。
+    key = "item_1685583796047"
+    item = record_restricted[2]
+    assert check_provide_in_system(key, item) == True
+
+    # "provide": [ {"workflow: システムに存在しないワークフローID"},{"role", システムに存在するロールID} ]
+    # 数のprovides= itemに設定したprovideを設定する。
+    key = "item_1685583796047"
+    item = record_restricted[4]
+    assert check_provide_in_system(key, item) == False
+
+    # "provide": [ {"workflow: システムに存在するワークフローID"},{"role", システムに存在しないロールID} ]
+    # 数のprovides= itemに設定したprovideを設定する。
+    key = "item_1685583796047"
+    item = record_restricted[5]
+    assert check_provide_in_system(key, item) == False
+
+    # "key"存在せず
+    key = "item_111111111111"
+    item = record_restricted[1]
+    assert check_provide_in_system(key, item) == False
+
+    # "provide"存在せず
+    key = "item_1685583796047"
+    item = record_restricted[1]
+    assert check_provide_in_system(key, item) == True
+
+    # "workflow"存在せず
+    key = "item_1685583796047"
+    item = record_restricted[6]
+    assert check_provide_in_system(key, item) == True
+
+    # "role"存在せず
+    key = "item_1685583796047"
+    item = record_restricted[7]
+    assert check_provide_in_system(key, item) == True
+
+    key = "item_1685583796047"
+    item = record_restricted[9]
+    assert check_provide_in_system(key, item) == True
 
 
 # def handle_check_file_path(paths, data_path, is_new=False, is_thumbnail=False, is_single_thumbnail=False):
@@ -4145,18 +4902,32 @@ def test_get_key_by_property(i18n_app):
 
 
 # def get_data_by_property(item_metadata, item_map, mapping_key):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_get_data_by_property -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_get_data_by_property(i18n_app):
     item_metadata = {}
     item_map = {"mapping_key": "test.test"}
     mapping_key = "mapping_key"
 
-    assert get_data_by_property(item_metadata, item_map, mapping_key)
-    assert get_data_by_property(item_metadata, {}, mapping_key)
+    data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+    assert data == None
+    assert key_list == "test.test"
+    data, key_list = get_data_by_property(item_metadata, {}, mapping_key)
+    assert data == None
+    assert key_list == None
 
     with patch(
         "weko_workflow.utils.get_sub_item_value", return_value=[True, ["value"]]
     ):
-        assert get_data_by_property(item_metadata, item_map, mapping_key)
+        item_metadata = {"test": {"test": "value"}, "test1": {"test1": "value"}}
+        data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+        assert data == ["value"]
+        assert key_list == "test.test"
+
+        item_map = {"mapping_key": "test.test,test1.test1"}
+        mapping_key = "mapping_key"
+        data, key_list = get_data_by_property(item_metadata, item_map, mapping_key)
+        assert data == ["value", "value"]
+        assert key_list == "test.test,test1.test1"
 
 
 # def get_filenames_from_metadata(metadata):
@@ -4195,7 +4966,7 @@ def test_handle_check_filename_consistence(i18n_app):
         ),
     ]
 )
-def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, warnings, errors, is_change_identifier):
+def test_function_issue34520(app, doi_records, mocker_itemtype, item_id, before_doi, after_doi, warnings, errors, is_change_identifier, mocker):
     before = {
             "metadata": {
                 "path": ["1667004052852"],
@@ -4225,7 +4996,17 @@ def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, w
             "item_type_id": 1,
             "$schema": "https://localhost/items/jsonschema/1",
         }
-
+    mapping = {
+        "title.@value": "item_1617186331708.subitem_1551255647225",
+        "title.@language": "item_1617186331708.subitem_1551255648112",
+        "type.@value": "item_1617258105262.resourcetype",
+        "type.@attributes.rdf:resource": "item_1617258105262.resourceuri",
+        "file.URI.@value": "item_1617605131499.url.url",
+        "file.extent.@value": "item_1617605131499.filesize.value",
+        "file.mimeType.@value": "item_1617605131499.format",
+        "identifierRegistration.@attributes.identifierType": "item_1617186819068.subitem_identifier_reg_type"
+    }
+    mocker.patch("weko_search_ui.utils.get_mapping", return_value=mapping)
     if item_id:
         before["id"] = "{}".format(item_id)
         before["uri"] = "https://localhost/records/{}".format(item_id)
@@ -4312,11 +5093,13 @@ def test_function_issue34520(app, doi_records, item_id, before_doi, after_doi, w
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34535 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
 def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocker):
     mocker.patch("weko_search_ui.utils.find_and_update_location_size")
+    mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents.apply_async")
+    mocker.patch("invenio_records.api.before_record_update.send")
     # register item
     indexer = WekoIndexer()
     indexer.get_es_index()
-    record_data = {"_oai":{"id":"oai:weko3.example.org:00000004","sets":[]},"path":["1"],"owner":"1","recid":"4","title":["test item in br"],"pubdate":{"attribute_name":"PubDate","attribute_value":"2022-11-21"},"_buckets":{"deposit":"0796e490-6dcf-4e7d-b241-d7201c3de83a"},"_deposit":{"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"owner":"1","owners":[1],"status":"published","created_by":1},"item_title":"test item in br","author_link":[],"item_type_id":"1","publish_date":"2022-11-21","publish_status":"0","weko_shared_id":-1,"item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}]},"item_1617186626617":{"attribute_name":"Description","attribute_value_mlt":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}]},"item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},"relation_version_is_last":True}
-    item_data = {"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"lang":"ja","path":[1],"owner":"1","title":"test item in br","owners":[1],"status":"published","$schema":"https://192.168.56.103/items/jsonschema/1","pubdate":"2022-11-21","edit_mode":"keep","created_by":1,"owners_ext":{"email":"wekosoftware@nii.ac.jp","username":"","displayname":""},"deleted_items":["item_1617605131499"],"shared_user_id":-1,"weko_shared_id":-1,"item_1617186331708":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}],"item_1617186626617":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}],"item_1617258105262":{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}}
+    record_data = {"_oai":{"id":"oai:weko3.example.org:00000004","sets":[]},"path":["1"],"owner":1,"recid":"4","title":["test item in br"],"pubdate":{"attribute_name":"PubDate","attribute_value":"2022-11-21"},"_buckets":{"deposit":"0796e490-6dcf-4e7d-b241-d7201c3de83a"},"_deposit":{"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"owner":1,"owners":[1],"status":"published","created_by":1},"item_title":"test item in br","author_link":[],"item_type_id":"1000","publish_date":"2022-11-21","publish_status":"0","weko_shared_ids":[],"item_1617186331708":{"attribute_name":"Title","attribute_value_mlt":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}]},"item_1617186626617":{"attribute_name":"Description","attribute_value_mlt":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}]},"item_1617258105262":{"attribute_name":"Resource Type","attribute_value_mlt":[{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}]},"relation_version_is_last":True}
+    item_data = {"id":"4","pid":{"type":"depid","value":"4","revision_id":0},"lang":"ja","path":[1],"owner":1,"title":"test item in br","owners":[1],"status":"published","$schema":"https://192.168.56.103/items/jsonschema/1000","pubdate":"2022-11-21","edit_mode":"keep","created_by":1,"owners_ext":{"email":"wekosoftware@nii.ac.jp","username":"","displayname":""},"deleted_items":["item_1617605131499"],"shared_user_ids":[],"weko_shared_ids":[],"item_1617186331708":[{"subitem_1551255647225":"test item in br","subitem_1551255648112":"ja"}],"item_1617186626617":[{"subitem_description":"this is line1.\nthis is line2.","subitem_description_type":"Abstract","subitem_description_language":"en"}],"item_1617258105262":{"resourceuri":"http://purl.org/coar/resource_type/c_5794","resourcetype":"conference paper"}}
     rec_uuid = uuid.uuid4()
     recid = PersistentIdentifier.create(
         "recid",
@@ -4342,11 +5125,11 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
 
     # new item
     root_path = os.path.dirname(os.path.abspath(__file__))
-    new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 1, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
+    new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1000', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 1000, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
 
     register_item_metadata(new_item,root_path,True)
     record = WekoDeposit.get_record(recid.object_uuid)
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': '1', 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_id': -1, 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
+    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': 1, 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': 1, 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1000', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34958 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_function_issue34958(app, make_itemtype):
@@ -4366,7 +5149,7 @@ def test_function_issue34958(app, make_itemtype):
         csv_path = "issue34958_import.csv"
 
 
-        test = [{"publish_status": "public", "pos_index": ["Index A"], "metadata": {"pubdate": "2022-11-11", "item_1671508244520": {"subitem_1551255647225": "Extra items test", "subitem_1551255648112": "en"}, "item_1671508260839": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "item_1671508308460": [{"interim": "test_text_value0"}, {"interim": "test_text_value1"}], "item_1671606815997": "test_text", "item_1617186626617": {"subitem_description": "test_description"}}, "edit_mode": "keep", "item_type_name": "test_import", "item_type_id": 34958, "$schema": "http://TEST_SERVER/items/jsonschema/34958", "warnings": ["The following items are not registered because they do not exist in the specified item type. item_1617186626617.subitem_description"], "is_change_identifier": False, "errors": None}]
+        test = [{"publish_status": "public", "pos_index": ["Index A"], "metadata": {"pubdate": "2022-11-11", 'edit_mode': 'keep', "item_1671508244520": {"subitem_1551255647225": "Extra items test", "subitem_1551255648112": "en"}, "item_1671508260839": {"resourcetype": "conference paper", "resourceuri": "http://purl.org/coar/resource_type/c_5794"}, "item_1671508308460": [{"interim": "test_text_value0"}, {"interim": "test_text_value1"}], "item_1671606815997": "test_text", "item_1617186626617": {"subitem_description": "test_description"}}, "edit_mode": "keep", "item_type_name": "test_import", "item_type_id": 34958, "$schema": "http://TEST_SERVER/items/jsonschema/34958", "warnings": ["The following items are not registered because they do not exist in the specified item type. item_1617186626617.subitem_description"], "is_change_identifier": False, "errors": None}]
         result = unpackage_import_file(data_path,csv_path,"csv",False,False)
 
         assert result == test
@@ -4394,7 +5177,18 @@ def test_function_issue34958(app, make_itemtype):
         )
     ]
 )
-def test_handle_fill_system_item_issue34520(app, doi_records, item_id, before_doi, after_doi, warnings, errors, is_change_identifier):
+def test_handle_fill_system_item_issue34520(app, doi_records, mocker_itemtype, item_id, before_doi, after_doi, warnings, errors, is_change_identifier, mocker):
+    mapping = {
+        "title.@value": "item_1617186331708.subitem_1551255647225",
+        "title.@language": "item_1617186331708.subitem_1551255648112",
+        "type.@value": "item_1617258105262.resourcetype",
+        "type.@attributes.rdf:resource": "item_1617258105262.resourceuri",
+        "file.URI.@value": "item_1617605131499.url.url",
+        "file.extent.@value": "item_1617605131499.filesize.value",
+        "file.mimeType.@value": "item_1617605131499.format",
+        "identifierRegistration.@attributes.identifierType": "item_1617186819068.subitem_identifier_reg_type"
+    }
+    mocker.patch("weko_search_ui.utils.get_mapping", return_value=mapping)
     before = {
             "metadata": {
                 "path": ["1667004052852"],
@@ -4514,7 +5308,7 @@ def test_handle_fill_system_item_issue34520(app, doi_records, item_id, before_do
     [
         (1, "http://TEST_SERVER/records/1",[],[],"keep"),
         (1000, "http://TEST_SERVER/records/1",[],["Specified URI and system URI do not match."],None),
-        (1000, "http://TEST_SERVER/records/1000",[],["Item does not exits in the system"],None),
+        (1000, "http://TEST_SERVER/records/1000",[],["Item does not exist in the system."],None),
         (None,None,[],[],"new")
     ])
 def test_handle_check_exist_record_issue35315(app, doi_records, id, uri, warnings, errors, status):

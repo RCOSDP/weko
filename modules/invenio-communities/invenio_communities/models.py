@@ -34,6 +34,7 @@ from invenio_accounts.models import Role, User
 from invenio_db import db
 from invenio_records.api import Record
 from invenio_records.models import RecordMetadata
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import FlushError
 from sqlalchemy_utils.models import Timestamp
@@ -323,9 +324,18 @@ class Community(db.Model, Timestamp):
 
     @classmethod
     def get_by_user(cls, role_ids, with_deleted=False):
-        """Get a community."""
+        """Get communities by user roles.
+        Args:
+            role_ids: List of Role ids
+            with_deleted: Boolean value to include deleted communities
+        Returns:
+            List of Community Object Query
+        """
         query = cls.query.filter(
-            Community.id_role.in_(role_ids)
+            or_(
+                Community.group_id.in_(role_ids),
+                Community.id_role.in_(role_ids)
+            )
         )
         if not with_deleted:
             query = query.filter(cls.deleted_at.is_(None))
@@ -340,6 +350,15 @@ class Community(db.Model, Timestamp):
             q = q.filter(cls.deleted_at.is_(None))
 
         return q.order_by(db.asc(Community.title)).all()
+
+    @classmethod
+    def get_by_ids(cls, community_ids, with_deleted=False):
+        """Get communities by ids."""
+        q = cls.query.filter(cls.id.in_(community_ids))
+        if not with_deleted:
+            q = q.filter(cls.deleted_at.is_(None))
+
+        return q.order_by(db.asc(Community.id)).all()
 
     @classmethod
     def filter_communities(cls, p, so, with_deleted=False):
@@ -374,9 +393,15 @@ class Community(db.Model, Timestamp):
 
     @classmethod
     def get_repositories_by_user(cls, user):
-        """Get repository ids for user."""
+        """Get communities where user has roles and repositories.
+        Args:
+            user: User Object
+        Returns:
+            List of Community Object
+        """
         role_ids = [role.id for role in user.roles]
-        return Community.query.filter(Community.group_id.in_(role_ids)).all()
+        query = cls.get_by_user(role_ids, with_deleted=True)
+        return query.all()
 
     def add_record(self, record):
         """Add a record to the community.

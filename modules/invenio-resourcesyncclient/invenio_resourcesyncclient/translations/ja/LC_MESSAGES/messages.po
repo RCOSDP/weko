@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: invenio-resourcesyncclient 1.0.0a4.dev20171205\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-06-13 07:47+0000\n"
+"POT-Creation-Date: 2025-10-03 15:33+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -19,62 +19,85 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/admin.py:235
+msgid "Resource Sync"
+msgstr ""
+
+#: invenio_resourcesyncclient/admin.py:236
+msgid "Resync"
+msgstr ""
+
+#. NOTE: This is a note to a translator.
+#: invenio_resourcesyncclient/ext.py:30
+msgid "A translation string"
+msgstr ""
+
+#: invenio_resourcesyncclient/views.py:35
+msgid "INVENIO-ResourceSyncClient"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/index.html:13
+#, python-format
+msgid "Welcome to %(module_name)s"
+msgstr ""
+
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:40
 msgid "List"
 msgstr "一覧"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:41
 msgid "Create"
 msgstr "作成"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:42
 msgid "Edit"
 msgstr "編集"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:43
 msgid "Detail"
 msgstr "詳細"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:44
 msgid "Start Time"
 msgstr "開始時間"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:45
 msgid "End Time"
 msgstr "終了時間"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:46
 msgid "Status"
 msgstr "ステータス"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:47
 msgid "Log Type"
 msgstr "ログ種別"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:48
 msgid "Processed Items"
 msgstr "処理件数"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:49
 msgid "Created Items"
 msgstr "登録件数"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:50
 msgid "Updated Items"
 msgstr "更新件数"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:51
 msgid "Deleted Items"
 msgstr "削除件数"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:52
 msgid "Error Items"
 msgstr "エラー件数"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:53
 msgid "The input value for From Date is incorrect."
 msgstr "From Date の入力値が正しくありません。"
 
-#: invenio_resourcesyncclient\templates\invenio_resourcesyncclient\resync_client.html
+#: invenio_resourcesyncclient/templates/invenio_resourcesyncclient/resync_client.html:54
 msgid "The input value for Until Date is incorrect."
 msgstr "Until Date の入力値が正しくありません。"
+

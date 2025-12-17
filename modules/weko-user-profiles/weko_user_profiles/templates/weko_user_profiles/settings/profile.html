@@ -42,6 +42,7 @@
 {%- endif %}
 {%- set form = profile_form %}
 <form method="POST" name="profile_form">
+  <!--hidden設定-->
   {%- for field in form %}
   {%- if field.widget.input_type == 'hidden' %}
   {{ field() }}

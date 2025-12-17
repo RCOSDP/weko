@@ -86,6 +86,7 @@ class IndexEditSettingView(BaseView):
             mod_tree_detail=current_app.config['WEKO_INDEX_TREE_API'],
             admin_coverpage_setting=str(get_admin_coverpage_setting()),
             index_id=index_id,
+            render_widgets = str(current_app.config['WEKO_INDEX_TREE_SHOW_MODAL']),
             lang_code=session.get('selected_language', 'en')  # Set default
         )
 

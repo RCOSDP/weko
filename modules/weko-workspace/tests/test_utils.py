@@ -20,23 +20,93 @@
 
 """Module tests."""
 
-import pytest
-from mock import patch, MagicMock
-from datetime import datetime, timedelta, timezone
-from flask_babelex import gettext as _
-from flask_login.utils import login_user
-from invenio_cache import current_cache
-from weko_user_profiles import UserProfile
-
 import json
-from unittest.mock import Mock, patch, call
-import pytest
-from sqlalchemy.exc import SQLAlchemyError
-from flask_login import login_user
-from weko_workspace.models import WorkspaceDefaultConditions
-import requests
+from datetime import datetime, timedelta, timezone
 
-from weko_workspace.utils import *
+import pytest
+import requests
+from elasticsearch.exceptions import TransportError
+from flask_babelex import gettext as _
+from flask_login import login_user
+from invenio_cache.proxies import current_cache
+from sqlalchemy.exc import SQLAlchemyError
+from unittest.mock import MagicMock, Mock, call, patch
+
+from weko_user_profiles import UserProfile
+from weko_workspace.models import WorkspaceDefaultConditions, WorkspaceStatusManagement
+from weko_workspace.utils import (
+    build_form_model,
+    build_model,
+    changeLang,
+    changeMsg,
+    convert_jamas_xml_data_to_dictionary,
+    deepcopy_API,
+    fill_data,
+    get_autofill_key_path,
+    get_cinii_autofill_item,
+    get_cinii_creator_data,
+    get_cinii_data_by_key,
+    get_cinii_date_data,
+    get_cinii_description_data,
+    get_cinii_numpage,
+    get_cinii_page_data,
+    get_cinii_product_identifier,
+    get_cinii_record_data,
+    get_cinii_subject_data,
+    get_cinii_title_data,
+    get_datacite_autofill_item,
+    get_datacite_contributor_data,
+    get_datacite_creator_data,
+    get_datacite_data_by_key,
+    get_datacite_description_data,
+    get_datacite_product_identifier,
+    get_datacite_publisher_data,
+    get_datacite_record_data,
+    get_datacite_subject_data,
+    get_datacite_title_data,
+    get_item_id,
+    get_jalc_autofill_item,
+    get_jalc_creator_data,
+    get_jalc_data_by_key,
+    get_jalc_date_data,
+    get_jalc_numpage,
+    get_jalc_page_data,
+    get_jalc_product_identifier,
+    get_jalc_publisher_data,
+    get_jalc_record_data,
+    get_jalc_source_title_data,
+    get_jalc_title_data,
+    get_jamas_creator_data,
+    get_jamas_issue_date,
+    get_jamas_language_data,
+    get_jamas_record_data,
+    get_jamas_autofill_item,
+    get_jamas_data_by_key,
+    get_autofill_key_tree,
+    build_record_model,
+    get_jamas_relation_data,
+    get_jamas_source_data,
+    get_key_value,
+    get_specific_key_path,
+    get_subschema,
+    get_workspace_filterCon,
+    get_es_itemlist,
+    get_workspace_status_management,
+    get_accessCnt_downloadCnt,
+    get_item_status,
+    get_userNm_affiliation,
+    insert_workspace_status,
+    is_multiple,
+    merge_dict,
+    pack_data_with_multiple_type_cinii,
+    pack_data_with_multiple_type_datacite,
+    pack_data_with_multiple_type_jalc,
+    pack_single_value_as_dict,
+    pack_single_value_for_jamas,
+    pack_with_language_value_for_jamas,
+    update_workspace_status,
+    extract_metadata_info,
+)
 from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS
 
 # ===========================def get_workspace_filterCon():=====================================
@@ -1926,6 +1996,183 @@ def test_get_cinii_autofill_item(app):
         result = get_cinii_autofill_item(15)
         assert result == {}
 
+# .tox/c1/bin/pytest tests/test_utils.py::test_build_record_model -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_build_record_model(app):
+    # not api_data,not item_autofill_key
+    result = build_record_model([], [])
+    assert result == []
+
+    api_data = {
+        "title": [{"@value": "test_article_title", "@language": "en"}],
+        "creator": [{"@value": "A.Test1", "@language": "en"}],
+        "contributor": [{"@value": "B.Test2", "@language": "en"}],
+        "sourceTitle": {"@value": "test_journal_title", "@language": "en"},
+        "sourceIdentifier": [{"@value": "0031-899X", "@type": "ISSN"}],
+        "volume": {"@value": "47"},
+        "issue": {"@value": "10"},
+        "pageStart": {"@value": 777},
+        "pageEnd": {"@value": 780},
+        "date": {"@value": "1935", "@type": "Issued"},
+        "relation": [{"@value": "10.1103/PhysRev.47.777", "@type": "DOI"}],
+        "not_dict_list": {"@value": "value"},
+    }
+    item_autofill_key = {
+        "title": [
+            {
+                "title": {
+                    "@value": "test_item1.test1_subitem1",
+                    "@language": "test_item1.test1_subitem2",
+                }
+            },
+            {
+                "title": {
+                    "@value": "test_item2.test1_subitem1",
+                    "@language": "test_item2.test1_subitem2",
+                }
+            },
+            {
+                "title": {
+                    "@value": "test_item3.test1_subitem1",
+                    "@language": "test_item3.test1_subitem2",
+                }
+            },
+        ],
+        "creator": {
+            "@value": "test_item6.creatorNames.creatorName",
+            "@language": "test_item6.creatorNames.creatorNameLang",
+        },
+        "contributor": {
+            "@value": "test_item7.contributorNames.contributorName",
+            "@language": "test_item7.contributorNames.lang",
+        },
+        "relation": {
+            "@value": "test_item8.test8_subitem1.test8_subitem2",
+            "@type": "test_item8.test8_subitem1.test8_subitem3",
+        },
+        "volume": {"@value": "test_item16.test16_subitem1"},
+        "not_dict_list": "value",
+    }
+    test = [
+        {
+            "test_item1": {
+                "test1_subitem1": "test_article_title",
+                "test1_subitem2": "en",
+            }
+        },
+        {
+            "test_item6": {
+                "creatorNames": {"creatorName": "A.Test1", "creatorNameLang": "en"}
+            }
+        },
+        {
+            "test_item7": {
+                "contributorNames": {"contributorName": "B.Test2", "lang": "en"}
+            }
+        },
+        {
+            "test_item8": {
+                "test8_subitem1": {
+                    "test8_subitem2": "10.1103/PhysRev.47.777",
+                    "test8_subitem3": "DOI",
+                }
+            }
+        },
+        {"test_item16": {"test16_subitem1": "47"}},
+    ]
+    result = build_record_model(item_autofill_key, api_data)
+    assert result == test
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_merge_dict -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_merge_dict(app):
+    original_dict = [
+        {
+            "test_item2": {"test2_subitem1": {"test2_subitem2": "@language"}},
+            "test_item3": {"test3_subitem1": {"test3_subitem2": "@value"}},
+            "test_item4": "test1",
+        }
+    ]
+    merged_dict = [
+        {
+            "test_item1": {
+                "test1_subitem1": {"test1_subitem2": "@value"}
+            },  # key not in original_dict
+            "test_item2": {
+                "test2_subitem1": {"test2_subitem3": "@value"}
+            },  # key in original_dict
+            "test_item3": {
+                "test3_subitem1": {"test3_subitem2": "@value"}
+            },  # orinal_dict=merge_dict
+            "test_item4": "test4",  # conflict
+        }
+    ]
+    test = [
+        {
+            "test_item2": {
+                "test2_subitem1": {
+                    "test2_subitem2": "@language",
+                    "test2_subitem3": "@value",
+                }
+            },
+            "test_item3": {"test3_subitem1": {"test3_subitem2": "@value"}},
+            "test_item4": "test1",
+            "test_item1": {"test1_subitem1": {"test1_subitem2": "@value"}},
+        }
+    ]
+    merge_dict(original_dict, merged_dict, over_write=True)
+    assert original_dict == test
+    original_dict = [
+        {
+            "test_item2": {"test2_subitem1": {"test2_subitem2": "@language"}},
+            "test_item3": {"test3_subitem1": {"test3_subitem2": "@value"}},
+            "test_item4": "test1",
+        }
+    ]
+    merged_dict = [
+        {
+            "test_item1": {
+                "test1_subitem1": {"test1_subitem2": "@value"}
+            },  # key not in original_dict
+            "test_item2": {
+                "test2_subitem1": {"test2_subitem3": "@value"}
+            },  # key in original_dict
+            "test_item3": {
+                "test3_subitem1": {"test3_subitem2": "@value"}
+            },  # orinal_dict=merge_dict
+            "test_item4": "test4",  # conflict
+        }
+    ]
+    test = [
+        {
+            "test_item2": {
+                "test2_subitem1": {
+                    "test2_subitem2": "@language",
+                    "test2_subitem3": "@value",
+                }
+            },
+            "test_item3": {"test3_subitem1": {"test3_subitem2": "@value"}},
+            "test_item4": "test1",
+            "test_item1": {"test1_subitem1": {"test1_subitem2": "@value"}},
+        }
+    ]
+    merge_dict(original_dict, merged_dict, over_write=False)
+    assert original_dict == test
+
+    # over_write is False, raise conflict
+    original_dict = {"test_item4": "test1"}
+    merged_dict = {"test_item4": "test4"}
+    test = ""
+    merge_dict(original_dict, merged_dict, over_write=False)
+    assert original_dict == {"test_item4": "test1"}
+
+    # not type dict and dict, list and list
+    original_dict = {"test_item2": {"test2_subitem1": {"test2_subitem2": "@language"}}}
+    merged_dict = [{"test_item1": {"test1_subitem1": {"test1_subitem2": "@value"}}}]
+    merge_dict(original_dict, merged_dict)
+    assert original_dict == {
+        "test_item2": {"test2_subitem1": {"test2_subitem2": "@language"}}
+    }
+
+
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_autofill_key_path -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 def test_get_autofill_key_path(app):
     with open('tests/data/item_type/15_form.json', 'r') as f:
@@ -2112,6 +2359,311 @@ def test_build_model():
     form_key = 'item_123456789012'
     build_model(form_model, form_key)
     assert form_model == [{'item_123456789012': {}}]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_fill_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_fill_data(app):
+    # autofill_data is not dict, list
+    form_model = ""
+    autofill_data = ""
+    result = fill_data(form_model, autofill_data)
+    assert result is None
+    
+    # not multiple_data, form.get(key) is not list
+    autofill_data = [{"@value": "A.Test1", "@language": "en"}]
+    form_model = {
+        "@value": {"test_item6": {"creatorNames": {"creatorName": "@value"}}},
+        "@language": {"test_item6": {"creatorNames": {"creatorNameLang": "@language"}}},
+    }
+    test = {
+        "@value": {"test_item6": {"creatorNames": {"creatorName": "A.Test1"}}},
+        "@language": {"test_item6": {"creatorNames": {"creatorNameLang": "en"}}},
+    }
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # not multiple_data, form.get(key) is list
+    autofill_data = [{"@value": "A.Test1"}]
+    form_model = {
+        "@value": [{"test_item6": {"creatorNames": {"creatorName": "@value"}}}],
+    }
+    test = {"@value": [{"test_item6": {"creatorNames": {"creatorName": "A.Test1"}}}]}
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # multiple_data, form.get(key) is list
+    autofill_data = [
+        [{"@value": "TEST Taro", "@language": "en"},{"@value": "テスト 太郎", "@language": "ja"}],
+        [{"@value": "TEST Ziro", "@language": "en"},{"@value": "テスト 次郎", "@language": "ja"}]
+    ]
+    form_model = {"item_xxx": [{"creatorNames":[{"creatorName": "@value", "creatorNameLang": "@language"}]}]}
+    test = {"item_xxx": [
+            {
+                "creatorNames": [
+                    {"creatorName": "TEST Taro", "creatorNameLang": "en"},
+                    {"creatorName": "テスト 太郎", "creatorNameLang": "ja"}
+                ]
+            },
+            {
+                "creatorNames": [
+                    {"creatorName": "TEST Ziro", "creatorNameLang": "en"},
+                    {"creatorName": "テスト 次郎", "creatorNameLang": "ja"}
+                ]
+            }
+        ]
+    }
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # autofill_data is dict, form_model is {}
+    autofill_data = {"@value": "47"}
+    form_model = {}
+    test = {}
+    result = fill_data(form_model,autofill_data)
+    assert result == test
+
+    #
+    autofill_data = {"@value": "47"}
+    form_model = [
+        {"@value": {"test_item16": {"test16_subitem1": "@value"}}},
+        {"@value": {"test_item17": {"test17_subitem1": "@value"}}},
+    ]
+    test = [
+        {"@value": {"test_item16": {"test16_subitem1": "47"}}},
+        {"@value": {"test_item17": {"test17_subitem1": "47"}}},
+    ]
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is not list, dict
+    autofill_data = {"@value": "47"}
+    form_model = "test"
+    fill_data(form_model, autofill_data)
+
+     # with schema and validate success
+    autofill_data = [{'@value': 'タイトル', '@language': 'ja'}]
+    form_model = {'item_30001_title0': [{'subitem_title': '@value', 'subitem_title_language': '@language'}]}
+    schema ={
+        "type": "object",
+        "properties": {
+            "item_30001_title0": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "subitem_title": {
+                            "type": "string",
+                            "title": "タイトル",
+                            "title_i18n": {
+                                "en": "Title",
+                                "ja": "タイトル"
+                            }
+                        },
+                        "subitem_title_language": {
+                            "enum": [
+                                None,
+                                "ja",
+                            ],
+                            "type": [
+                                "null",
+                                "string"
+                            ],
+                            "title": "言語",
+                        }
+                    }
+                },
+                "title": "Title",
+            }
+        }
+    }
+    expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # with schema and validate fail
+    autofill_data = [{'@value': 'タイトル', '@language': ''}]
+    expected  = {'item_30001_title0': [{'subitem_title': 'タイトル'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # with invalid schema and skip validate
+    autofill_data = [{'@value': 'タイトル', '@language': 'ja'}]
+    schema["properties"]["item_30001_title0"]["type"] = "object"
+    expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # duplicate language
+    autofill_data = [{"@value": "Title1", "@language": "en"}, {"@value": "Title2", "@language": "en"}]
+    expected = {'item_30001_title0': [{'subitem_title': 'Title1', 'subitem_title_language': 'en'}]}
+    result = fill_data(form_model, autofill_data, None, True)
+    assert result == expected
+
+    # schema with array items
+    schema = {"type": "array", "items": {"type": "object", "properties": {"prop1": {"type": "string"}}}}
+    autofill_data = [{"@value": "Title1"}]
+    form_model = {"prop1": "@value"}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == {"prop1": "Title1"}
+
+    # form_model is dict, autofill_data is str
+    autofill_data = "test_data"
+    form_model = {"test_key":"form_test"}
+    result = fill_data(form_model, autofill_data)
+    assert result is None
+
+    # form_model is list, autofill_data is str
+    autofill_data = "test_data"
+    form_model = [{"test_key":"form_test"}]
+    result = fill_data(form_model, autofill_data)
+    assert result is None
+
+    # form_model is list, autofill_data is str
+    autofill_data = "test_data"
+    form_model = [{"test_key":100}]
+    result = fill_data(form_model, autofill_data)
+    assert result is None
+
+    # form_model is list, autofill_data is int
+    autofill_data = 111
+    form_model = ""
+    result = fill_data(form_model, autofill_data)
+    assert result is None
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_subschema -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_subschema():
+    # Test with key in schema: type object
+    schema = {'type': 'object', 'properties': {'item_123456789012': {'type': 'string'}}}
+    key = 'item_123456789012'
+    assert get_subschema(schema, key) == {'type': 'string'}
+
+    # Test with key in schema: type array
+    schema = {'type': 'array', 'items': {'type': 'object', 'properties': {'item_123456789012': {'type': 'string'}}}}
+    key = 'item_123456789012'
+    assert get_subschema(schema, key) == {'type': 'string'}
+
+    # Test with key in schema: type string
+    schema = {'type': 'string'}
+    key = 'item_123456789012'
+    assert get_subschema(schema, key) is None
+
+    # Test with key not in schema
+    schema = {'type': 'object', 'properties': {'item_123456789012': {'type': 'string'}}}
+    key = 'non_existing_key'
+    assert get_subschema(schema, key) is None
+
+    # Test with schema is None
+    schema = None
+    key = 'item_123456789012'
+    assert get_subschema(schema, key) is None
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_deepcopy_API -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_deepcopy_API():
+    # Test with original_object being a dict
+    original_object = {
+        'key1': 'value1',
+        'key2': {
+            'subkey1': 'subvalue1',
+            'subkey2': ['item1', 'item2']
+        },
+        'key3': ['item3', 'item4']
+    }
+    new_object = {}
+    deepcopy_API(original_object, new_object)
+    assert new_object == original_object
+
+    # Test with original_object being a list
+    original_object = [
+        'item1',
+        {
+            'key1': 'value1',
+            'key2': ['item2', 'item3']
+        },
+        'item4'
+    ]
+    new_object = {}
+    deepcopy_API(original_object, new_object)
+    assert new_object == {'key1': 'value1', 'key2': ['item2', 'item3']}
+
+    # Test with original_object being a string
+    original_object = "test_string"
+    new_object = {}
+    deepcopy_API(original_object, new_object)
+    assert new_object == {}
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_is_multiple -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_is_multiple():
+    # Test with form_model having single item
+    form_model = {'item_123456789012': []}
+    autofill_data = ['abc', 'def']
+    assert is_multiple(form_model, autofill_data) == True
+    
+    # Test with form_model having multiple items
+    form_model = {'item_123456789012': [], 'item_123456789013': []}
+    autofill_data = ['abc', 'def']
+    assert is_multiple(form_model, autofill_data) == True
+
+    # Test with form_model is empty
+    form_model = {}
+    autofill_data = ['abc', 'def']
+    assert is_multiple(form_model, autofill_data) is None
+
+
+    # Test with form_model not having '[]' in key
+    form_model = {'item_123456789012': {}}
+    autofill_data =['abc', 'def']
+    assert is_multiple(form_model, autofill_data) == False
+
+    # Test with form_model having '[]' in key and autofill_data is empty
+    form_model = {'item_123456789012': []}
+    autofill_data = []
+    assert is_multiple(form_model, autofill_data) == False
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_jalc_record_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_jalc_record_data(app, mocker_itemtype):
+    mock_get_data = {
+        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'error': ''
+    }
+    with patch('weko_workspace.utils.JALCURL.get_data', return_value=mock_get_data):
+        with patch('weko_workspace.utils.get_jalc_data_by_key', return_value={}):
+            with patch('weko_workspace.utils.get_jalc_autofill_item'):
+                with patch('weko_workspace.utils.get_autofill_key_tree'):
+                    with patch('weko_items_autofill.utils.sort_by_item_type_order'):
+                        with patch('weko_workspace.utils.build_record_model', return_value=[1]):
+                            current_cache.delete('jalc_data10.1234/test-doi1')
+                            result = get_jalc_record_data('10.1234/test-doi', 1)
+                            assert result == [1]
+            
+            item_type = Mock(item_type='test_item_type', form=None)
+            with patch('weko_workspace.utils.ItemTypes.get_by_id', return_value=item_type):
+                current_cache.delete('jalc_data10.1234/test-doi1')
+                result = get_jalc_record_data('10.1234/test-doi', 1)
+                assert result == []
+
+            with patch('weko_workspace.utils.ItemTypes.get_by_id', return_value=None):
+                current_cache.delete('jalc_data10.1234/test-doi1')
+                result = get_jalc_record_data('10.1234/test-doi', 1)
+                assert result == []
+
+    # Test with error in get_data
+    mock_get_data = {
+        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'error': 'test error message'
+    }
+    with patch('weko_workspace.utils.JALCURL.get_data', return_value=mock_get_data):
+        current_cache.delete('jalc_data10.1234/test-doi1')
+        result = get_jalc_record_data('10.1234/test-doi', 1)
+        assert result == []
+
+    # Test with not dict response
+    mock_get_data = {
+        'response': '',
+        'error': ''
+    }
+    with patch('weko_workspace.utils.JALCURL.get_data', return_value=mock_get_data):
+        current_cache.delete('jalc_data10.1234/test-doi1')
+        result = get_jalc_record_data('10.1234/test-doi', 1)
+        assert result == []
 
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_jalc_data_by_key -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 @pytest.mark.parametrize('keyword, expected_result', [
@@ -2549,6 +3101,237 @@ def test_get_jalc_product_identifier():
     result = get_jalc_product_identifier(data)
     assert result == [{'@value': '10.1234/56789'}]
 
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_jalc_autofill_item -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_jalc_autofill_item(app):
+    mock_item = {
+        'title': {
+            '@value': 'subitem_1551255647225',
+            '@attributes': { 'xml:lang': 'subitem_1551255648112' },
+            'model_id': 'item_1617186331708'
+        },
+        'sourceTitle': {
+            '@value': 'subitem_1522650091861',
+            '@attributes': { 'xml:lang': 'subitem_1522650068558' },
+            'model_id': 'item_1617186941041'
+        },
+        'sourceIdentifier': {
+            '@value': 'subitem_1522646572813',
+            '@attributes': { 'identifierType': 'subitem_1522646500366' },
+            'model_id': 'item_1617186920753'
+        },
+        'no_required': {
+            '@value': 'subitem_1234567890123',
+            '@attributes': { 'identifierType': 'subitem_9876543210987' },
+            'model_id': 'item_1122334455667'
+        }
+    }
+    with patch('weko_workspace.utils.get_item_id', return_value=mock_item):
+        result = get_jalc_autofill_item(15)
+        del mock_item['no_required']
+        assert result == mock_item
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_record_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_datacite_record_data(app, mocker_itemtype):
+    mock_get_data = {
+        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'error': ''
+    }
+    with patch('weko_workspace.utils.DATACITEURL.get_data', return_value=mock_get_data):
+        with patch('weko_workspace.utils.get_datacite_data_by_key', return_value={}):
+            with patch('weko_workspace.utils.get_datacite_autofill_item'):
+                with patch('weko_workspace.utils.get_autofill_key_tree'):
+                    with patch('weko_items_autofill.utils.sort_by_item_type_order'):
+                        with patch('weko_workspace.utils.build_record_model', return_value=[1]):
+                            current_cache.delete('datacite_data10.1234/test-doi1')
+                            result = get_datacite_record_data('10.1234/test-doi', 1)
+                            assert result == [1]
+
+                            # With cache
+                            result = get_datacite_record_data('10.1234/test-doi', 1)
+                            assert result == [1]
+            
+            item_type = Mock(item_type='test_item_type', form=None)
+            with patch('weko_workspace.utils.ItemTypes.get_by_id', return_value=item_type):
+                current_cache.delete('datacite_data10.1234/test-doi1')
+                result = get_datacite_record_data('10.1234/test-doi', 1)
+                assert result == []
+
+            with patch('weko_workspace.utils.ItemTypes.get_by_id', return_value=None):
+                current_cache.delete('datacite_data10.1234/test-doi1')
+                result = get_datacite_record_data('10.1234/test-doi', 1)
+                assert result == []
+
+    # Test with error in get_data
+    mock_get_data = {
+        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'error': 'test error message'
+    }
+    with patch('weko_workspace.utils.DATACITEURL.get_data', return_value=mock_get_data):
+        current_cache.delete('datacite_data10.1234/test-doi1')
+        result = get_datacite_record_data('10.1234/test-doi', 1)
+        assert result == []
+
+    # Test with not dict response
+    mock_get_data = {
+        'response': '',
+        'error': ''
+    }
+    with patch('weko_workspace.utils.DATACITEURL.get_data', return_value=mock_get_data):
+        current_cache.delete('datacite_data10.1234/test-doi1')
+        result = get_datacite_record_data('10.1234/test-doi', 1)
+        assert result == []
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_data_by_key -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+@pytest.mark.parametrize('keyword, expected_result', [
+    ('title', {'title': [{'@value': 'test title', '@language': 'ja'}]}),
+    ('creator', {'creator': [[{'@value': 'Doe John', '@language': 'en'}]]}),
+    ('contributor', {'contributor': [[{'@value': 'Smith Jane', '@language': 'en'}]]}),
+    ('description', {'description': [{'@value': 'test description', '@language': 'en'}]}),
+    ('subject', {'subject': [{'@value': 'test subject', '@scheme': 'test subjectscheme','@language': 'en'}]}),
+    ('sourceTitle', {'sourceTitle': [{'@value': 'Publisher A', '@language': 'en'}]}),
+    ('sourceIdentifier', {'sourceIdentifier': [{'@value': '1234-5678', '@type': 'ISSN'}]}),
+    ('relation', {'relation': [{'@value': '10.1234/56789', '@type': 'DOI'}]}),
+    ('all', {
+        'title': [{'@value': 'test title', '@language': 'ja'}],
+        'creator': [[{'@value': 'Doe John', '@language': 'en'}]],
+        'contributor': [[{'@value': 'Smith Jane', '@language': 'en'}]],
+        'description': [{'@value': 'test description', '@language': 'en'}],
+        'subject': [{'@value': 'test subject', '@scheme': 'test subjectscheme','@language': 'en'}],
+        'sourceTitle': [{'@value': 'Publisher A', '@language': 'en'}],
+        'sourceIdentifier': [{'@value': '1234-5678', '@type': 'ISSN'}],
+        'relation': [{'@value': '10.1234/56789', '@type': 'DOI'}]
+    }),
+    ('empty', {
+        'title': None,
+        'creator': None,
+        'contributor': None,
+        'description': None,
+        'subject': None,
+        'sourceTitle': None,
+        'sourceIdentifier': None,
+        'relation': None
+    }),
+    ('none', {})
+])
+def test_get_datacite_data_by_key(app, mocker, keyword, expected_result):
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_title_data',
+        return_value=[{'@value': 'test title', '@language': 'ja'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_creator_data',
+        return_value=[[{'@value': 'Doe John', '@language': 'en'}]]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_contributor_data',
+        return_value=[[{'@value': 'Smith Jane', '@language': 'en'}]]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_description_data',
+        return_value=[{'@value': 'test description', '@language': 'en'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_subject_data',
+        return_value=[{'@value': 'test subject', '@scheme': 'test subjectscheme', '@language': 'en'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_publisher_data',
+        return_value=[{'@value': 'Publisher A', '@language': 'en'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.pack_data_with_multiple_type_datacite',
+        return_value=[{'@value': '1234-5678', '@type': 'ISSN'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_datacite_product_identifier',
+        return_value=[{'@value': '10.1234/56789', '@type': 'DOI'}]
+    )
+
+    if keyword == 'empty':
+        api = {
+            'response': {
+                'data': {
+                    'attributes': {
+                        'titles': [],
+                        'creators': [],
+                        'contributors': [],
+                        'descriptions': '',
+                        'subjects': '',
+                        'publisher': [],
+                        'identifiers': [],
+                    },
+                    'id': '',
+                }
+            }
+        }
+    elif keyword == 'none':
+        api = {
+            'response': None
+        }
+    else:
+        api = {
+            'response': {
+                'data': {
+                    'attributes': {
+                        'titles': [
+                            {
+                                'title': 'test title',
+                                'lang': 'ja'
+                            }
+                        ],
+                        'creators': [
+                            {
+                                'name': 'Doe John',
+                                'lang': 'en'
+                            }
+                        ],
+                        'contributors': [
+                            {
+                                'name': 'Smith Jane',
+                                'lang': 'en'
+                            }
+                        ],
+                        'descriptions': [
+                            {
+                                'description': 'test description',
+                                'lang': 'en'
+                            }
+                        ],
+                        'subjects': [
+                            {
+                                'subject': 'test subject',
+                                'subjectScheme': 'test subjectScheme',
+                                'lang': 'en'
+                            }
+                        ],
+                        'publisher': 'Publisher A',
+                        'identifiers': [
+                            {
+                                'identifier': '1234-5678',
+                                'identifierType': 'ISSN',
+                            }
+                        ],
+                    },
+                    'id': '10.1234/56789',
+                }
+            }
+        }
+    
+    result = get_datacite_data_by_key(api, keyword if keyword != 'empty' else 'all')
+    assert result == expected_result
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_publisher_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_datacite_publisher_data(app):
+    # Test with valid data
+    data = '出版者A'
+    result = get_datacite_publisher_data(data)
+    assert result == [
+        {
+            '@value': '出版者A',
+            '@language': 'en'
+        }
+    ]
+
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_title_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 def test_get_datacite_title_data(app):
     # Test with valid data
@@ -2645,3 +3428,113 @@ def test_get_datacite_contributor_data(app):
     data = []
     result = get_datacite_contributor_data(data)
     assert result == []
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_description_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_datacite_description_data(app):
+    # Test with valid data
+    data = [
+        {
+            'description': 'description text 1',
+            'lang': 'ja',
+        },
+        {
+            'description': 'description text 2',
+        },
+        {
+            'lang': 'ja',
+        },
+    ]
+    result = get_datacite_description_data(data)
+    assert result == [
+        {'@value': 'description text 1', '@language': 'ja'},
+        {'@value': 'description text 2', '@language': 'en'}
+    ]
+
+    # Test with empty data
+    data = []
+    result = get_datacite_description_data(data)
+    assert result == []
+
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_subject_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_datacite_subject_data(app):
+    # Test with valid data
+    data = [
+        {
+            'subject': 'subject text 1',
+            'subjectScheme': 'BSH',
+            'lang': 'ja',
+        },
+        {
+            'subject': 'subject text 2',
+        },
+        {
+            'subjectScheme': 'BSH',
+            'lang': 'ja',
+        },
+    ]
+    result = get_datacite_subject_data(data)
+    assert result == [
+        {'@value': 'subject text 1', '@scheme': 'BSH', '@language': 'ja'},
+        {'@value': 'subject text 2', '@scheme': None, '@language': 'en'}
+    ]
+
+    # Test with empty data
+    data = []
+    result = get_datacite_subject_data(data)
+    assert result == []
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_pack_data_with_multiple_type_datacite -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_pack_data_with_multiple_type_datacite():
+    # Test with single value
+    data = [
+        {'identifier': '1234-5678', 'identifierType': 'ISSN'},
+        {'identifier': 'AA12345678'}
+    ]
+    result = pack_data_with_multiple_type_datacite(data)
+    assert result == [
+        {'@value': '1234-5678', '@type': 'ISSN'},
+        {'@value': 'AA12345678', '@type': None}
+    ]
+
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_product_identifier -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_datacite_product_identifier():
+    # Test with single value
+    data = '1234-5678'
+    result = get_datacite_product_identifier(data)
+    assert result == [{'@value': '1234-5678', '@type': 'DOI'}]
+
+    # Test with empty value
+    data = ''
+    result = get_datacite_product_identifier(data)
+    assert result == [{'@value': None, '@type': None}]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_autofill_item -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_datacite_autofill_item(app):
+    mock_item = {
+        'title': {
+            '@value': 'subitem_1551255647225',
+            '@attributes': { 'xml:lang': 'subitem_1551255648112' },
+            'model_id': 'item_1617186331708'
+        },
+        'sourceTitle': {
+            '@value': 'subitem_1522650091861',
+            '@attributes': { 'xml:lang': 'subitem_1522650068558' },
+            'model_id': 'item_1617186941041'
+        },
+        'sourceIdentifier': {
+            '@value': 'subitem_1522646572813',
+            '@attributes': { 'identifierType': 'subitem_1522646500366' },
+            'model_id': 'item_1617186920753'
+        },
+        'no_required': {
+            '@value': 'subitem_1234567890123',
+            '@attributes': { 'identifierType': 'subitem_9876543210987' },
+            'model_id': 'item_1122334455667'
+        }
+    }
+    with patch('weko_workspace.utils.get_item_id', return_value=mock_item):
+        result = get_datacite_autofill_item(15)
+        del mock_item['no_required']
+        assert result == mock_item

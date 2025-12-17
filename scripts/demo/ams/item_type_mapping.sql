@@ -27,7 +27,7 @@ ON CONFLICT (id) DO UPDATE SET
     item_type_id = EXCLUDED.item_type_id,
     mapping = EXCLUDED.mapping,
     version_id = EXCLUDED.version_id;
-    
+
 --
 -- Name: item_type_mapping_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
 --

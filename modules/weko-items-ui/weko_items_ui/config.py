@@ -72,8 +72,8 @@ WEKO_ITEMS_UI_MAX_EXPORT_NUM_PER_ROLE = {
 }
 """Max number of items that can be exported per role."""
 
-WEKO_ITEMS_UI_EXPORT_FORMAT_JSON = 'JSON'
-"""Format for exporting items -- JSON. """
+WEKO_ITEMS_UI_EXPORT_FORMAT_TSV = 'TSV'
+"""Format for exporting items -- TSV. """
 
 WEKO_ITEMS_UI_EXPORT_FORMAT_BIBTEX = 'BIBTEX'
 """Format for exporting items -- BIBTEX. """
@@ -209,6 +209,8 @@ WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS = {
 WEKO_ITEMS_UI_RANKING_BUFFER = 100
 
 WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']
+
+WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST = [1,2,3]
 
 WEKO_ITEMS_UI_RANKING_QUERY = dict(
     most_view_ranking = dict(
@@ -380,3 +382,6 @@ WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS=\
 from kombu import Exchange, Queue
 LINKAGE_MQ_EXCHANGE = Exchange('cris_researchmap_linkage', type='direct')
 LINKAGE_MQ_QUEUE = Queue("cris_researchmap_linkage", exchange=LINKAGE_MQ_EXCHANGE, routing_key="cris_researchmap_linkage",queue_arguments={"x-queue-type":"quorum"})
+
+WEKO_ITEMS_UI_PROXY_POSTING = False
+"""Setting for multiple proxy posters."""

@@ -1,0 +1,15 @@
+version: '3.2'
+
+services:
+  tavern:
+    build:
+      context: .
+      dockerfile: tavern.Dockerfile
+    environment:
+      - TZ=Asia/Tokyo
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=WekoOpensearch123!
+    volumes: 
+      - type: bind
+        source: .
+        target: /tavern
+    tty: true

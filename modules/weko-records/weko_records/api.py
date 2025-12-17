@@ -24,7 +24,6 @@ import urllib.parse
 import pickle
 from typing import Union
 import json
-import copy
 import re
 import sys
 import traceback
@@ -43,7 +42,7 @@ from invenio_records.signals import after_record_delete, after_record_insert, \
     before_record_insert, before_record_revert, before_record_update
 from invenio_search import RecordsSearch
 from jsonpatch import apply_patch
-from sqlalchemy import cast, String
+from sqlalchemy import desc, cast, String
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.sql.expression import desc
@@ -55,6 +54,7 @@ from .fetchers import weko_record_fetcher
 from .models import (
     FeedbackMailList as _FeedbackMailList,
     RequestMailList as _RequestMailList,
+    ItemApplication as _ItemApplication,
     FileMetadata, ItemMetadata, ItemReference, ItemType,
     ItemTypeEditHistory as ItemTypeEditHistoryModel,
     ItemTypeMapping, ItemTypeName, ItemTypeProperty,
@@ -222,7 +222,8 @@ class ItemTypeNames(RecordBase):
             query = ItemTypeName.query.filter_by(id=id_)
             if not with_deleted:
                 query = query.filter_by(is_active=True)  # noqa
-            return query.one_or_none()
+            obj = query.one_or_none()
+            return obj if isinstance(obj, ItemTypeName) else None
 
     @classmethod
     def get_name_and_id_all(cls):
@@ -230,7 +231,8 @@ class ItemTypeNames(RecordBase):
         query = db.session.query(ItemTypeName).with_entities(ItemTypeName.name, ItemTypeName.id)
         return query.all()
 
-    def delete(self, force=False):
+    @classmethod
+    def delete(cls, id_, force=False):
         """Delete an item type name.
 
         If `force` is ``False``, the record is soft-deleted: record data will
@@ -247,27 +249,36 @@ class ItemTypeNames(RecordBase):
         #. Send a signal :data:`weko_records.signals.after_record_delete`
            with the current deleted record as parameter.
 
-        :param force: if ``True``, deletes the current item type name
-               from the database, otherwise soft-deletes it.
-        :returns: The deleted :class:`ItemTypeName` instance.
+        Args:
+            id_ (int): Identifier of item type name.
+            force (bool): If ``True``, deletes the current item type name
+                          from the database, otherwise soft-deletes it.
+
+        Returns:
+            bool: `True` if the item type name was deleted, `False` if it
+                  was not found.
         """
+
         with db.session.begin_nested():
+            obj = cls.get_record(id_)
+            if obj is None:
+                return False
+
             before_record_delete.send(
                 current_app._get_current_object(),
-                record=self
+                record=obj
             )
-
             if force:
-                db.session.delete(self)
+                db.session.delete(obj)
             else:
-                self.is_active = False
-                db.session.merge(self)
+                obj.is_active = False
+                db.session.merge(obj)
 
         after_record_delete.send(
             current_app._get_current_object(),
-            record=self
+            record=obj
         )
-        return self
+        return True
 
     def restore(self):
         """Restore an logically deleted item type name.
@@ -597,17 +608,14 @@ class ItemTypes(RecordBase):
         :param item_type_name: Item Type Name.
         :return: Record list.
         """
-        name = urllib.parse.quote_plus(item_type_name)
-        query_string = "itemtype:{}".format(
-            name)
+        from weko_search_ui.utils import execute_search_with_pagination
         result = []
         try:
             search = RecordsSearch(
                 index=current_app.config['SEARCH_UI_SEARCH_INDEX'])
-            search = search.query(QueryString(query=query_string))
+            search = search.query('term', **{"itemtype.keyword": item_type_name})
             search = search.sort('-publish_date', '-_updated')
-            search_result = search.execute().to_dict()
-            result = search_result.get('hits', {}).get('hits', [])
+            result = execute_search_with_pagination(search, -1)
         except NotFoundError as e:
             current_app.logger.debug("Indexes do not exist yet: ", str(e))
         return result
@@ -672,15 +680,17 @@ class ItemTypes(RecordBase):
         Returns:
             ItemType: Item type model instance.
         """
+        obj = None
         with db.session.no_autoflush:
             query = ItemTypeName.query.filter_by(name=name_)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             itemTypeName = query.one_or_none()
-            query = ItemType.query.filter_by(name_id=itemTypeName.id)
-            if not with_deleted:
-                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            obj = query.one_or_none()
+            if itemTypeName:
+                query = ItemType.query.filter_by(name_id=itemTypeName.id)
+                if not with_deleted:
+                    query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+                obj = query.one_or_none()
         return obj if isinstance(obj, ItemType) else None
 
     @classmethod
@@ -935,18 +945,68 @@ class ItemTypes(RecordBase):
         return RevisionsIterator(self.model)
 
     @classmethod
-    def reload(cls, itemtype_id, specified_list=[], renew_value='None'):
+    def reset_itemtype_mapping(cls,itemtype_id, prop_list=[],prop_mapping = {},mapping_list=[]):
+        """
+        reset_itemtype_mapping Initializes the mapping of the item type.
+
+        Initializes the mapping of the specified properties of the specified item type.
+
+        Args:
+            itemtype_id (_type_): _description_
+            prop_list (list, optional): _description_. Defaults to [].
+            prop_mapping (dict, optional): _description_. Defaults to {}.
+            mapping_list (list, optional): _description_. Defaults to [].
+
+        Returns:
+            _type_: _description_
+        """
+        result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
+        item_type = ItemTypes.get_by_id(itemtype_id)
+        data = pickle.loads(pickle.dumps(item_type.render, -1))
+        
+        pat1 = re.compile(r'cus_(\d+)')
+        for idx, i in enumerate(data['table_row_map']['form']):
+            if isinstance(i,dict) and 'key' in i:
+                _prop_id = i['key']
+                if _prop_id.startswith('item_'):
+                    if _prop_id.startswith('item_'):
+                        _property_id = data['meta_list'][_prop_id]['input_type']
+                    if pat1.match(_property_id):
+                        _property_id = int(_property_id.replace('cus_', ''))
+                        if _property_id not in prop_list:
+                            continue
+                        for _mapping in mapping_list:
+                            if str(_property_id) in prop_mapping:
+                                result['msg'] = result['msg'] + "\nUpdate Property({}) Mapping({})".format(_property_id,_mapping)
+                                data['table_row_map']['mapping'][_prop_id][_mapping]=prop_mapping.get(str(_property_id)).get(_mapping, "")
+        
+        mapping = Mapping.get_record(itemtype_id)
+        table_row_map = data.get('table_row_map')
+        mapping.model.mapping = table_row_map.get('mapping')
+        flag_modified(mapping.model, 'mapping')
+        db.session.add(mapping.model)
+
+        return result
+        
+
+
+    @classmethod
+    def reload(cls, itemtype_id, mapping_dict, specified_list=[], renew_value='None'):
         """reload itemtype properties.
 
         Args:
             itemtype_id (_type_): _description_
+            mapping_dict: properties mapping data
             specified_list: renew properties id list
             renew_value: None, ALL, VAL, LOC
-
         """
         # with db.session.begin_nested():
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
+        if not item_type:
+            result = {"msg":"ItemType({}) is not exist.".format(itemtype_id),"code":1}
+            return result
+
         data = pickle.loads(pickle.dumps(item_type.render, -1))
 
         pat1 = re.compile(r'cus_(\d+)')
@@ -954,14 +1014,17 @@ class ItemTypes(RecordBase):
             if isinstance(i,dict) and 'key' in i:
                 _prop_id = i['key']
                 if _prop_id.startswith('item_'):
-                    _tmp = data['meta_list'][_prop_id]['input_type']
+                    _property_id = data['meta_list'][_prop_id]['input_type']
                     multiple_flg = data['meta_list'][_prop_id]['option']['multiple']
-                    if pat1.match(_tmp):
-                        _tmp = int(_tmp.replace('cus_', ''))
-                        if specified_list and _tmp not in specified_list:
+                    if pat1.match(_property_id):
+                        _property_id = int(_property_id.replace('cus_', ''))
+                        if specified_list and _property_id not in specified_list:
                             continue
-                        _prop = ItemTypeProps.get_record(_tmp)
+                        _prop = ItemTypeProps.get_record(_property_id)
                         if _prop:
+                            # fix mapping
+                            if _property_id in mapping_dict:
+                                data['table_row_map']['mapping'][_prop_id] = mapping_dict.get(_property_id)
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                             # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
@@ -976,19 +1039,25 @@ class ItemTypes(RecordBase):
                                 if 'format' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
 
-                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
+                                tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
                                 _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
-                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id], renew_value)
                             else:
                                 tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))
+
                                 data['table_row_map']['schema']['properties'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
-                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id])
+                                data['table_row_map']['schema']['properties'][_prop_id]['type']="object"
+                                if 'maxItems' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id] = data['table_row_map']['schema']['properties'][_prop_id].pop("maxItems") 
+                                if 'minItems' in data['table_row_map']['schema']['properties'][_prop_id]:
+                                    data['table_row_map']['schema']['properties'][_prop_id] = data['table_row_map']['schema']['properties'][_prop_id].pop("minItems") 
+                                # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id], renew_value)
                                 _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
-                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id])
+                                cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id], renew_value)
 
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
 
@@ -1027,14 +1096,12 @@ class ItemTypes(RecordBase):
                                       render=data)
         mapping = Mapping.get_record(itemtype_id)
         if mapping:
-            _a = [p for p in data.get("table_row") if p in mapping]
-            if len(_a) is not len(data.get("table_row")):
-                mapping.model.mapping = table_row_map.get('mapping')
-                flag_modified(mapping.model, 'mapping')
-                db.session.add(mapping.model)
-                result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
-                result['code'] = 0
-
+            mapping.model.mapping = table_row_map.get('mapping')
+            flag_modified(mapping.model, 'mapping')
+            db.session.add(mapping.model)
+            result['msg'] = "Fix ItemType({}) mapping".format(itemtype_id)
+            result['code'] = 0  
+        
         ItemTypeEditHistory.create_or_update(
             item_type_id=record.model.id,
             user_id=1,
@@ -1044,17 +1111,17 @@ class ItemTypes(RecordBase):
         return result
 
     @classmethod
-    def update_property_enum(cls, old_value, new_value):
+    def update_property_enum(cls, old_value, new_value, renew_value = 'None'):
         managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
         if isinstance(old_value, dict):
             for key, value in old_value.items():
                 if isinstance(old_value[key], dict):
                     if key in new_value and key in old_value:
-                        if "enum" in old_value[key]:
+                        if "enum" in old_value[key] and renew_value not in ["ALL", "VAL"]:
                             if key not in managed_key_list:
                                 if old_value[key]["enum"] != [None]:
                                     new_value[key]["enum"] = old_value[key]["enum"]
-                        if "currentEnum" in old_value[key]:
+                        if "currentEnum" in old_value[key] and renew_value not in ["ALL", "VAL"]:
                             if key not in managed_key_list:
                                 if old_value[key]["currentEnum"] != [None]:
                                     new_value[key]["currentEnum"] = old_value[key]["currentEnum"]
@@ -1144,7 +1211,6 @@ class ItemTypes(RecordBase):
                         if ret is not None:
                             return ret
         return None
-
 
 
 class ItemTypeEditHistory(object):
@@ -1530,7 +1596,7 @@ class JsonldMapping():
         if not isinstance(obj, ItemTypeJsonldMapping):
             return None
         obj.is_deleted = True
-        db.session.commit()
+        db.session.merge(obj)
         return obj
 
 
@@ -1626,6 +1692,20 @@ class ItemTypeProps(RecordBase):
         :param form_array: form (array) in JSON format.
         :returns: A new :class:`Record` instance.
         """
+        if not name:
+            raise ValueError(
+                'The property name is required and cannot be empty.'
+            )
+
+        duplicated_prop = ItemTypeProperty.query.filter(
+            ItemTypeProperty.name == name,
+            ItemTypeProperty.id != property_id
+        ).first()
+        if duplicated_prop:
+            raise ValueError(
+                f'The property name "{name}" already exists.'
+            )
+
         with db.session.begin_nested():
             record = cls(schema)
 
@@ -1650,6 +1730,53 @@ class ItemTypeProps(RecordBase):
                                                 form=form_single,
                                                 forms=form_array)
 
+            db.session.add(record.model)
+
+        after_record_insert.send(
+            current_app._get_current_object(),
+            record=record
+        )
+        return record
+
+    @classmethod
+    def create_with_property_id(cls, property_id=None, name=None, schema=None,
+                                form_single=None, form_array=None):
+        """Create a new ItemTypeProperty instance and store it in the database.
+
+        :param property_id: ID of Itemtype property.
+        :param name: Property name.
+        :param schema: Property in JSON format.
+        :param form_single: form (single) in JSON format.
+        :param form_array: form (array) in JSON format.
+        :returns: A new :class:`Record` instance.
+        """
+        if not name:
+            raise ValueError(
+                'The property name is required and cannot be empty.'
+            )
+
+        duplicated_prop = ItemTypeProperty.query.filter(
+            ItemTypeProperty.name == name,
+            ItemTypeProperty.id != property_id
+        ).first()
+        if duplicated_prop:
+            raise ValueError(
+                f'The property name "{name}" already exists.'
+            )
+
+        with db.session.begin_nested():
+            record = cls(schema)
+
+            before_record_insert.send(
+                current_app._get_current_object(),
+                record=record
+            )
+
+            record.model = ItemTypeProperty(name=name,
+                                            schema=schema,
+                                            form=form_single,
+                                            forms=form_array,
+                                            id=property_id)
             db.session.add(record.model)
 
         after_record_insert.send(
@@ -1850,23 +1977,24 @@ class ItemsMetadata(RecordBase):
             return query.all()
 
     @classmethod
-    def get_registered_item_metadata(cls, item_type_id):
-        """Retrieve multiple records by item types identifier.
+    def count_registered_item_metadata(cls, item_type_id):
+        """Count the number of registered item metadata by item type identifier.
 
-        :param item_type_id: Identifier of item type.
-        :returns: A list of :class:`Record` instance.
+        Args:
+            item_type_id (int): Identifier of item type.
+        Returns:
+            int: Count of registered item metadata.
         """
         with db.session.no_autoflush:
-            # Get all item metadata registered by item_type_id
-            items = ItemMetadata.query.filter_by(item_type_id=item_type_id).all()
-            item_metadata_array = [str(item.id) for item in items]
-            # Get all persistent identifier which are not deleted.
-            persistent_identifier = PersistentIdentifier.query.filter(
-                PersistentIdentifier.object_uuid.in_(item_metadata_array),
-                PersistentIdentifier.pid_type == 'recid',
+            query = db.session.query(PersistentIdentifier).join(
+                ItemMetadata,
+                PersistentIdentifier.object_uuid == ItemMetadata.id
+            ).filter(
+                ItemMetadata.item_type_id == item_type_id,
+                PersistentIdentifier.pid_type == "recid",
                 PersistentIdentifier.status == PIDStatus.REGISTERED
-            ).all()
-            return persistent_identifier
+            )
+            return query.count()
 
     @classmethod
     def get_by_object_id(cls, object_id):
@@ -2683,7 +2811,7 @@ class RequestMailList(object):
                 else:
                     query_object.mail_list = request_maillist
                     db.session.merge(query_object)
-            db.session.commit()
+
         except SQLAlchemyError:
             db.session.rollback()
             return False
@@ -2766,6 +2894,67 @@ class RequestMailList(object):
 
         :param item_ids: item_id of target request_mail_list
         """
+        for item_id in item_ids:
+            cls.delete(item_id)
+
+class ItemApplication(object):
+
+    @classmethod
+    def update(cls, item_id, item_application):
+        try:
+            with db.session.begin_nested():
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if not query_object:
+                    query_object = _ItemApplication(
+                        item_id=item_id,
+                        item_application=item_application
+                    )
+                    db.session.add(query_object)
+                else:
+                    query_object.item_application = item_application
+                    db.session.merge(query_object)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def update_by_list_item_id(cls, item_ids, item_application):
+        for item_id in item_ids:
+            cls.update(item_id, item_application)
+
+    @classmethod
+    def get_item_application_by_item_id(cls, item_id):
+        try:
+            with db.session.no_autoflush:
+                query_object = _ItemApplication.query.filter_by(
+                    item_id=item_id).one_or_none()
+                if query_object and query_object.item_application:
+                    return query_object.item_application
+                else:
+                    return {}
+        except SQLAlchemyError:
+            return {}
+
+    @classmethod
+    def delete(cls, item_id):
+        try:
+            cls.delete_without_commit(item_id)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            return False
+        return True
+
+    @classmethod
+    def delete_without_commit(cls, item_id):
+        with db.session.begin_nested():
+            _ItemApplication.query.filter_by(item_id=item_id).delete()
+
+    @classmethod
+    def delete_by_list_item_id(cls, item_ids):
         for item_id in item_ids:
             cls.delete(item_id)
 
@@ -2899,7 +3088,7 @@ class ItemLink(object):
 
         return ret
 
-    def update(self, items):
+    def update(self, items, required_commit=True):
         """Update list item link of current record.
 
         This method updates the relationships between the current item
@@ -2910,6 +3099,8 @@ class ItemLink(object):
         Args:
             items(list): List of dictionaries containing
                 'item_id' and 'sele_id' (relationship type).
+            required_commit (bool):
+                If True, commit the transaction after processing.
         Returns:
             str: Error message if any, otherwise None.
         """
@@ -3025,22 +3216,26 @@ class ItemLink(object):
                 if created:
                     self.bulk_create(created)
 
-            # Commit the transaction if all operations succeed
-            db.session.commit()
+            if required_commit:
+                # Commit the transaction if all operations succeed
+                db.session.commit()
             for deleted_link in deleted:
                 UserActivityLogger.info(
                     operation="ITEM_DELETE_LINK",
-                    target_key=deleted_link["dst_item_pid"]
+                    target_key=deleted_link["dst_item_pid"],
+                    required_commit=required_commit
                 )
             for updated_link in updated:
                 UserActivityLogger.info(
                     operation="ITEM_UPDATE_LINK",
-                    target_key=updated_link["dst_item_pid"]
+                    target_key=updated_link["dst_item_pid"],
+                    required_commit=required_commit
                 )
             for created_link in created:
                 UserActivityLogger.info(
                     operation="ITEM_CREATE_LINK",
-                    target_key=created_link["dst_item_pid"]
+                    target_key=created_link["dst_item_pid"],
+                    required_commit=required_commit
                 )
         except IntegrityError as ex:
             # Log and handle integrity errors (e.g., duplicate entries)

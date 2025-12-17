@@ -189,7 +189,7 @@ class ExportComponent extends React.Component {
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+          '&times;</button>' + internal_server_error.value + '</div>');
       }
     });
   }
@@ -222,7 +222,7 @@ class ExportComponent extends React.Component {
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+          '&times;</button>' + internal_server_error.value + '</div>');
       }
     });
   }
@@ -280,7 +280,7 @@ class ExportComponent extends React.Component {
         $('#errors').append(
           '<div class="alert alert-danger alert-dismissable">' +
           '<button type="button" class="close" data-dismiss="alert" aria-hidden="true">' +
-          '&times;</button>' + internal_server_error + '</div>');
+          '&times;</button>' + internal_server_error.value + '</div>');
       }
     });
   }
@@ -333,11 +333,11 @@ class ExportComponent extends React.Component {
             </div>
             <div className="row">
               <div className="col-xs-12 text-center">
-                <div class="form-inline">
+                <div className="form-inline">
                   <label>{item_type_label}: </label>
-                  <select disabled={isDisableExport} class="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
+                  <select disabled={isDisableExport} className="form-control" onChange={this.SelectItemTypeChange}>{select_options}</select>&nbsp;
                   <label>{item_id_label}: </label>
-                  <input disabled={isDisableExport} class="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100" />
+                  <input disabled={isDisableExport} className="form-control" type="text" id="item_id_range" pattern="[0-9]*-[0-9]*" onChange={this.InputItemIdChange} value={item_id_range} placeholder="e.g.: 50 or 1-100 or 1- or -100" />
                 </div>
               </div>
             </div>

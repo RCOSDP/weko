@@ -74,6 +74,39 @@ def test_location_validation(app, db):
     pytest.raises(ValueError, Location, name='a' * 21, uri='file://', )
 
 
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_models.py::test_create_s3_client -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_create_s3_client(app, db, mocker):
+    with db.session.begin_nested():
+        # Test Case (Pos): type = s3_vh
+        l1 = Location(name='test1', uri='file:///tmp', default=False,
+                      access_key="access_key", secret_key="secret_key", type="s3_vh")
+        db.session.add(l1)
+        mocker_create = mocker.patch("invenio_files_rest.utils.create_boto3_s3_client")
+        l1.create_s3_client()
+        called_kwargs = mocker_create.call_args[1]
+        assert called_kwargs["client_config"]["s3"]["addressing_style"] == "virtual"
+
+    # Test Case (Pos): type = s3
+    with db.session.begin_nested():
+        l2 = Location(name='test2', uri='file:///tmp', default=False,
+                      access_key="access_key", secret_key="secret_key", type="s3")
+        db.session.add(l2)
+        mocker_create = mocker.patch("invenio_files_rest.utils.create_boto3_s3_client")
+        l2.create_s3_client()
+        called_kwargs = mocker_create.call_args[1]
+        assert called_kwargs["client_config"]["s3"]["addressing_style"] == "path"
+
+    # Test Case (Pos): type = None
+    with db.session.begin_nested():
+        l3 = Location(name='test3', uri='file:///tmp', default=False,
+                      access_key="access_key", secret_key="secret_key")
+        db.session.add(l3)
+        mocker_create = mocker.patch("invenio_files_rest.utils.create_boto3_s3_client")
+        l3.create_s3_client()
+        called_kwargs = mocker_create.call_args[1]
+        assert called_kwargs["client_config"]["s3"]["addressing_style"] == "auto"
+
+
 def test_bucket_removal(app, db, bucket, objects):
     """Test removal of bucket."""
     assert Bucket.query.count() == 1
@@ -952,8 +985,8 @@ def test_fileinstance_send_file(app, db, dummy_location,dummy_s3_location,mocker
                     readable=True
                 )
                 res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-                mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-                shutil.rmtree("/tmp/pdf_dir/1")
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
 
 def test_fileinstance_send_file_s3_path1(app, db, dummy_location,dummy_s3_location,mocker):
     """Test file instance send file."""
@@ -992,8 +1025,8 @@ def test_fileinstance_send_file_s3_path1(app, db, dummy_location,dummy_s3_locati
                     readable=True
                 )
                 res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-                mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-                shutil.rmtree("/tmp/pdf_dir/1")
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
 
 def test_fileinstance_send_file_s3_path2(app, db, dummy_location,dummy_s3_location,mocker):
     """Test file instance send file."""
@@ -1032,8 +1065,8 @@ def test_fileinstance_send_file_s3_path2(app, db, dummy_location,dummy_s3_locati
                     readable=True
                 )
                 res = f.send_file("test_file.docx",True,"application/vnd.openxmlformats-officedocument.wordprocessingml.document",False,None,False,True)
-                mock_convert.assert_called_with("/tmp/pdf_dir/1","/tmp/convert_1/test_file.docx")
-                shutil.rmtree("/tmp/pdf_dir/1")
+                mock_convert.assert_called_with("/var/tmp/pdf_dir/1","/var/tmp/convert_1/test_file.docx")
+                shutil.rmtree("/var/tmp/pdf_dir/1")
 
 
 
@@ -1099,4 +1132,4 @@ def test_get_location_all(app, db, dummy_location):
     """Test validating the FileInstance."""
     f = FileInstance.create()
     locations = f.get_location_all()
-    assert locations == None
+    assert locations == [dummy_location]

@@ -15,7 +15,7 @@ from sqlalchemy_utils.types import JSONType
 
 # revision identifiers, used by Alembic.
 revision = "89c58783bf65"
-down_revision = "4d2556236060"
+down_revision = "1619a115156f"
 branch_labels = ()
 depends_on = None
 
@@ -100,6 +100,12 @@ def upgrade():
         op.f("ix_jsonld_mappings_version_end_transaction_id"),
         "jsonld_mappings_version",
         ["end_transaction_id"],
+        unique=False,
+    )
+    op.create_index(
+        op.f("ix_jsonld_mappings_version_item_type_id"),
+        "jsonld_mappings_version",
+        ["item_type_id"],
         unique=False,
     )
 

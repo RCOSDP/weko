@@ -36,11 +36,8 @@ from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
-from weko_items_ui.utils import (
-    lock_item_will_be_edit, send_mail_direct_registered, send_mail_item_deleted
-)
+from weko_items_ui.utils import lock_item_will_be_edit
 from weko_logging.activity_logger import UserActivityLogger
-from weko_notifications.utils import notify_item_imported, notify_item_deleted
 from weko_records_ui.utils import get_record_permalink
 from weko_search_ui.utils import (
     import_items_to_system, import_items_to_activity,
@@ -59,11 +56,11 @@ from .utils import (
     check_import_items,
     check_deletion_type,
     update_item_ids,
-    get_shared_id_from_on_behalf_of,
-    delete_item_directly
+    get_shared_ids_from_on_behalf_of,
+    delete_item_directly,
+    notify_about_item,
 )
 from weko_accounts.utils import limiter
-
 
 class SwordState:
     accepted = "http://purl.org/net/sword/3.0/state/accepted"
@@ -262,7 +259,7 @@ def post_service_document():
     file_format = check_import_file_format(file, packaging)
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
-    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    shared_ids = get_shared_ids_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
@@ -281,7 +278,7 @@ def post_service_document():
             )
 
     check_result = check_import_items(
-        file, file_format, shared_id=shared_id,
+        file, file_format, shared_ids=shared_ids,
         packaging=packaging, client_id=client_id
     )
 
@@ -386,10 +383,9 @@ def post_service_document():
                 error = str(import_result.get('error_id'))
             else:
                 recid = str(import_result.get("recid"))
-                notify_item_imported(
-                    current_user.id, recid, current_user.id, shared_id=shared_id
+                notify_about_item(
+                    "import", recid, current_user.id, shared_ids=shared_ids
                 )
-                send_mail_direct_registered(recid, current_user.id, shared_id)
 
         elif register_type == "Workflow":
             url, recid, action , error = import_items_to_activity(
@@ -566,7 +562,7 @@ def put_object(recid):
     file_format = check_import_file_format(file, packaging)
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
-    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    shared_ids = get_shared_ids_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
 
     digest = request.headers.get("Digest")
@@ -585,7 +581,7 @@ def put_object(recid):
             )
 
     check_result = check_import_items(
-        file, file_format, shared_id=shared_id,
+        file, file_format, shared_ids=shared_ids,
         packaging=packaging, client_id=client_id
     )
 
@@ -675,6 +671,7 @@ def put_object(recid):
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
+    UserActivityLogger.issue_log_group_id(None)
     request_info = {
         "remote_addr": request.remote_addr,
         "referrer": request.referrer,
@@ -702,9 +699,8 @@ def put_object(recid):
                 .format(recid, import_result.get("error_id")),
                 ErrorType.BadRequest
             )
-        send_mail_direct_registered(recid, current_user.id, shared_id)
-        notify_item_imported(
-            current_user.id, recid, current_user.id, shared_id=shared_id
+        notify_about_item(
+            "update", recid, current_user.id, shared_ids=shared_ids
         )
         response = jsonify(_get_status_document(recid)), 200
 
@@ -990,7 +986,7 @@ def delete_object(recid):
         )
 
     on_behalf_of = request.headers.get("On-Behalf-Of")
-    shared_id = get_shared_id_from_on_behalf_of(on_behalf_of)
+    shared_ids = get_shared_ids_from_on_behalf_of(on_behalf_of)
     client_id = request.oauth.client.client_id
     check_result = check_deletion_type(client_id)
 
@@ -1008,12 +1004,13 @@ def delete_object(recid):
     owner = -1
     if current_user.is_authenticated:
         owner = current_user.id
+    UserActivityLogger.issue_log_group_id(None)
     request_info = {
         "remote_addr": request.remote_addr,
         "referrer": request.referrer,
         "hostname": request.host,
         "user_id": owner,
-        "shared_id": shared_id,
+        "shared_ids": shared_ids,
         "action": "DELETE"
     }
 
@@ -1035,10 +1032,9 @@ def delete_object(recid):
                 raise WekoSwordserverException(msg, ErrorType.BadRequest)
 
             delete_item_directly(recid, request_info=request_info)
-            notify_item_deleted(
-                current_user.id, recid, current_user.id, shared_id=shared_id
+            notify_about_item(
+                "delete", recid, current_user.id, record, shared_ids
             )
-            send_mail_item_deleted(recid, record, current_user.id, shared_id)
             current_app.logger.info(
                 f"Item deleted by sword from {request.oauth.client.name} (recid={recid})"
             )
@@ -1108,13 +1104,14 @@ def _create_error_document(type, error):
 
 @blueprint.errorhandler(401)
 def handle_unauthorized(ex):
+    traceback.print_exc()
     msg = "Authentication is required."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.AuthenticationRequired.type, msg)), ErrorType.AuthenticationRequired.code
 
 @blueprint.errorhandler(403)
 def handle_forbidden(ex):
-    msg = "Not allowed operation in your token scope."
+    msg = "Not allowed operation in your role or token scope."
     current_app.logger.error(msg)
     return jsonify(_create_error_document(ErrorType.Forbidden.type, msg)), ErrorType.Forbidden.code
 

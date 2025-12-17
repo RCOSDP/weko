@@ -35,7 +35,7 @@ from invenio_pidstore import current_pidstore
 from invenio_indexer.api import RecordIndexer
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
-    
+
 def process_minter(value):
     """Load minter from PIDStore registry based on given value.
 
@@ -143,14 +143,21 @@ def reindex(recid):
     '--raise-on-exception', type=bool,default=True,
     help='if False then don’t propagate exceptions from call to bulk and just report the items that failed as failed.')
 @click.option('--chunk-size',type=int,default=500,help='number of docs in one chunk sent to es (default: 500)')
-@click.option('--max-chunk-bytes',type=int,default=104857600,help='the maximum size of the request in bytes (default: 100MB)')
-@click.option('--max-retries',type=int,default=0,help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
+@click.option(
+    '--max-chunk-bytes',type=int,default=104857600,
+    help='the maximum size of the request in bytes (default: 100MB)')
+@click.option(
+    '--max-retries',type=int,default=0,
+    help='maximum number of times a document will be retired when 429 is received, set to 0 (default) for no retries on 429')
 @click.option('--initial_backoff',type=int,default=2,help='number of secconds we should wait before the first retry.')
 @click.option('--max-backoff',type=int,default=600,help='maximim number of seconds a retry will wait')
+@click.option('--stats-only', type=bool, default=True,
+              help='Only show indexing statistics without performing indexing.')
 @with_appcontext
-def run(version_type=None, raise_on_error=True,raise_on_exception=True,chunk_size=500,max_chunk_bytes=104857600,max_retries=0,initial_backoff=2,max_backoff=600):
+def run(version_type=None, raise_on_error=True,raise_on_exception=True,
+        chunk_size=500,max_chunk_bytes=104857600,max_retries=0,
+        initial_backoff=2,max_backoff=600, stats_only=True):
     """Initialize indexing queue."""
-
     try:
        RecordIndexer(version_type=version_type).process_bulk_queue(
                 es_bulk_kwargs={'raise_on_error': raise_on_error,
@@ -159,7 +166,8 @@ def run(version_type=None, raise_on_error=True,raise_on_exception=True,chunk_siz
                             'max_chunk_bytes':max_chunk_bytes,
                             'max_retries': max_retries,
                             'initial_backoff': initial_backoff,
-                            'max_backoff': max_backoff})
+                            'max_backoff': max_backoff,
+                            'stats_only': stats_only},)
     except Exception as e:
         click.secho(e, fg='red')
     click.secho('Reindex process finished!', fg='green')

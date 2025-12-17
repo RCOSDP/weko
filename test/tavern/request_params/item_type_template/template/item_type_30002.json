@@ -1,0 +1,597 @@
+{
+    "pubdate": "yyyy-mm-dd",
+    "item_30002_apc5": {
+        "subitem_apc": ""
+    },
+    "item_30002_date11": [
+        {
+            "subitem_date_issued_type": "",
+            "subitem_date_issued_datetime": "yyyy-mm-dd"
+        }
+    ],
+    "item_30002_file35": [
+        {
+            "url": {
+                "url": "",
+                "label": "",
+                "objectType": ""
+            },
+            "date": [
+                {
+                    "dateType": "",
+                    "dateValue": "yyyy-mm-dd"
+                }
+            ],
+            "format": "",
+            "groups": "",
+            "version": "",
+            "fileDate": [
+                {
+                    "fileDateType": "",
+                    "fileDateValue": "yyyy-mm-dd"
+                }
+            ],
+            "filename": "",
+            "filesize": [
+                {
+                    "value": ""
+                }
+            ],
+            "accessrole": "",
+            "displaytype": "",
+            "licensefree": "",
+            "licensetype": ""
+        }
+    ],
+    "item_30002_title0": [
+        {
+            "subitem_title": "",
+            "subitem_title_language": ""
+        }
+    ],
+    "item_30002_rights6": [
+        {
+            "subitem_rights": "",
+            "subitem_rights_language": "",
+            "subitem_rights_resource": ""
+        }
+    ],
+    "item_30002_creator2": [
+        {
+            "iscreator": "",
+            "givenNames": [
+                {
+                    "givenName": "",
+                    "givenNameLang": ""
+                }
+            ],
+            "creatorType": "",
+            "familyNames": [
+                {
+                    "familyName": "",
+                    "familyNameLang": ""
+                }
+            ],
+            "creatorMails": [
+                {
+                    "creatorMail": ""
+                }
+            ],
+            "creatorNames": [
+                {
+                    "creatorName": "",
+                    "creatorNameLang": "",
+                    "creatorNameType": ""
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "creatorAffiliations": [
+                {
+                    "affiliationNames": [
+                        {
+                            "affiliationName": "",
+                            "affiliationNameLang": ""
+                        }
+                    ],
+                    "affiliationNameIdentifiers": [
+                        {
+                            "affiliationNameIdentifier": "",
+                            "affiliationNameIdentifierURI": "",
+                            "affiliationNameIdentifierScheme": ""
+                        }
+                    ]
+                }
+            ],
+            "creatorAlternatives": [
+                {
+                    "creatorAlternative": "",
+                    "creatorAlternativeLang": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_subject8": [
+        {
+            "subitem_subject": "",
+            "subitem_subject_uri": "",
+            "subitem_subject_scheme": "",
+            "subitem_subject_language": ""
+        }
+    ],
+    "item_30002_catalog39": [
+        {
+            "catalog_file": {
+                "catalog_file_uri": "",
+                "catalog_file_object_type": ""
+            },
+            "catalog_rights": [
+                {
+                    "catalog_rights_right": "",
+                    "catalog_right_language": "",
+                    "catalog_right_rdf_resource": ""
+                }
+            ],
+            "catalog_titles": [
+                {
+                    "catalog_title": "",
+                    "catalog_title_language": ""
+                }
+            ],
+            "catalog_licenses": [
+                {
+                    "catalog_license": "",
+                    "catalog_license_type": "",
+                    "catalog_license_language": "",
+                    "catalog_license_rdf_resource": ""
+                }
+            ],
+            "catalog_subjects": [
+                {
+                    "catalog_subject": "",
+                    "catalog_subject_uri": "",
+                    "catalog_subject_scheme": "",
+                    "catalog_subject_language": ""
+                }
+            ],
+            "catalog_identifiers": [
+                {
+                    "catalog_identifier": "",
+                    "catalog_identifier_type": ""
+                }
+            ],
+            "catalog_contributors": [
+                {
+                    "contributor_type": "",
+                    "contributor_names": [
+                        {
+                            "contributor_name": "",
+                            "contributor_name_language": ""
+                        }
+                    ]
+                }
+            ],
+            "catalog_descriptions": {
+                "catalog_description": "",
+                "catalog_description_type": "",
+                "catalog_description_language": ""
+            },
+            "catalog_access_rights": [
+                {
+                    "catalog_access_right": "",
+                    "catalog_access_right_rdf_resource": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_edition41": [
+        {
+            "edition": "",
+            "edition_language": ""
+        }
+    ],
+    "item_30002_heading36": [
+        {
+            "subitem_heading_headline": "",
+            "subitem_heading_language": "",
+            "subitem_heading_banner_headline": ""
+        }
+    ],
+    "item_30002_version14": {
+        "subitem_version": ""
+    },
+    "item_30002_language12": [
+        {
+            "subitem_language": ""
+        }
+    ],
+    "item_30002_page_end28": {
+        "subitem_end_page": ""
+    },
+    "item_30002_relation18": [
+        {
+            "subitem_relation_name": [
+                {
+                    "subitem_relation_name_text": "",
+                    "subitem_relation_name_language": ""
+                }
+            ],
+            "subitem_relation_type": "",
+            "subitem_relation_type_id": {
+                "subitem_relation_type_select": "",
+                "subitem_relation_type_id_text": ""
+            }
+        }
+    ],
+    "item_30002_temporal19": [
+        {
+            "subitem_temporal_text": "",
+            "subitem_temporal_language": ""
+        }
+    ],
+    "item_30002_publisher10": [
+        {
+            "subitem_publisher": "",
+            "subitem_publisher_language": ""
+        }
+    ],
+    "item_30002_conference34": [
+        {
+            "subitem_conference_date": {
+                "subitem_conference_period": "",
+                "subitem_conference_end_day": "",
+                "subitem_conference_end_year": "",
+                "subitem_conference_end_month": "",
+                "subitem_conference_start_day": "",
+                "subitem_conference_start_year": "",
+                "subitem_conference_start_month": "",
+                "subitem_conference_date_language": ""
+            },
+            "subitem_conference_names": [
+                {
+                    "subitem_conference_name": "",
+                    "subitem_conference_name_language": ""
+                }
+            ],
+            "subitem_conference_places": [
+                {
+                    "subitem_conference_place": "",
+                    "subitem_conference_place_language": ""
+                }
+            ],
+            "subitem_conference_venues": [
+                {
+                    "subitem_conference_venue": "",
+                    "subitem_conference_venue_language": ""
+                }
+            ],
+            "subitem_conference_country": "",
+            "subitem_conference_sequence": "",
+            "subitem_conference_sponsors": [
+                {
+                    "subitem_conference_sponsor": "",
+                    "subitem_conference_sponsor_language": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_contributor3": [
+        {
+            "givenNames": [
+                {
+                    "givenName": "",
+                    "givenNameLang": ""
+                }
+            ],
+            "familyNames": [
+                {
+                    "familyName": "",
+                    "familyNameLang": ""
+                }
+            ],
+            "contributorType": "",
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "contributorMails": [
+                {
+                    "contributorMail": ""
+                }
+            ],
+            "contributorNames": [
+                {
+                    "lang": "",
+                    "nameType": "",
+                    "contributorName": ""
+                }
+            ],
+            "contributorAffiliations": [
+                {
+                    "contributorAffiliationNames": [
+                        {
+                            "contributorAffiliationName": "",
+                            "contributorAffiliationNameLang": ""
+                        }
+                    ],
+                    "contributorAffiliationNameIdentifiers": [
+                        {
+                            "contributorAffiliationURI": "",
+                            "contributorAffiliationScheme": "",
+                            "contributorAffiliationNameIdentifier": ""
+                        }
+                    ]
+                }
+            ],
+            "contributorAlternatives": [
+                {
+                    "contributorAlternative": "",
+                    "contributorAlternativeLang": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_description9": [
+        {
+            "subitem_description": "",
+            "subitem_description_type": "",
+            "subitem_description_language": ""
+        }
+    ],
+    "item_30002_identifier16": [
+        {
+            "subitem_identifier_uri": "",
+            "subitem_identifier_type": ""
+        }
+    ],
+    "item_30002_page_start27": {
+        "subitem_start_page": ""
+    },
+    "item_30002_degree_name31": [
+        {
+            "subitem_degreename": "",
+            "subitem_degreename_language": ""
+        }
+    ],
+    "item_30002_geolocation20": [
+        {
+            "subitem_geolocation_box": {
+                "subitem_east_longitude": "",
+                "subitem_north_latitude": "",
+                "subitem_south_latitude": "",
+                "subitem_west_longitude": ""
+            },
+            "subitem_geolocation_place": [
+                {
+                    "subitem_geolocation_place_text": ""
+                }
+            ],
+            "subitem_geolocation_point": {
+                "subitem_point_latitude": "",
+                "subitem_point_longitude": ""
+            }
+        }
+    ],
+    "item_30002_access_rights4": {
+        "subitem_access_right": "",
+        "subitem_access_right_uri": ""
+    },
+    "item_30002_date_granted32": {
+        "subitem_dategranted": "yyyy-mm-dd"
+    },
+    "item_30002_dcterms_date38": [
+        {
+            "jpcoar_format": "",
+            "jpcoar_format_language": ""
+        }
+    ],
+    "item_30002_issue_number25": {
+        "subitem_issue": ""
+    },
+    "item_30002_rights_holder7": [
+        {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "",
+                    "nameIdentifierURI": "",
+                    "nameIdentifierScheme": ""
+                }
+            ],
+            "rightHolderNames": [
+                {
+                    "rightHolderName": "",
+                    "rightHolderLanguage": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_source_title23": [
+        {
+            "subitem_source_title": "",
+            "subitem_source_title_language": ""
+        }
+    ],
+    "item_30002_version_type15": {
+        "subitem_version_type": "",
+        "subitem_peer_reviewed": "",
+        "subitem_version_resource": ""
+    },
+    "item_30002_volume_title44": [
+        {
+            "volume_title": "",
+            "volume_title_language": ""
+        }
+    ],
+    "item_30002_jpcoar_format40": [
+        {
+            "original_language": "",
+            "original_language_language": ""
+        }
+    ],
+    "item_30002_resource_type13": {
+        "resourceuri": "",
+        "resourcetype": ""
+    },
+    "item_30002_volume_number24": {
+        "subitem_volume": ""
+    },
+    "item_30002_dataset_series42": [
+        {
+            "jpcoar_dataset_series": ""
+        }
+    ],
+    "item_30002_dcterms_extent46": [
+        {
+            "publisher_names": [
+                {
+                    "publisher_name": "",
+                    "publisher_name_language": ""
+                }
+            ],
+            "publication_places": [
+                {
+                    "publication_place": ""
+                }
+            ],
+            "publisher_locations": [
+                {
+                    "publisher_location": ""
+                }
+            ],
+            "publisher_descriptions": [
+                {
+                    "publisher_description": "",
+                    "publisher_description_language": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_degree_grantor33": [
+        {
+            "subitem_degreegrantor": [
+                {
+                    "subitem_degreegrantor_name": "",
+                    "subitem_degreegrantor_language": ""
+                }
+            ],
+            "subitem_degreegrantor_identifier": [
+                {
+                    "subitem_degreegrantor_identifier_name": "",
+                    "subitem_degreegrantor_identifier_scheme": ""
+                }
+            ]
+        }
+    ],
+    "item_30002_number_of_pages26": {
+        "subitem_number_of_pages": ""
+    },
+    "item_30002_alternative_title1": [
+        {
+            "subitem_alternative_title": "",
+            "subitem_alternative_title_language": ""
+        }
+    ],
+    "item_30002_funding_reference21": [
+        {
+            "subitem_award_titles": [
+                {
+                    "subitem_award_title": "",
+                    "subitem_award_title_language": ""
+                }
+            ],
+            "subitem_funder_names": [
+                {
+                    "subitem_funder_name": "",
+                    "subitem_funder_name_language": ""
+                }
+            ],
+            "subitem_award_numbers": {
+                "subitem_award_uri": "",
+                "subitem_award_number": "",
+                "subitem_award_number_type": ""
+            },
+            "subitem_funding_streams": [
+                {
+                    "subitem_funding_stream": "",
+                    "subitem_funding_stream_language": ""
+                }
+            ],
+            "subitem_funder_identifiers": {
+                "subitem_funder_identifier": "",
+                "subitem_funder_identifier_type": ""
+            },
+            "subitem_funding_stream_identifiers": {
+                "subitem_funding_stream_identifier": "",
+                "subitem_funding_stream_identifier_type": "",
+                "subitem_funding_stream_identifier_type_uri": ""
+            }
+        }
+    ],
+    "item_30002_original_language43": [
+        {
+            "subitem_dcterms_date": "",
+            "subitem_dcterms_date_language": ""
+        }
+    ],
+    "item_30002_source_identifier22": [
+        {
+            "subitem_source_identifier": "",
+            "subitem_source_identifier_type": ""
+        }
+    ],
+    "item_30002_holding_agent_name37": [
+        {
+            "holding_agent_names": [
+                {
+                    "holding_agent_name": "",
+                    "holding_agent_name_language": ""
+                }
+            ],
+            "holding_agent_name_identifier": {
+                "holding_agent_name_identifier_uri": "",
+                "holding_agent_name_identifier_value": "",
+                "holding_agent_name_identifier_scheme": ""
+            }
+        }
+    ],
+    "item_30002_dissertation_number30": {
+        "subitem_dissertationnumber": ""
+    },
+    "item_30002_publisher_information45": [
+        {
+            "dcterms_extent": "",
+            "dcterms_extent_language": ""
+        }
+    ],
+    "item_30002_identifier_registration17": {
+        "subitem_identifier_reg_text": "",
+        "subitem_identifier_reg_type": ""
+    },
+    "item_30002_bibliographic_information29": {
+        "bibliographicPageEnd": "",
+        "bibliographic_titles": [
+            {
+                "bibliographic_title": "",
+                "bibliographic_titleLang": ""
+            }
+        ],
+        "bibliographicPageStart": "",
+        "bibliographicIssueDates": {
+            "bibliographicIssueDate": "yyyy-mm-dd",
+            "bibliographicIssueDateType": ""
+        },
+        "bibliographicIssueNumber": "",
+        "bibliographicVolumeNumber": "",
+        "bibliographicNumberOfPages": ""
+    },
+    "$schema": "/items/jsonschema/30002",
+    "shared_user_id": -1
+}

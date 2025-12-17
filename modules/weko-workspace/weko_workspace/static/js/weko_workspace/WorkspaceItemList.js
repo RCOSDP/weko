@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     return React.createElement(
       'div',
-      { style: { position: 'relative', marginBottom: '20px', maxWidth: '300px' } },
+      { style: { position: 'relative', marginTop: '10px', marginBottom: '10px', marginLeft: '5px', maxWidth: '300px' } },
       React.createElement('input', {
         type: 'text',
         id: 'search-input',
@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const handleFilter = async (e) => {
         e.preventDefault();
         const jsonTemplate = generateJsonTemplate();
-        await refreshPage('/workspace', 'POST', jsonTemplate);
+        await refreshPage('/workspace/', 'POST', jsonTemplate);
         closeFilter();
       };
 
@@ -446,11 +446,11 @@ document.addEventListener('DOMContentLoaded', function () {
           const data = await fetchJsonResponse('/workspace/save_filters', 'POST', jsonTemplate);
           alert(data.message);
           closeFilter();
-          await refreshPage('/workspace', 'GET');
+          await refreshPage('/workspace/', 'GET');
         } catch (error) {
           alert(error.message);
           closeFilter();
-          await refreshPage('/workspace', 'GET');
+          await refreshPage('/workspace/', 'GET');
           console.error('保存エラー:', error);
         }
       };
@@ -462,15 +462,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const data = await fetchJsonResponse('/workspace/reset_filters', 'DELETE');
             alert(data.message);
             closeFilter();
-            await refreshPage('/workspace', 'GET');
+            await refreshPage('/workspace/', 'GET');
           } catch (error) {
             alert(error.message);
             closeFilter();
-            await refreshPage('/workspace', 'GET');
+            await refreshPage('/workspace/', 'GET');
             console.error('リセットエラー:', error);
           }
-        } else {
-          console.log('リセットがキャンセルされました');
         }
       };
 
@@ -867,17 +865,13 @@ document.addEventListener('DOMContentLoaded', function () {
       }),
       searchContainer
     );
-  } else {
-    console.error('search-container が見つかりません');
   }
 
   // 初期表示
   if (workspaceItemList.length > 0 || Object.keys(defaultConditions).length > 0) {
-    console.log('初期化開始: データがロードされました', { workspaceItemList, defaultConditions });
     updateDisplay();
     setupToggle();
   } else {
-    console.warn('初期データが空です');
     mountButtons();
     bindRelatedButtons();
     setupToggle();

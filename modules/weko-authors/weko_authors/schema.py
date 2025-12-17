@@ -197,6 +197,8 @@ class AuthorSchema(Schema):
     affiliationInfo = fields.List(fields.Nested(AffiliationInfoSchema))
     """List of affiliations associated with the author."""
 
+    communityIds = fields.List(fields.String())
+
     class Meta:
         strict = True
 
@@ -205,21 +207,6 @@ class AuthorSchema(Schema):
         """Ensure the author schema is not empty."""
         if not data:
             raise ValidationError("author can not be null.")
-
-
-class AuthorUpdateSchema(AuthorSchema):
-    """Schema for updating author information."""
-
-    @validates_schema
-    def validate_weko_id_required(self, data, **kwargs):
-        """Ensure at least one WEKO ID is included on update."""
-        author_id_info = data.get("authorIdInfo", [])
-        if not any(item.get("idType") == "WEKO" for item in author_id_info):
-            raise ValidationError(
-                "At least one WEKO ID must be provided in update.",
-                field_name="authorIdInfo"
-            )
-
 
 class AuthorCreateRequestSchema(Schema):
     """Request schema for creating a new author."""
@@ -237,7 +224,7 @@ class AuthorUpdateRequestSchema(Schema):
     force_change = fields.Bool()
     """Flag to force change"""
 
-    author = fields.Nested(AuthorUpdateSchema, required=True)
+    author = fields.Nested(AuthorSchema, required=True)
     """Updated author information."""
 
     class Meta:

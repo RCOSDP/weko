@@ -42,6 +42,7 @@ from weko_accounts.utils import roles_required
 from weko_records.models import SiteLicenseInfo
 
 from werkzeug.local import LocalProxy
+from .models import AdminSettings
 
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
@@ -220,9 +221,12 @@ def save_lang_list():
         return jsonify(msg='Header Error')
     result = 'success'
     data = request.get_json()
-    from weko_index_tree.utils import delete_index_trees_from_redis
+    from weko_index_tree.utils import delete_index_trees_from_redis, delete_index_reset_trees_from_redis, \
+        delete_index_reset_ignore_more_trees_from_redis
     for lang_code in [lang["lang_code"] for lang in data if not lang["is_registered"]]:
         delete_index_trees_from_redis(lang_code)
+        delete_index_reset_trees_from_redis(lang_code)
+        delete_index_reset_ignore_more_trees_from_redis(lang_code)
 
     try:
         update_admin_lang_setting(data)
@@ -642,10 +646,6 @@ def get_site_info():
                 'GOOGLE_TRACKING_ID_USER']
         except BaseException:
             pass
-        try:
-            result['addthis_user_id'] = current_app.config['ADDTHIS_USER_ID']
-        except BaseException:
-            pass
         return jsonify(result)
 
     result['copy_right'] = site_info.copy_right
@@ -656,7 +656,6 @@ def get_site_info():
     result['site_name'] = site_info.site_name
     result['notify'] = site_info.notify
     result['google_tracking_id_user'] = site_info.google_tracking_id_user
-    result['addthis_user_id'] = site_info.addthis_user_id
 
     if site_info.ogp_image and site_info.ogp_image_name:
         ts = time.time()
@@ -782,7 +781,7 @@ def send_mail_reminder_usage_report():
     if json_data and json_data.get('activity_ids'):
         activities_id = json_data.get('activity_ids')
         usage_report = UsageReport()
-        result = usage_report.send_reminder_mail(activities_id)
+        result = usage_report.send_reminder_mail(activities_id, forced_send=True)
 
     return jsonify(status=result), 200
 
@@ -859,3 +858,30 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+#プロフィール設定画面のセーブの為のエンドポイントを設定
+@blueprint_api.route("/profile_settings/save", methods=["POST"])
+#ログインユーザーの設定
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    # データベースに保存する処理
+def send_profile_settings_save():
+    """Save profile settings.
+    Return:
+        json -- response result
+    """
+    data = request.get_json()
+    if not data or 'profiles_templates' not in data:
+        return jsonify({"status": "error", "msg": "Invalid data"}), 400
+
+    profiles_templates = data['profiles_templates']
+
+    try:
+        # settingsカラムを更新または新規作成
+        AdminSettings.update(name="profiles_items_settings", settings=profiles_templates)
+        return jsonify({"status": "success", "msg": "Settings updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error("Error updating profile settings: {}".format(str(e)))
+        return jsonify({"status": "error", "msg": "Failed to update settings"}), 500

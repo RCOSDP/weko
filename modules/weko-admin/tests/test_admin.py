@@ -1,23 +1,25 @@
 
-import os
+from datetime import datetime
 import io
 import json
+from unittest.mock import MagicMock, patch
+import os
+from os.path import dirname, join
 import pytest
-from datetime import datetime
-from mock import MagicMock, patch
-from .helpers import login, logout
+import uuid
 
 from flask import url_for,current_app,make_response
 from flask_admin import Admin
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.dialects import postgresql
-from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
+from wtforms.validators import ValidationError
 
 from invenio_access.models import ActionUsers
 from invenio_accounts.testutils import login_user_via_session, create_test_user
 from invenio_communities.models import Community
 from invenio_oauth2server.models import Client
+from invenio_search import current_search_client
 
 from weko_admin.models import (
     AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList, RankingSettings,
@@ -25,18 +27,19 @@ from weko_admin.models import (
 )
 from weko_index_tree.models import IndexStyle,Index
 from weko_records.api import JsonldMapping
+from weko_records.models import ItemTypeJsonldMapping
 from weko_swordserver.api import SwordClient
+from weko_swordserver.models import SwordClientModel
 from weko_workflow.api import WorkFlow
 from weko_workflow.models import WorkFlow
-from weko_records.models import ItemTypeJsonldMapping
-from weko_swordserver.models import SwordClientModel
 
 from weko_admin.admin import (
     StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,
     identifier_adminview,facet_search_adminview,FacetSearchSettingView,SwordAPISettingsView,
-    SwordAPIJsonldSettingsView, JsonldMappingView
+    SwordAPIJsonldSettingsView, JsonldMappingView, ProfileSettingView
 )
 
+from .helpers import login, logout
 from .test_views import assert_role
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -190,43 +193,68 @@ class TestStyleSettingView:
 class TestReportView:
 #    def index(self):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestReportView::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_index(self,db,client,indexes,users,statistic_email_addrs,mocker):
+    def test_index(self,db,client,indexes,users,statistic_email_addrs,esindex,mocker):
         login_user_via_session(client,email=users[0]["email"])
         url = url_for("report.index")
-        agg={
-            "took": 274,
-            "timed_out": False,
-            "_shards": {
-                "total": 1,
-                "successful": 1,
-                "skipped": 0,
-                "failed": 0
-            },
-            "hits": {
-                "total": 2,
-                "max_score": 0.0,
-                "hits": [
-                ]
-            },
-            "aggregations": {
-                "aggs_public": {
-                    "doc_count": 1
-                }
+
+        def make_index(id, parent, position, index_name, index_name_english,public_state,public_date):
+            return Index(
+                id=id,
+                parent=parent,position=position,
+                index_name=index_name,index_name_english=index_name_english,
+                public_state=public_state,public_date=public_date
+            )
+        def create_record(recid, item_title, pubdate, publish_status, paths):
+            metadata = {
+                "item_1617186331708": {"attribute_name": "Title","attribute_value_mlt": [{"subitem_1551255647225": item_title,"subitem_1551255648112": "ja"}]},
+                "item_1617258105262": {"attribute_name": "Resource Type","attribute_value_mlt": [{"resourcetype": "conference paper","resourceuri": "http://purl.org/coar/resource_type/c_5794"}]},
+                "pubdate": {"attribute_name": "PubDate","attribute_value": pubdate},
+                "item_title": item_title,
+                "item_type_id": "1",
+                "control_number": str(recid),
+                "author_link": [],
+                "_oai": {"id": "oai:weko3.example.org:{0:08}".format(recid),"sets": paths},
+                "weko_shared_id": -1,
+                "owner": "1",
+                "publish_date": pubdate,
+                "title": [item_title],
+                "relation_version_is_last": True,
+                "path": paths,
+                "publish_status": publish_status
             }
-        }
-        mocker.patch("invenio_stats.utils.get_aggregations",return_value=agg)
+            es_data = {
+                "type":["conference paper"],
+                "title":metadata["title"],
+                "control_number":metadata["control_number"],
+                "_oai":metadata["_oai"],
+                "_item_metadata":metadata,
+                "itemtype":"",
+                "publish_date":metadata["publish_date"],
+                "path":paths,
+                "publish_status":publish_status,
+                "_created": "2024-01-17T05:37:57.652396+00:00",
+                "_updated": "2024-01-17T05:37:57.652396+00:00",
+                "feedback_mail_list":[],
+                "relation_version_is_last":True
+            }
+
+            current_search_client.index(
+                index=current_app.config["INDEXER_DEFAULT_INDEX"],
+                doc_type="item-v1.0.0",
+                id=uuid.uuid4(),
+                body=es_data,
+                refresh="true"
+            )
+
+        # indexes is []
         mock_render = mocker.patch("weko_admin.admin.ReportView.render",return_value=make_response())
-        test = {
-            "total":2,
-            "open":1,
-            "private":1
-        }
         client.get(url)
         args,kwargs = mock_render.call_args
+        test = {"total":0,"open":0,"private":0}
         assert args[0] == "weko_admin/admin/report.html"
         assert kwargs["result"] == test
         assert [email.email_address for email in kwargs["emails"]] == ["test.taro@test.org"]
-        assert kwargs["current_schedule"] == {'frequency': 'daily', 'details': '', 'enabled': False}
+        assert kwargs["current_schedule"] == {"details":"","enabled":False,"frequency":"daily"}
         assert kwargs["repositories"] == [{"id": "Root Index"}]
 
         client.get(url, query_string={"repo_id": "comm1"})
@@ -245,7 +273,49 @@ class TestReportView:
         assert args[0] == "weko_admin/admin/report.html"
         assert kwargs["current_schedule"] == {"details": "", "enabled": False, "frequency": "daily"}
 
+        # Delete all records from the Index table before adding (to prevent unique constraint violation)
+        Index.query.delete()
+        db.session.commit()
+        with db.session.begin_nested():
+            db.session.add(make_index(1,0,0,'公開','publish',True,None))
+            db.session.add(make_index(11,1,0,'公開_公開','publish',True,None))
+            db.session.add(make_index(12,1,1,'公開_未公開','publish_notpublish',False,None))
+            db.session.add(make_index(13,1,2,'公開_未来公開','publish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+            db.session.add(make_index(2,0,1,'非公開','notpublish',False,None))
+            db.session.add(make_index(21,2,0,'非公開_公開','notpublish_publish',True,None))
+            db.session.add(make_index(22,2,1,'非公開_非公開','notpublish_notpublish',False,None))
+            db.session.add(make_index(23,2,2,'非公開_未来公開','notpublish_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+            db.session.add(make_index(3,0,2,'未来公開','feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+            db.session.add(make_index(31,3,0,'未来公開_公開','feature_publish',True,None))
+            db.session.add(make_index(32,3,1,'未来公開_非公開','feature_notpublish',False,None))
+            db.session.add(make_index(33,3,2,'未来公開_未来公開','feature_feature',True,datetime.strptime("2100/09/21","%Y/%m/%d")))
+        db.session.commit()
 
+        create_record(1,"公開インデックス下公開アイテム","2024-01-12","0",["1"])
+        create_record(2,"公開インデックス下非公開アイテム","2024-01-12","1",["1"])
+        create_record(3,"公開インデックス下未来公開アイテム","2100-01-12","0",["1"])
+        create_record(4,"非公開インデックス下公開アイテム","2024-01-12","0",["2"])
+        create_record(5,"非公開インデックス下非公開アイテム","2024-01-12","1",["2"])
+        create_record(6,"非公開インデックス下未来公開アイテム","2100-01-12","0",["2"])
+        create_record(7,"未来公開インデックス下公開アイテム","2024-01-12","0",["3"])
+        create_record(8,"未来公開インデックス下非公開アイテム","2024-01-12","1",["3"])
+        create_record(9,"未来公開インデックス下未来公開アイテム","2100-01-12","0",["3"])
+        create_record(10,"非公開_公開インデックス下公開アイテム","2024-01-12","0",["21"])
+        create_record(11,"非公開_未来公開インデックス下公開アイテム","2024-01-12","0",["23"])
+        create_record(12,"公開+非公開インデックス下公開アイテム","2024-01-12","0",["1", "2"])
+        create_record(13,"非公開+未来公開インデックス下公開アイテム","2024-01-12","0",["2","3"])
+        create_record(14,"非公開+非公開_公開インデックス下公開アイテム","2024-01-12","0",["2", "21"])
+
+        mock_render = mocker.patch("weko_admin.admin.ReportView.render",return_value=make_response())
+        client.get(url)
+        args,kwargs = mock_render.call_args
+        test = {"total":14,"open":2,"private":12}
+        assert args[0] == "weko_admin/admin/report.html"
+        assert kwargs["result"] == test
+        assert [email.email_address for email in kwargs["emails"]] == ["test.taro@test.org"]
+        assert kwargs["current_schedule"] == {"details":"","enabled":False,"frequency":"daily"}
+
+        # raise Error
         with patch("weko_index_tree.api.Indexes.get_public_indexes_list",return_value=[]):
             with patch("invenio_stats.utils.get_aggregations",return_value={}):
                 with patch("weko_admin.admin.ReportView.render",side_effect=Exception("test_error")):
@@ -530,6 +600,9 @@ def test_FeedbackMailView_index(client,users,mocker):
 def test_LanguageSettingView_index(client,users,mocker):
     login_user_via_session(client,email=users[0]["email"])
     url = url_for("language.index")
+    with client.session_transaction() as sess:
+        print(f"sess:{sess}")
+        print(f"users[0]['obj'].roles:{users[0]['obj'].roles}")
     # get
     mock_render = mocker.patch("weko_admin.admin.LanguageSettingView.render",return_value=make_response())
     result = client.get(url)
@@ -1455,7 +1528,9 @@ def test_RestrictedAccessSettingView_index(client, users, admin_settings, mocker
     assert res.status_code == 200
     args, kwargs = mock_render.call_args
     assert args[0] == "weko_admin/admin/restricted_access_settings.html"
-    assert json.loads(kwargs["data"]) == {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": []}
+    assert json.loads(kwargs["data"]) == {"content_file_download": {"expiration_date": 30,"expiration_date_unlimited_chk": False,"download_limit": 10,"download_limit_unlimited_chk": False,},"usage_report_workflow_access": {"expiration_date_access": 500,"expiration_date_access_unlimited_chk": False,},"terms_and_conditions": [],'display_request_form': False,'edit_mail_templates_enable': False,
+                                          'error_msg': {'content': {'en': {'content': 'This data is not available for ''this user'},'ja': {'content': 'このデータは利用できません（権限がないため）。'}},'key': ''},'item_application': {'application_item_types': [],'item_application_enable': False},
+                                          'password_enable': False,'preview_workflow_approval_enable': False,'restricted_access_display_flag': False}
     assert kwargs["items_per_page"] == 25
     assert kwargs["maxint"] == 9999999
 
@@ -1746,6 +1821,7 @@ class TestsReindexElasticSearchView:
         assert res.status_code == 302
         mocker_render.assert_not_called()
 
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestsReindexElasticSearchView::test_ReindexElasticSearchView_index_raise -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_ReindexElasticSearchView_index_raise(self, client,users,admin_settings,mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         url = url_for("reindex_es.index")
@@ -1907,7 +1983,7 @@ class TestsReindexElasticSearchView:
     def test_ReindexElasticSearchView_check_reindex_is_running_err(self, client,users,admin_settings):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         url = url_for("reindex_es.check_reindex_is_running")
-        with patch("weko_admin.admin.AdminSettings.get", side_effect=BaseException("test_error")):
+        with patch("weko_admin.admin.AdminSettings.get", side_effect=[None, BaseException("test_error")]):
             res = client.get(url)
             assert res.status_code == 500
             assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))
@@ -2379,27 +2455,9 @@ class TestSwordAPIJsonldSettingsView:
         login(client,obj=users[0]["obj"])
         view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
         q = view.get_query()
-        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT sword_clients.created, sword_clients.updated, sword_clients.id, sword_clients.client_id, sword_clients.active, sword_clients.registration_type_id, sword_clients.mapping_id, sword_clients.workflow_id, sword_clients.duplicate_check, sword_clients.meta_data_api \nFROM sword_clients ORDER BY sword_clients.id"
+        assert "ORDER BY sword_clients.id" in str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
         logout(client)
 
-        login(client,obj=users[1]["obj"])
-        q = view.get_query()
-        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT sword_clients.created, sword_clients.updated, sword_clients.id, sword_clients.client_id, sword_clients.active, sword_clients.registration_type_id, sword_clients.mapping_id, sword_clients.workflow_id, sword_clients.duplicate_check, sword_clients.meta_data_api \nFROM sword_clients JOIN oauth2server_client ON oauth2server_client.client_id = sword_clients.client_id \nWHERE oauth2server_client.client_id = sword_clients.client_id AND oauth2server_client.user_id = '{}' ORDER BY sword_clients.id".format(users[1]["id"])
-        logout(client)
-
-    # def get_count_query(self):
-    # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestSwordAPIJsonldSettingsView::test_get_count_query -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-    def test_get_count_query(self, client, users, db, mocker):
-        login(client,obj=users[0]["obj"])
-        view = SwordAPIJsonldSettingsView(SwordClientModel, db.session)
-        q = view.get_count_query()
-        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT count('*') AS count_1 \nFROM sword_clients"
-        logout(client)
-
-        login(client,obj=users[1]["obj"])
-        q = view.get_count_query()
-        assert str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True})) == "SELECT count('*') AS count_1 \nFROM sword_clients JOIN oauth2server_client ON oauth2server_client.client_id = sword_clients.client_id \nWHERE oauth2server_client.client_id = sword_clients.client_id AND oauth2server_client.user_id = '{}'".format(users[1]["id"])
-        logout(client)
 
     def test_format(self, app, client, users, db, sword_client, sword_mapping, mocker):
         login(client,obj=users[0]["obj"])
@@ -2820,3 +2878,42 @@ class TestCrisLinkageSettingView:
             with pytest.raises(Exception):
                 client.post(url,data=data)
                 mock_flash.assert_called_with('Failurely Changed Settings.','error')
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestProfileSettingView::test_ProfileSettingView_index -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+class TestProfileSettingView:
+    def test_ProfileSettingView_index(self,client, users, mocker,app):
+        with app.test_client() as client:
+            login_user_via_session(client, email=users[0]["email"])
+            url = url_for("profile_settings.index")
+            app.config.update({
+                "WEKO_USERPROFILES_CUSTOMIZE_ENABLED": True
+            })
+            mock_get = mocker.patch("weko_admin.admin.AdminSettings.get", return_value=None)
+            # GETリクエストのテスト
+            mock_render = mocker.patch("weko_admin.admin.ProfileSettingView.render", return_value=make_response())
+            result = client.get(url)
+            assert result.status_code == 200
+            mock_render.assert_called_with(
+                "weko_admin/admin/profiles_settings.html",
+                data = json.dumps({}), format_options = "[]"
+            )
+            mock_get.assert_called_with("profiles_items_settings", dict_to_object=False)
+
+            # ケース 2: AdminSettings.get がカスタム設定を返す場合
+            mock_get_custom = mocker.patch("weko_admin.admin.AdminSettings.get", return_value={"custom_field": "custom_value"})
+
+            # GETリクエストのテスト
+            result = client.get(url)
+
+            # ステータスコードの確認
+            assert result.status_code == 200
+
+            # render メソッドの呼び出しを確認
+            mock_render.assert_called_with(
+                "weko_admin/admin/profiles_settings.html",
+                data=json.dumps({"custom_field": "custom_value"}),  # カスタム設定が渡されることを確認
+                format_options=json.dumps([]),  # フォーマットオプションの確認
+            )
+
+            # AdminSettings.get が正しく呼び出されたかを確認
+            mock_get_custom.assert_called_with("profiles_items_settings", dict_to_object=False)

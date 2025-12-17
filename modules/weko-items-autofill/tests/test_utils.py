@@ -243,7 +243,7 @@ def test_get_title_pubdate_path(app, itemtypes):
     }
 
     # not reached break
-    all_false_mapping = {"test1": {}, "test2": {}}
+    all_false_mapping = {"test1": {}, "test2": {}, "test3":""}
     with patch(
         "weko_items_autofill.utils.Mapping.get_record", return_value=all_false_mapping
     ):
@@ -253,27 +253,31 @@ def test_get_title_pubdate_path(app, itemtypes):
 
 # def get_doi_record_data(doi, item_type_id, activity_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_doi_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_doi_record_data(db, itemtypes, mocker):
-    metainfo = '{"metainfo":"test_metadata"}'
-    metadata = {"id": "test_id", "name": "test_name"}
-    patch("weko_items_autofill.utils.cached_api_json")
-    mock_activity = mocker.patch("weko_items_autofill.utils.WorkActivity.get_activity_metadata",return_value=metainfo)
-    mock_fetch_metadata = mocker.patch("weko_items_autofill.utils.fetch_metadata_by_doi",return_value=metadata)
-    result = get_doi_record_data("doi","1","1")
-    assert result == [{"id": "test_id"}, {"name": "test_name"}]
-    mock_activity.assert_called_once()
-    mock_fetch_metadata.assert_called_once()
+def test_get_doi_record_data(mocker):
+    doi = "10.1234/test"
+    item_type_id = 1
+    activity_id = 2
+    fake_metadata = {"metainfo": {"foo": "bar", "empty": ""}}
+    fake_metainfo_cleaned = {"foo": "bar"}
+    fake_doi_result = {"title": "Test Title", "author": "Test Author"}
 
-    mock_activity.reset_mock()
-    mock_fetch_metadata.reset_mock()
+    # patch WorkActivity.get_activity_metadata
+    mock_activity = mocker.patch("weko_items_autofill.utils.WorkActivity.get_activity_metadata", return_value=fake_metadata)
+    # patch remove_empty
+    mock_remove_empty = mocker.patch("weko_items_autofill.utils.remove_empty", return_value=fake_metainfo_cleaned)
+    # patch fetch_metadata_by_doi
+    mock_fetch_metadata = mocker.patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=fake_doi_result)
 
-    result = get_doi_record_data("doi","1","1")
-    assert result == [{"id": "test_id"}, {"name": "test_name"}]
-    mock_activity.assert_not_called()
-    mock_fetch_metadata.assert_not_called()
+    from weko_items_autofill.utils import get_doi_record_data
 
-    from invenio_cache import current_cache
-    current_cache.delete("doi_datadoi11")
+    # Act
+    result = get_doi_record_data(doi, item_type_id, activity_id)
+
+    # Assert
+    mock_activity.assert_called_once_with(activity_id)
+    mock_remove_empty.assert_called_once_with(fake_metadata["metainfo"])
+    mock_fetch_metadata.assert_called_once_with(doi, item_type_id, fake_metainfo_cleaned)
+    assert result == [{"title": "Test Title"}, {"author": "Test Author"}]
 
 
 # def fetch_metadata_by_doi(doi, item_type_id, original_metadeta=None):
@@ -687,6 +691,8 @@ def test_pack_data_with_multiple_type_cinii():
     assert result == [
         {"@value": "13402625", "@type": "PISSN"},
     ]
+    result = pack_data_with_multiple_type_cinii(data, "test_type1", "test_type2")
+    assert result == []
 
 
 # def get_cinii_creator_data(data):
@@ -695,10 +701,14 @@ def test_get_cinii_creator_data():
     data = json_data("data/cinii_response_sample1.json")['response']['creator']
     result = get_cinii_creator_data(data)
     test = [
-        {"@value":"テスト 太郎", "@language":"ja"},
-        {"@value":"TEST Taro", "@language":"en"},
-        {"@value":"テスト 三郎", "@language":"ja"},
-        {"@value":"TEST Saburo", "@language":"en"},
+        [
+            {"@value":"テスト 太郎", "@language":"ja"},
+            {"@value":"TEST Taro", "@language":"en"}
+        ],
+        [
+            {"@value":"テスト 三郎", "@language":"ja"},
+            {"@value":"TEST Saburo", "@language":"en"}
+        ],
     ]
     assert result == test
 
@@ -707,10 +717,14 @@ def test_get_cinii_creator_data():
 def test_get_cinii_contributor_data():
     data = json_data("data/cinii_response_sample1.json")['response']["contributor"]
     test = [
-        {"@value": "テスト 次郎", "@language": "ja"},
-        {"@value": "TEST Ziro", "@language": "en"},
-        {"@value": "テスト 花子", "@language": "ja"},
-        {"@value": "TEST Hanako", "@language": "en"},
+        [
+            {"@value": "テスト 次郎", "@language": "ja"},
+            {"@value": "TEST Ziro", "@language": "en"}
+        ],
+        [
+            {"@value": "テスト 花子", "@language": "ja"},
+            {"@value": "TEST Hanako", "@language": "en"}
+        ],
     ]
     result = get_cinii_contributor_data(data)
     assert result == test
@@ -831,6 +845,10 @@ def test_get_cinii_data_by_key(app):
     result = get_cinii_data_by_key(api, "key")
     assert result == {}
 
+    api = {"response": None}
+    result = get_cinii_data_by_key(api, "key")
+    assert result == {}
+
     api = json_data("data/cinii_response_sample1.json")
     test = {
         "title": [
@@ -843,16 +861,24 @@ def test_get_cinii_data_by_key(app):
             {"@value": "別タイトル", "@language": "ja"},
         ],
         "creator": [
-            {"@value": "テスト 太郎", "@language": "ja"},
-            {"@value": "TEST Taro", "@language": "en"},
-            {"@value": "テスト 三郎", "@language": "ja"},
-            {"@value": "TEST Saburo", "@language": "en"},
+            [
+                {"@value": "テスト 太郎", "@language": "ja"},
+                {"@value": "TEST Taro", "@language": "en"}
+            ],
+            [
+                {"@value": "テスト 三郎", "@language": "ja"},
+                {"@value": "TEST Saburo", "@language": "en"}
+            ],
         ],
         "contributor": [
-            {"@value": "テスト 次郎", "@language": "ja"},
-            {"@value": "TEST Ziro", "@language": "en"},
-            {"@value": "テスト 花子", "@language": "ja"},
-            {"@value": "TEST Hanako", "@language": "en"}
+            [
+                {"@value": "テスト 次郎", "@language": "ja"},
+                {"@value": "TEST Ziro", "@language": "en"}
+            ],
+            [
+                {"@value": "テスト 花子", "@language": "ja"},
+                {"@value": "TEST Hanako", "@language": "en"}
+            ],
         ],
         "description": [
             {"@value": "this is test abstract.", "@type": "Abstract", "@language": "en"},
@@ -2005,11 +2031,11 @@ def test_get_workflow_journal(app, db, actions):
     db.session.commit()
 
     # not exist journal
-    result = get_workflow_journal(100)
+    result = get_workflow_journal(str(100))
     assert result == None
 
     # exist journal
-    result = get_workflow_journal(1)
+    result = get_workflow_journal(str(1))
     assert result == {"key": "value"}
 
 

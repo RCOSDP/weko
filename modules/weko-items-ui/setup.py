@@ -112,6 +112,8 @@ setup(
             'weko_items_ui.bundles:feedback_maillist_css',
             'weko_items_ui_request_maillist_js = '
             'weko_items_ui.bundles:request_maillist_js',
+            'weko_items_ui_no_file_approval_js = '
+            'weko_items_ui.bundles:no_file_approval_js',
         ],
         'invenio_access.actions': [
             'item_access = weko_items_ui.permissions:action_item_access',
@@ -128,6 +130,9 @@ setup(
         ],
         'invenio_celery.tasks': [
             'weko_items_ui = weko_items_ui.tasks',
+        ],
+        'invenio_db.alembic': [
+            'weko_items_ui = weko_items_ui:alembic',
         ],
     },
     extras_require=extras_require,

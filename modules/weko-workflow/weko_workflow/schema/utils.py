@@ -29,9 +29,9 @@ def get_schema_action(action_id):
         return None
     action_endpoint = action.action_endpoint
     
-    if action_endpoint in ["begin_action", "end_action", "approval"]:
+    if action_endpoint in ["begin_action", "end_action"]:
         return ActionSchema()
-    elif action_endpoint == "item_login":
+    elif action_endpoint in ["item_login", "approval"]:
         return NextSchema()
     elif action_endpoint == "item_link":
         return NextItemLinkSchema()

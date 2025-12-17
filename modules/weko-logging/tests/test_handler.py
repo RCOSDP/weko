@@ -2,7 +2,9 @@
 """ Pytest for weko_logging log handler."""
 
 import logging
-from mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+from weko_accounts.models import ShibbolethUser
 
 from weko_logging.handler import UserActivityLogHandler
 from weko_logging.models import UserActivityLog
@@ -17,7 +19,7 @@ def test_init(app):
 
 # def emit(self, record):
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_handler.py::test_emit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
-def test_emit(app, users, mocker, caplog, communities):
+def test_emit(app, db, users, caplog, communities):
     caplog.set_level(logging.DEBUG)
 
     # Test Case 1: ignored when error level is not ERROR or INFO
@@ -60,7 +62,7 @@ def test_emit(app, users, mocker, caplog, communities):
     assert len(caplog.records) == 3
     records = UserActivityLog.query.all()
     assert len(records) == 1
-    
+
     # Test Case 4: When community_id is not None
     logger = logging.getLogger("user-activity")
     logger.error("test", extra={
@@ -81,13 +83,48 @@ def test_emit(app, users, mocker, caplog, communities):
         "remarks": "test",
         "request_info": {
             "path": "https://test_server/cc/sample",
-            "args": {"community": "community_sample2"},
+            "args": {"c": "community_sample2"},
             "log_group_id": "log_group_123",
         },
     })
     assert len(caplog.records) == 5
     records = UserActivityLog.query.all()
     assert len(records) == 3
+
+    # Test Case 6: When user is authenticated
+    with patch("weko_logging.handler.UserActivityLogHandler.get_user_id") as mock_get_user_id:
+        mock_get_user_id.return_value = users[0]["id"]
+        logger = logging.getLogger("user-activity")
+        logger.error("test", extra={
+            "operation": "ITEM_CREATE",
+            "target_key": 2,
+            "remarks": "test",
+        })
+        assert len(caplog.records) == 6
+        records = UserActivityLog.query.all()
+        assert len(records) == 4
+        last_record = records[-1]
+        assert last_record.user_id == users[0]["id"]
+
+    shib_user = ShibbolethUser(weko_uid=users[1]["id"], shib_eppn="test_eppn_123")
+    db.session.add(shib_user)
+    db.session.commit()
+
+    # Test Case 7: When eppn is set
+    with patch("weko_logging.handler.UserActivityLogHandler.get_user_id") as mock_get_user_id:
+        mock_get_user_id.return_value = users[1]["id"]
+        logger = logging.getLogger("user-activity")
+        logger.error("test", extra={
+            "operation": "ITEM_CREATE",
+            "target_key": 2,
+            "remarks": "test",
+        })
+        assert len(caplog.records) == 7
+        records = UserActivityLog.query.all()
+        assert len(records) == 5
+        last_record = records[-1]
+        assert last_record.user_id == users[1]["id"]
+        assert last_record.log["eppn"] == "test_eppn_123"
 
 
 # def get_community_id_from_path(cls):
@@ -110,11 +147,11 @@ def test_get_community_id_from_path(app, mocker):
 
     # Test Case 3: When the path not contains "/c/" and the query param "community" exists
     mock_request.path = "https://test_server/cc/sample"
-    mock_request.args = {"community": "community_sample2"}
+    mock_request.args = {"c": "community_sample2"}
 
     community_id = UserActivityLogHandler.get_community_id_from_path(None)
     assert community_id == "community_sample2"
-    
+
     # Test Case 4: When the path not contains "/c/" (with request_info)
     request_info = {
         "path": "https://test_server/cc/sample",
@@ -133,7 +170,7 @@ def test_get_community_id_from_path(app, mocker):
     # Test Case 6: When the path not contains "/c/" and the query param "community" exists (with request_info)
     request_info = {
         "path": "https://test_server/cc/sample",
-        "args": {"community": "community_sample2"},
+        "args": {"c": "community_sample2"},
     }
 
     community_id = UserActivityLogHandler.get_community_id_from_path(request_info)
@@ -169,7 +206,7 @@ def test_get_summary_from_request(app, mocker):
     mock_request.path = None
     mock_request.oauth = None
     mock_request.args = {}
-    
+
     # Test Case 2: request has remote_addr
     mock_request.remote_addr = "172.0.0.1"
     actual2 = UserActivityLogHandler.get_summary_from_request()
@@ -185,7 +222,7 @@ def test_get_summary_from_request(app, mocker):
     assert actual3 == {
         "ip_address": "172.0.0.2",
     }
-    
+
     # Test Case 4: request has path
     mock_request.path = "https://test_server/cc/sample"
     actual4 = UserActivityLogHandler.get_summary_from_request()
@@ -193,7 +230,7 @@ def test_get_summary_from_request(app, mocker):
         "ip_address": "172.0.0.2",
         "path": "https://test_server/cc/sample",
     }
-    
+
     # Test Case 5: request has oauth
     mock_request.oauth = MagicMock()
     mock_request.oauth.client.client_id = "test_client_id"
@@ -203,10 +240,10 @@ def test_get_summary_from_request(app, mocker):
         "path": "https://test_server/cc/sample",
         "client_id": "test_client_id",
     }
-    
+
     # Test Case 6: request has args
     mock_request.args = {
-        "community": "community_sample2",
+        "c": "community_sample2",
     }
     actual6 = UserActivityLogHandler.get_summary_from_request()
     assert actual6 == {
@@ -214,6 +251,6 @@ def test_get_summary_from_request(app, mocker):
         "path": "https://test_server/cc/sample",
         "client_id": "test_client_id",
         "args": {
-            "community": "community_sample2",
+            "c": "community_sample2",
         },
     }

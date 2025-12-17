@@ -100,9 +100,10 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
                     mod_tree_detail='/api/tree/index/',
                     admin_coverpage_setting='False',
                     index_id=0,
+                    render_widgets='False',
                     lang_code='en'
                 )
-                
+
                 mock_sync.reset_mock()
                 mock_render.reset_mock()
                 app.config['WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS'] = False
@@ -117,12 +118,14 @@ def test_IndexEditSettingView(app, db, location, users, id, status_code):
                     mod_tree_detail='/api/tree/index/',
                     admin_coverpage_setting='False',
                     index_id=0,
+                    render_widgets='False',
                     lang_code='en'
                 )
 
-        with pytest.raises(Exception) as e:
-            res = client.get(url_for('indexedit.index'))
-        assert e.type==TemplateNotFound
+        with patch('weko_index_tree.admin.sync_shib_gakunin_map_groups') as mock_sync:
+            with pytest.raises(Exception) as e:
+                res = client.get(url_for('indexedit.index'))
+            assert e.type==TemplateNotFound
 
         with pytest.raises(Exception) as e:
             res = client.post(url_for('indexedit.upload_image'), data=dict(uploadFile=_file1))

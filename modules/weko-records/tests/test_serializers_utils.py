@@ -24,7 +24,7 @@ def test_get_mapping(app, db, item_type, item_type_mapping):
     result = get_mapping(1, 'jpcoar_mapping')
     assert result == {"item.@value": "item_1.interim"}
 
-    result = get_mapping(1, 'jpcoar_mapping', item_type=item_type)
+    result = get_mapping(1, 'jpcoar_mapping', item_type=item_type.model)
     assert result == {"item.@value": "item_1.interim"}
 
 # def get_full_mapping(item_type_mapping, mapping_type):
