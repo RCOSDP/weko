@@ -23,6 +23,7 @@
 
 """Tests for user profile models."""
 
+import pytest
 from mock import patch
 
 from invenio_accounts.models import User
@@ -225,3 +226,44 @@ def test_get_institute_data(app,user_profiles):
         expected[1]["subitem_affiliated_institution_position"] = ""
         actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data(True)
         assert expected == actual
+
+
+# def client_credentials_configured(self):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_client_credentials_configured -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_client_credentials_configured(app):
+    # Test Case (Pos): not all of s3_endpoint_url, access_key, secret_key are set
+    profile = UserProfile()
+    assert not profile.client_credentials_configured
+
+    # Test Case (Pos): not all of s3_endpoint_url, access_key, secret_key are set
+    profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com")
+    assert not profile.client_credentials_configured
+
+    # Test Case (Pos): all of s3_endpoint_url, access_key, secret_key are set
+    profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com",
+                          access_key="accesskey",
+                          secret_key = "secretkey")
+    assert profile.client_credentials_configured
+
+
+# def create_s3_client(self):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_create_s3_client -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_create_s3_client(app, mocker):
+    # Test Case (Neg): S3 setting is NG
+    profile = UserProfile()
+    with pytest.raises(Exception) as ex:
+        profile.create_s3_client()
+    assert "S3 setting none. Please check your profile." in str(ex.value)
+
+    # Test Case (Pos): S3 setting is OK
+    profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com",
+                          access_key="accesskey",
+                          secret_key="secretkey")
+
+    mocker_create = mocker.patch("weko_user_profiles.models.create_boto3_s3_client")
+    assert profile.create_s3_client()
+    args, called_kwargs = mocker_create.call_args
+    assert args[0] == "accesskey"
+    assert args[1] == "secretkey"
+    assert called_kwargs["region_name"] is None
+    assert called_kwargs["endpoint_url"] == "https://s3.amazonaws.com"

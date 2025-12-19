@@ -9,7 +9,6 @@ import properties
 from properties import property_config
 from register_properties import del_properties, get_properties_id, register_properties_from_folder
 from tools import updateRestrictedRecords
-# from tools import updateRestrictedRecords, update_weko_links
 from fix_metadata_53602 import main as fix_metadata_53602_main
 from invenio_files_rest.models import (
     timestamp_before_update as ifr_timestamp_before_update,
@@ -68,8 +67,6 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_time = show_exec_time(current_time, "register_properties_only_specified")
         renew_all_item_types() # 更新されたプロパティを使用してアイテムタイプの更新
         current_time = show_exec_time(current_time, "renew_all_item_types")
-        # update_weko_links.main(batch_size=batch_size)
-        # current_time = show_exec_time(current_time, "update_weko_links")
         current_app.logger.info("run update_feedback_mail_list_to_db")
         update_feedback_mail_list_to_db.main() # 著者DBのweko idの変更。それに伴うメタデータの変更
         current_time = show_exec_time(current_time, "update_feedback_mail_list_to_db")
@@ -115,12 +112,17 @@ def renew_all_item_types():
     try:
         fix_ids = []
         current_app.logger.info("Start renew_all_item_types")
-        query = db.session.query(ItemType.id).statement
+        query = db.session.query(ItemType.id, ItemType.is_deleted).statement
         results = db.engine.execution_options(stream_results=True).execute(query)
-        item_type_ids = [r[0] for r in results]
+        item_type_ids = [(r[0], r[1]) for r in results]
         current_app.logger.info("target item_type count: " + str(len(item_type_ids)))
         mapping = get_properties_mapping()
-        for item_type_id in item_type_ids:
+        for item_type_info in item_type_ids:
+            item_type_id = item_type_info[0]
+            is_deleted = item_type_info[1]
+            if is_deleted:
+                current_app.logger.warning(f"[SKIP] item_type (id:{item_type_id}) is deleted.")
+                continue
             ret = ItemTypes.reload(item_type_id, mapping)
             if ret.get("code") != 0:
                 current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))

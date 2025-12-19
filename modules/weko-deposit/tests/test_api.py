@@ -62,6 +62,7 @@ from invenio_accounts.models import User
 from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE
 from weko_workflow.models import Activity
 from weko_redis.redis import RedisConnection
+from weko_schema_ui.models import PublishStatus
 
 from tests.helpers import create_record_with_pdf
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -288,8 +289,12 @@ class TestWekoIndexer:
         indexer, records = es_records
         record = records[0]['record']
         record_data = records[0]['record_data']
-        ret = indexer.get_metadata_by_item_id(record.id)
-        assert ret['_index']=='test-weko-item-v1.0.0'
+        ret1 = indexer.get_metadata_by_item_id(record.id)
+        assert ret1['_index']=='test-weko-item-v1.0.0'
+
+        record.id = None
+        ret2 = indexer.get_metadata_by_item_id(record.id, is_ignore=True)
+        assert ret2['found'] is False
 
     #     def update_feedback_mail_list(self, feedback_mail):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_feedback_mail_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -310,17 +315,16 @@ class TestWekoIndexer:
         assert ret['_id'] == '{}'.format(record.id) and ret['result'] == 'updated' and ret['_shards'] == {'total': 2, 'successful': 1, 'failed': 0}
 
 
-    #     def update_author_link_and_weko_link(self, author_link):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_author_link_and_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_author_link_and_weko_link(self,es_records):
+    #     def update_author_link(self, author_link):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_author_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_author_link(self,es_records):
         indexer, records = es_records
         record = records[0]['record']
         author_link_info = {
                 "id": record.id,
-                "author_link": ['1'],
-                "weko_link": {"1":"13"}
+                "author_link": ['1']
             }
-        ret = indexer.update_author_link_and_weko_link(author_link_info)
+        ret = indexer.update_author_link(author_link_info)
         assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': str(record.id), '_version': 2, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 12, '_primary_term': 1}
 
     #     def update_jpcoar_identifier(self, dc, item_id):
@@ -1051,8 +1055,41 @@ class TestWekoDeposit:
                             ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}),
                             ('item_title', 'title'), ('item_type_id', '1'), ('control_number', 1), ('author_link', []),
                             ('_oai', {'id': '1'}), ('weko_shared_ids', []), ('owner', 1), ('owners', [1]), ('publish_date', '2022-08-20'),
-                            ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0'), ('weko_link', '')])
+                            ('title', ['title']), ('relation_version_is_last', True), ('path', ['1']), ('publish_status','0')])
         test2 = None
+        test_dc = OrderedDict([
+            ('pubdate', {'attribute_name': 'PubDate', 'attribute_value': '2022-08-20'}),
+            ('item_1617186331708', {'attribute_name': 'Title', 'attribute_value_mlt': [
+                {'subitem_1551255647225': 'タイトル', 'subitem_1551255648112': 'ja'},
+                {'subitem_1551255647225': 'title', 'subitem_1551255648112': 'en'}
+            ]}),
+            ('item_1617258105262', {'attribute_name': 'Resource Type', 'attribute_value_mlt': [
+                {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}
+            ]}),
+            ('item_title', 'title'),
+            ('item_type_id', '1'),
+            ('control_number', '1'),
+            ('author_link', []),
+            ('weko_shared_ids', []),
+            ('owner', 1),
+            ('owners', [1])
+        ])
+        test_jrc = {
+            'type': ['conference paper'],
+            'title': ['タイトル', 'title'],
+            'control_number': '1',
+            '_oai': {'id': '1'},
+            '_item_metadata': test_dc,
+            'itemtype': 'テストアイテムタイプ',
+            'publish_date': '2022-08-20',
+            'author_link': [],
+            'weko_creator_id': '1',
+            'weko_shared_ids': [],
+            'owner': 1,
+            'owners': [1]
+        }
+        test_is_edit_true = True
+        test_is_edit_false = False
 
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=['1']):
             with app.test_client() as client:
@@ -1114,7 +1151,6 @@ class TestWekoDeposit:
                 redis_connection = RedisConnection()
                 datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
                 cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=deposit.pid.pid_value)
-                print("cache_key:{}".format(cache_key))
                 datastore.put(cache_key, json.dumps(record['item_data']).encode('utf-8'))
                 deposit = record['deposit']
                 ret, _ = deposit.convert_item_metadata(index_obj)
@@ -1133,11 +1169,60 @@ class TestWekoDeposit:
                 ret, _ = deposit.convert_item_metadata(index_obj, record_data)
                 assert 'shared_user_ids' not in ret
 
+                # is_edit True/False
+                deposit = record['deposit']
+                record_data = record['item_data']
+                recid = PersistentIdentifier.query.filter_by(pid_type='recid', pid_value=record_data['id']).first()
+                expect_rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()
+                with patch('weko_deposit.api.json_loader', return_value=(test_dc, test_jrc, test_is_edit_true)):
+                    ret, _ = deposit.convert_item_metadata(index_obj, record_data)
+                    assert ret['publish_status'] == expect_rec.json['publish_status']
+                
+                deposit = record['deposit']
+                record_data = record['item_data']
+                with patch('weko_deposit.api.json_loader', return_value=(test_dc, test_jrc, test_is_edit_false)):
+                    ret, _ = deposit.convert_item_metadata(index_obj, record_data)
+                    assert ret['publish_status'] == PublishStatus.NEW.value
+                
+                # radis exist with is_save_path True
+                deposit = record['deposit']
+                index_obj_2 = {'index': ['1'], 'actions': '1', 'is_save_path': True}
+                redis_connection = RedisConnection()
+                datastore = redis_connection.connection(db=app.config['CACHE_REDIS_DB'], kv = True)
+                cache_key = app.config['WEKO_DEPOSIT_ITEMS_CACHE_PREFIX'].format(pid_value=deposit.pid.pid_value)
+                datastore.put(cache_key, json.dumps(record['item_data']).encode('utf-8'))
+                ret, _ = deposit.convert_item_metadata(index_obj_2)
+                assert datastore.redis.exists(cache_key) is True
+
+                # pid_value with 「.0」
+                record_0 = records[1]
+                deposit_0 = record_0['deposit']
+                pid = record_0['depid']
+                cid = record_0['recid']
+                record_data_0 = record_0['item_data']
+                with patch('weko_deposit.api.json_loader', return_value=(test_dc, test_jrc, test_is_edit_true)) as mock_json_loader:
+                    deposit_owners = record_data_0.get("owners", None)
+                    ret, _ = deposit_0.convert_item_metadata(index_obj, record_data_0)
+                    mock_json_loader.assert_called_with(
+                        record_data_0,
+                        deposit_0.pid,
+                        owner_id=record_data_0.get("owner", None),
+                        replace_field=False,
+                        creator_id=str(deposit_owners[0]) if deposit_owners else None,
+                    )
+
         with patch("weko_index_tree.api.Indexes.get_path_list", return_value=[]):
             with pytest.raises(PIDResolveRESTError) as error:
                 ret = deposit.convert_item_metadata(index_obj, record_data)
                 assert error.value.code == 500
                 assert error.value.data == "Any tree index has been deleted"
+        
+        # index not exists in index_obj
+        index_obj_err = {'actions': '1'}
+        with pytest.raises(PIDResolveRESTError) as error:
+            ret = deposit.convert_item_metadata(index_obj_err, record_data)
+            assert error.value.code == 500
+            assert error.value.data == "Any tree index has been deleted"
 
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1217,20 +1302,51 @@ class TestWekoDeposit:
         _, records = es_records
         record = records[0]
         deposit = record['deposit']
+        # case 1
         deposit.delete_by_index_tree_id('1',['2'])
         check_status(2, "R")
+        rec = WekoRecord.get_record_by_pid(2)
+        assert rec['path'] == ['1']
+        assert rec['_oai']['sets'] == ['1']
 
         time.sleep(1)
+        # case 2
         deposit.delete_by_index_tree_id('1',[])
         check_status(2, "D")
+        rec = WekoRecord.get_record_by_pid(2)
+        assert rec['path'] == []
+        assert rec['_oai']['sets'] == []
 
+        # case 3
         # not delete item
         deposit.delete_by_index_tree_id('3',[]) # 10.1 in 3
         check_status(10, "R")
+        rec = WekoRecord.get_record_by_pid(10)
+        assert rec['path'] == ['4']
+        assert rec['_oai']['sets'] == ['4']
 
+        # case 4
         # delete item
         deposit.delete_by_index_tree_id('4',[]) # 10, 10.2 in 4
         check_status(10, "D")
+        rec = WekoRecord.get_record_by_pid(10)
+        assert rec['path'] == []
+        assert rec['_oai']['sets'] == []
+
+        # case 5
+        deposit.delete_by_index_tree_id('',[])
+        check_status(3, "R")
+        rec = WekoRecord.get_record_by_pid(3)
+        assert rec['path'] == ['2']
+        assert rec['_oai']['sets'] == ['2']
+
+        # case 6
+        deposit.delete_by_index_tree_id('5',[])
+        check_status(11, "R")
+        rec = WekoRecord.get_record_by_pid(11)
+        assert rec['path'] == ["11"]
+        assert 'sets' not in rec['_oai']
+
 
     # def update_pid_by_index_tree_id(self, path):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_pid_by_index_tree_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1257,18 +1373,16 @@ class TestWekoDeposit:
         db.session.commit()
         deposit.delete_es_index_attempt(deposit.pid)
 
-    # def update_author_link_and_weko_link(self, author_link):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_author_link_and_weko_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    def test_update_author_link_and_weko_link(sel,app,db,location,es_records, mocker):
-        with patch("weko_deposit.api.WekoIndexer.update_author_link_and_weko_link") as mocker_indexer_update:
+    # def update_author_link(self, author_link):
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_author_link -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_author_link(self,es_records):
+        with patch("weko_deposit.api.WekoIndexer.update_author_link") as mocker_indexer_update:
             _, records = es_records
             record = records[0]
             deposit = record['deposit']
-            assert deposit.update_author_link_and_weko_link([], {"1":"123"})==None
+            assert deposit.update_author_link([]) == None
             mocker_indexer_update.assert_not_called()
-            assert deposit.update_author_link_and_weko_link(["1"], {})==None
-            mocker_indexer_update.assert_not_called()
-            assert deposit.update_author_link_and_weko_link(["1"], {"1":"123"})==None
+            assert deposit.update_author_link(["1"]) == None
             mocker_indexer_update.assert_called()
 
 

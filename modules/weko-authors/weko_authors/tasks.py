@@ -75,7 +75,6 @@ def import_author(author, force_change_mode, request_info):
 
     Args:
         author (dict): Author data to import.
-        force_change_mode (bool): Whether to force change mode.
         request_info (dict): Request information for logging.
 
     Returns:
@@ -86,18 +85,12 @@ def import_author(author, force_change_mode, request_info):
     retrys = current_app.config["WEKO_AUTHORS_BULK_EXPORT_MAX_RETRY"]
     interval = current_app.config["WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL"]
     status = author['status']
-    weko_id = author['weko_id']
     del author['status']
-    del author["weko_id"]
-    del author["current_weko_id"]
     try:
         # Retry processing in case of connection error
         for attempt in range(retrys):
             try:
-                import_author_to_system(
-                    author, status, weko_id, force_change_mode,
-                    request_info=request_info
-                )
+                import_author_to_system(author, status, force_change_mode, request_info=request_info)
                 result['status'] = states.SUCCESS
                 break
             except SQLAlchemyError as ex:
@@ -318,9 +311,7 @@ def import_authors_for_over_max(authors, request_info=None):
                     full_name_info += f"\n{full_name}"
         tasks.append({
             'task_id': task.task_id,
-            'record_id': authors[idx].get('pk_id'),
-            'previous_weko_id': authors[idx].get('current_weko_id'),
-            'new_weko_id': authors[idx].get('weko_id'),
+            'weko_id': authors[idx].get('pk_id'),
             'full_name': full_name_info,
             'type': authors[idx].get('status'),
             'status': 'PENDING'
@@ -360,8 +351,7 @@ def import_authors_for_over_max(authors, request_info=None):
         result.append({
             "start_date": start_date,
             "end_date": end_date,
-            'previous_weko_id': _task.get('previous_weko_id'),
-            'new_weko_id': _task.get('new_weko_id'),
+            "weko_id": _task['weko_id'],
             "full_name": _task['full_name'],
             "type": _task['type'],
             "status": status,
@@ -406,16 +396,14 @@ def write_result_temp_file(result):
             for res in result:
                 start_date = res.get("start_date", "")
                 end_date = res.get("end_date", "")
-                prev_weko_id= res.get('previous_weko_id', "")
-                new_weko_id= res.get('new_weko_id', "")
+                weko_id = res.get("weko_id", "")
                 full_name = res.get("full_name", "")
                 type = res.get("type", "")
                 status = res.get("status", "")
                 error_id = res.get("error_id", "")
 
                 msg = prepare_display_status(status, type, error_id)
-                writer.writerow(["", start_date, end_date, prev_weko_id, new_weko_id, full_name, msg])
-
+                writer.writerow(["", start_date, end_date, weko_id, full_name, msg])
 
     except Exception as e:
         current_app.logger.error(e)
@@ -549,9 +537,9 @@ def check_tmp_file_time_for_author():
     # Check if the directory is empty, and if it is, remove the directory
     if (
         os.path.exists(export_temp_dir)
-        and not os.listdir(export_temp_file)
+        and not os.listdir(export_temp_dir)
     ):
-        os.rmdir(export_temp_file)
+        os.rmdir(export_temp_dir)
 
     # Delete temporary files for author import
     for d in glob.glob(import_temp_file):
@@ -564,6 +552,6 @@ def check_tmp_file_time_for_author():
     # Check if the directory is empty, and if it is, remove the directory
     if (
         os.path.exists(import_temp_dir)
-        and not os.listdir(import_temp_file)
+        and not os.listdir(import_temp_dir)
     ):
-        os.rmdir(import_temp_file)
+        os.rmdir(import_temp_dir)

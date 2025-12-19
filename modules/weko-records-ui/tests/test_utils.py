@@ -1188,7 +1188,7 @@ def test_validate_expiration_date(app):
 
     in_a_week = (dt.now(timezone.utc) + timedelta(7)).strftime("%Y-%m-%d")
     with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
-        mock_settings.return_value = {'secret_expiration_date': 1}
+        mock_settings.return_value = {'max_secret_expiration_date': 1}
         assert validate_expiration_date(in_a_week, 0) is False
 
     in_an_year = (dt.now(timezone.utc) + timedelta(365)).strftime("%Y-%m-%d")
@@ -1421,11 +1421,12 @@ def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
         expiration_date=dt(2125, 1, 1, 0, 0),
         download_limit=10)
     item_title = 'test_title'
+    offset_time = -540
     mock_user.id = 1
     expected_info = {
         'mail_recipient'            : 'test@example.org',
         'file_name'                 : url_obj.file_name,
-        'restricted_expiration_date': '2125-01-01 23:59:59(JST)',
+        'restricted_expiration_date': '2125-01-01 09:00',
         'restricted_download_count' : str(url_obj.download_limit),
         'restricted_fullname'       : 'test_user',
         'restricted_data_name'      : item_title,
@@ -1434,21 +1435,21 @@ def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
     with app.test_request_context(), \
         patch("weko_records_ui.utils.get_item_info",return_value={}):
         expected_info["secret_url"] = create_download_url(url_obj)
-        assert send_secret_url_mail(uuid, url_obj, item_title) is True
+        assert send_secret_url_mail(uuid, url_obj, item_title, offset_time) is True
     mock_send.assert_called_once_with(expected_info, expected_template_id)
     mock_send.reset_mock()
 
     mock_profile.return_value = None
     with app.test_request_context(), \
         patch("weko_records_ui.utils.get_item_info",return_value={}):
-        assert send_secret_url_mail(uuid, url_obj, item_title) is True
+        assert send_secret_url_mail(uuid, url_obj, item_title, offset_time) is True
     expected_info['restricted_fullname'] = ''
     mock_send.assert_called_once_with(expected_info, expected_template_id)
 
     mock_send.return_value = False
     with app.test_request_context(), \
         patch("weko_records_ui.utils.get_item_info",return_value={}):
-        assert send_secret_url_mail(uuid, url_obj, item_title) is False
+        assert send_secret_url_mail(uuid, url_obj, item_title, offset_time) is False
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

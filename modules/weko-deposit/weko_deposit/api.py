@@ -441,19 +441,17 @@ class WekoIndexer(RecordIndexer):
             body=body
         )
 
-    def update_author_link_and_weko_link(self, link):
+    def update_author_link(self, author_link):
         """Update author_link info."""
         # current_app.logger.error("author_link:{}".format(author_link));
         self.get_es_index()
         pst = 'author_link'
-        pst2 = "weko_link"
-        body = {'doc': {pst: link.get('author_link'),
-                        pst2: link.get('weko_link')}}
+        body = {'doc': {pst: author_link.get('author_link')}}
 
         return self.client.update(
             index=self.es_index,
             doc_type=self.es_doc_type,
-            id=str(link.get('id')),
+            id=str(author_link.get('id')),
             body=body
         )
 
@@ -1027,7 +1025,7 @@ class WekoDeposit(Deposit):
                                                  self.revision_id)
                     # Upload pdf file content to Elasticsearch
                     from .tasks import extract_pdf_and_update_file_contents
-                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)))
+                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)), countdown=10)
                 except TransportError as err:
                     if self.jrc.get('content'):
                         for content in self.jrc['content']:
@@ -1578,7 +1576,6 @@ class WekoDeposit(Deposit):
             traceback.print_exc()
             raise
         except BaseException:
-            import traceback
             traceback.print_exc()
             abort(500, 'MAPPING_ERROR')
 
@@ -1595,7 +1592,7 @@ class WekoDeposit(Deposit):
         actions = index_obj.get('actions')
         if actions == 'publish' or actions == PublishStatus.PUBLIC.value:
             pubs = PublishStatus.PUBLIC.value
-        elif 'id' in data:
+        elif 'id' in data and is_edit:
             recid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', pid_value=data['id']).first()
             rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()
@@ -1769,20 +1766,19 @@ class WekoDeposit(Deposit):
         if index_id:
             index_id = str(index_id)
         obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id, only_latest_version=True)), [])
-        removed_records = []
         for obj_uuid in obj_ids:
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
             if r.json['recid'] in ignore_items:
                 continue
             r.json['path'].remove(index_id)
+            if '_oai' in r.json and 'sets' in r.json['_oai']:
+                r.json['_oai']['sets'] = r.json['path']
             flag_modified(r, 'json')
             if r.json and not r.json['path']:
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
-                removed_records.append(r)
-        for r in removed_records:
             dep = WekoDeposit(r.json, r)
-            dep.indexer.update_es_data(dep, update_revision=False)
+            dep.indexer.update_es_data(dep, update_revision=False, update_oai=True)
 
     def update_pid_by_index_tree_id(self, path):
         """
@@ -1854,7 +1850,7 @@ class WekoDeposit(Deposit):
                 pass
             raise PIDResolveRESTError(description='This item has been deleted')
 
-    def update_author_link_and_weko_link(self, author_link, weko_link):
+    def update_author_link(self, author_link):
         """Summary line.
 
     I   ndex author_link list.
@@ -1867,14 +1863,12 @@ class WekoDeposit(Deposit):
 
         """
         item_id = self.id
-        if author_link and weko_link:
-            link_info = {
+        if author_link:
+            author_link_info = {
                 "id": item_id,
-                "author_link": author_link,
-                "weko_link": weko_link
-
+                "author_link": author_link
             }
-            self.indexer.update_author_link_and_weko_link(link_info)
+            self.indexer.update_author_link(author_link_info)
 
     def update_request_mail(self):
         """

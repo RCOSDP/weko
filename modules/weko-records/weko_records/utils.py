@@ -41,12 +41,11 @@ from weko_admin import config as ad_config
 from weko_admin.models import SearchManagement as sm
 from weko_schema_ui.schema import SchemaTree
 from weko_authors.api import WekoAuthors
-from weko_authors.utils import update_data_for_weko_link
 from .api import ItemTypes, Mapping
 from .config import COPY_NEW_FIELD, WEKO_TEST_FIELD
 from sqlalchemy import null
 
-def get_author_link(author_link, weko_link, value):
+def get_author_link(author_link, value):
     """Get author link data."""
     if isinstance(value, list):
         for v in value:
@@ -57,11 +56,7 @@ def get_author_link(author_link, weko_link, value):
                 and v["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
                 and "nameIdentifier" in v["nameIdentifiers"][0]
             ):
-                weko_id = v["nameIdentifiers"][0]["nameIdentifier"]
-                pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
-                if int(pk_id) > 0:
-                    author_link.append(pk_id)
-                    weko_link[str(pk_id)] = weko_id
+                author_link.append(v["nameIdentifiers"][0]["nameIdentifier"])
     elif (
         isinstance(value, dict)
         and "nameIdentifiers" in value
@@ -70,11 +65,7 @@ def get_author_link(author_link, weko_link, value):
         and value["nameIdentifiers"][0]["nameIdentifierScheme"] == "WEKO"
         and "nameIdentifier" in value["nameIdentifiers"][0]
     ):
-        weko_id = value["nameIdentifiers"][0]["nameIdentifier"]
-        pk_id = WekoAuthors.get_pk_id_by_weko_id(weko_id)
-        if int(pk_id) > 0:
-            author_link.append(pk_id)
-            weko_link[str(pk_id)] = weko_id
+        author_link.append(value["nameIdentifiers"][0]["nameIdentifier"])
 
 def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True, creator_id=None):
     """Convert the item data and mapping to jpcoar.
@@ -126,7 +117,6 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
     mp = mjson.dumps()
     data.get("$schema")
     author_link = []
-    weko_link= {}
     for k, v in data.items():
         if k == "$schema" or mp.get(k) is None:
             continue
@@ -172,14 +162,14 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         if isinstance(v, list):
             if len(v) > 0 and isinstance(v[0], dict):
                 item["attribute_value_mlt"] = v
-                get_author_link(author_link, weko_link, v)
+                get_author_link(author_link, v)
             else:
                 item["attribute_value"] = v
         elif isinstance(v, dict):
             ar.append(v)
             item["attribute_value_mlt"] = ar
             ar = []
-            get_author_link(author_link, weko_link, v)
+            get_author_link(author_link, v)
         else:
             item["attribute_value"] = v
 
@@ -213,7 +203,6 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         dc.update(dict(control_number=pid))
         dc.update(dict(author_link=author_link))
         dc.update(dict(weko_shared_ids=weko_shared_ids))
-        dc.update(dict(weko_link=weko_link))
 
         if COPY_NEW_FIELD:
             copy_field_test(dc, WEKO_TEST_FIELD, jrc)
@@ -262,7 +251,6 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         jrc.update(dict(itemtype=ojson.model.item_type_name.name))
         jrc.update(dict(publish_date=pubdate))
         jrc.update(dict(author_link=author_link))
-        jrc.update(dict(weko_link=weko_link))
 
         # save items's creator to check permission
         if current_user and current_user.get_id() is not None:

@@ -117,7 +117,6 @@ def test_item_login(app,client,db_itemtype,db_itemtype2,db_itemtype3,db_itemtype
                     
     with open('tests/data/temp_data.json', 'r') as f:
         tmp = json.load(f)
-        tmp.pop("weko_link")
         temp_data = json.dumps(tmp)
         
     with app.test_request_context():

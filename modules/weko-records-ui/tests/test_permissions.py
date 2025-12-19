@@ -50,32 +50,53 @@ def test_page_permission_factory(app, records, users,db_file_permission):
 # def file_permission_factory(record, *args, **kwargs):
 #    def can(self):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_file_permission_factory -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_file_permission_factory(app, records, users, db_file_permission):
+def test_file_permission_factory(app, records, users, db_file_permission, itemtypes, mocker):
     app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
     indexer, results = records
     record = results[0]["record"]
+    mock_permission = mocker.patch("weko_records_ui.permissions.check_file_download_permission")
     with app.test_request_context():
-        assert file_permission_factory(record).can() == None
-
         # check_file_download_permission returns True
-        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True):
-            assert file_permission_factory(record).can() == True
+        mock_permission.return_value = True
+        assert file_permission_factory(record, fjson={}).can() == True
+        mock_permission.assert_called_once_with(record, {}, item_type=None)
+        mock_permission.reset_mock()
 
         # check_file_download_permission returns False
-        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False):
-            assert file_permission_factory(record).can() == False
+        mock_permission.return_value = False
+        assert file_permission_factory(record, fjson={}).can() == False
+        mock_permission.assert_called_once_with(record, {}, item_type=None)
+        mock_permission.reset_mock()
+
+        # item_type specified
+        mock_permission.return_value = True
+        assert file_permission_factory(record, fjson={}, item_type=itemtypes["item_type"]).can() == True
+        mock_permission.assert_called_once_with(record, {}, item_type=itemtypes["item_type"])
+        mock_permission.reset_mock()
 
     # with OAuth2
     with app.test_request_context(headers={"Authorization": "Bearer testtoken"}):
-        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=True), \
-             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
-             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
-            assert file_permission_factory(record).can() == True
+        with patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+            patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            mock_permission.return_value = True
+            assert file_permission_factory(record, fjson={}).can() == True
+            mock_permission.assert_called_once_with(record, {})
+            mock_permission.reset_mock()
 
-        with patch("weko_records_ui.permissions.check_file_download_permission", return_value=False), \
-             patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
-             patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
-            assert file_permission_factory(record).can() == False
+        with patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+            patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            mock_permission.return_value = False
+            assert file_permission_factory(record, fjson={}).can() == False
+            mock_permission.assert_called_once_with(record, {})
+            mock_permission.reset_mock()
+        
+        # item_type specified
+        with patch("weko_records_ui.permissions.require_api_auth", lambda: lambda f: f), \
+            patch("weko_records_ui.permissions.require_oauth_scopes", lambda x: lambda f: f):
+            mock_permission.return_value = True
+            assert file_permission_factory(record, fjson={}, item_type=itemtypes["item_type"]).can() == True
+            mock_permission.assert_called_once_with(record, {})
+            mock_permission.reset_mock()
 
 
 # def check_file_download_permission(record, fjson, is_display_file_info=False):

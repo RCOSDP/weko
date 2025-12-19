@@ -2046,7 +2046,7 @@ def validate_expiration_date(expiration_str, offset_minutes):
     secret_url_settings = get_restricted_access('secret_URL_file_download')
     if not secret_url_settings:
         return False
-    expiration_days = secret_url_settings.get('secret_expiration_date', 30) + 1
+    expiration_days = secret_url_settings.get('max_secret_expiration_date', 30) + 1
     if expiration_dt > dt.now(timezone.utc) + timedelta(days=expiration_days):
         return False
     return True
@@ -2215,13 +2215,14 @@ def generate_sha256_hash(url_obj):
     return hash_obj.digest()
 
 
-def send_secret_url_mail(uuid, secret_url_obj, item_title):
+def send_secret_url_mail(uuid, secret_url_obj, item_title, offset_time):
     """Send an email with a secret URL.
 
     Args:
         uuid (UUID): The UUID of the item.
         secret_url_obj (FileSecretDownload): The secret URL object.
         item_title (str): The item title.
+        offset_time (int): The timezone offset in minutes.
 
     Returns:
         bool: True if the email sent successfully, False otherwise.
@@ -2229,14 +2230,14 @@ def send_secret_url_mail(uuid, secret_url_obj, item_title):
     # Setup mail info
     user_profile = UserProfile.get_by_userid(current_user.id)
     fullname = user_profile._displayname if user_profile else ''
-    expiration_dt = secret_url_obj.expiration_date
-    jst_date = expiration_dt.astimezone(timezone(timedelta(hours=9))).date()
-    jst_str = jst_date.strftime('%Y-%m-%d') + ' 23:59:59(JST)'
+    expiration_dt = secret_url_obj.expiration_date.replace(tzinfo=timezone.utc)
+    local_dt = expiration_dt.astimezone(timezone(timedelta(minutes=-offset_time)))
+    local_expiration_str = local_dt.strftime('%Y-%m-%d %H:%M')
     secret_url_info = {
         'secret_url' : create_download_url(secret_url_obj),
         'mail_recipient'            : current_user.email,
         'file_name'                 : secret_url_obj.file_name,
-        'restricted_expiration_date': jst_str,
+        'restricted_expiration_date': local_expiration_str,
         'restricted_download_count' : str(secret_url_obj.download_limit),
         'restricted_fullname'       : fullname,
         'restricted_data_name'      : item_title,

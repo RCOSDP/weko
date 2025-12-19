@@ -59,6 +59,14 @@ class WekoAuthors(object):
         data["pk_id"] = str(new_id)
         data["gather_flg"] = 0
         community_ids = data.pop("communityIds", [])
+        data["authorIdInfo"].insert(
+            0,
+            {
+                "idType": "1",
+                "authorId": str(new_id),
+                "authorIdShowFlg": "true"
+            }
+        )
 
         es_id = str(uuid.uuid4())
         es_data = json.loads(json.dumps(data))
@@ -232,7 +240,7 @@ class WekoAuthors(object):
                 continue
             for authorIdInfo in metadata.get('authorIdInfo', {}):
                 idType = authorIdInfo.get('idType')
-                if idType:
+                if idType and idType != '1':
                     author_ids = existed_external_authors_id.get(idType, {})
                     weko_ids = author_ids.get(authorIdInfo.get('authorId'), [])
                     weko_ids.append(str(author.id))
@@ -240,68 +248,6 @@ class WekoAuthors(object):
                     existed_external_authors_id[idType] = author_ids
 
         return existed_authors_id, existed_external_authors_id
-
-    @classmethod
-    def get_pk_id_by_weko_id(cls, weko_id):
-        """
-        Get pk_id by weko_id.
-        """
-        query = {
-            "_source": ["pk_id", "authorIdInfo"],
-            "query": {
-                "bool": {
-                    "must": [
-                        {"term": {"authorIdInfo.authorId": weko_id}},
-                        {"term": {"gather_flg": {"value": 0}}}
-                    ],
-                    "must_not": [
-                        {"term": {"is_deleted": True}}
-                    ]
-                }
-            }
-        }
-
-        # Search
-        indexer = RecordIndexer()
-        result = indexer.client.search(
-            index=current_app.config['WEKO_AUTHORS_ES_INDEX_NAME'],
-            body=query
-        )
-
-        for res in result['hits']['hits']:
-            author_id_info_from_es = res['_source']['authorIdInfo']
-            for info in author_id_info_from_es:
-                if info.get('idType') == '1':
-                    author_id = info.get('authorId')
-                    if author_id == weko_id:
-                        pk_id = res['_source']['pk_id']
-                        return pk_id
-        return -1
-
-    @classmethod
-    def get_weko_id_by_pk_id(cls, pk_id):
-        """Get weko_id from pk_id.
-
-        Args:
-            pk_id (str): pk_id
-
-        Returns:
-            weko_id :str
-        """
-        try:
-            with db.session.begin_nested():
-                author = Authors.query.filter_by(id=pk_id).one_or_none()
-                if not author:
-                    return None
-                json = author.json
-                for author_id_info in json["authorIdInfo"]:
-                    if author_id_info["idType"] == "1":
-                        weko_id = author_id_info["authorId"]
-                        break
-            return weko_id
-        except Exception as ex:
-            current_app.logger.error("Failed to get weko_id by pk_id")
-            raise
 
     @classmethod
     def get_used_scheme_of_id_prefix(cls):
@@ -625,12 +571,6 @@ class WekoAuthors(object):
                                 None
                             )
                         )
-                    elif mapping["json_id"] == "weko_id":
-                        id_info = json_data["authorIdInfo"][0]
-                        if id_info["idType"] == "1":
-                            row.append(id_info["authorId"])
-                        else:
-                            row.append(None)
                     else:
                         row.append(json_data.get(mapping['json_id']))
 

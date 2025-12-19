@@ -62,6 +62,7 @@ from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTy
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
+from weko_records_ui.permissions import has_comadmin_permission
 from weko_search_ui.utils import check_tsv_import_items, import_items_to_system
 from weko_user_profiles.config import \
     WEKO_USERPROFILES_INSTITUTE_POSITION_LIST, \
@@ -3995,9 +3996,10 @@ def edit_item_direct_after_login(pid_value):
     latest_pid = PIDVersioning(child=recid).last_child
 
     # ! Check User's Permissions
-    if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
-        return render_template("weko_theme/error.html",
-                error="You are not allowed to edit this item."), 400
+    if user_id not in authenticators and not get_user_roles(is_super_role=False)[0]:
+        if not has_comadmin_permission(deposit):
+            return render_template("weko_theme/error.html",
+                    error="You are not allowed to edit this item."), 400
 
     # ! Check dependency ItemType
     if not ItemTypes.get_latest():
@@ -4036,7 +4038,8 @@ def edit_item_direct_after_login(pid_value):
             recid.object_uuid
         )
         workflow = get_workflow_by_item_type_id(item_type.name_id,
-                                                item_type_id)
+                                                item_type_id,
+                                                with_deleted=False)
         if not workflow:
             return render_template("weko_theme/error.html",
                     error="Workflow setting does not exist."), 400

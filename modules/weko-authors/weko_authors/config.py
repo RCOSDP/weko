@@ -25,7 +25,7 @@ WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'e-Rad_Researcher', 'NRID', 'ORCID', 'ISNI'
                             'kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other']
 """ List of Author Name Identifier Scheme """
 
-WEKO_AUTHORS_INDEX_ITEM_OTHER = 11
+WEKO_AUTHORS_INDEX_ITEM_OTHER = 12
 """ Item other index """
 
 WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
@@ -33,7 +33,7 @@ WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
 ]
 """ List of Affiliation Name Identifier Scheme """
 
-WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 4
+WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 5
 """ Item other index """
 
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
@@ -80,22 +80,10 @@ WEKO_AUTHORS_BULK_EXPORT_RETRY_INTERVAL = 5
 
 WEKO_AUTHORS_FILE_MAPPING = [
     {
-        "json_id": "pk_id",
-        "label_en": "Author ID",
-        "label_jp": "著者ID"
+        'label_en': 'WEKO ID',
+        'label_jp': 'WEKO ID',
+        'json_id': 'pk_id'
     },
-    {
-        "json_id": "weko_id",
-        "label_en": "WEKO ID",
-        "label_jp": "WEKO ID",
-        'validation': {
-            'validator': {
-                'class_name': 'weko_authors.contrib.validation',
-                'func_name': 'validate_digits_for_wekoid'
-            }
-        }
-    },
-
     {
         'json_id': 'authorNameInfo',
         'child': [
