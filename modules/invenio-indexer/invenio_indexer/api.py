@@ -500,9 +500,9 @@ class RecordIndexer(object):
             except NoResultFound as ne:
                 message.reject()
                 current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(ne).__name__}, message:{str(ne)}\n{traceback.format_exc()}")
-            except SQLAlchemyError:
+            except SQLAlchemyError as se:
                 db.session.rollback()
-                current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(ne).__name__}, message:{str(ne)}\n{traceback.format_exc()}")
+                current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(se).__name__}, message:{str(se)}\n{traceback.format_exc()}")
                 message.reject()
             except Exception as e:
                 message.reject()
