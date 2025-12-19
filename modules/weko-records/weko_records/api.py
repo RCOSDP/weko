@@ -1059,6 +1059,11 @@ class ItemTypes(RecordBase):
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id], renew_value)
 
+                            if _prop_id in item_type.render['meta_list']:
+                                data['table_row_map']['schema']['properties'][_prop_id]['title'] = item_type.render['meta_list'][_prop_id]['title']
+                            elif _prop_id in item_type.render['meta_fix']:
+                                data['table_row_map']['schema']['properties'][_prop_id]['title'] = item_type.render['meta_fix'][_prop_id]['title']
+
         from weko_itemtypes_ui.utils import fix_json_schema,update_required_schema_not_exist_in_form, update_text_and_textarea
 
         table_row_map = data.get('table_row_map')
