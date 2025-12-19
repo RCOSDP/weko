@@ -14,7 +14,7 @@ from weko_deposit.api import WekoIndexer
 
 from sqlalchemy.exc import OperationalError, SQLAlchemyError
 from elasticsearch import ConnectionError
-
+from flask import current_app
 def parse_args():
     # 初期値
     startDate = ""
@@ -280,15 +280,19 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
                         # DB保存
                         flag_modified(item, "json")
                         flag_modified(rec, "json")
-                        print(f"[FIX][fix_metadata_53602.py]item_metadata:{item.id}")
-                        print(f"[FIX][fix_metadata_53602.py]records_metadata:{rec.id}")
+                        current_app.logger.info(f"[FIX] item_metadata:{item.id}")
+                        current_app.logger.info(f"[FIX] records_metadata:{rec.id}")
                         db.session.commit()
 
             except (OperationalError, SQLAlchemyError, ConnectionError) as e:
-                sys.stderr.write(f"Error updating Item UUID={uuid}: {e}")
+                import traceback
+                current_app.logger.error(f"Error updating Item UUID={uuid}: {e}")
+                current_app.logger.error(traceback.format_exc())
                 db.session.rollback()
             except Exception as e:
-                sys.stderr.write(f"Unexpected error UUID={uuid}: {e}")
+                import traceback
+                current_app.logger.error(f"Unexpected error UUID={uuid}: {e}")
+                current_app.logger.error(traceback.format_exc())
                 db.session.rollback()
 
         # Activityの処理
@@ -316,27 +320,36 @@ def main(startDate=None,endDate=None,recordId=None,itemTypeId=None, from_cmd=Fal
                     if item_type_id not in check_item_keys:
                         get_item_type_info(check_item_keys, item_type_id, check_prop_ids)
 
-                    temp_data = json.loads(data.temp_data)
-                    for key, prop_type in check_item_keys[item_type_id].items():
-                        if key in temp_data and temp_data[key]:
-                            if change_metadata(prop_type, key, temp_data):
-                                change_flag = True
+                    if data.temp_data and isinstance(data.temp_data, str):
+                        temp_data = json.loads(data.temp_data)
+                        for key, prop_type in check_item_keys[item_type_id].items():
+                            if key in temp_data and temp_data[key]:
+                                if change_metadata(prop_type, key, temp_data):
+                                    change_flag = True
 
                     if change_flag:
                         activity = Activity.query.filter_by(activity_id=data.activity_id).one_or_none()
                         activity.temp_data = json.dumps(temp_data)
                         flag_modified(activity, "temp_data")
                         db.session.commit()
-                        print(f"[FIX][fix_metadata_53602.py]workflow_activity:{activity.id}")
+                        current_app.logger.info(f"[FIX] workflow_activity:{activity.id}")
                 except (OperationalError, SQLAlchemyError) as e:
-                    sys.stderr.write(f"Error updating Activity ID={data.activity_id}: {e}")
+                    current_app.logger.error(f"Error updating Activity ID={data.activity_id}: {e}")
                     db.session.rollback()
+                    import traceback
+                    current_app.logger.error(traceback.format_exc())
+
                 except Exception as e:
-                    sys.stderr.write(f"Unexpected error Activity ID={data.activity_id}: {e}")
+                    current_app.logger.error(f"Unexpected error Activity ID={data.activity_id}: {e}")
                     db.session.rollback()
+                    import traceback
+                    current_app.logger.error(traceback.format_exc())
+
 
     except Exception as e:
-        sys.stderr.write(f"Fatal error: {e}")
+        current_app.logger.error(f"Fatal error: {e}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
         raise
 
 

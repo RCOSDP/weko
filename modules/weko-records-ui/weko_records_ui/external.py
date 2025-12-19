@@ -43,7 +43,7 @@ class OAPublishStatus(Enum):
 
     DRAFT = 0
     """Publish status of draft item."""
-    
+
     PUBLISHED = 1
     """Publish status of published item."""
 
@@ -172,7 +172,7 @@ def call_external_system(old_record=None,
                     operation="ITEM_EXTERNAL_LINK",
                     target_key=pid_value_without_ver,
                     request_info=request_info,
-                    remarks=json.dumps(remarks, default=str, ensure_ascii=False),
+                    remarks=json.dumps(remarks, default=str, ensure_ascii=False, sort_keys=True),
                     required_commit=False,
                 )
 

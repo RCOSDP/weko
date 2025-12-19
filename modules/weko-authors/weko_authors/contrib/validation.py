@@ -243,15 +243,16 @@ def validate_external_author_identifier(item, values=[],
     msg = _('External author identifier exists in DB.<br/>{}')
     for val in values:
         reduce_keys = val['reduce_keys']
-        idType = reduce(getitem, reduce_keys[:-1], item)['idType']
-        authorId = reduce(getitem, reduce_keys[:-1], item)['authorId']
-        if idType and authorId:
+        author_info = reduce(getitem, reduce_keys[:-1], item)
+        id_type = author_info.get("idType")
+        author_id = author_info.get("authorId")
+        if id_type and author_id:
             weko_ids_has_authorId = existed_external_authors_id \
-                .get(idType, {}) \
-                .get(authorId, [])
+                .get(id_type, {}) \
+                .get(author_id, [])
             if weko_ids_has_authorId \
                     and item.get('pk_id') not in weko_ids_has_authorId:
-                warnings.append(authorId)
+                warnings.append(author_id)
     if warnings:
         return msg.format('<br/>'.join(warnings))
     return None

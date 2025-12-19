@@ -1,19 +1,27 @@
+import re
 import pytest
 from weko_records_ui.utils import (
+    can_manage_onetime_url,
+    convert_token_into_obj,
+    has_permission_to_manage_onetime_url,
+    is_onetime_file,
+    save_download_log,
+    to_utc_datetime,
+    create_download_url,
+    create_onetime_url_record,
+    create_secret_url_record,
+    generate_sha256_hash,
     is_future,
     create_usage_report_for_user,
+    get_data_usage_application_data,
+    send_secret_url_mail,
     send_usage_report_mail_for_user,
     check_and_send_usage_report,
-    update_onetime_download,
-    create_onetime_download_url,
     get_onetime_download,
-    validate_onetime_download_token,
     get_license_pdf,
     hide_item_metadata,
     get_pair_value,
     get_min_price_billing_file_download,
-    parse_one_time_download_token,
-    generate_one_time_download_url,
     validate_download_record,
     is_private_index,
     get_file_info_list,
@@ -33,52 +41,67 @@ from weko_records_ui.utils import (
     get_record_permalink,
     get_google_detaset_meta,
     get_google_scholar_meta,
-    create_secret_url,
-    parse_secret_download_token,
-    validate_secret_download_token,
-    get_secret_download,
-    update_secret_download,
     get_valid_onetime_download,
     display_oaiset_path,
     get_terms,
     get_roles,
     check_items_settings,
+    validate_expiration_date,
+    validate_file_access,
+    validate_secret_url_generation_request,
     get_data_by_key_array_json,
     get_values_by_selected_lang,
     export_preprocess,
-    get_data_by_key_array_json,
     RoCrateConverter,
-    create_tsv
+    create_tsv,
+    is_secret_url_feature_enabled,
+    has_permission_to_manage_secret_url,
+    is_secret_file,
+    can_manage_secret_url,
+    validate_token,
+    validate_url_download,
+    generate_one_time_download_url,
+    parse_one_time_download_token,
     )
 import base64
 from unittest.mock import MagicMock
 import copy
-from datetime import datetime as dt
+import pytest
+import io
+from datetime import date, datetime as dt, time, timezone
 from datetime import timedelta
 from lxml import etree
 from fpdf import FPDF
 from flask import json, current_app
-from flask_babelex import to_utc 
+from flask_babelex import to_utc
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from mock import patch
 from weko_deposit.api import WekoRecord, WekoDeposit
-from weko_records_ui.models import FileOnetimeDownload, FileSecretDownload
+from weko_records_ui.models import (
+    AccessStatus, FileOnetimeDownload, FileSecretDownload, FileUrlDownloadLog,
+    UrlType
+)
+from weko_records.api import ItemTypes,Mapping
+from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 from flask_babelex import gettext as _
 import datetime
 from werkzeug.exceptions import Gone, NotFound
+
+from weko_schema_ui.models import PublishStatus
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
 # def is_future(settings=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_future -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_future(app):
-    assert is_future(None) == True
-    assert is_future('2100-01-01') == True
-    assert is_future('2000-01-01T00:00:00') == False
-    assert is_future('2000-01-01 00:00:00') == False
-    assert is_future(dt(2100, 1, 1)) == True
-    assert is_future('2000-01-01 00:00') == True
+    with app.test_request_context():
+        assert is_future(None) == True
+        assert is_future('2100-01-01') == True
+        assert is_future('2000-01-01T00:00:00') == False
+        assert is_future('2000-01-01 00:00:00') == False
+        assert is_future(dt(2100, 1, 1)) == True
+        assert is_future('2000-01-01 00:00') == True
 
 # def check_items_settings(settings=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_items_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -561,10 +584,10 @@ def test_get_file_info_list(app,records, itemtypes):
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
         adt = str(datetime.date.max)
-        pdt = to_utc(dt.strptime(adt, '%Y-%m-%d')) 
+        pdt = to_utc(dt.strptime(adt, '%Y-%m-%d'))
         assert ret[1][0]['future_date_message'] == "Download is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
         assert ret[1][0]['download_preview_message'] == "Download / Preview is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
-    
+
     # dateValue == 過去
     past_time = dt.now() - timedelta(days=3)
     past_time_str = str(past_time).split(' ')[0]
@@ -572,7 +595,7 @@ def test_get_file_info_list(app,records, itemtypes):
     record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = past_time_str
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
-        pdt = to_utc(past_time) 
+        pdt = to_utc(past_time)
         assert ret[1][0]['future_date_message'] == ""
         assert ret[1][0]['download_preview_message'] == ""
 
@@ -583,7 +606,7 @@ def test_get_file_info_list(app,records, itemtypes):
     record['item_1617605131499']['attribute_value_mlt'][0]['date'][0]['dateValue'] = future_time_str
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
-        pdt = to_utc(future_time) 
+        pdt = to_utc(future_time)
         assert ret[1][0]['future_date_message'] == "Download is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
         assert ret[1][0]['download_preview_message'] == "Download / Preview is available from {}/{}/{}.".format(pdt.year, pdt.month, pdt.day)
 
@@ -592,7 +615,7 @@ def test_get_file_info_list(app,records, itemtypes):
 #     def set_message_for_file(p_file):
 #     def get_data_by_key_array_json(key, array_json, get_key):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_file_info_list_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_info_list_1(app, make_record_need_restricted_access):
+def test_get_file_info_list_1(app, make_record_need_restricted_access, esindex):
     # roles = [{"role":1},{"role":2}]
     record_1 = WekoRecord.get_record_by_pid(11)
     record_1['item_1689228169922']['attribute_value_mlt'][0]['roles'] = [{"role":1},{"role":2}]
@@ -600,21 +623,23 @@ def test_get_file_info_list_1(app, make_record_need_restricted_access):
         is_display_file_preview, files =  get_file_info_list(record_1)
         assert is_display_file_preview == True
         assert len(files) == 1
-    
+
     # 'provide': [{'role': '2', 'workflow': '3'}, {'role': 'none_loggin', 'workflow': '3'}, {'role': '1', 'workflow': '99'}, {'role': '3', 'workflow': '3'}]
     # terms='term_free' termsDescription='利用規約本文'
     record_2 = WekoRecord.get_record_by_pid(12)
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        is_display_file_preview, files =  get_file_info_list(record_2)
-        assert is_display_file_preview == True
-        assert len(files) == 1
+        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+            is_display_file_preview, files =  get_file_info_list(record_2)
+            assert is_display_file_preview == True
+            assert len(files) == 1
 
     record_2['item_1689228169922']['attribute_value_mlt'][0]['terms'] = '100'
     with app.test_request_context(headers=[("Accept-Language", "en")]):
-        is_display_file_preview, files =  get_file_info_list(record_2)
-        assert is_display_file_preview == True
-        assert len(files) == 1
-    
+        with patch('weko_records_ui.utils.check_file_download_permission',return_value=True):
+            is_display_file_preview, files =  get_file_info_list(record_2)
+            assert is_display_file_preview == True
+            assert len(files) == 1
+
 # def get_data_by_key_array_json(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_by_key_array_json -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_data_by_key_array_json(app):
@@ -636,7 +661,7 @@ def test_get_data_by_key_array_json(app):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_usage_report_for_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_create_usage_report_for_user(app, db, workflows, records, users, db_file_permission):
     _onetime_download_extra_info = {
-        'usage_application_activity_id': 'usage_application_activity_id_dummy1',
+        'usage_application_activity_id': 'usage_application_1',
         'is_guest': False
     }
     app.config['WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME'] = 'Data Usage Report'
@@ -732,32 +757,6 @@ def test_parse_one_time_download_token(app):
         assert parse_one_time_download_token("test") != None
         assert parse_one_time_download_token(None) != None
 
-
-# def validate_onetime_download_token(
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_onetime_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_validate_onetime_download_token(app,db_fileonetimedownload):
-    file_name='helloworld.pdf'
-    record_id='1'
-    user_email='wekosoftware@nii.ac.jp'
-    token = "9948A41F46456DF5"
-    date = "2022-09-28"
-    with app.test_request_context():
-        file_downloads = FileOnetimeDownload.find(
-            file_name=file_name, record_id=record_id, user_mail=user_email
-        )
-        assert validate_onetime_download_token(file_downloads[0],file_name,record_id,user_email,date,token)== (True, '')
-
-        data1 = MagicMock()
-        data1.download_count = 0
-
-        with patch('passlib.handlers.oracle.oracle10.verify', return_value=False):
-            assert validate_onetime_download_token(file_downloads[0],file_name,record_id,user_email,date,token)== (False, 'Token is invalid.')
-
-        assert validate_onetime_download_token(False,file_name,record_id,user_email,date,token)== (False, 'Token is invalid.')
-
-        assert validate_onetime_download_token(data1,file_name,record_id,user_email,date,token)== (False, 'Token is invalid.')
-
-
 # def is_private_index(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_private_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_is_private_index(app,records):
@@ -788,25 +787,204 @@ def test_is_private_index(app,records):
 
 # def validate_download_record(record: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_download_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_validate_download_record(app, records):
-    indexer, results = records
-    record = results[0]["record"]
-    assert validate_download_record(record)==None
+def test_validate_download_record():
+    record = {'publish_status': PublishStatus.PUBLIC.value}
+    with patch('weko_records_ui.utils.is_private_index', return_value=False):
+        assert validate_download_record(record) is True
+        record['publish_status'] = None
+        assert validate_download_record(record) is False
+        record['publish_status'] = PublishStatus.PUBLIC.value
+    with patch('weko_records_ui.utils.is_private_index', return_value=True):
+        assert validate_download_record(record) is False
+        record['publish_status'] = None
+        assert validate_download_record(record) is False
 
-    data1 = {
-        "publish_status": 1
-    }
 
-    try:
-        validate_download_record(data1)
-    except:
-        pass
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_url_feature_enabled -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_is_secret_url_feature_enabled(app):
+    with app.app_context():
+        # Case 1: secret_enableがTrueを返す
+        with patch('weko_records_ui.utils.AdminSettings.get') as mock_get:
+            mock_get.return_value = {
+                'secret_URL_file_download': {
+                    'secret_enable': True,
+                }
+            }
+            assert is_secret_url_feature_enabled() is True
 
-    with patch("weko_records_ui.utils.is_private_index", return_value=True):
-        try:
-            validate_download_record(record)
-        except:
-            pass
+        # Case 2: secret_enableがFalseを返す
+        with patch('weko_records_ui.utils.AdminSettings.get') as mock_get:
+            mock_get.return_value = {
+                'secret_URL_file_download': {
+                    'secret_enable': False,
+                }
+            }
+            assert is_secret_url_feature_enabled() is False
+
+        # Case 3: AdminSettingsがNoneでcurrent_app.configが存在し、期待するデフォルト設定がある場合
+        with patch('weko_records_ui.utils.AdminSettings.get', return_value=None):
+            with patch('weko_records_ui.utils.current_app.config', {
+                'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS': {
+                    'secret_URL_file_download': {}
+                }
+            }):
+                # secret_enable は存在しないのでデフォルト値の False を返すことを検証
+                assert is_secret_url_feature_enabled() is False
+
+        # Case 4: AdminSettingsがNoneでcurrent_app.configが存在しない場合
+        with patch('weko_records_ui.utils.AdminSettings.get', return_value=None):
+            with patch('weko_records_ui.utils.current_app.config', {'WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS': {}}):
+                # 設定がない場合も False を返すことを検証
+                assert is_secret_url_feature_enabled() is False
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_has_permission_to_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, expected",
+    [
+        (0, True),  # Owner
+        (4, True),  # Shared user
+        (1, True),  # Superuser
+        (2, True),  # Superuser
+        (3, False), # No permission
+        (5, False), # No superuser role
+    ],
+)
+def test_has_permission_to_manage_secret_url(user_id, expected, app, users):
+    # レコードに必要なデータを設定
+    # 'owner'と'weko_shared_ids'は、usersリストから取り出した値を使用
+    record = {'owner': str(users[0]["id"]), 'weko_shared_ids': [users[4]["id"]]}
+
+    # アプリケーションコンテキスト内でテスト実行
+    with app.app_context():
+        # has_permission_to_manage_secret_url関数を実行し、
+        # 結果が期待される値 (expected) と一致するかを検証
+        assert has_permission_to_manage_secret_url(record, users[user_id]["id"]) == expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_has_permission_to_manage_onetime_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "user_id, expected",
+    [
+        (0, True),  # Owner
+        (4, False), # Shared user
+        (1, True),  # Superuser
+        (2, True),  # Superuser
+        (3, False), # No permission
+        (5, False), # No superuser role
+    ],
+)
+def test_has_permission_to_manage_onetime_url(user_id, expected, app, users):
+    record = {'owner': str(users[0]["id"]), 'weko_shared_ids': [users[4]["id"]]}
+    with app.app_context():
+        assert has_permission_to_manage_onetime_url(
+            record, users[user_id]["id"]) is expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_secret_file -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "file_data, filename, expected",
+    [
+        # ケース1: accessroleが 'open_no' の場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_no', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', True),
+        # ケース2: accessroleが 'open_date' で公開日が未来の場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_date', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', True),
+        # ケース3: accessroleが 'open_date' で公開日が過去の場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_date', 'date': [{'dateValue': '2000-01-01'}]}], 'testfile.txt', False),
+        # ケース4: accessroleが 'open_no' や 'open_date' でない場合
+        ([{'filename': 'testfile.txt', 'accessrole': 'open_test', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', False),
+        # ケース5: ファイル名が一致しない場合
+        ([{'filename': 'otherfile.txt', 'accessrole': 'open_no', 'date': [{'dateValue': '2999-12-31'}]}], 'testfile.txt', False),
+        # ケース6: file_dataが空の場合
+        ([], 'testfile.txt', False),
+    ],
+)
+def test_is_secret_file(file_data, filename, expected):
+    # WekoRecordのモックを作成し、get_file_dataメソッドをファイルデータでモックする
+    mock_record = MagicMock(spec=WekoRecord)
+    mock_record.get_file_data.return_value = file_data  # モックのget_file_dataメソッドが返す値を設定
+
+    # dt（日時関連）をモックして、現在の日付や日付文字列の変換を制御する
+    with patch('weko_records_ui.utils.dt') as mock_dt:
+        mock_dt.utcnow.return_value = dt(2024, 1, 1)  # 現在の日付を2024年1月1日に設定
+        mock_dt.strptime.side_effect = lambda *args, **kwargs: dt.strptime(*args, **kwargs)  # strptimeの動作をモック
+
+        # is_secret_file関数を実行して、結果が期待される値と一致するかを確認
+        result = is_secret_file(mock_record, filename)
+
+        # 実際の結果が期待値と一致することを確認
+        assert result == expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_onetime_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_is_onetime_file():
+    mock_record = MagicMock()
+    mock_record.get_file_data.return_value = [
+        {"filename": "file1.txt", "accessrole": "open_restricted"},
+        {"filename": "file2.txt", "accessrole": "public"}
+    ]
+    assert is_onetime_file(mock_record, "file1.txt") is True
+    assert is_onetime_file(mock_record, "file2.txt") is False
+    assert is_onetime_file(mock_record, "file3.txt") is False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_can_manage_secret_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "is_authenticated, feature_enabled, has_permission, is_secret, expected",
+    [
+        # Case 1: ユーザーが認証されていない場合
+        (False, True, True, True, False),
+        # Case 2: 機能が有効でない場合
+        (True, False, True, True, False),
+        # Case 3: ユーザーに権限がない場合
+        (True, True, False, True, False),
+        # Case 4: ファイルが秘密でない場合
+        (True, True, True, False, False),
+        # Case 5: すべての条件を満たす場合
+        (True, True, True, True, True),
+    ],
+)
+def test_can_manage_secret_url(is_authenticated, feature_enabled, has_permission, is_secret, expected):
+    # WekoRecordのモックを作成
+    mock_record = MagicMock(spec=WekoRecord)
+
+    # ユーザーのモックを作成
+    mock_user = MagicMock()
+    mock_user.is_authenticated = is_authenticated  # ユーザーが認証されているかどうかを設定
+
+    # current_userのモックを作成して、`mock_user`を返すように設定
+    with patch('weko_records_ui.utils.current_user', mock_user):
+        # is_secret_url_feature_enabledのモックを作成して、`feature_enabled`を返すように設定
+        with patch('weko_records_ui.utils.is_secret_url_feature_enabled', return_value=feature_enabled):
+            # has_permission_to_manage_secret_urlのモックを作成して、`has_permission`を返すように設定
+            with patch('weko_records_ui.utils.has_permission_to_manage_secret_url', return_value=has_permission):
+                # is_secret_fileのモックを作成して、`is_secret`を返すように設定
+                with patch('weko_records_ui.utils.is_secret_file', return_value=is_secret):
+                    # can_manage_secret_url関数を実行し、結果が期待される値と一致するかを確認
+                    assert can_manage_secret_url(mock_record, 'testfile.txt') == expected
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_can_manage_onetime_url -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "is_authenticated, has_permission, is_onetime, expected",
+    [
+        # Case 1: ユーザーが認証されていない場合
+        (False, True, True, False),
+        # Case 2: ユーザーに権限がない場合
+        (True, False, True, False),
+        # Case 3: ファイルが制限公開アイテムでない場合
+        (True, True, False, False),
+        # Case 4: すべての条件を満たす場合
+        (True, True, True, True),
+    ],
+)
+def test_can_manage_onetime_url(is_authenticated, has_permission, is_onetime, expected):
+    mock_record = MagicMock(spec=WekoRecord)
+    mock_user = MagicMock()
+    mock_user.is_authenticated = is_authenticated
+    with patch('weko_records_ui.utils.current_user', mock_user):
+        with patch('weko_records_ui.utils.has_permission_to_manage_onetime_url', return_value=has_permission):
+            with patch('weko_records_ui.utils.is_onetime_file', return_value=is_onetime):
+                assert can_manage_onetime_url(mock_record, 'testfile.txt') == expected
 
 
 # def get_onetime_download(file_name: str, record_id: str,
@@ -828,24 +1006,6 @@ def test_get_valid_onetime_download():
         assert {} == get_valid_onetime_download(file_name= "str", record_id= "str",user_mail= "str")
     with patch("weko_records_ui.models.FileOnetimeDownload.find_downloadable_only",return_value=["a","b"]):
         assert "a" == get_valid_onetime_download(file_name= "str", record_id= "str",user_mail= "str")
-
-# def create_onetime_download_url(
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_onetime_download_url(app):
-    with app.test_request_context():
-        assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp','test_password')==None
-
-    with app.test_request_context():
-        with patch('weko_records_ui.utils.get_restricted_access', return_value=""):
-            assert create_onetime_download_url('ACT','helloworld.pdf','1','wekosoftware@nii.ac.jp','test_password')==False
-
-
-# def update_onetime_download(**kwargs) -> NoReturn:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_update_onetime_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_update_onetime_download(app):
-    with app.test_request_context():
-        assert update_onetime_download(file_name="helloworld.pdf", user_mail="wekosoftware@nii.ac.jp", record_id="1", download_count=0)==None
-
 
 # def get_workflows():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_workflows -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -907,7 +1067,7 @@ def test_get_google_scholar_meta(app,records,itemtypes,oaischema,oaiidentify):
         with app.test_request_context():
             indexer, results = records
             record = results[0]["record"]
-            assert get_google_scholar_meta(record)==[{'data': '『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表', 'name': 'citation_title'}, {'data': '東京大学史料編纂所附属画像史料解析センター', 'name': 'citation_publisher'}, {'data': '2022-09-30', 'name': 'citation_publication_date'}, {'data': 'creator name', 'name': 'citation_author'}, {'data': 'https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx',  'name': 'citation_pdf_url'}, {'data': '', 'name': 'citation_dissertation_institution'}, {'data': 'http://TEST_SERVER/records/1', 'name': 'citation_abstract_html_url'}]
+            assert get_google_scholar_meta(record)==[{'data': '『史料編纂掛備用写真画像図画類目録』画像の部：新旧架番号対照表', 'name': 'citation_title'}, {'data': '東京大学史料編纂所附属画像史料解析センター', 'name': 'citation_publisher'}, {'data': '2022-09-30', 'name': 'citation_publication_date'}, {'data': 'creator name', 'name': 'citation_author'}, {'data': 'https://repository.dl.itc.u-tokyo.ac.jp/record/2005680/files/comparison_table_of_preparation_image_catalog.xlsx',  'name': 'citation_pdf_url'}, {'data': '', 'name': 'citation_dissertation_institution'}, {'data': 'http://test_server/records/1', 'name': 'citation_abstract_html_url'}]
 
 
 # def get_google_detaset_meta(record):
@@ -928,179 +1088,624 @@ def test_get_google_detaset_meta(app, records, itemtypes, oaischema, oaiidentify
         with patch("lxml.etree", return_value=data1):
             assert get_google_detaset_meta(record) == None
 
-#def create_secret_url(record_id:str ,file_name:str ,user_mail:str ,restricted_fullname='',restricted_data_name='') -> dict:
-# def _generate_secret_download_url(file_name: str, record_id: str, id: str ,created :dt) -> str:
-# _create_secret_download_url(file_name: str, record_id: str, user_mail: str)
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_secret_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_create_secret_url(app,db,users,records):
-    url , results = records
-    file_name= results[1]["filename"]
-    record_id=results[1]["recid"].pid_value
-    user_mail = users[0]["email"]
 
-    db.session.add(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download":
-            {"secret_enable": True,
-            "secret_download_limit": 1,
-            "secret_expiration_date": 9999999,
-            "secret_download_limit_unlimited_chk": False,
-            "secret_expiration_date_unlimited_chk": False}}))
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_to_utc_datetime -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_to_utc_datetime(app):
+    assert to_utc_datetime('2025-1-1') == dt(
+        2025, 1, 1, 0, 0, tzinfo=timezone.utc)
+    assert to_utc_datetime('2025-01-01') == dt(
+        2025, 1, 1, 0, 0, tzinfo=timezone.utc)
+    assert to_utc_datetime('2025-1-1', 720) == dt(
+        2025, 1, 1, 12, 0, tzinfo=timezone.utc)
+    assert to_utc_datetime('2025-1-1', -720) == dt(
+        2024, 12, 31, 12, 0, tzinfo=timezone.utc)
+    assert to_utc_datetime('2025-1-1', -540) == dt(
+        2024, 12, 31, 15, 0, tzinfo=timezone.utc)
+    assert to_utc_datetime('2025/01/01') is None
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_url_generation_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.utils.validate_expiration_date')
+def test_validate_secret_url_generation_request(mock_date, app):
+    mock_date.return_value = True
+    base_case = {'link_name'              : '',
+                 'expiration_date'        : 'mocked',
+                 'download_limit'         : 1,
+                 'send_email'             : False,
+                 'timezone_offset_minutes': 0}
+    test_cases = [
+        (None,
+         False),
+        # When all fields are valid
+        ({'link_name'              : '123',
+          'expiration_date'        : 'mocked',
+          'download_limit'         : 1,
+          'send_email'             : False,
+          'timezone_offset_minutes': 0},
+          True),
+        # When all fields are invalid
+        ({'link_name'              : 123,
+          'expiration_date'        : 123,
+          'download_limit'         : 0,
+          'send_email'             : None,
+          'timezone_offset_minutes': '0'},
+          False),
+        # When each keys do not exist
+        ({key: value for key, value in base_case.items()
+          if key != 'link_name'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'expiration_date'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'download_limit'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'send_email'}, False),
+        ({key: value for key, value in base_case.items()
+          if key != 'timezone_offset_minutes'}, False),
+        # For link_name
+        ({**base_case, 'link_name': '123'    }, True),
+        ({**base_case, 'link_name': 123      }, False),
+        ({**base_case, 'link_name': 'a' * 256}, False),
+        # For expiration_date
+        ({**base_case, 'expiration_date': '2025-01-00'}, True),
+        ({**base_case, 'expiration_date': 20250101}, False),
+        # For download_limit
+        ({**base_case, 'download_limit': 1    }, True),
+        ({**base_case, 'download_limit': 0    }, False),
+        ({**base_case, 'download_limit': -1   }, False),
+        ({**base_case, 'download_limit': 1.1  }, False),
+        ({**base_case, 'download_limit': 'abc'}, False),
+        # For send_email
+        ({**base_case, 'send_email': False}, True),
+        ({**base_case, 'send_email': True }, True),
+        ({**base_case, 'send_email': None }, False),
+        # For timezone_offset_minutes
+        ({**base_case, 'timezone_offset_minutes': 0    }, True),
+        ({**base_case, 'timezone_offset_minutes': 720  }, True),
+        ({**base_case, 'timezone_offset_minutes': -720 }, True),
+        ({**base_case, 'timezone_offset_minutes': 800  }, False),
+        ({**base_case, 'timezone_offset_minutes': -800 }, False),
+        ({**base_case, 'timezone_offset_minutes': '100'}, False),
+    ]
+
+    for request_data, expected in test_cases:
+        assert validate_secret_url_generation_request(request_data) is expected
+
+    # if validate_expiration_date is False
+    mock_date.return_value = False
+    assert validate_secret_url_generation_request(base_case) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_expiration_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_validate_expiration_date(app):
+    assert validate_expiration_date('1999-12-31', 0) is False
+    yesterday = (dt.now(timezone.utc) - timedelta(1)).strftime("%Y-%m-%d")
+    assert validate_expiration_date(yesterday, 0) is False
+
+    tomorrow = (dt.now(timezone.utc) + timedelta(1)).strftime("%Y-%m-%d")
+    with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
+        mock_settings.return_value = None
+        assert validate_expiration_date(tomorrow, 0) is False
+
+    in_a_week = (dt.now(timezone.utc) + timedelta(7)).strftime("%Y-%m-%d")
+    with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
+        mock_settings.return_value = {'secret_expiration_date': 1}
+        assert validate_expiration_date(in_a_week, 0) is False
+
+    in_an_year = (dt.now(timezone.utc) + timedelta(365)).strftime("%Y-%m-%d")
+    with patch('weko_records_ui.utils.get_restricted_access') as mock_settings:
+        mock_settings.return_value = {}
+        assert validate_expiration_date(in_an_year, 0) is False
+
+    invalid_date = '2025-01-00'
+    assert validate_expiration_date(invalid_date, 0) is False
+
+    assert validate_expiration_date(tomorrow, 0) is True
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_secret_url_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.utils.get_restricted_access')
+@patch('weko_records_ui.utils.current_user')
+def test_create_secret_url_record(mock_user, mock_settings, users):
+    mock_settings.return_value = {'expiration_date': 30, 'download_limit': 10}
+    mock_user.id = 1
+    record_id = 1
+    file_name = 'test.txt'
+
+    # Test request data
+    request = {'link_name': '', 'expiration_date': '', 'download_limit': None,
+               'timezone_offset_minutes': 0}
+    url_obj = create_secret_url_record(record_id, file_name, request)
+    assert isinstance(url_obj, FileSecretDownload)
+    assert url_obj.creator_id == 1
+    assert url_obj.record_id == str(record_id)
+    assert url_obj.file_name == file_name
+    expected_name = 'test.txt_' + dt.now(timezone.utc).strftime('%Y-%m-%d')
+    assert url_obj.label_name == expected_name
+    expected_date = dt.combine((dt.now(timezone.utc).date()+timedelta(days=31)), time(0, 0, 0))
+    assert url_obj.expiration_date == expected_date
+    assert url_obj.download_limit == 10
+
+    # If request is valid
+    request = {
+        'link_name': 'test',
+        'expiration_date': (dt.now(timezone.utc).date()).strftime('%Y-%m-%d'),
+        'download_limit': 5,
+        'timezone_offset_minutes': 720
+    }
+    url_obj2 = create_secret_url_record(record_id, file_name, request)
+    assert url_obj2.creator_id == 1
+    assert url_obj2.record_id == str(record_id)
+    assert url_obj2.file_name == file_name
+    assert url_obj2.label_name == 'test'
+    expected_date2 = dt.combine((dt.now(timezone.utc).date()+timedelta(days=1)), time(12,0,0))
+    assert url_obj2.expiration_date == expected_date2
+    assert url_obj2.download_limit == 5
+    request = {'link_name': '',
+               'expiration_date': '2022-10-10',
+               'download_limit': '',
+               'timezone_offset_minutes': 0}
+    with pytest.raises(ValueError):
+        create_secret_url_record(record_id, file_name, request)
+    request = {'link_name': '',
+               'expiration_date': '',
+               'download_limit': 0,
+               'timezone_offset_minutes': 0}
+    with pytest.raises(ValueError):
+        create_secret_url_record(record_id, file_name, request)
+
+    # If settings is invalid
+    mock_settings.return_value = {}
+    assert create_secret_url_record(record_id, file_name, request) is None
+    mock_settings.return_value = 'invalid data'
+    assert create_secret_url_record(record_id, file_name, request) is None
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_onetime_download_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.utils.get_restricted_access')
+@patch('weko_records_ui.utils.current_user')
+def test_create_onetime_download_record(mock_user, mock_get, users):
+    mock_get.return_value = {'expiration_date': 30}
+    mock_user.id = 1
+    activity_id = 1
+    record_id = 1
+    file_name = 'test.txt'
+    user_mail = 'test@example.org'
+
+    assert FileOnetimeDownload.query.count() == 0
+    url_obj = create_onetime_url_record(
+        activity_id, record_id, file_name, user_mail)
+    assert FileOnetimeDownload.query.count() == 1
+    assert isinstance(url_obj, FileOnetimeDownload)
+    assert url_obj.approver_id == 1
+    assert url_obj.record_id == str(record_id)
+    assert url_obj.file_name == file_name
+    now = (dt.now(timezone.utc) + timedelta(days=31)).replace(tzinfo=None)
+    tolerance = timedelta(seconds=1)
+    assert now - url_obj.expiration_date <= tolerance
+    assert url_obj.download_limit == 10
+    assert url_obj.user_mail == user_mail
+    assert url_obj.is_guest is False
+
+    mock_get.return_value = {}
+    assert create_onetime_url_record(
+        activity_id, record_id, file_name, user_mail) is None
+    mock_get.return_value = 'invalid data'
+    assert create_onetime_url_record(
+        activity_id, record_id, file_name, user_mail) is None
+
+    # Test Case: user is guest (is_authenticated is False)
+    mock_get.return_value = {'expiration_date': 30}
+    mock_user.is_authenticated = False
+    mock_user.id = None
+    url_obj2 = create_onetime_url_record(
+        activity_id, record_id, file_name, user_mail, is_guest=True)
+    assert FileOnetimeDownload.query.count() == 2
+    assert isinstance(url_obj2, FileOnetimeDownload)
+    assert url_obj2.approver_id is None
+    assert url_obj2.record_id == str(record_id)
+    assert url_obj2.file_name == file_name
+    now = (dt.now(timezone.utc) + timedelta(days=31)).replace(tzinfo=None)
+    tolerance = timedelta(seconds=1)
+    assert now - url_obj2.expiration_date <= tolerance
+    assert url_obj2.download_limit == 10
+    assert url_obj2.user_mail == user_mail
+    assert url_obj2.is_guest is True
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_create_download_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_create_download_url(app):
+    with patch('weko_records_ui.utils.base64.urlsafe_b64encode') as encoded:
+        encoded.return_value = b'test'
+        with app.test_request_context():
+            secret_obj = FileSecretDownload(
+                creator_id=1,
+                record_id=1,
+                file_name='test.txt',
+                label_name='test_url',
+                expiration_date=dt.now() + timedelta(days=30),
+                download_limit=10)
+            url = create_download_url(secret_obj)
+            assert url == (f'http://test_server/record/1/file/secret/test.txt'
+                           f'?token={b"test".decode()}')
+        with app.test_request_context():
+            onetime_obj = FileOnetimeDownload(
+                approver_id=1,
+                record_id=1,
+                file_name='test.txt',
+                expiration_date=dt.now() + timedelta(days=30),
+                download_limit=10,
+                user_mail='test@example.org',
+                is_guest=False,
+                extra_info={'activity_id': 1})
+            url = create_download_url(onetime_obj)
+            assert url == (f'http://test_server/record/1/file/onetime/test.txt'
+                           f'?token={b"test".decode()}')
+        with app.test_request_context():
+            invalid_obj = MagicMock()
+            url = create_download_url(invalid_obj)
+            assert url is None
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_generate_sha256_hash -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_generate_sha256_hash(app):
+    app.config['WEKO_RECORDS_UI_SECRET_KEY'] = 'secret'
+    secret_ubj = FileSecretDownload(
+        creator_id=1,
+        record_id=1,
+        file_name='test.txt',
+        label_name='test_url',
+        expiration_date=dt.now().date() + timedelta(days=30),
+        download_limit=10)
+    secret_url = generate_sha256_hash(secret_ubj)
+    assert len(secret_url) == 32
+    secret_obj2 = FileSecretDownload(
+        creator_id=2,
+        record_id=2,
+        file_name='test2.txt',
+        label_name='test_url2',
+        expiration_date=dt.now().date() + timedelta(days=10),
+        download_limit=5)
+    secret_url2 = generate_sha256_hash(secret_obj2)
+    assert len(secret_url2) == 32
+    assert secret_url != secret_url2
+    same_url = generate_sha256_hash(secret_ubj)
+    assert secret_url == same_url
+
+    onetime_obj = FileOnetimeDownload(
+        approver_id=1,
+        record_id=1,
+        file_name='test.txt',
+        expiration_date=dt.now().date() + timedelta(days=30),
+        download_limit=10,
+        user_mail='test@example.org',
+        is_guest=False,
+        extra_info={'activity_id': 1})
+    onetime_url = generate_sha256_hash(onetime_obj)
+    assert len(onetime_url) == 32
+    onetime_obj2 = FileOnetimeDownload(
+        approver_id=2,
+        record_id=2,
+        file_name='test2.txt',
+        expiration_date=dt.now().date() + timedelta(days=10),
+        download_limit=5,
+        user_mail='test2@example.org',
+        is_guest=True,
+        extra_info={'activity_id': 2})
+    onetime_url2 = generate_sha256_hash(onetime_obj2)
+    assert len(onetime_url2) == 32
+    assert onetime_url != onetime_url2
+    same_url = generate_sha256_hash(onetime_obj)
+    assert onetime_url == same_url
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_send_secret_url_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.utils.UserProfile.get_by_userid')
+@patch('weko_records_ui.utils.current_user')
+@patch('weko_records_ui.utils.set_mail_info', return_value={})
+@patch('weko_records_ui.utils.process_send_mail', return_value=True)
+def test_send_secret_url_mail(mock_send, mock_set_info, mock_user,
+                              mock_profile, app, db_mailTemplateGenre, db_mailtemplates):
+    app.config['WEKO_RECORDS_UI_MAIL_TEMPLATE_SECRET_URL'] = 'test_template'
+    mock_profile_obj = MagicMock()
+    mock_profile_obj._displayname = 'test_user'
+    mock_profile.return_value = mock_profile_obj
+    mock_user.id = 1
+    mock_user.email = 'test@example.org'
+
+    uuid = 'test_uuid'
+    url_obj = FileSecretDownload(
+        creator_id=1,
+        record_id=1,
+        file_name='test.txt',
+        label_name='test_url',
+        expiration_date=dt(2125, 1, 1, 0, 0),
+        download_limit=10)
+    item_title = 'test_title'
+    mock_user.id = 1
+    expected_info = {
+        'mail_recipient'            : 'test@example.org',
+        'file_name'                 : url_obj.file_name,
+        'restricted_expiration_date': '2125-01-01 23:59:59(JST)',
+        'restricted_download_count' : str(url_obj.download_limit),
+        'restricted_fullname'       : 'test_user',
+        'restricted_data_name'      : item_title,
+    }
+    expected_template_id = 1
+    with app.test_request_context(), \
+        patch("weko_records_ui.utils.get_item_info",return_value={}):
+        expected_info["secret_url"] = create_download_url(url_obj)
+        assert send_secret_url_mail(uuid, url_obj, item_title) is True
+    mock_send.assert_called_once_with(expected_info, expected_template_id)
+    mock_send.reset_mock()
+
+    mock_profile.return_value = None
+    with app.test_request_context(), \
+        patch("weko_records_ui.utils.get_item_info",return_value={}):
+        assert send_secret_url_mail(uuid, url_obj, item_title) is True
+    expected_info['restricted_fullname'] = ''
+    mock_send.assert_called_once_with(expected_info, expected_template_id)
+
+    mock_send.return_value = False
+    with app.test_request_context(), \
+        patch("weko_records_ui.utils.get_item_info",return_value={}):
+        assert send_secret_url_mail(uuid, url_obj, item_title) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_validate_token(app, users):
+    with app.test_request_context():
+        secret_obj = FileSecretDownload.create(
+            creator_id=1,
+            record_id=1,
+            file_name='test.txt',
+            label_name='test_url',
+            expiration_date=dt.now(timezone.utc) + timedelta(days=30),
+            download_limit=10)
+        url = create_download_url(secret_obj)
+        match = re.search(r'[?&]token=([^&]+)', url)
+        secret_token = match.group(1)
+        assert validate_token(secret_token, is_secret_url=True) is True
+    with app.test_request_context():
+        onetime_obj = FileOnetimeDownload.create(
+            approver_id=1,
+            record_id=1,
+            file_name='test.txt',
+            expiration_date=dt.now(timezone.utc) + timedelta(days=30),
+            download_limit=10,
+            user_mail='test@example.org',
+            is_guest=False,
+            extra_info={'activity_id': 1})
+        url = create_download_url(onetime_obj)
+        match = re.search(r'[?&]token=([^&]+)', url)
+        onetime_token = match.group(1)
+        assert validate_token(onetime_token, is_secret_url=False) is True
+    invalid_bytes = b'\xb2q\xff\x19\xaf\xfc\xc6T\x8bt\xd6\xf6\xc6 \
+                            \x08D\xe7\xf3G;cN\x1bn|\xa2\x88\x01v\xed\x1cA_1'
+    with app.test_request_context():
+        secret_token = base64.urlsafe_b64decode(secret_token.encode())
+        assert secret_token.split(b'_')[-1] == invalid_bytes.split(b'_')[-1]
+        invalid_token = base64.urlsafe_b64encode(invalid_bytes).decode()
+        assert validate_token(invalid_token, is_secret_url=True) is False
+    with app.test_request_context():
+        onetime_token = base64.urlsafe_b64decode(onetime_token.encode())
+        assert onetime_token.split(b'_')[-1] == invalid_bytes.split(b'_')[-1]
+        invalid_token = base64.urlsafe_b64encode(invalid_bytes).decode()
+        assert validate_token(invalid_token, is_secret_url=False) is False
+    with app.test_request_context():
+        assert validate_token('', is_secret_url=True) is False
+        assert validate_token(123, is_secret_url=True) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_convert_token_into_obj -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.utils.validate_token')
+def test_convert_token_into_obj(vldt_token, app, users):
+    vldt_token.return_value = True
+    created_at = dt.now(timezone.utc)
+    with app.test_request_context():
+        secret_obj = FileSecretDownload.create(
+            creator_id=1,
+            record_id=1,
+            file_name='test.txt',
+            label_name='test_url',
+            expiration_date=created_at + timedelta(days=30),
+            download_limit=10)
+        assert FileSecretDownload.query.count() == 1
+        url = create_download_url(secret_obj)
+        match = re.search(r'[?&]token=([^&]+)', url)
+        secret_token = match.group(1)
+        secret_obj = convert_token_into_obj(secret_token, is_secret_url=True)
+        assert isinstance(secret_obj, FileSecretDownload)
+        assert secret_obj.id == 1
+        assert secret_obj.creator_id == 1
+        assert secret_obj.record_id == '1'
+        assert secret_obj.file_name == 'test.txt'
+        assert secret_obj.label_name == 'test_url'
+        expected_date = (created_at + timedelta(days=30)).replace(tzinfo=None)
+        assert secret_obj.expiration_date == expected_date
+        assert secret_obj.download_limit == 10
+        vldt_token.assert_called_once_with(secret_token, True)
+        vldt_token.reset_mock()
+    with app.test_request_context():
+        onetime_obj = FileOnetimeDownload.create(
+            approver_id=1,
+            record_id=1,
+            file_name='test.txt',
+            expiration_date=created_at + timedelta(days=30),
+            download_limit=10,
+            user_mail='test@example.org',
+            is_guest=False,
+            extra_info={'activity_id': 1})
+        assert FileOnetimeDownload.query.count() == 1
+        url = create_download_url(onetime_obj)
+        match = re.search(r'[?&]token=([^&]+)', url)
+        onetime_token = match.group(1)
+        onetime_obj = convert_token_into_obj(onetime_token, is_secret_url=False)
+        assert isinstance(onetime_obj, FileOnetimeDownload)
+        assert onetime_obj.id == 1
+        assert onetime_obj.approver_id == 1
+        assert onetime_obj.record_id == '1'
+        assert onetime_obj.file_name == 'test.txt'
+        expected_date = (created_at + timedelta(days=30)).replace(tzinfo=None)
+        assert onetime_obj.expiration_date == expected_date
+        assert onetime_obj.download_limit == 10
+        assert onetime_obj.is_guest == False
+        assert onetime_obj.extra_info == {'activity_id': 1}
+        vldt_token.assert_called_once_with(onetime_token, False)
+    vldt_token.return_value = False
+    with app.test_request_context():
+        assert convert_token_into_obj(secret_token, True) is None
+        assert convert_token_into_obj(onetime_token, False) is None
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_url_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@patch('weko_records_ui.utils.validate_token')
+@patch('weko_records_ui.utils.is_secret_url_feature_enabled')
+@patch('weko_records_ui.utils.validate_file_access')
+@patch('weko_records_ui.utils.validate_download_record')
+def test_validate_url_download(vldt_record, vldt_file, is_enabled, vldt_token,
+                               app, db, users):
+    with app.test_request_context():
+        secret_obj = FileSecretDownload.create(
+            creator_id=1,
+            record_id=1,
+            file_name='test.txt',
+            label_name='test_url',
+            expiration_date=dt.now(timezone.utc) + timedelta(days=30),
+            download_limit=10)
+        match = re.search(r'[?&]token=([^&]+)', create_download_url(secret_obj))
+        secret_token = match.group(1)
+    db.session.flush()
+    vldt_token.return_value  = True
+    is_enabled.return_value  = True
+    vldt_file.return_value   = True
+    vldt_record.return_value = True
+    assert validate_url_download('', '', secret_token, True) == (True, '')
 
     with app.test_request_context():
+        onetime_obj = FileOnetimeDownload.create(
+            approver_id=1,
+            record_id=1,
+            file_name='test.txt',
+            expiration_date=dt.now(timezone.utc) + timedelta(days=30),
+            download_limit=10,
+            user_mail='test@example.org',
+            is_guest=False,
+            extra_info={'activity_id': 1})
+        match = re.search(r'[?&]token=([^&]+)', create_download_url(onetime_obj))
+        onetime_token = match.group(1)
+    db.session.flush()
+    assert validate_url_download('', '', onetime_token, False) == (True, '')
 
-        #60
-        #76
-        # with db.session.begin_nested():
-        return_dict = create_secret_url(file_name= file_name, record_id=record_id, user_mail=user_mail)
+    with patch('weko_records_ui.utils.validate_token',
+               return_value=False):
+        assert validate_url_download('', '', secret_token, True) == (
+            False, 'The provided token is invalid.')
+    with patch('weko_records_ui.utils.is_secret_url_feature_enabled',
+               return_value=False):
+        assert validate_url_download('', '', secret_token, True) == (
+                    False, 'This feature is currently disabled.')
+    with patch('weko_records_ui.utils.validate_file_access',
+               return_value=False):
+        assert validate_url_download('', '', secret_token, True) == (
+            False, 'This file is currently not available for this feature.')
+    with patch('weko_records_ui.utils.validate_download_record',
+               return_value=False):
+        assert validate_url_download('', '', secret_token, True) == (
+            False, 'This file is currently not available for this feature.')
 
-        assert return_dict["restricted_download_count"] == '1'
-        assert return_dict["restricted_download_count_ja"] == ""
-        assert return_dict["restricted_download_count_en"] == ""
-        assert return_dict['restricted_expiration_date'] == ""
-        assert return_dict['restricted_expiration_date_ja'] == "無制限"
-        assert return_dict['restricted_expiration_date_en'] == "Unlimited"
+    secret_obj.is_deleted = True
+    db.session.commit()
+    assert validate_url_download('', '', secret_token, True) == (
+        False, 'This URL has been deactivated.')
+    secret_obj.is_deleted = False
+    secret_obj.download_count = 10
+    db.session.commit()
+    assert validate_url_download('', '', secret_token, True) == (
+        False, 'The download limit has been exceeded.')
+    secret_obj.download_count = 0
+    db.session.commit()
+    with patch('weko_records_ui.utils.dt') as mock_dt:
+        mock_dt.now.return_value = dt.now(timezone.utc) + timedelta(days=31)
+        assert validate_url_download('', '', secret_token, True) == (
+            False, 'The expiration date for download has been exceeded.')
 
-        #61
-        # with db.session.begin_nested():
-        db.session.merge(AdminSettings(id=6,name='restricted_access',settings={"secret_URL_file_download":
-                {"secret_enable": True,
-                "secret_download_limit": 9999999,
-                "secret_expiration_date": 1,
-                "secret_download_limit_unlimited_chk": False,
-                "secret_expiration_date_unlimited_chk": False}}))
-        return_dict = create_secret_url(file_name= file_name
-                    , record_id=record_id
-                    , user_mail=user_mail)
-        assert return_dict["restricted_download_count"] == ""
-        assert return_dict["restricted_download_count_ja"] == "無制限"
-        assert return_dict["restricted_download_count_en"] == "Unlimited"
-        assert return_dict['restricted_expiration_date'] == (datetime.date.today() + timedelta(1)).strftime("%Y-%m-%d")
-        assert return_dict['restricted_expiration_date_ja'] == ""
-        assert return_dict['restricted_expiration_date_en'] == ""
-
-        #62
-        #63
-        #test No.4(W2023-22 2)
-        from re import match
-        assert match("^.+record\/" + record_id + "\/file\/secret\/"+file_name+"\?token=.+=$",return_dict["secret_url"])
-        assert return_dict["secret_url"] != ""
-        assert return_dict["mail_recipient"] == user_mail
-
-
-# def parse_secret_download_token(token: str) -> Tuple[str, Tuple]:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_parse_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_parse_secret_download_token(app ,db):
-    #64
-    assert parse_secret_download_token(None) == (_("Token is invalid."),())
-    assert parse_secret_download_token("") == (_("Token is invalid."),())
-    #65
-    assert parse_secret_download_token("random_string sajfosijdfasodfjv") == (_("Token is invalid."),())
-
-
-    # 66
-    # invalid args pattern
-    assert parse_secret_download_token("MSA1IDIwMjMtMDMtMDggMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=") == (_("Token is invalid."),())
-
-    # 67
-    # valid args pattern
-    error, res = parse_secret_download_token("MSA1IDIwMjMtMDMtMDhUMDA6NTI6MTkuNjI0NTUyIDZGQTdEMzIxQTk0OTU1MEQ=")
-    assert not error
-    assert res == ('1', '5', '2023-03-08T00:52:19.624552', '6FA7D321A949550D')
-
-# def validate_secret_download_token(
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_secret_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_validate_secret_download_token(app):
-
-    with app.test_request_context():
-        secret_download=FileSecretDownload(
-            file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
-        )
-        secret_download.created = dt(2023,3,8,0,52,19,624552)
-        secret_download.id = 5
-        # 68
-        res = validate_secret_download_token(secret_download=None , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-
-        #69
-        res = validate_secret_download_token(secret_download=secret_download , file_name= "aaa.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '5', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '1', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '5', date= '2099-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '7FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-
-        # 70
-        secret_download2=FileSecretDownload(
-            file_name= "eee.txt", record_id= '5',user_mail="repoadmin@example.org",expiration_date=-1,download_count=10
-        )
-        secret_download2.created = dt(2023,3,8,0,52,19,624552)
-        secret_download2.id = 5
-        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("The expiration date for download has been exceeded."))
-
-        #71
-        secret_download2.expiration_date = 99999999
-        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (True ,"")
-
-        # 72
-        secret_download2.expiration_date = 9999999
-        secret_download2.download_count = 0
-        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("The download limit has been exceeded."))
-
-        # 73
-        res = validate_secret_download_token(secret_download=secret_download , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (True ,"")
-
-        secret_download2.expiration_date = "hoge"
-        res = validate_secret_download_token(secret_download=secret_download2 , file_name= "eee.txt", record_id= '1', id= '5', date= '2023-03-08 00:52:19.624552', token= '6FA7D321A949550D')
-        assert res == (False , _("Token is invalid."))
-
-# def get_secret_download(file_name: str, record_id: str,
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_secret_download -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_secret_download(app ,db ):
-    with app.test_request_context():
-        with db.session.begin_nested():
-            secret_download=FileSecretDownload(
-                file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
-            )
-            db.session.add(secret_download)
+    onetime_obj.is_deleted = True
+    db.session.commit()
+    assert validate_url_download('', '', onetime_token, False) == (
+        False, 'This URL has been deactivated.')
+    onetime_obj.is_deleted = False
+    onetime_obj.download_count = 10
+    db.session.commit()
+    assert validate_url_download('', '', onetime_token, False) == (
+        False, 'The download limit has been exceeded.')
+    onetime_obj.download_count = 0
+    db.session.commit()
+    with patch('weko_records_ui.utils.dt') as mock_dt:
+        mock_dt.now.return_value = dt.now(timezone.utc) + timedelta(days=31)
+        assert validate_url_download('', '', onetime_token, False) == (
+            False, 'The expiration date for download has been exceeded.')
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_file_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_validate_file_access():
+    with patch('weko_records_ui.utils.is_secret_file', return_value=True):
+        assert validate_file_access('', '', is_secret_url=True) is True
+    with patch('weko_records_ui.utils.is_secret_file', return_value=False):
+        assert validate_file_access('', '', is_secret_url=True) is False
+    with patch('weko_records_ui.utils.is_onetime_file', return_value=True):
+        assert validate_file_access('', '', is_secret_url=False) is True
+    with patch('weko_records_ui.utils.is_onetime_file', return_value=False):
+        assert validate_file_access('', '', is_secret_url=False) is False
 
-        assert get_secret_download(file_name= secret_download.file_name
-                            , record_id= secret_download.record_id
-                            , id= secret_download.id
-                            , created =secret_download.created)
 
-        assert not get_secret_download(file_name= secret_download.file_name
-                            , record_id= secret_download.record_id
-                            , id= secret_download.id + 1
-                            , created =secret_download.created)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_save_download_log -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_save_download_log(secret_url, onetime_url, mocker):
+    file_name = 'test.txt'
+    record = MagicMock()
 
-# def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_data_usage_application_data(app ,db):
-    with app.test_request_context():
-        with db.session.begin_nested():
-            secret_download=FileSecretDownload(
-                file_name= "eee.txt", record_id= '1',user_mail="repoadmin@example.org",expiration_date=999999,download_count=10
-            )
-            db.session.add(secret_download)
-        update_data = dict(
-            file_name   = secret_download.file_name
-            , record_id = secret_download.record_id
-            , download_count = 100
-            , created  = secret_download.created
-            , id = secret_download.id
-        )
-        res = update_secret_download(**update_data)
-        assert len(res) == 1
-        assert res[0].download_count == 100
+    mock_request = mocker.patch('weko_records_ui.utils.request')
+    mock_request.remote_addr = '192.168.56.1'
+    secret_token = secret_url['secret_token']
+
+    # When accessrole is open_no
+    record.get_file_data.return_value = [
+        {'filename': 'other_file', 'accessrole': 'open_yes'},
+        {'filename': file_name, 'accessrole': 'open_no'}
+    ]
+    open_no_dl = save_download_log(
+        record, file_name, secret_token, is_secret_url=True)
+    assert isinstance(open_no_dl, FileUrlDownloadLog)
+    assert open_no_dl.url_type       is UrlType.SECRET
+    assert open_no_dl.secret_url_id  == 1
+    assert open_no_dl.onetime_url_id is None
+    assert open_no_dl.ip_address     == '192.168.56.1'
+    assert open_no_dl.access_status  is AccessStatus.OPEN_NO
+    assert open_no_dl.used_token     == secret_token
+
+    # When accessrole is open_date
+    record.get_file_data.return_value = [
+        {'filename': file_name, 'accessrole': 'open_date'}
+    ]
+    open_date_dl = save_download_log(
+        record, file_name, secret_token, is_secret_url=True)
+    assert isinstance(open_date_dl, FileUrlDownloadLog)
+    assert open_date_dl.url_type       is UrlType.SECRET
+    assert open_date_dl.secret_url_id  == 1
+    assert open_date_dl.onetime_url_id is None
+    assert open_date_dl.ip_address     == '192.168.56.1'
+    assert open_date_dl.access_status  is AccessStatus.OPEN_DATE
+    assert open_date_dl.used_token     == secret_token
+
+    # When accessrole is open_restricted
+    onetime_token = onetime_url['onetime_token']
+    open_restricted = save_download_log(
+        record, file_name, onetime_token, is_secret_url=False)
+    assert isinstance(open_restricted, FileUrlDownloadLog)
+    assert open_restricted.url_type       is UrlType.ONETIME
+    assert open_restricted.secret_url_id  is None
+    assert open_restricted.onetime_url_id == 1
+    assert open_restricted.ip_address     is None
+    assert open_restricted.access_status  is AccessStatus.OPEN_RESTRICTED
+    assert open_restricted.used_token     == onetime_token
 
 
 # def update_secret_download(**kwargs) -> Optional[List[FileSecretDownload]]:

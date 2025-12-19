@@ -27,7 +27,7 @@
 
 from __future__ import absolute_import, print_function
 
-from mock import patch
+from unittest.mock import patch
 from click.testing import CliRunner
 from invenio_records.api import Record
 
@@ -83,7 +83,7 @@ def test_addlogo(script_info,app,db,communities,instance_path):
     )
     assert result.exit_code == 0
     assert Community.query.filter_by(id="comm1").one().logo_ext == "png"
-    
+
     # community is not existed
     runner = CliRunner()
     result = runner.invoke(
@@ -100,10 +100,10 @@ def test_request(script_info,db_records,communities,mocker):
     mocker.patch("invenio_records.api.before_record_update.send")
     mocker.patch("invenio_records.api.after_record_update.send")
     mocker.patch("invenio_communities.models.inclusion_request_created.send")
-    
+
     community_id = str(communities[0].id)
     record_id = str(db_records[2].id)
-    
+
     # accept is true
     runner = CliRunner()
     mock_index = mocker.patch("invenio_communities.cli.RecordIndexer.index_by_id")
@@ -141,7 +141,7 @@ def test_request(script_info,db_records,communities,mocker):
     args,_=mock_index.call_args
     assert str(args[0]) == record_id
     assert InclusionRequest.query.first().id_community=="comm2"
-    
+
     # Test the branch where RecordIndexer.index_by_id raises an exception and click.secho is called
     with patch("invenio_communities.cli.RecordIndexer") as MockIndexer:
         instance = MockIndexer.return_value
@@ -158,25 +158,29 @@ def test_request(script_info,db_records,communities,mocker):
             assert called_kwargs.get("fg") == "red"
 
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_cli.py::test_remove -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
-def test_remove(script_info,communities,db_records,mocker):
+def test_remove(db, script_info,communities,db_records,mocker):
     mocker.patch("invenio_records.api.before_record_update.send")
     mocker.patch("invenio_records.api.after_record_update.send")
     mocker.patch("invenio_communities.models.inclusion_request_created.send")
-    
+
     record_id = str(db_records[2].id)
     comm = Community.query.filter_by(id="comm1").one()
     record = Record.get_record(record_id)
     comm.add_record(record)
     record.commit()
     runner = CliRunner()
-    with patch("invenio_communities.cli.db.session.commit", side_effect=Exception('')):
+    with patch("invenio_communities.cli.db.session.commit", side_effect=Exception('')), \
+            patch("invenio_communities.cli.RecordIndexer.index_by_id") as mock_index:
         result = runner.invoke(
             remove,
             [comm.id,record_id],
             obj=script_info
         )
         assert Record.get_record(record_id)
+        mock_index.assert_called_once()
 
+    comm = Community.query.filter_by(id="comm1").one()
+    record = Record.get_record(record_id)
     mock_index = mocker.patch("invenio_communities.cli.RecordIndexer.delete_by_id")
     result = runner.invoke(
         remove,
@@ -185,3 +189,4 @@ def test_remove(script_info,communities,db_records,mocker):
     )
     args,_=mock_index.call_args
     assert str(args[0]) == record_id
+    assert Record.get_record(record_id)

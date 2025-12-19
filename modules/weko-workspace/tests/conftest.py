@@ -59,12 +59,15 @@ from weko_index_tree.models import Index
 from weko_workflow import WekoWorkflow
 from weko_workspace import WekoWorkspace
 from weko_search_ui import WekoSearchUI
+from weko_theme import WekoTheme
+from weko_workflow.models import WorkFlow, FlowDefine, FlowAction, Action, ActionStatus
 from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from weko_workspace.views import workspace_blueprint as weko_workspace_blueprint
 from weko_workflow.config import WEKO_WORKFLOW_ACTION_START,WEKO_WORKFLOW_ACTION_END,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION,WEKO_WORKFLOW_ACTION_APPROVAL,WEKO_WORKFLOW_ACTION_ITEM_LINK,WEKO_WORKFLOW_ACTION_OA_POLICY_CONFIRMATION,WEKO_WORKFLOW_ACTION_IDENTIFIER_GRANT,WEKO_WORKFLOW_ACTION_ITEM_REGISTRATION_USAGE_APPLICATION,WEKO_WORKFLOW_ACTION_GUARANTOR,WEKO_WORKFLOW_ACTION_ADVISOR,WEKO_WORKFLOW_ACTION_ADMINISTRATOR,WEKO_WORKFLOW_ACTIVITYLOG_XLS_COLUMNS, DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, DOI_VALIDATION_INFO_JALC
 from sqlalchemy_utils.functions import create_database, database_exists
 from tests.helpers import json_data
 from invenio_files_rest import InvenioFilesREST
+from invenio_files_rest.models import Location
 from invenio_records import InvenioRecords
 from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
@@ -74,8 +77,8 @@ from weko_schema_ui.config import WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,WEKO_SCHEMA_
 from weko_items_ui import WekoItemsUI
 from weko_admin import WekoAdmin
 from weko_deposit import WekoDeposit
-from weko_records.models import OaStatus
- 
+from weko_records.models import OaStatus, ItemTypeName, ItemType, ItemTypeMapping, ItemTypeProperty
+from weko_records.api import Mapping
 from weko_workspace.views import workspace_blueprint as weko_workspace_blueprint
 from weko_workspace.views import blueprint_itemapi as weko_workspace_blueprint_itemapi
 
@@ -99,7 +102,7 @@ class TestSearch(RecordsSearch):
         """Add extra options."""
         super(TestSearch, self).__init__(**kwargs)
         self._extra.update(**{'_source': {'excludes': ['_access']}})
-        
+
 @pytest.yield_fixture(scope='session')
 def search_class():
     """Search class."""
@@ -489,7 +492,7 @@ def base_app(instance_path, search_class, cache_config):
         WEKO_WORKFLOW_IDENTIFIER_GRANT_IS_WITHDRAWING = -2,
         WEKO_WORKSPACE_OA_STATUS_MAPPING=WEKO_WORKSPACE_OA_STATUS_MAPPING,
     )
-    
+
     app_.testing = True
     Babel(app_)
     InvenioI18N(app_)
@@ -507,6 +510,7 @@ def base_app(instance_path, search_class, cache_config):
     InvenioPIDStore(app_)
     InvenioRecords(app_)
     InvenioRecordsUI(app_)
+    WekoTheme(app_)
     WekoRecordsUI(app_)
     search = InvenioSearch(app_, client=MockEs())
     search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
@@ -517,15 +521,11 @@ def base_app(instance_path, search_class, cache_config):
     WekoItemsUI(app_)
     WekoAdmin(app_)
     InvenioOAuth2Server(app_)
-    app_.register_blueprint(invenio_communities_blueprint)
-    app_.register_blueprint(weko_workflow_blueprint)
+    WekoWorkspace(app_)
+    # app_.register_blueprint(invenio_communities_blueprint)
+    # app_.register_blueprint(weko_workflow_blueprint)
     app_.register_blueprint(weko_workspace_blueprint)
     app_.register_blueprint(weko_workspace_blueprint_itemapi)
-    
-
-    # 20250311 workspace
-    WekoWorkspace(app_)
-    app_.register_blueprint(weko_workspace_blueprint)
 
     return app_
 
@@ -540,12 +540,12 @@ def app(base_app):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    db_.drop_all()
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()
+    db_.drop_all()
     # drop_database(str(db_.engine.url))
 
 
@@ -617,7 +617,7 @@ def guest(client):
 def req_context(client,app):
     with app.test_request_context():
         yield client
-        
+
 @pytest.fixture
 def redis_connect(app):
     redis_connection = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
@@ -654,7 +654,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         student = User.query.filter_by(email='student@test.org').first()
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -815,8 +815,187 @@ def oa_status(db):
         oa_status='Processing Metadata Registered',
         weko_item_pid='2'
     )
-    
+
     with db.session.begin_nested():
         db.session.add(oa_status_1)
         db.session.add(oa_status_2)
     db.session.commit()
+
+@pytest.fixture()
+def item_type(db):
+    item_types = []
+
+    item_type_name = ItemTypeName(name='テストアイテムタイプ',
+                                  has_site_license=True,
+                                  is_active=True)
+    with db.session.begin_nested():
+        db.session.add(item_type_name)
+    item_type = ItemType(name_id=1,harvesting_type=True,
+                         schema=json_data("data/item_type/15_schema.json"),
+                         form=json_data("data/item_type/15_form.json"),
+                         render=json_data("data/item_type/15_render.json"),
+                         tag=1,version_id=1,is_deleted=False)
+    itemtype_property_data = json_data("data/itemtype_properties.json")[0]
+    item_type_property = ItemTypeProperty(
+        name=itemtype_property_data["name"],
+        schema=itemtype_property_data["schema"],
+        form=itemtype_property_data["form"],
+        forms=itemtype_property_data["forms"],
+        delflg=False
+    )
+    with db.session.begin_nested():
+        db.session.add(item_type)
+        db.session.add(item_type_property)
+    mappin = Mapping.create(
+        item_type.id,
+        mapping = json_data("data/item_type/item_type_mapping.json")
+    )
+    db.session.commit()
+    item_types.append({"id": item_type.id, "obj": item_type})
+
+    return item_types
+
+@pytest.fixture()
+def action_data(db):
+    action_datas=dict()
+    with open('tests/data/actions.json', 'r') as f:
+        action_datas = json.load(f)
+    actions_db = list()
+    with db.session.begin_nested():
+        for data in action_datas:
+            actions_db.append(Action(**data))
+        db.session.add_all(actions_db)
+    db.session.commit()
+
+    actionstatus_datas = dict()
+    with open('tests/data/action_status.json') as f:
+        actionstatus_datas = json.load(f)
+    actionstatus_db = list()
+    with db.session.begin_nested():
+        for data in actionstatus_datas:
+            actionstatus_db.append(ActionStatus(**data))
+        db.session.add_all(actionstatus_db)
+    db.session.commit()
+    return actions_db, actionstatus_db
+
+@pytest.fixture()
+def workflow(app, db, item_type, action_data, users):
+    flow_define = FlowDefine(flow_id=uuid.uuid4(),
+                             flow_name='Registration Flow',
+                             flow_user=1)
+    with db.session.begin_nested():
+        db.session.add(flow_define)
+    db.session.commit()
+
+    # setting flow action(start, item register, oa policy, item link, identifier grant, approval, end)
+    flow_actions = list()
+    # start
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=1,
+                     action_version='1.0.0',
+                     action_order=1,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # item register
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=3,
+                     action_version='1.0.0',
+                     action_order=2,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # oa policy
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=6,
+                     action_version='1.0.0',
+                     action_order=3,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # item link
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=5,
+                     action_version='1.0.0',
+                     action_order=4,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # identifier grant
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=7,
+                     action_version='1.0.0',
+                     action_order=5,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # approval
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=4,
+                     action_version='1.0.0',
+                     action_order=6,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    # end
+    flow_actions.append(FlowAction(status='N',
+                     flow_id=flow_define.flow_id,
+                     action_id=2,
+                     action_version='1.0.0',
+                     action_order=7,
+                     action_condition='',
+                     action_status='A',
+                     action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
+                     send_mail_setting={}))
+    with db.session.begin_nested():
+        db.session.add_all(flow_actions)
+    db.session.commit()
+    workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow01',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=flow_define.id,
+                        is_deleted=False,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    deleted_workflow = WorkFlow(flows_id=uuid.uuid4(),
+                        flows_name='test workflow02',
+                        itemtype_id=1,
+                        index_tree_id=None,
+                        flow_id=flow_define.id,
+                        is_deleted=True,
+                        open_restricted=False,
+                        location_id=None,
+                        is_gakuninrdm=False)
+    with db.session.begin_nested():
+        db.session.add(workflow)
+        db.session.add(deleted_workflow)
+    db.session.commit()
+
+    return {
+        "flow":flow_define,
+        "flow_action":flow_actions,
+        "workflow":workflow
+    }
+
+@pytest.fixture()
+def location(app, db, instance_path):
+    with db.session.begin_nested():
+        Location.query.delete()
+        loc = Location(name='local', uri=instance_path, default=True)
+        db.session.add(loc)
+    db.session.commit()
+    return loc

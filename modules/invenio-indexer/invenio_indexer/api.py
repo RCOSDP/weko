@@ -276,7 +276,7 @@ class RecordIndexer(object):
                     if isinstance(_fail, list):
                         fail = len(_fail)
                         for error in _fail:
-                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
                     else:
                         fail = _fail
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
@@ -295,9 +295,8 @@ class RecordIndexer(object):
                             error_type = err_info.get('type', 'unknown')
                         else:
                             error_type = str(err_info)
-                        click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
+                        click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
                 except (BulkConnectionTimeout, ConnectionTimeout) as ce:
-                    click.secho("Error: {}".format(ce.errors),fg='red')
                     click.secho("INDEXER_BULK_REQUEST_TIMEOUT: {} sec".format(req_timeout),fg='red')
                     click.secho("Please change value of INDEXER_BULK_REQUEST_TIMEOUT and retry it.",fg='red')
                     click.secho("processing: {}".format(self.count),fg='red')
@@ -314,7 +313,7 @@ class RecordIndexer(object):
                         errors = ce.errors if hasattr(ce, 'errors') else []
                     if len(errors) > 0:
                         for error in errors:
-                            click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                            click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
                         fail = len(errors)
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es(self.success_ids)
@@ -334,7 +333,7 @@ class RecordIndexer(object):
                             errors = ce.errors if hasattr(ce, 'errors') else []
                         if len(errors) > 0:
                             for error in errors:
-                                click.secho("[ERROR] {}, {}".format(error['index']['_id'],error['index']['error']['type']),fg='red')
+                                click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
                             fail = len(errors)
                         unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                         update_pdf_contents_es(self.success_ids)
@@ -359,8 +358,7 @@ class RecordIndexer(object):
                                 error_type = err_info.get('type', 'unknown')
                             else:
                                 error_type = str(err_info)
-                            click.secho("[ERROR] {}, {}".format(err.get('_id', ''), error_type), fg='red')
-                        fail = len(errors)
+                            click.secho("[ERROR] {}, type:{}, reason:{}".format(error['index']['_id'], error['index']['error'].get('type', ''), error['index']['error'].get('reason', '')), fg='red')
                     unprocessed = messages_count - (success + fail) if messages_count > (success + fail) else 0
                     update_pdf_contents_es(self.success_ids)
         if unprocessed == 0:
@@ -425,19 +423,18 @@ class RecordIndexer(object):
                 else:
                     yield self._index_action(payload, with_deleted=with_deleted)
                 message.ack()
-            except NoResultFound:
+            except NoResultFound as ne:
                 message.reject()
+                current_app.logger.error(f"type:{type(ne).__name__}, message:{str(ne)}\n{traceback.format_exc()}")
             except SQLAlchemyError:
                 db.session.rollback()
                 current_app.logger.error(
                     f'SQLAlchemy error occurred while updating the version_id in records_metadata for id: {payload.get("id", "unknown")}.'
                 )
                 message.reject()
-            except Exception:
+            except Exception as e:
                 message.reject()
-                current_app.logger.error(
-                    f"Failed to index record {0}".format(payload.get('id')),
-                    exc_info=True)
+                current_app.logger.error(f"type:{type(e).__name__}, message:{str(e)}\n{traceback.format_exc()}")
 
     def _delete_action(self, payload):
         """Bulk delete action.
@@ -478,11 +475,12 @@ class RecordIndexer(object):
 
         indexer = WekoIndexer()
         indexer.get_es_index()
-        res = indexer.get_metadata_by_item_id(record_id)
-        es_version = res.get('_version')
+        res = indexer.get_metadata_by_item_id(record_id, is_ignore=True)
+        if res["found"] is True:
+            es_version = res.get('_version')
 
-        if record.model.version_id < es_version:
-            record.model.version_id = es_version
+            if record.model.version_id < es_version:
+                record.model.version_id = es_version
 
         self.count = self.count + 1
         click.secho(f"Indexing ID:{record_id}, Count:{self.count}", fg='green')

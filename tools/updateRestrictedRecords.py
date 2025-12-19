@@ -39,6 +39,7 @@ def main(restricted_item_type_id, batch_size=500, run_es_reindex=False):
             current_app.logger.info('ElasticSearch data update end')
     except SQLAlchemyError as ex:
         db.session.rollback()
+        
         current_app.logger.error(str(ex))
         current_app.logger.error("records rollback")
         current_app.logger.error(traceback.format_exc())
@@ -55,7 +56,7 @@ def update_item_type_property(restricted_item_type_id):
             target_obj.form = json.load(form_file)
         with open('tools/restricted_jsons/item_type_property/forms.json', 'r') as forms_file:
             target_obj.forms = json.load(forms_file)
-        print(f"[FIX][updateRestrictedRecords.py]item_type_property:{target_obj.id}")
+        current_app.logger.info(f"[FIX] item_type_property:{target_obj.id}")
     else:
         current_app.logger.warning('id: ' + str(restricted_item_type_id) + ' not found')
 
@@ -188,9 +189,8 @@ def update_item_type(batch_size=500):
         item_type.render = _format_new_render(dict(item_type.render), key, schema, form_roles, render)
         flag_modified(item_type, "render")
         
-        current_app.logger.info(f'    Updated item_type id: {item_type.id}')
-        print(f"[FIX][updateRestrictedRecords.py]item_type:{target.id}")
-
+        # current_app.logger.info(f'    Updated item_type id: {item_type.id}')
+        current_app.logger.info(f"[FIX] item_type:{item_type.id}")
     current_app.logger.info('update item_type records success')
 
 
@@ -232,8 +232,8 @@ def update_item_metadata(bach_size=100):
         for item_metadata in item_metadata_list:
             item_metadata.json = _format_json(dict(item_metadata.json))
             flag_modified(item_metadata, "json")
-            current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
-            print(f"[FIX][updateRestrictedRecords.py]item_metadata:{item_metadata.id}")
+            # current_app.logger.info(f'    Updated item_metadata id: {item_metadata.id}')
+            current_app.logger.info(f"[FIX] item_metadata:{item_metadata.id}")
             gc.collect()
             
 
@@ -272,7 +272,7 @@ def update_records_metadata(bach_size=100):
     record_metadata_ids = [r[0] for r in results]
     current_app.logger.info('target record_metadata count: ' + str(len(record_metadata_ids)))
 
-    current_app.logger.info(f'record_metadata_ids: {record_metadata_ids}')
+    # current_app.logger.info(f'record_metadata_ids: {record_metadata_ids}')
     pages = [record_metadata_ids[i:i + bach_size] for i in range(0, len(record_metadata_ids), bach_size)]
     for record_metadata_id_batch in pages:
         # record_metadata_id_batch = record_metadata_ids[page:page+bach_size]
@@ -282,8 +282,8 @@ def update_records_metadata(bach_size=100):
         for record_metadata in record_metadata_list:
             record_metadata.json = _format_json(dict(record_metadata.json))
             flag_modified(record_metadata, "json")
-            current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
-            print(f"[FIX][updateRestrictedRecords.py]records_metadata:{record_metadata.id}")
+            # current_app.logger.info(f'    Updated record_metadata id: {record_metadata.id}')
+            current_app.logger.info(f"[FIX] records_metadata:{record_metadata.id}")
             gc.collect()
         
 
@@ -304,9 +304,11 @@ def update_admin_settings():
             "secret_expiration_date_unlimited_chk": False
         }
     AdminSettings.update('restricted_access', restricted_access)
-    
+    setting = AdminSettings.query.filter_by(name='restricted_access').one_or_none()
+    target_id = setting.id if setting else None
     current_app.logger.info('update admin_settings success')
-    print(f"[FIX][updateRestrictedRecords.py]admin_settings:restricted_access")
+    if target_id:
+        current_app.logger.info(f"[FIX] admin_settings:{target_id}")
 
 def elasticsearch_reindex( is_db_to_es ):
     """ 

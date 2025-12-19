@@ -69,7 +69,7 @@ def setup_data(db):
 def test_get_user_profile_info(setup_data):
     user_id = setup_data['profile'].user_id
 
-    # 正常系
+    # enable_custom=False
     profile_conf = {
         'fullname': {'visible': True},
         'displayname': {'visible': True},
@@ -81,12 +81,12 @@ def test_get_user_profile_info(setup_data):
         'item2': {'visible': True},
         'item3': {'visible': True},
         'item4': {'visible': True},
-        'item5': {'visible': True},
+        'item5': {'visible': False},
         'item6': {'visible': True},
         'item7': {'visible': True},
         'item8': {'visible': True},
         'item9': {'visible': True},
-        'item10': {'visible': True},
+        'item10': {'visible': False},
         'item11': {'visible': True},
         'item12': {'visible': True},
         'item13': {'visible': True},
@@ -117,6 +117,8 @@ def test_get_user_profile_info(setup_data):
         }
         assert result == expected
 
+    current_app.config.update(WEKO_USERPROFILES_CUSTOMIZE_ENABLED = True)
+
     profile_conf2 = {
         'fullname': {'visible': False},
         'displayname': {'visible': False},
@@ -125,12 +127,12 @@ def test_get_user_profile_info(setup_data):
         'department': {'visible': False},
         'position': {'visible': False},
         'item1': {'visible': False},
-        'item2': {'visible': False},
+        'item2': {'visible': True},
         'item3': {'visible': False},
         'item4': {'visible': False},
         'item5': {'visible': False},
         'item6': {'visible': False},
-        'item7': {'visible': False},
+        'item7': {'visible': True},
         'item8': {'visible': False},
         'item9': {'visible': False},
         'item10': {'visible': False},
@@ -151,9 +153,11 @@ def test_get_user_profile_info(setup_data):
             "subitem_university/institution": "",
             "subitem_affiliated_division/department": "",
             "subitem_position": "",
-            "subitem_phone_number": "",
+            "subitem_phone_number": "123-4567",
             "subitem_position(others)": "",
-            "subitem_affiliated_institution": [],
+            "subitem_affiliated_institution":[
+                {"subitem_affiliated_institution_name": "test institute3", "subitem_affiliated_institution_position": ""}
+            ],
             'subitem_mail_address': 'sysadmin@test.org',
         }
         assert result == expected
@@ -209,7 +213,7 @@ def test_handle_verification_form(app,mocker):
 
 # def handle_profile_form(form):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_utils.py::test_handle_profile_form -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
-def test_handle_profile_form(app, users, user_profiles, mocker):
+def test_handle_profile_form(app, db_admin_setting, users, user_profiles, mocker):
     # WEKO_USERPROFILES_ROLE_MAPPING_ENABLED is false
     data = {
         "profile-username": "test_sysadmin",
@@ -229,59 +233,40 @@ def test_handle_profile_form(app, users, user_profiles, mocker):
         "profile-institutePosition5": ""
     }
 
-    profile_conf = {
-        "item1": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "役職（その他）", "current_type": "text"},
-        "item2": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "電話番号", "current_type": "identifier"},
-        "item3": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "所属学会名", "current_type": "text"},
-        "item4": {"type": ["text", "identifier", "select"], "select": ["a|b|c"], "visible": False, "label_name": "所属学会役職", "current_type": "select"},
-        "item5": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "所属学会名", "current_type": "text"},
-        "item6": {"type": ["text", "identifier", "select"], "select": ["a|b|c"], "visible": False, "label_name": "所属学会役職", "current_type": "select"},
-        "item7": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "所属学会名", "current_type": "text"},
-        "item8": {"type": ["text", "identifier", "select"], "select": ["a|b|c"], "visible": False, "label_name": "所属学会役職", "current_type": "select"},
-        "item9": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "所属学会名", "current_type": "text"},
-        "item10": {"type": ["text", "identifier", "select"], "select": ["a|b|c"], "visible": False, "label_name": "所属学会役職", "current_type": "select"},
-        "item11": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "所属学会名", "current_type": "text"},
-        "item12": {"type": ["text", "identifier", "select"], "select": ["a|b|c"], "visible": False, "label_name": "所属学会役職", "current_type": "select"},
-        "fullname": {"type": ["text", "identifier", "select"], "select": [""], "visible": True, "label_name": "氏名", "current_type": "text"},
-        "position": {"type": ["text", "identifier", "select"], "select": ["a|b|c"], "visible": False, "label_name": "役職", "current_type": "text"},
-        "department": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "所属部局・部署", "current_type": "text"},
-        "university": {"type": ["text", "identifier", "select"], "select": [""], "visible": False, "label_name": "大学・機関名", "current_type": "text"}
-    }
-
     with app.test_request_context(method="POST", data=data):
-        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
-            login_user(users[0]["obj"])
-            userprofile = user_profiles[0]
-            form = EmailProfileForm(
-                formdata=None,
-                username=userprofile._username,
-                fullname=userprofile.fullname,
-                timezone=userprofile.timezone,
-                language=userprofile.language,
-                email="sysadmin@test.org",
-                email_repeat="sysadmin@test.org",
-                university=userprofile.university,
-                department=userprofile.department,
-                position=userprofile.position,
-                item1=userprofile.item1,
-                item2=userprofile.item2,
-                item3=userprofile.item3,
-                item4=userprofile.item4,
-                item5=userprofile.item5,
-                item6=userprofile.item6,
-                item7=userprofile.item7,
-                item8=userprofile.item8,
-                item9=userprofile.item9,
-                item10=userprofile.item10,
-                item11=userprofile.item11,
-                item12=userprofile.item12,
-                prefix='profile',
-            )
-            mock_flash = mocker.patch("weko_user_profiles.utils.flash")
-            handle_profile_form(form)
-            mock_flash.assert_called_with('Profile was updated.', category="success")
-            assert userprofile.timezone == "Etc/GMT"
-            assert userprofile._username == "sysadmin"
+        login_user(users[0]["obj"])
+        userprofile = user_profiles[0]
+        form = EmailProfileForm(
+            formdata=None,
+            username=userprofile._username,
+            fullname=userprofile.fullname,
+            timezone=userprofile.timezone,
+            language=userprofile.language,
+            email="sysadmin@test.org",
+            email_repeat="sysadmin@test.org",
+            university=userprofile.university,
+            department=userprofile.department,
+            position=userprofile.position,
+            item1=userprofile.item1,
+            item2=userprofile.item2,
+            item3=userprofile.item3,
+            item4=userprofile.item4,
+            item5=userprofile.item5,
+            item6=userprofile.item6,
+            item7=userprofile.item7,
+            item8=userprofile.item8,
+            item9=userprofile.item9,
+            item10=userprofile.item10,
+            item11=userprofile.item11,
+            item12=userprofile.item12,
+            prefix='profile',
+        )
+        mocker.patch.object(form, 'validate_on_submit', return_value=True)
+        mock_flash = mocker.patch("weko_user_profiles.utils.flash")
+        handle_profile_form(form)
+        mock_flash.assert_called_with('Profile was updated.', category="success")
+        assert userprofile.timezone == "Etc/GMT"
+        assert userprofile._username == "sysadmin"
 
     # validate_on_submit is false
     data = {
@@ -302,36 +287,36 @@ def test_handle_profile_form(app, users, user_profiles, mocker):
         "profile-institutePosition5": ""
     }
     with app.test_request_context(method="POST", data=data):
-        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
-            login_user(users[1]["obj"])
-            form = ProfileForm(
-                formdata=None,
-                username=userprofile._username,
-                fullname=userprofile.fullname,
-                timezone=userprofile.timezone,
-                language=userprofile.language,
-                email="repoadmin@test.org",
-                email_repeat="repoadmin@test.org",
-                university=userprofile.university,
-                department=userprofile.department,
-                position=userprofile.position,
-                item1=userprofile.item1,
-                item2=userprofile.item2,
-                item3=userprofile.item3,
-                item4=userprofile.item4,
-                item5=userprofile.item5,
-                item6=userprofile.item6,
-                item7=userprofile.item7,
-                item8=userprofile.item8,
-                item9=userprofile.item9,
-                item10=userprofile.item10,
-                item11=userprofile.item11,
-                item12=userprofile.item12,
-                prefix='profile',
-            )
-            mock_flash = mocker.patch("weko_user_profiles.utils.flash")
-            handle_profile_form(form)
-            mock_flash.assert_not_called()
+        login_user(users[1]["obj"])
+        form = ProfileForm(
+            formdata=None,
+            username=userprofile._username,
+            fullname=userprofile.fullname,
+            timezone=userprofile.timezone,
+            language=userprofile.language,
+            email="repoadmin@test.org",
+            email_repeat="repoadmin@test.org",
+            university=userprofile.university,
+            department=userprofile.department,
+            position=userprofile.position,
+            item1=userprofile.item1,
+            item2=userprofile.item2,
+            item3=userprofile.item3,
+            item4=userprofile.item4,
+            item5=userprofile.item5,
+            item6=userprofile.item6,
+            item7=userprofile.item7,
+            item8=userprofile.item8,
+            item9=userprofile.item9,
+            item10=userprofile.item10,
+            item11=userprofile.item11,
+            item12=userprofile.item12,
+            prefix='profile',
+        )
+        mocker.patch.object(form, 'validate_on_submit', return_value=False)
+        mock_flash = mocker.patch("weko_user_profiles.utils.flash")
+        handle_profile_form(form)
+        mock_flash.assert_not_called()
     # changed email
     current_app.config.update(
         WEKO_USERPROFILES_ROLE_MAPPING_ENABLED=True,
@@ -356,58 +341,41 @@ def test_handle_profile_form(app, users, user_profiles, mocker):
     }
 
     with app.test_request_context(method="POST", data=data):
-        with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
-            login_user(users[1]["obj"])
-            userprofile = user_profiles[1]
-            form = EmailProfileForm(
-                formdata=None,
-                username=userprofile._username,
-                fullname=userprofile.fullname,
-                timezone=userprofile.timezone,
-                language=userprofile.language,
-                email="repoadmin@test.org",
-                email_repeat="repoadmin@test.org",
-                university=userprofile.university,
-                department=userprofile.department,
-                position=userprofile.position,
-                item1=userprofile.item1,
-                item2=userprofile.item2,
-                item3=userprofile.item3,
-                item4=userprofile.item4,
-                item5=userprofile.item5,
-                item6=userprofile.item6,
-                item7=userprofile.item7,
-                item8=userprofile.item8,
-                item9=userprofile.item9,
-                item10=userprofile.item10,
-                item11=userprofile.item11,
-                item12=userprofile.item12,
-                prefix='profile',
-            )
-            mock_flash = mocker.patch("weko_user_profiles.utils.flash")
-            mocker.patch("weko_user_profiles.utils.get_role_by_position", return_value="Original Role")
-            handle_profile_form(form)
-            mock_flash.assert_called_with(
-                'Profile was updated. We have sent a verification email to new_repoadmin@test.org. Please check it.',
-                category="success"
-            )
-    data = {
-        "profile-username": "test_repoadmin",
-        "profile-timezone": 'Etc/GMT',
-        "profile-language": "ja",
-        "profile-email": 'new_repoadmin@test.org',
-        "profile-email_repeat": 'new_repoadmin@test.org',
-        "profile-fullname": "test username",
-        "profile-university": "test university",
-        "profile-department": "test department",
-        "profile-position": "Professor",
-        "profile-phoneNumber": "12-345",
-        "profile-item4": "",
-        "profile-item6": "",
-        "profile-item8": "",
-        "profile-item10": "",
-        "profile-item12": ""
-    }
+        login_user(users[1]["obj"])
+        userprofile = user_profiles[1]
+        form = EmailProfileForm(
+            formdata=None,
+            username=userprofile._username,
+            fullname=userprofile.fullname,
+            timezone=userprofile.timezone,
+            language=userprofile.language,
+            email="repoadmin@test.org",
+            email_repeat="repoadmin@test.org",
+            university=userprofile.university,
+            department=userprofile.department,
+            position=userprofile.position,
+            item1=userprofile.item1,
+            item2=userprofile.item2,
+            item3=userprofile.item3,
+            item4=userprofile.item4,
+            item5=userprofile.item5,
+            item6=userprofile.item6,
+            item7=userprofile.item7,
+            item8=userprofile.item8,
+            item9=userprofile.item9,
+            item10=userprofile.item10,
+            item11=userprofile.item11,
+            item12=userprofile.item12,
+            prefix='profile',
+        )
+        mocker.patch.object(form, 'validate_on_submit', return_value=True)
+        mock_flash = mocker.patch("weko_user_profiles.utils.flash")
+        mocker.patch("weko_user_profiles.utils.get_role_by_position", return_value="Original Role")
+        handle_profile_form(form)
+        mock_flash.assert_called_with(
+            'Profile was updated. We have sent a verification email to new_repoadmin@test.org. Please check it.',
+            category="success"
+        )
 
 
 # def get_role_by_position(position):

@@ -680,15 +680,17 @@ class ItemTypes(RecordBase):
         Returns:
             ItemType: Item type model instance.
         """
+        obj = None
         with db.session.no_autoflush:
             query = ItemTypeName.query.filter_by(name=name_)
             if not with_deleted:
                 query = query.filter(ItemType.is_deleted.is_(False))  # noqa
             itemTypeName = query.one_or_none()
-            query = ItemType.query.filter_by(name_id=itemTypeName.id)
-            if not with_deleted:
-                query = query.filter(ItemType.is_deleted.is_(False))  # noqa
-            obj = query.one_or_none()
+            if itemTypeName:
+                query = ItemType.query.filter_by(name_id=itemTypeName.id)
+                if not with_deleted:
+                    query = query.filter(ItemType.is_deleted.is_(False))  # noqa
+                obj = query.one_or_none()
         return obj if isinstance(obj, ItemType) else None
 
     @classmethod
@@ -1004,7 +1006,7 @@ class ItemTypes(RecordBase):
         if not item_type:
             result = {"msg":"ItemType({}) is not exist.".format(itemtype_id),"code":1}
             return result
-        
+
         data = pickle.loads(pickle.dumps(item_type.render, -1))
 
         pat1 = re.compile(r'cus_(\d+)')

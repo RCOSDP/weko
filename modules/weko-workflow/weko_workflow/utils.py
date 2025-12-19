@@ -90,7 +90,7 @@ from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALID
 from .errors import InvalidParameterValueError
 from .models import Action as _Action
 from .models import ActionStatusPolicy, Activity, ActivityStatusPolicy, \
-    FlowAction, GuestActivity
+    FlowAction, FlowActionRole, GuestActivity
 
 
 def _check_mail_setting(setting):
@@ -1456,9 +1456,10 @@ class IdentifierHandle(object):
                 records = PersistentIdentifier.query.filter_by(
                     pid_type=pid_type,
                     object_uuid=self.item_uuid).all()
-            records = PersistentIdentifier.query.filter_by(
-                pid_type=pid_type,
-                pid_value=chk_value).all()
+            else:
+                records = PersistentIdentifier.query.filter_by(
+                    pid_type=pid_type,
+                    pid_value=chk_value).all()
         return cast(List[PersistentIdentifier], records)
 
     def register_pidstore(self, pid_type, reg_value):
@@ -1844,15 +1845,17 @@ def get_actionid(endpoint):
 
 def convert_record_to_item_metadata(record_metadata):
     """Convert record_metadata to item_metadata."""
+    owner_id = record_metadata.get('owner')
+    creater_id = record_metadata.get('_deposit', {}).get('created_by', owner_id)
     item_metadata = {
         'id': record_metadata['recid'],
         'pid': record_metadata['_deposit']['pid'],
         '$schema': record_metadata['item_type_id'],
         'pubdate': record_metadata['publish_date'],
         'title': record_metadata['item_title'],
-        'owner': record_metadata['owner'],
+        'owner': owner_id,
         'owners': record_metadata['owners'],
-        'created_by': record_metadata['_deposit']['created_by'],
+        'created_by': creater_id,
         'shared_user_ids': record_metadata['weko_shared_ids']
     }
     item_type = ItemTypes.get_by_id(record_metadata['item_type_id']).render
@@ -2101,6 +2104,7 @@ def handle_finish_workflow(deposit, current_pid, recid):
     if not deposit:
         return None
 
+    pid_without_ver = None
     item_id = None
     old_record = None
     new_record = None
@@ -3835,51 +3839,44 @@ def create_onetime_download_url_to_guest(activity_id: str,
                                          extra_info: dict):
     """Create onetime download URL to guest.
 
-    @param activity_id:
-    @param extra_info:
-    @return:
+    Args:
+        activity_id (str): The ID of the usage application activity.
+        extra_info (dict): Additional information.
+
+    Returns:
+        dict: onetime URL and expiration date.
     """
-    file_name = extra_info.get('file_name')
-    record_id = extra_info.get('record_id')
-    user_mail = extra_info.get('user_mail')
-    password_for_download = extra_info.get('password_for_download')
+    from weko_records_ui.utils import (create_download_url,
+                                       create_onetime_url_record)
+    file_name = extra_info.get("file_name")
+    record_id = extra_info.get("record_id")
+    user_mail = extra_info.get("user_mail")
+    encrypted_password = extra_info.get("password_for_download")
     is_guest_user = False
     if not user_mail:
-        user_mail = extra_info.get('guest_mail')
+        user_mail = extra_info.get("guest_mail")
         is_guest_user = True
-    if file_name and record_id and user_mail:
-        from weko_records_ui.utils import generate_one_time_download_url
-        onetime_file_url = generate_one_time_download_url(
-            file_name, record_id, user_mail)
+    if not file_name or not record_id or not user_mail:
+        return {}
 
-        # Delete guest activity.
-        delete_guest_activity(activity_id)
+    try:
+        url_obj = create_onetime_url_record(
+            activity_id, record_id, file_name, user_mail,
+            is_guest=is_guest_user, encrypted_password=encrypted_password
+        )
+    except:
+        current_app.logger.error("Failed to create onetime URL.")
+        traceback.print_exc()
+        return {}
+    if not url_obj:
+        return {}
 
-        # Save onetime to Database.
-        from weko_records_ui.utils import create_onetime_download_url
-        one_time_obj = create_onetime_download_url(
-            activity_id, file_name, record_id, user_mail, password_for_download, is_guest_user)
-        expiration_tmp = {
-            "expiration_date": "",
-            "expiration_date_ja": "",
-            "expiration_date_en": "",
-        }
-        if one_time_obj:
-            try:
-                expiration_date = timedelta(days=one_time_obj.expiration_date)
-                expiration_date = datetime.today() + expiration_date
-                expiration_date = expiration_date.strftime("%Y-%m-%d")
-                expiration_tmp['expiration_date'] = expiration_date
-            except OverflowError:
-                expiration_tmp["expiration_date_ja"] = "無制限"
-                expiration_tmp["expiration_date_en"] = "Unlimited"
-            return {
-                "file_url": onetime_file_url,
-                **expiration_tmp,
-            }
-        else:
-            current_app.logger.error("Can not create onetime download.")
-            return False
+    delete_guest_activity(activity_id)
+
+    return {
+        "file_url": create_download_url(url_obj),
+        "expiration_date": url_obj.expiration_date.strftime("%Y-%m-%d")
+    }
 
 
 def delete_guest_activity(activity_id: str) -> bool:
@@ -3912,6 +3909,23 @@ def get_activity_display_info(activity_id: str):
         _type_: temporary_comment [{'ActivityId': 'A-20220821-00003', 'ActionId': 1, 'ActionName': 'Start', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'begin_action', 'Author': 'wekosoftware@nii.ac.jp', 'Status': 'action_done', 'ActionOrder': 1}, {'ActivityId': 'A-20220821-00003', 'ActionId': 3, 'ActionName': 'Item Registration', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_login', 'Author': '', 'Status': ' ', 'ActionOrder': 2}, {'ActivityId': 'A-20220821-00003', 'ActionId': 4, 'ActionName': 'Approval', 'ActionVersion': '2.0.0', 'ActionEndpoint': 'approval', 'Author': '', 'Status': ' ', 'ActionOrder': 3}, {'ActivityId': 'A-20220821-00003', 'ActionId': 5, 'ActionName': 'Item Link', 'ActionVersion': '1.0.1', 'ActionEndpoint': 'item_link', 'Author': '', 'Status': ' ', 'ActionOrder': 4}, {'ActivityId': 'A-20220821-00003', 'ActionId': 7, 'ActionName': 'Identifier Grant', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'identifier_grant', 'Author': '', 'Status': ' ', 'ActionOrder': 5}, {'ActivityId': 'A-20220821-00003', 'ActionId': 2, 'ActionName': 'End', 'ActionVersion': '1.0.0', 'ActionEndpoint': 'end_action', 'Author': '', 'Status': ' ', 'ActionOrder': 6}]
         Workflow: workflow_detail
     """
+
+    def _get_shared_user_ids_from_list(shared_user_ids_list):
+        """Get shared user ids from list.
+
+        Args:
+            shared_user_ids_list (list): List of shared user ids.
+        Returns:
+            list: List of shared user ids.
+        """
+        shared_user_ids = []
+        for user_id in shared_user_ids_list:
+            if isinstance(user_id, dict) and 'user' in user_id:
+                shared_user_ids.append(user_id['user'])
+            else:
+                shared_user_ids.append(user_id)
+        return shared_user_ids
+
     activity = WorkActivity()
     activity_detail = activity.get_activity_detail(activity_id)
     item = None
@@ -3946,13 +3960,26 @@ def get_activity_display_info(activity_id: str):
     if action_data:
         temporary_comment = action_data.action_comment
     metadata = activity.get_activity_metadata(activity_id)
+
+    shared_user_unique_ids = set()
+    owner_id = -1
+    if activity_detail.shared_user_ids:
+        shared_user_ids = _get_shared_user_ids_from_list(
+            activity_detail.shared_user_ids
+        )
+        shared_user_unique_ids = set(shared_user_ids)
+
     if metadata:
         item_json = json.loads(metadata).get('metainfo')
         owner_id = item_json.get('owner', -1)
         shared_user_ids = item_json.get('shared_user_ids', [])
-    else:
-        owner_id = -1
-        shared_user_ids = []
+        shared_user_unique_ids.update(
+            _get_shared_user_ids_from_list(shared_user_ids)
+        )
+
+    shared_user_ids = [
+        {"user": user_id} for user_id in list(shared_user_unique_ids)
+    ]
 
     current_app.logger.debug("action_endpoint:{}".format(action_endpoint))
     current_app.logger.debug("action_id:{}".format(action_id))
@@ -5202,7 +5229,7 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
         userid_list.append(int(owner_id))
         userid_list.extend(record['weko_shared_ids'])
     # 一時保存ユーザーデータ
-    elif user_id_list_json and owner_id != -1:
+    elif owner_id != -1:
         if type(user_id_list_json) == list:
             for rec in user_id_list_json:
                 if type(rec) == dict:
@@ -5230,7 +5257,12 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
         info['error'] = user_info['error']
         if int(owner_id) != -1 and int(owner_id) == int(user_info['userid']):
             info['owner'] = True
-        result.append(info)
+
+        if current_app.config.get("WEKO_ITEMS_UI_PROXY_POSTING", False) \
+                or info["owner"] \
+                or (current_user.is_authenticated and info["userid"] != current_user.id) \
+                or not current_user.is_authenticated:
+            result.append(info)
 
     return result
 
@@ -5393,3 +5425,19 @@ def check_activity_settings(settings=None):
         else:
             if hasattr(settings,'activity_display_flg'):
                 current_app.config['WEKO_WORKFLOW_APPROVER_EMAIL_COLUMN_VISIBLE'] = settings.activity_display_flg
+
+def reset_flow_action_roles_restricted_access():
+    """Reset FlowActionRole specify_property and action_item_registrant for restricted access."""
+    try:
+        with db.session.begin_nested():
+            flow_action_roles = FlowActionRole.query.filter(
+                (FlowActionRole.specify_property.isnot(None)) |
+                (FlowActionRole.action_item_registrant.is_(True))
+            ).all()
+            for action_role in flow_action_roles:
+                action_role.specify_property = None
+                action_role.action_item_registrant = False
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.exception(str(e))

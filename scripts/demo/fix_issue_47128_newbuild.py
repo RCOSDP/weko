@@ -6,7 +6,7 @@ from invenio_db import db
 from invenio_records.models import RecordMetadata
 from weko_records.api import ItemTypes
 from weko_records.models import ItemMetadata, ItemType, ItemTypeMapping
-
+from flask import current_app
 def get_properties_mapping():
     mapping = {}
     for i in dir(properties):
@@ -78,20 +78,20 @@ def main():
         'cus_91': 'cus_1022',
         'cus_93': 'cus_1021'
     }
-    print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Fix issue 47128 is start. (newbuild)')
+    current_app.logger.info('Fix issue 47128 is start. (newbuild)')
     try:
-        item_types = db.session.query(ItemType).filter(ItemType.harvesting_type==True).filter(ItemType.id==12).all()
-        for item_type in item_types:
+        item_type = ItemTypes.get_by_name('Multiple')
+        if item_type is None or not item_type.harvesting_type:
+            raise Exception("itemType is not found.")
+        else:
             # get/update item key
             try:
                 # update property id
-                for form in enumerate(item_type.render['table_row_map']['form']):
-                    if isinstance(form, dict) and 'key' in form:
-                        item_key = form['key']
-                        if item_key.startswith('item_'):
-                            prop_id = item_type.render['meta_list'][item_key]['input_type']
-                            if prop_id in prop_id_change.keys():
-                                item_type.render['meta_list'][item_key]['input_type'] = prop_id_change[prop_id]
+                for item_key in item_type.render['table_row']:
+                    if item_key.startswith('item_'):
+                        prop_id = item_type.render['meta_list'][item_key]['input_type']
+                        if prop_id in prop_id_change.keys():
+                            item_type.render['meta_list'][item_key]['input_type'] = prop_id_change[prop_id]
                 # get new item key
                 count = 1
                 id_match_key[item_type.id] = {}
@@ -122,12 +122,13 @@ def main():
                 flag_modified(item_type, "render")
                 db.session.merge(item_type)
                 db.session.commit()
-                print(f"[FIX][fix_issue47128_newbuild.py]item_type:{item_type.id}")
-                print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Update item key of item type ({}) is success.'.format(item_type.id))
+                current_app.logger.info(f"[FIX] item_type:{item_type.id}")
+                # current_app.logger.info(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Update item key of item type ({}) is success.'.format(item_type.id))
             except Exception as ex:
                 db.session.rollback()
-                print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Update item key of item type ({}) is fail.'.format(item_type.id))
-                print(ex)
+                import traceback
+                current_app.logger.error('Update item key of item type ({}) is fail.'.format(item_type.id))
+                current_app.logger.error(traceback.format_exc())
 
             # update item key of item type mapping
             mappings = db.session.query(ItemTypeMapping).filter(ItemTypeMapping.id==item_type.id).all()
@@ -140,39 +141,40 @@ def main():
                     flag_modified(mapping, "mapping")
                     db.session.merge(mapping)
                     db.session.commit()
-                    print(f"[FIX][fix_issue47128_newbuild.py]item_type_mapping:{mapping.id}")
-                    print(
-                        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                        'Update item key of item type mapping (item_type_id: {}, version_id: {}) is success.'.format(mapping.item_type_id, mapping.version_id))
+                    current_app.logger.info(f"[FIX] item_type_mapping:{mapping.id}")
+                    # print(
+                    #     datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    #     'Update item key of item type mapping (item_type_id: {}, version_id: {}) is success.'.format(mapping.item_type_id, mapping.version_id))
                 except Exception as ex:
                     db.session.rollback()
-                    print(
-                        datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                    import traceback
+                    current_app.logger.error(
                         'Update item key of item type mapping (item_type_id: {}, version_id: {}) is fail.'.format(mapping.item_type_id, mapping.version_id))
-                    print(ex)
+                    current_app.logger.error(traceback.format_exc())
 
             # reload property and update mapping
             try:
                 mapping = get_properties_mapping()
                 ItemTypes.reload(item_type.id, mapping, [], 'ALL')
                 db.session.commit()
-                print(
-                    datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                    'Reload properties of item type ({}) and update item type mapping is success.'.format(item_type.id))
+                current_app.logger.info(f"[FIX] item_type:{item_type.id}")
+                # print(
+                #     datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
+                #     'Reload properties of item type ({}) and update item type mapping is success.'.format(item_type.id))
             except Exception as ex:
                 db.session.rollback()
-                print(
-                    datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                    'Reload properties of item type ({}) and update item type mapping is fail.'.format(item_type.id))
-                print(ex)
+                import traceback
+                current_app.logger.error(
+                    'Reload properties of item type ({}) and update item type mapping is fail.'.format(item_type.id)
+                )
+                current_app.logger.error(traceback.format_exc())
 
-        print('IMPORTANT: item key change table: {}'.format(id_match_key))
-        item_type_id_list = [str(i.id) for i in item_types]
-        item_list = db.session.query(ItemMetadata).filter(ItemMetadata.item_type_id.in_(item_type_id_list)).all()
+        # current_app.logger.info('IMPORTANT: item key change table: {}'.format(id_match_key))
+        item_list = db.session.query(ItemMetadata).filter(ItemMetadata.item_type_id==item_type.id).all()
         success_count = 0
         skip_count = 0
         update_flag = False
-        print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Update metadata start.')
+        current_app.logger.info('Update metadata start.')
         for item in item_list:
             try:
                 rec = db.session.query(RecordMetadata).filter(RecordMetadata.id==item.id).one_or_none()
@@ -376,22 +378,24 @@ def main():
                     db.session.merge(item)
                     db.session.merge(rec)
                     db.session.commit()
-                    print(f"[FIX][fix_issue47128_newbuild.py]item_metadata:{item.id}")
-                    print(f"[FIX][fix_issue47128_newbuild.py]records_metadata:{rec.id}")
+                    current_app.logger.info(f"[FIX] item_metadata:{item.id}")
+                    current_app.logger.info(f"[FIX] records_metadata:{rec.id}")
                     success_count += 1
                 else:
                     skip_count += 1
             except Exception as ex:
-                print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Update {} is fail.'.format(item.id))
-                print(ex)
+                import traceback
+                current_app.logger.error(f"Update {item.id} is fail.")
+                current_app.logger.error(traceback.format_exc())
                 db.session.rollback()
-        print(
-            datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-            'Update metadata finish. Updated {} items. Skipped {} items.'.format(success_count, skip_count))
-        print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Fix issue 47128 is success.')
+        current_app.logger.info(
+            f"Update metadata finish. Updated {success_count} items. Skipped {skip_count} items."
+        )
+        current_app.logger.info("Fix issue 47128 is success.")
     except Exception as e:
-        print(datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'), 'Fix issue 47128 is fail.')
-        print(e)
+        import traceback
+        current_app.logger.error("Fix issue 47128 is fail.")
+        current_app.logger.error(traceback.format_exc())
 
 if __name__ == '__main__':
     main()

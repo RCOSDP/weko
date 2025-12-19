@@ -385,16 +385,19 @@ class WekoIndexer(RecordIndexer):
 
             self.client.clear_scroll(scroll_id=scroll_id)
 
-    def get_metadata_by_item_id(self, item_id):
+    def get_metadata_by_item_id(self, item_id, is_ignore=False):
         """Get metadata of item by id from ES.
 
         :param item_id: Item ID (UUID).
         :return: Metadata.
         """
         self.get_es_index()
-        return self.client.get(index=self.es_index,
-                               doc_type=self.es_doc_type,
-                               id=str(item_id))
+        args = {"index": self.es_index,
+                "doc_type": self.es_doc_type,
+                "id": str(item_id)}
+        if is_ignore:
+            args["ignore"] = [404]
+        return self.client.get(**args)
 
     def update_feedback_mail_list(self, feedback_mail):
         """Update feedback mail info.
@@ -1572,10 +1575,11 @@ class WekoDeposit(Deposit):
         except RuntimeError:
             raise
         except ValueError as ex:
-            raise ex
+            traceback.print_exc()
+            raise
         except BaseException:
             import traceback
-            traceback.format_exc()
+            traceback.print_exc()
             abort(500, 'MAPPING_ERROR')
 
         # Save Index Path on ES
@@ -1632,7 +1636,7 @@ class WekoDeposit(Deposit):
         self['_deposit']['owners'] = [int(dc['owner'])]
         self['_deposit']['weko_shared_ids'] = dc['weko_shared_ids']
         self['_deposit']['created_by'] = int(
-            self.data.get('created_by', 
+            self.data.get('created_by',
                           current_user.id if current_user and current_user.is_authenticated else system_admin.id))
 
         if data:
