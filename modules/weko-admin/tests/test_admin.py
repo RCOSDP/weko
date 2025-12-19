@@ -2750,7 +2750,17 @@ class TestJsonldMappingView:
     def test_get_query(self, client, users, db, mocker):
         login_user_via_session(client,email=users[0]["email"])# sysadmin
         view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
-        view.get_query()
+        q = view.get_query()
+        q_str = str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
+        assert "WHERE jsonld_mappings.is_deleted = false" in q_str
+        assert "ORDER BY jsonld_mappings.id" in q_str
+
+    def test_get_count_query(self, client, users, db, mocker):
+        login_user_via_session(client,email=users[0]["email"])# sysadmin
+        view = JsonldMappingView(ItemTypeJsonldMapping, db.session)
+        q = view.get_count_query()
+        q_str = str(q.statement.compile(dialect=postgresql.dialect(),compile_kwargs={"literal_binds": True}))
+        assert "WHERE jsonld_mappings.is_deleted = false" in q_str
 
 
     # .tox/c1/bin/pytest --cov=weko_admin tests/test_admin.py::TestJsonldMappingView::_is_editable -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
