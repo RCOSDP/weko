@@ -369,6 +369,7 @@ class RecordIndexer(object):
                             break
                         self.completed_record_count += self.count
                     except (BulkConnectionError, ConnectionError) as ce:
+                        current_app.logger.error(f"type:{type(ce).__name__}, message:{str(ce)}\n{traceback.format_exc()}")
                         _success_num = 0
                         _fail_num = 0
                         if '_success' in locals() or '_fail' in locals():
