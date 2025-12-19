@@ -228,7 +228,12 @@ class ItemTypeNames(RecordBase):
     @classmethod
     def get_name_and_id_all(cls):
         """get name and id all."""
-        query = db.session.query(ItemType).join(ItemTypeName,ItemType.name_id==ItemTypeName.id).with_entities(ItemTypeName.name, ItemType.id)
+        query = (
+            db.session
+            .query(ItemType)
+            .join(ItemTypeName,ItemType.name_id==ItemTypeName.id)
+            .with_entities(ItemTypeName.name, ItemType.id)
+        )
         return query.all()
 
     @classmethod
