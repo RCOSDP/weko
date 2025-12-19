@@ -1025,7 +1025,7 @@ class WekoDeposit(Deposit):
                                                  self.revision_id)
                     # Upload pdf file content to Elasticsearch
                     from .tasks import extract_pdf_and_update_file_contents
-                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)))
+                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)), countdown=10)
                 except TransportError as err:
                     if self.jrc.get('content'):
                         for content in self.jrc['content']:
@@ -1592,7 +1592,7 @@ class WekoDeposit(Deposit):
         actions = index_obj.get('actions')
         if actions == 'publish' or actions == PublishStatus.PUBLIC.value:
             pubs = PublishStatus.PUBLIC.value
-        elif 'id' in data:
+        elif 'id' in data and is_edit:
             recid = PersistentIdentifier.query.filter_by(
                 pid_type='recid', pid_value=data['id']).first()
             rec = RecordMetadata.query.filter_by(id=recid.object_uuid).first()

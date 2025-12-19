@@ -304,7 +304,7 @@ def get_user_information(user_ids):
         user_info = UserProfile.get_by_userid(user_id)
         if user_info is not None:
             info['userid'] = user_id
-            info['username'] = user_info.get_username
+            info['username'] = user_info.username
             info['fullname'] = user_info.fullname
         else:
             info['userid'] = user_id
@@ -1630,6 +1630,7 @@ def validate_form_input_data(
 
     # Remove excluded item in json_schema
     remove_excluded_items_in_json_schema(item_id, json_schema)
+    set_scheme_by_author_table("schema", item_type.render["meta_list"], json_schema)
 
     data['$schema'] = json_schema.copy()
 
@@ -5523,3 +5524,153 @@ def send_mail_direct_registered(pid_value, deposit, user_id, share_ids=[]):
             "Unexpected error occurred while sending mail for item registration"
         )
         return
+
+
+def set_scheme_by_author_table(data_type, meta_list, result):
+    creator_id = "1038"
+    contributor_id = "1039"
+    rightsHolder_id = "1008"
+    key_list = {
+        "creator": {
+            "key": "",
+            "ids_key": "nameIdentifiers",
+            "id_key": "nameIdentifierScheme",
+            "as_key": "creatorAffiliations",
+            "aids_key": "affiliationNameIdentifiers",
+            "aid_key": "affiliationNameIdentifierScheme"
+        },
+        "contributor": {
+            "key": "",
+            "ids_key": "nameIdentifiers",
+            "id_key": "nameIdentifierScheme",
+            "as_key": "contributorAffiliations",
+            "aids_key": "contributorAffiliationNameIdentifiers",
+            "aid_key": "contributorAffiliationScheme"
+        },
+        "rightsHolder": {
+            "key": "",
+            "ids_key": "nameIdentifiers",
+            "id_key": "nameIdentifierScheme",
+            "as_key": None,
+            "aids_key": None,
+            "aid_key": None
+        }
+    }
+
+    for key, data in meta_list.items():
+        if key_list["creator"]["key"] and key_list["contributor"]["key"] and key_list["rightsHolder"]["key"]:
+            break
+        if data and "input_type" in data and data["input_type"] == "cus_{}".format(creator_id):
+            key_list["creator"]["key"] = key
+        elif data and "input_type" in data and data["input_type"] == "cus_{}".format(contributor_id):
+            key_list["contributor"]["key"] = key
+        elif data and "input_type" in data and data["input_type"] == "cus_{}".format(rightsHolder_id):
+            key_list["rightsHolder"]["key"] = key
+    
+    if key_list["creator"]["key"] or key_list["contributor"]["key"] or key_list["rightsHolder"]["key"]:
+        prefix_scheme = WekoAuthors.get_scheme_of_id_prefix()
+        affiliation_scheme = WekoAuthors.get_scheme_of_affiliaiton_id()
+
+        if data_type == "form":
+            set_scheme_to_form(result, prefix_scheme, affiliation_scheme, key_list)
+        elif data_type == "schema":
+            set_scheme_to_schema(result, prefix_scheme, affiliation_scheme, key_list)
+
+    return result
+
+
+def set_scheme_to_form(form_data, prefix_scheme, affiliation_scheme, key_list):
+    prefix_list = []
+    affiliation_list = []
+    for prefix in prefix_scheme:
+        prefix_list.append({"name": prefix, "value": prefix.replace("【非推奨】", "")})
+    for affiliation in affiliation_scheme:
+        affiliation_list.append({"name": affiliation, "value": affiliation.replace("【非推奨】", "")})
+
+    for value in form_data:
+        if "key" not in value:
+            continue
+        if value["key"] == key_list["creator"]["key"]:
+            set_prefix_scheme_to_form("creator", value, prefix_list, affiliation_list, key_list)
+        elif value["key"] == key_list["contributor"]["key"]:
+            set_prefix_scheme_to_form("contributor", value, prefix_list, affiliation_list, key_list)
+        elif value["key"] == key_list["rightsHolder"]["key"]:
+            set_prefix_scheme_to_form("rightsHolder", value, prefix_list, affiliation_list, key_list)
+
+
+def set_prefix_scheme_to_form(prop_type, form_data, prefix_list, affiliation_list, key_list):
+    change_id = False
+    change_aid = False if prop_type != "rightsHolder" else True
+    if "items" in form_data:
+        for ids in form_data["items"]:
+            if "key" in ids and \
+                    key_list[prop_type]["ids_key"] in ids["key"] and \
+                    "items" in ids:
+                for id in ids["items"]:
+                    if "key" in id and key_list[prop_type]["id_key"] in id["key"]:
+                        id["titleMap"] = prefix_list
+                        change_id = True
+                    if change_id:
+                        break
+            if not change_aid and \
+                    "key" in ids and \
+                    key_list[prop_type]["as_key"] in ids["key"] and \
+                    "items" in ids:
+                for aids in ids["items"]:
+                    if "key" in aids and \
+                            key_list[prop_type]["aids_key"] in aids["key"] and \
+                            "items" in aids:
+                        for aid in aids["items"]:
+                            if "key" in aid and key_list[prop_type]["aid_key"] in aid["key"]:
+                                aid["titleMap"] = affiliation_list
+                                change_aid = True
+                            if change_aid:
+                                break
+                    if change_aid:
+                        break
+            if change_id and change_aid:
+                break
+
+
+def set_scheme_to_schema(schema_data, prefix_scheme, affiliation_scheme, key_list):
+    prefix_list = [None]
+    affiliation_list = [None]
+    for prefix in prefix_scheme:
+        prefix_list.append(prefix.replace("【非推奨】", ""))
+    for affiliation in affiliation_scheme:
+        affiliation_list.append(affiliation.replace("【非推奨】", ""))
+
+    schema = {}
+    if "properties" in schema_data:
+        if key_list["creator"]["key"]:
+            schema = schema_data["properties"][key_list["creator"]["key"]]
+            set_prefix_scheme_to_schema("creator", schema, prefix_list, affiliation_list, key_list)
+        if key_list["contributor"]["key"]:
+            schema = schema_data["properties"][key_list["contributor"]["key"]]
+            set_prefix_scheme_to_schema("contributor", schema, prefix_list, affiliation_list, key_list)
+        if key_list["rightsHolder"]["key"]:
+            schema = schema_data["properties"][key_list["rightsHolder"]["key"]]
+            set_prefix_scheme_to_schema("rightsHolder", schema, prefix_list, affiliation_list, key_list)
+        
+
+def set_prefix_scheme_to_schema(prop_type, schema_data, prefix_list, affiliation_list, key_list):
+    ids_key = key_list[prop_type]["ids_key"]
+    id_key = key_list[prop_type]["id_key"]
+    as_key = key_list[prop_type]["as_key"] 
+    aids_key = key_list[prop_type]["aids_key"]
+    aid_key = key_list[prop_type]["aid_key"]
+    if "items" in schema_data and \
+            "properties" in schema_data["items"]:
+        if ids_key in schema_data["items"]["properties"] and \
+                "items" in schema_data["items"]["properties"][ids_key] and \
+                "properties" in schema_data["items"]["properties"][ids_key]["items"] and \
+                id_key in schema_data["items"]["properties"][ids_key]["items"]["properties"]:
+            schema_data["items"]["properties"][ids_key]["items"]["properties"][id_key]["enum"] = prefix_list
+        if as_key and as_key in schema_data["items"]["properties"] and \
+                "items" in schema_data["items"]["properties"][as_key] and \
+                "properties" in schema_data["items"]["properties"][as_key]["items"] and \
+                aids_key in schema_data["items"]["properties"][as_key]["items"]["properties"] and \
+                "items" in schema_data["items"]["properties"][as_key]["items"]["properties"][aids_key] and \
+                "properties" in schema_data["items"]["properties"][as_key]["items"]["properties"][aids_key]["items"] and \
+                aid_key in schema_data["items"]["properties"][as_key]["items"]["properties"][aids_key]["items"]["properties"]:
+            schema_data["items"]["properties"][as_key]["items"]["properties"][aids_key]["items"]["properties"][aid_key]["enum"] = affiliation_list

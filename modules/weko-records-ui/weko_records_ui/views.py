@@ -914,7 +914,11 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
     message = _('Secret URL generated successfully')
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
-            pid.object_uuid, url_obj, record.get('item_title', ''))
+            pid.object_uuid,
+            url_obj,
+            record.get('item_title', ''),
+            request.json['timezone_offset_minutes']
+        )
         if sending_result:
             message += _(', please check your email inbox')
         else:
@@ -1491,6 +1495,7 @@ def copy_bucket():
         return jsonify(uri)
     except Exception as e:
         current_app.logger.error(str(e))
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 400
 
 

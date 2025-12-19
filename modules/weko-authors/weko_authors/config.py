@@ -25,7 +25,7 @@ WEKO_AUTHORS_LIST_SCHEME = ['e-Rad', 'e-Rad_Researcher', 'NRID', 'ORCID', 'ISNI'
                             'kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other']
 """ List of Author Name Identifier Scheme """
 
-WEKO_AUTHORS_INDEX_ITEM_OTHER = 11
+WEKO_AUTHORS_INDEX_ITEM_OTHER = 12
 """ Item other index """
 
 WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
@@ -33,7 +33,7 @@ WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
 ]
 """ List of Affiliation Name Identifier Scheme """
 
-WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 4
+WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 5
 """ Item other index """
 
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'

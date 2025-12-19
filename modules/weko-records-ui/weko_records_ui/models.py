@@ -360,10 +360,15 @@ class DownloadMixin:
             cls.download_count  < cls.download_limit,
             cls.is_deleted     == False
         )
+        records = []
         if ascending:
-            return query.order_by(asc(cls.id)).all()
+            records = query.order_by(asc(cls.id)).all()
         else:
-            return query.order_by(desc(cls.id)).all()
+            records = query.order_by(desc(cls.id)).all()
+        for record in records:
+            record.created = record.created.replace(tzinfo=timezone.utc)
+            record.expiration_date = record.expiration_date.replace(tzinfo=timezone.utc)
+        return records
 
 
 class FileOnetimeDownload(db.Model, Timestamp, DownloadMixin):

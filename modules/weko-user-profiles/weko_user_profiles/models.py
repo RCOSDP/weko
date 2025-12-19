@@ -21,8 +21,10 @@
 """Database models for user profiles."""
 
 from flask import current_app
+from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import User
 from invenio_db import db
+from invenio_files_rest.utils import create_boto3_s3_client
 from sqlalchemy import event
 from sqlalchemy.ext.hybrid import hybrid_property
 
@@ -203,6 +205,33 @@ class UserProfile(db.Model):
     def is_anonymous(self):
         """Return whether this UserProfile is anonymous."""
         return False
+
+    @property
+    def client_credentials_configured(self):
+        """Check whether S3 credentials are configured.
+        Returns:
+            bool: True if S3 credentials are configured, False otherwise.
+        """
+        return all([
+            self.s3_endpoint_url,
+            self.access_key,
+            self.secret_key,
+        ])
+
+    def create_s3_client(self):
+        """Create boto3 S3 client.
+        Returns:
+            boto3.client: Boto3 S3 client instance.
+        """
+        # Check if S3 credentials are configured
+        if not self.client_credentials_configured:
+            raise Exception(_('S3 setting none. Please check your profile.'))
+
+        return create_boto3_s3_client(
+            self.access_key, self.secret_key,
+            region_name=self.s3_region_name,
+            endpoint_url=self.s3_endpoint_url,
+        )
 
     def get_institute_data(self, enable_custom=False):
         """Get institute data.

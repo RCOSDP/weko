@@ -285,9 +285,9 @@ def schema(title="", multi_flag=multiple_flag):
                                         "affiliationNameIdentifierScheme": {
                                             "type": ["null", "string"],
                                             "format": "select",
-                                            # "enum": [],
+                                            "enum": [],
                                             # "currentEnum": [],
-                                            "enum": config.AFFILIATION_SCHEME_VAL,
+                                            # "enum": config.AFFILIATION_SCHEME_VAL,
                                             "title": "所属機関識別子Scheme",
                                             "title_i18n": {
                                                 "en": "Affiliation Name Identifier Scheme",
@@ -596,10 +596,11 @@ def form(
                                         "en": "Affiliation Name Identifier Scheme",
                                         "ja": "所属機関識別子Scheme",
                                     },
-                                    "titleMap": make_title_map(
-                                        config.AFFILIATION_SCHEME_LBL,
-                                        config.AFFILIATION_SCHEME_VAL,
-                                    ),
+                                    # "titleMap": make_title_map(
+                                    #     config.AFFILIATION_SCHEME_LBL,
+                                    #     config.AFFILIATION_SCHEME_VAL,
+                                    # ),
+                                    "titleMap": [],
                                     "type": "select",
                                 },
                                 {

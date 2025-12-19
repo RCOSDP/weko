@@ -1,0 +1,84 @@
+  /* 行は常に左右に並べる（Bootstrapのd-flexがない環境用の保険） */
+  #search_row {
+    display: flex;
+    align-items: stretch;
+  }
+
+  /* 折りたたみ時の固定幅 */
+  #search_sidebar_container {
+    overflow: hidden; /* 折りたたみ時に中身がはみ出さない */
+  }
+  #search_sidebar_container.sidebar-collapsed {
+    width: 50px !important;
+    min-width: 50px;
+    flex: 0 0 50px;
+  }
+
+  #sidebar-toggle {
+    border: none;
+    background: transparent;
+    padding: 0;
+  }
+
+  #sidebar-toggle::before {
+    content: "\25C0";
+    font-size: 0.875em;
+    display: inline-block;
+  }
+
+  .sidebar-collapsed #sidebar-toggle::before {
+    content: "\25B6";
+  }
+
+  #search_sidebar {
+    padding-left: 0%;
+    padding-right: 0%;
+    padding-bottom: 0%;
+  }
+
+  /* メインは残り幅を全て使う */
+  #item-main {
+    /* transition: width .2s ease, flex .2s ease; */
+  }
+  #item-main.main-expanded {
+    /* 展開時はBootstrapのcol-*に任せるので明示スタイル不要 */
+  }
+  #item-main.main-collapsed {
+    width: calc(100% - 50px) !important;
+    flex: 1 1 auto;
+  }
+
+  /* 折りたたみ時はパネル本文を非表示（ボタンだけ見える） */
+  #search_sidebar_container.sidebar-collapsed #search_sidebar {
+    display: none;
+  }
+
+
+@media (max-width: 767.98px) {
+  /* 行は縦積み */
+  #search_row {
+    display: block;
+  }
+
+  /* サイドバーは常に横幅100% */
+  #search_sidebar_container {
+    width: 100% !important;
+    min-width: 0;
+    flex: none; /* flex制御は不要 */
+  }
+
+  /* 折りたたみ時でも横幅100%（ボタン行のみ表示） */
+  #search_sidebar_container.sidebar-collapsed {
+    width: 100% !important;
+    min-width: 0;
+    flex: none;
+  }
+
+  /* メインは常に横幅100% */
+  #item-main,
+  #item-main.main-collapsed,
+  #item-main.main-expanded {
+    width: 100% !important;
+    flex: none;
+  }
+}

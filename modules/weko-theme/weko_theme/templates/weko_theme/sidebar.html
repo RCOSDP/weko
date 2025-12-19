@@ -1,0 +1,22 @@
+<div class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}}"
+     style="height: 80%" id="search_sidebar_container">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title text-center" style="font-size: 0.875em;">
+        <button id="sidebar-toggle" type="button" aria-controls="search_sidebar"
+                aria-expanded="true" data-label="{{ _('Minimize menu') }}">
+          <span>{{ _('Minimize menu') }}</span>
+        </button>
+      </h3>
+    </div>
+    <div class="panel-body" id="search_sidebar" >
+      {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
+        {% include "weko_theme/body_index.html" %}
+      {% endif %}
+      {% if display_facet_search %}
+        {% include "weko_search_ui/body_facet_search.html" %}
+      {% endif %}
+    </div>
+  </div>
+</div>
+

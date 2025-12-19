@@ -276,6 +276,10 @@ class TestFileOnetimeDownload:
             recid, filename, ascending=True)[0].id == 1
         assert FileOnetimeDownload.fetch_active_urls(
             recid, filename, ascending=False)[0].id == 2
+        # Both created and expiration_date have timezone info
+        result = FileOnetimeDownload.fetch_active_urls(recid, filename, ascending=True)
+        assert all(item.created.tzinfo is timezone.utc for item in result)
+        assert all(item.expiration_date.tzinfo is timezone.utc for item in result)
 
 
 class TestFileSecretDownload:
@@ -393,6 +397,10 @@ class TestFileSecretDownload:
             recid, filename, ascending=True)[0].id == 1
         assert FileSecretDownload.fetch_active_urls(
             recid, filename, ascending=False)[0].id == 2
+        # Both created and expiration_date have timezone info
+        result = FileSecretDownload.fetch_active_urls(recid, filename, ascending=True)
+        assert all(item.created.tzinfo is timezone.utc for item in result)
+        assert all(item.expiration_date.tzinfo is timezone.utc for item in result)
 
 
 # def find_downloadable_only(cls, **obj) -> list:
