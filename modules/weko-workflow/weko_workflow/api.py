@@ -2014,8 +2014,7 @@ class WorkActivity(object):
                     cast(_Activity.shared_user_ids, String).contains(self_user_id_json),
                     _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}").contains(self_user_id_json),
                     _Activity.temp_data.op("#>>")("{'metainfo', 'owner'}") == str(self_user_id),
-                ),
-                _FlowAction.action_id != 4
+                )
             ),
             and_(
                 _FlowActionRole.action_item_registrant == True,
