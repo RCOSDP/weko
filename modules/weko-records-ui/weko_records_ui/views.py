@@ -740,7 +740,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     restricted_errorMsg = ''
     restricted_access = get_restricted_access('error_msg')
-    restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
+    restricted_errorMsg = restricted_access['content'].get(current_lang, restricted_access['content']['en'])['content']
 
     onetime_file_name = ''
     onetime_url = request.args.get("onetime_url")
