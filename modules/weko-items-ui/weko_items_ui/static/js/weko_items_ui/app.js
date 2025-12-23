@@ -512,30 +512,11 @@ removeUser = async(user_id, id_value) => {
   let search_ids = $('[id^="contributor_row_"]');
 
   if(search_ids.length + search_new_ids.length < 2) {
-    let current_lang = $("#current_language").val();
-    message = 'At least 1 user is required.';
-    if (current_lang = 'ja') {
-      message = 'ユーザーは1名以上必要です。';
-    }
+    message = $("#min_user_required_error").val();
     alert(message);
     return false;
   }
-  //削除対象のログインユーザーの状態をチェック
-  const target_email = $(email_id).val();
-  if (target_email != '') {
-    const promise = angular.element(document.getElementById('weko_records_ctrl')).scope().checkLoginUserEmail(target_email);
-    const is_login_user = await promise.then(ret => {
-        // "ret == false" can delete
-        return ret.is_login_user;
-      }).catch(msg => {
-        alert(msg.error);
-        return true;
-      });
 
-    if(is_login_user) {
-      return false;
-    }
-  }
   //削除実行
   $(parent_id).remove();
 }
@@ -577,64 +558,6 @@ function addUser() {
     $(`#contributor_new_row_${max_id-1}`).after(base_node);
   }
   return;
-}
-
-function labelChangeToContributor(target_parent_div_list) {
-  target_parent_div_list.map( function(ii, element) {
-    let parent = $(`#${element.id}`).find('.input_contributor').parent();
-    if (parent.length > 0) {
-      let org_html = parent[0].innerHTML;
-      org_html = org_html.replaceAll('Owner', 'Contributor');
-      org_html = org_html.replace('Username', 'Contributor');
-      org_html = org_html.replace('handleShareContributor', 'handleShareOwner');
-      parent[0].innerHTML = org_html;
-    }
-  });
-}
-
-function displayAllTrashIcon(trash_id_list) {
-  trash_id_list.map( function(ii, element) {
-    $(`#${element.id}`).css('display', 'block');
-  });
-}
-
-function handleShareOwner(id) {
-  const is_owner = $('#' + id).prop("checked");
-  id = id.replace('id_owner_radio_', '');
-  if(is_owner) {
-    // 全てContributorに変更する
-    // Newボタンで追加したユーザー情報
-    let search_new_ids = $('[id^="contributor_new_row_"]');
-    labelChangeToContributor(search_new_ids);
-    // 本アクティビティに登録済みユーザー情報
-    let search_ids = $('[id^="contributor_row_"]');
-    labelChangeToContributor(search_ids);
-    // ゴミ箱アイコンを表示
-    displayAllTrashIcon($('[id^="id_trash_"]'));
-
-    let org_owner = $("#id_owner_radio_" + id).parent()[0].innerHTML;
-    org_owner = org_owner.replace('Username', 'Owner');
-    org_owner = org_owner.replace('Contributor', 'Owner');
-    $("#id_owner_radio_" + id).parent()[0].innerHTML = org_owner;
-    $("#share_username" + id).val("");
-    $("#share_email" + id).val("");
-    $("#id_owner_radio_" + id).prop('checked', 'checked');
-    // Ownerは削除不可能
-    $("#id_trash_" + id).css("display", "none");
-  } else {
-    let org_owner = $("#id_owner_radio_" + id).parent()[0].innerHTML;
-    org_owner = org_owner.replace('Username', 'Contributor');
-    org_owner = org_owner.replace('Owner', 'Contributor');
-    org_owner = org_owner.replace('handleShareContributor', 'handleShareOwner');
-    $("#id_owner_radio_" + id).parent()[0].innerHTML = org_owner;
-    $("#share_username_" + id).val("");
-    $("#share_email_" + id).val("");
-    $("#id_spinners_username_" + id).css("display", "none");
-    $("#share_username_" + id).prop('readonly', true);
-    $("#id_spinners_email_" + id).css("display", "none");
-    $("#share_email_"+ id).prop('readonly', true);
-    $("#id_trash_" + id).css('display', 'block');
-  }
 }
 
 function handleSharePermission(value) {
@@ -3797,8 +3720,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let model = $rootScope.recordsVM.invenioRecordsModel;
         let userSelection = $(".form_share_permission").css('display');
         let login_user_id = 0;
-        let is_exist_login_user = false;
-        let enable_multi_contributors = $("#enable_multi_contributors").val() === 'True';
+        let duplicateEmails = [];
         // init model
         model['shared_user_ids'] = [];
 
@@ -3809,64 +3731,40 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           /******************/
           /* 入力チェック
           /******************/
-          // ownerは必ず指定する
-          if ($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $("input[name='owner_radio']:checked").length == 0) {
-            return Promise.reject('[Be sure to select an owner.]');
-          }
           // This user
           if ($("input[name='checkedSharePermiss']:checked").val() =='this_user') {
             return true;
           }
-          // owner
-          let owner_radio_id = $("input[name='owner_radio']:checked")[0].id;
-          let owner_id = owner_radio_id.replace('id_owner_radio_', '')
-          // 空白チェック
-          if($("input[name='checkedSharePermiss']:checked").val() =='other_user' & $(`#share_email_${owner_id}`).val() == '') {
-            return Promise.reject('[owner email address is blank.]');
-          }
-          return owner_id;
-        }).then(async (owner_id) => {
+        }).then(async () => {
           /************************************************************/
-          /* ownerとContributorをまとめてリストでチェックする
+          /* Contributorをまとめてリストでチェックする
           /************************************************************/
           let check_user_info_list = [];
-          let check_owner_user_info = { 'username': '', 'email': '', 'owner': true };
-          // owner
-          const owner_username = $(`#share_username_${owner_id}`).val();
-          const owner_email = $(`#share_email_${owner_id}`).val();
-          check_owner_user_info['username'] = owner_username;
-          check_owner_user_info['email'] = owner_email;
-          check_user_info_list.push(check_owner_user_info);
           // contributor
-          if (enable_multi_contributors) {
-            let contributors = $("input[name='owner_radio']");
-            for (let idx=0; idx<contributors.length; idx++) {
-              let check_contributor_user_info = { 'username': '', 'email': '', 'owner': false };
-              let contributor_id = contributors[idx].id.replace('id_owner_radio_', '');
-              const contributor_username = $(`#share_username_${contributor_id}`).val();
-              const contributor_email = $(`#share_email_${contributor_id}`).val();
-              if (contributor_email == '' | contributors[idx].checked) {
-                continue;
-              }
-              check_contributor_user_info['username'] = contributor_username;
-              check_contributor_user_info['email'] = contributor_email;
-              check_user_info_list.push(check_contributor_user_info);
+          let contributors = $('[id^="pd_username_"]');
+          for (let idx=0; idx<contributors.length; idx++) {
+            let check_contributor_user_info = { 'username': '', 'email': '' };
+            let contributor_id = contributors[idx].id.replace('pd_username_', '');
+            const contributor_email_element = $(`#share_email_${contributor_id}`);
+            // if disabled, skip
+            if (contributor_email_element.is(':disabled')) {
+              continue;
             }
+            const contributor_username = $(`#share_username_${contributor_id}`).val();
+            const contributor_email = contributor_email_element.val();
+            if (contributor_email == '') {
+              continue;
+            }
+            check_contributor_user_info['username'] = contributor_username;
+            check_contributor_user_info['email'] = contributor_email;
+            check_user_info_list.push(check_contributor_user_info);
           }
           let ret = { 'async_validate': false, 'error': ''};
-          let owner_info = {};
           let contributors_info = [];
-          let async_validate_users = await $scope.validateUserInfo(login_user_id, check_user_info_list)
+          let async_validate_users = await $scope.validateUserInfo(check_user_info_list)
           .then( user_list => {
             for (user of user_list) {
-              if (user['is_login_user']) {
-                is_exist_login_user = true;
-              }
-              if (user['owner']) {
-                owner_info = {'user_id': user['userID'], 'email': user['email']};
-              } else {
-                contributors_info.push({'user_id':user['userID'], 'email': user['email']});
-              }
+              contributors_info.push({'user_id':user['userID'], 'email': user['email']});
             }
             ret['async_validate'] = true;
             return ret;
@@ -3877,19 +3775,23 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           });
 
           if(async_validate_users['async_validate']) {
-            // ログインチェック成功 Modelに設定する
-            //owner
-            model['owner'] = Number.parseInt(owner_info['user_id'])
-            
-            //contributor
-            let shared_user_ids = [];
-            if (enable_multi_contributors) {
-              contributors_info.forEach((contributors => {
-                shared_user_ids.push({'user':contributors['user_id']});
-              }));
-            } else {
-              shared_user_ids.push({'user': Number.parseInt(login_user_id)});
+            // check duplicate emails
+            const contributorEmails = contributors_info.map(c => c['email']);
+            duplicateEmails = contributorEmails.filter((email, idx, arr) =>
+              arr.indexOf(email) !== idx
+            )
+
+            // owner(login user)
+            if (!model['owner']) {
+              // set owner if not set yet
+              model['owner'] = Number.parseInt(login_user_id)
             }
+            
+            // contributor
+            let shared_user_ids = [];
+            contributors_info.forEach((contributors => {
+              shared_user_ids.push({'user':contributors['user_id']});
+            }));
             model['shared_user_ids'] = shared_user_ids;
           } else {
             return async_validate_users['error'];
@@ -3899,11 +3801,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           if (error_message.length > 0) {
             return Promise.reject(error_message);
           }
-          if (enable_multi_contributors && !is_exist_login_user) {
-            return Promise.reject('Contributer or Owner - the login user is required.');
+          if (model['owner'] === Number.parseInt(login_user_id)
+            && model['shared_user_ids'].some(e => e['user'] === Number.parseInt(login_user_id))) {
+            return Promise.reject($("#other_user_self_error").val());
           }
-          if (!enable_multi_contributors && model['owner'] === Number.parseInt(login_user_id)) {
-            return Promise.reject('You cannot specify yourself in "Other user" setting.');
+          if (duplicateEmails.length > 0) {
+            let errMsg = $("#duplicate_email_error").val();
+            [...new Set(duplicateEmails)].forEach(email => {
+              errMsg += `<br/>- ${email}`;
+            });
+            return Promise.reject(errMsg);
           }
           return true;
         });
@@ -4706,7 +4613,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             CustomBSDatePicker.removeLastAttr($rootScope.recordsVM.invenioRecordsModel);
 
             // Save required data into workflow activity
-            let is_save = await $scope.saveActivity(false).then(ret => {
+            let is_save = await $scope.saveActivity().then(ret => {
               return ret;
             });
             if (!is_save) {
@@ -4789,7 +4696,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return removedItemKeys;
       }
 
-      $scope.saveActivity = async function (is_login_check = true) {
+      $scope.saveActivity = async function () {
         let result = true;
         const URL = "/workflow/save_activity_data";
         let activityID = $('#activity_id').text();
@@ -4808,29 +4715,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         if (recordModel['approval1'] || recordModel['approval2']) {
           requestData['approval1'] = recordModel['approval1'];
           requestData['approval2'] = recordModel['approval2'];
-        }
-
-        if(is_login_check) {
-          //shared_userに現在ログイン中のユーザーIDと一致するかチェック
-          shared_user_ids = [];
-          if (recordModel['shared_user_ids'] != undefined) {
-            recordModel['shared_user_ids'].forEach(users => {
-              shared_user_ids.push(users['user']);
-            });
-          }
-          const ids = shared_user_ids.concat(recordModel['owner']);
-          if (Number.isInteger(recordModel['owner'])) {
-            let is_correct = await $scope.checkLoginUserIds(ids)
-            .then(ret => {
-              return true;
-            }).catch(error => {
-              alert(error);
-              return false;
-            });
-            if(!is_correct) {
-              return false;
-            }
-          }
         }
 
         $.ajax({
@@ -4855,7 +4739,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         return result;
       }
 
-      $scope.validateUserInfo = (login_user_id, user_list) => {
+      $scope.validateUserInfo = (user_list) => {
         let param = user_list;
         return new Promise((resolve, reject) => {
           $.ajax({
@@ -4874,13 +4758,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 let otherUser = {
                   username: userInfo.username,
                   email: userInfo.email,
-                  userID: userInfo.user_id,
-                  is_login_user: false,
-                  owner: user.owner
+                  userID: userInfo.user_id
                 };
-                if (Number(otherUser.userID) == Number(login_user_id)) {
-                  otherUser.is_login_user = true;
-                }
                 ret_list.push(otherUser)
               } else {
                 message = 'Shared user information is not valid\nPlease check it again!';
@@ -4911,50 +4790,6 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           });
         });
       };
-
-      $scope.checkLoginUserEmail = (email) => {
-        return new Promise((resolve, reject) => {
-          $.ajax({
-            url: '/api/items/is_login_user_email/' + email,
-            method: 'GET'
-          }).done(data => {
-            if (!data.is_login_user) {
-              resolve(data);
-            } else {
-              reject(data);
-            }
-          }).fail(data => {
-            reject('Cannot connect to server!' + data.error);
-          });
-        });
-      }
-
-      $scope.checkLoginUserIds = (params) => {
-        let login_user_id_url = '/api/items/is_login_user_ids?';
-        for (param in params) {
-          if (login_user_id_url.slice(-1) != '?') {
-            login_user_id_url += '&';
-          }
-          login_user_id_url += 'ids='+param;
-        }
-        return new Promise((resolve, reject) => {
-          $.ajax({
-            url: login_user_id_url,
-            method: 'GET'
-          }).done(data => {
-            if (data['is_login_user'] === false) {
-              resolve(data);
-              return true;
-            } else {
-              reject(data['error']);
-              return false;
-            }
-          }).fail(data => {
-            reject('Cannot connect to server!');
-            return false;
-          });
-        });
-      }
 
       $scope.getUserInfo = (url) => {
         return new Promise((resolve, reject) => {
@@ -5131,7 +4966,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           $scope.storeFilesToSession();
 
           // Save required data into workflow activity
-          let is_save = await $scope.saveActivity(true).then(ret => {
+          let is_save = await $scope.saveActivity().then(ret => {
             return ret;
           });
           if (!is_save) {
