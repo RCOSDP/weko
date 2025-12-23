@@ -1234,7 +1234,8 @@ class WekoDeposit(Deposit):
                                     current_app.config["WEKO_DEPOSIT_FILESIZE_LIMIT"]
                                 )
                                 inf = chardet.detect(data)
-                                data = data.decode(inf["encoding"], errors="replace")
+                                encoding = inf.get("encoding") or "utf-8"
+                                data = data.decode(encoding, errors="replace")
                             else:
                                 file_instance = file.obj.file
                                 file_info = {
@@ -1245,8 +1246,7 @@ class WekoDeposit(Deposit):
                                 reading_targets[lst["filename"]] = file_info
                             attachment["content"] = data
                     except FileNotFoundError as se:
-                        current_app.logger.error(f"FileNotFoundError: {se}")
-                        current_app.logger.error(f"file.obj: {file.obj}")
+                        current_app.logger.error(f"FileNotFoundError: {se}, {file.obj.key}")
 
                 content.update({"attachment": attachment})
                 contents.append(content)

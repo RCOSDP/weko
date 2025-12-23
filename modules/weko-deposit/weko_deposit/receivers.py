@@ -72,12 +72,8 @@ def append_file_content(sender, json={}, record=None, index=None, **kwargs):
         current_app.logger.info('FINISHED reindex record: {0}'.format(
             im['control_number']))
     except NoResultFound as e:
-        current_app.logger.error('Indexing error: record does not exists: {0}'.format(
-            record.id))
         raise e
     except PIDDoesNotExistError as e:
-        current_app.logger.error('Indexing error: pid does not exists: {0}'.format(
-            record.id))
         raise e
     except Exception as e:
         raise e
