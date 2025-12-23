@@ -927,14 +927,12 @@ def validate_users_info():
             'results': [
                 {
                     'username' : The username,
-                    'email' : The email,
-                    'owner' : True/False
+                    'email' : The email
                 }
             ]
     return: response pack:
         [
             {
-                'owner' : True/False,
                 'info': users information if users is valid,
                 'validation': 'true' if user is valid, other case return 'false',
                 'error': return error message, empty if no error occurs
@@ -953,7 +951,6 @@ def validate_users_info():
     data_list = request.get_json()
     for data in data_list:
         info = {
-            'owner': False,
             'info': '',
             'validation': False,
             'error': ''
@@ -962,7 +959,6 @@ def validate_users_info():
         email = data.get('email', '')
 
         try:
-            info['owner'] = data.get('owner', False)
             if username != "":
                 if email == "":
                     info['info'] = get_user_info_by_username(username)
@@ -1046,45 +1042,6 @@ def get_current_login_user_id():
     except Exception as e:
         result['error'] = str(e)
 
-    return jsonify(result)
-
-@blueprint_api.route('/is_login_user_email/<string:email>', methods=['GET'])
-def is_login_user_email(email):
-    result = {
-        'is_login_user': False,
-        'error': '',
-    }
-    # get user_id from delete email
-    user_info = get_user_info_by_email(email)
-    current_user_id = int(get_current_user())
-    if (user_info != None and user_info['user_id'] == current_user_id):
-        message = _("Logged-in user cannot be deleted.")
-        result['error'] = message
-        result['is_login_user'] = True
-
-    return jsonify(result)
-
-@blueprint_api.route('/is_login_user_ids', methods=['GET'])
-def is_login_user_ids():
-    ids = request.args.getlist('ids')
-    result = {
-        'is_login_user' : False,
-        'error': ''
-    }
-    #admin user
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    is_admin = False
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            is_admin = True
-    if not is_admin:
-        for target_id in ids:
-            if int(target_id) == int(get_current_user()):
-                result['is_login_user'] = True
-                result['error'] = _("Logged-in user cannot be deleted.")
-                break
-    else:
-        result['is_login_user'] = False
     return jsonify(result)
 
 @blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])
