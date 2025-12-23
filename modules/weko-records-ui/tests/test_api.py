@@ -3,6 +3,7 @@ import json
 from smtplib import SMTPException
 from mock import patch
 import pytest
+from botocore.exceptions import ClientError
 from flask import url_for,current_app,make_response
 from flask_login import UserMixin
 import uuid
@@ -370,6 +371,15 @@ def test_copy_bucket_to_s3(
     records_buckets = RecordsBuckets.query.filter_by(
         record_id=pid.object_uuid
     ).first()
+    app.config.update({
+        "FILES_REST_STORAGE_SERVICE_PATTERN": {
+            "aws_s3": [
+                r"^s3\.amazonaws\.com$",
+                r"^s3\.(?P<region>.+)\.amazonaws\.com$",
+                r"^(?P<bucket>.+)\.s3\.(?P<region>.+)\.amazonaws\.com$"
+            ],
+        }
+    })
 
     # Get user profile
     user_profile_s3 = users_storage_info["s3_storage_user"] # S3 storage profile (Repository)
@@ -473,12 +483,35 @@ def test_copy_bucket_to_s3(
     mocker_boto3_client_src = mocker.Mock()
     mocker_boto3_client_src.head_object.return_value = True
     mocker_boto3_client_src.copy.return_value = None
+    mocker_boto3_client_src.meta.endpoint_url = "https://s3.us-west-2.amazonaws.com"
 
     # Prepare s3 storage file instance
     mock_file_instance_s3 = mocker.Mock()
     mock_file_instance_s3.uri = "s3://bucket-name/helloworld.pdf"
 
+    # Test Case (Pos): source_location is None
+    loc_s3_vh = Location(
+        name="testloc-s3-vh-path",
+        uri="https://s3.us-west-2.amazonaws.com/bucket-name/",
+        default=False,
+        type="s3_vh",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == f"https://s3.{s3_storage_region_name}.amazonaws.com/sample1/helloworld.pdf"
+        mock_profile_boto3_client.copy.assert_not_called()
+        mock_profile_boto3_client.copy.reset_mock()
+
     # Test Case (Pos): storage s3 to s3 (path style)
+    mock_get_default = mocker.patch("invenio_files_rest.models.Location.get_default")
     loc_s3 = Location(
         name="testloc-s3",
         uri="s3://bucket-name/",
@@ -489,7 +522,7 @@ def test_copy_bucket_to_s3(
         secret_key="secret_key",
         s3_region_name="us-west-2",
     )
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3
+    mock_get_default.return_value = loc_s3
     with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
         mocker.patch.object(loc_s3, "create_s3_client", return_value=mocker_boto3_client_src)
         uri = copy_bucket_to_s3(
@@ -511,7 +544,7 @@ def test_copy_bucket_to_s3(
         secret_key="secret_key",
         s3_region_name="us-west-2",
     )
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3_vh
+    mock_get_default.return_value = loc_s3_vh
     with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
         mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
         uri = copy_bucket_to_s3(
@@ -533,7 +566,7 @@ def test_copy_bucket_to_s3(
         secret_key="secret_key",
         s3_region_name="us-west-2",
     )
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3_vh
+    mock_get_default.return_value = loc_s3_vh
     with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
         mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
         uri = copy_bucket_to_s3(
@@ -545,21 +578,8 @@ def test_copy_bucket_to_s3(
         mock_profile_boto3_client.copy.assert_called_once()
         mock_profile_boto3_client.copy.reset_mock()
 
-    # Test Case (Pos): source_location is None
-    mock_file_instance_s3.get_location_by_file_instance.return_value = None
-    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
-        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
-        uri = copy_bucket_to_s3(
-            pid=1, filename="helloworld.pdf",
-            org_bucket_id=records_buckets.bucket_id,
-            checked="create", bucket_name="sample1"
-        )
-        assert uri == f"https://s3.{s3_storage_region_name}.amazonaws.com/sample1/helloworld.pdf"
-        mock_profile_boto3_client.copy.assert_not_called()
-        mock_profile_boto3_client.copy.reset_mock()
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3_vh
-
     # Test Case (Pos): bucket_region is None
+    mock_get_default.return_value = loc_s3_vh
     mock_profile_boto3_client.get_bucket_location.return_value = {
         "LocationConstraint": None
     }
@@ -615,7 +635,7 @@ def test_copy_bucket_to_s3(
         secret_key="secret_key",
         s3_region_name="us-west-2",
     )
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3_other
+    mock_get_default.return_value = loc_s3_other
     with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
         mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
         with pytest.raises(Exception) as e:
@@ -628,7 +648,7 @@ def test_copy_bucket_to_s3(
         mock_profile_boto3_client.copy.reset_mock()
 
     # Test Case (Neg): s3 to s3, head object not found
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3
+    mock_get_default.return_value = loc_s3
     mocker_boto3_client_src.head_object.side_effect = Exception("Not found")
     with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
         mocker.patch.object(loc_s3, "create_s3_client", return_value=mocker_boto3_client_src)
@@ -641,7 +661,7 @@ def test_copy_bucket_to_s3(
     mocker_boto3_client_src.head_object.side_effect = None
 
     # Test Case (Neg): s3 to s3, head object not found
-    mock_file_instance_s3.get_location_by_file_instance.return_value = loc_s3
+    mock_get_default.return_value = loc_s3
     mocker_boto3_client_src.head_object.return_value = True
     mock_profile_boto3_client.copy.side_effect = Exception("Copy error")
     with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
@@ -682,6 +702,198 @@ def test_copy_bucket_to_s3(
                                         org_bucket_id=records_buckets.bucket_id,
                                         checked='create', bucket_name='sample1')
                 assert uri
+
+
+# def copy_bucket_to_s3(pid, filename, org_bucket_id, checked, bucket_name):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_copy_bucket_to_s3_cross_service -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_copy_bucket_to_s3_cross_service(
+    app, db, users_storage_info, client, records, mocker
+):
+    # Prepare user profile with complete client credentials info
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type="recid", pid_value='1'
+    ).first()
+    records_buckets = RecordsBuckets.query.filter_by(
+        record_id=pid.object_uuid
+    ).first()
+    app.config.update({
+        "FILES_REST_STORAGE_SERVICE_PATTERN": {
+            "aws_s3": [
+                r"^s3\.amazonaws\.com$",
+                r"^s3\.(?P<region>.+)\.amazonaws\.com$",
+                r"^(?P<bucket>.+)\.s3\.(?P<region>.+)\.amazonaws\.com$"
+            ],
+            "other_s3": [
+                r"^s3\.custom\.endpoint\.com$",
+                r"^s3\.(?P<region>.+)\.custom\.endpoint\.com$",
+                r"^(?P<bucket>.+)\.s3\.(?P<region>.+)\.custom\.endpoint\.com$"
+            ]
+        }
+    })
+
+    # Get user profile
+    user_profile_s3 = users_storage_info["not_s3_storage_user"] # Other S3 storage profile (Repository)
+    non_s3_storage_user = user_profile_s3["user_info"]["obj"]
+    non_s3_storage_user_profile = user_profile_s3["profile_obj"]
+    non_s3_storage_region_name = non_s3_storage_user_profile.s3_region_name
+    login(client, obj=non_s3_storage_user)
+
+    # Mock UserProfile.create_s3_client to return mock boto3 client
+    mock_profile_boto3_client = mocker.Mock()
+    mocker.patch("weko_user_profiles.models.UserProfile.create_s3_client", return_value=mock_profile_boto3_client)
+    mock_profile_boto3_client.meta.endpoint_url = non_s3_storage_user_profile.s3_endpoint_url
+    mock_profile_boto3_client.upload_file.return_value = None
+    mock_profile_boto3_client.get_bucket_location.return_value = {
+        "LocationConstraint": non_s3_storage_user_profile.s3_region_name,
+    }
+    mock_profile_boto3_client.upload_fileobj.return_value = None
+
+    mocker_boto3_client_src = mocker.Mock()
+    mocker_boto3_client_src.head_object.return_value = True
+    mocker_boto3_client_src.copy.return_value = None
+    mocker_boto3_client_src.meta.endpoint_url = "https://s3.us-west-2.amazonaws.com"
+    mocker_boto3_client_src.get_object.return_value = {"Body": mocker.Mock()}
+
+    # Prepare s3 storage file instance
+    mock_file_instance_s3 = mocker.Mock()
+    mock_file_instance_s3.uri = "s3://bucket-name/helloworld.pdf"
+    mock_file_instance_s3.size = 1234
+
+    mock_get_default = mocker.patch("invenio_files_rest.models.Location.get_default", return_value=non_s3_storage_user_profile)
+
+    # Test Case (Pos): storage s3 to other s3 (path style)
+    loc_s3 = Location(
+        name="testloc-s3",
+        uri="s3://bucket-name/",
+        default=False,
+        type="s3",
+        s3_endpoint_url="https://s3.us-west-2.amazonaws.com/",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    mock_get_default.return_value = loc_s3
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="select", bucket_name="sample1"
+        )
+        assert uri == non_s3_storage_user_profile.s3_endpoint_url + "sample1/helloworld.pdf"
+        mock_profile_boto3_client.copy.assert_not_called()
+        mock_profile_boto3_client.upload_fileobj.assert_called_once()
+        mock_profile_boto3_client.upload_fileobj.reset_mock()
+
+    mock_create_storage_bucket = mocker.patch("weko_records_ui.api.create_storage_bucket", return_value=None)
+
+    # Test Case (Pos): s3 to other s3 (virtual host style)
+    loc_s3_vh = Location(
+        name="testloc-s3-vh",
+        uri="https://bucket-name.s3.us-west-2.amazonaws.com/",
+        default=False,
+        type="s3_vh",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    mock_get_default.return_value = loc_s3_vh
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == non_s3_storage_user_profile.s3_endpoint_url + "sample1/helloworld.pdf"
+        mock_create_storage_bucket.assert_called_once()
+        mock_profile_boto3_client.upload_fileobj.assert_called_once()
+        mock_profile_boto3_client.upload_fileobj.reset_mock()
+
+    # Test Case (Pos): s3 to other s3 (virtual host style, path style uri)
+    loc_s3_vh = Location(
+        name="testloc-s3-vh-path",
+        uri="https://s3.us-west-2.amazonaws.com/bucket-name/",
+        default=False,
+        type="s3_vh",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    mock_get_default.return_value = loc_s3_vh
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == non_s3_storage_user_profile.s3_endpoint_url + "sample1/helloworld.pdf"
+        mock_profile_boto3_client.upload_fileobj.assert_called_once()
+        mock_profile_boto3_client.upload_fileobj.reset_mock()
+
+    # Test Case (Neg): uploading file ClientError
+    loc_s3_vh = Location(
+        name="testloc-s3-vh-path",
+        uri="https://s3.us-west-2.amazonaws.com/bucket-name/",
+        default=False,
+        type="s3_vh",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    mock_get_default.return_value = loc_s3_vh
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        mock_profile_boto3_client.upload_fileobj.side_effect = ClientError(
+            error_response={"Error": {"Code": "403", "Message": "Forbidden"}},
+            operation_name="UploadFileObj"
+        )
+        with pytest.raises(Exception) as e:
+            uri = copy_bucket_to_s3(
+                pid=1, filename="helloworld.pdf",
+                org_bucket_id=records_buckets.bucket_id,
+                checked="create", bucket_name="sample1"
+            )
+        assert "Uploading file failed. Please make sure you have write permissions or that the bucket is writable." == str(e.value)
+        mock_profile_boto3_client.upload_fileobj.reset_mock()
+        mock_profile_boto3_client.upload_fileobj.side_effect = None
+
+    # Test Case (Neg): file size is too large
+    loc_s3_vh = Location(
+        name="testloc-s3-vh-path",
+        uri="https://s3.us-west-2.amazonaws.com/bucket-name/",
+        default=False,
+        type="s3_vh",
+        access_key="access_key",
+        secret_key="secret_key",
+        s3_region_name="us-west-2",
+    )
+    mock_get_default.return_value = loc_s3_vh
+    mock_file_instance_s3.size = 20 * 1024 * 1024 * 1024 + 1
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        with pytest.raises(Exception) as e:
+            uri = copy_bucket_to_s3(
+                pid=1, filename="helloworld.pdf",
+                org_bucket_id=records_buckets.bucket_id,
+                checked="create", bucket_name="sample1"
+            )
+        assert "The source file size exceeds the limit for cross-service copy." == str(e.value)
+        mock_profile_boto3_client.upload_fileobj.reset_mock()
+
+    # Test Case (Pos): WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE is bigger than config value
+    app.config["WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE"] = 40 * 1024 * 1024 * 1024  # 40 GB
+    with patch("invenio_files_rest.models.FileInstance.get", return_value=mock_file_instance_s3):
+        mocker.patch.object(loc_s3_vh, "create_s3_client", return_value=mocker_boto3_client_src)
+        uri = copy_bucket_to_s3(
+            pid=1, filename="helloworld.pdf",
+            org_bucket_id=records_buckets.bucket_id,
+            checked="create", bucket_name="sample1"
+        )
+        assert uri == non_s3_storage_user_profile.s3_endpoint_url + "sample1/helloworld.pdf"
+        mock_profile_boto3_client.upload_fileobj.assert_called_once()
+        mock_profile_boto3_client.upload_fileobj.reset_mock()
 
 
 # def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):

@@ -11,6 +11,7 @@ import copy
 import json
 from urllib.parse import urlparse, urljoin, uses_relative, uses_netloc
 
+from botocore.exceptions import BotoCoreError, ClientError
 from email_validator import validate_email
 from flask import current_app, request
 
@@ -292,7 +293,11 @@ def copy_bucket_to_s3(
     source_content_info = ObjectVersion.get(bucket=source_bucket, key=filename)
     source_file_instance = FileInstance.get(source_content_info.file_id)
 
-    source_location = source_file_instance.get_location_by_file_instance()
+    # source_location = source_file_instance.get_location_by_file_instance()
+    source_location = db.session.query(Location).filter(
+        func.cast(source_file_instance.uri, String).like(Location.uri + "%")) \
+        .order_by(func.length(Location.uri).desc()) \
+        .first()
     if source_location is None:
         source_location = Location.get_default()
 
@@ -427,20 +432,30 @@ def copy_bucket_to_s3(
                 # Different storage service
                 # Check file size
                 source_file_size = source_file_instance.size
-                # Upload file size limit 256MiB
-                file_size_limit = 1024 * 1024 * 256 # 256MiB
+                # Upload file size limit from config
+                file_size_limit = current_app.config.get(
+                    "WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE",
+                    20 * 1024 * 1024 * 1024
+                )
                 if source_file_size < file_size_limit:
-                    obj = s3_client_source.get_object(Bucket=copy_source['Bucket'], Key=copy_source['Key'])
-                    body = obj['Body']
+                    obj = s3_client_source.get_object(
+                        Bucket=copy_source["Bucket"],
+                        Key=copy_source["Key"]
+                    )
+                    body = obj["Body"]
                     destination_s3_client.upload_fileobj(
                         body, destination_bucket, destination_key
                     )
                 else:
-                    raise Exception(_('The source file size exceeds the limit for cross-service copy.'))
-        except Exception as e:
-            traceback.print_exc()
+                    raise Exception(_("The source file size exceeds the limit for cross-service copy."))
+        except (ClientError, BotoCoreError) as e:
             current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             raise Exception(_('Uploading file failed.'))
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+            raise
 
         # Return file URI
         return urljoin(uri, filename)

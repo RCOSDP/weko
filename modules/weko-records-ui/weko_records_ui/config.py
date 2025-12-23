@@ -796,6 +796,9 @@ WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
 
 WEKO_RECORDS_UI_OA_API_CODE = "oaa"
 
+WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE = 20 * 1024 * 1024 * 1024  # 20GB
+"""Max file size for s3 compatible service cross copy."""
+
 class EXTERNAL_SYSTEM(Enum):
     OA = "OA"
 
