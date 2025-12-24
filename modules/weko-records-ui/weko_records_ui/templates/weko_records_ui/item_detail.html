@@ -138,7 +138,7 @@
           <td>
               {%- for sub_record in m_record.relation %}
                 <a target="_self"
-                   href="{{ sub_record.item_links }}">{{ sub_record.item_title | escape_str }}</a>
+                   href="/records/{{ sub_record.item_links }}">{{ sub_record.item_title | escape_str }}</a>
                 <br>
               {% endfor %}
           </td>

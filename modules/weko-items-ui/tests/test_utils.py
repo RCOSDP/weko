@@ -245,7 +245,7 @@ def test_get_user_info_by_email(users, db_userprofile):
 def test_get_user_information(users, db_userprofile):
     assert get_user_information([users[0]["id"]]) == [
     {
-        "username": db_userprofile[users[0]["email"]].get_username,
+        "username": db_userprofile[users[0]["email"]].username,
         "fullname": db_userprofile[users[0]["email"]].fullname,
         "userid": users[0]["id"],
         "email": users[0]["email"],
@@ -257,14 +257,14 @@ def test_get_user_information(users, db_userprofile):
 def test_get_user_information_1(users, db_userprofile):
     assert get_user_information([users[0]["id"],users[1]["id"]]) == [
     {
-        "username": db_userprofile[users[0]["email"]].get_username,
+        "username": db_userprofile[users[0]["email"]].username,
         "fullname": db_userprofile[users[0]["email"]].fullname,
         "userid": users[0]["id"],
         "email": users[0]["email"],
         'error': ''
     },
     {
-        "username": db_userprofile[users[1]["email"]].get_username,
+        "username": db_userprofile[users[1]["email"]].username,
         "fullname": db_userprofile[users[1]["email"]].fullname,
         "userid": users[1]["id"],
         "email": users[1]["email"],
@@ -274,7 +274,7 @@ def test_get_user_information_1(users, db_userprofile):
 
     assert get_user_information(int(users[0]["id"])) == [
     {
-        "username": db_userprofile[users[0]["email"]].get_username,
+        "username": db_userprofile[users[0]["email"]].username,
         "fullname": db_userprofile[users[0]["email"]].fullname,
         "userid": users[0]["id"],
         "email": users[0]["email"],

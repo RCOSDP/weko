@@ -66,8 +66,7 @@ class WekoAdmin(object):
             for role in roles:  # Check if role can view endpoint
                 if endpoint == 'mailtemplates' and not is_use_mail_templates:
                     return False
-                elif endpoint == 'restricted_access' and not is_display_restricted_settings \
-                    and role.name != system_admin:
+                elif endpoint == 'restricted_access' and not is_display_restricted_settings:
                         return False
                 elif endpoint == "profile_settings":
                     return current_app.config.get("WEKO_USERPROFILES_CUSTOMIZE_ENABLED", False)

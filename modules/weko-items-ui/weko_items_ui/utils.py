@@ -304,7 +304,7 @@ def get_user_information(user_ids):
         user_info = UserProfile.get_by_userid(user_id)
         if user_info is not None:
             info['userid'] = user_id
-            info['username'] = user_info.get_username
+            info['username'] = user_info.username
             info['fullname'] = user_info.fullname
         else:
             info['userid'] = user_id
