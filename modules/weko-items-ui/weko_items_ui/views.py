@@ -81,7 +81,8 @@ from .utils import (
     translate_schema_form, translate_validation_message, update_index_tree_for_record,
     update_json_schema_by_activity_id, update_schema_form_by_activity_id,
     update_sub_items_by_user_role, validate_form_input_data, validate_user,
-    validate_user_mail_and_index, is_duplicate_record, lock_item_will_be_edit
+    validate_user_mail_and_index, is_duplicate_record, lock_item_will_be_edit,
+    set_scheme_by_author_table
 )
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
@@ -403,7 +404,9 @@ def get_json_schema(item_type_id=0, activity_id=""):
         cur_lang = current_i18n.language
 
         if item_type_id > 0:
-            result = ItemTypes.get_record(item_type_id)
+            item_type_data = ItemTypes.get_by_id(item_type_id)
+            result = item_type_data.schema
+            meta_list = item_type_data.render["meta_list"]
             properties = result.get('properties')
             if 'filemeta' in json.dumps(result):
                 group_list = Group.get_group_list()
@@ -425,6 +428,7 @@ def get_json_schema(item_type_id=0, activity_id=""):
         json_schema = result
         # Remove excluded item in json_schema
         remove_excluded_items_in_json_schema(item_type_id, json_schema)
+        set_scheme_by_author_table("schema", meta_list, json_schema)
         return jsonify(json_schema)
     except BaseException:
         current_app.logger.error(
@@ -452,6 +456,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
             return '["*"]'
         schema_form = result.form
         filemeta_form = schema_form[0]
+        meta_list = result.render["meta_list"]
         if 'filemeta' == filemeta_form.get('key'):
             group_list = Group.get_group_list()
             filemeta_form_group = filemeta_form.get('items')[-1]
@@ -484,6 +489,7 @@ def get_schema_form(item_type_id=0, activity_id=''):
             if updated_schema_form:
                 schema_form = updated_schema_form
 
+        set_scheme_by_author_table("form", meta_list, schema_form)
         return jsonify(schema_form)
     except BaseException:
         current_app.logger.error(
@@ -921,14 +927,12 @@ def validate_users_info():
             'results': [
                 {
                     'username' : The username,
-                    'email' : The email,
-                    'owner' : True/False
+                    'email' : The email
                 }
             ]
     return: response pack:
         [
             {
-                'owner' : True/False,
                 'info': users information if users is valid,
                 'validation': 'true' if user is valid, other case return 'false',
                 'error': return error message, empty if no error occurs
@@ -947,7 +951,6 @@ def validate_users_info():
     data_list = request.get_json()
     for data in data_list:
         info = {
-            'owner': False,
             'info': '',
             'validation': False,
             'error': ''
@@ -956,7 +959,6 @@ def validate_users_info():
         email = data.get('email', '')
 
         try:
-            info['owner'] = data.get('owner', False)
             if username != "":
                 if email == "":
                     info['info'] = get_user_info_by_username(username)
@@ -1040,45 +1042,6 @@ def get_current_login_user_id():
     except Exception as e:
         result['error'] = str(e)
 
-    return jsonify(result)
-
-@blueprint_api.route('/is_login_user_email/<string:email>', methods=['GET'])
-def is_login_user_email(email):
-    result = {
-        'is_login_user': False,
-        'error': '',
-    }
-    # get user_id from delete email
-    user_info = get_user_info_by_email(email)
-    current_user_id = int(get_current_user())
-    if (user_info != None and user_info['user_id'] == current_user_id):
-        message = _("Logged-in user cannot be deleted.")
-        result['error'] = message
-        result['is_login_user'] = True
-
-    return jsonify(result)
-
-@blueprint_api.route('/is_login_user_ids', methods=['GET'])
-def is_login_user_ids():
-    ids = request.args.getlist('ids')
-    result = {
-        'is_login_user' : False,
-        'error': ''
-    }
-    #admin user
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    is_admin = False
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            is_admin = True
-    if not is_admin:
-        for target_id in ids:
-            if int(target_id) == int(get_current_user()):
-                result['is_login_user'] = True
-                result['error'] = _("Logged-in user cannot be deleted.")
-                break
-    else:
-        result['is_login_user'] = False
     return jsonify(result)
 
 @blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])

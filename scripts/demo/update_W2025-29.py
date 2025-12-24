@@ -112,12 +112,17 @@ def renew_all_item_types():
     try:
         fix_ids = []
         current_app.logger.info("Start renew_all_item_types")
-        query = db.session.query(ItemType.id).statement
+        query = db.session.query(ItemType.id, ItemType.is_deleted).statement
         results = db.engine.execution_options(stream_results=True).execute(query)
-        item_type_ids = [r[0] for r in results]
+        item_type_ids = [(r[0], r[1]) for r in results]
         current_app.logger.info("target item_type count: " + str(len(item_type_ids)))
         mapping = get_properties_mapping()
-        for item_type_id in item_type_ids:
+        for item_type_info in item_type_ids:
+            item_type_id = item_type_info[0]
+            is_deleted = item_type_info[1]
+            if is_deleted:
+                current_app.logger.warning(f"[SKIP] item_type (id:{item_type_id}) is deleted.")
+                continue
             ret = ItemTypes.reload(item_type_id, mapping)
             if ret.get("code") != 0:
                 current_app.logger.error("Failed to renew item_type_id:{}".format(item_type_id))

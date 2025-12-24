@@ -740,7 +740,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     restricted_errorMsg = ''
     restricted_access = get_restricted_access('error_msg')
-    restricted_errorMsg = restricted_access['content'].get(current_lang, None)['content']
+    restricted_errorMsg = restricted_access['content'].get(current_lang, restricted_access['content']['en'])['content']
 
     onetime_file_name = ''
     onetime_url = request.args.get("onetime_url")
@@ -914,7 +914,11 @@ def create_secret_url_and_send_mail(pid, record, filename, **kwargs):
     message = _('Secret URL generated successfully')
     if request.json['send_email'] is True:
         sending_result = send_secret_url_mail(
-            pid.object_uuid, url_obj, record.get('item_title', ''))
+            pid.object_uuid,
+            url_obj,
+            record.get('item_title', ''),
+            request.json['timezone_offset_minutes']
+        )
         if sending_result:
             message += _(', please check your email inbox')
         else:

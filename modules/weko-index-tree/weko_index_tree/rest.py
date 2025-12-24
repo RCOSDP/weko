@@ -264,6 +264,21 @@ def create_blueprint(app, endpoints):
     return blueprint
 
 
+def json_serialize(obj):
+    """Serialize object to JSON.
+
+    Args:
+        obj: The object to serialize.
+
+    Returns:
+        str: The serialized JSON string.
+    """
+    if isinstance(obj, (datetime, date)):
+        return obj.strftime("%Y%m%d")
+    else:
+        return str(obj)
+
+
 class IndexActionResource(ContentNegotiatedMethodView):
     """Index create update delete view."""
 
@@ -753,7 +768,9 @@ class GetIndex(ContentNegotiatedMethodView):
 
             # Create Response
             res = Response(
-                response=json.dumps(result_tree, indent=indent),
+                response=json.dumps(
+                    result_tree, indent=indent, default=json_serialize
+                ),
                 status=200,
                 content_type='application/json')
             res.set_etag(etag)
@@ -989,21 +1006,6 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
 
     def get_v1(self, **kwargs):
         """Get index tree."""
-
-        def json_serialize(obj):
-            """Serialize object to JSON.
-
-            Args:
-                obj: The object to serialize.
-
-            Returns:
-                str: The serialized JSON string.
-            """
-            if isinstance(obj, (datetime, date)):
-                return obj.strftime("%Y%m%d")
-            else:
-                return str(obj)
-
         try:
             pid = kwargs.get('index_id')
 
@@ -1114,6 +1116,10 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
             for cid in set(children_ja.keys()).union(children_en.keys()):
                 merged_children.append(merge_nodes(children_ja.get(cid), children_en.get(cid)))
             merged_node["children"] = merged_children
+
+            # Ensure public_date is empty string if None
+            if "public_date" in merged_node and merged_node["public_date"] is None:
+                merged_node["public_date"] = ""
 
             return merged_node
 
@@ -1226,8 +1232,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 "updated": updated_index.updated.isoformat(),
                 **{
                     "public_date": updated_index.public_date.strftime("%Y%m%d")
-                    if updated_index.public_date
-                    else {}
+                    if updated_index.public_date else ""
                 },
             }
         }
@@ -1337,8 +1342,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
                 "updated": updated_index.updated.isoformat(),
                 **{
                     "public_date": updated_index.public_date.strftime("%Y%m%d")
-                    if updated_index.public_date
-                    else {}
+                    if updated_index.public_date else ""
                 },
             }
         }

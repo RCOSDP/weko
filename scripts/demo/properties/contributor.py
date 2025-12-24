@@ -353,11 +353,11 @@ def schema(title="", multi_flag=multiple_flag):
                                         "contributorAffiliationScheme": {
                                             "type": ["null", "string"],
                                             "format": "select",
-                                            # "enum": [],
-                                            "enum": config.AFFILIATION_SCHEME_VAL,
-                                            "currentEnum": config.AFFILIATION_SCHEME_VAL[
-                                                1:
-                                            ],
+                                            "enum": [],
+                                            # "enum": config.AFFILIATION_SCHEME_VAL,
+                                            # "currentEnum": config.AFFILIATION_SCHEME_VAL[
+                                            #     1:
+                                            # ],
                                             "title": "所属機関識別子Scheme",
                                             "title_i18n": {
                                         "en": "Affiliation Name Identifier Scheme",
@@ -473,10 +473,11 @@ def form(
                                 "en": "Contributor Name Identifier Scheme",
                                 "ja": "寄与者識別子Scheme",
                             },
-                            "titleMap": make_title_map(
-                                config.CREATOR_IDENTIFIER_SCHEMA_LBL,
-                                config.CREATOR_IDENTIFIER_SCHEMA_VAL,
-                            ),
+                            "titleMap": [],
+                            # "titleMap": make_title_map(
+                            #     config.CREATOR_IDENTIFIER_SCHEMA_LBL,
+                            #     config.CREATOR_IDENTIFIER_SCHEMA_VAL,
+                            # ),
                             "type": "select",
                         },
                         {
@@ -623,9 +624,10 @@ def form(
                                         "en": "Affiliation Name Identifier Scheme",
                                         "ja": "所属機関識別子Scheme",
                                     },
-                                    "titleMap": get_select_value(
-                                        config.AFFILIATION_SCHEME_VAL
-                                    ),
+                                    "titleMap": [],
+                                    # "titleMap": get_select_value(
+                                    #     config.AFFILIATION_SCHEME_VAL
+                                    # ),
                                     "type": "select",
                                 },
                                 {

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-theme 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-10-03 16:58+0900\n"
+"POT-Creation-Date: 2025-12-15 12:00+0900\n"
 "PO-Revision-Date: 2018-04-12 18:01+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -18,76 +18,76 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/conftest.py:203
+#: tests/conftest.py:204
 msgid "write your own license"
 msgstr ""
 
-#: tests/conftest.py:208
+#: tests/conftest.py:209
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
-#: tests/conftest.py:223
+#: tests/conftest.py:224
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
-#: tests/conftest.py:235
+#: tests/conftest.py:236
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:249
+#: tests/conftest.py:250
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:263
+#: tests/conftest.py:264
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
-#: tests/conftest.py:277
+#: tests/conftest.py:278
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:291
+#: tests/conftest.py:292
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:306
+#: tests/conftest.py:307
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
-#: tests/conftest.py:318
+#: tests/conftest.py:319
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:332
+#: tests/conftest.py:333
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:346
+#: tests/conftest.py:347
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:360
+#: tests/conftest.py:361
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:374
+#: tests/conftest.py:375
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"
 msgstr ""
 
 #: weko_theme/templates/weko_theme/macros/tabs_selector.html:33
-#: weko_theme/utils.py:227
+#: weko_theme/utils.py:230
 msgid "Communities"
 msgstr "コミュニティ"
 
@@ -354,6 +354,11 @@ msgstr "ログアウト"
 #: weko_theme/templates/weko_theme/page_setting.html:33
 msgid "Settings"
 msgstr "設定"
+
+#: weko_theme/templates/weko_theme/sidebar.html:7
+#: weko_theme/templates/weko_theme/sidebar.html:8
+msgid "Minimize menu"
+msgstr "メニューを最小化"
 
 #: weko_theme/templates/weko_theme/admin/item_management_init.html:67
 msgid "Target Index"

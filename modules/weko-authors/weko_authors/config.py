@@ -33,7 +33,7 @@ WEKO_AUTHORS_LIST_SCHEME_AFFILIATION = [
 ]
 """ List of Affiliation Name Identifier Scheme """
 
-WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 4
+WEKO_AUTHORS_AFFILIATION_IDENTIFIER_ITEM_OTHER = 5
 """ Item other index """
 
 WEKO_AUTHORS_BASE_TEMPLATE = 'weko_authors/base.html'
