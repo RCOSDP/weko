@@ -400,7 +400,7 @@ def copy_bucket_to_s3(
 
         # Validate source file bucket and key
         if not source_bucket_name or not source_file_key:
-            raise Exception(_("The source bucket or file key is not set."))
+            raise Exception(_("The source bucket or file cannot be found."))
 
         copy_source = {
             "Bucket": source_bucket_name,
@@ -657,7 +657,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                 prev_key_parts[:-new_key_depth]) + new_file_key
 
         if not bucket_name or not new_file_key:
-            raise Exception(_("The file cannot be found."))
+            raise Exception(_("The source bucket or file cannot be found."))
 
         try:
             s3_client = location.create_s3_client()

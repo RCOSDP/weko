@@ -644,7 +644,7 @@ def test_copy_bucket_to_s3(
                 org_bucket_id=records_buckets.bucket_id,
                 checked="create", bucket_name="sample1"
             )
-        assert "The source bucket or file key is not set." in str(e.value)
+        assert "The source bucket or file cannot be found." in str(e.value)
         mock_profile_boto3_client.copy.reset_mock()
 
     # Test Case (Neg): s3 to s3, head object not found
@@ -1268,7 +1268,7 @@ def test_get_file_place_info(app, db, users, client, records, mocker):
                         org_bucket_id=records_buckets.bucket_id,
                         file_name='helloworld.pdf'
                     )
-                assert "The file cannot be found." in str(e.value)
+                assert "The source bucket or file cannot be found." in str(e.value)
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_api.py::test_replace_file_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

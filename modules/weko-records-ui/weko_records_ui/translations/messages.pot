@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-10-21 14:06+0900\n"
+"POT-Creation-Date: 2025-12-24 10:03+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,16 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/test_utils.py:712 weko_records_ui/api.py:634 weko_records_ui/fd.py:651
-#: weko_records_ui/fd.py:729 weko_records_ui/utils.py:1213
+#: tests/test_utils.py:717 weko_records_ui/api.py:678 weko_records_ui/fd.py:650
+#: weko_records_ui/fd.py:728 weko_records_ui/utils.py:1214
 msgid "Unexpected error occurred."
 msgstr ""
 
-#: tests/test_utils.py:716 weko_records_ui/utils.py:1215
+#: tests/test_utils.py:721 weko_records_ui/utils.py:1216
 msgid "Failed to send mail."
 msgstr ""
 
-#: tests/test_views.py:1303 weko_records_ui/views.py:1247
+#: tests/test_views.py:1342 weko_records_ui/views.py:1261
 msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
 msgstr ""
 
@@ -61,33 +61,49 @@ msgstr ""
 msgid "Bulk Update"
 msgstr ""
 
-#: weko_records_ui/api.py:214 weko_records_ui/api.py:221
-#: weko_records_ui/api.py:252 weko_records_ui/api.py:263
+#: weko_records_ui/api.py:220
+msgid "Not authenticated user."
+msgstr ""
+
+#: weko_records_ui/api.py:224 weko_records_ui/api.py:227
+#: weko_records_ui/api.py:289
 msgid "S3 setting none. Please check your profile."
 msgstr ""
 
-#: weko_records_ui/api.py:244
+#: weko_records_ui/api.py:246
 msgid "Getting Bucket List failed."
 msgstr ""
 
-#: weko_records_ui/api.py:379
-msgid "Creating Bucket failed."
-msgstr ""
-
-#: weko_records_ui/api.py:396
+#: weko_records_ui/api.py:325
 msgid "Getting region failed."
 msgstr ""
 
-#: weko_records_ui/api.py:425 weko_records_ui/api.py:491
+#: weko_records_ui/api.py:363 weko_records_ui/api.py:454
 msgid "Uploading file failed."
 msgstr ""
 
-#: weko_records_ui/api.py:480
+#: weko_records_ui/api.py:403 weko_records_ui/api.py:660
+msgid "The source bucket or file cannot be found."
+msgstr ""
+
+#: weko_records_ui/api.py:418
 msgid "The source file cannot be found."
 msgstr ""
 
-#: weko_records_ui/api.py:507 weko_records_ui/api.py:667
-#: weko_records_ui/api.py:668
+#: weko_records_ui/api.py:450
+msgid "The source file size exceeds the limit for cross-service copy."
+msgstr ""
+
+#: weko_records_ui/api.py:476
+msgid "Bucket already exists."
+msgstr ""
+
+#: weko_records_ui/api.py:525
+msgid "Creating Bucket failed."
+msgstr ""
+
+#: weko_records_ui/api.py:551 weko_records_ui/api.py:711
+#: weko_records_ui/api.py:712
 msgid "Cannot update because the corresponding item is being edited."
 msgstr ""
 
@@ -191,21 +207,21 @@ msgstr ""
 msgid "Restricted access is disabled."
 msgstr ""
 
-#: weko_records_ui/fd.py:501 weko_records_ui/fd.py:621
-#: weko_records_ui/fd.py:714
+#: weko_records_ui/fd.py:500 weko_records_ui/fd.py:620
+#: weko_records_ui/fd.py:713
 #, python-format
 msgid "The file \"%s\" does not exist."
 msgstr ""
 
-#: weko_records_ui/fd.py:513 weko_records_ui/fd.py:568
+#: weko_records_ui/fd.py:512 weko_records_ui/fd.py:567
 msgid "Invalid token."
 msgstr ""
 
-#: weko_records_ui/fd.py:577
+#: weko_records_ui/fd.py:576
 msgid "Could not download file."
 msgstr ""
 
-#: weko_records_ui/fd.py:586
+#: weko_records_ui/fd.py:585
 msgid "Invalid verification info."
 msgstr ""
 
@@ -234,83 +250,83 @@ msgstr ""
 msgid "Allow read file."
 msgstr ""
 
-#: weko_records_ui/utils.py:452
+#: weko_records_ui/utils.py:453
 msgid "Item cannot be deleted because the import is in progress."
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:218
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:151
-#: weko_records_ui/utils.py:988
+#: weko_records_ui/utils.py:989
 msgid "Restricted Access"
 msgstr ""
 
-#: weko_records_ui/utils.py:997
+#: weko_records_ui/utils.py:998
 msgid "Download is available from {}/{}/{}."
 msgstr ""
 
-#: weko_records_ui/utils.py:1000
+#: weko_records_ui/utils.py:1001
 msgid "Download / Preview is available from {}/{}/{}."
 msgstr ""
 
-#: weko_records_ui/utils.py:1260 weko_records_ui/utils.py:1296
+#: weko_records_ui/utils.py:1261 weko_records_ui/utils.py:1297
 msgid "Token is invalid."
 msgstr ""
 
-#: weko_records_ui/utils.py:1314 weko_records_ui/utils.py:2347
+#: weko_records_ui/utils.py:1315 weko_records_ui/utils.py:2353
 msgid "The expiration date for download has been exceeded."
 msgstr ""
 
-#: weko_records_ui/utils.py:1321 weko_records_ui/utils.py:2344
+#: weko_records_ui/utils.py:1322 weko_records_ui/utils.py:2350
 msgid "The download limit has been exceeded."
 msgstr ""
 
-#: weko_records_ui/utils.py:1580
+#: weko_records_ui/utils.py:1581
 msgid "Guest"
 msgstr ""
 
-#: weko_records_ui/utils.py:1591
+#: weko_records_ui/utils.py:1592
 msgid "Free Input"
 msgstr ""
 
-#: weko_records_ui/utils.py:2324
+#: weko_records_ui/utils.py:2330
 msgid "The type of URL is not specified."
 msgstr ""
 
-#: weko_records_ui/utils.py:2328
+#: weko_records_ui/utils.py:2334
 msgid "The provided token is invalid."
 msgstr ""
 
-#: weko_records_ui/utils.py:2332
+#: weko_records_ui/utils.py:2338
 msgid "This feature is currently disabled."
 msgstr ""
 
-#: weko_records_ui/utils.py:2337
+#: weko_records_ui/utils.py:2343
 msgid "This file is currently not available for this feature."
 msgstr ""
 
-#: weko_records_ui/utils.py:2342
+#: weko_records_ui/utils.py:2348
 msgid "This URL has been deactivated."
 msgstr ""
 
-#: weko_records_ui/views.py:904
+#: weko_records_ui/views.py:914
 msgid "Secret URL generated successfully"
 msgstr ""
 
-#: weko_records_ui/views.py:909
+#: weko_records_ui/views.py:923
 msgid ", please check your email inbox"
 msgstr ""
 
-#: weko_records_ui/views.py:911
+#: weko_records_ui/views.py:925
 msgid ""
 ", but there was an error while sending the email. To use the URL, please "
 "refresh the page and copy it from the issued URL list"
 msgstr ""
 
-#: weko_records_ui/views.py:914
+#: weko_records_ui/views.py:928
 msgid "."
 msgstr ""
 
-#: weko_records_ui/views.py:1144
+#: weko_records_ui/views.py:1158
 msgid "PDF cover page settings have been updated."
 msgstr ""
 
@@ -360,34 +376,34 @@ msgid "Next"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:25
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:553
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:580
 #: weko_records_ui/templates/weko_records_ui/box/request.html:71
 msgid "Send"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:25
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:561
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:588
 msgid "Please input email address."
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:35
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:455
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:476
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:498
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:482
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:503
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:525
 #: weko_records_ui/templates/weko_records_ui/file_details.html:110
 msgid "Confirm"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:36
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:462
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:484
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:489
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:511
 msgid "OK"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:37
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:463
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:485
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:558
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:490
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:512
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:585
 #: weko_records_ui/templates/weko_records_ui/box/request.html:74
 msgid "Cancel"
 msgstr ""
@@ -436,110 +452,127 @@ msgstr ""
 msgid "Original"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:270
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:276
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:289
+msgid "Import to GakuNin RDM"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:281
+msgid "Item is not published and file is not publicly accessible"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:283
+msgid "Item is not published"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:285
+msgid "File is not publicly accessible"
+msgstr ""
+
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:297
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:61
 msgid "Download"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:290
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:317
 msgid "Information"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:305
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:314
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:322
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:332
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:341
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:349
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:359
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:34
 #: weko_records_ui/templates/weko_records_ui/box/preview.html:61
 #: weko_records_ui/templates/weko_records_ui/box/preview_carousel.html:34
 msgid "Preview"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:352
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:379
 msgid "Jupyter"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:377
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:404
 msgid "Back"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:382
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:409
 msgid "Edit"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:384
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:411
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
 #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
 msgid "Delete"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:388
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:415
 msgid "Delete this version"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:391
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:401
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:418
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:428
 msgid "The workflow is being edited."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:393
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:420
 msgid "The item cannot be deleted because it has a DOI."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:395
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:422
 msgid "You cannot keep an item private because it has a DOI."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:407
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:434
 msgid "Please wait a moment."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:502
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:529
 #: weko_records_ui/templates/weko_records_ui/file_details.html:113
 msgid "This file is a Billing file. (Price: XXXXX). Do you want to download it?"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:506
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:533
 #: weko_records_ui/templates/weko_records_ui/file_details.html:117
 msgid "Yes"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:507
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:534
 #: weko_records_ui/templates/weko_records_ui/file_details.html:118
 msgid "No"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:523
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:550
 msgid ""
 "To download the files below, you will need to enter your email address "
 "and password."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:525
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:552
 msgid "To download the files below, you will need to enter your email address."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:528
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:555
 msgid "File Name"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:533
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:536
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:560
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:563
 msgid "Email address"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:541
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:544
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:568
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:571
 msgid "Password"
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/body_contents.html:545
+#: weko_records_ui/templates/weko_records_ui/body_contents.html:572
 msgid "If you have not set a password, please apply again."
 msgstr ""
 
-#: weko_records_ui/templates/weko_records_ui/creator_detail_template.html:110
 #: weko_records_ui/templates/weko_records_ui/creator_detail_template.html:115
-#: weko_records_ui/templates/weko_records_ui/creator_detail_template.html:116
+#: weko_records_ui/templates/weko_records_ui/creator_detail_template.html:120
+#: weko_records_ui/templates/weko_records_ui/creator_detail_template.html:121
 msgid "Search repository"
 msgstr ""
 
@@ -1138,15 +1171,3 @@ msgstr ""
 msgid "Show All versions"
 msgstr ""
 
-
-msgid "Import to GakuNin RDM"
-msgstr ""
-
-msgid "Item is not published"
-msgstr ""
-
-msgid "File is not publicly accessible"
-msgstr ""
-
-msgid "Item is not published and file is not publicly accessible"
-msgstr ""
