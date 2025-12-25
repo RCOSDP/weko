@@ -1,6 +1,7 @@
 import traceback
 from invenio_db import db
 from weko_records.api import ItemTypes
+from weko_records.models import ItemType
 from flask import current_app
 def main():
     try:
@@ -22,16 +23,33 @@ def main():
             prop = getattr(properties, i)
             if getattr(prop, 'property_id', None) and prop.property_id == 1016:
                 mapping[int(prop.property_id)] = prop.mapping
+
         current_app.logger.info("Reload all itemtypes")
-        itemtypes = ItemTypes.get_all()
-        for itemtype in itemtypes:
-                ret = ItemTypes.reload(itemtype.id, mapping)
-                current_app.logger.info(f"  itemtype id:{itemtype.id}, itemtype name:{itemtype.item_type_name.name}")
-                current_app.logger.info(f"  {ret['msg']}")
+        fix_ids = []
+        query = db.session.query(ItemType.id).statement
+        results = db.engine.execution_options(stream_results=True).execute(query)
+        item_type_ids = [r[0] for r in results]
+
+        for itemtype_id in item_type_ids:
+            ret = ItemTypes.reload(itemtype_id, mapping)
+            if ret.get("code") != 0:
+                current_app.logger.error("Failed to renew item_type_id:{}".format(itemtype_id))
+                current_app.logger.error(ret.get("msg"))
+                continue
+            current_app.logger.info(f"  itemtype id:{itemtype_id}")
+            current_app.logger.info(f"  {ret['msg']}")
+            is_fix_mapping = False
+            if "mapping" in ret.get("msg",""):
+                is_fix_mapping = True
+            else:
+                is_fix_mapping = False
+            fix_ids.append((itemtype_id, is_fix_mapping))
         
         db.session.commit()
-        for itemtype in itemtypes:
-            current_app.logger.info(f"[FIX] item_type:{itemtype.id}")
+        for (itemtype_id, is_fix_mapping) in fix_ids:
+            current_app.logger.info(f"[FIX] item_type:{itemtype_id}")
+            if is_fix_mapping:
+                current_app.logger.info(f"[FIX] item_type_mapping:{itemtype_id}(item_type_id)")
         current_app.logger.info("  Successfully reloaded all itemtypes")
 
         current_app.logger.info("Completed!")
