@@ -2252,6 +2252,10 @@ def selected_value_by_language(
     lang_key_list = lang_key_str.split(",")
     val_key_list = val_key_str.split(",")
 
+    if lang_selected == 'zh_Hans':
+            lang_selected = 'zh-cn'
+    elif lang_selected == 'zh_Hant':
+        lang_selected = 'zh-tw'
     for val_key in val_key_list:
         val_parent_key = val_key.split(".")[0]
         val_sub_key = val_key.split(".")[-1]

@@ -23,7 +23,7 @@
   <script src="{{ url_for('static', filename='js/jquery/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/weko_theme/lang_combobox.js') }}"></script>
   <form id="language-code-form" class="form form-inline lang-select text-white"
-        action="{{ url_for('invenio_i18n.set_lang')}}"
+        action="{{ url_for('weko_admin.custom_set_lang')}}"
         method="POST">
     <div class="form-group form-group2">
       <span for="lang-code">{{ _('Language:') }}</span>

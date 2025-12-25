@@ -162,7 +162,7 @@ def get_selected_language():
     if not registered_languages:
         return result
     result['lang'] = registered_languages
-    result['selected'] = current_i18n.language
+    result['selected'] = str(current_i18n.locale)
 
     return result
 
