@@ -12,6 +12,7 @@ import json
 from urllib.parse import urlparse, urljoin, uses_relative, uses_netloc
 
 from botocore.exceptions import BotoCoreError, ClientError
+from boto3.s3.transfer import TransferConfig
 from email_validator import validate_email
 from flask import current_app, request
 
@@ -347,6 +348,10 @@ def copy_bucket_to_s3(
     current_app.logger.debug(f"Profile endpoint URL: {profile.s3_endpoint_url}")
     current_app.logger.debug(f"Profile region name: {profile.s3_region_name}")
 
+    # Get TransferConfig from config
+    transfer_setting = current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_CONFIG", {})
+    s3_transfer_config = TransferConfig(**transfer_setting)
+
     if source_location.type is None:
         # local to S3
 
@@ -355,7 +360,8 @@ def copy_bucket_to_s3(
             destination_s3_client.upload_file(
                 source_file_instance.uri,
                 bucket_name,
-                filename
+                filename,
+                Config=s3_transfer_config
             )
             return urljoin(uri, filename)
         except Exception as e:
@@ -426,7 +432,8 @@ def copy_bucket_to_s3(
                     copy_source,
                     destination_bucket,
                     destination_key,
-                    SourceClient=s3_client_source
+                    SourceClient=s3_client_source,
+                    Config=s3_transfer_config
                 )
             else:
                 # Different storage service
@@ -444,7 +451,8 @@ def copy_bucket_to_s3(
                     )
                     body = obj["Body"]
                     destination_s3_client.upload_fileobj(
-                        body, destination_bucket, destination_key
+                        body, destination_bucket, destination_key,
+                        Config=s3_transfer_config
                     )
                 else:
                     raise Exception(_("The source file size exceeds the limit for cross-service copy."))
