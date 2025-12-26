@@ -252,7 +252,7 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
                     subitems[subitem_key] = metadata.get(oai_key)
                 else:
                     current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
-            elif isinstance(metadata, str):
+            elif isinstance(metadata, str) and oai_key == TEXT:
                 subitems[subitem_key] = metadata
             elif isinstance(metadata, list) and len(metadata) > 0:
                 subitems[subitem_key] = metadata[0]
