@@ -537,8 +537,8 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
 
-    current_lang = current_i18n.language \
-        if hasattr(current_i18n, 'language') else None
+    current_lang = str(current_i18n.locale) \
+        if hasattr(current_i18n, 'locale') else None
     # get title name
     from weko_search_ui.utils import get_data_by_property
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form

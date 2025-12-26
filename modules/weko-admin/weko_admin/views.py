@@ -28,7 +28,8 @@ from datetime import timedelta, datetime
 import traceback
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
-    jsonify, render_template, request
+    jsonify, render_template, request, redirect, url_for, session
+from flask import session as flask_session
 from flask_babelex import lazy_gettext as _
 from flask_breadcrumbs import register_breadcrumb
 from flask_login import current_user, login_required
@@ -56,6 +57,8 @@ from .utils import FeedbackMail, StatisticMail, UsageReport, \
     overwrite_the_memory_config_with_db, save_api_certification, \
     store_facet_search_query_in_redis, update_admin_lang_setting, \
     update_restricted_access, validate_certification, validation_site_info
+from invenio_i18n.views import get_redirect_target
+from invenio_i18n.config import I18N_DEFAULT_REDIRECT_ENDPOINT, I18N_SESSION_KEY
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
 
@@ -885,3 +888,26 @@ def send_profile_settings_save():
         db.session.rollback()
         current_app.logger.error("Error updating profile settings: {}".format(str(e)))
         return jsonify({"status": "error", "msg": "Failed to update settings"}), 500
+
+
+@blueprint.route('/lang/', methods=['POST'])
+@blueprint.route('/lang/<lang_code>', methods=['GET', 'POST'])
+def custom_set_lang(lang_code=None):
+    """Set language in session and redirect."""
+    # Check if language is available.
+    lang_code = lang_code or request.values.get("lang_code")
+    languages = dict(current_app.extensions["invenio-i18n"].get_languages())
+    if lang_code is None or lang_code not in languages:
+        abort(404 if request.method == "GET" else 400)
+
+    # Set language in session.
+    flask_session[I18N_SESSION_KEY] = lang_code
+
+    # Redirect user back.
+    target = get_redirect_target()
+    if not target:
+        endpoint = I18N_DEFAULT_REDIRECT_ENDPOINT
+        target = url_for(endpoint) if endpoint else "/"
+
+    return redirect(target)
+    
