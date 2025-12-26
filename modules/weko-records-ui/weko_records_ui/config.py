@@ -796,17 +796,20 @@ WEKO_RECORDS_UI_OA_API_RETRY_COUNT = 3
 
 WEKO_RECORDS_UI_OA_API_CODE = "oaa"
 
-WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE = 20 * 1024 * 1024 * 1024  # 20GB
+WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE = 20 * 1024 * 1024 * 1024  # 20GiB
 """Max file size for s3 compatible service cross copy."""
 
-WEKO_RECORDS_UI_S3_TRANSFER_CONFIG = {
-    "multipart_threshold": 8 * 1024 * 1024,     # threshold to use multipart upload (default: 8 MiB)
-    "multipart_chunksize": 8 * 1024 * 1024,     # size of each part for multipart upload (default: 8 MiB)
-    "use_threads": True,                        # enable multithreading (default: True)
-    "max_concurrency": 10,                      # number of threads for multipart upload/download (default: 10)
-    # "max_bandwidth": None,                    # throttle bandwidth in bytes/second (default: None) Available Boto3 Version 1.20+
-}
-"""Configuration for S3 compatible service transfer."""
+WEKO_RECORDS_UI_S3_TRANSFER_MULTIPART_THRESHOLD = 8 * 1024 * 1024
+"""Threshold to use multipart upload for S3 compatible service transfer (byte). Default is 8 MiB."""
+
+WEKO_RECORDS_UI_S3_TRANSFER_MULTIPART_CHUNKSIZE = 8 * 1024 * 1024
+"""Size of each part for multipart upload for S3 compatible service transfer (byte). Default is 8 MiB."""
+
+WEKO_RECORDS_UI_S3_TRANSFER_USE_THREADS = True
+"""Enable multithreading for S3 compatible service transfer. True if using multithreading."""
+
+WEKO_RECORDS_UI_S3_TRANSFER_MAX_CONCURRENCY = 10
+"""Number of threads for multipart upload/download for S3 compatible service transfer. Default is 10."""
 
 class EXTERNAL_SYSTEM(Enum):
     OA = "OA"

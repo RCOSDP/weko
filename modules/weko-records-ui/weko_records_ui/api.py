@@ -349,7 +349,12 @@ def copy_bucket_to_s3(
     current_app.logger.debug(f"Profile region name: {profile.s3_region_name}")
 
     # Get TransferConfig from config
-    transfer_setting = current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_CONFIG", {})
+    transfer_setting = {
+        "multipart_threshold": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_MULTIPART_THRESHOLD", 8 * 1024 * 1024),
+        "multipart_chunksize": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_MULTIPART_CHUNKSIZE", 8 * 1024 * 1024),
+        "use_threads": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_USE_THREADS", True),
+        "max_concurrency": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_MAX_CONCURRENCY", 10),
+    }
     s3_transfer_config = TransferConfig(**transfer_setting)
 
     if source_location.type is None:
