@@ -144,3 +144,17 @@ FILES_REST_ROLES_ENV = [
     'INVENIO_ROLE_COMMUNITY'
 ]
 """The version update roles."""
+
+FILES_REST_STORAGE_SERVICE_PATTERN = {
+    "aws_s3": [
+        r"^s3\.(?P<region>[a-z0-9-]+)\.amazonaws\.com$",
+        r"^(?P<bucket>.+)\.s3\.(?P<region>[a-z0-9-]+)\.amazonaws\.com$",
+        r"^(?P<bucket>.+)\.s3\.amazonaws\.com$",
+        r"^s3\.amazonaws\.com$",
+    ],
+    "wasabi": [
+        r"^s3\.wasabisys\.com$",
+        r"^s3\.(?P<region>[a-z0-9-]+)\.wasabisys\.com$",
+    ],
+}
+"""Storage service patterns for parsing storage host."""

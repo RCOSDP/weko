@@ -9,8 +9,10 @@ import tempfile
 import shutil
 import copy
 import json
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin, uses_relative, uses_netloc
 
+from botocore.exceptions import BotoCoreError, ClientError
+from boto3.s3.transfer import TransferConfig
 from email_validator import validate_email
 from flask import current_app, request
 
@@ -21,6 +23,7 @@ from sqlalchemy import func, String
 
 from invenio_mail.admin import _load_mail_cfg_from_db, _set_flask_mail_cfg
 from invenio_files_rest.models import Bucket, ObjectVersion, FileInstance
+from invenio_files_rest.utils import parse_storage_host
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.api import Record
 from weko_logging.activity_logger import UserActivityLogger
@@ -245,8 +248,41 @@ def get_s3_bucket_list():
 
 
 def copy_bucket_to_s3(
-    pid, filename, org_bucket_id, checked, bucket_name
-):
+        pid, filename, org_bucket_id, checked, bucket_name
+    ):
+    """
+    Copy file to S3 bucket.
+    Args:
+        pid (str): Persistent identifier value.
+        filename (str): File name.
+        org_bucket_id (int): Original bucket ID.
+        checked (str): Create bucket option.
+        bucket_name (str): Destination bucket name.
+    Returns:
+        str: File URI.
+    """
+
+    def _is_same_storage_service(source_s3_client, destination_s3_client):
+        """Check if source and destination storage service are the same.
+        Args:
+            source_s3_client (boto3.client): Boto3 S3 client instance for source.
+            destination_s3_client (boto3.client): Boto3 S3 client instance for destination.
+        Returns:
+            bool: True if same service, False otherwise.
+        """
+        source_url_info = urlparse(source_s3_client.meta.endpoint_url)
+        destination_url_info = urlparse(destination_s3_client.meta.endpoint_url)
+        source_service = parse_storage_host(source_url_info.netloc)
+        destination_service = parse_storage_host(destination_url_info.netloc)
+        if source_service["service"] is None or destination_service["service"] is None:
+            return source_url_info.netloc == destination_url_info.netloc
+        return source_service["service"] == destination_service["service"]
+
+    # Add s3 to uses_relative and uses_netloc
+    if not "s3" in uses_relative:
+        uses_relative.append("s3")
+    if not "s3" in uses_netloc:
+        uses_netloc.append("s3")
 
     # Get profile
     profile = UserProfile.get_by_userid(current_user.id)
@@ -258,7 +294,11 @@ def copy_bucket_to_s3(
     source_content_info = ObjectVersion.get(bucket=source_bucket, key=filename)
     source_file_instance = FileInstance.get(source_content_info.file_id)
 
-    source_location = source_file_instance.get_location_by_file_instance()
+    # source_location = source_file_instance.get_location_by_file_instance()
+    source_location = db.session.query(Location).filter(
+        func.cast(source_file_instance.uri, String).like(Location.uri + "%")) \
+        .order_by(func.length(Location.uri).desc()) \
+        .first()
     if source_location is None:
         source_location = Location.get_default()
 
@@ -308,6 +348,15 @@ def copy_bucket_to_s3(
     current_app.logger.debug(f"Profile endpoint URL: {profile.s3_endpoint_url}")
     current_app.logger.debug(f"Profile region name: {profile.s3_region_name}")
 
+    # Get TransferConfig from config
+    transfer_setting = {
+        "multipart_threshold": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_MULTIPART_THRESHOLD", 8 * 1024 * 1024),
+        "multipart_chunksize": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_MULTIPART_CHUNKSIZE", 8 * 1024 * 1024),
+        "use_threads": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_USE_THREADS", True),
+        "max_concurrency": current_app.config.get("WEKO_RECORDS_UI_S3_TRANSFER_MAX_CONCURRENCY", 10),
+    }
+    s3_transfer_config = TransferConfig(**transfer_setting)
+
     if source_location.type is None:
         # local to S3
 
@@ -316,9 +365,10 @@ def copy_bucket_to_s3(
             destination_s3_client.upload_file(
                 source_file_instance.uri,
                 bucket_name,
-                filename
+                filename,
+                Config=s3_transfer_config
             )
-            return os.path.join(uri, filename)
+            return urljoin(uri, filename)
         except Exception as e:
             traceback.print_exc()
             raise Exception(_('Uploading file failed.'))
@@ -361,13 +411,13 @@ def copy_bucket_to_s3(
 
         # Validate source file bucket and key
         if not source_bucket_name or not source_file_key:
-            raise Exception(_("The source bucket or file key is not set."))
+            raise Exception(_("The source bucket or file cannot be found."))
 
         copy_source = {
             "Bucket": source_bucket_name,
             "Key": source_file_key
         }
-        current_app.logger.debug(f'copy_source: {copy_source}')
+        current_app.logger.debug(f"copy_source: {copy_source}")
 
         try:
             s3_client_source.head_object(
@@ -378,19 +428,50 @@ def copy_bucket_to_s3(
             traceback.print_exc()
             raise Exception(_('The source file cannot be found.'))
         try:
-            # Note: Allowed same storage service
-            destination_s3_client.copy(
-                copy_source,
-                destination_bucket,
-                destination_key,
-                SourceClient=s3_client_source
-            )
-        except Exception as e:
-            traceback.print_exc()
+            if _is_same_storage_service(
+                s3_client_source,
+                destination_s3_client
+            ):
+                # Same storage service
+                destination_s3_client.copy(
+                    copy_source,
+                    destination_bucket,
+                    destination_key,
+                    SourceClient=s3_client_source,
+                    Config=s3_transfer_config
+                )
+            else:
+                # Different storage service
+                # Check file size
+                source_file_size = source_file_instance.size
+                # Upload file size limit from config
+                file_size_limit = current_app.config.get(
+                    "WEKO_RECORDS_UI_S3_CROSS_COPY_MAX_FILE_SIZE",
+                    20 * 1024 * 1024 * 1024
+                )
+                if source_file_size < file_size_limit:
+                    obj = s3_client_source.get_object(
+                        Bucket=copy_source["Bucket"],
+                        Key=copy_source["Key"]
+                    )
+                    body = obj["Body"]
+                    destination_s3_client.upload_fileobj(
+                        body, destination_bucket, destination_key,
+                        Config=s3_transfer_config
+                    )
+                else:
+                    raise Exception(_("The source file size exceeds the limit for cross-service copy."))
+        except (ClientError, BotoCoreError) as e:
             current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
             raise Exception(_('Uploading file failed.'))
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+            raise
 
-        return os.path.join(uri, filename)
+        # Return file URI
+        return urljoin(uri, filename)
 
 def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
     """Create storage bucket.
@@ -589,7 +670,7 @@ def get_file_place_info(org_pid, org_bucket_id, file_name):
                 prev_key_parts[:-new_key_depth]) + new_file_key
 
         if not bucket_name or not new_file_key:
-            raise Exception(_("The file cannot be found."))
+            raise Exception(_("The source bucket or file cannot be found."))
 
         try:
             s3_client = location.create_s3_client()
