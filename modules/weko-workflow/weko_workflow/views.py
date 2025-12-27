@@ -758,6 +758,9 @@ def render_guest_workflow(file_name=""):
     )
 
     form = FlaskForm(request.form)
+    if not guest_activity.get("steps",[]):
+        current_app.logger.error("can not get workflow_action_history:{}".format(activity_id))
+        abort(404)
 
     return render_template(
         'weko_workflow/activity_detail.html',
@@ -880,7 +883,9 @@ def display_activity(activity_id="0", community_id=None):
         current_app.logger.error("display_activity: can not get activity display info")
         return render_template("weko_theme/error.html",
                 error="can not get data required for rendering")
-
+    if not steps:
+        current_app.logger.error("can not get workflow_action_history:{}".format(activity_id))
+        abort(404)
     # display_activity of Identifier grant
     identifier_setting = None
     if action_endpoint == 'identifier_grant' and item:
