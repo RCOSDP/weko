@@ -2503,7 +2503,7 @@ class WorkActivity(object):
         his = WorkActivityHistory()
         histories = his.get_activity_history_list(activity_id)
         if not histories:
-            abort(404)
+            return []
         history_dict = {}
         activity = WorkActivity()
         activity_detail = activity.\
