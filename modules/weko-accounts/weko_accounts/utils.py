@@ -29,7 +29,7 @@ from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
 import hashlib
 
-from .config import WEKO_API_LIMIT_RATE_DEFAULT
+from .config import WEKO_API_LIMIT_RATE_DEFAULT,WEKO_ACCOUNTS_WAYF_URL,WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS,WEKO_ACCOUNTS_DEFAULT_IDP
 
 limiter = Limiter(
     app=None,
@@ -238,8 +238,23 @@ def get_sp_info():
     if 'SP_HANDLERURL' in current_app.config:
         sp_handlerURL = current_app.config['SP_HANDLERURL']
 
+    wayf_url = WEKO_ACCOUNTS_WAYF_URL
+    if 'WEKO_ACCOUNTS_WAYF_URL' in current_app.config:
+        wayf_url = current_app.config['WEKO_ACCOUNTS_WAYF_URL']
+
+    wayf_additional_idps = WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS
+    if 'WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS' in current_app.config:
+        wayf_additional_idps = current_app.config['WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS']
+    
+    default_idp = WEKO_ACCOUNTS_DEFAULT_IDP
+    if 'WEKO_ACCOUNTS_DEFAULT_IDP' in current_app.config:
+        default_idp = current_app.config['WEKO_ACCOUNTS_DEFAULT_IDP']   
+    
     return {
         'sp_entityID': sp_entityID,
         'sp_handlerURL': sp_handlerURL,
         'return_url': return_url,
+        'wayf_url': wayf_url,
+        'wayf_additional_idps': wayf_additional_idps,
+        'default_idp': default_idp,
     }

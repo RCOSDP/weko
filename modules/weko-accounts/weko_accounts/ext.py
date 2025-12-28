@@ -100,6 +100,11 @@ class WekoAccounts(object):
                     app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                         app.config[
                             'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE']
+                else:
+                    app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+                        app.config[
+                            'WEKO_ACCOUNTS_SECURITY_LOGIN_LOCAL_SHIB_TEMPLATE']
+                        
 
     def _enable_logger_activity(self, app):
         """

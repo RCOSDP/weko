@@ -1,3 +1,23 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
 {%- if config.WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED and config.WEKO_ACCOUNTS_SHIB_INST_LOGIN_DIRECTLY_ENABLED and config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED %}
 {%- set url_args = request.args.get('next', '/') | urlencode -%}
 <meta http-equiv="Refresh" content="0; url={{ config.WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL.format(request.url_root) + request.path + '?next=' + url_args }}" />
@@ -27,7 +47,16 @@
         <h3 class="text-center panel-free-title">{{_('Log in to account') }}</h3>
         {% endif %}
         {%- endblock form_header %}
-    
+      
+        {%- if config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED'] %}
+
+        {%- include 'weko_accounts/gakunin.html' with context %}
+        
+        <div class="text-divider">
+          OR
+        </div>
+        {%- endif %}
+
         {%- block form_outer %}    
         {%- with form = login_user_form %}
         <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
