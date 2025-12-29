@@ -251,7 +251,7 @@ WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH = 253
 WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL = 'https://cg.gakunin.jp'
 """Base URL for Gakunin mAP."""
 
-WEKO_ACCOUNTS_WAYF_URL ="https://test-ds.gakunin.nii.ac.jp/WAYF";
+WEKO_ACCOUNTS_WAYF_URL ="https://test-ds.gakunin.nii.ac.jp/WAYF"
 """URL for WAYF."""
 
 WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS = [{"name":"Orthros-Test","entityID":"https://core-stg.orthros.gakunin.nii.ac.jp/idp"}]
@@ -260,5 +260,8 @@ WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS = [{"name":"Orthros-Test","entityID":"https:/
 WEKO_ACCOUNTS_DEFAULT_IDP =""
 """Default IdP for WAYF."""
 
-WEKO_ACCOUNTS_SET_SHIB_TEMPLATE = 'weko_accounts/gakunin.html'
-""" template for gakunin login."""
+SECURITY_REGISTERABLE = False
+"""Disable user registration via WEKO-Accounts."""
+
+SECURITY_RECOVERABLE = False
+"""Disable password recovery via WEKO-Accounts."""
