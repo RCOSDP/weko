@@ -248,7 +248,7 @@ WEKO_ACCOUNTS_GAKUNIN_USER_NAME_PREFIX = 'G_'
 WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH = 253
 """Length of Shibboleth user name without hash value."""
 
-WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL = 'https://cg.gakunin.jp'
+WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL = 'https://sptest.cg.gakunin.jp'
 """Base URL for Gakunin mAP."""
 
 WEKO_ACCOUNTS_WAYF_URL ="https://test-ds.gakunin.nii.ac.jp/WAYF"
