@@ -668,7 +668,7 @@ class WidgetDesignPage(db.Model):
 
         :return: Single page objects or none.
         """
-        return db.session.query(cls).filter_by(url=url).one()
+        return db.session.query(cls).filter_by(url=url).one_or_none()
 
     @classmethod
     def get_by_repository_id(cls, repository_id):
