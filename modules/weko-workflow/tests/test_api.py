@@ -2288,6 +2288,21 @@ def test_UpdateItem_publish(app, db_records, mocker):
     mock_update_es_data.assert_called_once_with(
         dep, update_revision=False, field="publish_status")
 
+# def __create_self_user_id_json(self_user_id)
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test___create_self_user_id_json -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test___create_self_user_id_json(app):
+    activity = WorkActivity()
+    self_user_id = 123
+    # WEKO_ITEMS_UI_PROXY_POSTING is False
+    app.config['WEKO_ITEMS_UI_PROXY_POSTING'] = False
+    result = activity._WorkActivity__create_self_user_id_json(self_user_id)
+    assert result == '{"user": 123}]'
+
+    # WEKO_ITEMS_UI_PROXY_POSTING is True
+    app.config['WEKO_ITEMS_UI_PROXY_POSTING'] = True
+    result = activity._WorkActivity__create_self_user_id_json(self_user_id)
+    assert result == '{"user": 123}'
+
 # def query_activities_by_tab_is_wait(query)
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_query_activities_by_tab_is_wait -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_query_activities_by_tab_is_wait(users, db):

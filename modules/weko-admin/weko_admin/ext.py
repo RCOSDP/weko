@@ -35,7 +35,7 @@ from invenio_i18n.views import set_lang
 from . import config
 from .models import AdminLangSettings, AdminSettings, SessionLifetime, SiteInfo
 from .utils import overwrite_the_memory_config_with_db
-from .views import blueprint
+from .views import blueprint, custom_set_lang
 
 
 class WekoAdmin(object):
@@ -132,7 +132,7 @@ class WekoAdmin(object):
                 if registered_languages:
                     default_language = registered_languages[0].get('lang_code')
                     session['selected_language'] = default_language
-                    set_lang(default_language)
+                    custom_set_lang(default_language)
                     ctx = _request_ctx_stack.top
                     if ctx is not None and hasattr(ctx, 'babel_locale'):
                         setattr(ctx, 'babel_locale', Locale(default_language))

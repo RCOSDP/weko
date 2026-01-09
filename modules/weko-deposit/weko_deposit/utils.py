@@ -26,6 +26,7 @@ from .api import WekoDeposit
 import pypdfium2
 import os
 import subprocess
+import gc
 
 def update_pdf_contents_es(record_ids):
     """register the contents of the record PDF file in elasticsearch
@@ -59,21 +60,33 @@ def extract_text_from_pdf(filepath, max_size):
         reader = pypdfium2.PdfDocument(filepath)
         texts = []
         total_bytes = 0
-        for page in reader:
-            text = page.get_textpage().get_text_range()
-            encoded = text.encode('utf-8', errors='replace')
-            if total_bytes + len(encoded) > max_size:
-                remain = max_size - total_bytes
-                texts.append(encoded[:remain].decode('utf-8', errors='ignore'))
-                break
-            else:
-                texts.append(text)
-                total_bytes += len(encoded)
+        for i in range(len(reader)):
+            page = reader.get_page(i)
+            textpage=None
+            try:
+                textpage = page.get_textpage()
+                text = textpage.get_text_range()
+                
+                encoded = text.encode('utf-8', errors='replace')
+                if total_bytes + len(encoded) > max_size:
+                    remain = max_size - total_bytes
+                    texts.append(encoded[:remain].decode('utf-8', errors='ignore'))
+                    break
+                else:
+                    texts.append(text)
+                    total_bytes += len(encoded)
+            finally:
+                if textpage is not None:
+                    textpage.close()
+                page.close()
         data = "".join(texts)
         data = "".join(data.splitlines())
     finally:
         if reader is not None:
             reader.close()
+        
+        del reader
+        gc.collect()
 
     return data
 

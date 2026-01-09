@@ -1025,7 +1025,7 @@ class WekoDeposit(Deposit):
                                                  self.revision_id)
                     # Upload pdf file content to Elasticsearch
                     from .tasks import extract_pdf_and_update_file_contents
-                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)))
+                    extract_pdf_and_update_file_contents.apply_async((reading_targets, str(self.pid.object_uuid)), countdown=10)
                 except TransportError as err:
                     if self.jrc.get('content'):
                         for content in self.jrc['content']:
@@ -1234,7 +1234,8 @@ class WekoDeposit(Deposit):
                                     current_app.config["WEKO_DEPOSIT_FILESIZE_LIMIT"]
                                 )
                                 inf = chardet.detect(data)
-                                data = data.decode(inf["encoding"], errors="replace")
+                                encoding = inf.get("encoding") or "utf-8"
+                                data = data.decode(encoding, errors="replace")
                             else:
                                 file_instance = file.obj.file
                                 file_info = {
@@ -1245,8 +1246,7 @@ class WekoDeposit(Deposit):
                                 reading_targets[lst["filename"]] = file_info
                             attachment["content"] = data
                     except FileNotFoundError as se:
-                        current_app.logger.error(f"FileNotFoundError: {se}")
-                        current_app.logger.error(f"file.obj: {file.obj}")
+                        current_app.logger.error(f"FileNotFoundError: {se}, {file.obj.key}")
 
                 content.update({"attachment": attachment})
                 contents.append(content)
@@ -1766,20 +1766,19 @@ class WekoDeposit(Deposit):
         if index_id:
             index_id = str(index_id)
         obj_ids = next((cls.indexer.get_pid_by_es_scroll(index_id, only_latest_version=True)), [])
-        removed_records = []
         for obj_uuid in obj_ids:
             r = RecordMetadata.query.filter_by(id=obj_uuid).first()
             if r.json['recid'] in ignore_items:
                 continue
             r.json['path'].remove(index_id)
+            if '_oai' in r.json and 'sets' in r.json['_oai']:
+                r.json['_oai']['sets'] = r.json['path']
             flag_modified(r, 'json')
             if r.json and not r.json['path']:
                 from weko_records_ui.utils import soft_delete
                 soft_delete(obj_uuid)
-                removed_records.append(r)
-        for r in removed_records:
             dep = WekoDeposit(r.json, r)
-            dep.indexer.update_es_data(dep, update_revision=False)
+            dep.indexer.update_es_data(dep, update_revision=False, update_oai=True)
 
     def update_pid_by_index_tree_id(self, path):
         """

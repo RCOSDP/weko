@@ -39,7 +39,7 @@ from invenio_pidstore.models import PersistentIdentifier
 from weko_records.api import FeedbackMailList, RequestMailList, ItemApplication, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
-from weko_records.models import ItemReference, ItemTypeJsonldMapping, ItemTypeName, ItemTypeProperty
+from weko_records.models import ItemReference, ItemTypeJsonldMapping, ItemTypeName, ItemTypeProperty, ItemType
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -146,9 +146,16 @@ def test_itemtypenames(app, db, item_type, item_type2):
     lst = ItemTypeNames.get_all_by_id(ids=[1,2,3], with_deleted=True)
     assert len(lst)==3
 
+    _item_type_name_10 = ItemTypeName(id=10,name='test10')
+    with db.session.begin_nested():
+        db.session.add(_item_type_name_10)
+    _item_type_30 = ItemType(id=30,item_type_name=_item_type_name_10, schema={}, form={}, render={}, tag=1)
+    with db.session.begin_nested():
+        db.session.add(_item_type_30)
     # def get_name_and_id_all(cls):
     lst = ItemTypeNames.get_name_and_id_all()
-    assert len(lst)>0
+    res = [('test', 1), ('test2 updated', 2), ('test10', 30)]
+    assert lst == res
 
     # def delete(self, force=True):
     item_type_name = ItemTypeNames.get_record(3)

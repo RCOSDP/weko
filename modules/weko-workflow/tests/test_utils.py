@@ -4000,7 +4000,7 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         with db.session.begin_nested():
             db.session.add(db_history1)
         test_steps = [
-            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
+            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"user@test.org", "Status":"action_doing", "ActionOrder":1},
             {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
             {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3},
             {"ActivityId":activity_id,"ActionId":4,"ActionName":"Approval","ActionVersion":"1.0.0","ActionEndpoint":"approval","Author":"","Status":" ","ActionOrder":4}
@@ -4042,22 +4042,23 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         # if metadata: == True
         import json
         target_activity = Activity.query.filter_by(activity_id=activity_id).first()
-        target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[{"user": -1}, {"user": 1}]}})
+        target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[{"user": -1}, {"user": 1}, {"user": 1}]}})
         db.session.merge(target_activity)
         db.session.commit()
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert owner_id == 2
-        assert shared_user_ids == [{"user":1},{"user":-1}]
+        assert shared_user_ids == [{"user":-1},{"user":1}]
 
         # if metadata: owner and shared_user_ids are int
         import json
         target_activity = Activity.query.filter_by(activity_id=activity_id).first()
+        target_activity.shared_user_ids = [{'user': -1}, {'user': 1}, {'user': 1}]
         target_activity.temp_data = json.dumps({"metainfo":{"owner": 2, "shared_user_ids":[-1,1]}})
         db.session.merge(target_activity)
         db.session.commit()
         endpoint, action_id, activity_detail, cur_action, histories, item, steps, temporary_comment, workflow_detail, owner_id, shared_user_ids = get_activity_display_info(activity_id)
         assert owner_id == 2
-        assert shared_user_ids == [{"user":1},{"user":-1}]
+        assert shared_user_ids == [{"user":-1},{"user":1}]
 
 
 # def __init_activity_detail_data_for_guest(activity_id: str, community_id: str):
@@ -5374,70 +5375,57 @@ def test_get_contributors(app, db, users_1, db_records_1):
         # 引数のpid_valueをfalseに設定する。
         actual = get_contributors(False)
         assert actual == []
-        # user_id_list_json値を設定,owner_idが-1でない
+        # user_id_list_json値を設定
         # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がdict
         user_id_list_json = [{"user":1},{"user":2}]
-        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
+        actual = get_contributors(False, user_id_list_json=user_id_list_json)
         expected = [{
                     'userid' : 1,
                     'username': "",
                     'email' : "user1@sample.com",
-                    'owner' : True,
                     'error': ''
                     },{
                     'userid' : 2,
                     'username': "",
                     'email' : "user2@sample.com",
-                    'owner' : False,
                     'error': ''
                     }]
+        assert actual == expected
+
+        # type of user_id_list_json is List but contents are int
+        user_id_list_json = [1, 2]
+        actual = get_contributors(False, user_id_list_json=user_id_list_json)
+        expected = [
+            {
+                'userid' : 1,
+                'username': "",
+                'email' : "user1@sample.com",
+                'error': ''
+            },
+            {
+                'userid' : 2,
+                'username': "",
+                'email' : "user2@sample.com",
+                'error': ''
+            }
+        ]
         assert actual == expected
 
         # 引数のpid_valueをfalseに設定する。 user_id_list_json(List型) Listの中がstring
         user_id_list_json = ["漢字", "ひらがな"]
-        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
-        expected = [{
-                    'userid' : 1,
-                    'username': "",
-                    'email' : "user1@sample.com",
-                    'owner' : True,
-                    'error': ''
-                    }]
+        actual = get_contributors(False, user_id_list_json=user_id_list_json)
+        expected = []
         assert actual == expected
 
         # 引数のpid_valueをfalseに設定する。 user_id_list_json(Dict型)
         user_id_list_json = {"user": 1}
-        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
-        expected = [{
-                    'userid' : 1,
-                    'username': "",
-                    'email' : "user1@sample.com",
-                    'owner' : True,
-                    'error': ''
-                    }]
-        assert actual == expected
-
-        # user_id_list_jsonに値を設定しない,owner_idが-1でない
-        user_id_list_json=None
-        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=1)
-        expected = [{
-                    'userid' : 1,
-                    'username': "",
-                    'email' : "user1@sample.com",
-                    'owner' : True,
-                    'error': ''
-                    }]
-        assert actual == expected
-        
-        # user_id_list_jsonに値を設定,owner_idが-1
-        user_id_list_json = [{"user":1},{"user":2}]
-        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=-1)
+        actual = get_contributors(False, user_id_list_json=user_id_list_json)
         expected = []
         assert actual == expected
 
-        # user_id_list_jsonに値を設定しない,owner_idが-1
-        user_id_list_json = None
-        actual = get_contributors(False, user_id_list_json=user_id_list_json, owner_id=-1)
+        # user_id_list_jsonに値を設定しない
+        user_id_list_json=None
+        actual = get_contributors(False, user_id_list_json=user_id_list_json)
         expected = []
         assert actual == expected
 
@@ -5463,61 +5451,49 @@ def test_get_contributors(app, db, users_1, db_records_1):
         db.session.commit()
 
         actual = get_contributors('196.0')
-        assert actual == [{ 'userid' : 1,
-                        'username': "ユーザー1",
-                        'email' : "user1@sample.com",
-                        'owner' : True,
-                        'error': ''
-                        }]
+        assert actual == []
 
         # pid_value=196.1を設定
         # weko_shared_ids": [100] を設定（存在しないユーザーID）
         actual = get_contributors('197')
-        expected = [{
-                    'userid' : 1,
-                    'username': "ユーザー1",
-                    'email' : "user1@sample.com",
-                    'owner' : True,
-                    'error': ''
-                    },
-                    {
-                    'userid' : 100,
-                    'username': '',
-                    'email' : '',
-                    'owner' : False,
-                    'error': 'The specified user ID is incorrect'
-                    }]
+        expected = [
+            {
+                'userid' : 100,
+                'username': '',
+                'email' : '',
+                'error': 'The specified user ID is incorrect'
+            }
+        ]
         assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
 
-        expected = [{
-                'userid' : 1,
-                'username': "ユーザー1",
-                'email' : "user1@sample.com",
-                'owner' : True,
-                'error': ''
-                },
-                {
-                'userid' : 2,
-                'username': "ユーザー2",
-                'email' : "user2@sample.com",
-                'owner' : False,
-                'error': ''
-                }]
-        # user_id_list_jsonを設定
-        user_id_list_json = [2]
-        actual = get_contributors(None, user_id_list_json, owner_id=1)
-        assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
-
-        # login user does not exist when WEKO_ITEMS_UI_PROXY_POSTING is False
-        app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = False
-        user_id_list_json = [1, 2]
-        actual = get_contributors(None, user_id_list_json, owner_id=2)
         expected = [
             {
                 'userid' : 2,
-                'username': "ユーザー2",
+                'username': "display ユーザー2",
                 'email' : "user2@sample.com",
-                'owner' : True,
+                'error': ''
+            }
+        ]
+        # user_id_list_jsonを設定
+        user_id_list_json = [2]
+        actual = get_contributors(None, user_id_list_json=user_id_list_json)
+        assert sorted(actual, key=lambda x: x["userid"]) == sorted(expected, key=lambda x: x["userid"])
+
+        # WEKO_ITEMS_UI_PROXY_POSTING is False
+        app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = False
+        user_id_list_json = [1, 2]
+        actual = get_contributors(None, user_id_list_json=user_id_list_json)
+        expected = [
+            {
+                'userid' : 1,
+                'username': "display ユーザー1",
+                'email' : "user1@sample.com",
+                'error': ''
+            },
+            {
+                'userid' : 2,
+                'username': "display ユーザー2",
+                'email' : "user2@sample.com",
                 'error': ''
             }
         ]

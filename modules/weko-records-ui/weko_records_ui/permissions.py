@@ -153,8 +153,11 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
         created_id = record.get('_deposit', {}).get('created_by')
         user_id_list.append(created_id) if created_id else None
         user_id_list.append(int(record['owner'])) if record.get('owner') else None
-        if current_app.config.get('WEKO_ITEMS_UI_PROXY_POSTING', False) and record.get('weko_shared_ids'):
-            user_id_list.extend(record.get('weko_shared_ids'))
+        if record.get('weko_shared_ids'):
+            if current_app.config.get('WEKO_ITEMS_UI_PROXY_POSTING', False):
+                user_id_list.extend(record.get('weko_shared_ids'))
+            else:
+                user_id_list.append(record.get('weko_shared_ids')[-1])
         user_id_list = list(set(user_id_list))
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
@@ -542,8 +545,11 @@ def check_created_id(record):
             is_himself = True
         elif user_id and owner and user_id == str(owner):
             is_himself = True
-        elif user_id and len(shared_ids)>0 and int(user_id) in shared_ids and proxy_posting:
-            is_himself = True
+        elif user_id and len(shared_ids)>0:
+            if proxy_posting and int(user_id) in shared_ids:
+                is_himself = True
+            elif not proxy_posting and shared_ids[-1] == int(user_id):
+                is_himself = True
         for lst in list(current_user.roles or []):
             # In case of supper user,it's always have permission
             if lst.name in supers:
