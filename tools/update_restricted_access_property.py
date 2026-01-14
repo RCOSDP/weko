@@ -80,7 +80,8 @@ def update_item_type():
         if not _check_restricted_item_type(item_type):
             continue
         
-        ret = ItemTypes.reload(item_type_id, renew_value='ALL')
+        mapping = {}
+        ret = ItemTypes.reload(item_type_id, mapping, renew_value='ALL')
         item_type_name = ItemTypeName.query.get(item_type_id)
         current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id,item_type_name.name))
         current_app.logger.info(ret['msg'])
