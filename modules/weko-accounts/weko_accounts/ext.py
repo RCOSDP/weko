@@ -87,6 +87,9 @@ class WekoAccounts(object):
 
         # Shibboleth
         if app.config['WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED']:
+            app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
+                        app.config[
+                            'WEKO_ACCOUNTS_SECURITY_LOGIN_LOCAL_SHIB_TEMPLATE']
             # Shibboleth IdP
             if app.config['WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED']:
                 if app.config[
@@ -100,6 +103,7 @@ class WekoAccounts(object):
                     app.config['SECURITY_LOGIN_USER_TEMPLATE'] = \
                         app.config[
                             'WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE']
+                        
 
     def _enable_logger_activity(self, app):
         """

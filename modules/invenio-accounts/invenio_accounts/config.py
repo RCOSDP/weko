@@ -75,10 +75,10 @@ SECURITY_CHANGEABLE = True
 SECURITY_CONFIRMABLE = True
 """Allow user to confirm their email address."""
 
-SECURITY_RECOVERABLE = True
+SECURITY_RECOVERABLE = False
 """Allow password recovery by users."""
 
-SECURITY_REGISTERABLE = True
+SECURITY_REGISTERABLE = False
 """Allow users to register."""
 
 SECURITY_CONFIRM_EMAIL_WITHIN = '30 minutes'
