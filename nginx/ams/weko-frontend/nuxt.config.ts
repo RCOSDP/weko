@@ -44,8 +44,8 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      clientId: 'kwzzqZnjLxhI7C4lTfGY4SC25SeiCf6PTVaMlOOU',
-      redirectURI: 'https://mebyo.ir.rcos.nii.ac.jp/',
+      clientId: 'Z3JmFZtzAkVx1Yet3nmDmvsKgfyPrSfjjUgXkTv7',
+      redirectURI: 'https://ms2db.ir.rcos.nii.ac.jp/',
       apiTimeout: 10000, // api response timeout (ms)
       tokenRefreshLimit: 600, // refresh access token before time (s)
       contact: {
@@ -55,10 +55,10 @@ export default defineNuxtConfig({
         display: 5 // number of items displayed in DL ranking
       }
     },
-    clientSecret: 'cTrXEd1ZaNzJNwlzRgHJdreaLV8UiHLMKLILgxAP318wz1t3TXspneL21Bgd',
+    clientSecret: 'xgUiGkUqXlJGQa93k2rNwzpr6EkIxzXrJhS0Z8cAigauiCGXRrZ33EIuVVew',
     // email setting for contact
     contact: {
-      to: 'sample@sample.co.jp',
+      to: 'wekosoftware@nii.ac.jp',
       subject: 'Contact subject',
       smtp: {
         host: 'localhost',

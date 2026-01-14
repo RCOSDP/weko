@@ -5,7 +5,7 @@
         <!--
         <img class="scale-150" :src="`${appConf.amsImage ?? '/img'}/logo/logo_w.svg`" alt="AMS Logo" />
         -->
-        <h1 class="text-5xl text-center font-medium text-white">Mebyo Data Catalog DB</h1>
+        <h1 class="text-5xl text-center font-medium text-white">MoonshotG2 Database Catalog</h1>
       </NuxtLink>
     </div>
     <div

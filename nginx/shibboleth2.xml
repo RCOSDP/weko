@@ -5,13 +5,13 @@
   <UnixListener address="/tmp/shibd.sock" />
   <RequestMapper type="XML">
     <RequestMap>
-      <Host name="mebyo.ir.rcos.nii.ac.jp" authType="shibboleth" requireSession="true"
+      <Host name="ms2db.ir.rcos.nii.ac.jp" authType="shibboleth" requireSession="true"
         redirectToSSL="443">
         <Path name="/secure" />
       </Host>
     </RequestMap>
   </RequestMapper>
-  <ApplicationDefaults entityID="https://mebyo.ir.rcos.nii.ac.jp/shibboleth-sp"
+  <ApplicationDefaults entityID="https://ms2db.ir.rcos.nii.ac.jp/shibboleth-sp"
     REMOTE_USER="eppn persistent-id targeted-id"
     cipherSuites="DEFAULT:!EXP:!LOW:!aNULL:!eNULL:!DES:!IDEA:!SEED:!RC4:!3DES:!kRSA:!SSLv2:!SSLv3:!TLSv1:!TLSv1.1">
     <Sessions lifetime="28800" timeout="3600" relayState="ss:mem" checkAddress="false"
