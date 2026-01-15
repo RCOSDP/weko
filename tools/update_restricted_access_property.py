@@ -5,7 +5,7 @@ import traceback
 from flask import current_app
 
 from invenio_db import db
-from weko_records.api import ItemTypes
+from weko_records.api import ItemTypes, Mapping
 from weko_records.models import ItemType, ItemTypeName, ItemTypeProperty
 
 def main(target_item_type_property_id, update_type):
@@ -18,7 +18,7 @@ def main(target_item_type_property_id, update_type):
     try:
         with db.session.begin_nested():
             update_item_type_property(target_item_type_property_id, update_type)
-            update_item_type()
+            update_item_type(target_item_type_property_id)
         db.session.commit()
     except Exception as ex:
         db.session.rollback()
@@ -46,25 +46,28 @@ def update_item_type_property(target_item_type_property_id, update_type):
     
     current_app.logger.info("Update item_type_property record successfully.")
 
-def update_item_type():
-    """Reload item types that contain the restricted access property."""
+def update_item_type(target_item_type_property_id):
+    """Reload item types that contain the restricted access property.
+    
+    Args:
+        target_item_type_property_id (int): The ID of the target item type property."""
     def _check_restricted_item_type(item_type):
         """Check if the item type contains the restricted access property.
         
         Args:
             item_type (ItemType): The item type to check.
         Returns:
-            bool: True if the item type contains the restricted access property, False otherwise.
+            str or None: The property key if found, otherwise None.
         """
         target_nested_props = ["filename", "provide", "terms", "termsDescription"]
         props = item_type.schema.get("properties", {})
-        for _, value in props.items():
+        for key, value in props.items():
             if value.get("type") != "array" or value["items"].get("type") != "object":
                 continue
             nested_props = value["items"].get("properties", {})
             if all([prop in nested_props.keys() for prop in target_nested_props]):
-                return True
-        return False
+                return key
+        return None
 
     # get all item_type ids which is not deleted
     query = db.session.query(ItemType.id).filter(
@@ -77,11 +80,15 @@ def update_item_type():
     # reload all item_type
     for item_type_id in item_type_ids:
         item_type = ItemType.query.get(item_type_id)
-        if not _check_restricted_item_type(item_type):
+        item_type_property_key = _check_restricted_item_type(item_type)
+        if not item_type_property_key:
             continue
         
-        mapping = {}
-        ret = ItemTypes.reload(item_type_id, mapping, renew_value='ALL')
+        mapping = Mapping.get_record(item_type_id)
+        mapping_dict = {
+            target_item_type_property_id: mapping.get(item_type_property_key)
+        }
+        ret = ItemTypes.reload(item_type_id, mapping_dict, renew_value='ALL')
         item_type_name = ItemTypeName.query.get(item_type_id)
         current_app.logger.info("itemtype id:{}, itemtype name:{}".format(item_type_id,item_type_name.name))
         current_app.logger.info(ret['msg'])
