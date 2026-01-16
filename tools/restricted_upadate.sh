@@ -72,3 +72,7 @@ docker cp scripts/demo/resticted_access.sql $(docker compose ps -q postgresql):/
 docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/resticted_access.sql
 
 docker-compose exec web invenio shell tools/update_restricted_access_property.py $RESTRICTED_ACCESS_PROPERTY enable
+
+docker-compose exec web bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/invenio.cfg"
+docker-compose down
+docker-compose up -d
