@@ -38,6 +38,10 @@ WEKO_ACCOUNTS_SECURITY_LOGIN_USER_TEMPLATE = 'weko_accounts/login_user.html'
 WEKO_ACCOUNTS_SECURITY_REGISTER_USER_TEMPLATE = 'weko_accounts/register_user.html'
 """Default template for user registration."""
 
+WEKO_ACCOUNTS_SECURITY_LOGIN_LOCAL_SHIB_TEMPLATE = 'weko_accounts/' \
+    'login_shibuser_pattern_0.html'
+"""Shibboleth template for login."""
+
 WEKO_ACCOUNTS_SECURITY_LOGIN_SHIB_USER_TEMPLATE = 'weko_accounts/' \
     'login_shibuser_pattern_1.html'
 """Shibboleth template for login."""
@@ -78,9 +82,15 @@ WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
 }
 """IdP attribute map."""
 
+# WEKO_ACCOUNTS_ATTRIBUTE_MAP = {
+#     'shib_eppn': 'eppn',
+#     'shib_role_authority_name': 'eduPersonAffiliation',
+#     'shib_mail': 'mail',
+#     'shib_user_name': 'DisplayName'
+# }
 WEKO_ACCOUNTS_ATTRIBUTE_MAP = {
     'shib_eppn': 'eppn',
-    'shib_role_authority_name': 'eduPersonAffiliation',
+    'shib_role_authority_name': 'HTTP_WEKOSOCIETYAFFILIATION',
     'shib_mail': 'mail',
     'shib_user_name': 'DisplayName'
 }
@@ -145,12 +155,18 @@ WEKO_ACCOUNTS_EXTRA_ROLE = {
 }
 """Extra Default role."""
 
+# WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
+#     '管理者': 'System Administrator',
+#     '学認IdP': WEKO_ACCOUNTS_GAKUNIN_ROLE['defaultRole'],
+#     '機関内のOrthros': WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE['defaultRole'],
+#     '機関外のOrthros': WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE['defaultRole'],
+#     'その他': WEKO_ACCOUNTS_EXTRA_ROLE['defaultRole']
+# }
 WEKO_ACCOUNTS_SHIB_ROLE_RELATION = {
     '管理者': 'System Administrator',
-    '学認IdP': WEKO_ACCOUNTS_GAKUNIN_ROLE['defaultRole'],
-    '機関内のOrthros': WEKO_ACCOUNTS_ORTHROS_INSIDE_ROLE['defaultRole'],
-    '機関外のOrthros': WEKO_ACCOUNTS_ORTHROS_OUTSIDE_ROLE['defaultRole'],
-    'その他': WEKO_ACCOUNTS_EXTRA_ROLE['defaultRole']
+    '図書館員': 'Repository Administrator',
+    '教員': 'Contributor',
+    '教官': 'Contributor'
 }
 """Role relation."""
 
@@ -192,7 +208,7 @@ WEKO_API_LIMIT_RATE_DEFAULT = ['100 per minute']
 """Default rate limit per endpoint for one user in the WEKO API."""
 
 
-WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = True
+WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = False
 """Skip shibboleth confirmation page."""
 
 WEKO_ACCOUNTS_IDP_ENTITY_ID = ''
@@ -234,5 +250,20 @@ WEKO_ACCOUNTS_GAKUNIN_USER_NAME_PREFIX = 'G_'
 WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH = 253
 """Length of Shibboleth user name without hash value."""
 
-WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL = 'https://cg.gakunin.jp'
+WEKO_ACCOUNTS_GAKUNIN_MAP_BASE_URL = 'https://sptest.cg.gakunin.jp'
 """Base URL for Gakunin mAP."""
+
+WEKO_ACCOUNTS_WAYF_URL ="https://test-ds.gakunin.nii.ac.jp/WAYF"
+"""URL for WAYF."""
+
+WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS = [{"name":"Orthros-Test","entityID":"https://core-stg.orthros.gakunin.nii.ac.jp/idp"}]
+"" "Additional IdPs for WAYF."""
+
+WEKO_ACCOUNTS_DEFAULT_IDP =""
+"""Default IdP for WAYF."""
+
+SECURITY_REGISTERABLE = False
+"""Disable user registration via WEKO-Accounts."""
+
+SECURITY_RECOVERABLE = False
+"""Disable password recovery via WEKO-Accounts."""

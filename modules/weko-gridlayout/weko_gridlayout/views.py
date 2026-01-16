@@ -495,14 +495,15 @@ def _add_url_rule(url_or_urls):
                      '/<path:path>/<string:current_language>', methods=['GET'])
 def get_access_counter_record(repository_id, path, current_language):
     """Get access Top page value."""
-    cached_data = current_cache.get('access_counter')
-    if path == "main":
-        widget_design_setting = WidgetDesignServices.get_widget_design_setting(
-            repository_id, current_language or get_default_language())
-    else:
-        page_id = WidgetDesignPage.get_by_url("/"+path).id
+    design_page = WidgetDesignPage.get_by_url("/" + path)
+    if design_page:
+        page_id = design_page.id
         widget_design_setting = WidgetDesignPageServices.get_widget_design_setting(
             page_id, current_language or get_default_language())
+    else:
+        page_id = "main"
+        widget_design_setting = WidgetDesignServices.get_widget_design_setting(
+            repository_id, current_language or get_default_language())
 
     widget_ids = [
         str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings", {})
@@ -510,7 +511,9 @@ def get_access_counter_record(repository_id, path, current_language):
     ]
     if len(widget_ids) == 0:
         return abort(404)
-
+    
+    cached_key = "access_counter_{}".format(page_id)
+    cached_data = current_cache.get(cached_key)
     if not cached_data or set(list(json.loads(cached_data.data).keys())) != set(widget_ids):
         result = {}
         # need to logic check
@@ -547,7 +550,7 @@ def get_access_counter_record(repository_id, path, current_language):
         if result and len(result) > 0:
             cached_data = jsonify(result)
             ttl = current_app.config.get('INVENIO_CACHE_TTL', 50)
-            current_cache.set('access_counter', cached_data, ttl)
+            current_cache.set(cached_key, cached_data, ttl)
 
     return cached_data
 
