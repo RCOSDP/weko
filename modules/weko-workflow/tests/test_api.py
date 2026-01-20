@@ -837,6 +837,50 @@ def test_WorkFlow_get_workflow_list(app, db, workflow, users):
     user = users[3]["obj"]
     res = _workflow.get_workflow_list(user=user)
     assert len(res) == 1
+
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_get_workflows_by_roles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_workflows_by_roles(app, mocker):
+    role_1 = MagicMock(id=1, name='')
+    role_2 = MagicMock(id=2, name='')
+    role_3 = MagicMock(id=3, name='')
+
+    mock_user = MagicMock()
+    mock_user.roles = [role_1, role_2]
+    mocker.patch("flask_login.utils._get_user", return_value=mock_user) # current_user_roles
+
+    mock_query = mocker.patch("invenio_accounts.models.Role.query")
+    mock_filter = mock_query.filter.return_value
+    mock_filter.all.return_value = [role_1, role_3] # all roles
+
+    mock_outerjoin = mock_query.outerjoin.return_value
+    mock_filter1 = mock_outerjoin.filter.return_value
+    mock_filter2 = mock_filter1.filter.return_value
+    mock_filter2.all.return_value = [role_1] # list_hide
+
+    wf = WorkFlow()
+    wf1 = MagicMock(id=11, name='')
+
+    # user_roles:[role_1] - list_hide:[role_1] = [] -> not show wf1
+    workflows = wf.get_workflows_by_roles([wf1])
+    assert workflows == []
+
+    mock_filter2.all.return_value = [] # list_hide
+
+    # user_roles:[role_1] - list_hide:[] = [role_1] -> show wf1
+    workflows = wf.get_workflows_by_roles([wf1])
+    assert workflows == [wf1]
+
+    # argument is None
+    workflows = wf.get_workflows_by_roles(None)
+    assert workflows == []
+
+    # user_roles is None
+    mock_filter.all.return_value = None # role
+    workflows = wf.get_workflows_by_roles([wf1])
+    assert workflows == []
+
+
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_WorkActivity_filter_by_action -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_WorkActivity_filter_by_action(app, db):
     query = db.session.query(Activity)

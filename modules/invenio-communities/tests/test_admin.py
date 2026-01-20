@@ -79,6 +79,36 @@ def setup_view_community(app,db,users):
 # class CommunityModelView(ModelView):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestInclusionRequestModelView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 class TestCommunityModelView():
+    # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_owner_query_factory_exclude_roles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+    def test_owner_query_factory_exclude_roles(self, app, db):
+        app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'] = {
+            'role_keyword': 'roles',
+            'prefix': 'jc'
+        }
+        from invenio_accounts.models import Role
+
+        role_key = app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('role_keyword', '')
+        prefix = app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('prefix', '')
+
+        role_both = Role(name=f"{prefix}abc{role_key}")  # Contains both → should be excluded
+        role_only_key = Role(name=f"abc{role_key}")      # Contains only one → should be included
+        role_only_prefix = Role(name=f"{prefix}abc")     # Contains only one → should be included
+        role_none = Role(name="abc")                     # Contains neither → should be included
+        db.session.add_all([role_both, role_only_key, role_only_prefix, role_none])
+        db.session.commit()
+
+        from invenio_communities.models import Community
+        view = CommunityModelView(Community, db.session)
+        # List of role names obtained by query_factory
+        owner_names = [r.name for r in view.form_args['owner']['query_factory']()]
+
+        # Exclude roles that contain both
+        assert role_both.name not in owner_names
+        # Include roles that contain only one or neither
+        assert role_only_key.name in owner_names
+        assert role_only_prefix.name in owner_names
+        assert role_none.name in owner_names
+
     def test_index_view_acl_guest(self,app,setup_view_community,client):
         url = url_for('community.index_view')
         res = client.get(url)
@@ -736,7 +766,7 @@ class TestCommunityModelView():
         model.cnri = None
         model.thumbnail_path = None
         CommunityModelView.on_model_delete(self, model)
-    
+
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_on_model_change_sets_id_user -vv -s --
     def test_on_model_change_sets_id_user(self, setup_view_community, mocker):
         _, _, _, _, view = setup_view_community
@@ -771,7 +801,7 @@ class TestCommunityModelView():
             with patch("invenio_communities.admin.json.load", return_value={}):
                 res = client.get(url)
                 assert res.status_code == 200
-                
+
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_get_schema_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
     def test_get_schema_form(self,setup_view_community,users,mocker,db):
         app, _, _, user, _ = setup_view_community
@@ -783,10 +813,10 @@ class TestCommunityModelView():
             with patch("invenio_communities.admin.db.session.execute", side_effect=BaseException()):
                 res = client.get(url)
                 assert res.status_code == 500
-    
+
     @pytest.mark.parametrize("input_id,expected_error", [
         ("1abc", "The first character cannot"),
-        ("-123", "Cannot set negative number"), 
+        ("-123", "Cannot set negative number"),
         ("abc def", "Don't use space or special"),
     ])
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_validate_input_id_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp

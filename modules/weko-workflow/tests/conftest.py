@@ -235,6 +235,10 @@ def base_app(instance_path, search_class, cache_config):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
+        WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT={
+            'role_keyword': 'roles',
+            'prefix': 'jc'
+        },
         ACCOUNTS_SESSION_REDIS_DB_NO = 1,
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
@@ -573,52 +577,53 @@ def base_app(instance_path, search_class, cache_config):
     )
 
     app_.testing = True
-    Babel(app_)
-    InvenioI18N(app_)
-    Menu(app_)
-    # InvenioTheme(app_)
-    OAuth2Provider(app_)
-    InvenioAccess(app_)
-    InvenioAccounts(app_)
-    InvenioFilesREST(app_)
-    InvenioCache(app_)
-    InvenioDB(app_)
-    InvenioDeposit(app_)
-    InvenioStats(app_)
-    InvenioAssets(app_)
-    InvenioAdmin(app_)
-    InvenioPIDRelations(app_)
-    InvenioJSONSchemas(app_)
-    InvenioPIDStore(app_)
-    InvenioRecords(app_)
-    InvenioRecordsUI(app_)
-    InvenioREST(app_)
-    InvenioOAuth2Server(app_)
-    InvenioOAuth2ServerREST(app_)
-    WekoRecordsUI(app_)
-    search = InvenioSearch(app_, client=MockEs())
-    search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
-    # InvenioCommunities(app_)
-    # WekoAdmin(app_)
-    WekoSearchUI(app_)
-    WekoWorkflow(app_)
-    WekoUserProfiles(app_)
-    WekoDeposit(app_)
-    WekoItemsUI(app_)
-    WekoAdmin(app_)
-    InvenioOAuth2Server(app_)
-    WekoLoggingUserActivity(app_)
-    WekoNotifications(app_)
-    # WekoRecordsUI(app_)
-    # app_.register_blueprint(invenio_theme_blueprint)
-    app_.register_blueprint(invenio_communities_blueprint)
-    # app_.register_blueprint(invenio_admin_blueprint)
-    # app_.register_blueprint(invenio_accounts_blueprint)
-    # app_.register_blueprint(weko_theme_blueprint)
-    # app_.register_blueprint(weko_admin_blueprint)
-    app_.register_blueprint(weko_workflow_blueprint)
-    WekoWorkflowREST(app_)
-    app_.register_blueprint(oauth2server_settings_blueprint)
+    with app_.app_context():
+        Babel(app_)
+        InvenioI18N(app_)
+        Menu(app_)
+        # InvenioTheme(app_)
+        OAuth2Provider(app_)
+        InvenioAccess(app_)
+        InvenioAccounts(app_)
+        InvenioFilesREST(app_)
+        InvenioCache(app_)
+        InvenioDB(app_)
+        InvenioDeposit(app_)
+        InvenioStats(app_)
+        InvenioAssets(app_)
+        InvenioAdmin(app_)
+        InvenioPIDRelations(app_)
+        InvenioJSONSchemas(app_)
+        InvenioPIDStore(app_)
+        InvenioRecords(app_)
+        InvenioRecordsUI(app_)
+        InvenioREST(app_)
+        InvenioOAuth2Server(app_)
+        InvenioOAuth2ServerREST(app_)
+        WekoRecordsUI(app_)
+        search = InvenioSearch(app_, client=MockEs())
+        search.register_mappings(search_class.Meta.index, 'mock_module.mappings')
+        # InvenioCommunities(app_)
+        # WekoAdmin(app_)
+        WekoSearchUI(app_)
+        WekoWorkflow(app_)
+        WekoUserProfiles(app_)
+        WekoDeposit(app_)
+        WekoItemsUI(app_)
+        WekoAdmin(app_)
+        InvenioOAuth2Server(app_)
+        WekoLoggingUserActivity(app_)
+        WekoNotifications(app_)
+        # WekoRecordsUI(app_)
+        # app_.register_blueprint(invenio_theme_blueprint)
+        app_.register_blueprint(invenio_communities_blueprint)
+        # app_.register_blueprint(invenio_admin_blueprint)
+        # app_.register_blueprint(invenio_accounts_blueprint)
+        # app_.register_blueprint(weko_theme_blueprint)
+        # app_.register_blueprint(weko_admin_blueprint)
+        app_.register_blueprint(weko_workflow_blueprint)
+        WekoWorkflowREST(app_)
+        app_.register_blueprint(oauth2server_settings_blueprint)
 
     return app_
 
@@ -702,7 +707,7 @@ def users(app, db):
     user = User.query.filter_by(email='user@test.org').one_or_none()
     if not user:
         user = create_test_user(email='user@test.org')
-    
+
     contributor = User.query.filter_by(email='user@test.org').one_or_none()
     if not contributor:
         contributor = create_test_user(email='contributor@test.org')
@@ -714,7 +719,7 @@ def users(app, db):
     repoadmin = User.query.filter_by(email='repoadmin@test.org').one_or_none()
     if not repoadmin:
         repoadmin = create_test_user(email='repoadmin@test.org')
-    
+
     sysadmin = User.query.filter_by(email='sysadmin@test.org').one_or_none()
     if not sysadmin:
         sysadmin = create_test_user(email='sysadmin@test.org')
@@ -754,15 +759,15 @@ def users(app, db):
     general_role = Role.query.filter_by(name='General').one_or_none()
     if not general_role:
         general_role = ds.create_role(name='General')
-    
+
     originalrole = Role.query.filter_by(name='Original Role').one_or_none()
     if not originalrole:
         originalrole = ds.create_role(name='Original Role')
-    
+
     studentrole = Role.query.filter_by(name='Student').one_or_none()
     if not studentrole:
         studentrole = ds.create_role(name='Student')
-    
+
     ds.add_role_to_user(sysadmin, sysadmin_role)
     ds.add_role_to_user(repoadmin, repoadmin_role)
     ds.add_role_to_user(contributor, contributor_role)
@@ -838,7 +843,7 @@ def users(app, db):
         index = Index(id=1,parent=0,position=0,index_name="com_index",display_no=5,public_state=True)
         db.session.add(index)
         db.session.commit()
-    
+
 
     comm = Community.query.filter_by(id="comm01").one_or_none()
     if not comm:
@@ -913,7 +918,7 @@ def users_1(app, db):
         index = Index(id=1,parent=0,position=0,index_name="com_index",display_no=5,public_state=True)
         db.session.add(index)
         db.session.commit()
-    
+
     comm = Community.query.filter_by(id="comm01").one_or_none()
     if not comm:
         comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
@@ -1382,7 +1387,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                 flow_name='Delete Approval Flow',
                                 flow_user=1,
                                 flow_type='2')
-    
+
     with db.session.begin_nested():
         db.session.add(flow_define)
         db.session.add(del_flow_define)
@@ -1401,7 +1406,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     flow_action2 = FlowAction.query.filter_by(flow_id=flow_define.flow_id, action_id=3, action_order=2).one_or_none()
     if not flow_action2:
         flow_action2 = FlowAction(status='N',
@@ -1413,7 +1418,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     flow_action3 = FlowAction.query.filter_by(flow_id=flow_define.flow_id, action_id=5).one_or_none()
     if not flow_action3:
         flow_action3 = FlowAction(status='N',
@@ -1425,7 +1430,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     flow_action4 = FlowAction.query.filter_by(flow_id=flow_define.flow_id, action_id=3, action_order=1).one_or_none()
     if not flow_action4:
         flow_action4 = FlowAction(status='N',
@@ -1437,7 +1442,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2018/07/28 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     del_flow_action1 = FlowAction.query.filter_by(flow_id=del_flow_define.flow_id, action_id=1).one_or_none()
     if not del_flow_action1:
         del_flow_action1 = FlowAction(status='N',
@@ -1461,7 +1466,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     app_flow_action1 = FlowAction.query.filter_by(flow_id=app_flow_define.flow_id, action_id=1).one_or_none()
     if not app_flow_action1:
         app_flow_action1 = FlowAction(status='N',
@@ -1473,7 +1478,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     app_flow_action2 = FlowAction.query.filter_by(flow_id=app_flow_define.flow_id, action_id=4).one_or_none()
     if not app_flow_action2:
         app_flow_action2 = FlowAction(status='N',
@@ -1485,7 +1490,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                      action_status='A',
                      action_date=datetime.strptime('2025/05/01 0:00:00','%Y/%m/%d %H:%M:%S'),
                      send_mail_setting={})
-    
+
     app_flow_action3 = FlowAction.query.filter_by(flow_id=app_flow_define.flow_id, action_id=2).one_or_none()
     if not app_flow_action3:
         app_flow_action3 = FlowAction(status='N',
@@ -1515,31 +1520,31 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         action_role_1 = FlowActionRole(flow_action_id=flow_action1.id,
                                    action_role=1,
                                    action_user=1)
-    
-    action_role_2_1 = FlowActionRole.query.filter_by(flow_action_id=flow_action2.id, action_role=1, action_user=2).one_or_none()    
+
+    action_role_2_1 = FlowActionRole.query.filter_by(flow_action_id=flow_action2.id, action_role=1, action_user=2).one_or_none()
     if not action_role_2_1:
         action_role_2_1 = FlowActionRole(flow_action_id=flow_action2.id,
                                    action_role=1,
                                    action_user=2)
-    
-    action_role_2_2 = FlowActionRole.query.filter_by(flow_action_id=flow_action2.id, action_role=2, action_user=1).one_or_none()    
+
+    action_role_2_2 = FlowActionRole.query.filter_by(flow_action_id=flow_action2.id, action_role=2, action_user=1).one_or_none()
     if not action_role_2_2:
         action_role_2_2 = FlowActionRole(flow_action_id=flow_action2.id,
                                    action_role=2,
                                    action_user=1)
-    
+
     action_role_2_3 = FlowActionRole.query.filter_by(flow_action_id=flow_action2.id, action_role=2, action_user=2).one_or_none()
     if not action_role_2_3:
         action_role_2_3 = FlowActionRole(flow_action_id=flow_action2.id,
                                    action_role=2,
                                    action_user=2)
-    
+
     action_role_2_4 = FlowActionRole.query.filter_by(flow_action_id=flow_action2.id, action_role=2, action_user=3).one_or_none()
     if not action_role_2_4:
         action_role_2_4 = FlowActionRole(flow_action_id=flow_action2.id,
                                    action_role=2,
                                    action_user=3)
-    
+
     action_role_3 = FlowActionRole.query.filter_by(flow_action_id=flow_action3.id, action_role=1, action_user=3).one_or_none()
     if not action_role_3:
         action_role_3 = FlowActionRole(flow_action_id=flow_action3.id,
@@ -1554,8 +1559,8 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                    action_role_exclude=True,
                                    action_user_exclude=True
                                    )
-    
-    action_role_4_2 = FlowActionRole.query.filter_by(flow_action_id=flow_action4.id, action_role=1, action_user=2, action_role_exclude=True, action_user_exclude=True).one_or_none()    
+
+    action_role_4_2 = FlowActionRole.query.filter_by(flow_action_id=flow_action4.id, action_role=1, action_user=2, action_role_exclude=True, action_user_exclude=True).one_or_none()
     if not action_role_4_2:
         action_role_4_2 = FlowActionRole(flow_action_id=flow_action4.id,
                                    action_role=1,
@@ -1563,8 +1568,8 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                    action_role_exclude=True,
                                    action_user_exclude=True
                                    )
-    
-    action_role_4_3 = FlowActionRole.query.filter_by(flow_action_id=flow_action4.id, action_role=1, action_user=3, action_role_exclude=False, action_user_exclude=False).one_or_none()  
+
+    action_role_4_3 = FlowActionRole.query.filter_by(flow_action_id=flow_action4.id, action_role=1, action_user=3, action_role_exclude=False, action_user_exclude=False).one_or_none()
     if not action_role_4_3:
         action_role_4_3 = FlowActionRole(flow_action_id=flow_action4.id,
                                    action_role=1,
@@ -1572,9 +1577,9 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                    action_role_exclude=False,
                                    action_user_exclude=False
                                    )
-    
+
     action_role_4_4 = FlowActionRole.query.filter_by(flow_action_id=flow_action4.id, action_role=2, action_user=1).one_or_none()
-    if not action_role_4_4: 
+    if not action_role_4_4:
         action_role_4_4 = FlowActionRole(flow_action_id=flow_action4.id,
                                    action_role=2,
                                    action_user=1
@@ -1610,7 +1615,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                         open_restricted=False,
                         location_id=None,
                         is_gakuninrdm=False)
-    
+
     del_workflow = WorkFlow.query.filter_by(flows_name='test delete workflow').one_or_none()
     if not del_workflow:
         del_workflow = WorkFlow(flows_id=uuid.uuid4(),
@@ -1623,7 +1628,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                         open_restricted=False,
                         location_id=None,
                         is_gakuninrdm=False)
-    
+
     app_del_workflow = WorkFlow.query.filter_by(flows_name='test delete approval workflow').one_or_none()
     if not app_del_workflow:
         app_del_workflow = WorkFlow(flows_id=uuid.uuid4(),
@@ -1636,7 +1641,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                         open_restricted=False,
                         location_id=None,
                         is_gakuninrdm=False)
-    
+
     activity = Activity.query.filter_by(activity_id='1').one_or_none()
     if not activity:
         activity = Activity(activity_id='1',workflow_id=1, flow_id=flow_define.id,
@@ -1648,7 +1653,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test', shared_user_ids='[]', extra_info={},
                     action_order=1,
                     )
-    
+
     activity2 = Activity.query.filter_by(activity_id='A-00000001-10001').one_or_none()
     if not activity2:
         activity2 = Activity(activity_id='A-00000001-10001',workflow_id=1, flow_id=flow_define.id,
@@ -1684,7 +1689,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     app_del_activity = Activity.query.filter_by(activity_id='A-00000001-10011').one_or_none()
     if not app_del_activity:
         app_del_activity = Activity(activity_id='A-00000001-10011',workflow_id=3, flow_id=app_flow_define.id,
@@ -1696,7 +1701,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item1 = Activity.query.filter_by(activity_id='2').one_or_none()
     if not activity_item1:
         activity_item1 = Activity(activity_id='2',item_id=db_records[2][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1708,7 +1713,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item1', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item2 = Activity.query.filter_by(activity_id='3').one_or_none()
     activity_item2 = Activity(activity_id='3', workflow_id=1, flow_id=flow_define.id,
                     action_id=3, activity_login_user=users[3]["id"],
@@ -1730,7 +1735,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item3', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item4 = Activity.query.filter_by(activity_id='5').one_or_none()
     if not activity_item4:
         activity_item4 = Activity(activity_id='5', workflow_id=1, flow_id=flow_define.id,
@@ -1742,7 +1747,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item4', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-        
+
     activity_item5 = Activity.query.filter_by(activity_id='6').one_or_none()
     if not activity_item5:
         activity_item5 = Activity(activity_id='6', workflow_id=1, flow_id=flow_define.id,
@@ -1754,7 +1759,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item5', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item6 = Activity.query.filter_by(activity_id='7').one_or_none()
     if not activity_item6:
         activity_item6 = Activity(activity_id='7', workflow_id=1, flow_id=flow_define.id,
@@ -1766,7 +1771,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item5', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item7 = Activity.query.filter_by(activity_id='8').one_or_none()
     if not activity_item7:
         activity_item7 = Activity(activity_id='8', item_id=db_records[0][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1778,7 +1783,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item8', shared_user_ids=[], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item8 = Activity.query.filter_by(activity_id='9').one_or_none()
     if not activity_item8:
         activity_item8 = Activity(activity_id='9', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1790,7 +1795,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item8', shared_user_ids='[]', extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item9 = Activity.query.filter_by(activity_id='10').one_or_none()
     if not activity_item9:
         activity_item9 = Activity(activity_id='10', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1802,7 +1807,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='test item9', shared_user_ids=[6], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_item10 = Activity.query.filter_by(activity_id='11').one_or_none()
     if not activity_item10:
         activity_item10 = Activity(activity_id='11', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1814,7 +1819,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     title='制限公開', shared_user_ids=[2,4], extra_info={},
                     action_order=1,
                     )
-    
+
     activity_guest = Activity.query.filter_by(activity_id='guest').one_or_none()
     if not activity_guest:
         activity_guest = Activity(activity_id='guest', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1827,7 +1832,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     action_order=1,
                     extra_info={"guest_mail":"guest@test.org","record_id": 1,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
                     )
-    
+
     activity_landing_url = Activity.query.filter_by(activity_id='A-00000001-10003').one_or_none()
     if not activity_landing_url:
         activity_landing_url = Activity(activity_id='A-00000001-10003',workflow_id=1, flow_id=flow_define.id,
@@ -1838,7 +1843,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_ids=[], extra_info={"record_id": 1},
                     action_order=6)
-    
+
     activity_terms_of_use = Activity.query.filter_by(activity_id='A-00000001-10004').one_or_none()
     if not activity_terms_of_use:
         activity_terms_of_use = Activity(activity_id='A-00000001-10004',workflow_id=1, flow_id=flow_define.id,
@@ -1849,13 +1854,13 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     activity_confirm_term_of_use=True,
                     title='test', shared_user_ids=[], extra_info={"record_id": 1, "file_name":"aaa.txt"},
                     action_order=6)
-    
+
     activity_no_contents = Activity.query.filter_by(activity_id='A-00000001-10005').one_or_none()
     if not activity_no_contents:
         activity_no_contents = Activity(activity_id='A-00000001-10005',workflow_id=1, flow_id=flow_define.id,
                     action_id=1, activity_login_user=1,title='test', shared_user_ids=[], extra_info={"record_id": 1, "file_name":"recid/1.0"},
                     action_order=6)
-    
+
     activity_guest_2 = Activity.query.filter_by(activity_id='guest_2').one_or_none()
     if not activity_guest_2:
         activity_guest_2 = Activity(activity_id='guest_2', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1881,7 +1886,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                     action_order=1,
                     extra_info={"guest_mail":"guest@test.org","record_id": 3,"related_title":"related_guest_activity","usage_record_id":str(db_records[1][2].id),"usage_activity_id":str(uuid.uuid4())}
                     )
-    
+
     activity_guest_4 = Activity.query.filter_by(activity_id='guest_4').one_or_none()
     if not activity_guest_4:
         activity_guest_4 = Activity(activity_id='guest_4', item_id=db_records[1][2].id,workflow_id=1, flow_id=flow_define.id,
@@ -1929,19 +1934,19 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         activity_action1_item1 = ActivityAction(activity_id=activity_item1.activity_id,
                                             action_id=1,action_status="M",
                                             action_handler=1, action_order=1)
-    
+
     activity_action2_item1 = ActivityAction.query.filter_by(activity_id=activity_item1.activity_id, action_id=3).one_or_none()
     if not activity_action2_item1:
         activity_action2_item1 = ActivityAction(activity_id=activity_item1.activity_id,
                                             action_id=3,action_status="M",
                                             action_handler=1, action_order=2)
-    
+
     activity_action3_item1 = ActivityAction.query.filter_by(activity_id=activity_item1.activity_id, action_id=5).one_or_none()
     if not activity_action3_item1:
         activity_action3_item1 = ActivityAction(activity_id=activity_item1.activity_id,
                                             action_id=5,action_status="M",
                                             action_handler=1, action_order=3)
-    
+
     activity_action1_item2 = ActivityAction.query.filter_by(activity_id=activity_item2.activity_id, action_id=1).one_or_none()
     if not activity_action1_item2:
         activity_action1_item2 = ActivityAction(activity_id=activity_item2.activity_id,
@@ -1952,13 +1957,13 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         activity_action2_item2 = ActivityAction(activity_id=activity_item2.activity_id,
                                             action_id=3,action_status="M",
                                             action_handler=1, action_order=2)
-    
+
     activity_action3_item2 = ActivityAction.query.filter_by(activity_id=activity_item2.activity_id, action_id=5).one_or_none()
     if not activity_action3_item2:
         activity_action3_item2 = ActivityAction(activity_id=activity_item2.activity_id,
                                             action_id=5,action_status="M",
                                             action_handler=1, action_order=3)
-    
+
     activity_item2_feedbackmail = ActionFeedbackMail.query.filter_by(activity_id=activity_item2.activity_id, action_id=3).one_or_none()
     if not activity_item2_feedbackmail:
         activity_item2_feedbackmail = ActionFeedbackMail(activity_id='3',
@@ -1971,7 +1976,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                 action_id=3,
                                 feedback_maillist=[{"email": "test@org", "author_id": ""}]
                                 )
-    
+
     activity_item4_feedbackmail = ActionFeedbackMail.query.filter_by(activity_id=activity_item4.activity_id, action_id=3).one_or_none()
     if not activity_item4_feedbackmail:
         activity_item4_feedbackmail = ActionFeedbackMail(activity_id='5',
@@ -1985,11 +1990,11 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
                                 action_id=3,
                                 feedback_maillist=[{"email": "test1@org", "author_id": "2"}]
                                 )
-    
+
     activity_item5_Authors = Authors.query.filter_by(id=1).one_or_none()
     if not activity_item5_Authors:
         activity_item5_Authors = Authors(id=1,json={'affiliationInfo': [{'affiliationNameInfo': [{'affiliationName': '', 'affiliationNameLang': 'ja', 'affiliationNameShowFlg': 'true'}], 'identifierInfo': [{'affiliationId': 'aaaa', 'affiliationIdType': '1', 'identifierShowFlg': 'true'}]}], 'authorIdInfo': [{'authorId': '1', 'authorIdShowFlg': 'true', 'idType': '1'}, {'authorId': '1', 'authorIdShowFlg': 'true', 'idType': '2'}], 'authorNameInfo': [{'familyName': '一', 'firstName': '二', 'fullName': '一\u3000二 ', 'language': 'ja-Kana', 'nameFormat': 'familyNmAndNm', 'nameShowFlg': 'true'}], 'emailInfo': [{'email': 'test@org'}], 'gather_flg': 0, 'id': {'_id': 'HZ9iXYMBnq6bEezA2CK3', '_index': 'tenant1-authors-author-v1.0.0', '_primary_term': 29, '_seq_no': 0, '_shards': {'failed': 0, 'successful': 1, 'total': 2}, '_type': 'author-v1.0.0', '_version': 1, 'result': 'created'}, 'is_deleted': 'false', 'pk_id': '1'})
-    
+
     activity_item6_feedbackmail = ActionFeedbackMail.query.filter_by(activity_id=activity_item6.activity_id, action_id=3).one_or_none()
     if not activity_item6_feedbackmail:
         activity_item6_feedbackmail = ActionFeedbackMail(activity_id='7',
@@ -2028,7 +2033,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
         activity_action03_1 = ActivityAction(activity_id=activity_03.activity_id,
                                             action_id=1,action_status="M",action_comment="",
                                             action_handler=1, action_order=1)
-    
+
     activity_action03_2 = ActivityAction.query.filter_by(activity_id=activity_03.activity_id, action_id=3).one_or_none()
     if not activity_action03_2:
         activity_action03_2 = ActivityAction(activity_id=activity_03.activity_id,
@@ -2050,7 +2055,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
     with db.session.begin_nested():
         db.session.add(history)
     db.session.commit()
-    
+
     doi_identifier = Identifier.query.filter_by(id=1).one_or_none()
     if not doi_identifier:
         doi_identifier = Identifier(id=1, repository='Root Index',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,
@@ -2058,7 +2063,7 @@ def db_register_full_action(app, db, db_records, users, action_data, item_type):
             created_userId='1',created_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S'),
             updated_userId='1',updated_date=datetime.strptime('2022-09-28 04:33:42','%Y-%m-%d %H:%M:%S')
         )
-    
+
     doi_identifier2 = Identifier.query.filter_by(id=2).one_or_none()
     if not doi_identifier2:
         doi_identifier2 = Identifier(id=2, repository='test',jalc_flag= True,jalc_crossref_flag= True,jalc_datacite_flag=True,ndl_jalc_flag=True,

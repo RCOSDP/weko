@@ -582,6 +582,31 @@ class Community(db.Model, Timestamp):
         return hashlib.sha1('{0}__{1}'.format(
             self.id, self.updated).encode('utf-8')).hexdigest()
 
+    @property
+    def owner_display(self):
+        """
+        Get the display name of the community owner.
+
+        This property returns a user-friendly owner name for the community.
+        If the owner's name contains a role keyword defined in the system configuration,
+        it replaces the suffix with a mapped display name for clarity.
+        Otherwise, it returns the owner's name as-is.
+
+        Returns:
+            str: Display name of the community owner.
+        """
+        if self.owner and hasattr(self.owner, 'name'):
+            roles_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+            role_mapping = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_mapping"]
+            sysadm_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["sysadm_group"]
+            owner_name = self.owner.name
+            if owner_name == sysadm_key:
+                return "System Administrator"
+            if owner_name and roles_key in owner_name:
+                suffix = owner_name.split(roles_key + '_')[-1]
+                if suffix in role_mapping.keys():
+                    owner_name = role_mapping[suffix]
+            return owner_name
 
 class FeaturedCommunity(db.Model, Timestamp):
     """Represent a featured community."""

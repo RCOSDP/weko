@@ -287,3 +287,35 @@ def test_userview_edit_form(app, users):
     view = UserView(User, db.session)
     form = view.edit_form()
     assert form.data['active'] is False
+
+# .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_scaffold_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
+def test_scaffold_form(app):
+    """Test scaffold_form method of UserView."""
+    with app.app_context():
+        current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'] = {
+            'role_keyword': 'roles',
+            'prefix': 'jc'
+        }
+        db.session.add(Role(id=1, name='Contributor', description=None))
+        db.session.add(Role(id=2, name='jc_xxx_roles_contributor', description=None))
+        db.session.add(Role(id=3, name='jc_xxx_groups_yyy', description=None))
+        db.session.commit()
+
+        view = UserView(User, db.session)
+        form_class = view.scaffold_form()
+
+        roles = form_class.role.kwargs['query_factory']()
+        groups = form_class.group.kwargs['query_factory']()
+
+        role_names = [r.name for r in roles]
+        group_names = [g.name for g in groups]
+        # Check included roles
+        assert 'Contributor' in role_names
+        # Check included groups
+        assert 'jc_xxx_groups_yyy' in group_names
+        # Check excluded roles
+        assert 'jc_xxx_roles_contributor' not in role_names
+        assert 'jc_xxx_groups_yyy' not in role_names
+        # Check excluded groups
+        assert 'Contributor' not in group_names
+        assert 'jc_xxx_roles_contributor' not in group_names

@@ -730,7 +730,11 @@ class WorkFlow(object):
         wfs = []
         current_user_roles = [role.id for role in current_user.roles]
         if isinstance(workflows, list):
-            role = Role.query.all()
+            role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
+            prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
+            role = Role.query.filter(
+                ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
+            ).all()
             while workflows:
                 tmp = workflows.pop(0)
                 list_hide = Role.query.outerjoin(WorkflowRole) \
@@ -2310,7 +2314,7 @@ class WorkActivity(object):
             ).all()
             com_roles = list(
                 set([comm.id_role for comm in comm_list]).union(
-                    set([comm.group_id for comm in comm_list])))            
+                    set([comm.group_id for comm in comm_list])))
 
             if com_roles:
                 com_users = User.query.outerjoin(userrole).outerjoin(Role) \

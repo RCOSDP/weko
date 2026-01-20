@@ -1024,8 +1024,8 @@ class TestIndexManagementAPI:
         assert created_index_db.rss_status is False
         assert set(created_index_db.browsing_role.split(",")) == set(map(lambda x: str(x["id"]), Indexes.get_account_role()))
         assert set(created_index_db.browsing_role.split(",")) == set(map(lambda x: str(x["id"]), Indexes.get_account_role()))
-        assert created_index_db.browsing_group == ""
-        assert created_index_db.contribute_group == ""
+        assert created_index_db.browsing_group == "-89"
+        assert created_index_db.contribute_group == "-89"
         assert created_index_db.online_issn == ""
         assert self.count_indices == count_before + 1, "Index has not been created successfully"
 

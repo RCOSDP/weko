@@ -83,6 +83,11 @@ class CommunityModelView(ModelView):
     column_searchable_list = ('id', 'title', 'description')
     edit_template = "invenio_communities/admin/edit.html"
 
+    column_formatters = {
+        'owner': lambda v, c, m, p: m.owner_display,
+        'owner.name': lambda v, c, m, p: m.owner_display
+    }
+
     @expose('/new/', methods=['GET', 'POST'])
     def create_view(self):
         """Create a new model.
@@ -99,7 +104,7 @@ class CommunityModelView(ModelView):
         if(request.method == 'POST'):
             try:
                 form_data = request.form.to_dict()
-                
+
                 # Validate community ID
                 self.validate_community_id(form_data['id'])
                 # Validate title length
@@ -224,7 +229,7 @@ class CommunityModelView(ModelView):
         form.id.data = model.id or ''
         form.cnri.data = model.cnri or ''
         form.title.data = model.title or ''
-        form.owner.data = model.owner or ''
+        form.owner.data = model.owner_display or ''
         form.index.data = model.index or ''
         form.group.data = model.group or ''
         form.description.data = model.description or ''
@@ -554,6 +559,15 @@ class CommunityModelView(ModelView):
         },
         "title": {
             "validators": [Length(max=255)]
+        },
+        'owner': {
+            'allow_blank': False,
+            'query_factory': lambda: db.session.query(Role).filter(
+                ~(
+                    Role.name.like(f"%{current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('role_keyword','')}%") &
+                    Role.name.startswith(current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('prefix',''))
+                )
+            ).all(),
         },
         'group': {
             'allow_blank': False,
