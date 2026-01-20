@@ -55,13 +55,13 @@ def check_site_license_permission():
     ):
         for shib_user in current_user.shib_weko_user:
             user_domain = shib_user.shib_organization
-            for lst in sl_lst:
-                domain_name = lst.get('domain_name')
-
-                if user_domain == domain_name:
-                    current_user.site_license_flag = True
-                    current_user.site_license_name = lst.get('organization_name')
-                    return True
+            if user_domain:
+                for lst in sl_lst:
+                    domain_name = lst.get('domain_name')
+                    if domain_name and user_domain == domain_name:
+                        current_user.site_license_flag = True
+                        current_user.site_license_name = lst.get('organization_name')
+                        return True
             
     return False
 
