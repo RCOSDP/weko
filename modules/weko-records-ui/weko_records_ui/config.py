@@ -827,3 +827,6 @@ class FILE_OPEN_STATUS(Enum):
 
 WEKO_RECORDS_UI_GAKUNIN_RDM_URL = "https://rdm.nii.ac.jp"
 """URL of GakuNin RDM."""
+
+WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED = False
+"""Enable user storage modification feature."""

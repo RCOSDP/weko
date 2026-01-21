@@ -148,6 +148,16 @@ class LocationModelView(ModelView):
                                   'System Administrator')
     _repoadmin_role = os.environ.get('INVENIO_ROLE_REPOSITORY',
                                     'Repository Administrator')
+
+    def get_query(self):
+        """Override get_query to filter locations based on user roles."""
+        query = super(LocationModelView, self).get_query()
+        user_role_names = {role.name for role in current_user.roles}
+        if not self._system_role in user_role_names:
+            """Non-system admins should not see default locations."""
+            query = query.filter_by(default=False)
+        return query 
+
     @expose('/')
     def index_view(self):
         """Override index view to add custom logic.
