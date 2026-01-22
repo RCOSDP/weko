@@ -386,6 +386,48 @@ class TestProfileForm:
         res = client.post("/test_form/profile_form",data=data)
         assert res.data == bytes("invalid","utf-8")
 
+    def test_init_storage_fields_removed_when_disabled(self, app):
+        """Test that storage fields are removed when feature flag is disabled."""
+        # Set the config to disable storage modification
+        app.config.update(
+            WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED=False
+        )
+        
+        with app.app_context():
+            # Create the form
+            form = ProfileForm()
+            
+            # Verify storage-related fields are removed
+            assert not hasattr(form, 'access_key'), "access_key field should be removed when feature is disabled"
+            assert not hasattr(form, 'secret_key'), "secret_key field should be removed when feature is disabled"
+            assert not hasattr(form, 's3_endpoint_url'), "s3_endpoint_url field should be removed when feature is disabled"
+            assert not hasattr(form, 's3_region_name'), "s3_region_name field should be removed when feature is disabled"
+            
+            # Verify other fields are still present
+            assert hasattr(form, 'fullname'), "fullname field should still be present"
+            assert hasattr(form, 'email'), "email field should still be present"
+
+    def test_init_storage_fields_present_when_enabled(self, app):
+        """Test that storage fields are present when feature flag is enabled."""
+        # Set the config to enable storage modification
+        app.config.update(
+            WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED=True
+        )
+        
+        with app.app_context():
+            # Create the form
+            form = ProfileForm()
+            
+            # Verify storage-related fields are present
+            assert hasattr(form, 'access_key'), "access_key field should be present when feature is enabled"
+            assert hasattr(form, 'secret_key'), "secret_key field should be present when feature is enabled"
+            assert hasattr(form, 's3_endpoint_url'), "s3_endpoint_url field should be present when feature is enabled"
+            assert hasattr(form, 's3_region_name'), "s3_region_name field should be present when feature is enabled"
+            
+            # Verify other fields are still present
+            assert hasattr(form, 'fullname'), "fullname field should still be present"
+            assert hasattr(form, 'email'), "email field should still be present"
+
 # def custom_profile_form_factory(profile_cls):
 # .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_forms.py::test_custom_profile_form_factory -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 class DummyClass:
