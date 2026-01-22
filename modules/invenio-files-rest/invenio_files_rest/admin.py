@@ -154,7 +154,7 @@ class LocationModelView(ModelView):
         query = super(LocationModelView, self).get_query()
         user_role_names = {role.name for role in current_user.roles}
         if not self._system_role in user_role_names:
-            """Non-system admins should not see default locations."""
+            # Non-system admins should not see default locations.
             query = query.filter_by(default=False)
         return query
 
