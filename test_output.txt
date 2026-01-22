@@ -1,0 +1,4 @@
+ImportError while loading conftest '/home/runner/work/weko/weko/modules/invenio-files-rest/tests/conftest.py'.
+modules/invenio-files-rest/tests/conftest.py:20: in <module>
+    from flask_babelex import Babel
+E   ModuleNotFoundError: No module named 'flask_babelex'
