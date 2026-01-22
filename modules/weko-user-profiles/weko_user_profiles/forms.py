@@ -440,13 +440,6 @@ class ProfileForm(FlaskForm):
             if hasattr(self, 's3_region_name'):
                 del self.s3_region_name
 
-
-                
-                
-                
-
-
-
     def validate_username(form, field):
         """Wrap username validator for WTForms."""
         try:
