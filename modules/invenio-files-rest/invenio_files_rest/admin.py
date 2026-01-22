@@ -158,6 +158,13 @@ class LocationModelView(ModelView):
             query = query.filter_by(default=False)
         return query
 
+    def get_count_query(self):
+        """Override get_count_query to apply the same role-based filters."""
+        query = super(LocationModelView, self).get_count_query()
+        user_role_names = {role.name for role in current_user.roles}
+        if not self._system_role in user_role_names:
+            query = query.filter_by(default=False)
+        return query
     @expose('/')
     def index_view(self):
         """Override index view to add custom logic.
