@@ -156,7 +156,7 @@ class LocationModelView(ModelView):
         if not self._system_role in user_role_names:
             """Non-system admins should not see default locations."""
             query = query.filter_by(default=False)
-        return query 
+        return query
 
     @expose('/')
     def index_view(self):
