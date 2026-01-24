@@ -23,7 +23,7 @@
 import csv
 import mimetypes
 import chardet
-import json
+import orjson
 import math
 import os
 import re
@@ -329,7 +329,8 @@ def get_journal_info(index_id=0):
             "weko-indextree-journal/weko_indextree_journal",
             current_app.config["WEKO_INDEXTREE_JOURNAL_FORM_JSON_FILE"],
         )
-        schema_data = json.load(open(schema_file))
+        with open(schema_file, 'rb') as f:
+            schema_data = orjson.loads(f.read())
 
         cur_lang = current_i18n.language
         journal = Journals.get_journal_by_index_id(index_id)
@@ -496,7 +497,7 @@ def parse_to_json_form(data: list, item_path_not_existed=[], include_empty=False
                 set_nested_item(result, key_path, value)
 
     convert_data(result)
-    result = json.loads(json.dumps(result))
+    result = orjson.loads(orjson.dumps(result))
     return result
 
 
@@ -928,8 +929,8 @@ def check_jsonld_import_items(
                 .format(item_type.item_type_name.name)
             )
 
-        with open(f"{data_path}/{json_name}", "r") as f:
-            json_ld = json.load(f)
+        with open(f"{data_path}/{json_name}", "rb") as f:
+            json_ld = orjson.loads(f.read())
         item_metadatas, _fromat = mapper.to_item_metadata(json_ld)
         list_record = [
             {
@@ -3794,8 +3795,8 @@ def handle_check_date(list_record):
                             _value = datetime.strptime(value, "%Y/%m/%d").strftime(
                                 "%Y-%m-%d"
                             )
-                            attribute = json.loads(
-                                (json.dumps(attribute)).replace(value, _value)
+                            attribute = orjson.loads(
+                                orjson.dumps(attribute).decode('utf-8').replace(value, _value)
                             )
                             record["metadata"][_keys[0]] = attribute
                             warnings.append(
@@ -4652,7 +4653,7 @@ def export_all(root_url, user_id, data, start_time):
                 }
             reset_redis_cache(
                     _file_create_key,
-                    json.dumps(write_file_json)
+                    orjson.dumps(write_file_json)
                 )
 
             index_id_list = _get_index_id_list(user_id)
@@ -4680,12 +4681,12 @@ def export_all(root_url, user_id, data, start_time):
                 gc.collect()
 
                 file_count = math.ceil(len(record_ids) / current_app.config["WEKO_SEARCH_UI_BULK_EXPORT_LIMIT"])
-                write_file_json = json.loads(get_redis_cache(_file_create_key))
+                write_file_json = orjson.loads(get_redis_cache(_file_create_key))
                 for i in range(file_count):
                     write_file_json['write_file_status'][f"{item_type_id}.{str(i + 1)}"] = 'waiting'
                 reset_redis_cache(
                     _file_create_key,
-                    json.dumps(write_file_json)
+                    orjson.dumps(write_file_json)
                 )
                 if len(record_ids) == 0:
                     item_types.remove(it)
@@ -4786,7 +4787,7 @@ def export_all(root_url, user_id, data, start_time):
 
     reset_redis_cache(_msg_key, "")
     reset_redis_cache(_run_msg_key, "")
-    reset_redis_cache(_file_create_key, json.dumps({}))
+    reset_redis_cache(_file_create_key, orjson.dumps({}))
 
     temp_path = os.getenv('TMPDIR')
     os.makedirs(temp_path, exist_ok=True)
@@ -4825,9 +4826,9 @@ def export_all(root_url, user_id, data, start_time):
             if result:
                 db.session.commit()
             else:
-                json_data = json.loads(get_redis_cache(_file_create_key))
+                json_data = orjson.loads(get_redis_cache(_file_create_key))
                 json_data['cancel_flg'] = True
-                reset_redis_cache(_file_create_key, json.dumps(json_data))
+                reset_redis_cache(_file_create_key, orjson.dumps(json_data))
                 reset_redis_cache(_msg_key, "Export failed.")
         else:
             reset_redis_cache(_msg_key, "Export failed. Please check item id range.")
@@ -5125,7 +5126,7 @@ def cancel_export_all():
 
         json_data = get_redis_cache(_file_create_key)
         if json_data:
-            json_data = json.loads(json_data)
+            json_data = orjson.loads(json_data)
             json_data['cancel_flg'] = True
             write_file_status = json_data.get("write_file_status",{})
             for file, status in write_file_status.items():
@@ -5134,7 +5135,7 @@ def cancel_export_all():
             json_data['write_file_status'] = write_file_status
             export_path = json_data.get("export_path")
             shutil.rmtree(export_path)
-            reset_redis_cache(_file_create_key, json.dumps(json_data))
+            reset_redis_cache(_file_create_key, orjson.dumps(json_data))
 
         delete_task_id_cache_on_revoke.apply_async(
             args=(
@@ -5257,7 +5258,7 @@ def get_export_status():
             return export_status, download_uri, message, run_message, \
                     status, start_time, finish_time
 
-        write_file_data = json.loads(write_file_info)
+        write_file_data = orjson.loads(write_file_info)
         if not write_file_data:
             return export_status, download_uri, message, run_message, \
                     status, start_time, finish_time
@@ -5288,10 +5289,10 @@ def get_export_status():
             download_uri = src.uri
             _timezone = current_app.config.get("WEKO_INDEX_TREE_PUBLIC_DEFAULT_TIMEZONE")
             finish_time = datetime.now(pytz.timezone(_timezone)).strftime('%Y/%m/%d %H:%M:%S')
-            write_file_data = json.loads(get_redis_cache(file_msg))
+            write_file_data = orjson.loads(get_redis_cache(file_msg))
             write_file_data["finish_time"] = finish_time
             current_app.logger.info(f"Bulk export all finished at {finish_time}.")
-            reset_redis_cache(file_msg, json.dumps(write_file_data))
+            reset_redis_cache(file_msg, orjson.dumps(write_file_data))
             reset_redis_cache(cache_uri, download_uri)
             reset_redis_cache(run_msg, "")
 

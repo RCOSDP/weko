@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Blueprint for weko-workflow."""
 
-import json
+import orjson
 import re
 import shutil
 import sys
@@ -1341,7 +1341,7 @@ def check_authority_action(activity_id='0', action_id=0,
                 activity_shared_user_ids
             )
 
-            temp_data = json.loads(activity.temp_data)
+            temp_data = orjson.loads(activity.temp_data)
             temp_user_ids = []
             if temp_data is not None:
                 # Get shared_user_ids from temp_data's metainfo
@@ -2003,7 +2003,7 @@ def next_action(activity_id='0', action_id=0, json_data=None):
             # Call signal to cris linkage
             temp_data = work_activity.get_activity_metadata(activity_id=activity_id)
             if temp_data:
-                if json.loads(temp_data).get('cris_linkage',{}).get('researchmap' , False):
+                if orjson.loads(temp_data).get('cris_linkage',{}).get('researchmap' , False):
                     cris_researchmap_linkage_request.send(new_item_id)
 
             work_activity.end_activity(activity)
@@ -2304,16 +2304,14 @@ def get_journals():
 
     if datastore.redis.exists(cache_key):
         data = datastore.get(cache_key)
-        multiple_result = json.loads(
-            data.decode('utf-8'),
-            object_pairs_hook=OrderedDict)
+        multiple_result = orjson.loads(data)
 
     else:
         multiple_result = search_romeo_jtitles(key, 'starts') if key else {}
         try:
             datastore.put(
                 cache_key,
-                json.dumps(multiple_result).encode('utf-8'),
+                orjson.dumps(multiple_result),
                 ttl_secs=int(
                     current_app.config['WEKO_WORKFLOW_OAPOLICY_CACHE_TTL']))
         except Exception:
@@ -2958,7 +2956,7 @@ def get_request_maillist(activity_id='0'):
 @workflow_blueprint.route('/activity/unlocks/<string:activity_id>',methods=["POST"])
 @login_required
 def unlocks_activity(activity_id="0"):
-    data = json.loads(request.data.decode("utf-8"))
+    data = orjson.loads(request.data.decode("utf-8"))
     msg_lock = None
     if data.get("locked_value") != 0:
         msg_lock = delete_lock_activity_cache(activity_id, data)
@@ -3074,7 +3072,7 @@ def user_unlock_activity(activity_id="0"):
                             ResponseMessageSchema
                         example: {"code":200,"msg":"Unlock success"}
     """
-    data = json.loads(request.data.decode("utf-8"))
+    data = orjson.loads(request.data.decode("utf-8"))
     msg = delete_user_lock_activity_cache(activity_id, data)
     res = {"code":200, "msg":msg}
     return jsonify(res), 200
@@ -3286,7 +3284,7 @@ def unlock_activity(activity_id="0"):
         res = ResponseMessageSchema().load({"code":-1, "msg":"arguments error"})
         return jsonify(res.data), 400
     try:
-        data = LockedValueSchema().load(json.loads(request.data.decode("utf-8")))
+        data = LockedValueSchema().load(orjson.loads(request.data.decode("utf-8")))
     except ValidationError as err:
         res = ResponseMessageSchema().load({'code':-1, 'msg':str(err)})
         return jsonify(res.data), 400
@@ -4054,7 +4052,7 @@ def edit_item_direct_after_login(pid_value):
 
     post_activity = '{"workflow_id": 0, "flow_id": 0, ' \
         '"itemtype_id": 0, "community": 0, "post_workflow": 0}'
-    post_activity = json.loads(post_activity)
+    post_activity = orjson.loads(post_activity)
     if post_workflow:
         post_activity['workflow_id'] = post_workflow.workflow_id
         post_activity['flow_id'] = post_workflow.flow_id

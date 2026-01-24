@@ -22,7 +22,7 @@
 
 import inspect
 
-import json
+import orjson
 from datetime import datetime as dt
 from flask import Blueprint, current_app, jsonify, request, make_response, session, abort
 from flask_babelex import get_locale
@@ -610,7 +610,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
         index_ids = index_ids.split(',') if index_ids else []
         input_item_data = ""
         if request.data:
-            input_item_data = json.loads(request.data.decode("utf-8"))
+            input_item_data = orjson.loads(request.data.decode("utf-8"))
         if not len(input_item_data):
             current_app.logger.error(f"[{activity_id}] request body is empty.")
             raise InvalidParameterValueError() # 400 Error

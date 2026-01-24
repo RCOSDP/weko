@@ -23,7 +23,7 @@
 import urllib.parse
 import pickle
 from typing import Union
-import json
+import orjson
 import re
 import sys
 import traceback
@@ -1045,7 +1045,7 @@ class ItemTypes(RecordBase):
                                     data['table_row_map']['schema']['properties'][_prop_id].pop('format')
 
                                 tmp_data = pickle.loads(pickle.dumps(data['table_row_map']['form'][idx], -1))                            
-                                _forms = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).replace('parentkey',_prop_id))
+                                _forms = orjson.loads(orjson.dumps(pickle.loads(pickle.dumps(_prop.forms, -1))).decode('utf-8').replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_forms, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id], renew_value)
@@ -1059,7 +1059,7 @@ class ItemTypes(RecordBase):
                                 if 'minItems' in data['table_row_map']['schema']['properties'][_prop_id]:
                                     data['table_row_map']['schema']['properties'][_prop_id] = data['table_row_map']['schema']['properties'][_prop_id].pop("minItems") 
                                 # cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'],data['table_row_map']['schema']['properties'][_prop_id], renew_value)
-                                _form = json.loads(json.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).replace('parentkey',_prop_id))
+                                _form = orjson.loads(orjson.dumps(pickle.loads(pickle.dumps(_prop.form, -1))).decode('utf-8').replace('parentkey',_prop_id))
                                 data['table_row_map']['form'][idx]=pickle.loads(pickle.dumps(_form, -1))
                                 cls.update_attribute_options(tmp_data, data['table_row_map']['form'][idx], renew_value)
                                 cls.update_property_enum(item_type.render['table_row_map']['schema']['properties'][_prop_id],data['table_row_map']['schema']['properties'][_prop_id], renew_value)

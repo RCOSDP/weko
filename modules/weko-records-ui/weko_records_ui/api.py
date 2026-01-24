@@ -8,7 +8,7 @@ import traceback
 import tempfile
 import shutil
 import copy
-import json
+import orjson
 from urllib.parse import urlparse, urljoin, uses_relative, uses_netloc
 
 from botocore.exceptions import BotoCoreError, ClientError
@@ -530,7 +530,7 @@ def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
         }
         s3_client.put_bucket_policy(
             Bucket=bucket_name,
-            Policy=json.dumps(public_policy)
+            Policy=orjson.dumps(public_policy).decode('utf-8')
         )
     except Exception as e:
         current_app.logger.error(e)

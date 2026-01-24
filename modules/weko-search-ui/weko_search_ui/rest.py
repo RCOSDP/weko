@@ -22,7 +22,7 @@
 
 from datetime import datetime
 import inspect
-import json
+import orjson
 import pickle
 import traceback
 from functools import partial
@@ -718,7 +718,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 'aggregations' : facet_list
             }
             res = Response(
-                response=json.dumps(result, indent=indent),
+                response=orjson.dumps(result, option=orjson.OPT_INDENT_2 if indent else 0).decode('utf-8'),
                 status=200,
                 content_type='application/json')
 

@@ -21,7 +21,7 @@
 """Module of weko-workflow utils."""
 
 import base64
-import json
+import orjson
 import os
 import re
 from collections import OrderedDict
@@ -1150,7 +1150,7 @@ def get_non_extract_files_by_recid(recid):
     activity = work_activity.get_workflow_activity_by_item_id(pid.object_uuid)
 
     if activity is not None and isinstance(activity.temp_data, str):
-        item_json = json.loads(activity.temp_data)
+        item_json = orjson.loads(activity.temp_data)
         # Load files from temp_data.
         files = item_json.get('files', [])
         return [
@@ -3877,7 +3877,7 @@ def get_activity_display_info(activity_id: str):
                 seen.add(uid)
 
     if metadata:
-        item_json = json.loads(metadata).get('metainfo')
+        item_json = orjson.loads(metadata).get('metainfo')
         owner_id = item_json.get('owner', -1)
         shared_user_ids = item_json.get('shared_user_ids', [])
         for uid in _get_shared_user_ids_from_list(shared_user_ids):
@@ -4589,11 +4589,11 @@ def update_system_data_for_activity(activity, sub_system_data_key,
     """
     if activity:
         if activity.temp_data:
-            temp = json.loads(activity.temp_data)
+            temp = orjson.loads(activity.temp_data)
         else:
             temp = {'metainfo': {}}
         temp['metainfo'][sub_system_data_key] = dict_system_data
-        activity.temp_data = json.dumps(temp)
+        activity.temp_data = orjson.dumps(temp).decode('utf-8')
         db.session.merge(activity)
         db.session.commit()
 
@@ -4717,7 +4717,7 @@ def get_files_and_thumbnail(activity_id, item_id):
     metadata = activity.get_activity_metadata(activity_id)
     # Load files from metadata.
     if metadata:
-        item_json = json.loads(metadata)
+        item_json = orjson.loads(metadata)
         files = item_json.get('files') if item_json.get('files') else []
     # Load files from deposit.
     if deposit and not files:
@@ -4964,7 +4964,7 @@ def get_pid_value_by_activity_detail(activity_detail):
         activity_detail: Activity detail.
     """
     if activity_detail.temp_data:
-        temp_data = json.loads(activity_detail.temp_data)
+        temp_data = orjson.loads(activity_detail.temp_data)
         if temp_data.get('endpoints', {}).get('self', ''):
             self_list = temp_data.get('endpoints').get('self', '').split('/')
 
@@ -4988,7 +4988,7 @@ def check_doi_validation_not_pass(item_id, activity_id,
     if error_list:
         sessionstore.put(
             'updated_json_schema_{}'.format(activity_id),
-            json.dumps(error_list).encode('utf-8'),
+            orjson.dumps(error_list),
             ttl_secs=300)
         return True
     else:
