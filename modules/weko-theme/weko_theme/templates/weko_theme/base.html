@@ -39,9 +39,6 @@
   {{ site_info() }}
   {%- block head_links %}
   <!--    <link rel="shortcut icon" href="{{ config.get('WEKO_SITE_INFO').favicon }}"/>-->
-  {%- if config.THEME_LOGO %}
-  <link rel="preload" as="image" href="{{ url_for('static', filename=config.THEME_LOGO) }}">
-  {%- endif %}
   {%- if keywords %}
   <link rel="canonical" href="{{ canonical_url }}" />{% endif %}
   {%- block head_links_langs %}
@@ -84,24 +81,8 @@
   {%- block trackingcode %}{% include config.THEME_TRACKINGCODE_TEMPLATE with context %}
   {%- endblock trackingcode %}
   <!-- end tracking code -->
-  <script defer src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-  <script>
-    (function () {
-      var load = function () {
-        var s = document.createElement('script');
-        s.id = 'MathJax-script';
-        s.async = true;
-        s.type = 'module';
-        s.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-        document.head.appendChild(s);
-      };
-      if ('requestIdleCallback' in window) {
-        requestIdleCallback(load, { timeout: 2000 });
-      } else {
-        window.setTimeout(load, 2000);
-      }
-    })();
-  </script>
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   {%- endblock head %}
 </head>
 
@@ -291,7 +272,7 @@
   <!-- Styling for the consent pop-up -->
   <link rel="stylesheet" href="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.min.css" />
   <!-- Klaro Consent Pop-up Library -->
-  <script type="text/javascript" type="module" src="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.js"></script>
+  <script type="text/javascript" src="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.js"></script>
   <div id="klaro"></div>
   {%- endif %}
 
