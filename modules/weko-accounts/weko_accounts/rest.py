@@ -95,7 +95,7 @@ class WekoLogin(ContentNegotiatedMethodView):
         """Constructor."""
         super(WekoLogin, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Login as weko user.
@@ -157,7 +157,7 @@ class WekoLogout(ContentNegotiatedMethodView):
         """Constructor."""
         super(WekoLogout, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Logout of weko.

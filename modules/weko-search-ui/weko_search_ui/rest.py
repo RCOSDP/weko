@@ -583,7 +583,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Search records.
 
@@ -772,7 +772,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """Search records.
 

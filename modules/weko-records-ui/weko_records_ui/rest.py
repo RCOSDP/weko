@@ -315,7 +315,7 @@ class NeedRestrictedAccess(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """
         Check if need restricted access.
@@ -391,7 +391,7 @@ class GetFileTerms(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(activity_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """
         Get files tarms.
@@ -469,7 +469,7 @@ class FileApplication(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(activity_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Post file application.
@@ -683,7 +683,7 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get records json."""
         version = kwargs.get('version')
@@ -880,7 +880,7 @@ class WekoRecordsStats(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get record stats."""
         version = kwargs.get('version')
@@ -963,7 +963,7 @@ class WekoFilesStats(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(file_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get file stats."""
         version = kwargs.get('version')
@@ -1057,7 +1057,7 @@ class WekoFilesGet(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(file_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get file."""
         version = kwargs.get('version')
@@ -1155,7 +1155,7 @@ class WekoFileListGetAll(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(file_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get file."""
         version = kwargs.get('version')
@@ -1232,7 +1232,7 @@ class WekoFileListGetSelected(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(file_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """Get file."""
         version = kwargs.get('version')
@@ -1292,7 +1292,7 @@ class RequestMail(ContentNegotiatedMethodView):
         """Constructor."""
         super(RequestMail, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Post file application.
@@ -1348,7 +1348,7 @@ class CreateCaptchaImage(ContentNegotiatedMethodView):
         """Constructor."""
         super(CreateCaptchaImage, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """
         Post file application.
@@ -1394,7 +1394,7 @@ class CaptchaAnswerValidation(ContentNegotiatedMethodView):
         """Constructor."""
         super(CaptchaAnswerValidation, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Post file application.

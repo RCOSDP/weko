@@ -121,7 +121,7 @@ class WekoRanking(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(ranking_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get ranking json."""
         version = kwargs.get('version')
@@ -219,7 +219,7 @@ class WekoFileRanking(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(ranking_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get ranking json."""
         version = kwargs.get('version')

@@ -27,6 +27,7 @@ import re
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
+from time import perf_counter
 import sys
 from typing import List, NoReturn, Optional, Tuple, Union, cast
 import traceback
@@ -1792,33 +1793,60 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         rtn: new activity
 
     """
+    _t0 = perf_counter()
     # ! Check pid's version
     community = post_activity['community']
     activity = WorkActivity()
 
+    _t_draft_lookup = perf_counter()
     draft_pid = PersistentIdentifier.query.filter_by(
         pid_type='recid',
         pid_value="{}.0".format(recid.pid_value)
     ).one_or_none()
+    current_app.logger.info(
+        "prepare_edit_workflow timing draft_pid_lookup=%0.3fs",
+        perf_counter() - _t_draft_lookup,
+    )
     if not draft_pid:
+        _t_prepare_draft = perf_counter()
         draft_record = deposit.prepare_draft_item(recid)
+        current_app.logger.info(
+            "prepare_edit_workflow timing prepare_draft_item=%0.3fs",
+            perf_counter() - _t_prepare_draft,
+        )
+        _t_init_activity = perf_counter()
         rtn = activity.init_activity(post_activity,
                                     community,
                                     draft_record.model.id)
+        current_app.logger.info(
+            "prepare_edit_workflow timing init_activity(new_draft)=%0.3fs",
+            perf_counter() - _t_init_activity,
+        )
         # create item link info of draft record from parent record
+        _t_item_link = perf_counter()
         weko_record = WekoRecord.get_record_by_pid(
             draft_record.pid.pid_value)
         if weko_record:
             weko_record.update_item_link(recid.pid_value)
+        current_app.logger.info(
+            "prepare_edit_workflow timing update_item_link=%0.3fs",
+            perf_counter() - _t_item_link,
+        )
     else:
         # Clone org bucket into draft record.
         try:
+            _t_clone_start = perf_counter()
             _parent = WekoDeposit.get_record(recid.object_uuid)
             _deposit = WekoDeposit.get_record(draft_pid.object_uuid)
             _deposit['path'] = _parent.get('path')
             _deposit['_deposit']['status'] = 'draft'
             _deposit.merge_data_to_record_without_version(recid, True)
             _deposit.publish()
+            current_app.logger.info(
+                "prepare_edit_workflow timing merge_publish_existing_draft=%0.3fs",
+                perf_counter() - _t_clone_start,
+            )
+            _t_bucket_start = perf_counter()
             _bucket = Bucket.get(_deposit.files.bucket.id)
 
             if not _bucket:
@@ -1847,8 +1875,13 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                     db.session.add(sync_bucket)
 
                 _bucket.remove()
+            current_app.logger.info(
+                "prepare_edit_workflow timing bucket_ops=%0.3fs",
+                perf_counter() - _t_bucket_start,
+            )
 
             # update metadata
+            _t_meta_start = perf_counter()
             _metadata = convert_record_to_item_metadata(deposit)
             _metadata['deleted_items'] = {}
             _cur_keys = [_key for _key in _metadata.keys()
@@ -1861,12 +1894,21 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             args = [index, _metadata]
             _deposit.update(*args)
             _deposit.commit()
+            current_app.logger.info(
+                "prepare_edit_workflow timing metadata_update_commit=%0.3fs",
+                perf_counter() - _t_meta_start,
+            )
         except SQLAlchemyError as ex:
             raise ex
 
+        _t_init_activity = perf_counter()
         rtn = activity.init_activity(post_activity,
                                      community,
                                      draft_pid.object_uuid)
+        current_app.logger.info(
+            "prepare_edit_workflow timing init_activity(existing_draft)=%0.3fs",
+            perf_counter() - _t_init_activity,
+        )
     if rtn:
         # GOTO: TEMPORARY EDIT MODE FOR IDENTIFIER
         identifier_actionid = get_actionid('identifier_grant')
@@ -1881,10 +1923,15 @@ def prepare_edit_workflow(post_activity, recid, deposit):
         # Note: These queries are independent and could potentially be optimized
         # by combining into a single query or using batch loading in the future
         item_uuid = recid.object_uuid
+        _t_related_start = perf_counter()
         pid_doi = IdentifierHandle(item_uuid).get_pidstore()
         feedback_maillist = FeedbackMailList.get_mail_list_by_item_id(item_id=item_uuid)
         request_maillist = RequestMailList.get_mail_list_by_item_id(item_id=item_uuid)
         item_application = ItemApplication.get_item_application_by_item_id(item_id=item_uuid)
+        current_app.logger.info(
+            "prepare_edit_workflow timing related_fetches=%0.3fs",
+            perf_counter() - _t_related_start,
+        )
 
         # Process identifier
         if pid_doi and pid_doi.status == PIDStatus.DELETED:
@@ -1897,37 +1944,61 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             identifier['action_identifier_select'] = current_app.config.get(
                 "WEKO_WORKFLOW_IDENTIFIER_GRANT_DOI", 0)
 
+        _t_identifier = perf_counter()
         activity.create_or_update_action_identifier(
             rtn.activity_id,
             identifier_actionid,
             identifier)
+        current_app.logger.info(
+            "prepare_edit_workflow timing update_identifier=%0.3fs",
+            perf_counter() - _t_identifier,
+        )
 
         # Process feedback maillist
         if feedback_maillist:
             action_id = current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
+            _t_feedback = perf_counter()
             activity.create_or_update_action_feedbackmail(
                 activity_id=rtn.activity_id,
                 action_id=action_id,
                 feedback_maillist=feedback_maillist
             )
+            current_app.logger.info(
+                "prepare_edit_workflow timing update_feedbackmail=%0.3fs",
+                perf_counter() - _t_feedback,
+            )
 
         # Process request maillist
         if request_maillist:
+            _t_request = perf_counter()
             activity.create_or_update_activity_request_mail(
                 activity_id=rtn.activity_id,
                 request_maillist=request_maillist,
                 is_display_request_button=True
             )
+            current_app.logger.info(
+                "prepare_edit_workflow timing update_request_mail=%0.3fs",
+                perf_counter() - _t_request,
+            )
 
         # Process item application
         if item_application:
+            _t_item_app = perf_counter()
             activity.create_or_update_activity_item_application(
                 activity_id=rtn.activity_id,
                 item_application=item_application,
                 is_display_item_application_button=True
             )
+            current_app.logger.info(
+                "prepare_edit_workflow timing update_item_application=%0.3fs",
+                perf_counter() - _t_item_app,
+            )
 
+    current_app.logger.info(
+        "prepare_edit_workflow timing total=%0.3fs",
+        perf_counter() - _t0,
+    )
     return rtn
 
 
@@ -2251,6 +2322,8 @@ def check_an_item_is_locked(item_id=None):
         return False
 
     _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    _max_total = current_app.config.get("CELERY_GET_STATUS_MAX_TIME", 0.8)
+    _start = perf_counter()
     if not item_id:
         return False
 
@@ -2258,8 +2331,17 @@ def check_an_item_is_locked(item_id=None):
     inspector = inspect(timeout=_timeout)
     if not inspector.ping():
         return False
+    if perf_counter() - _start > _max_total:
+        return False
 
-    return check(inspector.active()) or check(inspector.reserved())
+    workers_active = inspector.active()
+    if perf_counter() - _start > _max_total:
+        return False
+    workers_reserved = inspector.reserved()
+    if perf_counter() - _start > _max_total:
+        return False
+
+    return check(workers_active) or check(workers_reserved)
 
 
 def bulk_check_an_item_is_locked(item_ids=[]):
@@ -2270,6 +2352,8 @@ def bulk_check_an_item_is_locked(item_ids=[]):
     :return list: Locked item id list.
     """
     _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+    _max_total = current_app.config.get("CELERY_GET_STATUS_MAX_TIME", 0.8)
+    _start = perf_counter()
     if not item_ids:
         return []
 
@@ -2277,10 +2361,14 @@ def bulk_check_an_item_is_locked(item_ids=[]):
     inspector = inspect(timeout=_timeout)
     if not inspector.ping():
         return []
+    if perf_counter() - _start > _max_total:
+        return []
 
     item_ids = [str(item_id) for item_id in item_ids]
     result = []
     for state in ['active', 'reserved']:
+        if perf_counter() - _start > _max_total:
+            return result
         workers = getattr(inspector, state)()
         for worker in workers:
             for task in workers[worker]:

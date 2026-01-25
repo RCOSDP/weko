@@ -137,7 +137,7 @@ class GetActivities(ContentNegotiatedMethodView):
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """
         Get workflow activities.
@@ -233,7 +233,7 @@ class ApproveActivity(ContentNegotiatedMethodView):
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Approve workflow activity.
@@ -318,7 +318,7 @@ class ThrowOutActivity(ContentNegotiatedMethodView):
 
     @require_api_auth()
     @require_oauth_scopes(activity_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Throw out workflow activity.
@@ -366,7 +366,7 @@ class FileApplicationActivity(ContentNegotiatedMethodView):
 
     @require_api_auth(True)
     @require_oauth_scopes(activity_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """
         Post file application.

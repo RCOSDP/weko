@@ -282,40 +282,46 @@ def get_user_information(user_ids):
     """
     result = []
 
-    metadata = MetaData()
-    metadata.reflect(bind=db.engine)
-    table_name = 'accounts_user'
-
-    user_table = Table(table_name, metadata)
-    record = db.session.query(user_table)
-
-    data = record.all()
-
     if type(user_ids) is int:
         user_ids = [user_ids]
+    if not user_ids:
+        return result
+
+    rows = (
+        db.session.query(
+            User.id,
+            User.email,
+            UserProfile._displayname,
+            UserProfile.fullname,
+        )
+        .outerjoin(UserProfile, UserProfile.user_id == User.id)
+        .filter(User.id.in_(user_ids))
+        .all()
+    )
+    user_map = {
+        int(row.id): {
+            "email": row.email,
+            "username": row._displayname,
+            "fullname": row.fullname,
+        }
+        for row in rows
+    }
+
     for user_id in user_ids:
         info = {
-            'userid':'',
+            'userid': int(user_id),
             'username': '',
             'email': '',
             'fullname': '',
             'error': ''
         }
-        user_info = UserProfile.get_by_userid(user_id)
-        if user_info is not None:
-            info['userid'] = user_id
-            info['username'] = user_info.username
-            info['fullname'] = user_info.fullname
+        data = user_map.get(int(user_id))
+        if data:
+            info['email'] = data.get('email') or ''
+            info['username'] = data.get('username') or ''
+            info['fullname'] = data.get('fullname') or ''
         else:
-            info['userid'] = user_id
-
-        temp = list(map(lambda x : x[0], data))
-        if not user_id in temp:
             info['error'] = "The specified user ID is incorrect"
-
-        for item in data:
-            if int(item[0]) == int(user_id):
-                info['email'] = item[1]
         result.append(info)
 
     return result
