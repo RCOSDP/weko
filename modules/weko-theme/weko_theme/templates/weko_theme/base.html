@@ -82,7 +82,7 @@
   {%- endblock trackingcode %}
   <!-- end tracking code -->
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script id="MathJax-script" async type="module" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
   {%- endblock head %}
 </head>
 
@@ -272,7 +272,7 @@
   <!-- Styling for the consent pop-up -->
   <link rel="stylesheet" href="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.min.css" />
   <!-- Klaro Consent Pop-up Library -->
-  <script type="text/javascript" src="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.js"></script>
+  <script type="text/javascript" type="module" src="https://cdn.kiprotect.com/klaro/v0.7.16/klaro.js"></script>
   <div id="klaro"></div>
   {%- endif %}
 
