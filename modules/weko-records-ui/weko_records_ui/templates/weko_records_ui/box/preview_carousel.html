@@ -92,15 +92,15 @@
                   <div class="item {{ 'active' if loop.index == firstPreviewFileIndex.value else '' }}" id="carousel_prev_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">
                       {%- if 'audio' in file.mimetype -%}
-                        <audio controls preload="auto">
+                        <audio controls preload="metadata">
                           <source src="{{file_preview_url}}" type="{{file.mimetype}}">
                         </audio>
                       {%- elif 'video' in file.mimetype -%}
-                        <video controls>
+                        <video controls preload="metadata">
                           <source src="{{file_preview_url}}" type="{{file.mimetype}}">
                         </video>
                       {%- elif 'text/csv' in file.mimetype -%}
-                        <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                        <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400" loading="lazy"
                           src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key, allow_aggs=allow_aggs_preview) }}">
                         </iframe>
                       {%- elif 'text' in file.mimetype -%}
@@ -108,12 +108,12 @@
                       {%- else -%}
                         {%- if file | preview_able -%}
                           {%- if cur_step and cur_step == 'approval'-%}
-                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400" loading="lazy"
                               src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key, allow_aggs=allow_aggs_preview) }}">
                             </iframe>
                           {%- else -%}
                             {% set rootVer = pid.pid_value.split('.') %}
-                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400"
+                            <iframe class="preview-iframe" id="preview-iframe" width="100%" height="400" loading="lazy"
                               src="{{ url_for('invenio_records_ui.recid_preview', pid_value=rootVer[0], filename=file.filename or file.key, allow_aggs=allow_aggs_preview) }}">
                             </iframe>
                           {%- endif -%}
@@ -130,7 +130,7 @@
                 {%- elif 'detail' in file.displaytype and 'pdf' in file.mimetype -%}
                   <div class="item {{ 'active' if loop.index == 1 else '' }}" id="carousel_pdf_item_{{ loop.index }}">
                     <div class="embed-responsive embed-responsive-16by9">
-                      <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400"
+                      <iframe class="preview-iframe" id="preview-iframe_de" width="100%" height="400" loading="lazy"
                         src="{{ url_for('invenio_records_ui.recid_preview', pid_value=pid.pid_value, filename=file.filename or file.key, allow_aggs=allow_aggs_preview) }}">
                       </iframe>
                     </div>

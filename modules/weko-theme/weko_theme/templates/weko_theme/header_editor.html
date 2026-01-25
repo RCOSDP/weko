@@ -27,7 +27,15 @@
   </button>
   {%- block brand %}
   {%- if config.THEME_LOGO %}
-    <a href="/"><img class="navbar-brand" src="{{ url_for('static', filename=config.THEME_LOGO)}}" alt="{{_(config.THEME_SITENAME)}}" /></a>
+    <a href="/"><img class="navbar-brand"
+      src="{{ url_for('static', filename=config.THEME_LOGO)}}"
+      alt="{{_(config.THEME_SITENAME)}}"
+      width="308"
+      height="48"
+      loading="eager"
+      decoding="async"
+      fetchpriority="high"
+    /></a>
   {%- else %}
     <a class="navbar-brand" href="/">{{_(config.THEME_SITENAME)}}</a>
   {%- endif %}

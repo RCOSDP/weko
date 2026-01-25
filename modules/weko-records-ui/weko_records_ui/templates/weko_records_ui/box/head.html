@@ -38,6 +38,12 @@
 <div class="panel-body">
   <div class="row row-4">
     <div class="col-sm-12 col-md-12 col-lg-12 col-left">
+      <style>
+        .lcp-priority {
+          content-visibility: visible;
+          contain: none;
+        }
+      </style>
       <div class="panel_bread" id="panel_bread">
         {%- set record_navs = record.navi -%}
         {%- if record_navs -%}
@@ -76,13 +82,13 @@
             </div>
           {%- endfor %}
         {%- endif -%}
-        <div class="panel-group" style="padding-top: 10px;">
-          <h2 style="display: inline;">
+        <div class="panel-group lcp-priority" style="padding-top: 10px;">
+          <h2 class="lcp-priority" style="display: inline;">
             <!-- temporary fix for display of title -->
             {%- if title_name -%}
-              <div style="margin-left: 0.05em;">{{ title_name | escape_str }}</div>
+              <div class="lcp-priority" style="margin-left: 0.05em;">{{ title_name | escape_str }}</div>
             {%- else -%}
-              <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
+              <div class="lcp-priority" style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
             {%- endif -%}
             <!--
               <div style="margin-left: 0.05em;">{{ record.get('item_title', _('No title')) | escape_str }}</div>
@@ -92,7 +98,7 @@
         <div class="panel-group">
           {%- if record.permalink_uri -%}
             <div class="hide" id="permalink_uri">{{record.permalink_uri}}</div>
-            <span class="pull-right" style="display: inline;padding-right:10px;">
+            <span class="pull-right" style="display: inline-block; padding-right:10px; max-width: 40ch; font-size: 12px; line-height: 1.2; word-break: break-all;">
               {{ record.permalink_uri }}</span>
           {%- endif -%}
         </div>

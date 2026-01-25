@@ -21,6 +21,7 @@
 """Blueprint for weko-records-ui."""
 
 from datetime import datetime
+from time import perf_counter
 import re
 import os
 import traceback
@@ -37,6 +38,7 @@ from flask_babelex import get_locale, gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.http import generate_etag
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
@@ -399,6 +401,21 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
+    perf_enabled = current_app.config.get("WEKO_RECORDS_UI_PERF_LOG", False)
+
+    def _perf_start():
+        return perf_counter() if perf_enabled else None
+
+    def _perf_end(label, t0):
+        if perf_enabled and t0 is not None:
+            current_app.logger.info(
+                "weko_records_ui perf %s pid=%s ms=%.1f",
+                label,
+                pid.pid_value,
+                (perf_counter() - t0) * 1000,
+            )
+
+    total_t0 = _perf_start()
     def _get_rights_title(result, rights_key_str, rights_values, current_lang, meta_options):
         """Get multi-lang rights title."""
         for rights_key in rights_key_str.split(','):
@@ -447,6 +464,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             abort(403)
 
     path_name_dict = {'ja': {}, 'en': {}}
+    t0 = _perf_start()
     for navi in record.navi:
         path_arr = navi.path.split('/')
         for path in path_arr:
@@ -459,7 +477,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 "\n", r"<br\>").replace("&EMPTY&", "")
             if not path_name_dict['ja'][path]:
                 path_name_dict['ja'][path] = path_name_dict['en'][path]
+    _perf_end("path_name_dict", t0)
     # Get PID version object to retrieve all versions of item
+    t0 = _perf_start()
     pid_ver = PIDVersioning(child=pid)
     if not pid_ver.exists or pid_ver.is_last_child:
         abort(404)
@@ -478,21 +498,26 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if active_versions:
         # active_versions.remove(pid_ver.last_child)
         active_versions.pop()
+    _perf_end("pid_versioning", t0)
 
+    t0 = _perf_start()
     check_site_license_permission()
     check_items_settings()
+    _perf_end("site_license_and_settings", t0)
     send_info = {}
     send_info['site_license_flag'] = True \
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
 
+    t0 = _perf_start()
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
         record=record,
         info=send_info
     )
+    _perf_end("record_viewed_signal", t0)
     community_arg = request.args.get('c')
     community_id = ""
     ctx = {'community': None}
@@ -504,6 +529,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             community_id = comm.id
 
     # Get index style
+    t0 = _perf_start()
     style = IndexStyle.get(
         current_app.config['WEKO_INDEX_TREE_STYLE_OPTIONS']['id'])
     if not style:
@@ -516,16 +542,22 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     width = style.width
     height = style.height
     index_link_enabled = style.index_link_enabled
+    _perf_end("index_style", t0)
 
+    t0 = _perf_start()
     detail_condition = get_search_detail_keyword('')
+    _perf_end("detail_condition", t0)
 
     # Add Item Reference data to Record Metadata
+    t0 = _perf_start()
     res = ItemLink.get_item_link_info(record.get("recid"))
     if res:
         record["relation"] = res
     else:
         record["relation"] = {}
+    _perf_end("item_link_info", t0)
 
+    t0 = _perf_start()
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -536,6 +568,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
+    _perf_end("oai_getrecord_and_meta", t0)
 
     current_lang = str(current_i18n.locale) \
         if hasattr(current_i18n, 'locale') else None
@@ -548,6 +581,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     rights_values = {}
     accessRight = ''
     hide_list = []
+    t0 = _perf_start()
     if item_type:
         meta_options = get_options_and_order_list(
             item_type_id,
@@ -557,8 +591,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         meta_options = get_options_and_order_list(item_type_id, mapping_flag=False)
     item_map = get_mapping(item_type_id, 'jpcoar_mapping', item_type=item_type)
+    _perf_end("meta_options_and_mapping", t0)
 
     # get title info
+    t0 = _perf_start()
     title_value_key = 'title.@value'
     title_lang_key = 'title.@attributes.xml:lang'
     if title_value_key in item_map:
@@ -617,14 +653,18 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                     elif isinstance(data_result, str):
                         accessRight = data_result
                         break
+    _perf_end("title_rights_access", t0)
 
+    t0 = _perf_start()
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
     # and the cover page setting is set and its value is enable (not disabled)
     can_download_original = check_original_pdf_download_permission(record) \
         and pdfcoverpage_set_rec and pdfcoverpage_set_rec.avail != 'disable'
+    _perf_end("pdfcoverpage_and_permissions", t0)
 
     # Get item meta data
+    t0 = _perf_start()
     record['permalink_uri'] = None
     permalink = get_record_permalink(record)
     if not permalink:
@@ -640,9 +680,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 request.url_root, record.get("recid"))
     else:
         record['permalink_uri'] = permalink
+    _perf_end("permalink", t0)
 
     can_update_version = has_update_version_role(current_user)
 
+    t0 = _perf_start()
     display_setting = AdminSettings.get(name='display_stats_settings',
                                         dict_to_object=False)
     if display_setting:
@@ -656,20 +698,25 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         search_author_flg = items_display_settings.get('items_search_author')
     else:
         search_author_flg = "name"
+    _perf_end("admin_settings", t0)
 
+    t0 = _perf_start()
     groups_price = get_groups_price(record)
     billing_files_permission = get_billing_file_download_permission(
         groups_price) if groups_price else None
     billing_files_prices = get_min_price_billing_file_download(
         groups_price,
         billing_files_permission) if groups_price else None
+    _perf_end("billing_files", t0)
 
     from weko_theme.utils import get_design_layout
 
     # Get the design for widget rendering
+    t0 = _perf_start()
     page, render_widgets = get_design_layout(
         request.args.get('c') or current_app.config[
             'WEKO_THEME_DEFAULT_COMMUNITY'])
+    _perf_end("design_layout", t0)
 
     # if current_lang:
     #     index_link_list = get_index_link_list(current_lang)
@@ -677,20 +724,25 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     #     index_link_list = get_index_link_list()
 
     index_link_list = []
+    t0 = _perf_start()
     if index_link_enabled:
         index_link_list = get_index_link_list()
+    _perf_end("index_link_list", t0)
 
     files_thumbnail = []
+    t0 = _perf_start()
     if record.files:
         files_thumbnail = ObjectVersion.get_by_bucket(
             record.files.bucket.id, asc_sort=True).\
             filter_by(is_thumbnail=True).all()
     is_display_file_preview, files = get_file_info_list(record, item_type=item_type)
+    _perf_end("files_and_thumbnails", t0)
     # Flag: can edit record
     can_edit = True if pid == get_record_without_version(pid) else False
 
     open_day_display_flg = current_app.config.get('OPEN_DATE_DISPLAY_FLG')
     # Hide email of creator in pdf cover page
+    t0 = _perf_start()
     is_show_email = is_show_email_of_creator(item_type_id, item_type=item_type)
     if not is_show_email:
         # list_hidden = get_ignore_item(record['item_type_id'])
@@ -703,8 +755,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     if item_type:
         list_hidden = get_ignore_item(item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
     record = hide_by_itemtype(record, list_hidden)
+    _perf_end("hide_fields", t0)
 
     # Get Facet search setting.
+    t0 = _perf_start()
     display_facet_search = get_search_setting().get("display_control", {}).get(
         'display_facet_search', {}).get('status', False)
     ctx.update({
@@ -724,6 +778,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     ctx.update({
         "display_community": display_community
     })
+    _perf_end("search_settings", t0)
 
     current_app.logger.debug("template :{}".format(template))
 
@@ -733,10 +788,12 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
 
     mailcheckflag=request.args.get("v")
 
+    t0 = _perf_start()
     with_files = False
     for content in record.get_file_data():
         if content.get('filename'):
             with_files = True
+    _perf_end("with_files", t0)
 
     restricted_errorMsg = ''
     restricted_access = get_restricted_access('error_msg')
@@ -749,6 +806,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         onetime_file_name = onetime_url_parsed.path.split("/")[-1]
 
     # Get communities info
+    t0 = _perf_start()
     belonging_community = []
     for navi in record.navi:
         path_arr = navi.path.split('/')
@@ -759,8 +817,10 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
             if communities is not None:
                 for comm in communities:
                     belonging_community.append(comm)
+    _perf_end("belonging_community", t0)
 
     # Get Settings
+    t0 = _perf_start()
     enable_request_maillist = False
     is_no_content_item_application = False
     password_checkflag = False
@@ -780,9 +840,11 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         item_application_settings = restricted_access_settings.get("item_application", {})
         is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
             and int(item_type_id) in item_application_settings.get("application_item_types", [])
+    _perf_end("restricted_access_settings", t0)
 
 
-    return render_template(
+    _perf_end("total", total_t0)
+    response = make_response(render_template(
         template,
         pid=pid,
         pid_versioning=pid_ver,
@@ -841,7 +903,17 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         is_storage_editable=current_app.config.get('WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'),
         **ctx,
         **kwargs
-    )
+    ))
+
+    etag_payload = "|".join([
+        str(record.get("recid", "")),
+        str(getattr(record, "updated", "")),
+        str(getattr(record, "revision_id", "")),
+        str(current_user.get_id() if current_user and current_user.is_authenticated else "anon"),
+        request.full_path,
+    ])
+    response.set_etag(generate_etag(etag_payload.encode("utf-8")))
+    return response.make_conditional(request)
 
 @blueprint.route('/get-secret-settings', methods=['GET'])
 def get_secret_setting():
@@ -1557,4 +1629,3 @@ def replace_file():
         except Exception as e:
             current_app.logger.error(str(e))
             return jsonify({'error': str(e)}), 400
-

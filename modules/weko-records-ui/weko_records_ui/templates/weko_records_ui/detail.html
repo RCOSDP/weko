@@ -19,19 +19,19 @@
 {%- block javascript %}
 <!--   {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL
     }}"></script>{% endassets %} -->
-  {% assets "invenio_deposit_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "invenio_deposit_dependencies_js" %}<script defer src="{{ ASSET_URL }}"></script>{% endassets %}
 
   {{ super() }}
   {% assets "weko_theme_js_treeview" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_theme_js_top_page" %}<script src="{{ ASSET_URL }}" defer></script>{% endassets %}
+  {% assets "weko_theme_js_detail_search" %}<script src="{{ ASSET_URL }}" defer></script>{% endassets %}
   {% assets "weko_records_ui_dependencies_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}"></script>
-  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}" defer></script>
+  {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}" defer></script>{% endassets %}
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  <script src="{{ url_for('static', filename='js/weko_records_ui/request_mail.js')}}"></script>
+  {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}" defer></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/request_mail.js')}}" defer></script>
   <script src="{{ url_for('static', filename='js/weko_theme/sidebar.js')}}"></script>
 {%- endblock javascript %}
 
