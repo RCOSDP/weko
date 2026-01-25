@@ -1167,9 +1167,7 @@ def prepare_edit_item(id=None, community=None):
             post_activity['workflow_id'] = latest_activity.workflow_id
             post_activity['flow_id'] = latest_activity.flow_id
         else:
-            latest_activity = work_activity.get_workflow_activity_by_item_id(
-                recid.object_uuid
-            )
+            # Get workflow by item type instead of querying activity again
             workflow = get_workflow_by_item_type_id(
                 item_type.name_id, item_type_id, with_deleted=False
             )

@@ -2675,19 +2675,46 @@ class FeedbackMailList(object):
                 if query_object:
                     data = []
                     list_author_id = []
+                    all_author_ids = set()
+
+                    # Collect all author IDs
                     if query_object.account_author:
                         list_author_id = query_object.account_author.split(',')
+                        all_author_ids.update(list_author_id)
+
+                    if query_object.mail_list:
+                        for m in query_object.mail_list:
+                            author_id = m.get("author_id")
+                            if author_id:
+                                all_author_ids.add(author_id)
+
+                    # Batch fetch all authors to avoid N+1 query problem
+                    author_emails_map = {}
+                    if all_author_ids:
+                        authors = Authors.query.filter(Authors.id.in_(all_author_ids)).all()
+                        for author in authors:
+                            try:
+                                email_info = author.json.get('emailInfo', []) if author.json else []
+                                emails = [e.get('email') for e in email_info if e.get('email')]
+                                author_emails_map[str(author.id)] = emails
+                            except Exception:
+                                author_emails_map[str(author.id)] = []
+
+                    # Process account_author
+                    if query_object.account_author:
                         for author_id in list_author_id:
-                            emails = Authors.get_emails_by_id(author_id)
+                            emails = author_emails_map.get(author_id, [])
                             for e in emails:
                                 data.append({"email": e, "author_id": author_id})
+
+                    # Process mail_list
                     if query_object.mail_list:
                         for m in query_object.mail_list:
                             author_id = m.get("author_id")
                             email = m.get("email")
                             if author_id: # if there is author_id (obsolete data formats only)
                                 if author_id not in list_author_id:
-                                    emails = Authors.get_emails_by_id(author_id)
+                                    emails = author_emails_map.get(author_id, [])
                                     for e in emails:
                                         data.append({"email": e, "author_id": author_id})
                             else:

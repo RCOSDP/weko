@@ -1831,19 +1831,22 @@ def prepare_edit_workflow(post_activity, recid, deposit):
 
             bucket = deposit.files.bucket
 
-            sync_bucket = RecordsBuckets.query.filter_by(
-                bucket_id=_deposit.files.bucket.id
-            ).first()
+            # Optimize: Only proceed with bucket operations if bucket exists
+            if bucket and _bucket:
+                sync_bucket = RecordsBuckets.query.filter_by(
+                    bucket_id=_deposit.files.bucket.id
+                ).first()
 
-            snapshot = bucket.snapshot(lock=False)
-            snapshot.locked = False
-            _bucket.locked = False
+                snapshot = bucket.snapshot(lock=False)
+                snapshot.locked = False
+                _bucket.locked = False
 
-            sync_bucket.bucket_id = snapshot.id
-            _deposit['_buckets']['deposit'] = str(snapshot.id)
+                if sync_bucket:
+                    sync_bucket.bucket_id = snapshot.id
+                    _deposit['_buckets']['deposit'] = str(snapshot.id)
+                    db.session.add(sync_bucket)
 
-            db.session.add(sync_bucket)
-            _bucket.remove()
+                _bucket.remove()
 
             # update metadata
             _metadata = convert_record_to_item_metadata(deposit)
@@ -1873,7 +1876,17 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             'action_identifier_jalc_dc_doi': '',
             'action_identifier_ndl_jalc_doi': ''
         }
-        pid_doi = IdentifierHandle(recid.object_uuid).get_pidstore()
+
+        # Fetch all related data for the item
+        # Note: These queries are independent and could potentially be optimized
+        # by combining into a single query or using batch loading in the future
+        item_uuid = recid.object_uuid
+        pid_doi = IdentifierHandle(item_uuid).get_pidstore()
+        feedback_maillist = FeedbackMailList.get_mail_list_by_item_id(item_id=item_uuid)
+        request_maillist = RequestMailList.get_mail_list_by_item_id(item_id=item_uuid)
+        item_application = ItemApplication.get_item_application_by_item_id(item_id=item_uuid)
+
+        # Process identifier
         if pid_doi and pid_doi.status == PIDStatus.DELETED:
             identifier['action_identifier_select'] = current_app.config.get(
                 "WEKO_WORKFLOW_IDENTIFIER_GRANT_WITHDRAWN", -3)
@@ -1889,8 +1902,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
             identifier_actionid,
             identifier)
 
-        feedback_maillist = FeedbackMailList.get_mail_list_by_item_id(
-            item_id=recid.object_uuid)
+        # Process feedback maillist
         if feedback_maillist:
             action_id = current_app.config.get(
                 "WEKO_WORKFLOW_ITEM_REGISTRATION_ACTION_ID", 3)
@@ -1900,8 +1912,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                 feedback_maillist=feedback_maillist
             )
 
-        request_maillist = RequestMailList.get_mail_list_by_item_id(
-            item_id=recid.object_uuid)
+        # Process request maillist
         if request_maillist:
             activity.create_or_update_activity_request_mail(
                 activity_id=rtn.activity_id,
@@ -1909,8 +1920,7 @@ def prepare_edit_workflow(post_activity, recid, deposit):
                 is_display_request_button=True
             )
 
-        item_application = ItemApplication.get_item_application_by_item_id(
-            item_id=recid.object_uuid)
+        # Process item application
         if item_application:
             activity.create_or_update_activity_item_application(
                 activity_id=rtn.activity_id,
@@ -2241,11 +2251,15 @@ def check_an_item_is_locked(item_id=None):
         return False
 
     _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
-    if not item_id or not inspect(timeout=_timeout).ping():
+    if not item_id:
         return False
 
-    return check(inspect(timeout=_timeout).active()) or \
-        check(inspect(timeout=_timeout).reserved())
+    # Create inspect instance once and reuse to reduce RPC overhead
+    inspector = inspect(timeout=_timeout)
+    if not inspector.ping():
+        return False
+
+    return check(inspector.active()) or check(inspector.reserved())
 
 
 def bulk_check_an_item_is_locked(item_ids=[]):
@@ -2256,13 +2270,18 @@ def bulk_check_an_item_is_locked(item_ids=[]):
     :return list: Locked item id list.
     """
     _timeout = current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
-    if not item_ids or not inspect(timeout=_timeout).ping():
+    if not item_ids:
+        return []
+
+    # Create inspect instance once and reuse to reduce RPC overhead
+    inspector = inspect(timeout=_timeout)
+    if not inspector.ping():
         return []
 
     item_ids = [str(item_id) for item_id in item_ids]
     result = []
     for state in ['active', 'reserved']:
-        workers = getattr(inspect(timeout=_timeout), state)()
+        workers = getattr(inspector, state)()
         for worker in workers:
             for task in workers[worker]:
                 if task['name'] == 'weko_search_ui.tasks.import_item' \
@@ -3829,7 +3848,11 @@ def get_activity_display_info(activity_id: str):
         return shared_user_ids
 
     activity = WorkActivity()
+
+    # 1. Get activity_detail once
     activity_detail = activity.get_activity_detail(activity_id)
+
+    # 2. Get item if available
     item = None
     if activity_detail and activity_detail.item_id:
         try:
@@ -3838,9 +3861,14 @@ def get_activity_display_info(activity_id: str):
             item = ItemsMetadata.get_record(id_=activity_detail.item_id)
         except NoResultFound as ex:
             item = None
-    steps = activity.get_activity_steps(activity_id)
+
+    # 3. Get histories once
     history = WorkActivityHistory()
     histories = history.get_activity_history_list(activity_id)
+
+    # 4. Get steps using already fetched activity_detail and histories
+    # This avoids duplicate queries inside get_activity_steps
+    steps = activity.get_activity_steps(activity_id, activity_detail=activity_detail, histories=histories)
     workflow = WorkFlow()
     workflow_detail = workflow.get_workflow_by_id(
         activity_detail.workflow_id)

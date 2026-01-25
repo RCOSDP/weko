@@ -3721,24 +3721,25 @@ def get_workflow_by_item_type_id(
 
     """
     from weko_workflow.models import WorkFlow
+    from sqlalchemy import case
 
-    query = WorkFlow.query.filter_by(itemtype_id=item_type_id)
+    # Get all related item type IDs in one go
+    item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
+    id_list = [item_type_id] + [x.id for x in item_type_list]
+
+    # Single query with prioritization of exact item_type_id match
+    query = WorkFlow.query.filter(WorkFlow.itemtype_id.in_(id_list))
     if not with_deleted:
         query = query.filter_by(is_deleted=False)
+
+    # Order by: prioritize exact item_type_id match, then by itemtype_id desc, then by flow_id asc
+    query = query.order_by(
+        case((WorkFlow.itemtype_id == item_type_id, 0), else_=1),
+        WorkFlow.itemtype_id.desc(),
+        WorkFlow.flow_id.asc()
+    )
     workflow = query.first()
 
-    if not workflow:
-        item_type_list = ItemTypes.get_by_name_id(item_type_name_id)
-        id_list = [x.id for x in item_type_list]
-        query = (
-            WorkFlow.query
-            .filter(WorkFlow.itemtype_id.in_(id_list))
-            .order_by(WorkFlow.itemtype_id.desc())
-            .order_by(WorkFlow.flow_id.asc())
-        )
-        if not with_deleted:
-            query = query.filter_by(is_deleted=False)
-        workflow = query.first()
     return workflow if isinstance(workflow, WorkFlow) else None
 
 
@@ -5052,10 +5053,15 @@ def check_item_is_being_edit(
     # current_app.logger.error("activity:{}".format(activity))
     if not isinstance(activity, WorkActivity):
         activity = WorkActivity()
+
+    # Create PIDVersioning once and reuse it to avoid redundant queries
+    pv = PIDVersioning(child=recid)
+
     if not isinstance(post_workflow, Activity):
-        latest_pid = PIDVersioning(child=recid).last_child
+        latest_pid = pv.last_child
         item_uuid = latest_pid.object_uuid
         post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
+
     if (
         post_workflow and post_workflow.action_status
             in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
@@ -5081,28 +5087,28 @@ def check_item_is_being_edit(
             )
             return str(draft_workflow.activity_id)
 
-        pv = PIDVersioning(child=recid)
-        latest_pid = PIDVersioning(parent=pv.parent,child=recid).get_children(
+        # Reuse pv instead of creating new PIDVersioning
+        latest_pid = pv.get_children(
             pid_status=PIDStatus.REGISTERED
         ).filter(PIDRelation.relation_type == 2).order_by(
             PIDRelation.index.desc()
         ).first()
-        latest_workflow = activity.get_workflow_activity_by_item_id(
-            latest_pid.object_uuid
-        )
-        if (
-            latest_workflow
-            and latest_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
-        ):
-            current_app.logger.debug("latest_workflow: {0} status: {1}".format(
-                latest_pid.object_uuid, latest_workflow.action_status))
-            return str(latest_workflow.activity_id)
+        if latest_pid:
+            latest_workflow = activity.get_workflow_activity_by_item_id(
+                latest_pid.object_uuid
+            )
+            if (
+                latest_workflow
+                and latest_workflow.action_status in [ASP.ACTION_BEGIN, ASP.ACTION_DOING]
+            ):
+                current_app.logger.debug("latest_workflow: {0} status: {1}".format(
+                    latest_pid.object_uuid, latest_workflow.action_status))
+                return str(latest_workflow.activity_id)
 
-    pv = PIDVersioning(child=recid)
+    # Reuse pv instead of creating new PIDVersioning
     versions_uuid = [
         record.object_uuid
-        for record in PIDVersioning(parent=pv.parent, child=recid)
-        .get_children(pid_status=PIDStatus.REGISTERED)
+        for record in pv.get_children(pid_status=PIDStatus.REGISTERED)
         .filter(PIDRelation.relation_type == 2)
         .order_by(PIDRelation.index.desc())
         .all()
