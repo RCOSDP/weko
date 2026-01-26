@@ -98,6 +98,10 @@ USER root
 RUN chown -R invenio:invenio /code
 USER invenio
 
+RUN rm -rf /home/invenio/.cache/pip /home/invenio/.cache/npm /home/invenio/.npm || true
+RUN find /home/invenio/.virtualenvs/invenio -type d -name __pycache__ -prune -exec rm -rf {} + \
+    && find /home/invenio/.virtualenvs/invenio -type f -name "*.pyc" -delete
+
 # Runtime image with only required libs and prebuilt venv/code
 FROM python:3.6-slim-buster AS runtime
 
@@ -128,6 +132,11 @@ ENV WEKO_AGGREGATE_EVENT_HOUR=0
 ENV WEKO_AGGREGATE_EVENT_MINUTE=0
 ENV INVENIO_DB_POOL_CLASS=QueuePool
 
+# Optional runtime features (set to 0 to skip)
+ARG WITH_LIBREOFFICE=1
+ARG WITH_JRE=1
+ARG WITH_JA_FONTS=1
+
 # Install runtime libraries only (no build tools)
 # buster is archived; update apt sources to archive mirrors
 RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
@@ -145,25 +154,41 @@ RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
         libzip4 \
         libpcre3 \
         supervisor \
-        default-jre \
-        libreoffice-java-common \
-        libreoffice \
-        fonts-ipafont \
-        fonts-ipaexfont \
         ca-certificates \
-        curl \
     && apt-get -y autoremove && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js (newer than Debian buster's default) for node-sass@9.
-RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
-    && apt-get -y update --allow-releaseinfo-change \
-    && apt-get -y install --no-install-recommends nodejs \
-    && apt-get -y autoremove && apt-get -y clean \
-    && rm -rf /var/lib/apt/lists/*
+# Optional packages (kept separate to allow build-time toggles)
+RUN set -eux; \
+    apt-get -y update --allow-releaseinfo-change; \
+    if [ "${WITH_JRE}" = "1" ]; then \
+        apt-get -y install --no-install-recommends default-jre; \
+    fi; \
+    if [ "${WITH_LIBREOFFICE}" = "1" ]; then \
+        apt-get -y install --no-install-recommends libreoffice-java-common libreoffice; \
+    fi; \
+    if [ "${WITH_JA_FONTS}" = "1" ]; then \
+        apt-get -y install --no-install-recommends fonts-ipafont fonts-ipaexfont; \
+    fi; \
+    apt-get -y autoremove && apt-get -y clean; \
+    rm -rf /var/lib/apt/lists/*
 
-# Install webassets filters required at runtime for `invenio assets build`.
-RUN npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js
+# Optional Node.js + webassets filters (set to 0 to skip in worker)
+ARG WITH_NODE=1
+RUN set -eux; \
+    if [ "${WITH_NODE}" = "1" ]; then \
+        apt-get -y update --allow-releaseinfo-change; \
+        apt-get -y install --no-install-recommends curl; \
+        curl -fsSL https://deb.nodesource.com/setup_16.x | bash -; \
+        apt-get -y update --allow-releaseinfo-change; \
+        apt-get -y install --no-install-recommends nodejs; \
+        npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js; \
+        npm cache clean --force; \
+        rm -rf /root/.npm; \
+        apt-get -y purge --auto-remove curl; \
+        apt-get -y autoremove && apt-get -y clean; \
+        rm -rf /var/lib/apt/lists/*; \
+    fi
 
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
 COPY --from=build-env /home/invenio/.virtualenvs/invenio /home/invenio/.virtualenvs/invenio
