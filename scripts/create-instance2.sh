@@ -152,6 +152,9 @@ ${INVENIO_WEB_INSTANCE} collect -v
 ${INVENIO_WEB_INSTANCE} assets build
 # sphinxdoc-collect-and-build-assets-end
 
+# remove build-time node modules to reduce image size
+rm -rf "var/instance/static/node_modules"
+
 # gunicorn uwsgi - begin
 # pip install gunicorn
 # pip install meinheld

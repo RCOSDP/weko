@@ -60,13 +60,14 @@ provision_web_common_ubuntu14 () {
     $sudo apt-get -y update --allow-releaseinfo-change
 
     # install useful system tools:
-    $sudo apt-get -y install \
+    $sudo apt-get -y install --no-install-recommends \
          curl \
          git \
          rlwrap \
          screen \
          vim \
          gnupg \
+         build-essential \
 	 libpcre3-dev
     # sphinxdoc-install-useful-system-tools-ubuntu14-end
 
@@ -82,7 +83,7 @@ provision_web_common_ubuntu14 () {
     $sudo printf "\nPackage: *\nPin: origin deb.nodesource.com\nPin-Priority: 600" >> /etc/apt/preferences.d/nodesource
 
     # sphinxdoc-install-web-common-ubuntu14-begin
-    $sudo apt-get -y install \
+    $sudo apt-get -y install --no-install-recommends \
          libffi-dev \
          libfreetype6-dev \
          libjpeg-dev \
@@ -102,7 +103,7 @@ provision_web_common_ubuntu14 () {
 provision_web_libpostgresql_ubuntu14 () {
 
     # sphinxdoc-install-web-libpostgresql-ubuntu14-begin
-    $sudo apt-get -y install \
+    $sudo apt-get -y install --no-install-recommends \
          libpq-dev
     # sphinxdoc-install-web-libpostgresql-ubuntu14-end
 }
@@ -193,7 +194,7 @@ setup_virtualenvwrapper () {
 setup_nginx_ubuntu14 () {
     # sphinxdoc-install-web-nginx-ubuntu14-begin
     # install Nginx web server:
-    $sudo apt-get install -y nginx
+    $sudo apt-get install -y --no-install-recommends nginx
 
     # configure Nginx web server:
     $sudo cp -f "$scriptpathname/../nginx/weko.conf" /etc/nginx/sites-available/
@@ -252,11 +253,11 @@ setup_libreoffice_ubuntu14 () {
     # sphinxdoc-install-web-libreoffice-ubuntu14-begin
     set +o errexit
     $sudo mkdir -p /usr/share/man/man1
-    $sudo apt-get install default-jre libreoffice-java-common
-    $sudo apt-get install -y libreoffice
+    $sudo apt-get install -y --no-install-recommends default-jre libreoffice-java-common
+    $sudo apt-get install -y --no-install-recommends libreoffice
     #$sudo apt-get install -y libreoffice-core --no-install-recommends
-    $sudo apt-get install -y fonts-ipafont fonts-ipaexfont # japanese fonts
-    $sudo apt-get install -y supervisor
+    $sudo apt-get install -y --no-install-recommends fonts-ipafont fonts-ipaexfont # japanese fonts
+    $sudo apt-get install -y --no-install-recommends supervisor
     set -o errexit
     # sphinxdoc-install-web-libreoffice-ubuntu14-end
 }
@@ -273,6 +274,7 @@ setup_libreoffice_centos7 () {
 cleanup_web_ubuntu14 () {
     # sphinxdoc-install-web-cleanup-ubuntu14-begin
     $sudo apt-get -y autoremove && $sudo apt-get -y clean
+    $sudo rm -rf /var/lib/apt/lists/*
     # sphinxdoc-install-web-cleanup-ubuntu14-end
 }
 
