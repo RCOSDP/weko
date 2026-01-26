@@ -150,6 +150,7 @@ RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
         libreoffice \
         fonts-ipafont \
         fonts-ipaexfont \
+        curl \
     && apt-get -y autoremove && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
 
