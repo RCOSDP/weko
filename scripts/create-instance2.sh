@@ -136,6 +136,8 @@ cp -prf "/code/modules/weko-index-tree/weko_index_tree/static/indextree" "var/in
 ${INVENIO_WEB_INSTANCE} npm
 cdvirtualenv "var/instance/static"
 CI=true npm install
+CI=true npm install node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js
+export PATH="$(pwd)/node_modules/.bin:$PATH"
 CI=true npm install angular-schema-form@0.8.13
 ## for install ckeditor plugins
 cdvirtualenv "var/instance/static/node_modules/ckeditor/plugins"

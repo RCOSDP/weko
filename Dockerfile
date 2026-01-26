@@ -150,8 +150,20 @@ RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
         libreoffice \
         fonts-ipafont \
         fonts-ipaexfont \
+        ca-certificates \
+        curl \
     && apt-get -y autoremove && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (newer than Debian buster's default) for node-sass@9.
+RUN curl -fsSL https://deb.nodesource.com/setup_16.x | bash - \
+    && apt-get -y update --allow-releaseinfo-change \
+    && apt-get -y install --no-install-recommends nodejs \
+    && apt-get -y autoremove && apt-get -y clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install webassets filters required at runtime for `invenio assets build`.
+RUN npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js
 
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
 COPY --from=build-env /home/invenio/.virtualenvs/invenio /home/invenio/.virtualenvs/invenio
