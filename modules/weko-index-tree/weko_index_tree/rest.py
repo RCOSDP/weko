@@ -701,7 +701,7 @@ class GetIndex(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(read_index_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get tree json."""
         version = kwargs.get('version')
@@ -818,7 +818,7 @@ class GetParentIndex(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(read_index_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get tree json."""
         version = kwargs.get('version')
@@ -941,7 +941,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(read_index_scope.id)
     @roles_required([], allow_anonymous=True)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Get index tree."""
         version = kwargs.get('version')
@@ -958,7 +958,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
     ])
     @require_oauth_scopes(create_index_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """Create a new index tree node."""
         version = kwargs.get('version')
@@ -975,7 +975,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
     ])
     @require_oauth_scopes(update_index_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def put(self, **kwargs):
         """Update an existing index tree node."""
         current_app.logger.info("Updating an existing index tree node")
@@ -993,7 +993,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
     ])
     @require_oauth_scopes(delete_index_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def delete(self, **kwargs):
         """Delete an existing index tree node."""
         version = kwargs.get('version')

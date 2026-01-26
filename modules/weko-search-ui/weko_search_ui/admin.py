@@ -21,7 +21,7 @@
 """Weko Search-UI admin."""
 
 import codecs
-import json
+import orjson
 import os
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -368,7 +368,7 @@ class ItemImportView(BaseView):
 
         return self.render(
             WEKO_ITEM_ADMIN_IMPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js),
+            workflows=orjson.dumps(workflows_js).decode('utf-8'),
             file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower(),
             form=form
         )
@@ -811,7 +811,7 @@ class ItemRocrateImportView(BaseView):
 
         return self.render(
             WEKO_ITEM_ADMIN_ROCRATE_IMPORT_TEMPLATE,
-            workflows=json.dumps(workflows_js),
+            workflows=orjson.dumps(workflows_js).decode('utf-8'),
             file_format=current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'json').lower(),
             form=form
         )
@@ -1214,7 +1214,7 @@ class ItemBulkExport(BaseView):
             name=WEKO_SEARCH_UI_BULK_EXPORT_FILE_CREATE_RUN_MSG,
             user_id=current_user.get_id()
         )
-        export_info = json.loads(get_redis_cache(file_msg))
+        export_info = orjson.loads(get_redis_cache(file_msg))
         export_path = export_info["export_path"]
         export_status, download_uri, _, _, \
             _, _, _ = get_export_status()

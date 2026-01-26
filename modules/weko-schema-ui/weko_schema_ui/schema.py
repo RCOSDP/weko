@@ -21,7 +21,7 @@
 """Blueprint for schema rest."""
 
 import copy
-import json
+import orjson
 from collections import Iterable, OrderedDict
 from functools import partial
 
@@ -61,7 +61,7 @@ class SchemaConverter:
 
     def to_dict(self):
         """To_dict."""
-        return json.dumps(self.schema)
+        return orjson.dumps(self.schema).decode('utf-8')
 
     def create_schema(self, schema_file):
         """Create_schema."""
@@ -1900,8 +1900,7 @@ def cache_schema(schema_name, delete=False):
                 dstore['target_namespace'] = rec.get('target_namespace')
                 dstore['schema_location'] = rec.get('schema_location')
                 dstore['namespaces'] = rec.model.namespaces.copy()
-                dstore['schema'] = json.loads(
-                    rec.model.xsd, object_pairs_hook=OrderedDict)
+                dstore['schema'] = orjson.loads(rec.model.xsd)
                 
                 # why use clear()?
                 rec.model.namespaces.clear()
@@ -1918,16 +1917,14 @@ def cache_schema(schema_name, delete=False):
         cache_key = current_app.config[
             'WEKO_SCHEMA_CACHE_PREFIX'].format(schema_name=schema_name)
         data_str = datastore.get(cache_key)
-        data = json.loads(
-            data_str.decode('utf-8'),
-            object_pairs_hook=OrderedDict)
+        data = orjson.loads(data_str)
         if delete:
             datastore.delete(cache_key)
     except BaseException as ex:
         try:
             schema = get_schema()
             if schema:
-                datastore.put(cache_key, json.dumps(schema).encode("utf-8"))
+                datastore.put(cache_key, orjson.dumps(schema))
         except BaseException:
             return get_schema()
         else:

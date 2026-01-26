@@ -42,6 +42,7 @@ from invenio_records.models import RecordMetadata
 from sqlalchemy import and_, asc, desc, func, or_,literal_column, not_, cast, String
 from sqlalchemy.sql import exists
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import joinedload
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.types import String
 from weko_deposit.api import WekoDeposit
@@ -995,12 +996,17 @@ class WorkActivity(object):
                 db.session.add(db_history)
 
                 with db.session.begin_nested():
+                    # Batch fetch all actions to avoid N+1 query problem
+                    action_ids = [fa.action_id for fa in flow_actions]
+                    actions = _Action.query.filter(_Action.id.in_(action_ids)).all()
+                    action_map = {a.id: a for a in actions}
+
                     # set action handler for all the action except approval
                     # actions
                     for flow_action in flow_actions:
-                        action_instance = Action()
-                        action = action_instance.get_action_detail(
-                            flow_action.action_id)
+                        action = action_map.get(flow_action.action_id)
+                        if not action:
+                            continue
                         action_handler = activity_login_user \
                             if not action.action_endpoint == 'approval' else -1
                         action_status = ActionStatusPolicy.ACTION_DOING \
@@ -2497,17 +2503,33 @@ class WorkActivity(object):
                     desc(_Activity.id)).all()
             return activities
 
-    def get_activity_steps(self, activity_id):
-        """Get activity steps."""
+    def get_activity_steps(self, activity_id, activity_detail=None, histories=None):
+        """Get activity steps.
+
+        Args:
+            activity_id: Activity ID
+            activity_detail: Optional pre-fetched activity detail (avoids duplicate query)
+            histories: Optional pre-fetched histories (avoids duplicate query)
+
+        Returns:
+            List of activity steps
+        """
         steps = []
         his = WorkActivityHistory()
-        histories = his.get_activity_history_list(activity_id)
+
+        # Use provided histories or fetch if not provided
+        if histories is None:
+            histories = his.get_activity_history_list(activity_id)
+
         if not histories:
             return []
+
         history_dict = {}
         activity = WorkActivity()
-        activity_detail = activity.\
-            get_activity_detail(histories[0].activity_id)
+
+        # Use provided activity_detail or fetch if not provided
+        if activity_detail is None:
+            activity_detail = activity.get_activity_detail(histories[0].activity_id)
         is_action_order = True if histories[0].action_order else False
         for history in histories:
             update_user_mail = history.user.email \
@@ -2526,12 +2548,13 @@ class WorkActivity(object):
                 )
             }
         with db.session.no_autoflush:
-            self.get_activity_by_id(activity_id)
             activity = self.get_activity_by_id(activity_id)
             if activity is not None:
-                flow_actions = _FlowAction.query.filter_by(
-                    flow_id=activity.flow_define.flow_id).order_by(asc(
-                        _FlowAction.action_order)).all()
+                flow_actions = _FlowAction.query.options(
+                    joinedload(_FlowAction.action)
+                ).filter_by(
+                    flow_id=activity.flow_define.flow_id
+                ).order_by(asc(_FlowAction.action_order)).all()
                 doing_index_id = -1
                 retry_index_id = -1
                 for flow_action in flow_actions:
@@ -2948,7 +2971,12 @@ class WorkActivity(object):
         Returns:
             Activity: Activity object. if not found, return None.
         """
-        obj = _Activity.query.filter_by(activity_id=activity_id).one_or_none()
+        # Use eager loading to fetch related data in a single query
+        obj = _Activity.query.options(
+            joinedload(_Activity.action),
+            joinedload(_Activity.workflow),
+            joinedload(_Activity.flow_define)
+        ).filter_by(activity_id=activity_id).one_or_none()
         return obj if isinstance(obj, _Activity) else None
 
     def update_activity(self, activity_id: str, activity_data: dict):
@@ -3900,9 +3928,23 @@ class WorkActivityHistory(object):
             query = ActivityHistory.query.filter_by(
                 activity_id=activity_id).order_by(asc(ActivityHistory.action_order))
             histories = query.all()
+
+            # Fetch all actions in a single query to avoid N+1 problem
+            if histories:
+                action_ids = [h.action_id for h in histories if h.action_id]
+                if action_ids:
+                    actions = _Action.query.filter(_Action.id.in_(action_ids)).all()
+                    action_map = {a.id: a for a in actions}
+                else:
+                    action_map = {}
+            else:
+                action_map = {}
+
             for history in histories:
-                history.ActionName = _Action.query.filter_by(
-                    id=history.action_id).first().action_name,
+                if history.action_id in action_map:
+                    history.ActionName = action_map[history.action_id].action_name,
+                else:
+                    history.ActionName = None,
                 history.StatusDesc = ActionStatusPolicy.describe(
                     history.action_status)
                 history.CommentDesc = ActionCommentPolicy.describe(

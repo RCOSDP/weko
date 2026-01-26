@@ -24,6 +24,7 @@ import json
 import requests
 import sys
 import traceback
+from time import perf_counter
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
@@ -1100,20 +1101,31 @@ def prepare_edit_item(id=None, community=None):
     community = community or getargs.get('c', None)
 
     if pid_value:
+        _t0 = perf_counter()
         # Check redis cache
+        _t_lock_start = perf_counter()
         if not lock_item_will_be_edit(pid_value):
             current_app.logger.error(f"Item {pid_value} is being edited.")
             return jsonify(
                 code=err_code,
                 msg=_('This Item is being edited.')
             )
+        current_app.logger.debug(
+            "prepare_edit_item timing lock_item_will_be_edit=%0.3fs",
+            perf_counter() - _t_lock_start,
+        )
 
         pid_value = str(pid_value)
         record_class = import_string('weko_deposit.api:WekoDeposit')
         resolver = Resolver(pid_type='recid',
                             object_type='rec',
                             getter=record_class.get_record)
+        _t_resolve_start = perf_counter()
         recid, deposit = resolver.resolve(pid_value)
+        current_app.logger.debug(
+            "prepare_edit_item timing resolver.resolve=%0.3fs",
+            perf_counter() - _t_resolve_start,
+        )
 
         if not deposit:
             return jsonify(
@@ -1128,13 +1140,19 @@ def prepare_edit_item(id=None, community=None):
         latest_pid = PIDVersioning(child=recid).last_child
 
         # ! Check User's Permissions
+        _t_perm_start = perf_counter()
         if user_id not in authenticators and not get_user_roles(is_super_role=True)[0]:
             return jsonify(
                 code=err_code,
                 msg=_("You are not allowed to edit this item.")
             )
+        current_app.logger.debug(
+            "prepare_edit_item timing permission_check=%0.3fs",
+            perf_counter() - _t_perm_start,
+        )
 
         # ! Check dependency ItemType
+        _t_itemtype_start = perf_counter()
         item_type_id = deposit.get('item_type_id')
         item_type = ItemTypes.get_by_id(item_type_id)
         if not item_type:
@@ -1142,15 +1160,25 @@ def prepare_edit_item(id=None, community=None):
                 code=err_code,
                 msg=_("Dependency ItemType not found.")
             )
+        current_app.logger.debug(
+            "prepare_edit_item timing itemtype_lookup=%0.3fs",
+            perf_counter() - _t_itemtype_start,
+        )
 
         # Check Record is in import progress
+        _t_importlock_start = perf_counter()
         if check_an_item_is_locked(pid_value):
             return jsonify(
                 code=err_code,
                 msg=_('Item cannot be edited because the import is in progress.')
             )
+        current_app.logger.debug(
+            "prepare_edit_item timing check_an_item_is_locked=%0.3fs",
+            perf_counter() - _t_importlock_start,
+        )
 
         # ! Check Record is being edit
+        _t_being_edit_start = perf_counter()
         item_uuid = latest_pid.object_uuid
         latest_activity = work_activity.get_workflow_activity_by_item_id(item_uuid)
 
@@ -1162,14 +1190,16 @@ def prepare_edit_item(id=None, community=None):
                 msg=_('This Item is being edited.'),
                 activity_id=is_begin_edit
             )
+        current_app.logger.debug(
+            "prepare_edit_item timing check_item_is_being_edit=%0.3fs",
+            perf_counter() - _t_being_edit_start,
+        )
 
         if latest_activity:
             post_activity['workflow_id'] = latest_activity.workflow_id
             post_activity['flow_id'] = latest_activity.flow_id
         else:
-            latest_activity = work_activity.get_workflow_activity_by_item_id(
-                recid.object_uuid
-            )
+            # Get workflow by item type instead of querying activity again
             workflow = get_workflow_by_item_type_id(
                 item_type.name_id, item_type_id, with_deleted=False
             )
@@ -1186,8 +1216,18 @@ def prepare_edit_item(id=None, community=None):
         post_activity['post_workflow'] = latest_activity
 
         try:
+            _t_prepare_start = perf_counter()
             rtn = prepare_edit_workflow(post_activity, recid, deposit)
+            current_app.logger.debug(
+                "prepare_edit_item timing prepare_edit_workflow=%0.3fs",
+                perf_counter() - _t_prepare_start,
+            )
+            _t_commit_start = perf_counter()
             db.session.commit()
+            current_app.logger.debug(
+                "prepare_edit_item timing db_commit=%0.3fs",
+                perf_counter() - _t_commit_start,
+            )
         except SQLAlchemyError as ex:
             current_app.logger.error('sqlalchemy error: {}'.format(ex))
             traceback.print_exc()
@@ -1203,6 +1243,11 @@ def prepare_edit_item(id=None, community=None):
             return jsonify(
                 code=err_code,
                 msg=_('An error has occurred.')
+            )
+        finally:
+            current_app.logger.debug(
+                "prepare_edit_item timing total=%0.3fs",
+                perf_counter() - _t0,
             )
 
         if community:

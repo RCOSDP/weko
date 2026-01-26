@@ -90,7 +90,7 @@ class OaStatusCallback(ContentNegotiatedMethodView):
         """Constructor."""
         super(OaStatusCallback, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     @oauth2.require_oauth()
     @require_oauth_scopes(oa_status_update_scope.id)
     def post(self, **kwargs):

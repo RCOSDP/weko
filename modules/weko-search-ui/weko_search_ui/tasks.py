@@ -21,7 +21,7 @@
 """WEKO3 module docstring."""
 import os
 import gc
-import json
+import orjson
 import os
 import pickle
 import shutil
@@ -252,7 +252,7 @@ def write_files_task(self, export_path, pickle_file_name , user_id):
 
         item_type_id = pickle_file_name.split(".")[1]
         part = pickle_file_name.split(".")[2]
-        json_data = json.loads(get_redis_cache(_file_create_key))
+        json_data = orjson.loads(get_redis_cache(_file_create_key))
         pickle_path = export_path + '/' + pickle_file_name
         def _update_redis_status(json_data, file_name, status,item_type_id):
             """Update status in redis cache.
@@ -277,7 +277,7 @@ def write_files_task(self, export_path, pickle_file_name , user_id):
                 import_datas = pickle.load(f)
 
             result = write_files(import_datas, export_path, user_id, 0)
-            json_data = json.loads(get_redis_cache(_file_create_key))
+            json_data = orjson.loads(get_redis_cache(_file_create_key))
             if result:
                 _update_redis_status(json_data, import_datas['name'], 'finished',import_datas['item_type_id'])
             else:

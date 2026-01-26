@@ -45,7 +45,7 @@
     <div class="panel-body panel-body2">
       {%- include "weko_records_ui/box/head.html" %}
     </div>
-    <div class="panel-body panel-body2" style="padding-top: 10px;">
+    <div class="panel-body panel-body2" style="padding-top: 10px; content-visibility: auto; contain-intrinsic-size: 1000px;">
       <div class="row row-4">
         <div id="detail-item" class="col-sm-9 col-md-9 col-lg-9 col-left">
           <div id="record_id" class="hide">{{ record.id }}</div>
@@ -56,7 +56,9 @@
           <!-- Preview Carousel -->
           {% if not record.hide_file %}
             {%- if is_display_file_preview -%}
-              {{ preview_carousel(record=record, files=files, pid=pid) }}
+              <div style="content-visibility: auto; contain-intrinsic-size: 480px;">
+                {{ preview_carousel(record=record, files=files, pid=pid) }}
+              </div>
             {%- endif -%}
             {%- set file_order = [] -%}
               {%- for file in files -%}
@@ -76,7 +78,7 @@
                   <th class="action_header">{{_('Actions')}}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody style="content-visibility: auto; contain-intrinsic-size: 800px;">
               {%- set preview_count = {'value': 0} -%}
               {%- for file_name in file_order|unique-%}
                 {%- for file in files -%}
@@ -437,7 +439,7 @@
             {% endif %}
           </div>
         </div>
-        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right">
+        <div id="invenio-csl" class="col-sm-3 col-md-3 col-lg-3 col-right" style="content-visibility: auto; contain-intrinsic-size: 1200px;">
           <!-- start demo block -->
           {%- include "weko_records_ui/box/stats.html" %}
           {%- if files | selectattr('is_thumbnail', 'equalto', False)| list | length > 0 -%}
@@ -457,7 +459,9 @@
              {%- include "weko_records_ui/box/versions.html" %}
 		  {% endif %}
           {% if config.WEKO_RECORDS_UI_DISPLAY_SHARE_BOX_FLG %}
-              {%- include "weko_records_ui/box/share.html" %}
+              <div style="content-visibility: auto; contain-intrinsic-size: 240px;">
+                {%- include "weko_records_ui/box/share.html" %}
+              </div>
           {% endif %}
 		  {% if config.WEKO_RECORDS_UI_DISPLAY_EXPORT_BOX_FLG %}
               {%- include "weko_records_ui/box/export.html" %}

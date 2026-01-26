@@ -187,7 +187,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_search_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Handle GET request."""
         version = kwargs.get('version')
@@ -200,7 +200,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_create_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """Handle GET request."""
         version = kwargs.get('version')
@@ -213,7 +213,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_update_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def put(self, **kwargs):
         """Handle GET request."""
         version = kwargs.get('version')
@@ -226,7 +226,7 @@ class AuthorDBManagementAPI(ContentNegotiatedMethodView):
     @require_api_auth(allow_anonymous=False)
     @require_oauth_scopes(author_delete_scope.id)
     @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def delete(self, **kwargs):
         """Handle GET request."""
         version = kwargs.get('version')

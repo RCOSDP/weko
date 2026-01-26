@@ -32,6 +32,7 @@
                             m_cur_step=None,
                             m_community=None) %}
   {% autoescape False %}
+  <div style="content-visibility: auto; contain-intrinsic-size: 1200px;">
   <table class="table table-bordered table-striped detail-table">
       {% if m_record.item_type_info %}
 	    {% if flg_display_itemtype %}
@@ -122,9 +123,14 @@
                     {% endif %}
                   <p>
                     <span>{{ thumb_name }}</span><br>
-                    <img src={{ thumb_url }}
-                         alt={{ thumb_name }}
-                         style="max-width: {{ thumbnail_width }}px;"
+                    {%- set is_first_thumb = loop.index0 == 0 -%}
+                    <img src="{{ thumb_url }}"
+                         alt="{{ thumb_name }}"
+                         style="max-width: {{ thumbnail_width }}px; height: auto;"
+                         loading="{{ 'eager' if is_first_thumb else 'lazy' }}"
+                         decoding="async"
+                         fetchpriority="{{ 'high' if is_first_thumb else 'auto' }}"
+                         width="{{ thumbnail_width }}"
                     />
                   </p>
                 {% endfor %}
@@ -191,5 +197,6 @@
         </tr>
       {% endif %}
   </table>
+  </div>
   {% endautoescape %}
 {% endmacro %}

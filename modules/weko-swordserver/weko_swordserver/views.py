@@ -83,7 +83,7 @@ blueprint.before_request(verify_oauth_token_and_set_current_user)
 
 @blueprint.route("/service-document", methods=["GET"])
 @oauth2.require_oauth()
-@limiter.limit("")
+@limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
 @check_on_behalf_of()
 def get_service_document():
     """Retrieve the Service Document
@@ -166,7 +166,7 @@ def get_service_document():
 
 @blueprint.route("/service-document", methods=["POST"])
 @oauth2.require_oauth()
-@limiter.limit("")
+@limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
 @require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_create_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
@@ -462,7 +462,7 @@ def post_service_document():
 
 @blueprint.route("/deposit/<recid>", methods=["PUT"])
 @oauth2.require_oauth()
-@limiter.limit("")
+@limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
 @require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_update_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
@@ -942,7 +942,7 @@ def _get_status_workflow_document(activity_id, recid):
 
 @blueprint.route("/deposit/<recid>", methods=["DELETE"])
 @oauth2.require_oauth()
-@limiter.limit("")
+@limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
 @require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_delete_scope.id)
 @roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)

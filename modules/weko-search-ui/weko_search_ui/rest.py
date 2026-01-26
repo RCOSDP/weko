@@ -21,8 +21,9 @@
 """Blueprint for Index Search rest."""
 
 from datetime import datetime
+from time import perf_counter
 import inspect
-import json
+import orjson
 import pickle
 import traceback
 from functools import partial
@@ -246,6 +247,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         community_id = request.values.get("c")
         params = {}
         facets = get_facet_search_query()
+
         search_index = current_app.config["SEARCH_UI_SEARCH_INDEX"]
         if facets and search_index and "post_filters" in facets[search_index]:
             post_filters = facets[search_index]["post_filters"]
@@ -259,15 +261,19 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         search_obj = self.search_class()
         search = search_obj.with_preference_param().params(version=True)
         search = search[(page - 1) * size : page * size]
+
         search, qs_kwargs = self.search_factory(self, search)
+
         query = request.values.get("q")
         if query:
             urlkwargs["q"] = query
 
         # Execute search
         weko_faceted_search_mapping = FacetSearchSetting.get_activated_facets_mapping()
+
         from weko_admin.utils import get_title_facets
         titles, order, uiTypes, isOpens, displayNumbers, searchConditions = get_title_facets()
+
         current_app.logger.warning(search)
         for param in params:
             query_key = weko_faceted_search_mapping[param]
@@ -283,6 +289,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 else:
                     search = search.post_filter({"terms": {query_key: params[param]}})
         search_result = search.execute()
+
 
         # Generate links for prev/next
         urlkwargs.update(
@@ -305,13 +312,16 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             )
         # aggs result identify
         rd = search_result.to_dict()
+
         from weko_search_ui.utils import combine_aggs
         rd = combine_aggs(rd)
+
         q = request.values.get("q") or ""
         lang = current_i18n.language
 
         try:
             paths = Indexes.get_self_list(q, community_id)
+
         except BaseException:
             paths = []
         import pickle
@@ -320,7 +330,9 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         nlst = []
         items_count = dict()
         public_indexes = set(Indexes.get_public_indexes_list())
+
         recorrect_private_items_count(agp)
+
         for i in agp:
             items_count[i["key"]] = {
                 "key": i["key"],
@@ -430,6 +442,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 current_idx["date_range"]["un_pub_cnt"] = private_count
                 if p.path in is_perm_paths:
                     nlst.append(current_idx)
+
         agp.clear()
         # process index tree image info
         custom_sort_data = None
@@ -450,6 +463,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             nlst[idx]["rss_status"] = index_info.rss_status
             if index_id == q:
                 custom_sort_data = index_info
+
         agp.append(nlst)
         for hit in rd["hits"]["hits"]:
             try:
@@ -465,6 +479,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                     }
             except Exception:
                 pass
+
 
         # add info (headings & page info)
         try:
@@ -488,12 +503,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
         except Exception as ex:
             current_app.logger.error(ex)
 
-        return self.make_response(
+
+        res = self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=rd,
             links=links,
             item_links_factory=self.links_factory,
         )
+
+        return res
 
 
 def get_heading_info(data, lang, item_type):
@@ -583,7 +601,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def get(self, **kwargs):
         """Search records.
 
@@ -718,7 +736,7 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
                 'aggregations' : facet_list
             }
             res = Response(
-                response=json.dumps(result, indent=indent),
+                response=orjson.dumps(result, option=orjson.OPT_INDENT_2 if indent else 0).decode('utf-8'),
                 status=200,
                 content_type='application/json')
 
@@ -772,7 +790,7 @@ class IndexSearchResultList(ContentNegotiatedMethodView):
 
     @require_api_auth(allow_anonymous=True)
     @require_oauth_scopes(item_read_scope.id)
-    @limiter.limit('')
+    @limiter.limit(lambda: (current_app.config.get("WEKO_API_LIMIT_RATE_DEFAULT") or ["100 per minute"])[0])
     def post(self, **kwargs):
         """Search records.
 
