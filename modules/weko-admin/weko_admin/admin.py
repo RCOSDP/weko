@@ -2072,6 +2072,13 @@ class JsonldMappingView(ModelView):
             .order_by(ItemTypeJsonldMapping.id)
         )
 
+    def get_count_query(self):
+        """Get query for JSON-LD mapping."""
+        return (
+            super().get_count_query()
+            .filter(ItemTypeJsonldMapping.is_deleted == False)
+        )
+
     @expose("/new/", methods=["GET", "POST"])
     def create_view(self):
 

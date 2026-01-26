@@ -109,6 +109,7 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
 
     indexer, results = records
     record = results[0]["record"]
+    record['_deposit']['created_by'] = 1
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}],
             'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': 'open_access',
             'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False,
@@ -229,7 +230,7 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         with patch("flask_security.current_user", return_value=users[0]["obj"]):
             with patch("flask_security.current_user.is_authenticated", return_value=True):
-                assert check_file_download_permission(record, fjson, True) == False
+                assert check_file_download_permission(record, fjson, True) == True
 
     current_app.config.update(WEKO_ITEMS_UI_PROXY_POSTING = True)
     #'accessrole=open_no',weko_shared_ids に任意のユーザが登録され、WEKO_ITEMS_UI_PROXY_POSTING が True の状態で、created_by に登録したユーザで実行する。
@@ -276,6 +277,7 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
 
     fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'}, 'date': [{'dateType': 'Available', 'dateValue': '2023-04-01'}], 'format': 'image/jpeg', 'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessdate': '2023-06-01', 'accessrole': 'open_date', 'roles':[{'role':'1'},{'role':'2'}], 'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview', 'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0, 'mimetype': 'image/jpeg', 'file_order': 0}
     record = results[1]["record"]
+    record['_deposit']['created_by'] = 1
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         assert check_file_download_permission(record, fjson, False) == True
 
@@ -846,7 +848,7 @@ def test_check_created_id(app, users, index, status):
         "item_type_id": "15",
         "publish_date": "2022-07-12",
         "publish_status": "0",
-        "weko_shared_ids": [2],
+        "weko_shared_ids": [2, 100],
         "item_1617186331708": {
             "attribute_name": "Title",
             "attribute_value_mlt": [
@@ -872,7 +874,7 @@ def test_check_created_id(app, users, index, status):
             record['owner']=current_user.get_id()
             assert check_created_id(record) == True
             record['owner']=-1
-            record['weko_shared_ids']=[int(current_user.get_id())]
+            record['weko_shared_ids']=[int(current_user.get_id()), 100]
             assert check_created_id(record) == False
             current_app.config.update(WEKO_ITEMS_UI_PROXY_POSTING = True)
             assert check_created_id(record) == True

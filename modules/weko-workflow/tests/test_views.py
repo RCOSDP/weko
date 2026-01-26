@@ -6260,8 +6260,19 @@ def test_check_authority_action2(app, client, users, db_register_full_action, mo
             # ItemMetadataあり
             activity = Activity.query.filter_by(activity_id='11').first()
             im = ItemMetadata.query.filter_by(id=activity.item_id).one_or_none()
+            current_app.config['WEKO_ITEMS_UI_PROXY_POSTING'] = True
+            im.json['shared_user_ids'] = []
+            assert 1 == check_authority_action(activity_id='11',
+                                action_id=3,
+                                contain_login_item_application=False,
+                                action_order=1)
             im.json['shared_user_ids'] = [1,2,3,4,5,6]
             assert 0 == check_authority_action(activity_id='11',
+                                action_id=3,
+                                contain_login_item_application=False,
+                                action_order=1)
+            current_app.config['WEKO_ITEMS_UI_PROXY_POSTING'] = False
+            assert 1 == check_authority_action(activity_id='11',
                                 action_id=3,
                                 contain_login_item_application=False,
                                 action_order=1)
@@ -6281,8 +6292,27 @@ def test_check_authority_action2(app, client, users, db_register_full_action, mo
 
             # ItemMetadataなし
             activity = Activity.query.filter_by(activity_id='11').first()
-            activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[{'user': 1},{'user': users[4]['id']}], 'owner': 1}})
+            current_app.config['WEKO_ITEMS_UI_PROXY_POSTING'] = True
             activity.item_id=str(uuid.uuid4())
+            activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[], 'owner':1}})
+            activity.shared_user_ids = []
+            assert 1 == check_authority_action(activity_id='11',
+                                action_id=3,
+                                contain_login_item_application=False,
+                                action_order=1)
+            activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[{'user': users[4]['id']},{'user': 1}], 'owner': 1}})
+            activity.shared_user_ids = [{'user': users[4]['id']},{'user': 1}]
+            assert 0 == check_authority_action(activity_id='11',
+                                action_id=3,
+                                contain_login_item_application=False,
+                                action_order=1)
+            current_app.config['WEKO_ITEMS_UI_PROXY_POSTING'] = False
+            assert 1 == check_authority_action(activity_id='11',
+                                action_id=3,
+                                contain_login_item_application=False,
+                                action_order=1)
+            activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[{'user': 1},{'user': users[4]['id']}], 'owner': 1}})
+            activity.shared_user_ids = [{'user': 1},{'user': users[4]['id']}]
             assert 0 == check_authority_action(activity_id='11',
                                 action_id=3,
                                 contain_login_item_application=False,
@@ -6290,6 +6320,12 @@ def test_check_authority_action2(app, client, users, db_register_full_action, mo
             activity.temp_data = json.dumps({'metainfo':{'shared_user_ids':[{'user': 1}], 'owner': users[4]['id']}})
             activity.item_id=str(uuid.uuid4())
             assert 0 == check_authority_action(activity_id='11',
+                                action_id=3,
+                                contain_login_item_application=False,
+                                action_order=1)
+            activity.temp_data = json.dumps({'metainfo': {'shared_user_ids':[], 'owner': 1}})
+            activity.shared_user_ids = []
+            assert 1 == check_authority_action(activity_id='11',
                                 action_id=3,
                                 contain_login_item_application=False,
                                 action_order=1)

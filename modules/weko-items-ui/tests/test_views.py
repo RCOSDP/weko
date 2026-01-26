@@ -21040,43 +21040,43 @@ def test_validate_users_info_login(client_api, users, db_userprofile, mocker):
     res = client_api.post(
         "/api/items/validate_users_info",
         data=json.dumps(
-            [{"username": "", "email": users[0]["email"], "owner": False},
-            {"username": "repoadmin", "email": "", "owner": True},
-            {"username": "", "email": users[2]["email"], "owner": False}]
+            [{"username": "", "email": users[0]["email"]},
+            {"username": "repoadmin", "email": ""},
+            {"username": "", "email": users[2]["email"]}]
             ),
         content_type="application/json",
     )
     assert res.status_code == 200
     assert json.loads(res.data) == {"results": [
-            {"owner": False, "info":{"email": users[0]["email"], "user_id":users[0]["id"], "username": "contributor"}, "validation": True, "error":''},
-            {"owner": True,  "info":{"email": users[1]["email"], "user_id":users[1]["id"], "username": "repoadmin"}, "validation": True, "error":''},
-            {"owner": False, "info":{"email": users[2]["email"], "user_id":users[2]["id"], "username": "sysadmin"}, "validation": True, "error":''}
+            {"info":{"email": users[0]["email"], "user_id":users[0]["id"], "username": "contributor"}, "validation": True, "error":''},
+            {"info":{"email": users[1]["email"], "user_id":users[1]["id"], "username": "repoadmin"}, "validation": True, "error":''},
+            {"info":{"email": users[2]["email"], "user_id":users[2]["id"], "username": "sysadmin"}, "validation": True, "error":''}
             ]}
 
     # username:存在しない値 "email":存在しない値
     res1 = client_api.post(
         "/api/items/validate_users_info",
         data=json.dumps(
-            [{"username": "", "email": users[3]["email"], "owner": False},
-            {"username": '', "email": "hogehoge@ivis.co.jp", "owner": False},
-            {"username": 'hogehoge', "email": "", "owner": False},
-            {"username": "hogehoge", "email": "hogehoge@ivis.co.jp", "owner": False},]
+            [{"username": "", "email": users[3]["email"]},
+            {"username": '', "email": "hogehoge@ivis.co.jp"},
+            {"username": 'hogehoge', "email": ""},
+            {"username": "hogehoge", "email": "hogehoge@ivis.co.jp"}]
             ),
         content_type="application/json",
     )
     assert res1.status_code == 200
     assert json.loads(res1.data) == {"results": [
-            {"error":'', "owner": False, "info":{'email':users[3]["email"],'user_id':users[3]["id"],'username':'comadmin'},"validation": True},
-            {"error":"Not Found Email", "info": None, "owner": False,"validation": False},
-            {"error":"Not Found Username", "info": None, "owner": False,"validation": False},
-            {"error":'User is not exist UserProfile',"info": '',"owner": False,"validation": False}
+            {"error":'', "info":{'email':users[3]["email"],'user_id':users[3]["id"],'username':'comadmin'},"validation": True},
+            {"error":"Not Found Email", "info": None, "validation": False},
+            {"error":"Not Found Username", "info": None, "validation": False},
+            {"error":'User is not exist UserProfile',"info": '', "validation": False}
             ]}
 
     # headers error
     res2 = client_api.post(
         "/api/items/validate_users_info",
         data=json.dumps(
-            [{"username": "", "email": users[0]["email"], "owner": False}]
+            [{"username": "", "email": users[0]["email"]}]
             ),
         content_type="text/json",
     )
@@ -21910,67 +21910,6 @@ def test_get_oa_policy_exceptions(app,client_api, users):
         assert res.status_code == 500, "一般的な例外時に500が返るべき"
         assert "error" in json.loads(res.data)
         assert "An unknown error occurred" in json.loads(res.data)["error"]
-
-# def is_login_user_email
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_is_login_user_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_is_login_user_email(
-    client_api, users, db_records, db_sessionlifetime
-):
-    login_user_via_session(client=client_api, email=users[0]["email"])
-    # delete login user
-    url = url_for(
-        "weko_items_ui_api.is_login_user_email", email=users[0]["email"], _external=True
-    )
-    res = client_api.get(url)
-    assert res.json == {'error': 'Logged-in user cannot be deleted.', 'is_login_user': True }
-
-    # delete other user
-    url = url_for(
-        "weko_items_ui_api.is_login_user_email", email=users[1]["email"], _external=True
-    )
-    res = client_api.get(url)
-    assert res.json == {'error': '', 'is_login_user': False }
-
-    # delete unexist user
-    url = url_for(
-        "weko_items_ui_api.is_login_user_email", email="hogehoge@test.com", _external=True
-    )
-    res = client_api.get(url)
-    assert res.json == {'error': '', 'is_login_user': False }
-
-# def is_login_user_ids
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_is_login_user_ids -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_is_login_user_ids(
-    client_api, users, db_records, db_sessionlifetime
-):
-    # admin sysadmin@test.org
-    login_user_via_session(client=client_api, email=users[2]["email"])
-
-    url = url_for(
-        "weko_items_ui_api.is_login_user_ids", ids=[users[0]["id"],users[1]["id"]], _external=True
-    )
-    res = client_api.get(url)
-    assert res.json == {'error': '', 'is_login_user': False }
-
-# def is_login_user_ids
-# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_is_login_user_ids_1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_is_login_user_ids_1(
-    client_api, users, db_records, db_sessionlifetime
-):
-    # generaluser generaluser.email
-    login_user_via_session(client=client_api, email=users[4]["email"])
-
-    url = url_for(
-        "weko_items_ui_api.is_login_user_ids", ids=[users[4]["id"], users[7]["id"]], _external=True
-    )
-    res = client_api.get(url)
-    assert res.json == {'error': 'Logged-in user cannot be deleted.', 'is_login_user': True }
-
-    url = url_for(
-        "weko_items_ui_api.is_login_user_ids", ids=[users[7]["id"]], _external=True
-    )
-    res = client_api.get(url)
-    assert res.json == {'error': '', 'is_login_user': False }
 
 # def get_userinfo_by_emails
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_userinfo_by_emails -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

@@ -3961,21 +3961,27 @@ def get_activity_display_info(activity_id: str):
         temporary_comment = action_data.action_comment
     metadata = activity.get_activity_metadata(activity_id)
 
-    shared_user_unique_ids = set()
+    # Initialize as an ordered list without duplicates
+    shared_user_unique_ids = []
+    seen = set()
     owner_id = -1
     if activity_detail.shared_user_ids:
         shared_user_ids = _get_shared_user_ids_from_list(
             activity_detail.shared_user_ids
         )
-        shared_user_unique_ids = set(shared_user_ids)
+        for uid in shared_user_ids:
+            if uid not in seen:
+                shared_user_unique_ids.append(uid)
+                seen.add(uid)
 
     if metadata:
         item_json = json.loads(metadata).get('metainfo')
         owner_id = item_json.get('owner', -1)
         shared_user_ids = item_json.get('shared_user_ids', [])
-        shared_user_unique_ids.update(
-            _get_shared_user_ids_from_list(shared_user_ids)
-        )
+        for uid in _get_shared_user_ids_from_list(shared_user_ids):
+            if uid not in seen:
+                shared_user_unique_ids.append(uid)
+                seen.add(uid)
 
     shared_user_ids = [
         {"user": user_id} for user_id in list(shared_user_unique_ids)
@@ -5216,7 +5222,16 @@ def delete_user_lock_activity_cache(activity_id, data):
         msg = "User Unlock Success"
     return msg
 
-def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
+def get_contributors(pid_value, user_id_list_json=None):
+    """Get contributors information.
+    
+    Args:
+        pid_value(str): PID value of item.
+        user_id_list_json(list, Optional): List of user IDs in JSON format.
+    
+    Returns:
+        list: A list of dictionaries containing contributor information.
+    """
     from weko_items_ui.utils import get_user_information
 
     userid_list = []
@@ -5225,44 +5240,30 @@ def get_contributors(pid_value, user_id_list_json=None, owner_id=-1):
         pid_value = pid_value.split('.')[0]
         # Get Record by pid_value
         record = WekoRecord.get_record_by_pid(pid_value)
-        owner_id = record['_deposit']['owner']
-        userid_list.append(int(owner_id))
         userid_list.extend(record['weko_shared_ids'])
     # 一時保存ユーザーデータ
-    elif owner_id != -1:
-        if type(user_id_list_json) == list:
-            for rec in user_id_list_json:
-                if type(rec) == dict:
-                    userid_list.append(int(rec['user']))
-                elif type(rec) == int:
-                    userid_list.append(rec)
-        userid_list.append(int(owner_id))
+    elif user_id_list_json:
+        for rec in user_id_list_json:
+            if type(rec) == dict:
+                userid_list.append(int(rec['user']))
+            elif type(rec) == int:
+                userid_list.append(rec)
 
-    #　重複を削除
-    userid_list = list(set(userid_list))
     result = []
 
     user_infos = get_user_information(userid_list)
     for user_info in user_infos:
         info = {
-        'userid': '',
-        'username': '',
-        'email': '',
-        'owner': False,
-        'error': ''
+            'userid': '',
+            'username': '',
+            'email': '',
+            'error': ''
         }
         info['userid'] = int(user_info['userid'])
         info['username'] = user_info['username'] if not user_info['username'] == None else ''
         info['email'] = user_info['email']
         info['error'] = user_info['error']
-        if int(owner_id) != -1 and int(owner_id) == int(user_info['userid']):
-            info['owner'] = True
-
-        if current_app.config.get("WEKO_ITEMS_UI_PROXY_POSTING", False) \
-                or info["owner"] \
-                or (current_user.is_authenticated and info["userid"] != current_user.id) \
-                or not current_user.is_authenticated:
-            result.append(info)
+        result.append(info)
 
     return result
 

@@ -1379,7 +1379,7 @@ WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 WEKO_ADMIN_USE_MAIL_TEMPLATE_EDIT = False
 """Whether system can edit mail template or not."""
 
-WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False
+WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True
 """If True, display admin restricted settings."""
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'

@@ -552,6 +552,12 @@
               value="{{_('Thumbnail file type error message')}}">
           <input type="hidden" id="max_files_thumnbnail_error" name="max_files_thumnbnail_error"
               value="{{_('is too long.')}}">
+          <input type="hidden" id="other_user_self_error" name="other_user_self_error"
+              value='{{_("You cannot specify yourself in \"Other user\" setting.")}}'>
+          <input type="hidden" id="duplicate_email_error" name="duplicate_email_error"
+              value="{{_('Duplicate email addresses found:')}}">
+          <input type="hidden" id="min_user_required_error" name="min_user_required_error"
+              value="{{_('At least 1 user is required.')}}">
 
           <input type="hidden" id="item_registration_workflow" value="true">
 

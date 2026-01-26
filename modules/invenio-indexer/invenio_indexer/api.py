@@ -22,6 +22,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from elasticsearch.helpers import bulk, streaming_bulk
 from flask import current_app
 from invenio_records.api import Record
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_search import current_search_client
 from kombu import Producer as KombuProducer
 from kombu.compat import Consumer
@@ -499,7 +500,10 @@ class RecordIndexer(object):
                 message.ack()
             except NoResultFound as ne:
                 message.reject()
-                current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(ne).__name__}, message:{str(ne)}\n{traceback.format_exc()}")
+                current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(ne).__name__}, message:record does not exists\n{traceback.format_exc()}")
+            except PIDDoesNotExistError as pe:
+                message.reject()
+                current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(pe).__name__}, message:pid does not exists\n{traceback.format_exc()}")
             except SQLAlchemyError as se:
                 db.session.rollback()
                 current_app.logger.error(f"id:{payload.get('id', 'unknown')}, type:{type(se).__name__}, message:{str(se)}\n{traceback.format_exc()}")

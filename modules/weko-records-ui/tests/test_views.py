@@ -318,6 +318,7 @@ def test_check_permission(app, records, users):
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert check_permission(record) == True
 
+    record['_deposit']['created_by'] = 1
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert check_permission(record) == False
 

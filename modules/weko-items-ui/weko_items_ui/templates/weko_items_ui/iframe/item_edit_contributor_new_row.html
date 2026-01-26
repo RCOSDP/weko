@@ -20,7 +20,6 @@
 <div class="row row-4 panel-body panel-body2 contributor-record pd_username" id="pd_username_{{default_id}}">
     <div class="col-xs-3 col-sm-3 col-md-3 col-lg-3 label_username" id="label_username_{{default_id}}">
         <label for="share_username_{{default_id}}">
-            <input type="radio" name="owner_radio" id="id_owner_radio_{{default_id}}" class="input_contributor" value="contributor" onChange="handleShareOwner(this.id)">
             Username
         </label>
     </div>
@@ -40,7 +39,9 @@
         </div>
     </div>
     <div class="text-center contributor-trash">
-        <a id="id_trash_{{default_id}}" onclick="removeUser(0, this.id)"><i class="fa fa-trash" aria-hidden="true"></i></a>
+        <a id="id_trash_{{default_id}}" onclick="removeUser(0, this.id)" {% if not enable_multi_contributors %}style="display:none;"{% endif %}>
+            <i class="fa fa-trash" aria-hidden="true"></i>
+        </a>
     </div>
 </div>
 <div class="row row-4"></div>
