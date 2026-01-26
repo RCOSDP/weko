@@ -36,6 +36,11 @@ services:
     restart: "always"
     build:
       context: .
+      args:
+        WITH_LIBREOFFICE: "1"
+        WITH_JRE: "1"
+        WITH_JA_FONTS: "1"
+        WITH_NODE: "1"
       #target: stage_1
     sysctls:
       net.core.somaxconn: 1024
@@ -173,6 +178,11 @@ services:
     restart: "always"
     build:
       context: .
+      args:
+        WITH_LIBREOFFICE: "0"
+        WITH_JRE: "1"
+        WITH_JA_FONTS: "1"
+        WITH_NODE: "0"
       #target: stage_1
     # image: weko-web
     # depends_on:
@@ -455,4 +465,3 @@ volumes:
   mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:
-
