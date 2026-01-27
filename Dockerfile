@@ -176,19 +176,17 @@ RUN set -eux; \
 # Optional Node.js + webassets filters (set to 0 to skip in worker)
 ARG WITH_NODE=1
 RUN set -eux; \
+    apt-get -y update --allow-releaseinfo-change; \
+    apt-get -y install --no-install-recommends curl; \
     if [ "${WITH_NODE}" = "1" ]; then \
-        apt-get -y update --allow-releaseinfo-change; \
-        apt-get -y install --no-install-recommends curl; \
         curl -fsSL https://deb.nodesource.com/setup_16.x | bash -; \
-        apt-get -y update --allow-releaseinfo-change; \
         apt-get -y install --no-install-recommends nodejs; \
         npm install -g node-sass@9.0.0 clean-css@3.4.12 requirejs uglify-js; \
         npm cache clean --force; \
         rm -rf /root/.npm; \
-        apt-get -y purge --auto-remove curl; \
-        apt-get -y autoremove && apt-get -y clean; \
-        rm -rf /var/lib/apt/lists/*; \
-    fi
+    fi; \
+    apt-get -y autoremove && apt-get -y clean; \
+    rm -rf /var/lib/apt/lists/*;
 
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
 COPY --from=build-env /home/invenio/.virtualenvs/invenio /home/invenio/.virtualenvs/invenio
