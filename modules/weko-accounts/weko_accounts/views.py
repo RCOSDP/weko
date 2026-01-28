@@ -273,6 +273,12 @@ def confirm_user():
         shib_user = ShibUser(cache_val)
         account = request.form.get('WEKO_ATTR_ACCOUNT', None)
         password = request.form.get('WEKO_ATTR_PWD', None)
+        if account:
+            account = account.strip()
+            account = account.strip('\u200b')  # remove zero-width spaces
+        if password:
+            password = password.strip()
+            password = password.strip('\u200b')  # remove zero-width spaces
         if not shib_user.check_weko_user(account, password):
             flash('check_weko_user', category='error')
             datastore.delete(cache_key)

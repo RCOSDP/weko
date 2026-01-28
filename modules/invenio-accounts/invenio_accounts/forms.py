@@ -66,4 +66,14 @@ def login_form_factory(Form, app):
             super(LoginForm, self).__init__(*args, **kwargs)
             self.remember.data = False
 
+        def validate(self):
+            """Validate the form after trimming email and password fields."""
+            if self.email.data:
+                self.email.data = self.email.data.strip()
+                self.email.data = self.email.data.strip('\u200b')  # remove zero-width spaces
+            if self.password.data:
+                self.password.data = self.password.data.strip()
+                self.password.data = self.password.data.strip('\u200b')  # remove zero-width spaces
+            return super(LoginForm, self).validate()
+
     return LoginForm
