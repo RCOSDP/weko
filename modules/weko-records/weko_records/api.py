@@ -1013,7 +1013,7 @@ class ItemTypes(RecordBase):
             return result
 
         data = pickle.loads(pickle.dumps(item_type.render, -1))
-
+        item_type_mapping = Mapping.get_record(itemtype_id)
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -1029,7 +1029,9 @@ class ItemTypes(RecordBase):
                         if _prop:
                             # fix mapping
                             if _property_id in mapping_dict:
-                                data['table_row_map']['mapping'][_prop_id] = mapping_dict.get(_property_id)
+                                update_mapping = cls.update_mapping_without_static(item_type_mapping.get(_prop_id,{}),mapping_dict.get(_property_id)) \
+                                    if item_type_mapping else mapping_dict.get(_property_id)
+                                data['table_row_map']['mapping'][_prop_id] = update_mapping
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                             # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
                             if multiple_flg:
@@ -1120,6 +1122,70 @@ class ItemTypes(RecordBase):
 
         return result
 
+    @classmethod
+    def update_mapping_without_static(cls, old_mapping, mapping_prop):
+        """Update the mapping dictionary by copying static values from the old mapping.
+        
+        This method searches for static values (strings starting with '=') in the old_mapping,
+        and sets the same static values at the corresponding paths in mapping_prop.
+        Only existing paths in mapping_prop will be updated; missing paths are ignored.
+
+        Args:
+            old_mapping (dict): The original mapping dictionary containing static values.
+            mapping_prop (dict): The target mapping dictionary to update.
+        
+        Returns:
+            dict: The updated mapping_prop with static values set.
+        
+        Example:
+            >>> old = {'a': {'b': '=static'}}
+            >>> new = {'a': {'b': 'test'}}
+            >>> update_mapping_without_static(old, new)
+            {'a': {'b': '=static'}}
+        """
+
+        def find_static_value(d, path=""):
+            """Recursively search for static values in a nested dictionary structure.
+            
+            A static value is defined as a string that starts with '='.
+            Returns a list of tuples, where each tuple contains the path 
+            (dot-separated) to the static value and the value itself.
+            
+            Args:
+                d (dict or str): The dictionary or string to search.
+                path (str, optional): The current path in dot notation. Defaults to "".
+
+            Returns:
+                list of tuple: List of (path, value) pairs for all static values found.
+
+            Example:
+                >>> data = {'a': {'b': '=static'}, 'c': 'value'}
+                >>> find_static_value(data)
+                [('a.b', '=static')]
+            """
+            result = [] 
+            if isinstance(d,dict):
+                for key, value in d.items():
+                    result+=find_static_value(value,f"{path}.{key}" if path!="" else key)
+            elif isinstance(d,str):
+                if d.startswith("="):
+                    result.append((path,d))
+            return result
+
+        set_static = find_static_value(old_mapping)
+        for path, value in set_static:
+            keys = path.lstrip('.').split('.')
+            temp = mapping_prop
+            is_exist_field = True
+            for key in keys[:-1]:
+                if key not in temp:
+                    is_exist_field = False
+                    break
+                temp = temp[key]
+            if is_exist_field:
+                temp[keys[-1]] = value
+        return mapping_prop
+    
     @classmethod
     def update_property_enum(cls, old_value, new_value, renew_value = 'None'):
         managed_key_list = current_app.config.get("WEKO_RECORDS_MANAGED_KEYS")
