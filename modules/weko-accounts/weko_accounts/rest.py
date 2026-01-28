@@ -116,6 +116,12 @@ class WekoLogin(ContentNegotiatedMethodView):
         data = request.get_json()
         email = data['email']
         password = data['password']
+        if email:
+            email = email.strip()
+            email = email.strip('\u200b')  # remove zero-width spaces
+        if password:
+            password = password.strip()
+            password = password.strip('\u200b')  # remove zero-width spaces
 
         # Check if user is already logged in
         if current_user.is_authenticated:
