@@ -125,13 +125,15 @@
                         {%- endif -%}
 
                         <input type="hidden" value="{{file.bucket}}" id="bucket_id_value"/>
-                        {% if record | check_permission %}
-                          {% if can_edit %}
-                          <input type="file" id="fileInput" style="display: none;" />
-                          <span style="white-space: nowrap;">
-                            <button onclick="replaceFile()">{{_('Replace the file content')}}</button>
-                            <button onclick="openBucketCopyModal()">{{_('Copy file to open bucket')}}</button>
-                          </span>
+                        {% if is_storage_editable %}
+                          {% if record | check_permission %}
+                            {% if can_edit %}
+                            <input type="file" id="fileInput" style="display: none;" />
+                            <span style="white-space: nowrap;">
+                              <button onclick="replaceFile()">{{_('Replace the file content')}}</button>
+                              <button onclick="openBucketCopyModal()">{{_('Copy file to open bucket')}}</button>
+                            </span>
+                            {% endif %}
                           {% endif %}
                         {% endif %}
                       </td>
