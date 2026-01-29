@@ -1409,7 +1409,7 @@ RAISE NOTICE 'add record of admin_settings';
 INSERT INTO admin_settings (name, settings)
 VALUES ('site_license_mail_settings', '{"Root Index": {"auto_send_flag": false}}')
 ON CONFLICT (name)
-DO UPDATE SET settings = '{"Root Index": {"auto_send_flag": false}}';
+DO UPDATE SET settings = jsonb_build_object('Root Index', admin_settings.settings);
 
 --${INVENIO_WEB_INSTANCE} admin_settings create_settings 6 "blocked_user_settings" "{'blocked_ePPNs': []}" 
 INSERT INTO admin_settings (name, settings)
