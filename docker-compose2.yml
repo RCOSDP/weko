@@ -37,9 +37,9 @@ services:
     build:
       context: .
       args:
-        WITH_LIBREOFFICE: "1"
-        WITH_JRE: "1"
-        WITH_JA_FONTS: "1"
+        WITH_LIBREOFFICE: "0"
+        WITH_JRE: "0"
+        WITH_JA_FONTS: "0"
         WITH_NODE: "1"
       #target: stage_1
     sysctls:
@@ -180,8 +180,8 @@ services:
       context: .
       args:
         WITH_LIBREOFFICE: "0"
-        WITH_JRE: "1"
-        WITH_JA_FONTS: "1"
+        WITH_JRE: "0"
+        WITH_JA_FONTS: "0"
         WITH_NODE: "0"
       #target: stage_1
     # image: weko-web
