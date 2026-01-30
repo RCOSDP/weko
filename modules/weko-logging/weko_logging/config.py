@@ -80,16 +80,16 @@ Set to a valid Python logging level: ``CRITICAL``, ``ERROR``, ``WARNING``,
 """
 
 WEKO_LOGGING_USER_ACTIVITY_DB_SETTING = {
-   "log_level": "ERROR",
+   "log_level": "INFO",
    "delete": {
-      "when": "months",
-      "interval": 3
+      "when": "years",
+      "interval": 10
    }
 }
 """User activity logging to the database."""
 
 WEKO_LOGGING_USER_ACTIVITY_STREAM_SETTING = {
-   "log_level": "ERROR"
+   "log_level": "INFO"
 }
 """User activity logging to the stream."""
 
