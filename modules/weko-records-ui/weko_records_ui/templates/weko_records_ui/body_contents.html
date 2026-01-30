@@ -568,7 +568,6 @@
       }
       if(download_id && charge_button || show_popup === "1"){
         window.history.replaceState( {} , '',  href.replace(search, ''));
-        handleChargeBillingFile();
         $('button#charge-button').trigger('click');
         "{{ session.pop('check_download_billingfile', None) }}";
       }
