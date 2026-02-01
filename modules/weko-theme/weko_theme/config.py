@@ -244,6 +244,14 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'RO-Crate Import',
                 'order': 5
+            },
+            {
+                'name': 'Validation Settings',
+                'order': 6
+            },
+            {
+                'name': 'Validation Report',
+                'order': 7
             }
         ]
     },

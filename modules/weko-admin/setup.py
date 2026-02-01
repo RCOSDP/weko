@@ -141,6 +141,8 @@ setup(
             'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview',
             #管理者画面に追加するプロフィール設定のビューを追加
             'profile_settings_adminview = weko_admin.admin:profile_settings_adminview',
+            'validation_settings_adminview = weko_admin.admin:validation_settings_adminview',
+            'validation_report_adminview = weko_admin.admin:validation_report_adminview'
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',

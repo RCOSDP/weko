@@ -65,6 +65,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
+from weko_admin.utils import execute_validation
 from weko_index_tree.api import Indexes
 from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemsMetadata, \
     ItemTypes
@@ -882,6 +883,11 @@ class WekoDeposit(Deposit):
         """
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
+            if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE') \
+                  and kwargs.get("route") and kwargs.get("item_id"):
+                execute_validation(args[1], kwargs.get("route"),
+                                   kwargs.get("item_id"))
+
             dc, deleted_items = self.convert_item_metadata(args[0], args[1])
             super(WekoDeposit, self).update(dc)
         elif len(args)==1:
@@ -1031,14 +1037,14 @@ class WekoDeposit(Deposit):
                         for content in self.jrc['content']:
                             if 'attachment' in content and 'content' in content.get('attachment'):
                                 del content['attachment']['content']
-            
+
                 try:
                     feedback_mail_list = FeedbackMailList.get_mail_list_by_item_id(self.id)
                     if feedback_mail_list:
                         self.update_feedback_mail()
                     else:
                         self.remove_feedback_mail()
-                except TransportError as err:    
+                except TransportError as err:
                     raise err
 
                 # Remove large base64 files for release memory
@@ -1286,8 +1292,8 @@ class WekoDeposit(Deposit):
                         }
                         pdf_files[filename] = file_info
         return pdf_files
-    
-    
+
+
     def get_file_data(self):
         """
         Get file data.
@@ -2948,7 +2954,7 @@ class _FormatSysCreator:
                                                   formatted_creator_list)
 
             rtn_value.update({'order_lang': formatted_creator_list})
-        
+
         except KeyError as e:
             current_app.logger.error("KeyError in format_creator: {}".format(e))
             current_app.logger.error(traceback.format_exc())

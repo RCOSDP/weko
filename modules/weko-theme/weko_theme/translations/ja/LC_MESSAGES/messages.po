@@ -555,6 +555,14 @@ msgid "Admin menu_Items_RO-Crate Import"
 msgstr "RO-Crate インポート"
 
 #: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_Validation Settings"
+msgstr "ヴァリデーション設定"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
+msgid "Admin menu_Items_Validation Report"
+msgstr "ヴァリデーションレポート"
+
+#: /weko-theme/weko_theme/templates/weko_theme/admin_layout.html:
 msgid "Admin menu_Index Tree_Edit Tree"
 msgstr "ツリー編集"
 

@@ -38,6 +38,7 @@ from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
 from invenio_records.models import RecordMetadata
 from lxml import etree
+from weko_admin.utils import Validator
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_index_tree.models import Index
 from weko_records.models import ItemMetadata
@@ -184,6 +185,7 @@ def process_item(record, harvesting, counter, request_info):
         0, 'Harvesting', mapper.identifier(), harvesting.metadata_prefix))
     hvstid = PersistentIdentifier.query.filter_by(
         pid_type='hvstid', pid_value=mapper.identifier()).first()
+    validation_item_id = hvstid
     if hvstid:
         r = RecordMetadata.query.filter_by(id=hvstid.object_uuid).first()
         recid = PersistentIdentifier.query.filter_by(
@@ -199,10 +201,11 @@ def process_item(record, harvesting, counter, request_info):
         return
     else:
         dep = WekoDeposit.create({})
-        PersistentIdentifier.create(pid_type='hvstid',
-                                    pid_value=mapper.identifier(),
-                                    object_type=dep.pid.object_type,
-                                    object_uuid=dep.pid.object_uuid)
+        validation_item_id = PersistentIdentifier.create(
+            pid_type='hvstid',
+            pid_value=mapper.identifier(),
+            object_type=dep.pid.object_type,
+            object_uuid=dep.pid.object_uuid)
         indexes = []
         event = ItemEvents.CREATE
 
@@ -286,15 +289,19 @@ def process_item(record, harvesting, counter, request_info):
             if 'item_1600078832557' in json_data:
                 for i in json_data['item_1600078832557']:
                     i['accessrole'] = 'open_access'
-            
+
             json_data['resourcetype']=[]
             json_data['resourcetype'].append({
-                "resourcetype": "dataset", "resourceuri": "http://purl.org/coar/resource_type/c_ddb1"})        
+                "resourcetype": "dataset", "resourceuri": "http://purl.org/coar/resource_type/c_ddb1"})
         # END: temporary fix for JDCat
 
         # current_app.logger.debug('[{0}] [{1}] Processing {2}'.format(
         #     0, 'Harvesting', json))
-        dep.update({'actions': 'publish', 'index': indexes}, json_data)
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+            dep.update({'actions': 'publish', 'index': indexes}, json_data,
+                       route='OAI-PMH', item_id=validation_item_id)
+        else:
+            dep.update({'actions': 'publish', 'index': indexes}, json_data)
         dep.commit()
         dep.publish()
 
@@ -381,7 +388,7 @@ def is_harvest_running(id, task_id):
 
 
 @ shared_task
-def run_harvesting(id, start_time, user_data, request_info): 
+def run_harvesting(id, start_time, user_data, request_info):
     """Run harvest."""
     def dump(setting):
         setting_json = {}
@@ -408,6 +415,8 @@ def run_harvesting(id, start_time, user_data, request_info):
     start_time = datetime.strptime(start_time, '%Y-%m-%dT%H:%M:%S')
 
     try:
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+            Validator.load_instance()
         harvesting = HarvestSettings.query.filter_by(id=id).first()
         harvesting.task_id = current_task.request.id
         rtoken = harvesting.resumption_token
@@ -501,6 +510,13 @@ def run_harvesting(id, start_time, user_data, request_info):
         except Exception as ex:
             db.session.rollback()
             current_app.logger.error(ex)
+        try:
+            if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+                validator = Validator.get_loaded_instance()
+                validator.write_report()
+        except Exception:
+            current_app.logger.exception('Validation failed.')
+
         return ({'task_state': 'SUCCESS',
                  'start_time': start_time.strftime('%Y-%m-%dT%H:%M:%S%z'),
                  'end_time': end_time.strftime('%Y-%m-%dT%H:%M:%S%z'),

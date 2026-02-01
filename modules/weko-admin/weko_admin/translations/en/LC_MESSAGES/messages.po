@@ -336,6 +336,50 @@ msgstr ""
 msgid "Please input Merge Mode"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
+msgid "UiType"
+msgstr "UI"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
+msgid "DisplayNumber"
+msgstr "Display Number"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
+msgid "OpenClose"
+msgstr "Open/Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
+msgid "OpenClose Open"
+msgstr "Open"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
+msgid "OpenClose Close"
+msgstr "Close"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
+msgid "DisplayNumber Validation1"
+msgstr "Display Number must be an integer value from 1 to 99."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
+msgid "DisplayNumber Validation2"
+msgstr "If CheckboxList is selected, Display Number must be entered."
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr "search condition "
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr "OR"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr "AND"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
+msgstr "The value of Item Name(EN) cannot be used."
+
 #: weko_admin/admin.py:2397 weko_admin/admin.py:2424 weko_admin/admin.py:2433
 #: weko_admin/admin.py:2442 weko_admin/admin.py:2451 weko_admin/admin.py:2460
 #: weko_admin/admin.py:2469 weko_admin/admin.py:2478 weko_admin/admin.py:2496
@@ -458,6 +502,15 @@ msgid "CRIS Linkage"
 msgstr ""
 
 #: weko_admin/api.py:129
+#: weko_admin/admin.py:1582
+msgid "Validation Settings"
+msgstr "Validation Settings"
+
+#: weko_admin/admin.py:1592
+msgid "Validation Report"
+msgstr "Validation Report"
+
+#: weko_admin/api.py:82
 msgid "statistics report"
 msgstr ""
 
@@ -2044,3 +2097,128 @@ msgstr "Update"
 #~ "allowed maximum."
 #~ msgstr ""
 
+#~ msgid "Site License setting"
+#~ msgstr ""
+
+#~ msgid "Background2"
+#~ msgstr ""
+
+#~ msgid "Frame Border"
+#~ msgstr ""
+
+#~ msgid "Header"
+#~ msgstr ""
+
+#~ msgid "Footer"
+#~ msgstr ""
+
+#~ msgid "Header Setting"
+#~ msgstr "Search Results Setting"
+
+#~ msgid "Footer Setting"
+#~ msgstr ""
+
+#~ msgid "File Preview Report"
+#~ msgstr ""
+
+#~ msgid "01"
+#~ msgstr ""
+
+#~ msgid "02"
+#~ msgstr ""
+
+#~ msgid "03"
+#~ msgstr ""
+
+#~ msgid "04"
+#~ msgstr ""
+
+#~ msgid "05"
+#~ msgstr ""
+
+#~ msgid "06"
+#~ msgstr ""
+
+#~ msgid "07"
+#~ msgstr ""
+
+#~ msgid "08"
+#~ msgstr ""
+
+#~ msgid "09"
+#~ msgstr ""
+
+#~ msgid "10"
+#~ msgstr ""
+
+#~ msgid "11"
+#~ msgstr ""
+
+#~ msgid "12"
+#~ msgstr ""
+
+#~ msgid "Mail Address"
+#~ msgstr ""
+
+msgid "admin validation field Active"
+msgstr "Active"
+
+msgid "admin validation field Inactive"
+msgstr "Inactive"
+
+msgid "admin validation button Upload"
+msgstr "Upload"
+
+msgid "admin validation field Target Date"
+msgstr "Target Date"
+
+msgid "admin validation field Mismatch Count"
+msgstr "Mismatch Count"
+
+msgid "admin validation field Action"
+msgstr "Action"
+
+msgid "admin validation message No Report"
+msgstr "There is no validation report."
+
+msgid "admin validation confirm Upload Setting"
+msgstr "Uploading this settings file will delete the currently registered settings and cannot be undone. Are you sure you want to continue?"
+
+msgid "admin validation confirm Deleted Setting"
+msgstr "The deleted settings file cannot be restored. Are you sure you want to proceed?"
+
+msgid "admin validation confirm Deleted Report"
+msgstr "The deleted report cannot be restored. Are you sure you want to proceed?"
+
+msgid "ERR_WAV-001"
+msgstr "ERR_WAV-001: Validation feature is disabled, so validation settings are unavailable."
+
+msgid "ERR_WAV-002"
+msgstr "ERR_WAV-002: The file Location for validation setting has not been configured."
+
+msgid "ERR_WAV-003"
+msgstr "ERR_WAV-003: Location '%(location_name)s' was not found."
+
+msgid "ERR_WAV-004"
+msgstr "ERR_WAV-004: IO error occurred."
+
+msgid "ERR_WAV-005"
+msgstr "ERR_WAV-005: The JSON encoding is incorrect. Expected UTF-8 without BOM."
+
+msgid "ERR_WAV-006"
+msgstr "ERR_WAV-006: The JSON format is incorrect. Reason: %(reason)s (line %(line)d, column %(col)d)"
+
+msgid "ERR_WAV-007"
+msgstr "ERR_WAV-007: The JSON format is incorrect. Required field version is missing or empty."
+
+msgid "ERR_WAV-008"
+msgstr "ERR_WAV-008: The JSON structure is invalid. validationTargets is not defined as an array."
+
+msgid "ERR_WAV-009"
+msgstr "ERR_WAV-009: The JSON structure is invalid. %(targetName)s isActive is not defined as a boolean."
+
+msgid "ERR_WAV-010"
+msgstr "ERR_WAV-010: The JSON structure is invalid. %(targetName)s is not defined in validationTargets."
+
+msgid "ERR_WAV-011"
+msgstr "ERR_WAV-011: Validation feature is disabled, so validation reports are unavailable."

@@ -1,0 +1,192 @@
+{# -*- coding: utf-8 -*-
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+{% endblock %}
+
+{% block javascript %}
+  {{ super() }}
+  <script>
+    (function ($) {
+      'use strict';
+
+      $(document).on('click', '#js-validation-upload-btn', function () {
+        const msg = this.dataset.confirm; // data-confirm
+        if (msg && !window.confirm(msg)) {
+          return; // キャンセルなら何もしない
+        }
+        const fileInput = document.getElementById('js-validation-upload-file');
+        fileInput.click();
+      });
+
+      // ファイル選択完了 → そのまま submit
+      $(document).on('change', '#js-validation-upload-file', function () {
+        if (!this.files || this.files.length === 0) {
+          return;
+        }
+
+        // 連続選択できるように一旦 disabled にする（誤連打防止）
+        $('#js-validation-upload-btn').prop('disabled', true);
+
+        // 通常submit（他画面と同じ“フォームPOST”に寄せる）
+        $('#js-validation-upload-form').submit();
+      });
+
+      // submit 失敗時等に備えて、ページ離脱せず戻ってきた場合は復帰
+      $(function () {
+        $('#js-validation-upload-btn').prop('disabled', false);
+        // 同じファイルを再選択できるよう value をクリア
+        $('#js-validation-upload-file').val('');
+      });
+
+    })(jQuery);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const header = document.querySelector('.content-header h4');
+      if (header && header.textContent.trim() === 'Validation Settings') {
+        header.textContent = "{{_('Admin menu_Items_Validation Settings')}}";
+      }
+     });
+  </script>
+{% endblock %}
+
+{%- block body %}
+<div class="row">
+  <div class="col-sm-12 col-md-12">
+
+    {% if error_msg %}
+        <div class="alert alert-danger" role="alert">
+            {{ error_msg }}
+        </div>
+    {% endif %}
+    {% if display_contents %}
+      <form
+        id="js-validation-upload-form"
+        method="POST"
+        enctype="multipart/form-data"
+        action="{{ url_for('.upload') }}"
+        style="display:inline;"
+      >
+        {% if csrf_token is defined %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
+        <input
+          id="js-validation-upload-file"
+          name="file"
+          type="file"
+          style="display:none;"
+          accept=".json">
+
+        {% if version %}
+          <button
+            class="btn btn-primary action-button"
+            id="js-validation-upload-btn"
+            type="button"
+            data-confirm="{{ _('admin validation confirm Upload Setting')}}">
+            <i class="glyphicon glyphicon-upload"></i>
+            {{_('admin validation button Upload')}}
+          </button>
+        {% else %}
+          <button
+            class="btn btn-primary action-button"
+            id="js-validation-upload-btn"
+            type="button">
+            <i class="glyphicon glyphicon-upload"></i>
+            {{_('admin validation button Upload')}}
+          </button>
+        {% endif %}
+      </form>
+
+      &nbsp;&nbsp;
+
+      <a class="btn btn-primary action-button"
+        {% if version %}
+          href="{{ url_for('.download') }}"
+        {% else %}
+          href="#"
+          tabindex="-1"
+          disabled
+        {% endif %}
+      >
+        <i class="glyphicon glyphicon-download-alt"></i>
+        {{_('Download')}}
+      </a>
+
+      &nbsp;&nbsp;
+
+      <form
+        id="js-validation-delete-form"
+        method="POST"
+        action="{{ url_for('.delete') }}"
+        style="display:inline;"
+        onsubmit='return confirm({{ _("admin validation confirm Deleted Setting") | tojson }});'
+      >
+        {% if csrf_token is defined %}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% endif %}
+
+        <button class="btn btn-danger style-deleteBtn" type="submit" {% if not version %}disabled{% endif %}>
+          <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+          &nbsp;{{_('Delete')}}
+        </button>
+      </form>
+
+      {% if version %}
+      <div class="col-sm-12 col-md-12">
+        <table class="table table-hover table-bordered searchable" style="margin-top: 20px;">
+          <colgroup>
+            <col style="width: 300px;">
+          </colgroup>
+          <tbody>
+            <tr>
+              <td><b>version</b></td>
+              <td>{{ version }}</td>
+            </tr>
+            <tr>
+              <td><b>OAI-PMH</b></td>
+              {% if oaipmh %}
+                <td style="color: green">{{_('admin validation field Active')}}</td>
+              {% else %}
+                <td style="color: red">{{_('admin validation field Inactive')}}</td>
+              {% endif %}
+
+            </tr>
+            <tr>
+              <td><b>ResouceSync</b></td>
+              {% if resoucesync %}
+                <td style="color: green">{{_('admin validation field Active')}}</td>
+              {% else %}
+                <td style="color: red">{{_('admin validation field Inactive')}}</td>
+              {% endif %}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{%- endblock %}
+
