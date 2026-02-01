@@ -134,7 +134,9 @@ setup(
             'weko_admin_identifier = weko_admin.admin:identifier_adminview',
             'restricted_access_adminview = weko_admin.admin:restricted_access_adminview',
             'facet_search_adminview = weko_admin.admin:facet_search_adminview',
-            'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview'
+            'reindex_elasticsearch_adminview = weko_admin.admin:reindex_elasticsearch_adminview',
+            'validation_settings_adminview = weko_admin.admin:validation_settings_adminview',
+            'validation_report_adminview = weko_admin.admin:validation_report_adminview'
         ],
         'invenio_access.actions': [
             'page_style_access = weko_admin.permissions:action_admin_access',

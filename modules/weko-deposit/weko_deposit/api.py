@@ -61,6 +61,7 @@ from simplekv.memory.redisstore import RedisStore
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.attributes import flag_modified
 from weko_admin.models import AdminSettings
+from weko_admin.utils import execute_validation
 from weko_index_tree.api import Indexes
 from weko_records.api import ItemLink, ItemsMetadata, ItemTypes,FeedbackMailList
 from weko_records.models import ItemMetadata, ItemReference
@@ -829,16 +830,19 @@ class WekoDeposit(Deposit):
                     "arg1 ex: {'index': ['1557820086539'], 'actions': '1'}
                 arg2:
                     item_metadata information
-                    arg2 ex: {'pid': {'type': 'depid', 'value': '34', 'revision_id': 0}, 'lang': 'ja', 'owner': '1', 'title': 'test deposit', 'owners': [1], 'status': 'published', '$schema': '/items/jsonschema/15', 'pubdate': '2022-06-07', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}, 'shared_user_id': -1, 'item_1617186331708': [{'subitem_1551255647225': 'test deposit', 'subitem_1551255648112': 'ja'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/34/files/tagmanifest-sha256.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-06-07'}], 'format': 'text/plain', 'filename': 'tagmanifest-sha256.txt', 'filesize': [{'value': '323 B'}], 'accessrole': 'open_access', 'version_id': 'b27b05d9-e19f-47fb-b6f5-7f031b1ef8fe'}]}"      
             **kwargs:
                 unused: (Default: ``empty``)
-        
             Returns:
                 bool: Description of return value
 
         """
         self['_deposit']['status'] = 'draft'
         if len(args) > 1:
+            if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE') \
+                  and kwargs.get("route") and kwargs.get("item_id"):
+                execute_validation(args[1], kwargs.get("route"),
+                                   kwargs.get("item_id"))
+
             dc, deleted_items = self.convert_item_metadata(args[0], args[1])
             super(WekoDeposit, self).update(dc)
         elif len(args)==1:

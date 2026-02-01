@@ -193,13 +193,29 @@ msgstr "開"
 msgid "OpenClose Close"
 msgstr "閉"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
 msgid "DisplayNumber Validation1"
 msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
 msgid "DisplayNumber Validation2"
 msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
+msgid "Search Condition"
+msgstr "検索条件"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
+msgid "Search Condition or"
+msgstr "OR"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
+msgid "Search Condition and"
+msgstr "AND"
+
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
+msgid "NameEN Validation"
+msgstr "項目名（英）の値は使用出来ません。"
 
 #: weko_admin/admin.py:1210 weko_admin/admin.py:1237 weko_admin/admin.py:1246
 #: weko_admin/admin.py:1255 weko_admin/admin.py:1264 weko_admin/admin.py:1273
@@ -285,6 +301,14 @@ msgstr ""
 #, fuzzy
 msgid "Faceted Search"
 msgstr "ファセット検索一覧"
+
+#: weko_admin/admin.py:1582
+msgid "Validation Settings"
+msgstr "ヴァリデーション設定"
+
+#: weko_admin/admin.py:1592
+msgid "Validation Report"
+msgstr "ヴァリデーションレポート"
 
 #: weko_admin/api.py:82
 #, fuzzy
@@ -1788,47 +1812,65 @@ msgstr "処理が完了しました。"
 #~ msgid "Facet Search List"
 #~ msgstr "ファセット検索一覧"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:59
-msgid "UiType"
-msgstr "UI"
+msgid "admin validation field Active"
+msgstr "活性"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:60
-msgid "DisplayNumber"
-msgstr "表示件数"
+msgid "admin validation field Inactive"
+msgstr "非活性"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:61
-msgid "OpenClose"
-msgstr "開閉状態"
+msgid "admin validation button Upload"
+msgstr "アップロード"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:62
-msgid "OpenClose Open"
-msgstr "開"
+msgid "admin validation field Target Date"
+msgstr "対象日付"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:63
-msgid "OpenClose Close"
-msgstr "閉"
+msgid "admin validation field Mismatch Count"
+msgstr "不一致件数"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:67
-#, python-format
-msgid "DisplayNumber Validation1"
-msgstr "表示件数は1以上99以下の整数値で入力する必要があります。"
+msgid "admin validation field Action"
+msgstr "アクション"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:68
-msgid "DisplayNumber Validation2"
-msgstr "CheckboxListを選択した場合は表示件数を入力する必要があります。"
+msgid "admin validation confirm Upload Setting"
+msgstr "設定ファイルをアップロードすると、アップロード前に登録済みの設定は削除され元に戻せません。宜しいですか？"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-msgid "Search Condition"
-msgstr "検索条件"
+msgid "admin validation message No Report"
+msgstr "ヴァリデーションレポートはありません。"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
-msgid "Search Condition or"
-msgstr "OR"
+msgid "admin validation confirm Deleted Setting"
+msgstr "削除された設定ファイルは元に戻せません。宜しいですか？"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:66
-msgid "Search Condition and"
-msgstr "AND"
+msgid "admin validation confirm Deleted Report"
+msgstr "削除されたレポートは元に戻せません。宜しいですか？"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:69
-msgid "NameEN Validation"
-msgstr "項目名（英）の値は使用出来ません。"
+msgid "ERR_WAV-001"
+msgstr "ERR_WAV-001: ヴァリデーション機能が無効なため、ヴァリデーション設定を利用できません。"
+
+msgid "ERR_WAV-002"
+msgstr "ERR_WAV-002: ヴァリデーション設定のファイル保存先が設定されていません。"
+
+msgid "ERR_WAV-003"
+msgstr "ERR_WAV-003: ロケーション「%(location_name)s」が登録されていません。"
+
+msgid "ERR_WAV-004"
+msgstr "ERR_WAV-004: 入出力エラーが発生しました。"
+
+msgid "ERR_WAV-005"
+msgstr "ERR_WAV-005: JSON ファイルのエンコードが BOM なし UTF-8 ではありません。"
+
+msgid "ERR_WAV-006"
+msgstr "ERR_WAV-006: JSON ファイルの形式に不正があります。原因: %(reason)s（%(line)d行 %(col)d列）"
+
+msgid "ERR_WAV-007"
+msgstr "ERR_WAV-007: JSON の構造に不備があります。version が未定義、または空です。"
+
+msgid "ERR_WAV-008"
+msgstr "ERR_WAV-008: JSON の構造に不備があります。validationTargets が配列として定義されていません。"
+
+msgid "ERR_WAV-009"
+msgstr "ERR_WAV-009: JSON の構造に不備があります。%(targetName)s の isActive がブール値として定義されていません。"
+
+msgid "ERR_WAV-010"
+msgstr "ERR_WAV-010: JSON の構造に不備があります。validationTargets に %(targetName)s が定義されていません。"
+
+msgid "ERR_WAV-011"
+msgstr "ERR_WAV-011: ヴァリデーション機能が無効なため、ヴァリデーションレポートを利用できません。"

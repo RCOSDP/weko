@@ -222,6 +222,14 @@ WEKO_THEME_ADMIN_MENU = [
             {
                 'name': 'Import',
                 'order': 4
+            },
+            {
+                'name': 'Validation Settings',
+                'order': 5
+            },
+            {
+                'name': 'Validation Report',
+                'order': 6
             }
         ]
     },

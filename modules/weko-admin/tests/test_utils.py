@@ -16,6 +16,8 @@ from weko_user_profiles import UserProfile
 
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.models import AdminLangSettings, FeedbackMailHistory, FeedbackMailFailed, SiteInfo
+from weko_admin import tasks
+from weko_admin import utils
 from weko_admin.utils import (
     get_response_json,
     allowed_file,
@@ -2292,3 +2294,304 @@ def test_get_detail_search_list(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         result =  get_detail_search_list()
         assert result
+
+
+class _DummyLocation:
+    def __init__(self, id_=1, name="dummy-location"):
+        self.id = id_
+        self.name = name
+
+
+class _DummyBucket:
+    def __init__(self, default_location=1):
+        self.default_location = default_location
+
+
+class _DummyObjectVersion:
+    def __init__(self, key="dummy.json", bucket=None, file_id=None):
+        self.key = key
+        self.bucket = bucket
+        self.file_id = file_id
+        self.file = None  # not used in these tests
+
+    def remove(self):
+        # will be mocked/checked in test if needed
+        return None
+
+
+class _DummyFileInstance:
+    def __init__(self, writable=False):
+        self.writable = writable
+
+
+class _DummyUploadFile:
+    def __init__(self, raw=b"{}"):
+        self._raw = raw
+
+    def read(self):
+        return self._raw
+
+
+# def get_location()
+def test_get_location_success(app, mocker):
+    dummy_location = _DummyLocation(id_=10, name="loc10")
+
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+
+    loc_cls = mocker.patch("invenio_files_rest.models.Location", autospec=True)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return self
+        def first(self):
+            return dummy_location
+
+    loc_cls.query = _Q()
+
+    app.config["WEKO_ADMIN_VALIDATION_STORAGE_LOCATION"] = "loc10"
+
+    loc = get_location()
+    assert loc == dummy_location
+
+
+def test_get_location_no_config(app, mocker):
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+
+    if "WEKO_ADMIN_VALIDATION_STORAGE_LOCATION" in app.config:
+        del app.config["WEKO_ADMIN_VALIDATION_STORAGE_LOCATION"]
+
+    with pytest.raises(RuntimeError) as e:
+        get_location()
+    assert "ERR_WAV-002" in str(e.value)
+
+
+def test_get_location_not_found(app, mocker):
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return self
+        def first(self):
+            return None
+
+    loc_cls = mocker.patch("invenio_files_rest.models.Location", autospec=True)
+    loc_cls.query = _Q()
+
+    app.config["WEKO_ADMIN_VALIDATION_STORAGE_LOCATION"] = "missing-loc"
+
+    with pytest.raises(RuntimeError) as e:
+        get_location()
+    assert "ERR_WAV-003" in str(e.value)
+
+
+# def get_validation_setting()
+def test_get_validation_setting_found(app, mocker):
+    location = _DummyLocation(id_=1)
+    ok_bucket = _DummyBucket(default_location=1)
+    ng_bucket = _DummyBucket(default_location=999)
+
+    ov_ng = _DummyObjectVersion(
+        key="validation/validation_setting.json",
+        bucket=ng_bucket
+    )
+    ov_ok = _DummyObjectVersion(
+        key="validation/validation_setting.json",
+        bucket=ok_bucket
+    )
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return [ov_ng, ov_ok]
+
+    class FakeObjectVersion:
+        query = _Q()
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+
+        result = get_validation_setting(location)
+
+    assert result == ov_ok
+
+
+def test_get_validation_setting_none(app, mocker):
+    location = _DummyLocation(id_=1)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return []
+
+    class FakeObjectVersion:
+        query = _Q()
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+
+        result = get_validation_setting(location)
+
+    assert result is None
+
+
+# def get_validation_control()
+def test_get_validation_control_existing(app, mocker):
+    location = _DummyLocation(id_=2)
+    bucket = _DummyBucket(default_location=2)
+    ov = _DummyObjectVersion(
+        key="validation/validation_control.json",
+        bucket=bucket
+    )
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return [ov]
+
+    class FakeObjectVersion:
+        query = _Q()
+
+        @staticmethod
+        def create(*args, **kwargs):
+            raise AssertionError("ObjectVersion.create should not be called")
+
+    class FakeBucket:
+        @staticmethod
+        def create(*args, **kwargs):
+            raise AssertionError("Bucket.create should not be called")
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+        mocker.patch("invenio_files_rest.models.Bucket", FakeBucket)
+
+        mock_commit = mocker.patch("weko_admin.utils.db.session.commit")
+
+        result = get_validation_control(location)
+
+    assert result == ov
+    assert mock_commit.called is False
+
+
+def test_get_validation_control_create_new(app, mocker):
+    location = _DummyLocation(id_=3)
+    dummy_bucket = _DummyBucket(default_location=3)
+    dummy_created_ov = _DummyObjectVersion(
+        key="validation/validation_control.json",
+        bucket=dummy_bucket
+    )
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return []
+
+    class FakeBucket:
+        @staticmethod
+        def create(loc):
+            # loc が渡されることも軽く保証
+            assert loc == location
+            return dummy_bucket
+
+    class FakeObjectVersion:
+        query = _Q()
+
+        @staticmethod
+        def create(bucket, key, stream=None):
+            assert bucket == dummy_bucket
+            assert "validation_control.json" in key
+            return dummy_created_ov
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.Bucket", FakeBucket)
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+
+        mock_commit = mocker.patch("weko_admin.utils.db.session.commit")
+
+        result = get_validation_control(location)
+
+    assert result == dummy_created_ov
+    assert mock_commit.called is True
+
+
+def test_get_validation_control_create_raises(app, mocker):
+
+    location = _DummyLocation(id_=4)
+
+    class _DummyFilterResult:
+        def __iter__(self):
+            return iter([])
+        def __len__(self):
+            return 0
+        def first(self):
+            return None
+        def all(self):
+            return []
+
+    class _DummyQuery:
+        def filter_by(self, **kwargs):
+            return _DummyFilterResult()
+
+    with app.app_context():
+        mock_object_version = mocker.patch("invenio_files_rest.models.ObjectVersion")
+        mock_object_version.query = _DummyQuery()
+
+        mocker.patch(
+            "invenio_files_rest.models.Bucket.create",
+            side_effect=Exception("test_error")
+        )
+
+        with pytest.raises(Exception) as e:
+            utils.get_validation_control(location)
+
+        assert "test_error" in str(e.value)
+
+
+# def upload_validation_setting()
+def test_upload_validation_setting_new_file_no_old(app, mocker):
+    location = _DummyLocation(id_=5)
+    dummy_control = _DummyObjectVersion(
+        key="validation/validation_control.json",
+        bucket=_DummyBucket(5),
+    )
+    dummy_setting = _DummyObjectVersion(
+        key="validation/validation_setting.json",
+        bucket=dummy_control.bucket,
+    )
+
+    mocker.patch("weko_admin.utils.get_validation_setting", return_value=None)
+    mocker.patch("weko_admin.utils.get_validation_control", return_value=dummy_control)
+
+    mocker.patch("weko_admin.utils.ValidationSetting.create_from_bytes", return_value=True)
+
+    mock_ov_create = mocker.patch(
+        "invenio_files_rest.models.ObjectVersion.create",
+        return_value=dummy_setting,
+    )
+
+    mock_commit = mocker.patch("weko_admin.utils.db.session.commit")
+
+    upload_file = _DummyUploadFile(raw=b'{"version":"1","validationTargets":[]}')
+
+    with app.app_context():
+        result = utils.upload_validation_setting(location, upload_file)
+
+    assert result == dummy_setting
+    assert mock_ov_create.called is True
+    assert mock_commit.called is True
+
+
+def test_upload_validation_setting_validation_error(app, mocker):
+    location = _DummyLocation(id_=7)
+
+    mocker.patch("weko_admin.utils.get_validation_setting", return_value=None)
+
+    mocker.patch(
+        "weko_admin.utils.ValidationSetting.create_from_bytes",
+        side_effect=ValueError("bad json"),
+    )
+
+    upload_file = _DummyUploadFile(raw=b"not json")
+
+    with app.app_context():
+        with pytest.raises(ValueError) as e:
+            utils.upload_validation_setting(location, upload_file)
+
+    assert "bad json" in str(e.value)
+
+

@@ -20,12 +20,15 @@
 
 """Utilities for convert response json."""
 import csv
+import io
 import json
 import math
 import os
+import traceback
 import zipfile
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
+from jsonpath_ng.ext import parse
 from typing import Dict, Optional, Tuple, Union
 
 import redis
@@ -59,6 +62,8 @@ from .models import AdminLangSettings, AdminSettings, ApiCertificate, \
     FacetSearchSetting, FeedbackMailFailed, FeedbackMailHistory, \
     FeedbackMailSetting, SearchManagement, SiteInfo, StatisticTarget, \
     StatisticUnit
+
+VALIDATION_FOLDER_NAME = 'WEKO_ADMIN_VALIDATION_DATA_FOLDER'
 
 
 def get_response_json(result_list, n_lst):
@@ -2527,5 +2532,669 @@ def _elasticsearch_remake_item_index(index_name):
         assert res.get("_shards").get("failed") == 0 ,'Index fail.'
         returnlist.append(res)
     current_app.logger.info(' END elasticsearch import from records_metadata')
-    
+
     return returnlist
+
+
+def get_location():
+    """
+        Retrieves the location used to store validation-related files.
+        The location name is defined by the configuration value
+        "WEKO_ADMIN_VALIDATION_STORAGE_LOCATION".
+        If the target ObjectVersion does not exist, an ObjectVersion
+        for the controlled vocabulary validation execution control
+        JSON file is created.
+
+        Returns:
+            Location object used for controlled vocabulary validation.
+    """
+
+    from invenio_files_rest.models import Location
+
+    location_name = current_app.config.get(
+        'WEKO_ADMIN_VALIDATION_STORAGE_LOCATION')
+    if not location_name:
+        err_msg = _("ERR_WAV-002")
+        current_app.logger.error(err_msg)
+        raise RuntimeError(err_msg)
+
+    location = Location.query.filter_by(name=location_name).first()
+    if not location:
+        err_msg = _("ERR_WAV-003") % {"location_name": location_name}
+        current_app.logger.error(err_msg)
+        raise RuntimeError(err_msg)
+
+    return location
+
+
+def get_validation_control(location):
+    """
+        Retrieves the ObjectVersion of the controlled vocabulary
+        validation execution control JSON file from PostgreSQL.
+        If the location of the retrieved ObjectVersion matches
+        the given location argument,
+        the ObjectVersion information is returned.
+        If the target ObjectVersion does not exist, a new ObjectVersion
+        for the controlled
+        vocabulary validation execution control JSON file is created.
+
+        Args:
+            location: Location where the file is stored.
+
+        Returns:
+            ObjectVersion of the controlled vocabulary validation execution
+             control JSON file.
+    """
+
+    from invenio_files_rest.models import Bucket, ObjectVersion
+
+    control_json_obj = None
+
+    control_key = "{0}/validation_control.json".format(VALIDATION_FOLDER_NAME)
+    for obj_version in ObjectVersion.query.filter_by(key=control_key):
+        if obj_version.bucket and \
+           getattr(obj_version.bucket, 'default_location', None) == \
+           location.id:
+            control_json_obj = obj_version
+            break
+
+    if control_json_obj is None:
+        control_json = {
+            "settingFile": "{0}/validation_setting.json".format(
+                VALIDATION_FOLDER_NAME),
+            "autoReport": []
+        }
+        bytesIO = io.BytesIO(bytes(json.dumps(control_json), encoding="utf-8"))
+        bucket = None
+        try:
+            bucket = Bucket.create(location)
+            control_json_obj = ObjectVersion.create(
+                bucket, '{0}/validation_control.json'.format(
+                    VALIDATION_FOLDER_NAME), stream=bytesIO)
+        except Exception as e:
+            current_app.logger.exception('ERR_WAV-004: IO error occurred.')
+            raise e
+        db.session.commit()
+
+    return control_json_obj
+
+
+def get_validation_setting(location):
+    """
+        Retrieves the ObjectVersion of a controlled vocabulary
+        JSON file from PostgreSQL.
+        If the location of the retrieved ObjectVersion matches
+        the given location argument,
+        the ObjectVersion information is returned.
+
+        Args:
+            location: Location where the file is stored.
+
+        Returns:
+            Controlled vocabulary JSON file.
+    """
+
+    from invenio_files_rest.models import ObjectVersion
+
+    setting_key = "{0}/validation_setting.json".format(VALIDATION_FOLDER_NAME)
+    for obj_version in ObjectVersion.query.filter_by(key=setting_key):
+        if obj_version.bucket and \
+           getattr(obj_version.bucket, 'default_location', None) == \
+           location.id:
+            return obj_version
+
+    return None
+
+
+def upload_validation_setting(location, file):
+    """
+        Retrieves the ObjectVersion of a controlled vocabulary
+        JSON file from PostgreSQL.
+        If the location of the retrieved ObjectVersion matches
+        the given location argument,
+        the ObjectVersion information is returned.
+
+        Args:
+            location: Location where the file is stored.
+            file: The result of request.files.get('file'), which is an
+                instance of werkzeug.datastructures.FileStorage representing
+                an uploaded file in a Flask application.
+
+        Returns:
+            Updated controlled vocabulary JSON file.
+    """
+
+    from invenio_files_rest.models import ObjectVersion
+    from invenio_files_rest.models import FileInstance
+    from invenio_files_rest.tasks import remove_file_data
+
+    setting_json_obj = None
+    try:
+        old_file_obj = get_validation_setting(location)
+        raw = file.read()
+        ValidationSetting.create_from_bytes(raw)
+        control_obj = get_validation_control(location)
+
+        binary_io = io.BytesIO(raw)
+        setting_json_obj = ObjectVersion.create(
+            control_obj.bucket,
+            "{0}/validation_setting.json".format(VALIDATION_FOLDER_NAME),
+            stream=binary_io)
+
+    except Exception as e:
+        current_app.logger.exception('ERR_IOS-002: IO error occurred.')
+        raise e
+
+    if old_file_obj:
+        old_id = str(old_file_obj.file_id) if old_file_obj.file_id else None
+        old_file_obj.remove()
+        if old_id:
+            fi = FileInstance.query.get(old_id)
+            fi.writable = True
+            db.session.commit()
+            remove_file_data.delay(old_id)
+
+    db.session.commit()
+    return setting_json_obj
+
+
+class Validator:
+
+    _instance = None
+
+    def __init__(self):
+        self.__settings = ValidationSetting.get_instance()
+        self.__target_date = datetime.now().strftime('%Y-%m-%d')
+        self.__reports = []
+
+    @classmethod
+    def load_instance(cls):
+        if not cls._instance:
+            cls._instance = cls()
+
+    @classmethod
+    def get_loaded_instance(cls):
+        cls.load_instance()
+        return cls._instance
+
+    @classmethod
+    def clear_loaded_instance(cls):
+        if not cls._instance.__reports:
+            cls._instance = None
+
+    def is_validation_required(self, route):
+        return self.__settings.is_active_target(route)
+
+    def execute_validation(self, json_data: dict, vaidation_target, item_id):
+        """
+            Performs controlled vocabulary validation.
+            When violations of the controlled vocabulary are found, the report
+            information is stored in memory.
+            Call "write_report" to output the report.
+
+            Args:
+                json_data: JSON data subject to validation
+                validation_target: Source of the input data
+                item_id: Identifier of the item
+        """
+        try:
+
+            # ItemTypeが定義されていない場合は何もしない。
+            if not json_data.get("$schema"):
+                return
+
+            # 統制語彙ごとの確認
+            for item in self.__settings.get_settings_json().get(
+                    "controlledItems"):
+                itemType = None
+                if item.get("itemTypes"):
+                    for it in item.get("itemTypes"):
+                        if json_data["$schema"].strip() == \
+                              it.get("identifier"):
+                            itemType = it
+                if itemType:
+                    values = self.__getValueByItemType(json_data, itemType)
+                    for value in values:
+                        if value not in item.get("controlledVocabulary"):
+                            detectionTime = datetime.now()
+                            handling = "Dry-run"
+
+                            # 不整合データ
+                            notMatch = {
+                                "version": self.__settings.get_version(),
+                                "validationTarget": vaidation_target,
+                                "detectionTime": detectionTime.isoformat(
+                                    timespec="seconds"),
+                                "itemId": str(item_id),
+                                "handling": handling,
+                                "controlledItem": item.get("vocabularyName"),
+                                "incorrectWord": value
+                            }
+                            self.__add_report_item(notMatch)
+        except Exception:
+            current_app.logger.exception('Validation failed.')
+
+    def __getValueByItemType(self, data, itemType):
+        # 条件付きの場合
+        if itemType.get("condition"):
+            path_tmps = itemType.get("path").split('.')
+            common_path = None
+            for index, tmp in enumerate(path_tmps):
+                isMatch = None
+                for condition in itemType.get("condition"):
+                    cpath_tmps = condition.get("conditionPath").split('.')
+                    isMatch = (isMatch is None or isMatch) and \
+                        len(cpath_tmps) > index and tmp == cpath_tmps[index]
+                if isMatch:
+                    common_path = '.'.join(path_tmps[0:index + 1])
+
+            if common_path:
+                vpath = itemType.get("path").split(common_path + '.')[1]
+                ret = []
+                matches = parse(common_path).find(data)
+                for match in matches:
+                    isMatch = None
+                    for condition in itemType.get("condition"):
+                        cpath = condition.get("conditionPath").split(
+                            common_path + '.')[1]
+                        cval = self.__getValueByPath(match, cpath)
+                        if cval:
+                            isMatch = (isMatch is None or isMatch) and \
+                                condition.get("conditionValue") == cval[0]
+                    if isMatch:
+                        ret.extend(self.__getValueByPath(match, vpath))
+                return ret
+            else:
+                return None
+
+        return self.__getValueByPath(data, itemType.get("path"))
+
+    def __getValueByPath(self, data, path):
+        matches = parse(path).find(data)
+        return [match.value for match in matches]
+
+    def __add_report_item(self, report: dict):
+        today = datetime.now().strftime('%Y-%m-%d')
+        if self.__target_date != today:
+            self.write_report()
+            self.__target_date = today
+
+        self.__reports.append(report)
+
+
+    def write_report(self):
+        """
+            Outputs the validation check results of the
+            controlled vocabularies stored in memory.
+            The output results are managed by WEKO’s file management system.
+        """
+
+        if not self.__reports:
+            current_app.logger.debug(
+                "No errors were found during the controlled "
+                "vocabulary verification.")
+            Validator.clear_loaded_instance()
+            return
+
+        current_app.logger.debug(
+                "{0} issues were found during the verification of the"
+                " controlled vocabulary.".format(len(self.__reports)))
+
+
+        from invenio_files_rest.models import ObjectVersion
+        from invenio_files_rest.models import FileInstance
+        from invenio_files_rest.tasks import remove_file_data
+
+        try:
+            location = get_location()
+            control = get_validation_control(location)
+            old_report_obj = None
+            report_key = "{0}/validation_report_{1}.json".format(
+                VALIDATION_FOLDER_NAME, self.__target_date)
+            for obj_version in ObjectVersion.query.filter_by(key=report_key):
+                if obj_version.bucket and \
+                    getattr(obj_version.bucket, 'default_location', None) == \
+                        location.id:
+                    old_report_obj = obj_version
+                    break
+
+            report_json = None
+            if old_report_obj is None:
+                report_json = {
+                    "targetDate": self.__target_date,
+                    "notMatchCount": 0,
+                    "notMatchs": []
+                }
+            else:
+                with old_report_obj.file.storage().open() as f:
+                    text = f.read().decode('utf-8')
+                    report_json = json.loads(text)
+            report_json["notMatchCount"] += len(self.__reports)
+            report_json["notMatchs"].extend(self.__reports)
+
+            json_text = json.dumps(
+                report_json,
+                ensure_ascii=False,
+                indent=2
+            )
+            bytesIO = io.BytesIO(json_text.encode("utf-8"))
+
+            ObjectVersion.create(
+                control.bucket, report_key, stream=bytesIO)
+
+            if old_report_obj:
+                old_id = str(old_report_obj.file_id) \
+                    if old_report_obj.file_id else None
+                old_report_obj.remove()
+                if old_id:
+                    fi = FileInstance.query.get(old_id)
+                    fi.writable = True
+                    db.session.commit()
+                    remove_file_data.delay(old_id)
+
+            self.__update_validation_control_add_report(
+                location,
+                self.__target_date,
+                report_json["notMatchCount"],
+                report_key)
+            db.session.commit()
+            self.__reports = []
+
+        except Exception:
+            current_app.logger.exception('Validation write report failed.')
+            db.session.rollback()
+
+    def __update_validation_control_add_report(self, location, target_date,
+                                               not_match_count, report_file):
+
+        from invenio_files_rest.models import FileInstance
+        from invenio_files_rest.models import ObjectVersion
+        from invenio_files_rest.tasks import remove_file_data
+
+        old_control = get_validation_control(location)
+        with old_control.file.storage().open() as f:
+            text = f.read().decode('utf-8')
+            control_json = json.loads(text)
+
+        auto_reports = control_json.setdefault("autoReport", [])
+        is_update = False
+        for report in auto_reports:
+            if report.get("targetDate") == target_date:
+                # ① 今日のデータが存在 → 更新
+                report["notMatchCount"] = not_match_count
+                report["reportFile"] = report_file
+                is_update = True
+                break
+
+        # ② 今日のデータが存在しない → 追加
+        if not is_update:
+            auto_reports.append({
+                "targetDate": target_date,
+                "notMatchCount": not_match_count,
+                "reportFile": report_file
+            })
+
+        json_text = json.dumps(
+            control_json,
+            ensure_ascii=False,
+            indent=2
+        )
+        bytesIO = io.BytesIO(json_text.encode("utf-8"))
+
+        ObjectVersion.create(
+            old_control.bucket, old_control.key, stream=bytesIO)
+
+        old_id = str(old_control.file_id) if old_control.file_id else None
+        old_control.remove()
+        if old_id:
+            fi = FileInstance.query.get(old_id)
+            fi.writable = True
+            db.session.commit()
+            remove_file_data.delay(old_id)
+
+
+class ValidationSetting:
+
+    _instance = None
+
+    def __init__(self, json_data: dict):
+        self.__json_data = json_data
+        self.__version = json_data.get('version')
+        self.__targets = json_data.get('validationTargets')
+        self.__check()
+
+    @classmethod
+    def create_from_file(cls, file):
+        raw = file.read()
+        return cls.create_from_bytes(raw)
+
+    @classmethod
+    def create_from_bytes(cls, raw):
+        try:
+            # UTF-8（BOMなし）としてデコード
+            text = raw.decode('utf-8')
+
+            json_data = json.loads(text)
+            return cls(json_data)
+
+        except UnicodeDecodeError:
+            raise ValueError(_("ERR_WAV-005"))
+
+        except json.JSONDecodeError as e:
+            raise ValueError(
+                _("ERR_WAV-006") % {
+                    "reason": e.msg,
+                    "line": e.lineno,
+                    "col": e.colno,
+                }
+            ) from e
+
+    @classmethod
+    def get_instance(cls):
+
+        location = get_location()
+        file_obj = get_validation_setting(location)
+        if file_obj:
+            # NOTE: This open() without args follows the existing
+            # WEKO3 implementation.
+            with file_obj.file.storage().open() as f:
+                return cls.create_from_file(f)
+        else:
+            return None
+
+    def __check(self):
+        if not isinstance(self.__version, str) or not self.__version.strip():
+            raise ValueError(_("ERR_WAV-007"))
+
+        if not isinstance(self.__targets, list):
+            raise ValueError(_("ERR_WAV-008"))
+
+        required_targets = {
+            'OAI-PMH': False,
+            'ResouceSync': False,
+        }
+
+        for target in self.__targets:
+            if not isinstance(target, dict):
+                continue
+
+            name = target.get('targetName')
+            is_active = target.get('isActive')
+
+            if name in required_targets:
+                if not isinstance(is_active, bool):
+                    raise ValueError(_("ERR_WAV-009") % {"targetName": name})
+                required_targets[name] = True
+
+        for name, found in required_targets.items():
+            if not found:
+                raise ValueError(_("ERR_WAV-010") % {"targetName": name})
+
+    def get_version(self):
+        return self.__version
+
+    def get_settings_json(self):
+        return self.__json_data
+
+    def is_active_target(self, targetName):
+        # __check で list を保証しているので通常は安全
+        for target in self.__targets:
+            if not isinstance(target, dict):
+                continue
+            if target.get('targetName') == targetName \
+                    and target.get('isActive'):
+                return target.get('isActive')
+        return False
+
+
+def update_validation_control_delete_report(location, report_file):
+    """
+        Removes report-related information from the execution management JSON.
+
+        Args:
+            report_file: Key of the report ObjectVersion.
+    """
+
+    from invenio_files_rest.models import FileInstance
+    from invenio_files_rest.models import ObjectVersion
+    from invenio_files_rest.tasks import remove_file_data
+
+    try:
+        old_control = get_validation_control(location)
+        with old_control.file.storage().open() as f:
+            text = f.read().decode('utf-8')
+            control_json = json.loads(text)
+
+        control_json["autoReport"] = [
+            report for report in control_json.get("autoReport", [])
+            if report.get("reportFile") != report_file
+        ]
+
+        json_text = json.dumps(
+            control_json,
+            ensure_ascii=False,
+            indent=2
+        )
+        bytesIO = io.BytesIO(json_text.encode("utf-8"))
+
+        ObjectVersion.create(
+            old_control.bucket, old_control.key, stream=bytesIO)
+
+        old_id = str(old_control.file_id) if old_control.file_id else None
+        old_control.remove()
+        if old_id:
+            fi = FileInstance.query.get(old_id)
+            fi.writable = True
+            db.session.commit()
+            remove_file_data.delay(old_id)
+        db.session.commit()
+    except Exception:
+        current_app.logger.exception(_("ERR_WAV-004"))
+        db.session.rollback()
+
+
+def delete_validation_setting(location):
+    """
+        Deletes the controlled vocabulary JSON configuration file.
+
+        Args:
+            location: Location where the file is stored.
+    """
+
+    from invenio_files_rest.models import FileInstance
+    from invenio_files_rest.tasks import remove_file_data
+
+    try:
+
+        file_obj = get_validation_setting(location)
+
+        if file_obj:
+            file_id = str(file_obj.file_id) if file_obj.file_id else None
+            file_obj.remove()
+            if file_id:
+                fi = FileInstance.query.get(file_id)
+                fi.writable = True
+                db.session.commit()
+                remove_file_data.delay(file_id)
+            db.session.commit()
+    except Exception:
+        current_app.logger.exception(_("ERR_WAV-004"))
+        db.session.rollback()
+
+
+def delete_validation_report(location, report_key):
+    """
+        Deletes the report file.
+
+        Args:
+            location: Location where the file is stored.
+            report_key: ObjectVersion key of the report.
+    """
+
+    from invenio_files_rest.models import FileInstance
+    from invenio_files_rest.tasks import remove_file_data
+
+    try:
+
+        file_obj = get_validation_report(location, report_key)
+
+        if file_obj:
+            file_id = str(file_obj.file_id) if file_obj.file_id else None
+            file_obj.remove()
+            if file_id:
+                fi = FileInstance.query.get(file_id)
+                fi.writable = True
+                db.session.commit()
+                remove_file_data.delay(file_id)
+            update_validation_control_delete_report(location, report_key)
+            db.session.commit()
+    except Exception:
+        current_app.logger.exception(_("ERR_WAV-004"))
+        db.session.rollback()
+
+
+def write_validation_report():
+    validator = Validator.get_loaded_instance()
+    validator.write_report()
+
+
+def execute_validation(json_data: dict, vaidation_target, item_id):
+
+    try:
+        validator = Validator.get_loaded_instance()
+        if not validator.is_validation_required(vaidation_target):
+            current_app.logger.debug(
+                "Validation from root {0} will not be performed."
+                .format(vaidation_target))
+            return
+
+        current_app.logger.debug("Perform validation from root {0}."
+                                .format(vaidation_target))
+        validator.execute_validation(json_data, vaidation_target, item_id)
+    except Exception:
+        current_app.logger.exception('Validation failed.')
+
+
+def get_validation_report(location, report_key):
+    """
+        Retrieves the ObjectVersion of a controlled vocabulary
+        JSON file from PostgreSQL.
+        If the location of the retrieved ObjectVersion matches the given
+        location argument, the ObjectVersion information is returned.
+
+        Args:
+            location: Location where the file is stored.
+
+        Returns:
+            Controlled vocabulary JSON file.
+    """
+
+    from invenio_files_rest.models import ObjectVersion
+
+    for obj_version in ObjectVersion.query.filter_by(key=report_key):
+        if obj_version.bucket and \
+           getattr(obj_version.bucket, 'default_location', None) == \
+           location.id:
+            return obj_version
+
+    return None

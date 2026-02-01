@@ -296,6 +296,14 @@ msgstr ""
 msgid "Faceted Search"
 msgstr ""
 
+#: weko_admin/admin.py:1582
+msgid "Validation Settings"
+msgstr ""
+
+#: weko_admin/admin.py:1592
+msgid "Validation Report"
+msgstr ""
+
 #: weko_admin/api.py:82
 msgid "statistics report"
 msgstr ""
@@ -1651,3 +1659,66 @@ msgstr "本処理の実行にはかなりの時間がかかることが予想さ
 #: weko_admin/admin/reindex_elasticsearch.html
 msgid "completed"
 msgstr "処理が完了しました。"
+
+msgid "admin validation field Active"
+msgstr ""
+
+msgid "admin validation field Inactive"
+msgstr ""
+
+msgid "admin validation button Upload"
+msgstr ""
+
+msgid "admin validation field Target Date"
+msgstr ""
+
+msgid "admin validation field Mismatch Count"
+msgstr ""
+
+msgid "admin validation field Action"
+msgstr ""
+
+msgid "admin validation message No Report"
+msgstr ""
+
+msgid "admin validation confirm Upload Setting"
+msgstr ""
+
+msgid "admin validation confirm Deleted Setting"
+msgstr ""
+
+msgid "admin validation confirm Deleted Report"
+msgstr ""
+
+msgid "ERR_WAV-001"
+msgstr ""
+
+msgid "ERR_WAV-002"
+msgstr ""
+
+msgid "ERR_WAV-003"
+msgstr ""
+
+msgid "ERR_WAV-004"
+msgstr ""
+
+msgid "ERR_WAV-005"
+msgstr ""
+
+msgid "ERR_WAV-006"
+msgstr ""
+
+msgid "ERR_WAV-007"
+msgstr ""
+
+msgid "ERR_WAV-008"
+msgstr ""
+
+msgid "ERR_WAV-009"
+msgstr ""
+
+msgid "ERR_WAV-010"
+msgstr ""
+
+msgid "ERR_WAV-011"
+msgstr ""
