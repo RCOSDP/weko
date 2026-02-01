@@ -514,6 +514,65 @@ class TestWekoDeposit:
             assert 'draft' == deposit.status
             assert 0 == deposit.revision_id
 
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_validation_enabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_validation_enabled(sel, app, db, location):
+        """C1: WEKO_ADMIN_VALIDATION_ENABLE=True + route + item_id in kwargs.
+
+        Covers the True branch of the new compound condition:
+            current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE') and
+            kwargs.get('route') and kwargs.get('item_id')
+        which dispatches to execute_validation().
+        """
+        app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+        with app.test_request_context():
+            deposit = WekoDeposit.create({})
+            item_id = deposit.pid.object_uuid
+            metadata = {'$schema': '/items/jsonschema/1'}
+            with patch('weko_deposit.api.execute_validation') as mock_exec, \
+                    patch.object(WekoDeposit, 'convert_item_metadata',
+                                 return_value=({}, [])), \
+                    patch('invenio_deposit.api.Deposit.update'):
+                deposit.update({}, metadata, route='OAI-PMH', item_id=item_id)
+            mock_exec.assert_called_once_with(metadata, 'OAI-PMH', item_id)
+
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_validation_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_validation_disabled(sel, app, db, location):
+        """C1: WEKO_ADMIN_VALIDATION_ENABLE=False short-circuits the new branch.
+
+        Covers the False branch of the compound condition (config disabled).
+        execute_validation must NOT be invoked.
+        """
+        app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = False
+        with app.test_request_context():
+            deposit = WekoDeposit.create({})
+            item_id = deposit.pid.object_uuid
+            metadata = {'$schema': '/items/jsonschema/1'}
+            with patch('weko_deposit.api.execute_validation') as mock_exec, \
+                    patch.object(WekoDeposit, 'convert_item_metadata',
+                                 return_value=({}, [])), \
+                    patch('invenio_deposit.api.Deposit.update'):
+                deposit.update({}, metadata, route='OAI-PMH', item_id=item_id)
+            mock_exec.assert_not_called()
+
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_update_validation_missing_kwargs -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    def test_update_validation_missing_kwargs(sel, app, db, location):
+        """C1: WEKO_ADMIN_VALIDATION_ENABLE=True but route/item_id not provided.
+
+        Covers the False sub-branches of the compound condition (missing
+        kwargs). execute_validation must NOT be invoked.
+        """
+        app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+        with app.test_request_context():
+            deposit = WekoDeposit.create({})
+            metadata = {'$schema': '/items/jsonschema/1'}
+            with patch('weko_deposit.api.execute_validation') as mock_exec, \
+                    patch.object(WekoDeposit, 'convert_item_metadata',
+                                 return_value=({}, [])), \
+                    patch('invenio_deposit.api.Deposit.update'):
+                # kwargs without route/item_id
+                deposit.update({}, metadata)
+            mock_exec.assert_not_called()
+
 
     # def clear(self, *args, **kwargs):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_clear -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp

@@ -1,6 +1,6 @@
 import csv
 import uuid
-from mock import patch
+from mock import patch, MagicMock
 from datetime import datetime, timedelta
 from flask import current_app, Markup
 from io import StringIO
@@ -16,6 +16,8 @@ from weko_user_profiles import UserProfile
 
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS
 from weko_admin.models import AdminLangSettings, FeedbackMailHistory, FeedbackMailFailed, SiteInfo
+from weko_admin import tasks
+from weko_admin import utils
 from weko_admin.utils import (
     get_response_json,
     allowed_file,
@@ -60,7 +62,10 @@ from weko_admin.utils import (
     get_title_facets,
     is_exits_facet,
     overwrite_the_memory_config_with_db,
-    get_detail_search_list
+    get_detail_search_list,
+    get_location,
+    get_validation_setting,
+    get_validation_control,
 )
 
 from tests.helpers import json_data
@@ -2292,3 +2297,1241 @@ def test_get_detail_search_list(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         result =  get_detail_search_list()
         assert result
+
+
+class _DummyLocation:
+    def __init__(self, id_=1, name="dummy-location"):
+        self.id = id_
+        self.name = name
+
+
+class _DummyBucket:
+    def __init__(self, default_location=1):
+        self.default_location = default_location
+
+
+class _DummyObjectVersion:
+    def __init__(self, key="dummy.json", bucket=None, file_id=None):
+        self.key = key
+        self.bucket = bucket
+        self.file_id = file_id
+        self.file = None  # not used in these tests
+
+    def remove(self):
+        # will be mocked/checked in test if needed
+        return None
+
+
+class _DummyFileInstance:
+    def __init__(self, writable=False):
+        self.writable = writable
+
+
+class _DummyUploadFile:
+    def __init__(self, raw=b"{}"):
+        self._raw = raw
+
+    def read(self):
+        return self._raw
+
+
+# def get_location()
+def test_get_location_success(app, mocker):
+    dummy_location = _DummyLocation(id_=10, name="loc10")
+
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+
+    loc_cls = mocker.patch("invenio_files_rest.models.Location", autospec=True)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return self
+        def first(self):
+            return dummy_location
+
+    loc_cls.query = _Q()
+
+    app.config["WEKO_ADMIN_VALIDATION_STORAGE_LOCATION"] = "loc10"
+
+    loc = get_location()
+    assert loc == dummy_location
+
+
+def test_get_location_no_config(app, mocker):
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+
+    if "WEKO_ADMIN_VALIDATION_STORAGE_LOCATION" in app.config:
+        del app.config["WEKO_ADMIN_VALIDATION_STORAGE_LOCATION"]
+
+    with pytest.raises(RuntimeError) as e:
+        get_location()
+    assert "ERR_WAV-002" in str(e.value)
+
+
+def test_get_location_not_found(app, mocker):
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return self
+        def first(self):
+            return None
+
+    loc_cls = mocker.patch("invenio_files_rest.models.Location", autospec=True)
+    loc_cls.query = _Q()
+
+    app.config["WEKO_ADMIN_VALIDATION_STORAGE_LOCATION"] = "missing-loc"
+
+    with pytest.raises(RuntimeError) as e:
+        get_location()
+    assert "ERR_WAV-003" in str(e.value)
+
+
+# def get_validation_setting()
+def test_get_validation_setting_found(app, mocker):
+    location = _DummyLocation(id_=1)
+    ok_bucket = _DummyBucket(default_location=1)
+    ng_bucket = _DummyBucket(default_location=999)
+
+    ov_ng = _DummyObjectVersion(
+        key="validation/validation_setting.json",
+        bucket=ng_bucket
+    )
+    ov_ok = _DummyObjectVersion(
+        key="validation/validation_setting.json",
+        bucket=ok_bucket
+    )
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return [ov_ng, ov_ok]
+
+    class FakeObjectVersion:
+        query = _Q()
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+
+        result = get_validation_setting(location)
+
+    assert result == ov_ok
+
+
+def test_get_validation_setting_none(app, mocker):
+    location = _DummyLocation(id_=1)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return []
+
+    class FakeObjectVersion:
+        query = _Q()
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+
+        result = get_validation_setting(location)
+
+    assert result is None
+
+
+# def get_validation_control()
+def test_get_validation_control_existing(app, mocker):
+    location = _DummyLocation(id_=2)
+    bucket = _DummyBucket(default_location=2)
+    ov = _DummyObjectVersion(
+        key="validation/validation_control.json",
+        bucket=bucket
+    )
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return [ov]
+
+    class FakeObjectVersion:
+        query = _Q()
+
+        @staticmethod
+        def create(*args, **kwargs):
+            raise AssertionError("ObjectVersion.create should not be called")
+
+    class FakeBucket:
+        @staticmethod
+        def create(*args, **kwargs):
+            raise AssertionError("Bucket.create should not be called")
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+        mocker.patch("invenio_files_rest.models.Bucket", FakeBucket)
+
+        mock_commit = mocker.patch("weko_admin.utils.db.session.commit")
+
+        result = get_validation_control(location)
+
+    assert result == ov
+    assert mock_commit.called is False
+
+
+def test_get_validation_control_create_new(app, mocker):
+    location = _DummyLocation(id_=3)
+    dummy_bucket = _DummyBucket(default_location=3)
+    dummy_created_ov = _DummyObjectVersion(
+        key="validation/validation_control.json",
+        bucket=dummy_bucket
+    )
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return []
+
+    class FakeBucket:
+        @staticmethod
+        def create(loc):
+            # Lightly assert that loc is forwarded.
+            assert loc == location
+            return dummy_bucket
+
+    class FakeObjectVersion:
+        query = _Q()
+
+        @staticmethod
+        def create(bucket, key, stream=None):
+            assert bucket == dummy_bucket
+            assert "validation_control.json" in key
+            return dummy_created_ov
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.Bucket", FakeBucket)
+        mocker.patch("invenio_files_rest.models.ObjectVersion", FakeObjectVersion)
+
+        mock_commit = mocker.patch("weko_admin.utils.db.session.commit")
+
+        result = get_validation_control(location)
+
+    assert result == dummy_created_ov
+    assert mock_commit.called is True
+
+
+def test_get_validation_control_create_raises(app, mocker):
+
+    location = _DummyLocation(id_=4)
+
+    class _DummyFilterResult:
+        def __iter__(self):
+            return iter([])
+        def __len__(self):
+            return 0
+        def first(self):
+            return None
+        def all(self):
+            return []
+
+    class _DummyQuery:
+        def filter_by(self, **kwargs):
+            return _DummyFilterResult()
+
+    with app.app_context():
+        mock_object_version = mocker.patch("invenio_files_rest.models.ObjectVersion")
+        mock_object_version.query = _DummyQuery()
+
+        mocker.patch(
+            "invenio_files_rest.models.Bucket.create",
+            side_effect=Exception("test_error")
+        )
+
+        with pytest.raises(Exception) as e:
+            utils.get_validation_control(location)
+
+        assert "test_error" in str(e.value)
+
+
+# def upload_validation_setting()
+def test_upload_validation_setting_new_file_no_old(app, mocker):
+    location = _DummyLocation(id_=5)
+    dummy_control = _DummyObjectVersion(
+        key="validation/validation_control.json",
+        bucket=_DummyBucket(5),
+    )
+    dummy_setting = _DummyObjectVersion(
+        key="validation/validation_setting.json",
+        bucket=dummy_control.bucket,
+    )
+
+    mocker.patch("weko_admin.utils.get_validation_setting", return_value=None)
+    mocker.patch("weko_admin.utils.get_validation_control", return_value=dummy_control)
+
+    mocker.patch("weko_admin.utils.ValidationSetting.create_from_bytes", return_value=True)
+
+    mock_ov_create = mocker.patch(
+        "invenio_files_rest.models.ObjectVersion.create",
+        return_value=dummy_setting,
+    )
+
+    mock_commit = mocker.patch("weko_admin.utils.db.session.commit")
+
+    upload_file = _DummyUploadFile(raw=b'{"version":"1","validationTargets":[]}')
+
+    with app.app_context():
+        result = utils.upload_validation_setting(location, upload_file)
+
+    assert result == dummy_setting
+    assert mock_ov_create.called is True
+    assert mock_commit.called is True
+
+
+def test_upload_validation_setting_validation_error(app, mocker):
+    location = _DummyLocation(id_=7)
+
+    mocker.patch("weko_admin.utils.get_validation_setting", return_value=None)
+
+    mocker.patch(
+        "weko_admin.utils.ValidationSetting.create_from_bytes",
+        side_effect=ValueError("bad json"),
+    )
+
+    upload_file = _DummyUploadFile(raw=b"not json")
+
+    with app.app_context():
+        with pytest.raises(ValueError) as e:
+            utils.upload_validation_setting(location, upload_file)
+
+    assert "bad json" in str(e.value)
+
+
+# -------------------------------------------------------------------
+# Validator class C1 tests
+# -------------------------------------------------------------------
+@pytest.fixture(autouse=False)
+def _reset_validator_singleton():
+    """Reset the Validator class-level singleton between tests."""
+    from weko_admin.utils import Validator
+    Validator._instance = None
+    yield
+    Validator._instance = None
+
+
+def _make_validator(mocker, settings_mock=None):
+    """Build a Validator instance bypassing ValidationSetting.get_instance()."""
+    from weko_admin.utils import Validator
+    if settings_mock is None:
+        settings_mock = MagicMock()
+    mocker.patch(
+        "weko_admin.utils.ValidationSetting.get_instance",
+        return_value=settings_mock,
+    )
+    Validator._instance = None
+    return Validator()
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_load_instance_creates_when_absent -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_load_instance_creates_when_absent(app, mocker,
+                                                     _reset_validator_singleton):
+    """C1: Validator.load_instance() - _instance is None branch (creates)."""
+    from weko_admin.utils import Validator
+    settings_mock = MagicMock()
+    mocker.patch(
+        "weko_admin.utils.ValidationSetting.get_instance",
+        return_value=settings_mock,
+    )
+    assert Validator._instance is None
+    Validator.load_instance()
+    assert Validator._instance is not None
+    first = Validator._instance
+
+    # Calling again must NOT create a new instance (else branch).
+    Validator.load_instance()
+    assert Validator._instance is first
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_get_loaded_instance -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_get_loaded_instance(app, mocker,
+                                       _reset_validator_singleton):
+    """C1: get_loaded_instance() always returns a non-None instance."""
+    from weko_admin.utils import Validator
+    settings_mock = MagicMock()
+    mocker.patch(
+        "weko_admin.utils.ValidationSetting.get_instance",
+        return_value=settings_mock,
+    )
+    inst = Validator.get_loaded_instance()
+    assert inst is not None
+    # Idempotent.
+    assert Validator.get_loaded_instance() is inst
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_clear_loaded_instance -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_clear_loaded_instance(app, mocker,
+                                         _reset_validator_singleton):
+    """C1: clear_loaded_instance() - both branches.
+
+    - reports empty -> _instance reset to None
+    - reports populated -> _instance retained
+    """
+    from weko_admin.utils import Validator
+    validator = _make_validator(mocker)
+    Validator._instance = validator
+
+    # Branch 1: reports list empty -> singleton cleared.
+    Validator.clear_loaded_instance()
+    assert Validator._instance is None
+
+    # Branch 2: reports list non-empty -> singleton retained.
+    validator2 = _make_validator(mocker)
+    Validator._instance = validator2
+    # Touch the name-mangled private attribute to populate __reports.
+    validator2._Validator__reports.append({"sample": "report"})
+    Validator.clear_loaded_instance()
+    assert Validator._instance is validator2
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_is_validation_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_is_validation_required(app, mocker,
+                                          _reset_validator_singleton):
+    """C1: is_validation_required() delegates to settings.is_active_target."""
+    settings_mock = MagicMock()
+    settings_mock.is_active_target.side_effect = lambda r: r == 'OAI-PMH'
+    validator = _make_validator(mocker, settings_mock=settings_mock)
+    assert validator.is_validation_required('OAI-PMH') is True
+    assert validator.is_validation_required('ResouceSync') is False
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_execute_validation_no_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_execute_validation_no_schema(app, mocker,
+                                                _reset_validator_singleton):
+    """C1: execute_validation() - early-return when $schema is missing."""
+    settings_mock = MagicMock()
+    settings_mock.get_settings_json.return_value = {"controlledItems": []}
+    validator = _make_validator(mocker, settings_mock=settings_mock)
+    validator.execute_validation({}, 'OAI-PMH', 'item-1')
+    # No reports added.
+    assert validator._Validator__reports == []
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_execute_validation_match_no_violation -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_execute_validation_match_no_violation(app, mocker,
+                                                          _reset_validator_singleton):
+    """C1: execute_validation() - itemType matches, value is in vocabulary.
+
+    No report should be appended (the violation branch is False).
+    """
+    settings_mock = MagicMock()
+    settings_mock.get_settings_json.return_value = {
+        "controlledItems": [
+            {
+                "vocabularyName": "Resource Type",
+                "controlledVocabulary": ["dataset", "journal article"],
+                "itemTypes": [
+                    {
+                        "identifier": "/items/jsonschema/1",
+                        "path": "$.resourcetype"
+                    }
+                ]
+            }
+        ]
+    }
+    validator = _make_validator(mocker, settings_mock=settings_mock)
+    json_data = {
+        "$schema": "/items/jsonschema/1",
+        "resourcetype": "dataset",
+    }
+    validator.execute_validation(json_data, 'OAI-PMH', 'item-1')
+    assert validator._Validator__reports == []
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_execute_validation_violation_appended -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_execute_validation_violation_appended(app, mocker,
+                                                          _reset_validator_singleton):
+    """C1: execute_validation() - value not in vocabulary => report appended."""
+    settings_mock = MagicMock()
+    settings_mock.get_version.return_value = "1.0"
+    settings_mock.get_settings_json.return_value = {
+        "controlledItems": [
+            {
+                "vocabularyName": "Resource Type",
+                "controlledVocabulary": ["dataset", "journal article"],
+                "itemTypes": [
+                    {
+                        "identifier": "/items/jsonschema/1",
+                        "path": "$.resourcetype"
+                    }
+                ]
+            }
+        ]
+    }
+    validator = _make_validator(mocker, settings_mock=settings_mock)
+    json_data = {
+        "$schema": "/items/jsonschema/1",
+        "resourcetype": "magazine",  # not in vocabulary
+    }
+    validator.execute_validation(json_data, 'OAI-PMH', 'item-1')
+    reports = validator._Validator__reports
+    assert len(reports) == 1
+    assert reports[0]["controlledItem"] == "Resource Type"
+    assert reports[0]["incorrectWord"] == "magazine"
+    assert reports[0]["validationTarget"] == 'OAI-PMH'
+    assert reports[0]["itemId"] == 'item-1'
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_execute_validation_swallows_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_execute_validation_swallows_exception(app, mocker,
+                                                          _reset_validator_singleton):
+    """C1: execute_validation() - except branch logs and does not raise."""
+    settings_mock = MagicMock()
+    settings_mock.get_settings_json.side_effect = RuntimeError("boom")
+    validator = _make_validator(mocker, settings_mock=settings_mock)
+    with patch.object(app.logger, 'exception') as mock_log_exc:
+        validator.execute_validation(
+            {"$schema": "/items/jsonschema/1"}, 'OAI-PMH', 'item-1')
+    mock_log_exc.assert_any_call('Validation failed.')
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_write_report_no_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_write_report_no_reports(app, mocker,
+                                            _reset_validator_singleton):
+    """C1: write_report() - early-return branch when reports list is empty.
+
+    Verifies clear_loaded_instance is invoked and no I/O happens.
+    """
+    from weko_admin.utils import Validator
+    validator = _make_validator(mocker)
+    Validator._instance = validator
+    spy_clear = mocker.spy(Validator, 'clear_loaded_instance')
+    # Patch ObjectVersion to detect any unintended I/O attempt.
+    mock_objver_create = mocker.patch(
+        "invenio_files_rest.models.ObjectVersion.create")
+    validator.write_report()
+    assert spy_clear.call_count == 1
+    mock_objver_create.assert_not_called()
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validator_write_report_exception_branch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validator_write_report_exception_branch(app, mocker,
+                                                  _reset_validator_singleton):
+    """C1: write_report() - except branch logs + rolls back the session."""
+    validator = _make_validator(mocker)
+    validator._Validator__reports.append({
+        "version": "1",
+        "validationTarget": "OAI-PMH",
+        "detectionTime": "2026-01-01T00:00:00",
+        "itemId": "x",
+        "handling": "Dry-run",
+        "controlledItem": "Resource Type",
+        "incorrectWord": "magazine",
+    })
+
+    # Force get_location to raise so the try block fails fast.
+    mocker.patch("weko_admin.utils.get_location",
+                 side_effect=RuntimeError("no location"))
+    rollback_spy = mocker.patch("weko_admin.utils.db.session.rollback")
+    with patch.object(app.logger, 'exception') as mock_log_exc:
+        validator.write_report()
+    rollback_spy.assert_called_once()
+    mock_log_exc.assert_any_call('Validation write report failed.')
+
+
+# -------------------------------------------------------------------
+# execute_validation() (top-level) C1 tests
+# -------------------------------------------------------------------
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_top_level_execute_validation_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_top_level_execute_validation_required(app, mocker,
+                                               _reset_validator_singleton):
+    """C1: execute_validation() - is_validation_required True branch."""
+    from weko_admin.utils import execute_validation, Validator
+    validator_mock = MagicMock()
+    validator_mock.is_validation_required.return_value = True
+    mocker.patch.object(Validator, 'get_loaded_instance',
+                        return_value=validator_mock)
+    execute_validation({"x": 1}, 'OAI-PMH', 'item-1')
+    validator_mock.execute_validation.assert_called_once_with(
+        {"x": 1}, 'OAI-PMH', 'item-1')
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_top_level_execute_validation_not_required -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_top_level_execute_validation_not_required(app, mocker,
+                                                    _reset_validator_singleton):
+    """C1: execute_validation() - is_validation_required False branch."""
+    from weko_admin.utils import execute_validation, Validator
+    validator_mock = MagicMock()
+    validator_mock.is_validation_required.return_value = False
+    mocker.patch.object(Validator, 'get_loaded_instance',
+                        return_value=validator_mock)
+    execute_validation({"x": 1}, 'OAI-PMH', 'item-1')
+    validator_mock.execute_validation.assert_not_called()
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_top_level_execute_validation_swallows_exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_top_level_execute_validation_swallows_exception(app, mocker,
+                                                          _reset_validator_singleton):
+    """C1: execute_validation() - except branch swallows exception."""
+    from weko_admin.utils import execute_validation, Validator
+    mocker.patch.object(Validator, 'get_loaded_instance',
+                        side_effect=RuntimeError("boom"))
+    with patch.object(app.logger, 'exception') as mock_log_exc:
+        execute_validation({"x": 1}, 'OAI-PMH', 'item-1')
+    mock_log_exc.assert_any_call('Validation failed.')
+
+
+# -------------------------------------------------------------------
+# ValidationSetting class C1 tests
+# -------------------------------------------------------------------
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validation_setting_check_valid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validation_setting_check_valid(app):
+    """C1: ValidationSetting.__check() - valid input passes."""
+    from weko_admin.utils import ValidationSetting
+    json_data = {
+        "version": "1.0",
+        "validationTargets": [
+            {"targetName": "OAI-PMH", "isActive": True},
+            {"targetName": "ResouceSync", "isActive": False},
+        ],
+    }
+    setting = ValidationSetting(json_data)
+    assert setting.get_version() == "1.0"
+    assert setting.is_active_target('OAI-PMH') is True
+    assert setting.is_active_target('ResouceSync') is False
+    # Unknown target -> False (not in __targets active list).
+    assert setting.is_active_target('Unknown') is False
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validation_setting_check_invalid_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validation_setting_check_invalid_version(app, mocker):
+    """C1: ValidationSetting.__check() - version not str/empty raises."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    with pytest.raises(ValueError) as e:
+        ValidationSetting({"version": "", "validationTargets": []})
+    assert "ERR_WAV-007" in str(e.value)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validation_setting_check_targets_not_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validation_setting_check_targets_not_list(app, mocker):
+    """C1: ValidationSetting.__check() - targets not a list raises."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    with pytest.raises(ValueError) as e:
+        ValidationSetting({"version": "1.0", "validationTargets": "not-a-list"})
+    assert "ERR_WAV-008" in str(e.value)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validation_setting_check_missing_required_target -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validation_setting_check_missing_required_target(app, mocker):
+    """C1: ValidationSetting.__check() - required target missing raises."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    # Only OAI-PMH provided; ResouceSync missing.
+    with pytest.raises(ValueError) as e:
+        ValidationSetting({
+            "version": "1.0",
+            "validationTargets": [
+                {"targetName": "OAI-PMH", "isActive": True},
+            ],
+        })
+    assert "ERR_WAV-010" in str(e.value)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_validation_setting_check_invalid_isactive -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_validation_setting_check_invalid_isactive(app, mocker):
+    """C1: ValidationSetting.__check() - isActive not bool raises."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    with pytest.raises(ValueError) as e:
+        ValidationSetting({
+            "version": "1.0",
+            "validationTargets": [
+                {"targetName": "OAI-PMH", "isActive": "yes"},
+                {"targetName": "ResouceSync", "isActive": False},
+            ],
+        })
+    assert "ERR_WAV-009" in str(e.value)
+
+
+# -------------------------------------------------------------------
+# write_validation_report() (top-level) C1 test
+# -------------------------------------------------------------------
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_write_validation_report -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_write_validation_report(app, mocker, _reset_validator_singleton):
+    """C1: write_validation_report() delegates to Validator.write_report()."""
+    from weko_admin.utils import write_validation_report, Validator
+    validator_mock = MagicMock()
+    mocker.patch.object(Validator, 'get_loaded_instance',
+                        return_value=validator_mock)
+    write_validation_report()
+    validator_mock.write_report.assert_called_once()
+
+
+# -------------------------------------------------------------------
+# ValidationSetting.create_from_bytes / get_instance C1 tests
+# -------------------------------------------------------------------
+def test_validation_setting_create_from_bytes_valid(app, mocker):
+    """C1: create_from_bytes() - successful UTF-8 + JSON decode path."""
+    from weko_admin.utils import ValidationSetting
+    raw = json.dumps({
+        "version": "1.0",
+        "validationTargets": [
+            {"targetName": "OAI-PMH", "isActive": True},
+            {"targetName": "ResouceSync", "isActive": False},
+        ],
+    }).encode("utf-8")
+    inst = ValidationSetting.create_from_bytes(raw)
+    assert inst.get_version() == "1.0"
+
+
+def test_validation_setting_create_from_bytes_unicode_error(app, mocker):
+    """C1: create_from_bytes() - UnicodeDecodeError branch."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    invalid_utf8 = b'\xff\xfe\xfd'
+    with pytest.raises(ValueError) as e:
+        ValidationSetting.create_from_bytes(invalid_utf8)
+    assert "ERR_WAV-005" in str(e.value)
+
+
+def test_validation_setting_create_from_bytes_json_error(app, mocker):
+    """C1: create_from_bytes() - JSONDecodeError branch."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    invalid_json = b'not a valid json'
+    with pytest.raises(ValueError) as e:
+        ValidationSetting.create_from_bytes(invalid_json)
+    assert "ERR_WAV-006" in str(e.value)
+
+
+def test_validation_setting_get_instance_with_file(app, mocker):
+    """C1: get_instance() with file_obj returns a ValidationSetting."""
+    from weko_admin.utils import ValidationSetting
+
+    raw = json.dumps({
+        "version": "1.0",
+        "validationTargets": [
+            {"targetName": "OAI-PMH", "isActive": True},
+            {"targetName": "ResouceSync", "isActive": False},
+        ],
+    }).encode("utf-8")
+
+    class _Storage:
+        def open(self):
+            from io import BytesIO
+            return BytesIO(raw)
+
+    class _File:
+        def storage(self):
+            return _Storage()
+
+    file_obj = MagicMock()
+    file_obj.file = _File()
+
+    mocker.patch("weko_admin.utils.get_location",
+                 return_value=_DummyLocation(id_=1))
+    mocker.patch("weko_admin.utils.get_validation_setting",
+                 return_value=file_obj)
+    inst = ValidationSetting.get_instance()
+    assert inst is not None
+    assert inst.get_version() == "1.0"
+
+
+def test_validation_setting_get_instance_no_file(app, mocker):
+    """C1: get_instance() returns None when file_obj is None."""
+    from weko_admin.utils import ValidationSetting
+    mocker.patch("weko_admin.utils.get_location",
+                 return_value=_DummyLocation(id_=1))
+    mocker.patch("weko_admin.utils.get_validation_setting",
+                 return_value=None)
+    assert ValidationSetting.get_instance() is None
+
+
+# -------------------------------------------------------------------
+# get_validation_report C1 tests
+# -------------------------------------------------------------------
+def test_get_validation_report_found(app, mocker):
+    """C1: get_validation_report() returns the matching ObjectVersion when bucket.default_location matches."""
+    from weko_admin.utils import get_validation_report
+    location = _DummyLocation(id_=5)
+    ok_bucket = _DummyBucket(default_location=5)
+    ng_bucket = _DummyBucket(default_location=999)
+    ov_ng = _DummyObjectVersion(key="report.json", bucket=ng_bucket)
+    ov_ok = _DummyObjectVersion(key="report.json", bucket=ok_bucket)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return [ov_ng, ov_ok]
+
+    class FakeObjectVersion:
+        query = _Q()
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion",
+                     FakeObjectVersion)
+        result = get_validation_report(location, "report.json")
+    assert result == ov_ok
+
+
+def test_get_validation_report_not_found(app, mocker):
+    """C1: get_validation_report() returns None when there is no match."""
+    from weko_admin.utils import get_validation_report
+    location = _DummyLocation(id_=5)
+
+    class _Q:
+        def filter_by(self, **kwargs):
+            return []
+
+    class FakeObjectVersion:
+        query = _Q()
+
+    with app.app_context():
+        mocker.patch("invenio_files_rest.models.ObjectVersion",
+                     FakeObjectVersion)
+        result = get_validation_report(location, "report.json")
+    assert result is None
+
+
+# -------------------------------------------------------------------
+# delete_validation_setting C1 tests
+# -------------------------------------------------------------------
+def test_delete_validation_setting_with_file(app, mocker):
+    """C1: delete_validation_setting() with file_obj present and file_id set."""
+    from weko_admin.utils import delete_validation_setting
+    location = _DummyLocation(id_=1)
+    file_obj = MagicMock()
+    file_obj.file_id = 'fid-123'
+
+    mocker.patch("weko_admin.utils.get_validation_setting",
+                 return_value=file_obj)
+    fi_mock = MagicMock()
+    fi_query = mocker.patch("invenio_files_rest.models.FileInstance")
+    fi_query.query.get.return_value = fi_mock
+    remove_mock = mocker.patch("invenio_files_rest.tasks.remove_file_data")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+
+    delete_validation_setting(location)
+
+    file_obj.remove.assert_called_once()
+    assert fi_mock.writable is True
+    remove_mock.delay.assert_called_once_with('fid-123')
+    assert commit_mock.call_count >= 1
+
+
+def test_delete_validation_setting_no_file(app, mocker):
+    """C1: delete_validation_setting() does nothing when file_obj is None."""
+    from weko_admin.utils import delete_validation_setting
+    location = _DummyLocation(id_=1)
+    mocker.patch("weko_admin.utils.get_validation_setting",
+                 return_value=None)
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+    delete_validation_setting(location)
+    commit_mock.assert_not_called()
+
+
+def test_delete_validation_setting_exception(app, mocker):
+    """C1: delete_validation_setting() except branch (logger.exception + rollback)."""
+    from weko_admin.utils import delete_validation_setting
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    location = _DummyLocation(id_=1)
+    mocker.patch("weko_admin.utils.get_validation_setting",
+                 side_effect=RuntimeError("boom"))
+    rollback_mock = mocker.patch("weko_admin.utils.db.session.rollback")
+    with patch.object(app.logger, 'exception') as mock_log:
+        delete_validation_setting(location)
+    rollback_mock.assert_called_once()
+    assert mock_log.called
+
+
+# -------------------------------------------------------------------
+# delete_validation_report C1 tests
+# -------------------------------------------------------------------
+def test_delete_validation_report_with_file(app, mocker):
+    """C1: delete_validation_report() with file_obj present and file_id set."""
+    from weko_admin.utils import delete_validation_report
+    location = _DummyLocation(id_=1)
+    file_obj = MagicMock()
+    file_obj.file_id = 'fid-456'
+
+    mocker.patch("weko_admin.utils.get_validation_report",
+                 return_value=file_obj)
+    fi_mock = MagicMock()
+    fi_query = mocker.patch("invenio_files_rest.models.FileInstance")
+    fi_query.query.get.return_value = fi_mock
+    remove_mock = mocker.patch("invenio_files_rest.tasks.remove_file_data")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+    update_ctrl_mock = mocker.patch(
+        "weko_admin.utils.update_validation_control_delete_report")
+
+    delete_validation_report(location, 'report-key.json')
+
+    file_obj.remove.assert_called_once()
+    update_ctrl_mock.assert_called_once_with(location, 'report-key.json')
+    remove_mock.delay.assert_called_once_with('fid-456')
+
+
+def test_delete_validation_report_no_file(app, mocker):
+    """C1: delete_validation_report() does nothing when file_obj is None."""
+    from weko_admin.utils import delete_validation_report
+    location = _DummyLocation(id_=1)
+    mocker.patch("weko_admin.utils.get_validation_report",
+                 return_value=None)
+    update_ctrl_mock = mocker.patch(
+        "weko_admin.utils.update_validation_control_delete_report")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+    delete_validation_report(location, 'report-key.json')
+    update_ctrl_mock.assert_not_called()
+    commit_mock.assert_not_called()
+
+
+def test_delete_validation_report_exception(app, mocker):
+    """C1: delete_validation_report() except branch."""
+    from weko_admin.utils import delete_validation_report
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    location = _DummyLocation(id_=1)
+    mocker.patch("weko_admin.utils.get_validation_report",
+                 side_effect=RuntimeError("boom"))
+    rollback_mock = mocker.patch("weko_admin.utils.db.session.rollback")
+    with patch.object(app.logger, 'exception') as mock_log:
+        delete_validation_report(location, 'report-key.json')
+    rollback_mock.assert_called_once()
+    assert mock_log.called
+
+
+# -------------------------------------------------------------------
+# update_validation_control_delete_report C1 tests
+# -------------------------------------------------------------------
+def test_update_validation_control_delete_report_success(app, mocker):
+    """C1: update_validation_control_delete_report() success path."""
+    from weko_admin.utils import update_validation_control_delete_report
+
+    location = _DummyLocation(id_=1)
+    bucket = _DummyBucket(default_location=1)
+
+    class _Storage:
+        def open(self):
+            from io import BytesIO
+            payload = json.dumps({
+                "autoReport": [
+                    {"targetDate": "2024-01-01", "reportFile": "keep.json"},
+                    {"targetDate": "2024-02-01", "reportFile": "remove.json"},
+                ]
+            }).encode("utf-8")
+            return BytesIO(payload)
+
+    class _File:
+        def storage(self):
+            return _Storage()
+
+    old_control = MagicMock()
+    old_control.bucket = bucket
+    old_control.key = "control.json"
+    old_control.file = _File()
+    old_control.file_id = 'cid-1'
+
+    mocker.patch("weko_admin.utils.get_validation_control",
+                 return_value=old_control)
+    objver_mock = mocker.patch("invenio_files_rest.models.ObjectVersion")
+    objver_mock.create.return_value = MagicMock()
+    fi_mock = MagicMock()
+    fi_query = mocker.patch("invenio_files_rest.models.FileInstance")
+    fi_query.query.get.return_value = fi_mock
+    mocker.patch("invenio_files_rest.tasks.remove_file_data")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+
+    update_validation_control_delete_report(location, "remove.json")
+
+    objver_mock.create.assert_called_once()
+    old_control.remove.assert_called_once()
+    assert commit_mock.called
+
+
+def test_update_validation_control_delete_report_exception(app, mocker):
+    """C1: update_validation_control_delete_report() except branch."""
+    from weko_admin.utils import update_validation_control_delete_report
+    mocker.patch("weko_admin.utils._", side_effect=lambda x: x)
+    location = _DummyLocation(id_=1)
+    mocker.patch("weko_admin.utils.get_validation_control",
+                 side_effect=RuntimeError("boom"))
+    rollback_mock = mocker.patch("weko_admin.utils.db.session.rollback")
+    with patch.object(app.logger, 'exception') as mock_log:
+        update_validation_control_delete_report(location, "x.json")
+    rollback_mock.assert_called_once()
+    assert mock_log.called
+
+
+# -------------------------------------------------------------------
+# Validator.__add_report_item C1 tests
+# -------------------------------------------------------------------
+def test_validator_add_report_item_same_day(app, mocker,
+                                              _reset_validator_singleton):
+    """C1: __add_report_item - target_date == today (append without calling write_report)."""
+    from weko_admin.utils import Validator
+    from datetime import datetime as _dt
+    validator = _make_validator(mocker)
+    validator._Validator__target_date = _dt.now().strftime('%Y-%m-%d')
+    spy_write = mocker.patch.object(Validator, 'write_report')
+    validator._Validator__add_report_item({"sample": 1})
+    spy_write.assert_not_called()
+    assert validator._Validator__reports == [{"sample": 1}]
+
+
+def test_validator_add_report_item_day_changed(app, mocker,
+                                                 _reset_validator_singleton):
+    """C1: __add_report_item - target_date != today (calls write_report then updates date)."""
+    from weko_admin.utils import Validator
+    from datetime import datetime as _dt
+    validator = _make_validator(mocker)
+    validator._Validator__target_date = '1900-01-01'  # past date
+    spy_write = mocker.patch.object(Validator, 'write_report')
+    validator._Validator__add_report_item({"sample": 2})
+    spy_write.assert_called_once()
+    today = _dt.now().strftime('%Y-%m-%d')
+    assert validator._Validator__target_date == today
+    assert validator._Validator__reports == [{"sample": 2}]
+
+
+# -------------------------------------------------------------------
+# upload_validation_setting old_file_obj branches
+# -------------------------------------------------------------------
+def test_upload_validation_setting_with_old_file(app, mocker):
+    """C1: upload_validation_setting() with old_file_obj present and file_id set."""
+    location = _DummyLocation(id_=8)
+
+    old_file = MagicMock()
+    old_file.file_id = 'old-fid-123'
+    mocker.patch("weko_admin.utils.get_validation_setting",
+                 return_value=old_file)
+
+    mocker.patch(
+        "weko_admin.utils.ValidationSetting.create_from_bytes",
+        return_value=MagicMock(),
+    )
+
+    control_obj = MagicMock()
+    control_obj.bucket = MagicMock()
+    mocker.patch("weko_admin.utils.get_validation_control",
+                 return_value=control_obj)
+
+    new_obj = MagicMock()
+    objver_mock = mocker.patch("invenio_files_rest.models.ObjectVersion")
+    objver_mock.create.return_value = new_obj
+
+    fi_mock = MagicMock()
+    fi_query = mocker.patch("invenio_files_rest.models.FileInstance")
+    fi_query.query.get.return_value = fi_mock
+    remove_mock = mocker.patch("invenio_files_rest.tasks.remove_file_data")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+
+    upload_file = _DummyUploadFile(raw=b'{"version":"1"}')
+
+    with app.app_context():
+        result = utils.upload_validation_setting(location, upload_file)
+
+    assert result is new_obj
+    old_file.remove.assert_called_once()
+    assert fi_mock.writable is True
+    remove_mock.delay.assert_called_once_with('old-fid-123')
+
+
+# -------------------------------------------------------------------
+# Validator.__getValueByItemType condition branches
+# -------------------------------------------------------------------
+def test_validator_getvaluebyitemtype_no_condition(app, mocker,
+                                                    _reset_validator_singleton):
+    """C1: __getValueByItemType - no condition (simple path resolution)."""
+    validator = _make_validator(mocker)
+    json_data = {"foo": "bar"}
+    itemType = {"path": "$.foo"}  # no 'condition' key
+    result = validator._Validator__getValueByItemType(json_data, itemType)
+    assert result == ["bar"]
+
+
+def test_validator_getvaluebyitemtype_condition_match(app, mocker,
+                                                       _reset_validator_singleton):
+    """C1: __getValueByItemType - condition present and isMatch true path."""
+    validator = _make_validator(mocker)
+    json_data = {
+        "list": [
+            {"type": "A", "value": "v1"},
+            {"type": "B", "value": "v2"},
+        ]
+    }
+    itemType = {
+        "path": "$.list[*].value",
+        "condition": [
+            {
+                "conditionPath": "$.list[*].type",
+                "conditionValue": "A",
+            }
+        ],
+    }
+    result = validator._Validator__getValueByItemType(json_data, itemType)
+    # only entries with type='A' should be returned
+    assert result == ["v1"]
+
+
+def test_validator_getvaluebyitemtype_condition_no_common_path(
+        app, mocker, _reset_validator_singleton):
+    """C1: __getValueByItemType - condition present but common_path stays None.
+
+    Forces the no-common-path branch by using a path whose head segment
+    differs from the conditionPath's head segment. The internal loop
+    that builds common_path never sets it, so the function returns None.
+    """
+    validator = _make_validator(mocker)
+    json_data = {"foo": "bar", "baz": "qux"}
+    itemType = {
+        "path": "foo",
+        "condition": [
+            {
+                "conditionPath": "baz",
+                "conditionValue": "qux",
+            }
+        ],
+    }
+    result = validator._Validator__getValueByItemType(json_data, itemType)
+    assert result is None
+
+
+# -------------------------------------------------------------------
+# Validator.write_report success paths
+# -------------------------------------------------------------------
+def _make_storage_with_payload(payload_bytes):
+    """Helper for write_report tests: returns an object emulating file.storage().open()."""
+    class _Storage:
+        def open(self):
+            from io import BytesIO
+            return BytesIO(payload_bytes)
+
+    class _File:
+        def storage(self):
+            return _Storage()
+
+    return _File()
+
+
+def test_validator_write_report_success_no_old_report(
+        app, mocker, _reset_validator_singleton):
+    """C1: write_report() success path with old_report_obj=None (creates new report).
+
+    Also exercises the append branch of __update_validation_control_add_report
+    (autoReport does not yet contain the current target_date).
+    """
+    validator = _make_validator(mocker)
+    validator._Validator__target_date = '2026-04-30'
+    validator._Validator__reports.append({
+        "version": "1",
+        "validationTarget": "OAI-PMH",
+        "detectionTime": "2026-04-30T00:00:00",
+        "itemId": "x",
+        "handling": "Dry-run",
+        "controlledItem": "Resource Type",
+        "incorrectWord": "magazine",
+    })
+
+    location = _DummyLocation(id_=10)
+    bucket = _DummyBucket(default_location=10)
+
+    control_payload = json.dumps({
+        "autoReport": [
+            {"targetDate": "2025-01-01", "reportFile": "old.json"},
+        ]
+    }).encode("utf-8")
+
+    control_obj = MagicMock()
+    control_obj.bucket = bucket
+    control_obj.key = "control.json"
+    control_obj.file = _make_storage_with_payload(control_payload)
+    control_obj.file_id = 'cid-x'
+
+    mocker.patch("weko_admin.utils.get_location", return_value=location)
+    mocker.patch("weko_admin.utils.get_validation_control",
+                 return_value=control_obj)
+
+    # ObjectVersion.query.filter_by(...) is called for both report_key and
+    # control. Returning [] yields old_report_obj=None on the report path.
+    objver_mock = mocker.patch("invenio_files_rest.models.ObjectVersion")
+    objver_mock.query.filter_by.return_value = []
+    objver_mock.create.return_value = MagicMock()
+
+    fi_mock = MagicMock()
+    fi_query = mocker.patch("invenio_files_rest.models.FileInstance")
+    fi_query.query.get.return_value = fi_mock
+    mocker.patch("invenio_files_rest.tasks.remove_file_data")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+
+    validator.write_report()
+
+    # ObjectVersion.create is called twice: new report + control update.
+    assert objver_mock.create.call_count == 2
+    # control.remove is called inside __update_validation_control_add_report.
+    control_obj.remove.assert_called_once()
+    assert commit_mock.call_count >= 1
+    # reports must be reset.
+    assert validator._Validator__reports == []
+
+
+def test_validator_write_report_success_with_old_report(
+        app, mocker, _reset_validator_singleton):
+    """C1: write_report() success path with old_report_obj present (extend existing).
+
+    Also exercises the update branch of __update_validation_control_add_report
+    (autoReport already contains the same target_date and gets updated).
+    """
+    validator = _make_validator(mocker)
+    validator._Validator__target_date = '2026-04-30'
+    validator._Validator__reports.append({
+        "version": "1",
+        "validationTarget": "OAI-PMH",
+        "detectionTime": "2026-04-30T01:00:00",
+        "itemId": "y",
+        "handling": "Dry-run",
+        "controlledItem": "Access",
+        "incorrectWord": "magic",
+    })
+
+    location = _DummyLocation(id_=11)
+    bucket = _DummyBucket(default_location=11)
+
+    # Existing report ObjectVersion whose bucket matches our location.id.
+    old_report_payload = json.dumps({
+        "targetDate": "2026-04-30",
+        "notMatchCount": 1,
+        "notMatchs": [{"existing": "entry"}],
+    }).encode("utf-8")
+    old_report_obj = MagicMock()
+    old_report_obj.bucket = bucket
+    old_report_obj.file = _make_storage_with_payload(old_report_payload)
+    old_report_obj.file_id = 'rid-old'
+
+    # control_json already contains the same target_date -> update branch.
+    control_payload = json.dumps({
+        "autoReport": [
+            {"targetDate": "2026-04-30", "reportFile": "old.json",
+             "notMatchCount": 1},
+        ]
+    }).encode("utf-8")
+    control_obj = MagicMock()
+    control_obj.bucket = bucket
+    control_obj.key = "control.json"
+    control_obj.file = _make_storage_with_payload(control_payload)
+    control_obj.file_id = 'cid-y'
+
+    mocker.patch("weko_admin.utils.get_location", return_value=location)
+    mocker.patch("weko_admin.utils.get_validation_control",
+                 return_value=control_obj)
+
+    objver_mock = mocker.patch("invenio_files_rest.models.ObjectVersion")
+    objver_mock.query.filter_by.return_value = [old_report_obj]
+    objver_mock.create.return_value = MagicMock()
+
+    fi_mock = MagicMock()
+    fi_query = mocker.patch("invenio_files_rest.models.FileInstance")
+    fi_query.query.get.return_value = fi_mock
+    mocker.patch("invenio_files_rest.tasks.remove_file_data")
+    commit_mock = mocker.patch("weko_admin.utils.db.session.commit")
+
+    validator.write_report()
+
+    # Both the report and control are created (overwritten).
+    assert objver_mock.create.call_count == 2
+    # Both the old report and old control are removed.
+    old_report_obj.remove.assert_called_once()
+    control_obj.remove.assert_called_once()
+    assert commit_mock.call_count >= 1
+    assert validator._Validator__reports == []
+
+

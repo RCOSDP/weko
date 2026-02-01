@@ -128,6 +128,247 @@ def test_process_item(app, db, esindex, location, test_resync, db_itemtype, db_o
     process_item(_record, _resync, _counter)
     assert _counter['updated_items'] == 1
 
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_item_validation_enabled_new -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_process_item_validation_enabled_new(app, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True on the new-item path.
+
+    Covers the True branch of the **first** occurrence of
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE')
+    in process_item (resyncid is None -> dep.update(route='ResouceSync',
+    item_id=pid_created)).
+
+    Heavy mapping/DB infrastructure is stubbed so the test does not
+    depend on db_itemtype / db_oaischema / esindex fixtures or the real
+    JPCOARMapper (which has a pre-existing MAPPING_ERROR in some envs).
+    """
+    import types
+
+    class _StopHere(Exception):
+        """Sentinel used to short-circuit process_item after dep.update."""
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+
+    # 1) Stub JPCOARMapper.
+    mock_mapper = MagicMock()
+    mock_mapper.identifier.return_value = 'val_resync_new_id'
+    mock_mapper.is_deleted.return_value = False
+    mock_mapper.map.return_value = {'sample_field': 'value'}
+    mock_mapper.itemtype = MagicMock()
+    mock_mapper.itemtype.id = 1
+    mocker.patch("invenio_resourcesyncclient.utils.JPCOARMapper",
+                 return_value=mock_mapper)
+
+    # 2) Replace gen_resync_pid_value so it does not need the resync to
+    # be a real DB row.
+    mocker.patch(
+        "invenio_resourcesyncclient.utils.gen_resync_pid_value",
+        return_value='resync-pid-for-new-item')
+
+    # 3) Replace PersistentIdentifier so query.filter_by(...).with_lockmode(
+    # 'update').one_or_none() returns None (i.e. resyncid does not exist),
+    # and PID.create(...) returns a known fake PID we can assert on.
+    fake_pid = MagicMock()
+    fake_pid.pid_type = 'syncid'
+    fake_pid.pid_value = 'resync-pid-for-new-item'
+
+    mock_pid_cls = mocker.patch(
+        "invenio_resourcesyncclient.utils.PersistentIdentifier")
+    (mock_pid_cls.query.filter_by.return_value
+        .with_lockmode.return_value.one_or_none.return_value) = None
+    mock_pid_cls.create.return_value = fake_pid
+
+    # 4) Replace WekoDeposit.create so dep.update raises _StopHere right
+    # after the new conditional fires.
+    mock_dep = MagicMock()
+    mock_dep.pid.object_type = 'rec'
+    mock_dep.pid.object_uuid = 'dep-uuid'
+    mock_dep.update.side_effect = _StopHere
+    mocker.patch("invenio_resourcesyncclient.utils.WekoDeposit.create",
+                 return_value=mock_dep)
+
+    resync = types.SimpleNamespace(
+        saving_format='JPCOAR-XML',
+        index_id=1,
+    )
+    counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+    record = etree.fromstring(
+        b'<record xmlns="http://www.openarchives.org/OAI/2.0/">'
+        b'<header><identifier>x</identifier>'
+        b'<datestamp>2020-01-01T00:00:00Z</datestamp></header>'
+        b'<metadata/></record>')
+
+    with pytest.raises(_StopHere):
+        process_item(record, resync, counter)
+
+    assert mock_dep.update.call_count == 1
+    call_kwargs = mock_dep.update.call_args.kwargs
+    assert call_kwargs.get('route') == 'ResouceSync'
+    assert call_kwargs.get('item_id') is fake_pid
+
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_item_validation_enabled_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_process_item_validation_enabled_update(app, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True on the update (existing) path.
+
+    Covers the True branch of the **second** occurrence of
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE')
+    in process_item (resyncid exists, mapper.is_deleted()=False ->
+    dep.update(route='ResouceSync', item_id=resyncid)).
+    """
+    import types
+
+    class _StopHere(Exception):
+        pass
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+
+    mock_mapper = MagicMock()
+    mock_mapper.identifier.return_value = 'val_resync_upd_id'
+    mock_mapper.is_deleted.return_value = False
+    mock_mapper.map.return_value = {'sample_field': 'value'}
+    mock_mapper.itemtype = MagicMock()
+    mock_mapper.itemtype.id = 1
+    mocker.patch("invenio_resourcesyncclient.utils.JPCOARMapper",
+                 return_value=mock_mapper)
+
+    mocker.patch(
+        "invenio_resourcesyncclient.utils.gen_resync_pid_value",
+        return_value='resync-pid-for-existing-item')
+
+    # Existing resyncid; recid lookup also needs to succeed.
+    fake_resyncid = MagicMock()
+    fake_resyncid.pid_type = 'syncid'
+    fake_resyncid.pid_value = 'resync-pid-for-existing-item'
+    fake_resyncid.object_uuid = 'rec-uuid-1'
+
+    fake_recid = MagicMock()
+    fake_recid.pid_value = '1'
+    fake_recid.object_uuid = 'rec-uuid-1'
+    fake_recid.status = None
+
+    mock_pid_cls = mocker.patch(
+        "invenio_resourcesyncclient.utils.PersistentIdentifier")
+    (mock_pid_cls.query.filter_by.return_value
+        .with_lockmode.return_value.one_or_none.return_value) = fake_resyncid
+    mock_pid_cls.query.filter_by.return_value.one_or_none.return_value = \
+        fake_recid
+
+    # RecordMetadata.query.filter_by(id=...).one_or_none()
+    mock_record_meta_cls = mocker.patch(
+        "invenio_resourcesyncclient.utils.RecordMetadata")
+    fake_record_metadata = MagicMock(json={})
+    (mock_record_meta_cls.query.filter_by.return_value
+        .one_or_none.return_value) = fake_record_metadata
+
+    # WekoDeposit(r.json, r) constructor returns mock_dep; dep.update
+    # short-circuits via _StopHere.
+    mock_dep = MagicMock()
+    mock_dep.__contains__ = MagicMock(return_value=False)  # 'path' not in dep
+    mock_dep.update.side_effect = _StopHere
+    mocker.patch("invenio_resourcesyncclient.utils.WekoDeposit",
+                 return_value=mock_dep)
+
+    resync = types.SimpleNamespace(
+        saving_format='JPCOAR-XML',
+        index_id=1,
+    )
+    counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+    record = etree.fromstring(
+        b'<record xmlns="http://www.openarchives.org/OAI/2.0/">'
+        b'<header><identifier>x</identifier>'
+        b'<datestamp>2020-01-01T00:00:00Z</datestamp></header>'
+        b'<metadata/></record>')
+
+    with pytest.raises(_StopHere):
+        process_item(record, resync, counter)
+
+    assert mock_dep.update.call_count == 1
+    call_kwargs = mock_dep.update.call_args.kwargs
+    assert call_kwargs.get('route') == 'ResouceSync'
+    assert call_kwargs.get('item_id') is fake_resyncid
+
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_item_validation_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_process_item_validation_disabled(app, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=False keeps the legacy dep.update.
+
+    Mirror of test_process_item_validation_enabled_new - covers the
+    False branch (no route/item_id kwargs forwarded to dep.update).
+    """
+    import types
+
+    class _StopHere(Exception):
+        pass
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = False
+
+    mock_mapper = MagicMock()
+    mock_mapper.identifier.return_value = 'val_resync_dis_id'
+    mock_mapper.is_deleted.return_value = False
+    mock_mapper.map.return_value = {'sample_field': 'value'}
+    mock_mapper.itemtype = MagicMock()
+    mock_mapper.itemtype.id = 1
+    mocker.patch("invenio_resourcesyncclient.utils.JPCOARMapper",
+                 return_value=mock_mapper)
+    mocker.patch(
+        "invenio_resourcesyncclient.utils.gen_resync_pid_value",
+        return_value='resync-pid-disabled')
+
+    mock_pid_cls = mocker.patch(
+        "invenio_resourcesyncclient.utils.PersistentIdentifier")
+    (mock_pid_cls.query.filter_by.return_value
+        .with_lockmode.return_value.one_or_none.return_value) = None
+    mock_pid_cls.create.return_value = MagicMock()
+
+    mock_dep = MagicMock()
+    mock_dep.pid.object_type = 'rec'
+    mock_dep.pid.object_uuid = 'dep-uuid'
+    mock_dep.update.side_effect = _StopHere
+    mocker.patch("invenio_resourcesyncclient.utils.WekoDeposit.create",
+                 return_value=mock_dep)
+
+    resync = types.SimpleNamespace(
+        saving_format='JPCOAR-XML',
+        index_id=1,
+    )
+    counter = {
+        'processed_items': 0,
+        'created_items': 0,
+        'updated_items': 0,
+        'deleted_items': 0,
+        'error_items': 0,
+        'list': []
+    }
+    record = etree.fromstring(
+        b'<record xmlns="http://www.openarchives.org/OAI/2.0/">'
+        b'<header><identifier>x</identifier>'
+        b'<datestamp>2020-01-01T00:00:00Z</datestamp></header>'
+        b'<metadata/></record>')
+
+    with pytest.raises(_StopHere):
+        process_item(record, resync, counter)
+
+    assert mock_dep.update.call_count == 1
+    call_kwargs = mock_dep.update.call_args.kwargs
+    assert call_kwargs.get('route') is None
+    assert call_kwargs.get('item_id') is None
+
+
 #def process_sync(resync_id, counter):
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_sync -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
 def test_process_sync(app, test_resync):

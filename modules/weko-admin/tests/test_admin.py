@@ -9,9 +9,11 @@ import json
 from io import BytesIO
 import pytest
 from datetime import datetime
+from flask import url_for, current_app, make_response
+from flask_admin import Admin
 from wtforms.validators import ValidationError
 from werkzeug.datastructures import ImmutableMultiDict
-
+from werkzeug.exceptions import NotFound, BadRequest
 import pytest
 from requests import Response
 
@@ -24,7 +26,8 @@ from invenio_communities.models import Community
 
 from weko_index_tree.models import IndexStyle,Index
 from weko_admin.admin import StyleSettingView,LogAnalysisSettings,ItemExportSettingsView,IdentifierSettingView,\
-    identifier_adminview,facet_search_adminview,FacetSearchSettingView
+    identifier_adminview,facet_search_adminview,FacetSearchSettingView,ValidationSettingsView,\
+    ValidationReportView, validation_settings_adminview, validation_report_adminview
 from weko_admin.models import AdminSettings,StatisticsEmail,LogAnalysisRestrictedCrawlerList,\
                                 RankingSettings,SearchManagement, Identifier,FacetSearchSetting
 
@@ -1878,3 +1881,658 @@ class TestsReindexElasticSearchView:
             res = client.get(url)
             assert res.status_code == 500
             assert res.data != str(dict({ "isError":False ,"isExecuting":False,"disabled_Btn":False }))
+
+
+@pytest.fixture()
+def setup_view_validation(admin_app, admin_db, app):
+    """Fixture for ValidationSettings/Report tests.
+
+    Due to fixture resolution order:
+      1. The `app` fixture pushes `base_app`'s app_context()
+      2. The `admin_app` fixture pushes a separate Flask's app_context()
+    so during test execution `current_app` is `admin_app` (top of stack).
+    Meanwhile `client` is built from `app.test_client()`, so `current_app`
+    switches to `app` during request handling.
+
+    Therefore URLs must be registered on BOTH Flask instances:
+      - `admin_app`: for `url_for(...)` to resolve at test time
+      - `app`: for `client.get(url)` to actually invoke the view
+
+    The `weko_admin` entry_points (invenio_admin.views) may not be
+    picked up unless `pip install -e modules/weko-admin` is re-run,
+    so explicit registration on `app` is also needed.
+
+    Tests unpack `app, _, _ = setup_view_validation` and set
+    `app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = ...`. The ENABLE flag
+    must reach the request-serving app, so the first return element is
+    `app` (not `admin_app`). Both apps share the same dummy template
+    names so assertions and actual render calls match.
+    """
+    from flask_admin import Admin
+
+    admin_for_url = Admin(admin_app)
+    cfg = dict(validation_settings_adminview["kwargs"])
+    admin_for_url.add_view(validation_settings_adminview["view_class"](**cfg))
+    cfg = dict(validation_report_adminview["kwargs"])
+    admin_for_url.add_view(validation_report_adminview["view_class"](**cfg))
+
+    existing_admins = app.extensions.get('admin', [])
+    if existing_admins:
+        request_admin = existing_admins[0]
+        try:
+            cfg = dict(validation_settings_adminview["kwargs"])
+            request_admin.add_view(
+                validation_settings_adminview["view_class"](**cfg))
+        except Exception:
+            pass
+        try:
+            cfg = dict(validation_report_adminview["kwargs"])
+            request_admin.add_view(
+                validation_report_adminview["view_class"](**cfg))
+        except Exception:
+            pass
+
+    for target in (admin_app, app):
+        target.config["WEKO_ADMIN_VALIDATION_SETTINGS_TEMPLATE"] = \
+            "dummy_settings.html"
+        target.config["WEKO_ADMIN_VALIDATION_REPORT_TEMPLATE"] = \
+            "dummy_report.html"
+        target.config.setdefault("WEKO_ADMIN_PERMISSION_ROLE_SYSTEM",
+                                 "System Administrator")
+        target.config.setdefault("WEKO_ADMIN_PERMISSION_ROLE_REPO",
+                                 "Repository Administrator")
+
+    return app, admin_db, admin_for_url
+
+
+
+# ValidationSettingsView
+def test_validation_settings_index_disabled(setup_view_validation, client, users, mocker):
+    """When WEKO_ADMIN_VALIDATION_ENABLE=False, render ERR_WAV-001 and return."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = False
+
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.index")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    mock_render.assert_called_with(
+        app.config["WEKO_ADMIN_VALIDATION_SETTINGS_TEMPLATE"],
+        error_msg=mocker.ANY,
+    )
+
+
+def test_validation_settings_index_enabled_calls_render_page(setup_view_validation, client, users, mocker):
+    """When WEKO_ADMIN_VALIDATION_ENABLE=True, dispatch to render_page()."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.index")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    assert mock_render_page.called is True
+
+
+def test_validation_settings_render_page_success(setup_view_validation, client, users, mocker):
+    """render_page reads setting and passes version/oaipmh/resoucesync to render."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    class _DummySetting:
+        def get_version(self):
+            return "1"
+
+        def is_active_target(self, name):
+            return name == "OAI-PMH"
+
+    mocker.patch(
+        "weko_admin.admin.ValidationSetting.get_instance",
+        return_value=_DummySetting(),
+    )
+
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.index")
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+    res = client.get(url)
+
+    assert res.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert args[0] == app.config["WEKO_ADMIN_VALIDATION_SETTINGS_TEMPLATE"]
+    assert kwargs["error_msg"] is None
+    assert kwargs["version"] == "1"
+    assert kwargs["oaipmh"] is True
+    assert kwargs["resoucesync"] is False
+    assert kwargs["display_contents"] is True
+
+
+def test_validation_settings_render_page_exception(setup_view_validation, client, users, mocker):
+    """When an exception is raised inside render_page, error_msg=str(e)."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch(
+        "weko_admin.admin.ValidationSetting.get_instance",
+        side_effect=Exception("boom"),
+    )
+
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.index")
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+    res = client.get(url)
+
+    assert res.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert kwargs["error_msg"] == "boom"
+    assert kwargs["display_contents"] is True
+
+
+def test_validation_settings_upload_no_file(setup_view_validation, client, users, mocker):
+    """upload: when file is missing or filename is empty, render_page is called with the source error message."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.upload")
+    res = client.post(url, data={}, content_type="multipart/form-data")
+
+    assert res.status_code == 200
+    mock_render_page.assert_called_with("ファイルが選択されていません。")
+
+
+def test_validation_settings_upload_success(setup_view_validation, client, users, mocker):
+    """upload: get_location -> upload_validation_setting -> render_page()."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mock_upload = mocker.patch("weko_admin.admin.upload_validation_setting", return_value=True)
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.upload")
+    data = {"file": (BytesIO(b'{"version":"1"}'), "validation_setting.json")}
+    res = client.post(url, data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 200
+    assert mock_upload.called is True
+    # On success, render_page() is called with no arguments.
+    mock_render_page.assert_called_with()
+
+
+def test_validation_settings_upload_error(setup_view_validation, client, users, mocker):
+    """upload: when upload_validation_setting raises, render_page(str(e)) is called."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.upload_validation_setting", side_effect=Exception("upfail"))
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.upload")
+    data = {"file": (BytesIO(b"{}"), "validation_setting.json")}
+    res = client.post(url, data=data, content_type="multipart/form-data")
+
+    assert res.status_code == 200
+    mock_render_page.assert_called_with("upfail")
+
+
+def test_validation_settings_delete_success(setup_view_validation, client, users, mocker):
+    """delete: delete_validation_setting -> render_page()."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mock_delete = mocker.patch("weko_admin.admin.delete_validation_setting", return_value=True)
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.delete")
+    res = client.post(url)
+
+    assert res.status_code == 200
+    assert mock_delete.called is True
+    mock_render_page.assert_called_with()
+
+
+def test_validation_settings_download_not_found(setup_view_validation, client, users, mocker):
+    """download: 404 when setting_obj is None / deleted / file is None."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+
+    # setting_obj = None -> 404
+    mocker.patch("weko_admin.admin.get_validation_setting", return_value=None)
+
+    url = url_for("validation-setting.download")
+    res = client.get(url)
+    assert res.status_code == 404
+
+
+def test_validation_settings_download_success(setup_view_validation, client, users, mocker):
+    """download: send_file(as_attachment=True) is invoked."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+
+    class _DummyObj:
+        deleted = False
+        file = object()
+
+        def send_file(self, as_attachment=False):
+            resp = make_response(b"data")
+            resp.headers["X-As-Attachment"] = str(as_attachment)
+            return resp
+
+    mocker.patch("weko_admin.admin.get_validation_setting", return_value=_DummyObj())
+
+    url = url_for("validation-setting.download")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    assert res.data == b"data"
+    assert res.headers["X-As-Attachment"] == "True"
+
+
+# ValidationReportView
+def test_validation_report_index_disabled(setup_view_validation, client, users, mocker):
+    """When WEKO_ADMIN_VALIDATION_ENABLE=False, render ERR_WAV-011."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = False
+
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationReportView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-report.index")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    mock_render.assert_called_with(
+        app.config["WEKO_ADMIN_VALIDATION_REPORT_TEMPLATE"],
+        error_msg=mocker.ANY,
+    )
+
+
+def test_validation_report_render_page_sorting(setup_view_validation, client, users, mocker):
+    """render_page: sort control_json.autoReport by targetDate and pass to render."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+
+    # Emulate control_obj.file.storage().open()
+    class _Storage:
+        def __init__(self, b):
+            self._b = b
+        def open(self):
+            return BytesIO(self._b)
+
+    class _File:
+        def __init__(self, b):
+            self._b = b
+        def storage(self):
+            return _Storage(self._b)
+
+    class _ControlObj:
+        def __init__(self, b):
+            self.file = _File(b)
+
+    control_json = {
+        "autoReport": [
+            {"targetDate": "2024-01-10", "reportFile": "b.json"},
+            {"targetDate": "2023-12-31", "reportFile": "a.json"},
+            {"targetDate": None, "reportFile": "z.json"},
+        ]
+    }
+    control_bytes = json.dumps(control_json).encode("utf-8")
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.get_validation_control", return_value=_ControlObj(control_bytes))
+
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationReportView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-report.index")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert args[0] == app.config["WEKO_ADMIN_VALIDATION_REPORT_TEMPLATE"]
+    assert kwargs["error_msg"] is None
+    assert kwargs["display_contents"] is True
+
+    # Ascending order by targetDate (None is treated as "" so it comes first).
+    reports = kwargs["reports"]
+    assert [r.get("reportFile") for r in reports] == ["z.json", "a.json", "b.json"]
+
+
+def test_validation_report_download_no_param(setup_view_validation, client, users):
+    """download: 400 when reportFile is missing."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    url = url_for("validation-report.download")
+    res = client.get(url)
+    assert res.status_code == 400
+
+
+def test_validation_report_download_not_found(setup_view_validation, client, users, mocker):
+    """download: 404 when report_obj is None / deleted / file is None."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.get_validation_report", return_value=None)
+
+    url = url_for("validation-report.download", reportFile="x.json")
+    res = client.get(url)
+    assert res.status_code == 404
+
+
+def test_validation_report_download_success(setup_view_validation, client, users, mocker):
+    """download: report_obj.send_file(as_attachment=True)"""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+
+    class _DummyObj:
+        deleted = False
+        file = object()
+
+        def send_file(self, as_attachment=False):
+            resp = make_response(b"report")
+            resp.headers["X-As-Attachment"] = str(as_attachment)
+            return resp
+
+    mocker.patch("weko_admin.admin.get_validation_report", return_value=_DummyObj())
+
+    url = url_for("validation-report.download", reportFile="x.json")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    assert res.data == b"report"
+    assert res.headers["X-As-Attachment"] == "True"
+
+
+def test_validation_report_delete_no_param(setup_view_validation, client, users):
+    """delete: 400 when reportFile is missing."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    url = url_for("validation-report.delete")
+    res = client.post(url, data={})
+    assert res.status_code == 400
+
+
+def test_validation_report_delete_success(setup_view_validation, client, users, mocker):
+    """delete: delete_validation_report -> render_page()"""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mock_delete = mocker.patch("weko_admin.admin.delete_validation_report", return_value=True)
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationReportView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-report.delete")
+    res = client.post(url, data={"reportFile": "x.json"})
+
+    assert res.status_code == 200
+    assert mock_delete.called is True
+    mock_render_page.assert_called_with()
+
+
+# ---------------------------------------------------------------
+# C1 augmentations: exception branches not covered above
+# ---------------------------------------------------------------
+def test_validation_settings_delete_exception(setup_view_validation, client,
+                                              users, mocker):
+    """C1: ValidationSettingsView.delete except branch.
+
+    Covers `except Exception as e:` in delete() - the error message from
+    the exception is forwarded to render_page(str(e)).
+    """
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.delete_validation_setting",
+                 side_effect=RuntimeError("delfail"))
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render_page",
+        return_value=make_response("err"),
+    )
+
+    url = url_for("validation-setting.delete")
+    res = client.post(url)
+
+    assert res.status_code == 200
+    mock_render_page.assert_called_with("delfail")
+
+
+def test_validation_settings_download_deleted(setup_view_validation, client,
+                                              users, mocker):
+    """C1: ValidationSettingsView.download - deleted=True branch returns 404.
+
+    Covers the `setting_obj.deleted` sub-condition of
+        if not setting_obj or setting_obj.deleted or setting_obj.file is None
+    """
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    class _DummyObj:
+        deleted = True
+        file = object()
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.get_validation_setting",
+                 return_value=_DummyObj())
+
+    url = url_for("validation-setting.download")
+    res = client.get(url)
+    assert res.status_code == 404
+
+
+def test_validation_report_index_enabled_calls_render_page(setup_view_validation,
+                                                           client, users,
+                                                           mocker):
+    """C1: ValidationReportView.index - enabled branch dispatches to render_page."""
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationReportView.render_page",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-report.index")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    mock_render_page.assert_called_once()
+
+
+def test_validation_report_render_page_exception(setup_view_validation,
+                                                 client, users, mocker):
+    """C1: ValidationReportView.render_page except branch.
+
+    Covers the case where get_validation_control raises - the exception
+    message is forwarded to the template via error_msg, and reports stays
+    empty.
+    """
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.get_validation_control",
+                 side_effect=RuntimeError("ctrlfail"))
+
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationReportView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-report.index")
+    res = client.get(url)
+    assert res.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert kwargs["error_msg"] == "ctrlfail"
+    assert kwargs["reports"] == []
+    assert kwargs["display_contents"] is True
+
+
+def test_validation_report_download_deleted(setup_view_validation, client,
+                                            users, mocker):
+    """C1: ValidationReportView.download - deleted=True branch returns 404."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    class _DummyObj:
+        deleted = True
+        file = object()
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.get_validation_report",
+                 return_value=_DummyObj())
+
+    url = url_for("validation-report.download", reportFile="x.json")
+    res = client.get(url)
+    assert res.status_code == 404
+
+
+def test_validation_report_delete_exception(setup_view_validation, client,
+                                            users, mocker):
+    """C1: ValidationReportView.delete except branch.
+
+    Covers `except Exception as e:` in delete() - error string is
+    forwarded to render_page(str(e)).
+    """
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+
+    mocker.patch("weko_admin.admin.get_location", return_value=object())
+    mocker.patch("weko_admin.admin.delete_validation_report",
+                 side_effect=RuntimeError("rmfail"))
+
+    mock_render_page = mocker.patch(
+        "weko_admin.admin.ValidationReportView.render_page",
+        return_value=make_response("err"),
+    )
+
+    url = url_for("validation-report.delete")
+    res = client.post(url, data={"reportFile": "x.json"})
+
+    assert res.status_code == 200
+    mock_render_page.assert_called_with("rmfail")
+
+
+# ---------------------------------------------------------------
+# Additional C1 augmentations: is_accessible False / render_page setting=None
+# ---------------------------------------------------------------
+def test_validation_settings_is_accessible_no_role(setup_view_validation,
+                                                    client, users, mocker):
+    """C1: ValidationSettingsView.is_accessible False branch.
+
+    Logs in as a user lacking System Admin / Repository Admin roles
+    and verifies 403 is returned.
+    """
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email="contributor@test.org")
+    url = url_for("validation-setting.index")
+    res = client.get(url)
+    assert res.status_code == 403
+
+
+def test_validation_report_is_accessible_no_role(setup_view_validation,
+                                                  client, users, mocker):
+    """C1: ValidationReportView.is_accessible False branch."""
+    _, _, _ = setup_view_validation
+    login_user_via_session(client, email="contributor@test.org")
+    url = url_for("validation-report.index")
+    res = client.get(url)
+    assert res.status_code == 403
+
+
+def test_validation_settings_render_page_setting_none(setup_view_validation,
+                                                       client, users, mocker):
+    """C1: ValidationSettingsView.render_page setting=None path.
+
+    Covers the case where ValidationSetting.get_instance() returns None.
+    version / oaipmh / resoucesync are passed to render as None.
+    """
+    app, _, _ = setup_view_validation
+    login_user_via_session(client, email=users[0]["email"])
+    app.config["WEKO_ADMIN_VALIDATION_ENABLE"] = True
+
+    mocker.patch(
+        "weko_admin.admin.ValidationSetting.get_instance",
+        return_value=None,
+    )
+    mock_render = mocker.patch(
+        "weko_admin.admin.ValidationSettingsView.render",
+        return_value=make_response("ok"),
+    )
+
+    url = url_for("validation-setting.index")
+    res = client.get(url)
+
+    assert res.status_code == 200
+    args, kwargs = mock_render.call_args
+    assert kwargs["error_msg"] is None
+    assert kwargs["version"] is None
+    assert kwargs["oaipmh"] is None
+    assert kwargs["resoucesync"] is None
+    assert kwargs["display_contents"] is True

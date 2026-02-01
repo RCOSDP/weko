@@ -1,0 +1,88 @@
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+{% endblock %}
+
+{% block javascript %}
+  {{ super() }}
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const header = document.querySelector('.content-header h4');
+      if (header && header.textContent.trim() === 'Validation Report') {
+        header.textContent = "{{_('Admin menu_Items_Validation Report')}}";
+      }
+    });
+  </script>
+{% endblock %}
+
+{%- block body %}
+<div class="row">
+  <div class="col-sm-12 col-md-12">
+    {% if error_msg %}
+        <div class="alert alert-danger" role="alert">
+            {{ error_msg }}
+        </div>
+    {% endif %}
+    {% if display_contents %}
+      {% if not reports %}
+        <div class="alert" style="margin-top: 20px;">
+          {{_('admin validation message No Report')}}
+        </div>
+      {% else %}
+        <table class="table table-hover table-bordered searchable" style="margin-top: 20px;">
+          <thead>
+            <tr>
+              <th class="width-small">#</th>
+              <th class="width-medium">{{_('admin validation field Target Date')}}</th>
+              <th class="width-medium">{{_('admin validation field Mismatch Count')}}</th>
+              <th class="width-long">{{_('admin validation field Action')}}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for r in reports %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ r.get('targetDate', '') }}</td>
+                <td>{{ r.get('notMatchCount', 0) }}</td>
+                <td>
+
+                  <a
+                    class="btn btn-primary action-button"
+                    href="{{ url_for('.download', reportFile=r.get('reportFile')) }}"
+                  >
+                    <i class="glyphicon glyphicon-download-alt"></i>
+                    {{_('Download')}}
+                  </a>
+
+                  &nbsp;&nbsp;
+
+                  <form
+                    method="POST"
+                    action="{{ url_for('.delete') }}"
+                    style="display:inline;"
+                    onsubmit='return confirm({{ _("admin validation confirm Deleted Report") | tojson }});'
+                  >
+                    {% if csrf_token is defined %}
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    {% endif %}
+
+                    <input type="hidden" name="reportFile" value="{{ r.get('reportFile') }}">
+
+                    <button class="btn btn-danger style-deleteBtn" type="submit">
+                      <span class="glyphicon glyphicon-trash" aria-hidden="true"></span>
+                      &nbsp;{{_('Delete')}}
+                    </button>
+                  </form>
+
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+{%- endblock %}

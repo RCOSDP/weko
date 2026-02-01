@@ -36,6 +36,7 @@ from invenio_db import db
 from invenio_oaiharvester.harvester import DCMapper, DDIMapper, JPCOARMapper
 from invenio_oaiharvester.tasks import event_counter
 from lxml import etree
+from weko_admin.utils import Validator
 
 from .api import ResyncHandler
 from .config import INVENIO_RESYNC_INDEXES_MODE, \
@@ -89,6 +90,8 @@ def run_sync_import(id):
         log_type='import'
     )
     try:
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+            Validator.load_instance()
         DCMapper.update_itemtype_map()
         pause = False
 
@@ -199,6 +202,12 @@ def run_sync_import(id):
                     'task_id': resync_sync.request.id
                 },
             )
+        try:
+            if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+                validator = Validator.get_loaded_instance()
+                validator.write_report()
+        except Exception:
+            current_app.logger.exception('Validation failed.')
     return res
 
 

@@ -60,6 +60,80 @@ def test_run_sync_import(app, test_resync):
     res[0].pop('execution_time')
     assert res == ({'task_state': 'SUCCESS', 'task_name': 'import', 'task_type': 'import', 'repository_name': 'weko', 'task_id': None},)
 
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_tasks.py::test_run_sync_import_validation_enabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_run_sync_import_validation_enabled(app, test_resync):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True + write_report() succeeds.
+
+    Covers the True branch of both
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE')
+    occurrences and the no-exception path of the new try/except in finally.
+    """
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+    mock_validator_cls = MagicMock()
+    with patch('invenio_resourcesyncclient.tasks.Validator', mock_validator_cls):
+        res = run_sync_import(10)
+    mock_validator_cls.load_instance.assert_called_once()
+    mock_validator_cls.get_loaded_instance.assert_called_once()
+    mock_validator_cls.get_loaded_instance.return_value.write_report \
+        .assert_called_once()
+    res[0].pop('start_time')
+    res[0].pop('end_time')
+    res[0].pop('execution_time')
+    assert res == ({'task_state': 'SUCCESS', 'task_name': 'import',
+                    'task_type': 'import', 'repository_name': 'weko',
+                    'task_id': None},)
+
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_tasks.py::test_run_sync_import_validation_write_report_failure -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_run_sync_import_validation_write_report_failure(app, test_resync):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True + write_report() raises.
+
+    Covers the `except Exception:` branch of the new try/except in finally
+    (current_app.logger.exception('Validation failed.') is invoked and the
+    overall task still returns SUCCESS).
+    """
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+    mock_validator_cls = MagicMock()
+    mock_validator_cls.get_loaded_instance.return_value.write_report \
+        .side_effect = RuntimeError('write_report failed')
+    with patch('invenio_resourcesyncclient.tasks.Validator', mock_validator_cls), \
+            patch.object(app.logger, 'exception') as mock_log_exc:
+        res = run_sync_import(10)
+    mock_validator_cls.load_instance.assert_called_once()
+    mock_validator_cls.get_loaded_instance.return_value.write_report \
+        .assert_called_once()
+    mock_log_exc.assert_any_call('Validation failed.')
+    res[0].pop('start_time')
+    res[0].pop('end_time')
+    res[0].pop('execution_time')
+    assert res == ({'task_state': 'SUCCESS', 'task_name': 'import',
+                    'task_type': 'import', 'repository_name': 'weko',
+                    'task_id': None},)
+
+
+# .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_tasks.py::test_run_sync_import_validation_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
+def test_run_sync_import_validation_disabled(app, test_resync):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=False.
+
+    Covers the False branch of both
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE')
+    occurrences (Validator must not be touched at all).
+    """
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = False
+    mock_validator_cls = MagicMock()
+    with patch('invenio_resourcesyncclient.tasks.Validator', mock_validator_cls):
+        res = run_sync_import(10)
+    mock_validator_cls.load_instance.assert_not_called()
+    mock_validator_cls.get_loaded_instance.assert_not_called()
+    res[0].pop('start_time')
+    res[0].pop('end_time')
+    res[0].pop('execution_time')
+    assert res == ({'task_state': 'SUCCESS', 'task_name': 'import',
+                    'task_type': 'import', 'repository_name': 'weko',
+                    'task_id': None},)
+
+
 #def get_record_from_file(rc):
 
 

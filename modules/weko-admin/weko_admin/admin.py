@@ -46,6 +46,7 @@ from invenio_db import db
 from invenio_files_rest.storage.pyfs import remove_dir_with_file
 from invenio_mail.api import send_mail
 from invenio_i18n.ext import current_i18n
+from weko_accounts.utils import roles_required
 from weko_gridlayout.services import WidgetDesignServices
 from weko_index_tree.models import IndexStyle
 from weko_records.api import ItemTypes, SiteLicense
@@ -63,9 +64,13 @@ from .models import AdminSettings, FacetSearchSetting, Identifier, \
     RankingSettings, SearchManagement, StatisticsEmail
 from .permissions import admin_permission_factory ,superuser_access
 from .utils import get_facet_search, get_item_mapping_list, \
-    get_response_json, get_restricted_access, get_search_setting, get_detail_search_list
+    get_response_json, get_restricted_access, get_search_setting, \
+    get_detail_search_list, ValidationSetting
 from .utils import get_user_report_data as get_user_report
-from .utils import package_reports, str_to_bool
+from .utils import package_reports, str_to_bool, get_location, \
+    get_validation_setting, upload_validation_setting, \
+    delete_validation_setting, get_validation_control, \
+    get_validation_report, delete_validation_report
 from .tasks import is_reindex_running ,reindex
 
 
@@ -1560,6 +1565,188 @@ reindex_elasticsearch_adminview = {
 }
 
 
+class ValidationSettingsView(BaseView):
+
+    def is_accessible(self):
+        return current_user.has_role(current_app.config.get(
+            'WEKO_ADMIN_PERMISSION_ROLE_SYSTEM')) or \
+            current_user.has_role(current_app.config.get(
+                'WEKO_ADMIN_PERMISSION_ROLE_REPO'))
+
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+
+        if not current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+            return self.render(
+                current_app.config["WEKO_ADMIN_VALIDATION_SETTINGS_TEMPLATE"],
+                error_msg=_("ERR_WAV-001")
+            )
+        return self.render_page()
+
+    def render_page(self, error_msg=None):
+        version = None
+        oaipmh = None
+        resoucesync = None
+
+        try:
+            setting = ValidationSetting.get_instance()
+            if setting:
+                version = setting.get_version()
+                oaipmh = setting.is_active_target('OAI-PMH')
+                resoucesync = setting.is_active_target('ResouceSync')
+        except Exception as e:
+            error_msg = str(e)
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_VALIDATION_SETTINGS_TEMPLATE"],
+            error_msg=error_msg,
+            version=version,
+            oaipmh=oaipmh,
+            resoucesync=resoucesync,
+            display_contents=True
+        )
+
+    @expose('/upload', methods=['POST'])
+    def upload(self):
+        """validation_setting.html のアップロード要求を受け取る処理"""
+
+        # 1) ファイル取り出し
+        f = request.files.get('file')
+        if not f or f.filename == '':
+            return self.render_page('ファイルが選択されていません。')
+
+        try:
+            location = get_location()
+            upload_validation_setting(location, f)
+            return self.render_page()
+        except Exception as e:
+            return self.render_page(str(e))
+
+    @expose('/delete', methods=['POST'])
+    def delete(self):
+
+        try:
+            location = get_location()
+            delete_validation_setting(location)
+            return self.render_page()
+        except Exception as e:
+            return self.render_page(str(e))
+
+    @expose('/download', methods=['GET'])
+    def download(self):
+
+        location = get_location()
+        setting_obj = get_validation_setting(location)
+
+        if not setting_obj or setting_obj.deleted or setting_obj.file is None:
+            abort(404)
+
+        return setting_obj.send_file(as_attachment=True)
+
+
+class ValidationReportView(BaseView):
+
+    def is_accessible(self):
+        return current_user.has_role(current_app.config.get(
+            'WEKO_ADMIN_PERMISSION_ROLE_SYSTEM')) or \
+            current_user.has_role(current_app.config.get(
+                'WEKO_ADMIN_PERMISSION_ROLE_REPO'))
+
+    def inaccessible_callback(self, name, **kwargs):
+        abort(403)
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        if not current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+            return self.render(
+                current_app.config["WEKO_ADMIN_VALIDATION_REPORT_TEMPLATE"],
+                error_msg=_("ERR_WAV-011")
+            )
+        return self.render_page()
+
+    def render_page(self, error_msg=None):
+
+        auto_reports = []
+        try:
+            location = get_location()
+
+            # control JSON 取得（例：ObjectVersion）
+            control_obj = get_validation_control(location)
+            auto_reports = []
+
+            with control_obj.file.storage().open() as f:
+                text = f.read().decode('utf-8')
+            control_json = json.loads(text)
+            auto_reports = control_json.get('autoReport', []) or []
+
+        except Exception as e:
+            error_msg = str(e)
+
+        auto_reports = sorted(
+            auto_reports,
+            key=lambda r: r.get("targetDate") or ""
+        )
+
+        return self.render(
+            current_app.config["WEKO_ADMIN_VALIDATION_REPORT_TEMPLATE"],
+            error_msg=error_msg,
+            reports=auto_reports,
+            display_contents=True
+        )
+
+    @expose('/download', methods=['GET'])
+    def download(self):
+        """reportFile で対象レポートをDL"""
+        report_file = request.args.get('reportFile')
+        if not report_file:
+            abort(400)
+
+        location = get_location()
+
+        report_obj = get_validation_report(location, report_file)
+        if not report_obj or report_obj.deleted or report_obj.file is None:
+            abort(404)
+
+        # ObjectVersion なら send_file が使える想定（あなたの既存実装と同じ）
+        return report_obj.send_file(as_attachment=True)
+
+    @expose('/delete', methods=['POST'])
+    def delete(self):
+        """reportFile で対象レポートを削除（control JSON も更新）"""
+        report_file = request.form.get('reportFile')
+        if not report_file:
+            abort(400)
+
+        try:
+            location = get_location()
+            delete_validation_report(location, report_file)
+            return self.render_page()
+        except Exception as e:
+            return self.render_page(str(e))
+
+
+validation_settings_adminview = {
+    'view_class': ValidationSettingsView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Validation Settings'),
+        'endpoint': 'validation-setting'
+    }
+}
+
+validation_report_adminview = {
+    'view_class': ValidationReportView,
+    'kwargs': {
+        'category': _('Items'),
+        'name': _('Validation Report'),
+        'endpoint': 'validation-report'
+    }
+}
+
+
 __all__ = (
     'style_adminview',
     'report_adminview',
@@ -1578,5 +1765,7 @@ __all__ = (
     'restricted_access_adminview',
     'identifier_adminview',
     'facet_search_adminview',
-    'reindex_elasticsearch_adminview'
+    'reindex_elasticsearch_adminview',
+    'validation_settings_adminview',
+    'validation_report_adminview'
 )

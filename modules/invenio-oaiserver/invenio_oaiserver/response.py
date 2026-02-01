@@ -1011,7 +1011,6 @@ def get_data_json(location):
     if data_folder:
         data_json_obj = ObjectVersion.get(
             data_folder.bucket_id, "{0}/data.json".format(OAIPMH_FOLDER_NAME))
-        current_app.logger.debug('file_id : {0}'.format(data_json_obj.file_id))
         if data_json_obj is not None:
             try:
                 with data_json_obj.file.storage().open() as f:

@@ -1155,6 +1155,8 @@ WEKO_ADMIN_REPOSITORY_ACCESS_LIST = [
     'location',
     'facet-search',
     'community',
+    'validation-setting',
+    'validation-report',
     # 'restricted_access'
 ] + WEKO_ADMIN_COMMUNITY_ACCESS_LIST
 """Classes Repository Administrator can access."""
@@ -1303,3 +1305,15 @@ WEKO_ADMIN_USE_REGEX_IN_CRAWLER_LIST = False
 
 WEKO_ADMIN_USE_TOP_PAGE_WEB_CONTENTS = False
 """ If True, Web content can be displayed on the TOP screen.. """
+
+WEKO_ADMIN_VALIDATION_SETTINGS_TEMPLATE = 'weko_admin/admin/validation_settings.html'
+"""Validation Settings template."""
+
+WEKO_ADMIN_VALIDATION_REPORT_TEMPLATE = 'weko_admin/admin/validation_report.html'
+"""Validation Report template."""
+
+WEKO_ADMIN_VALIDATION_STORAGE_LOCATION = 'oci'
+"""Controlled Vocabulary Validation File Save Location."""
+
+WEKO_ADMIN_VALIDATION_ENABLE = False
+"""Controlled Vocabulary Validation Enabled/Disabled Flag."""

@@ -338,7 +338,11 @@ def process_item(record, resync, counter):
         json = mapper.map()
         json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
         dep['_deposit']['status'] = 'draft'
-        dep.update({'actions': 'publish', 'index': indexes}, json)
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+            dep.update({'actions': 'publish', 'index': indexes}, json,
+                       route='ResouceSync', item_id=pid)
+        else:
+            dep.update({'actions': 'publish', 'index': indexes}, json)
         dep.commit()
         dep.publish()
 
@@ -377,7 +381,11 @@ def process_item(record, resync, counter):
             json = mapper.map()
             json['$schema'] = '/items/jsonschema/' + str(mapper.itemtype.id)
             dep['_deposit']['status'] = 'draft'
-            dep.update({'actions': 'publish', 'index': indexes}, json)
+            if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE'):
+                dep.update({'actions': 'publish', 'index': indexes}, json,
+                           route='ResouceSync', item_id=resyncid)
+            else:
+                dep.update({'actions': 'publish', 'index': indexes}, json)
             dep.commit()
             dep.publish()
             # current_app.logger.debug('{0} {1} {2}: {3}'.format(

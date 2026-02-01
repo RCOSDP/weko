@@ -27,7 +27,7 @@ import signal
 
 import pytest
 import responses
-from mock import patch
+from mock import patch, MagicMock
 from invenio_db import db
 from weko_index_tree.models import Index
 from lxml import etree
@@ -585,9 +585,247 @@ def test_run_harvesting(app, db,mocker):
             os.kill(pid, signal.SIGTERM)
         with patch("invenio_oaiharvester.tasks.process_item",side_effect=mock_process_item):
             res = run_harvesting(1, '2022-10-01T00:00:00', '2022-10-01T23:59:59', {})
-            
+
             assert res == ({'task_state': 'SUCCESS', 'start_time': '2022-10-01T00:00:00', 'end_time': res[0]["end_time"], 'total_records': 0, 'execution_time': res[0]['execution_time'], 'task_name': 'harvest', 'repository_name': 'weko', 'task_id': None}, '2022-10-01T23:59:59')
-        
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_run_harvesting_validation_enabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_run_harvesting_validation_enabled(app, db, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True + write_report() succeeds in run_harvesting.
+
+    Covers the True branch of both
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE')
+    occurrences (Validator.load_instance at the start of try, and
+    validator.write_report() in the new try/except inside finally) and
+    the no-exception path of the new try/except. Bypasses the network
+    layer by patching harvester_list_records directly so the test does
+    not depend on the `responses` package.
+    """
+    mocker.patch("invenio_oaiharvester.tasks.send_run_status_mail")
+    mocker.patch("invenio_oaiharvester.tasks.harvester_list_records",
+                 return_value=([], None))
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    setting = HarvestSettings(
+        id=11,
+        repository_name="val_enabled",
+        base_url="http://export.arxiv.org/oai2/",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="jpcoar_1.0",
+        index_id=1,
+        update_style="0",
+        auto_distribution="0"
+    )
+    with db.session.begin_nested():
+        db.session.add(setting)
+    db.session.commit()
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+    mock_validator_cls = MagicMock()
+
+    with patch('invenio_oaiharvester.tasks.is_harvest_running', return_value=False), \
+            patch('invenio_oaiharvester.tasks.Validator', mock_validator_cls):
+        run_harvesting(11, '2022-10-01T00:00:00', '2022-10-01T23:59:59', {})
+
+    mock_validator_cls.load_instance.assert_called_once()
+    mock_validator_cls.get_loaded_instance.assert_called_once()
+    mock_validator_cls.get_loaded_instance.return_value.write_report \
+        .assert_called_once()
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_run_harvesting_validation_write_report_failure -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_run_harvesting_validation_write_report_failure(app, db, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True + write_report() raises in run_harvesting.
+
+    Covers the `except Exception:` branch of the new try/except inside
+    finally (current_app.logger.exception('Validation failed.') is invoked).
+    """
+    mocker.patch("invenio_oaiharvester.tasks.send_run_status_mail")
+    mocker.patch("invenio_oaiharvester.tasks.harvester_list_records",
+                 return_value=([], None))
+    index = Index()
+    db.session.add(index)
+    db.session.commit()
+    setting = HarvestSettings(
+        id=12,
+        repository_name="val_failure",
+        base_url="http://export.arxiv.org/oai2/",
+        from_date=datetime(2022, 10, 1),
+        until_date=datetime(2022, 10, 2),
+        metadata_prefix="jpcoar_1.0",
+        index_id=1,
+        update_style="0",
+        auto_distribution="0"
+    )
+    with db.session.begin_nested():
+        db.session.add(setting)
+    db.session.commit()
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+    mock_validator_cls = MagicMock()
+    mock_validator_cls.get_loaded_instance.return_value.write_report \
+        .side_effect = RuntimeError('write_report failed')
+
+    with patch('invenio_oaiharvester.tasks.is_harvest_running', return_value=False), \
+            patch('invenio_oaiharvester.tasks.Validator', mock_validator_cls), \
+            patch.object(app.logger, 'exception') as mock_log_exc:
+        res = run_harvesting(12, '2022-10-01T00:00:00', '2022-10-01T23:59:59', {})
+
+    mock_validator_cls.load_instance.assert_called_once()
+    mock_validator_cls.get_loaded_instance.return_value.write_report \
+        .assert_called_once()
+    mock_log_exc.assert_any_call('Validation failed.')
+    # The task overall still returns SUCCESS (exception swallowed)
+    assert res[0]['task_state'] == 'SUCCESS'
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_process_item_validation_enabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_process_item_validation_enabled(app, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=True triggers dep.update(route+item_id).
+
+    Covers the True branch of
+        if current_app.config.get('WEKO_ADMIN_VALIDATION_ENABLE')
+    in process_item. To stay independent of the heavy mapping pipeline
+    (which has a pre-existing MAPPING_ERROR in some environments) the
+    JPCOARMapper, WekoDeposit and PersistentIdentifier are all stubbed
+    out; the test drives the function up to the new conditional and uses
+    a sentinel exception raised from dep.update to short-circuit the
+    rest of process_item.
+    """
+    import types
+    from datetime import datetime as _dt
+
+    class _StopHere(Exception):
+        """Sentinel used to short-circuit process_item after dep.update."""
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = True
+
+    # 1) Stub JPCOARMapper so the mapping pipeline is fully under control.
+    mock_mapper = MagicMock()
+    mock_mapper.identifier.return_value = 'val_test_id_99999'
+    mock_mapper.is_deleted.return_value = False
+    mock_mapper.specs.return_value = []
+    mock_mapper.map.return_value = {'sample_field': 'value'}
+    mock_mapper.itemtype = MagicMock()
+    mock_mapper.itemtype.id = 1
+    mock_mapper.datestamp.return_value = _dt(2020, 1, 1).date()
+    mocker.patch("invenio_oaiharvester.tasks.JPCOARMapper",
+                 return_value=mock_mapper)
+
+    # 2) Replace PersistentIdentifier in the tasks module so the
+    # `query.filter_by(...).first()` lookup yields no existing hvstid
+    # (forcing the else-branch that runs PID.create), and PID.create
+    # returns a known fake PID we can assert on.
+    fake_validation_pid = MagicMock()
+    fake_validation_pid.pid_type = 'hvstid'
+    fake_validation_pid.pid_value = 'val_test_id_99999'
+
+    mock_pid_cls = mocker.patch(
+        "invenio_oaiharvester.tasks.PersistentIdentifier")
+    mock_pid_cls.query.filter_by.return_value.first.return_value = None
+    mock_pid_cls.create.return_value = fake_validation_pid
+
+    # 3) Replace WekoDeposit.create so it returns a fully-mocked deposit.
+    # dep.update side-effects with _StopHere so the remaining code in
+    # process_item (commit/publish/post-processing) never executes.
+    mock_dep = MagicMock()
+    mock_dep.pid.object_type = 'rec'
+    mock_dep.pid.object_uuid = 'dep-uuid'
+    mock_dep.pid.status = None  # not PIDStatus.DELETED
+    mock_dep.update.side_effect = _StopHere
+    mocker.patch("invenio_oaiharvester.tasks.WekoDeposit.create",
+                 return_value=mock_dep)
+
+    # 4) Minimal harvesting-like settings object (avoid db_itemtype
+    # dependency entirely).
+    harvesting = types.SimpleNamespace(
+        metadata_prefix='jpcoar_1.0',
+        auto_distribution='0',
+        update_style='0',
+        index_id=1,
+    )
+
+    # 5) Build a minimal record element. The XML body is only consumed by
+    # the (now stubbed) JPCOARMapper, so any well-formed element works.
+    record = etree.fromstring(
+        b'<record xmlns="http://www.openarchives.org/OAI/2.0/">'
+        b'<header><identifier>x</identifier>'
+        b'<datestamp>2020-01-01T00:00:00Z</datestamp></header>'
+        b'<metadata/></record>')
+
+    with pytest.raises(_StopHere):
+        process_item(record, harvesting, {}, None)
+
+    # The True branch of the new conditional is taken iff dep.update was
+    # called with route='OAI-PMH' AND item_id=<the PID returned by
+    # PID.create()>.
+    assert mock_dep.update.call_count == 1
+    call_kwargs = mock_dep.update.call_args.kwargs
+    assert call_kwargs.get('route') == 'OAI-PMH'
+    assert call_kwargs.get('item_id') is fake_validation_pid
+
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_process_item_validation_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+def test_process_item_validation_disabled(app, mocker):
+    """C1: WEKO_ADMIN_VALIDATION_ENABLE=False keeps the legacy dep.update.
+
+    Mirror of test_process_item_validation_enabled - covers the False
+    branch (no route/item_id kwargs are forwarded to dep.update).
+    """
+    import types
+    from datetime import datetime as _dt
+
+    class _StopHere(Exception):
+        pass
+
+    app.config['WEKO_ADMIN_VALIDATION_ENABLE'] = False
+
+    mock_mapper = MagicMock()
+    mock_mapper.identifier.return_value = 'val_test_id_99998'
+    mock_mapper.is_deleted.return_value = False
+    mock_mapper.specs.return_value = []
+    mock_mapper.map.return_value = {'sample_field': 'value'}
+    mock_mapper.itemtype = MagicMock()
+    mock_mapper.itemtype.id = 1
+    mock_mapper.datestamp.return_value = _dt(2020, 1, 1).date()
+    mocker.patch("invenio_oaiharvester.tasks.JPCOARMapper",
+                 return_value=mock_mapper)
+
+    mock_pid_cls = mocker.patch(
+        "invenio_oaiharvester.tasks.PersistentIdentifier")
+    mock_pid_cls.query.filter_by.return_value.first.return_value = None
+    mock_pid_cls.create.return_value = MagicMock()
+
+    mock_dep = MagicMock()
+    mock_dep.pid.object_type = 'rec'
+    mock_dep.pid.object_uuid = 'dep-uuid'
+    mock_dep.pid.status = None
+    mock_dep.update.side_effect = _StopHere
+    mocker.patch("invenio_oaiharvester.tasks.WekoDeposit.create",
+                 return_value=mock_dep)
+
+    harvesting = types.SimpleNamespace(
+        metadata_prefix='jpcoar_1.0',
+        auto_distribution='0',
+        update_style='0',
+        index_id=1,
+    )
+    record = etree.fromstring(
+        b'<record xmlns="http://www.openarchives.org/OAI/2.0/">'
+        b'<header><identifier>x</identifier>'
+        b'<datestamp>2020-01-01T00:00:00Z</datestamp></header>'
+        b'<metadata/></record>')
+
+    with pytest.raises(_StopHere):
+        process_item(record, harvesting, {}, None)
+
+    assert mock_dep.update.call_count == 1
+    call_kwargs = mock_dep.update.call_args.kwargs
+    assert call_kwargs.get('route') is None
+    assert call_kwargs.get('item_id') is None
+
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_tasks.py::test_check_schedules_and_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_check_schedules_and_run(app,db,mocker):
