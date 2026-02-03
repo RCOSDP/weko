@@ -2148,13 +2148,8 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                             key_label.append(new_label.format('0'))
                             key_data.append('')
                     elif properties[key]['type'] in ['array', 'object']:
-                        if data and idx < len(data):
-                            if isinstance(data, list) and data[idx].get(key):
-                                m_data = data[idx][key]
-                            elif isinstance(data, dict) and data.get(key):
-                                m_data = data[key]
-                            else:
-                                m_data = None
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
                         else:
                             m_data = None
 
@@ -4735,13 +4730,8 @@ def make_stats_file_with_permission(item_type_id, recids,
                             key_label.append(new_label.format('0'))
                             key_data.append('')
                     elif properties[key]['type'] in ['array', 'object']:
-                        if data and idx < len(data):
-                            if isinstance(data, list) and data[idx].get(key):
-                                m_data = data[idx][key]
-                            elif isinstance(data, dict) and data.get(key):
-                                m_data = data[key]
-                            else:
-                                m_data = None
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
                         else:
                             m_data = None
 

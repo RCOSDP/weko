@@ -1002,7 +1002,31 @@ class TestItemTypes:
         expected_dict = {"isHide": False, "isShowList": False, "isNonDisplay": False, "isSpecifyNewline": False, "required": False,"key": "key", "type": "fieldset", "items": [{"key": "key.subitem_select_item", "type": "select", "title": "値", "titleMap": [{"name": "a", "value": "a"}, {"name": "b", "value": "b"}], "title_i18n": {"en": "Test Value", "ja": "テスト値"}, "title_i18n_temp": {"en": "Test Value", "ja": "テスト値"},'isHide': False,'isNonDisplay': False,'isShowList': False, 'isSpecifyNewline': False,'required': False}], "title": "abcdef", "title_i18n": {"en": "", "ja": ""}}
         ItemTypes.update_attribute_options(old_value,new_value,"ALL")
         TestCase().assertDictEqual(new_value, expected_dict)
-
+    def test_update_mapping_without_static(self):
+        old_data={
+            "str_not_static":"b",
+            "str_static":"=str_static_value",
+            "dict_not_static":{"a":"b"},
+            "dict_static":{"not_static":"a","static":"=dict_static_value"},
+            "not_exist_path":{"not_static":"a","static":"=not_exist_static_value"},
+        }
+        
+        new_data={
+            "str_not_static":"b",
+            "str_static":"c",
+            "dict_not_static":{"a":"b"},
+            "dict_static":{"not_static":"a","static":"b"},
+        }
+        
+        test = {
+            "str_not_static":"b",
+            "str_static":"=str_static_value",
+            "dict_not_static":{"a":"b"},
+            "dict_static":{"not_static":"a","static":"=dict_static_value"}
+        }
+        
+        result = ItemTypes.update_mapping_without_static(old_data,new_data)
+        assert result==test
 
 # class ItemTypeEditHistory(RecordBase):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_item_type_edit_history -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
