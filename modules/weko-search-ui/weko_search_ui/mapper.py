@@ -1930,7 +1930,7 @@ class JsonLdMapper(JsonMapper):
         Returns:
             str: The extracted text content from the file.
         """
-        data_path = self.data_path
+        data_path = self.data_path + "/data"
         try:
             file_path = os.path.join(data_path, filename)
             if not os.path.isfile(file_path):

@@ -20,7 +20,7 @@ export default defineNuxtConfig({
     buildAssetsDir: '/ams/_nuxt/',
     head: {
       htmlAttrs: { lang: 'ja' },
-      title: 'Mebyo Data Catalog DB',
+      title: 'MoonshotG2 Database Catalog',
       meta: [
         { charset: 'utf-8' },
         { name: 'keywords', content: '' },
