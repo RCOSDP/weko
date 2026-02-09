@@ -118,6 +118,3 @@ WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE = [
     "Contributor"
 ]
 """ Roles that can deposit items with token authentication. """
-
-WEKO_SWORDSERVER_FILE_SET_FILE = "/terms/fileSetFile"
-""" File path of file set file in SWORD server. """
