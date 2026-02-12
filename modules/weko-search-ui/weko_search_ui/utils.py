@@ -1594,7 +1594,10 @@ def handle_check_exist_record(list_record) -> list:
         if item_id is None and recid is not None:
             item["id"] = recid
             item_id = recid
-        system_url = request.host_url + "records/" + str(item_id) if item_id is not None else None
+        system_url = (
+            request.host_url + "records/" + str(item_id)
+            if item_id is not None else None
+        )
         if item.get("uri") is None and system_url is not None:
             item["uri"] = system_url
         # current_app.logger.debug("item_id:{}".format(item_id))

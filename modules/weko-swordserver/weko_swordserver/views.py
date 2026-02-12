@@ -945,6 +945,8 @@ def _get_status_multi_document(recids, activity_ids, register_type="Direct"):
             src_pid = ref.src_item_pid
             if not float(src_pid).is_integer():
                 continue
+            if str(int(src_pid)) not in [str(int(float(r))) for r in recids]:
+                continue
             src_uri = "{}records/{}".format(request.url_root, src_pid)
             ref_type = ref.reference_type
             logs.append({"type": ref_type, "url": src_uri})
@@ -977,15 +979,22 @@ def _get_status_multi_document(recids, activity_ids, register_type="Direct"):
     if register_type == "Workflow":
         for activity_id in activity_ids:
             all_links.append({
-                "@id": url_for("weko_workflow.display_activity", activity_id=activity_id, _external=True),
+                "@id": url_for(
+                    "weko_workflow.display_activity",
+                    activity_id=activity_id,
+                    _external=True
+                ),
                 "rel": ["alternate"],
                 "contentType": "text/html"
             })
-
     raw_data = {
         "@context": constants.JSON_LD_CONTEXT,
         "@type": constants.DocumentType.Status[0],
-        "@id": url_for("weko_swordserver.get_status_document", recid=last_recid, _external=True),
+        "@id": url_for(
+            "weko_swordserver.get_status_document",
+            recid=last_recid,
+            _external=True
+        ),
         "actions": {
             "getMetadata": False,
             "getFiles": False,
@@ -1102,13 +1111,15 @@ def _get_status_workflow_document(activity_id, recid):
 
 def _get_file_info(record, record_url):
     files_info = {}
-    file_rel = current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"] + current_app.config["WEKO_SWORDSERVER_FILE_SET_FILE"]
+    file_rel = (
+        current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"]
+        + current_app.config["WEKO_SWORDSERVER_FILE_SET_FILE"]
+    )
     for _, attr_val in record.items():
         if isinstance(attr_val, dict) and attr_val.get("attribute_type", None) == "file":
             file_mlt = attr_val.get("attribute_value_mlt")
             for file in file_mlt:
                 url_info = file.get("url", None)
-                print("url_info:", url_info)
                 url = url_info.get("url") if isinstance(url_info, dict) else None
                 label = url_info.get("label", None) if isinstance(url_info, dict) else None
                 content_type = file.get("mimetype") or file.get("format")
@@ -1126,17 +1137,17 @@ def _sort_links_for_status(links):
     def link_key(link):
         link_id = link.get("@id", "")
         rel = link.get("rel", [])
-        # 1. ワークフローactivityリンク
+        # 1. Workflow activity link
         if "/workflow/activity/detail/" in link_id:
             group = 0
             m = re.search(r'/workflow/activity/detail/[^-]+-\d+-0*(\d+)', link_id)
             order = int(m.group(1)) if m else 0
-        # 2. レコードHTMLリンク
+        # 2. Record HTML link
         elif "/records/" in link_id and "alternate" in rel:
             group = 1
             m = re.search(r'/records/(\d+)', link_id)
             order = int(m.group(1)) if m else 0
-        # 3. ファイルリンク
+        # 3. File link
         elif "fileSetFile" in "".join(rel):
             group = 2
             derived = link.get("derivedFrom", "")

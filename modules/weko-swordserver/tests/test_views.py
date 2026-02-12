@@ -1254,14 +1254,14 @@ def test__get_file_info(app):
     record_url = "http://example.com/records/1"
     with app.app_context():
         current_app = app
-        current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"] = "http://purl.org/net/sword/3.0/"
+        current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"] = "http://purl.org/net/sword/3.0"
         current_app.config["WEKO_SWORDSERVER_FILE_SET_FILE"] = "/terms/fileSetFile"
         result = _get_file_info(record, record_url)
         expected = {
             "test.pdf": {
                 "@id": "http://example.com/files/test.pdf",
                 "contentType": "application/pdf",
-                "rel": ["http://purl.org/net/sword/3.0//terms/fileSetFile"],
+                "rel": ["http://purl.org/net/sword/3.0/terms/fileSetFile"],
                 "derivedFrom": record_url
             }
         }
@@ -1300,45 +1300,52 @@ from weko_swordserver.views import _sort_links_for_status
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__sort_links_for_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test__sort_links_for_status():
     links = [
-        # group=2 file link
-        {
-            "@id": "http://example.com/files/file1.pdf",
-            "rel": ["http://purl.org/net/sword/3.0/terms/fileSetFile"],
-            "derivedFrom": "http://example.com/records/2",
-            "contentType": "application/pdf"
-        },
-        # group=1 record HTML link recid=1
-        {
-            "@id": "http://example.com/records/1",
-            "rel": ["alternate"],
-            "contentType": "text/html"
-        },
-        # group=0 workflow activity link
-        {
-            "@id": "http://example.com/workflow/activity/detail/A-TEST-00001-001-00001",
-            "rel": ["alternate"],
-            "contentType": "text/html"
-        },
-        # group=1 record HTML link recid=2
         {
             "@id": "http://example.com/records/2",
             "rel": ["alternate"],
             "contentType": "text/html"
         },
-        # group=3 other
+        {
+            "@id": "http://example.com/files/file1.pdf",
+            "rel": ["http://purl.org/net/sword/3.0/terms/fileSetFile"],
+            "derivedFrom": "http://example.com/records/1",
+            "contentType": "application/pdf"
+        },
+        {
+            "@id": "http://example.com/workflow/activity/detail/A-20260101-00001",
+            "rel": ["alternate"],
+            "contentType": "text/html"
+        },
         {
             "@id": "http://example.com/other",
             "rel": ["other"],
             "contentType": "text/plain"
+        },
+        {
+            "@id": "http://example.com/records/1",
+            "rel": ["alternate"],
+            "contentType": "text/html"
+        },
+        {
+            "@id": "http://example.com/files/file2.pdf",
+            "rel": ["http://purl.org/net/sword/3.0/terms/fileSetFile"],
+            "derivedFrom": "http://example.com/records/2",
+            "contentType": "application/pdf"
+        },
+        {
+            "@id": "http://example.com/workflow/activity/detail/A-20260101-00002",
+            "rel": ["alternate"],
+            "contentType": "text/html"
         }
     ]
     sorted_links = _sort_links_for_status(links)
-    # Order: activity link → records/1 → records/2 → file1.pdf → other
-    assert sorted_links[0]["@id"].startswith("http://example.com/workflow/activity/detail/")
-    assert sorted_links[1]["@id"] == "http://example.com/records/1"
-    assert sorted_links[2]["@id"] == "http://example.com/records/2"
-    assert sorted_links[3]["@id"] == "http://example.com/files/file1.pdf"
-    assert sorted_links[4]["@id"] == "http://example.com/other"
+    assert sorted_links[0]["@id"] == "http://example.com/workflow/activity/detail/A-20260101-00001"
+    assert sorted_links[1]["@id"] == "http://example.com/workflow/activity/detail/A-20260101-00002"
+    assert sorted_links[2]["@id"] == "http://example.com/records/1"
+    assert sorted_links[3]["@id"] == "http://example.com/records/2"
+    assert sorted_links[4]["@id"] == "http://example.com/files/file1.pdf"
+    assert sorted_links[5]["@id"] == "http://example.com/files/file2.pdf"
+    assert sorted_links[6]["@id"] == "http://example.com/other"
 
 
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_get_status_multi_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
@@ -1413,7 +1420,7 @@ def test_get_status_multi_document(app, mocker):
         }
     })
     class MockRef:
-        src_item_pid = "10"
+        src_item_pid = "1"
         reference_type = "cites"
     mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[MockRef()])
     with app.test_request_context("/test_req"):
@@ -1423,10 +1430,67 @@ def test_get_status_multi_document(app, mocker):
         assert "links" in result
         assert any(link["@id"] == "http://example.com/files/test.pdf" for link in result["links"])
         assert any(link["@id"] == "http://example.com/permalink" for link in result["links"])
-        assert any(
-            link.get("log") and "10" in str(link["log"])
-            for link in result["links"]
-        )
+        expected_log = [{"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"}]
+        log_links = [link for link in result["links"] if link.get("log")]
+        assert len(log_links) == 1
+        import ast
+        log_value = log_links[0]["log"]
+        if isinstance(log_value, str):
+            log_value = ast.literal_eval(log_value)
+        assert log_value == expected_log
+
+        # Pattern where log contains multiple entries
+        class MockRef2:
+            src_item_pid = "2"
+            reference_type = "isReferencedBy"
+        class MockRef3:
+            src_item_pid = "3"
+            reference_type = "isSupplementedBy"
+        class MockRef4:
+            src_item_pid = "4"
+            reference_type = "otherType"
+        class MockRecord1:
+            revision_id = 1
+            def get(self, key, default=None):
+                return default
+            def items(self):
+                return []
+        class MockRecord2:
+            revision_id = 2
+            def get(self, key, default=None):
+                return default
+            def items(self):
+                return []
+        class MockRecord3:
+            revision_id = 3
+            def get(self, key, default=None):
+                return default
+            def items(self):
+                return []
+        def get_record_multi(recid):
+            if recid == "1":
+                return MockRecord1()
+            elif recid == "2":
+                return MockRecord2()
+            return MockRecord3()
+        mocker.patch("weko_swordserver.views.import_string", return_value=type("Dummy", (), {"get_record": get_record_multi})())
+        mocker.patch("weko_swordserver.views.Resolver", side_effect=lambda **kwargs: type("DummyResolver", (), {"resolve": lambda self, recid: (None, get_record_multi(recid))})())
+        mocker.patch("weko_swordserver.views.get_record_permalink", return_value=None)
+        mocker.patch("weko_swordserver.views._get_file_info", return_value=None)
+        mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[MockRef(), MockRef2(), MockRef3(), MockRef4()])
+        expected_multi_log = [
+            {"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"},
+            {"type": "isReferencedBy", "url": "http://TEST_SERVER.localdomain/records/2"},
+            {"type": "isSupplementedBy", "url": "http://TEST_SERVER.localdomain/records/3"}
+        ]
+        with app.test_request_context("/test_req"):
+            result_multi = _get_status_multi_document(["1", "2", "3"], [], register_type="Direct")
+            log_links_multi = [link for link in result_multi["links"] if link.get("log")]
+            assert len(log_links_multi) == 3
+            log_raw = log_links_multi[0]["log"]
+            import ast
+            log_value = ast.literal_eval(log_raw)
+            assert log_value == expected_multi_log
 
     # 3. No file, no permalink, with system_identifier_doi (permalink supplement)
     class MockRecord2:
