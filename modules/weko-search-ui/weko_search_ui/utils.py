@@ -931,7 +931,8 @@ def check_jsonld_import_items(
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
         mapper.data_path = data_path
-        item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        mapper.mapping_id = mapping_id
+        item_metadatas, x = mapper.to_item_metadata(json_ld)
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
@@ -1447,7 +1448,7 @@ def handle_validate_item_import(list_record, schema) -> list:
     v2 = Draft4Validator(schema) if schema else None
     for record in list_record:
         errors = record.get("errors") or []
-        warnings = []
+        warnings = record.get("warnings") or []
         record_id = record.get("id")
         if record_id and (
             not represents_int(record_id) or re.search(r"([０-９])", record_id)
@@ -1496,7 +1497,7 @@ def handle_validate_item_import(list_record, schema) -> list:
                     type="type:integer", existing_type="type:string"
                 )
             )
-            records["warnings"] = warnings if len(warnings) else None
+            records["warnings"] = warnings if len(warnings) else []
         result.append(records)
 
     return result

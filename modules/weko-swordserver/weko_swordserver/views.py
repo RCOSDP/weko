@@ -388,6 +388,7 @@ def post_service_document():
                 )
 
         elif register_type == "Workflow":
+            item["metadata"]["researchmap"] = item.get("researchmap_linkage", False)
             url, recid, action , error = import_items_to_activity(
                 item, request_info=request_info
             )
@@ -705,6 +706,7 @@ def put_object(recid):
         response = jsonify(_get_status_document(recid)), 200
 
     elif register_type == "Workflow":
+        item["metadata"]["researchmap"] = item.get("researchmap_linkage", False)
         url, _, action, error = import_items_to_activity(
             item, request_info=request_info
         )

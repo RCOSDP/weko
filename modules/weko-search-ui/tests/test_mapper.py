@@ -3,10 +3,13 @@ import pytest
 import xmltodict
 import uuid
 import json
+import copy
 from datetime import date
 from unittest.mock import patch, MagicMock
 from collections import OrderedDict
 from pypdfium2 import PdfiumError
+
+from invenio_i18n.babel import set_locale
 
 from weko_records.api import Mapping
 from weko_records.serializers.utils import get_full_mapping
@@ -4832,6 +4835,7 @@ class TestJsonLdMapper:
         assert system_info["file_path"] == ["sample.txt", "data.csv", "0606/data.csv", "https://example.com/test/sample/1"]
         assert system_info["non_extract"] == ["data.csv"]
         assert system_info["save_as_is"] == False
+        assert system_info["researchmap_linkage"] == True
         assert metadata["@id"] == "./"
         assert metadata["name"] == "The Sample Dataset for WEKO"
         assert metadata["description"] == "Item metadata for Item ID: 2000001. Title: The Sample Dataset for WEKO."
@@ -4928,6 +4932,7 @@ class TestJsonLdMapper:
         assert graph["wk:editMode"] == "Keep"
         assert graph["wk:feedbackMail"] == ["wekosoftware@nii.ac.jp"]
         assert graph["wk:metadataAutoFill"] == False
+        assert graph["wk:researchmapLinkage"] == False
         if metadata.get("publish_status") == "0":
             assert graph["wk:publishStatus"] == "public"
         elif metadata.get("publish_status") == "1":
@@ -5007,6 +5012,7 @@ class TestJsonLdMapper:
         assert "wk:feedbackMail" in graph
         assert "wk:itemLinks" in graph
         assert "wk:metadataAutoFill" in graph
+        assert "wk:researchmapLinkage" in graph
         assert graph["wk:index"] == metadata["path"]
         if metadata.get("publish_status") == "0":
             assert graph["wk:publishStatus"] == "public"
@@ -5052,6 +5058,7 @@ class TestJsonLdMapper:
             assert "wk:feedbackMail" in graph
             assert "wk:itemLinks" in graph
             assert "wk:metadataAutoFill" in graph
+            assert "wk:researchmapLinkage" in graph
             assert graph["wk:index"] == metadata["path"]
             if metadata.get("publish_status") == "0":
                 assert graph["wk:publishStatus"] == "public"
@@ -5121,6 +5128,7 @@ class TestJsonLdMapper:
         assert "wk:feedbackMail" in graph
         assert "wk:itemLinks" in graph
         assert "wk:metadataAutoFill" in graph
+        assert "wk:researchmapLinkage" in graph
         assert graph["wk:index"] == metadata["path"]
         if metadata.get("publish_status") == "0":
             assert graph["wk:publishStatus"] == "public"
@@ -5183,6 +5191,7 @@ class TestJsonLdMapper:
         assert "wk:feedbackMail" in graph
         assert "wk:itemLinks" in graph
         assert "wk:metadataAutoFill" in graph
+        assert "wk:researchmapLinkage" in graph
         assert graph["wk:index"] == metadata["path"]
         if metadata.get("publish_status") == "0":
             assert graph["wk:publishStatus"] == "public"
@@ -5381,6 +5390,220 @@ class TestJsonLdMapper:
 
         extract_text = mapper.extract_text_from_files("sample.other")
         assert extract_text == ""
+
+    # def apply_import_replace_rules(self, metadata, info):
+    # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_mapper.py::TestJsonLdMapper::test_apply_import_replace_rules -v -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+    def test_apply_import_replace_rules(self, item_type2, app):
+        with app.test_request_context():
+            mapper = JsonLdMapper(item_type2.model.id, None)
+            mapper.mapping_id = 123
+            metadata = {"key1": "ab|cd", "key2": "efg|hij"}
+            info = {"warnings": []}
+
+            # invalid rules
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = "invalid_val"
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.: The type of the jsonld mapping replacement rule is invalid."\
+                            in w for w in result_info["warnings"])
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの型が不正です。"\
+                            in w for w in result_info["warnings"])
+            assert result_metadata == metadata
+
+            # invalid rule_map
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
+                "pipe_full_width_normal": {
+                    "from": "|",
+                    "to": "｜",
+                    "is_regex": False,
+                    "target_path": ["key1"]
+                },
+            } 
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = ["invalid_val"]
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.: The type of the jsonld mapping replacement rule is invalid."\
+                            in w for w in result_info["warnings"])
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの型が不正です。"\
+                            in w for w in result_info["warnings"])
+            assert result_metadata == metadata
+
+            # invalid rule_keys
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
+                "123": {"abc": "notalist"}
+            }
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.: The type of the jsonld mapping replacement rule is invalid."\
+                            in w for w in result_info["warnings"])
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの型が不正です。"\
+                            in w for w in result_info["warnings"])
+            assert result_metadata == metadata
+
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
+                "123": [
+                    "pipe_full_width_normal",
+                    "pipe_full_width_regex"
+                ]
+            }
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.: Required replacement rule: 'pipe_full_width_regex' is missing."\
+                            in w for w in result_info["warnings"])
+                assert result_metadata["key1"] == "ab｜cd"
+                assert result_metadata["key2"] == "efg|hij"
+            
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。: 必要な置換ルール：'pipe_full_width_regex'が見つかりません。"\
+                            in w for w in result_info["warnings"])
+
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
+                "from_type_invalid": {
+                    "from": [],
+                    "to": "def",
+                    "is_regex": False,
+                    "target_path": ["key1"]
+                },
+                "from_str_empty": {
+                    "from": "",
+                    "to": "abc",
+                    "is_regex": False,
+                    "target_path": ["key1"]
+                },
+                "to_type_invalid": {
+                    "from": "abc",
+                    "to": {},
+                    "is_regex": False,
+                    "target_path": ["key1"]
+                },
+                "target_path_type_invalid": {
+                    "from": "ghi",
+                    "to": "klm",
+                    "is_regex": False,
+                    "target_path": "notalist"
+                },
+                "pipe_full_width_regex": {
+                    "from": r"\|",
+                    "to": "｜",
+                    "is_regex": True,
+                    "target_path": ["key2"]
+                }
+            }
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
+                "123": [
+                    "from_type_invalid",
+                    "from_str_empty",
+                    "to_type_invalid",
+                    "target_path_type_invalid",
+                    "pipe_full_width_regex"
+                ]
+            }
+
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.: Replacement rule: 'from_type_invalid' is invalid."\
+                            in w for w in result_info["warnings"])
+                assert any("Replacement failed.: Replacement rule: 'from_str_empty' is invalid."\
+                            in w for w in result_info["warnings"])
+                assert any("Replacement failed.: Replacement rule: 'to_type_invalid' is invalid."\
+                            in w for w in result_info["warnings"])
+                assert any("Replacement failed.: Replacement rule: 'target_path_type_invalid' is invalid."\
+                            in w for w in result_info["warnings"])
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。: 置換ルール： 'from_type_invalid'の設定が不正です。"\
+                            in w for w in result_info["warnings"])
+                assert any("置換処理に失敗しました。: 置換ルール： 'from_str_empty'の設定が不正です。"\
+                            in w for w in result_info["warnings"])
+                assert any("置換処理に失敗しました。: 置換ルール： 'to_type_invalid'の設定が不正です。"\
+                            in w for w in result_info["warnings"])
+                assert any("置換処理に失敗しました。: 置換ルール： 'target_path_type_invalid'の設定が不正です。"\
+                            in w for w in result_info["warnings"])
+            assert result_metadata["key1"] == "ab|cd"
+            assert result_metadata["key2"] == "efg｜hij"
+
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
+                "is_regex_not_bool_false": {
+                    "from": "|",
+                    "to": "｜",
+                    "is_regex": "false",
+                    "target_path": ["key1"]
+                },
+                "is_regex_not_bool_true": {
+                    "from": r"(\|)|(\\\|)",
+                    "to": "\uFF5C",
+                    "is_regex": "true",
+                    "target_path": ["key2"]
+                },
+            } 
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
+                "123": [
+                    "is_regex_not_bool_false",
+                    "is_regex_not_bool_true"
+                ]
+            }
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement rule: 'is_regex_not_bool_false' - 'is_regex' is not boolean. Treated as False."\
+                            in w for w in result_info["warnings"])
+                assert any("Replacement rule: 'is_regex_not_bool_true' - 'is_regex' is not boolean. Treated as False."\
+                            in w for w in result_info["warnings"])
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換ルール: 'is_regex_not_bool_false' - 'is_regex' が真偽値ではありません。Falseとして処理します。"\
+                            in w for w in result_info["warnings"])
+                assert any("置換ルール: 'is_regex_not_bool_true' - 'is_regex' が真偽値ではありません。Falseとして処理します。"\
+                            in w for w in result_info["warnings"])
+            assert result_metadata["key1"] == "ab｜cd"
+            assert result_metadata["key2"] == "efg|hij"
+
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
+                "pipe_full_width_normal": {
+                    "from": "|",
+                    "to": "｜",
+                    "is_regex": False,
+                    "target_path": ["key1"]
+                },
+                "pipe_full_width_regex": {
+                    "from": r"(\|)|(\\\|)",
+                    "to": "｜",
+                    "is_regex": True,
+                    "target_path": ["key2"]
+                }
+            }
+            app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
+                "123": [
+                    "pipe_full_width_normal",
+                    "pipe_full_width_regex"
+                ]
+            }
+
+            result_metadata, result_info = mapper.apply_import_replace_rules(
+                copy.deepcopy(metadata), copy.deepcopy(info))
+            assert result_metadata != metadata
+            assert result_metadata["key1"] == "ab｜cd"
+            assert result_metadata["key2"] == "efg｜hij"
+            assert result_info["warnings"] == []
+
 def test_set_by_jsonpath():
     data = {}
 
