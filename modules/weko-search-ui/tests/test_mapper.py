@@ -5473,6 +5473,7 @@ class TestJsonLdMapper:
                             in w for w in result_info["warnings"])
 
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
+                "rule_not_dict": "notadict",
                 "from_type_invalid": {
                     "from": [],
                     "to": "def",
@@ -5506,6 +5507,7 @@ class TestJsonLdMapper:
             }
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
                 "123": [
+                    "rule_not_dict",
                     "from_type_invalid",
                     "from_str_empty",
                     "to_type_invalid",
@@ -5517,6 +5519,8 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.: Replacement rule: 'rule_not_dict' is invalid."\
+                            in w for w in result_info["warnings"])
                 assert any("Replacement failed.: Replacement rule: 'from_type_invalid' is invalid."\
                             in w for w in result_info["warnings"])
                 assert any("Replacement failed.: Replacement rule: 'from_str_empty' is invalid."\
@@ -5528,6 +5532,8 @@ class TestJsonLdMapper:
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。: 置換ルール： 'rule_not_dict'の設定が不正です。"\
+                            in w for w in result_info["warnings"])
                 assert any("置換処理に失敗しました。: 置換ルール： 'from_type_invalid'の設定が不正です。"\
                             in w for w in result_info["warnings"])
                 assert any("置換処理に失敗しました。: 置換ルール： 'from_str_empty'の設定が不正です。"\

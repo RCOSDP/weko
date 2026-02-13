@@ -1414,6 +1414,10 @@ class JsonLdMapper(JsonMapper):
                     continue
 
                 rule = rules.get(rule_id, None)
+                if not isinstance(rule, dict):
+                    warning_list.append(_("Replacement rule: '%(rule_id)s' is invalid.", rule_id=rule_id))
+                    continue
+                
                 from_str = rule.get("from", None)
                 to_str = rule.get("to", None)
                 target_path_list = rule.get("target_path", [])
