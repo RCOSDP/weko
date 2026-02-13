@@ -161,13 +161,88 @@ CREATE TABLE IF NOT EXISTS user_activity_logs (
     log_group_id INTEGER,
     log JSONB NOT NULL,
     remarks TEXT,
-    CONSTRAINT pk_user_activity_logs PRIMARY KEY (id),
+    CONSTRAINT pk_user_activity_logs PRIMARY KEY (id, date),
+    CONSTRAINT uq_date UNIQUE (date),
     CONSTRAINT fk_user_activity_active_user_id
         FOREIGN KEY (user_id) REFERENCES accounts_user(id) ON DELETE SET NULL,
     CONSTRAINT fk_user_activity_community_id
         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE SET NULL
-);
+) PARTITION BY RANGE (date);
 CREATE SEQUENCE IF NOT EXISTS user_activity_log_group_id_seq;
+-- 2026-01～2026-12
+CREATE TABLE user_activity_logs_202601 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202601 FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+
+CREATE TABLE user_activity_logs_202602 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202602 FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+
+CREATE TABLE user_activity_logs_202603 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202603 FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+
+CREATE TABLE user_activity_logs_202604 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202604 FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+
+CREATE TABLE user_activity_logs_202605 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202605 FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+
+CREATE TABLE user_activity_logs_202606 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202606 FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
+
+CREATE TABLE user_activity_logs_202607 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202607 FOR VALUES FROM ('2026-07-01') TO ('2026-08-01');
+
+CREATE TABLE user_activity_logs_202608 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202608 FOR VALUES FROM ('2026-08-01') TO ('2026-09-01');
+
+CREATE TABLE user_activity_logs_202609 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202609 FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');
+
+CREATE TABLE user_activity_logs_202610 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202610 FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');
+
+CREATE TABLE user_activity_logs_202611 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202611 FOR VALUES FROM ('2026-11-01') TO ('2026-12-01');
+
+CREATE TABLE user_activity_logs_202612 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202612 FOR VALUES FROM ('2026-12-01') TO ('2027-01-01');
+
+-- 2027-01～2027-12
+CREATE TABLE user_activity_logs_202701 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202701 FOR VALUES FROM ('2027-01-01') TO ('2027-02-01');
+
+CREATE TABLE user_activity_logs_202702 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202702 FOR VALUES FROM ('2027-02-01') TO ('2027-03-01');
+
+CREATE TABLE user_activity_logs_202703 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202703 FOR VALUES FROM ('2027-03-01') TO ('2027-04-01');
+
+CREATE TABLE user_activity_logs_202704 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202704 FOR VALUES FROM ('2027-04-01') TO ('2027-05-01');
+
+CREATE TABLE user_activity_logs_202705 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202705 FOR VALUES FROM ('2027-05-01') TO ('2027-06-01');
+
+CREATE TABLE user_activity_logs_202706 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202706 FOR VALUES FROM ('2027-06-01') TO ('2027-07-01');
+
+CREATE TABLE user_activity_logs_202707 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202707 FOR VALUES FROM ('2027-07-01') TO ('2027-08-01');
+
+CREATE TABLE user_activity_logs_202708 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202708 FOR VALUES FROM ('2027-08-01') TO ('2027-09-01');
+
+CREATE TABLE user_activity_logs_202709 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202709 FOR VALUES FROM ('2027-09-01') TO ('2027-10-01');
+
+CREATE TABLE user_activity_logs_202710 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202710 FOR VALUES FROM ('2027-10-01') TO ('2027-11-01');
+
+CREATE TABLE user_activity_logs_202711 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202711 FOR VALUES FROM ('2027-11-01') TO ('2027-12-01');
+
+CREATE TABLE user_activity_logs_202712 (LIKE user_activity_logs INCLUDING ALL);
+ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202712 FOR VALUES FROM ('2027-12-01') TO ('2028-01-01');
+
 
 -- modules/weko-notifications
 RAISE NOTICE 'Migration for module weko-notifications';
