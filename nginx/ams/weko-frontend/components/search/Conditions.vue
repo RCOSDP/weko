@@ -204,11 +204,11 @@ function copySearchCondition() {
   navigator.clipboard.writeText(copyURL).then(
     () => {
       toastData.value.loglevel = 'success';
-      toastData.value.msgstr = t('message.popup.copySuccess');
+      toastData.value.msgstr = t('message.copySearch.copySuccess');
     },
     () => {
       toastData.value.loglevel = 'error';
-      toastData.value.msgstr = t('message.popup.copyFailed');
+      toastData.value.msgstr = t('message.copySearch.copyFailed');
     }
   );
   isToast.value = true;

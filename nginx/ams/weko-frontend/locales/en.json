@@ -192,7 +192,7 @@
       "noUserInformation": "There is no user information.",
       "oauthError": "Login is required to view items. You will be automatically redirected to the login screen in {time} seconds. Login screen:"
     },
-    "popup": {
+    "copySearch": {
       "copySuccess": "URL copied to clipboard.",
       "copyFailed": "Copy failed."
     }

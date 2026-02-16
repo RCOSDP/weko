@@ -193,7 +193,7 @@
       "noUserInformation": "ユーザ情報がありません。",
       "oauthError": "アイテム閲覧にはログインが必要です。{time} 秒後にログイン画面に遷移します。ログイン画面："
     },
-    "popup": {
+    "copySearch": {
       "copySuccess": "URLをクリップボードにコピーしました。",
       "copyFailed": "コピーに失敗しました。"
     }
