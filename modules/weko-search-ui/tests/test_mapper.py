@@ -5545,6 +5545,8 @@ class TestJsonLdMapper:
             assert result_metadata["key1"] == "ab|cd"
             assert result_metadata["key2"] == "efg｜hij"
 
+            metadata["key3"] = "[abc"
+
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
                 "is_regex_not_bool_false": {
                     "from": "|",
@@ -5558,11 +5560,18 @@ class TestJsonLdMapper:
                     "is_regex": "true",
                     "target_path": ["key2"]
                 },
+                "invalid_regex": {
+                    "from": "[",
+                    "to": "「",
+                    "is_regex": True,
+                    "target_path": ["key3"]
+                }
             } 
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
                 "123": [
                     "is_regex_not_bool_false",
-                    "is_regex_not_bool_true"
+                    "is_regex_not_bool_true",
+                    "invalid_regex"
                 ]
             }
             with set_locale("en"):
@@ -5572,6 +5581,8 @@ class TestJsonLdMapper:
                             in w for w in result_info["warnings"])
                 assert any("Replacement rule: 'is_regex_not_bool_true' - 'is_regex' is not boolean. Treated as False."\
                             in w for w in result_info["warnings"])
+                assert any("Replacement rule: 'invalid_regex' - regex error:"\
+                            in w for w in result_info["warnings"])
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
@@ -5579,8 +5590,11 @@ class TestJsonLdMapper:
                             in w for w in result_info["warnings"])
                 assert any("置換ルール: 'is_regex_not_bool_true' - 'is_regex' が真偽値ではありません。Falseとして処理します。"\
                             in w for w in result_info["warnings"])
+                assert any("置換ルール: 'invalid_regex' - 正規表現エラー:"\
+                            in w for w in result_info["warnings"])
             assert result_metadata["key1"] == "ab｜cd"
             assert result_metadata["key2"] == "efg|hij"
+            assert result_metadata["key3"] == "[abc"
 
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
                 "pipe_full_width_normal": {

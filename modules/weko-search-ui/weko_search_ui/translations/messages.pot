@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-search-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2026-02-10 17:20+0900\n"
+"POT-Creation-Date: 2026-02-16 09:37+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -226,61 +226,66 @@ msgstr ""
 msgid "\"{key}\" is not in itemtype, did you mean \"{similar_key}\"?"
 msgstr ""
 
-#: weko_search_ui/mapper.py:1405 weko_search_ui/mapper.py:1409
+#: weko_search_ui/mapper.py:1404 weko_search_ui/mapper.py:1408
 msgid "The type of the jsonld mapping replacement rule is invalid."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1413
+#: weko_search_ui/mapper.py:1412
 #, python-format
 msgid "Required replacement rule: '%(rule_id)s' is missing."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1428
+#: weko_search_ui/mapper.py:1418 weko_search_ui/mapper.py:1431
 #, python-format
 msgid "Replacement rule: '%(rule_id)s' is invalid."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1434
+#: weko_search_ui/mapper.py:1437
 #, python-format
 msgid ""
 "Replacement rule: '%(rule_id)s' - 'is_regex' is not boolean. Treated as "
 "False."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1459
+#: weko_search_ui/mapper.py:1451
+#, python-format
+msgid "Replacement rule: '%(rule_id)s' - regex error: %(error)s"
+msgstr ""
+
+#: weko_search_ui/mapper.py:1466
 #, python-format
 msgid "Replacement failed.: %(warn)s"
 msgstr ""
 
-#: weko_search_ui/mapper.py:1463
+#: weko_search_ui/mapper.py:1470
 #, python-format
 msgid "Replacement failed.: %(warning)s"
 msgstr ""
 
-#: weko_search_ui/mapper.py:1585
+#: weko_search_ui/mapper.py:1591
 #, python-format
 msgid ""
 "Cannot map to item type from json-ld; Mapping is not defined for the "
 "metadata, \"%(key)s\": \"%(value)s\""
 msgstr ""
 
-#: weko_search_ui/mapper.py:1611
+#: weko_search_ui/mapper.py:1617
 #, python-format
 msgid ""
 "Cannot map to item type from json-ld; Not found mapping destination for "
 "the metadata, \"%(key)s\": \"%(value)s\""
 msgstr ""
 
-#: weko_search_ui/mapper.py:1621
+#: weko_search_ui/mapper.py:1627
 #, python-format
 msgid "Failed to set metadata for json-ld, \"%(key)s\": \"%(value)s\""
 msgstr ""
 
-#: weko_search_ui/mapper.py:1643
+#: weko_search_ui/mapper.py:1649
 msgid "Metadata which could not be mapped to item type will be set in 'Extra'."
 msgstr ""
 
-#: weko_search_ui/mapper.py:1647
+#: weko_search_ui/mapper.py:1653
 msgid "Metadata which could not be mapped to item type will be discarded."
 msgstr ""
 
