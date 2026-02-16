@@ -192,6 +192,10 @@
       "loginFailed": "ログインに失敗しました。管理者に連絡してください。",
       "noUserInformation": "ユーザ情報がありません。",
       "oauthError": "アイテム閲覧にはログインが必要です。{time} 秒後にログイン画面に遷移します。ログイン画面："
+    },
+    "popup": {
+      "copySuccess": "URLをクリップボードにコピーしました。",
+      "copyFailed": "コピーに失敗しました。"
     }
   },
   "overview": "概要",
