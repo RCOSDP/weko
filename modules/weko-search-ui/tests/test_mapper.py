@@ -5405,13 +5405,15 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("Replacement failed.: The type of the jsonld mapping replacement rule is invalid."\
+                assert any("Replacement failed.: The type of the jsonld mapping "
+                            "replacement rule is invalid."\
                             in w for w in result_info["warnings"])
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの型が不正です。"\
-                            in w for w in result_info["warnings"])
+                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルール"
+                           "の型が不正です。"\
+                            in w for w in result_info["warnings"])  
             assert result_metadata == metadata
 
             # invalid rule_map
@@ -5427,12 +5429,14 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("Replacement failed.: The type of the jsonld mapping replacement rule is invalid."\
+                assert any("Replacement failed.: The type of the jsonld mapping "
+                           "replacement rule is invalid."\
                             in w for w in result_info["warnings"])
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの型が不正です。"\
+                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの"
+                           "型が不正です。"\
                             in w for w in result_info["warnings"])
             assert result_metadata == metadata
 
@@ -5443,12 +5447,14 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("Replacement failed.: The type of the jsonld mapping replacement rule is invalid."\
+                assert any("Replacement failed.: The type of the jsonld mapping "
+                           "replacement rule is invalid."\
                             in w for w in result_info["warnings"])
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルールの型が不正です。"\
+                assert any("置換処理に失敗しました。: jsonldマッピングの置換ルール"
+                           "の型が不正です。"\
                             in w for w in result_info["warnings"])
             assert result_metadata == metadata
 
@@ -5461,7 +5467,8 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("Replacement failed.: Required replacement rule: 'pipe_full_width_regex' is missing."\
+                assert any("Replacement failed.: Required replacement rule: "
+                           "'pipe_full_width_regex' is missing."\
                             in w for w in result_info["warnings"])
                 assert result_metadata["key1"] == "ab｜cd"
                 assert result_metadata["key2"] == "efg|hij"
@@ -5469,7 +5476,8 @@ class TestJsonLdMapper:
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("置換処理に失敗しました。: 必要な置換ルール：'pipe_full_width_regex'が見つかりません。"\
+                assert any("置換処理に失敗しました。: 必要な置換ルール："
+                           "'pipe_full_width_regex'が見つかりません。"\
                             in w for w in result_info["warnings"])
 
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULES"] = {
@@ -5519,28 +5527,38 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("Replacement failed.: Replacement rule: 'rule_not_dict' is invalid."\
+                assert any("Replacement failed.: Replacement rule: "
+                           "'rule_not_dict' is invalid."\
                             in w for w in result_info["warnings"])
-                assert any("Replacement failed.: Replacement rule: 'from_type_invalid' is invalid."\
+                assert any("Replacement failed.: Replacement rule: "
+                           "'from_type_invalid' is invalid."\
                             in w for w in result_info["warnings"])
-                assert any("Replacement failed.: Replacement rule: 'from_str_empty' is invalid."\
+                assert any("Replacement failed.: Replacement rule: "
+                           "'from_str_empty' is invalid."\
                             in w for w in result_info["warnings"])
-                assert any("Replacement failed.: Replacement rule: 'to_type_invalid' is invalid."\
+                assert any("Replacement failed.: Replacement rule: "
+                           "'to_type_invalid' is invalid."\
                             in w for w in result_info["warnings"])
-                assert any("Replacement failed.: Replacement rule: 'target_path_type_invalid' is invalid."\
+                assert any("Replacement failed.: Replacement rule: "
+                           "'target_path_type_invalid' is invalid."\
                             in w for w in result_info["warnings"])
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("置換処理に失敗しました。: 置換ルール： 'rule_not_dict'の設定が不正です。"\
+                assert any("置換処理に失敗しました。: 置換ルール： "
+                           "'rule_not_dict'の設定が不正です。"\
                             in w for w in result_info["warnings"])
-                assert any("置換処理に失敗しました。: 置換ルール： 'from_type_invalid'の設定が不正です。"\
+                assert any("置換処理に失敗しました。: 置換ルール： "
+                           "'from_type_invalid'の設定が不正です。"\
                             in w for w in result_info["warnings"])
-                assert any("置換処理に失敗しました。: 置換ルール： 'from_str_empty'の設定が不正です。"\
+                assert any("置換処理に失敗しました。: 置換ルール： "
+                           "'from_str_empty'の設定が不正です。"\
                             in w for w in result_info["warnings"])
-                assert any("置換処理に失敗しました。: 置換ルール： 'to_type_invalid'の設定が不正です。"\
+                assert any("置換処理に失敗しました。: 置換ルール： "
+                           "'to_type_invalid'の設定が不正です。"\
                             in w for w in result_info["warnings"])
-                assert any("置換処理に失敗しました。: 置換ルール： 'target_path_type_invalid'の設定が不正です。"\
+                assert any("置換処理に失敗しました。: 置換ルール： "
+                           "'target_path_type_invalid'の設定が不正です。"\
                             in w for w in result_info["warnings"])
             assert result_metadata["key1"] == "ab|cd"
             assert result_metadata["key2"] == "efg｜hij"
@@ -5577,20 +5595,26 @@ class TestJsonLdMapper:
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("Replacement rule: 'is_regex_not_bool_false' - 'is_regex' is not boolean. Treated as False."\
+                assert any("Replacement rule: 'is_regex_not_bool_false' - "
+                           "'is_regex' is not boolean. Treated as False."\
                             in w for w in result_info["warnings"])
-                assert any("Replacement rule: 'is_regex_not_bool_true' - 'is_regex' is not boolean. Treated as False."\
+                assert any("Replacement rule: 'is_regex_not_bool_true' - "
+                           "'is_regex' is not boolean. Treated as False."\
                             in w for w in result_info["warnings"])
-                assert any("Replacement rule: 'invalid_regex' - regex error:"\
+                assert any("Replacement failed.: Replacement rule: "
+                           "'invalid_regex' - regex error:"\
                             in w for w in result_info["warnings"])
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
-                assert any("置換ルール: 'is_regex_not_bool_false' - 'is_regex' が真偽値ではありません。Falseとして処理します。"\
+                assert any("置換ルール: 'is_regex_not_bool_false' - 'is_regex' "
+                           "が真偽値ではありません。Falseとして処理します。"\
                             in w for w in result_info["warnings"])
-                assert any("置換ルール: 'is_regex_not_bool_true' - 'is_regex' が真偽値ではありません。Falseとして処理します。"\
+                assert any("置換ルール: 'is_regex_not_bool_true' - 'is_regex' "
+                           "が真偽値ではありません。Falseとして処理します。"\
                             in w for w in result_info["warnings"])
-                assert any("置換ルール: 'invalid_regex' - 正規表現エラー:"\
+                assert any("置換処理に失敗しました。: 置換ルール: 'invalid_regex' "
+                           "- 正規表現エラー:"\
                             in w for w in result_info["warnings"])
             assert result_metadata["key1"] == "ab｜cd"
             assert result_metadata["key2"] == "efg|hij"
@@ -5623,6 +5647,18 @@ class TestJsonLdMapper:
             assert result_metadata["key1"] == "ab｜cd"
             assert result_metadata["key2"] == "efg｜hij"
             assert result_info["warnings"] == []
+
+            metadata = None
+            with set_locale("en"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("Replacement failed.:"\
+                            in w for w in result_info["warnings"])
+            with set_locale("ja"):
+                result_metadata, result_info = mapper.apply_import_replace_rules(
+                    copy.deepcopy(metadata), copy.deepcopy(info))
+                assert any("置換処理に失敗しました。:"\
+                            in w for w in result_info["warnings"])
 
 def test_set_by_jsonpath():
     data = {}

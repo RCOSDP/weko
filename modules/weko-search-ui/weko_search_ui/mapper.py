@@ -1395,27 +1395,34 @@ class JsonLdMapper(JsonMapper):
         try:
             mapping_id = self.mapping_id
 
-            rules = current_app.config.get("WEKO_SEARCH_UI_IMPORT_REPLACE_RULES", {})
-            rule_map = current_app.config.get("WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP", {})
+            rules = current_app.config.get(
+                "WEKO_SEARCH_UI_IMPORT_REPLACE_RULES", {})
+            rule_map = current_app.config.get(
+                "WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP", {})
             if not (
                 isinstance(rules, dict) and
                 isinstance(rule_map, dict)
                ):
-                raise ValueError(_("The type of the jsonld mapping replacement rule is invalid."))
+                raise ValueError(
+                    _("The type of the jsonld mapping replacement rule is invalid."))
 
             rule_keys = rule_map.get(str(mapping_id), [])
             if not isinstance(rule_keys, list):
-                raise ValueError(_("The type of the jsonld mapping replacement rule is invalid."))
+                raise ValueError(
+                    _("The type of the jsonld mapping replacement rule is invalid."))
 
             for rule_id in rule_keys:
                 if rule_id not in rules:
-                    warning_list.append(_("Required replacement rule: '%(rule_id)s' is missing.",\
-                                           rule_id=rule_id))
+                    warning_list.append(
+                        _("Required replacement rule: '%(rule_id)s' is missing.",\
+                        rule_id=rule_id))
                     continue
 
                 rule = rules.get(rule_id, None)
                 if not isinstance(rule, dict):
-                    warning_list.append(_("Replacement rule: '%(rule_id)s' is invalid.", rule_id=rule_id))
+                    warning_list.append(
+                        _("Replacement rule: '%(rule_id)s' is invalid.", 
+                        rule_id=rule_id))
                     continue
                 
                 from_str = rule.get("from", None)
@@ -1428,29 +1435,36 @@ class JsonLdMapper(JsonMapper):
                     isinstance(to_str, str) and
                     isinstance(target_path_list, list)
                 ):
-                    warning_list.append(_("Replacement rule: '%(rule_id)s' is invalid.", rule_id=rule_id))
+                    warning_list.append(
+                        _("Replacement rule: '%(rule_id)s' is invalid.", 
+                        rule_id=rule_id))
                     continue
 
                 is_regex = rule.get("is_regex", False)
                 if not isinstance(is_regex, bool):
                     warning_list.append(
-                        _("Replacement rule: '%(rule_id)s' - 'is_regex' is not boolean. Treated as False.",\
+                        _("Replacement rule: '%(rule_id)s' - 'is_regex' is "
+                          "not boolean. Treated as False.",\
                            rule_id=rule_id))
                     is_regex = False
 
-                for path_key in target_path_list:
-                    for meta_key in list(metadata.keys()):
-                        meta_key_no_index = re.sub(r'\[\d+\]', '', meta_key)
-                        if meta_key_no_index == path_key:
-                            metadata_value = metadata[meta_key]
-                            if is_regex:
-                                try:
-                                    metadata[path_key] = re.sub(from_str, lambda m: to_str, metadata_value)
-                                except re.error as e:
-                                    warning_list.append(_("Replacement rule: '%(rule_id)s' - regex error: %(error)s",\
-                                                           rule_id=rule_id, error=str(e)))
-                            else:
-                                metadata[path_key] = metadata_value.replace(from_str, to_str)
+                try:
+                    for path_key in target_path_list:
+                        for meta_key in list(metadata.keys()):
+                            meta_key_no_index = re.sub(r'\[\d+\]', '', meta_key)
+                            if meta_key_no_index == path_key:
+                                metadata_value = metadata[meta_key]
+                                if is_regex:
+                                        metadata[path_key] = \
+                                        re.sub(from_str, lambda m: to_str, 
+                                               metadata_value)
+                                else:
+                                    metadata[path_key] = \
+                                    metadata_value.replace(from_str, to_str)
+                except re.error as e:
+                    warning_list.append(_("Replacement rule: '%(rule_id)s' - "
+                                          "regex error: %(error)s",\
+                                           rule_id=rule_id, error=str(e)))
 
             if warning_list:
                 raise ValueError(warning_list)
@@ -1463,11 +1477,13 @@ class JsonLdMapper(JsonMapper):
                     if 'is_regex' in warn:
                         warning_message = str(warn)
                     else:
-                        warning_message = str(_("Replacement failed.: %(warn)s", warn=warn))
+                        warning_message = str(_(
+                            "Replacement failed.: %(warn)s", warn=warn))
                     current_app.logger.warning(warning_message)
                     info_warnings.append(warning_message)
             else:
-                warning_message = str(_("Replacement failed.: %(warning)s", warning=e))
+                warning_message = str(_(
+                    "Replacement failed.: %(warning)s", warning=e))
                 current_app.logger.warning(warning_message)
                 info_warnings.append(warning_message)
             info["warnings"] = info_warnings
@@ -1552,7 +1568,8 @@ class JsonLdMapper(JsonMapper):
         }
 
         # Execute replacement process for metadata
-        metadata, system_info = self.apply_import_replace_rules(metadata, system_info)
+        metadata, system_info = \
+        self.apply_import_replace_rules(metadata, system_info)
 
         missing_metadata = {}
 
@@ -1829,7 +1846,8 @@ class JsonLdMapper(JsonMapper):
             ]
             system_info["save_as_is"] = extracted.get("wk:saveAsIs", False)
             system_info["metadata_replace"] = extracted.get("wk:metadataReplace", False)
-            system_info["researchmap_linkage"] = extracted.get("wk:researchmapLinkage", False)
+            system_info["researchmap_linkage"] = extracted.get(
+                "wk:researchmapLinkage", False)
 
             for relation in extracted.get("jpcoar:relation", []):
                 relation_id = relation.get("jpcoar:relatedIdentifier") or {}
