@@ -1444,8 +1444,8 @@ class JsonLdMapper(JsonMapper):
                 if not isinstance(is_regex, bool):
                     warning_list.append(
                         _("Replacement rule: '%(rule_id)s' - 'is_regex' is "
-                          "not boolean. Treated as False.",\
-                           rule_id=rule_id))
+                        "not boolean. Treated as False.",
+                        rule_id=rule_id))
                     is_regex = False
 
                 try:
