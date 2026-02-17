@@ -25,6 +25,7 @@ from invenio_records.models import (
 from weko_records.api import ItemTypes
 from fix_issue_47128_newbuild import main as fix_issue_47128_newbuild_main
 from update_itemtype_multiple import main as update_itemtype_multiple_main
+from fix_issue_57372 import main as fix_issue_57372
 from weko_records.models import (
     ItemTypeName, ItemType,
     timestamp_before_update as weko_timestamp_before_update,
@@ -78,6 +79,8 @@ def main(restricted_item_type_id, start_time, batch_size=500):
         current_time = show_exec_time(current_time, "fix_metadata_53602_main")
         add_peer_reviewed_to_version_type_property.main()
         current_time = show_exec_time(current_time, "add_peer_reviewed_to_version_type_property")
+        fix_issue_57372() # 詳細検索条件の更新
+        current_time = show_exec_time(current_time, "fix_issue_57372_main")
         current_app.logger.info("All updates completed successfully.")
     except Exception as ex:
         import traceback

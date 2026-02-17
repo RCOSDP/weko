@@ -781,6 +781,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         is_no_content_item_application = item_application_settings.get("item_application_enable", False) \
             and int(item_type_id) in item_application_settings.get("application_item_types", [])
 
+
     return render_template(
         template,
         pid=pid,
@@ -837,6 +838,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         restricted_errorMsg = restricted_errorMsg,
         with_files = with_files,
         belonging_community=belonging_community,
+        is_storage_editable=current_app.config.get('WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'),
         **ctx,
         **kwargs
     )

@@ -1356,6 +1356,127 @@ CREATE TABLE IF NOT EXISTS cris_linkage_result (
         FOREIGN KEY (last_linked_item) REFERENCES item_metadata(id)
 );
 
+-- populate-instance.sh で追加・変更された内容
+RAISE NOTICE 'add record of access_actionsroles';
+--${INVENIO_WEB_INSTANCE} access allow "files-rest-object-read-version" role "${INVENIO_ROLE_REPOSITORY}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'files-rest-object-read-version', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Repository Administrator')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'files-rest-object-read-version' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Repository Administrator')
+);
+
+--${INVENIO_WEB_INSTANCE} access allow "files-rest-object-read-version" role "${INVENIO_ROLE_COMMUNITY}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'files-rest-object-read-version', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'files-rest-object-read-version' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+);
+
+--${INVENIO_WEB_INSTANCE} access allow "files-rest-object-read-version" role "${INVENIO_ROLE_CONTRIBUTOR}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'files-rest-object-read-version', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Contributor')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'files-rest-object-read-version' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Contributor')
+);
+
+--${INVENIO_WEB_INSTANCE} access allow "stats-api-access" role "${INVENIO_ROLE_COMMUNITY}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'stats-api-access', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'stats-api-access' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+);
+
+RAISE NOTICE 'add record of api_certificate';
+--${INVENIO_WEB_INSTANCE} cert insert oaa "OAアシスト" 
+INSERT INTO api_certificate (api_code, api_name, cert_data)
+VALUES ('oaa', 'OAアシスト', '""')
+ON CONFLICT (api_name) DO NOTHING;
+
+RAISE NOTICE 'add record of admin_settings';
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 3 "site_license_mail_settings" "{'Root Index': {'auto_send_flag': False}}" 
+INSERT INTO admin_settings (name, settings)
+VALUES ('site_license_mail_settings', '{"Root Index": {"auto_send_flag": false}}')
+ON CONFLICT (name)
+DO UPDATE SET settings = jsonb_build_object('Root Index', admin_settings.settings);
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 6 "blocked_user_settings" "{'blocked_ePPNs': []}" 
+INSERT INTO admin_settings (name, settings)
+VALUES ('blocked_user_settings', '{"blocked_ePPNs": []}')
+ON CONFLICT (name) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 7 "shib_login_enable" "{'shib_flg': False}" 
+INSERT INTO admin_settings (name, settings)
+VALUES ('shib_login_enable', '{"shib_flg": false}')
+ON CONFLICT (name) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 8 "default_role_settings" "{'gakunin_role': '', 'orthros_outside_role': '', 'extra_role': ''}" 
+INSERT INTO admin_settings (name, settings)
+VALUES ('default_role_settings', '{"gakunin_role": "", "orthros_outside_role": "", "extra_role": ""}')
+ON CONFLICT (name) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 9 "attribute_mapping" "{'shib_eppn': '', 'shib_role_authority_name': '', 'shib_mail': '', 'shib_user_name': ''}" 
+INSERT INTO admin_settings (name, settings)
+VALUES ('attribute_mapping', '{"shib_eppn": "", "shib_role_authority_name": "", "shib_mail": "", "shib_user_name": ""}')
+ON CONFLICT (name) DO NOTHING;
+
+RAISE NOTICE 'add record of authors_prefix';
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+SELECT 'NRID', 'NRID【非推奨】', 'https://nrid.nii.ac.jp/nrid/##', now(), now()
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM authors_prefix_settings 
+  WHERE scheme = 'NRID' 
+     OR scheme = 'NRID【非推奨】'
+);
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "ISNI" "ISNI" "http://www.isni.org/isni/##" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+VALUES ('ISNI', 'ISNI', 'http://www.isni.org/isni/##', now(), now())
+ON CONFLICT (scheme) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "VIAF" "VIAF" "https://viaf.org/viaf/##" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+VALUES ('VIAF', 'VIAF', 'https://viaf.org/viaf/##', now(), now())
+ON CONFLICT (scheme) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "kakenhi" "kakenhi【非推奨】" "" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+SELECT 'kakenhi', 'kakenhi【非推奨】', '', now(), now()
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM authors_prefix_settings 
+  WHERE scheme = 'kakenhi' 
+     OR scheme = 'kakenhi【非推奨】'
+);
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "Ringgold" "Ringgold" "" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+VALUES ('Ringgold', 'Ringgold', '', now(), now())
+ON CONFLICT (scheme) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "GRID" "GRID【非推奨】" "" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+SELECT 'GRID', 'GRID【非推奨】', '', now(), now()
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM authors_prefix_settings 
+  WHERE scheme = 'GRID' 
+     OR scheme = 'GRID【非推奨】'
+);
+
 RAISE NOTICE 'End execution: Migration W2025-29.sql';
 END $$;
 COMMIT;
