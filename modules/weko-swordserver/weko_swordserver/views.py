@@ -14,6 +14,7 @@ import shutil
 from datetime import datetime, timedelta
 import sys
 import traceback
+import json
 
 from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
 from flask_login import current_user
@@ -959,7 +960,7 @@ def _get_status_multi_document(recids, activity_ids, register_type="Direct"):
         })
 
         if logs:
-            all_links[-1]["log"] = logs
+            all_links[-1]["log"] = json.dumps(logs)
 
         # Add file links
         if files_info is not None:

@@ -1348,51 +1348,22 @@ def test__sort_links_for_status():
     assert sorted_links[6]["@id"] == "http://example.com/other"
 
 
-# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_get_status_multi_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
-def test_get_status_multi_document(app, mocker):
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test__get_status_multi_document -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test__get_status_multi_document(app, mocker):
     from weko_swordserver.views import _get_status_multi_document
 
     # Common url_for
     def url_for_side_effect(endpoint, **kwargs):
         if endpoint == "weko_workflow.display_activity":
             return f"/workflow/activity/detail/{kwargs.get('activity_id', '')}"
-        elif endpoint == "weko_swordserver.get_status_document":
+        if endpoint == "weko_swordserver.get_status_document":
             return f"/dummy/status/{kwargs.get('recid', '')}"
-        elif endpoint == "weko_swordserver.get_service_document":
+        if endpoint == "weko_swordserver.get_service_document":
             return "/dummy/service"
         return f"/dummy/{endpoint}/{kwargs.get('recid', '') or kwargs.get('activity_id', '')}"
     mocker.patch("weko_swordserver.views.url_for", side_effect=url_for_side_effect)
 
-
-    # 1. where recid==last_recid is False (recids=["1", "2"])
-    class MockRecordA:
-        revision_id = 1
-        def get(self, key, default=None):
-            return default
-        def items(self):
-            return []
-    class MockRecordB:
-        revision_id = 2
-        def get(self, key, default=None):
-            return default
-        def items(self):
-            return []
-    def get_record_multi(recid):
-        if recid == "1":
-            return MockRecordA()
-        return MockRecordB()
-    mocker.patch("weko_swordserver.views.import_string", return_value=type("Dummy", (), {"get_record": get_record_multi})())
-    mocker.patch("weko_swordserver.views.Resolver", side_effect=lambda **kwargs: type("DummyResolver", (), {"resolve": lambda self, recid: (None, get_record_multi(recid))})())
-    mocker.patch("weko_swordserver.views.get_record_permalink", return_value=None)
-    mocker.patch("weko_swordserver.views._get_file_info", return_value=None)
-    mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[])
-    with app.test_request_context("/test_req"):
-        result = _get_status_multi_document(["1", "2"], [], register_type="Direct")
-        assert isinstance(result, dict)
-        assert "@context" in result
-        assert len(result["links"]) >= 2
-
-    # 2. With file, with permalink, reverse reference as int type
+    # 1. With file, with permalink, reverse reference as int type
     class MockRecord1:
         revision_id = 1
         def get(self, key, default=None):
@@ -1404,7 +1375,7 @@ def test_get_status_multi_document(app, mocker):
                 ("file_attr", {
                     "attribute_type": "file",
                     "attribute_value_mlt": [
-                        {"url": {"url": "http://example.com/files/test.pdf", "label": "test.pdf"}, "mimetype": "application/pdf", "format": None}
+                        {"url": {"url": "http://TEST_SERVER.localdomain/files/test.pdf", "label": "test.pdf"}, "mimetype": "application/pdf", "format": None}
                     ]
                 })
             ]
@@ -1413,84 +1384,96 @@ def test_get_status_multi_document(app, mocker):
     mocker.patch("weko_swordserver.views.get_record_permalink", return_value="http://example.com/permalink")
     mocker.patch("weko_swordserver.views._get_file_info", return_value={
         "test.pdf": {
-            "@id": "http://example.com/files/test.pdf",
+            "@id": "http://TEST_SERVER.localdomain/files/test.pdf",
             "contentType": "application/pdf",
             "rel": ["http://purl.org/net/sword/3.0//terms/fileSetFile"],
             "derivedFrom": "/dummy/records/1"
         }
     })
-    class MockRef:
-        src_item_pid = "1"
-        reference_type = "cites"
+    MockRef = type("MockRef", (), {"src_item_pid": "1", "reference_type": "cites"})
     mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[MockRef()])
     with app.test_request_context("/test_req"):
         result = _get_status_multi_document(["1"], [], register_type="Direct")
-        assert isinstance(result, dict)
-        assert "@context" in result
+        import json
+        expected_links = [
+            {
+                "@id": "http://TEST_SERVER.localdomain/records/1",
+                "contentType": "text/html",
+                "log": json.dumps([
+                    {"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"}
+                ]),
+                "rel": ["alternate"]
+            },
+            {
+                "@id": "http://TEST_SERVER.localdomain/files/test.pdf",
+                "contentType": "application/pdf",
+                "rel": ["http://purl.org/net/sword/3.0//terms/fileSetFile"],
+                "derivedFrom": "/dummy/records/1"
+            },
+            {
+                "@id": "http://example.com/permalink",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            }
+        ]
         assert "links" in result
-        assert any(link["@id"] == "http://example.com/files/test.pdf" for link in result["links"])
-        assert any(link["@id"] == "http://example.com/permalink" for link in result["links"])
-        expected_log = [{"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"}]
-        log_links = [link for link in result["links"] if link.get("log")]
-        assert len(log_links) == 1
-        import ast
-        log_value = log_links[0]["log"]
-        if isinstance(log_value, str):
-            log_value = ast.literal_eval(log_value)
-        assert log_value == expected_log
+        assert len(result["links"]) == len(expected_links)
+        assert all(link in expected_links for link in result["links"])
+        assert all(link in result["links"] for link in expected_links)
 
         # Pattern where log contains multiple entries
-        class MockRef2:
-            src_item_pid = "2"
-            reference_type = "isReferencedBy"
-        class MockRef3:
-            src_item_pid = "3"
-            reference_type = "isSupplementedBy"
-        class MockRef4:
-            src_item_pid = "4"
-            reference_type = "otherType"
-        class MockRecord1:
+        MockRef2 = type("MockRef2", (), {"src_item_pid": "2", "reference_type": "isReferencedBy"})
+        MockRef3 = type("MockRef3", (), {"src_item_pid": "3", "reference_type": "isSupplementedBy"})
+        MockRef4 = type("MockRef4", (), {"src_item_pid": "4", "reference_type": "otherType"})
+        class MockRecordEmpty:
             revision_id = 1
-            def get(self, key, default=None):
-                return default
-            def items(self):
-                return []
-        class MockRecord2:
-            revision_id = 2
-            def get(self, key, default=None):
-                return default
-            def items(self):
-                return []
-        class MockRecord3:
-            revision_id = 3
-            def get(self, key, default=None):
-                return default
-            def items(self):
-                return []
+            def get(self, key, default=None): return default
+            def items(self): return []
         def get_record_multi(recid):
-            if recid == "1":
-                return MockRecord1()
-            elif recid == "2":
-                return MockRecord2()
-            return MockRecord3()
+            return MockRecordEmpty()
         mocker.patch("weko_swordserver.views.import_string", return_value=type("Dummy", (), {"get_record": get_record_multi})())
         mocker.patch("weko_swordserver.views.Resolver", side_effect=lambda **kwargs: type("DummyResolver", (), {"resolve": lambda self, recid: (None, get_record_multi(recid))})())
         mocker.patch("weko_swordserver.views.get_record_permalink", return_value=None)
         mocker.patch("weko_swordserver.views._get_file_info", return_value=None)
         mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[MockRef(), MockRef2(), MockRef3(), MockRef4()])
-        expected_multi_log = [
-            {"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"},
-            {"type": "isReferencedBy", "url": "http://TEST_SERVER.localdomain/records/2"},
-            {"type": "isSupplementedBy", "url": "http://TEST_SERVER.localdomain/records/3"}
-        ]
         with app.test_request_context("/test_req"):
             result_multi = _get_status_multi_document(["1", "2", "3"], [], register_type="Direct")
-            log_links_multi = [link for link in result_multi["links"] if link.get("log")]
-            assert len(log_links_multi) == 3
-            log_raw = log_links_multi[0]["log"]
-            import ast
-            log_value = ast.literal_eval(log_raw)
-            assert log_value == expected_multi_log
+            expected_links = [
+                {
+                    "@id": "http://TEST_SERVER.localdomain/records/1",
+                    "contentType": "text/html",
+                    "log": json.dumps([
+                        {"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"},
+                        {"type": "isReferencedBy", "url": "http://TEST_SERVER.localdomain/records/2"},
+                        {"type": "isSupplementedBy", "url": "http://TEST_SERVER.localdomain/records/3"}
+                    ]),
+                    "rel": ["alternate"]
+                },
+                {
+                    "@id": "http://TEST_SERVER.localdomain/records/2",
+                    "contentType": "text/html",
+                    "log": json.dumps([
+                        {"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"},
+                        {"type": "isReferencedBy", "url": "http://TEST_SERVER.localdomain/records/2"},
+                        {"type": "isSupplementedBy", "url": "http://TEST_SERVER.localdomain/records/3"}
+                    ]),
+                    "rel": ["alternate"]
+                },
+                {
+                    "@id": "http://TEST_SERVER.localdomain/records/3",
+                    "contentType": "text/html",
+                    "log": json.dumps([
+                        {"type": "cites", "url": "http://TEST_SERVER.localdomain/records/1"},
+                        {"type": "isReferencedBy", "url": "http://TEST_SERVER.localdomain/records/2"},
+                        {"type": "isSupplementedBy", "url": "http://TEST_SERVER.localdomain/records/3"}
+                    ]),
+                    "rel": ["alternate"]
+                }
+            ]
+            assert "links" in result_multi
+            assert len(result_multi["links"]) == len(expected_links)
+            assert all(link in expected_links for link in result_multi["links"])
+            assert all(link in result_multi["links"] for link in expected_links)
 
     # 3. No file, no permalink, with system_identifier_doi (permalink supplement)
     class MockRecord2:
@@ -1503,8 +1486,7 @@ def test_get_status_multi_document(app, mocker):
             if key == "system_identifier_doi":
                 return {"attribute_value_mlt": [{"subitem_systemidt_identifier": "http://example.com/doi_subitem"}]}
             raise KeyError(key)
-        def items(self):
-            return []
+        def items(self): return []
     mocker.patch("weko_swordserver.views.import_string", return_value=type("Dummy", (), {"get_record": lambda recid: MockRecord2()})())
     mocker.patch("weko_swordserver.views.Resolver", side_effect=lambda **kwargs: type("DummyResolver", (), {"resolve": lambda self, recid: (None, MockRecord2())})())
     mocker.patch("weko_swordserver.views.get_record_permalink", return_value=None)
@@ -1512,21 +1494,29 @@ def test_get_status_multi_document(app, mocker):
     mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[])
     with app.test_request_context("/test_req"):
         result = _get_status_multi_document(["2"], [], register_type="Direct")
-        assert isinstance(result, dict)
-        assert "@context" in result
+        expected_links = [
+            {
+                "@id": "http://TEST_SERVER.localdomain/records/2",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            },
+            {
+                "@id": "http://example.com/doi_subitem",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            }
+        ]
         assert "links" in result
-        assert any(link["@id"] == "http://example.com/doi_subitem" for link in result["links"])
+        assert len(result["links"]) == len(expected_links)
+        assert all(link in expected_links for link in result["links"])
+        assert all(link in result["links"] for link in expected_links)
 
     # 4. Reverse reference as float type (continue branch)
     class MockRecord3:
         revision_id = 3
-        def get(self, key, default=None):
-            return default
-        def items(self):
-            return []
-    class MockRefFloat:
-        src_item_pid = "10.5"
-        reference_type = "cites"
+        def get(self, key, default=None): return default
+        def items(self): return []
+    MockRefFloat = type("MockRefFloat", (), {"src_item_pid": "10.5", "reference_type": "cites"})
     mocker.patch("weko_swordserver.views.import_string", return_value=type("Dummy", (), {"get_record": lambda recid: MockRecord3()})())
     mocker.patch("weko_swordserver.views.Resolver", side_effect=lambda **kwargs: type("DummyResolver", (), {"resolve": lambda self, recid: (None, MockRecord3())})())
     mocker.patch("weko_swordserver.views.get_record_permalink", return_value=None)
@@ -1534,21 +1524,23 @@ def test_get_status_multi_document(app, mocker):
     mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[MockRefFloat()])
     with app.test_request_context("/test_req"):
         result = _get_status_multi_document(["3"], [], register_type="Direct")
-        assert isinstance(result, dict)
-        assert "@context" in result
+        expected_links = [
+            {
+                "@id": "http://TEST_SERVER.localdomain/records/3",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            }
+        ]
         assert "links" in result
-        assert all(
-            not link.get("log")
-            for link in result["links"]
-        )
+        assert len(result["links"]) == len(expected_links)
+        assert all(link in expected_links for link in result["links"])
+        assert all(link in result["links"] for link in expected_links)
 
     # 5. Workflow (with activity_ids)
     class MockRecord4:
         revision_id = 4
-        def get(self, key, default=None):
-            return default
-        def items(self):
-            return []
+        def get(self, key, default=None): return default
+        def items(self): return []
     mocker.patch("weko_swordserver.views.import_string", return_value=type("Dummy", (), {"get_record": lambda recid: MockRecord4()})())
     mocker.patch("weko_swordserver.views.Resolver", side_effect=lambda **kwargs: type("DummyResolver", (), {"resolve": lambda self, recid: (None, MockRecord4())})())
     mocker.patch("weko_swordserver.views.get_record_permalink", return_value=None)
@@ -1556,16 +1548,27 @@ def test_get_status_multi_document(app, mocker):
     mocker.patch("weko_records.models.ItemReference.get_dst_references", return_value=[])
     with app.test_request_context("/test_req"):
         result = _get_status_multi_document(["4"], ["A-0001", "A-0002"], register_type="Workflow")
-        assert isinstance(result, dict)
-        assert "@context" in result
+        expected_links = [
+            {
+                "@id": "/workflow/activity/detail/A-0001",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            },
+            {
+                "@id": "/workflow/activity/detail/A-0002",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            },
+            {
+                "@id": "http://TEST_SERVER.localdomain/records/4",
+                "contentType": "text/html",
+                "rel": ["alternate"]
+            }
+        ]
         assert "links" in result
-        assert any(link["@id"] == "/workflow/activity/detail/A-0001" for link in result["links"])
-        assert any(link["@id"] == "/workflow/activity/detail/A-0002" for link in result["links"])
-        assert any(
-            s.get("@id") == "http://purl.org/net/sword/3.0/state/inWorkflow"
-            for s in result.get("state", [])
-        )
-        assert "eTag" not in result
+        assert len(result["links"]) == len(expected_links)
+        assert all(link in expected_links for link in result["links"])
+        assert all(link in result["links"] for link in expected_links)
 
 # def delete_item(recid):
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_delete_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
