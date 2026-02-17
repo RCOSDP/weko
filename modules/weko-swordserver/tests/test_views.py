@@ -207,12 +207,15 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
     mocker_check_item.return_value = {
         "data_path": "/var/tmp/test",
         "register_type": "Direct",
-        "list_record": [{"status": "new", "errors": ["Item check error."]}],
+        "list_record": [{"status": "new", "errors": ["Item check error."], 
+                         "warnings": ["Test warning message"]}],
     }
 
-    result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    result = client.post(url, data={"file": storage}, content_type=
+                         "multipart/form-data", headers=headers)
     assert result.status_code == 400
-    assert result.json.get("error") == "Item check error: Item check error."
+    assert "Item check error: Item check error." in result.json.get("error")
+    assert "Test warning message" in result.json.get("error")
 
     # not new item
     login_user_via_session(client=client, email=users[0]["email"])
@@ -526,12 +529,15 @@ def test_put_object(
     mocker_check_item.return_value = {
         "data_path": "/var/tmp/test",
         "register_type": "Direct",
-        "list_record": [{"status": "keep", "errors": ["Item check error."]}],
+        "list_record": [{"status": "keep", "errors": ["Item check error."], 
+                         "warnings": ["Test warning message"]}],
     }
 
-    result = client.put(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+    result = client.put(url, data={"file": storage}, content_type=
+                        "multipart/form-data", headers=headers)
     assert result.status_code == 400
-    assert result.json.get("error") == "Item check error: Item check error."
+    assert "Item check error: Item check error." in result.json.get("error")
+    assert "Test warning message" in result.json.get("error")
 
     # new item
     login_user_via_session(client=client, email=users[0]["email"])
