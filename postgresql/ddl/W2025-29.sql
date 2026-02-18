@@ -169,79 +169,346 @@ CREATE TABLE IF NOT EXISTS user_activity_logs (
         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE SET NULL
 ) PARTITION BY RANGE (date);
 CREATE SEQUENCE IF NOT EXISTS user_activity_log_group_id_seq;
+
 -- 2026-01～2026-12
-CREATE TABLE user_activity_logs_202601 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202601 FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
 
-CREATE TABLE user_activity_logs_202602 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202602 FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202601' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202601 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202601 FOR VALUES FROM (''2026-01-01'') TO (''2026-02-01'')';
+        RAISE NOTICE 'user_activity_logs_202601: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202601: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202603 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202603 FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202602' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202602 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202602 FOR VALUES FROM (''2026-02-01'') TO (''2026-03-01'')';
+        RAISE NOTICE 'user_activity_logs_202602: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202602: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202604 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202604 FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202603' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202603 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202603 FOR VALUES FROM (''2026-03-01'') TO (''2026-04-01'')';
+        RAISE NOTICE 'user_activity_logs_202603: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202603: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202605 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202605 FOR VALUES FROM ('2026-05-01') TO ('2026-06-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202604' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202604 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202604 FOR VALUES FROM (''2026-04-01'') TO (''2026-05-01'')';
+        RAISE NOTICE 'user_activity_logs_202604: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202604: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202606 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202606 FOR VALUES FROM ('2026-06-01') TO ('2026-07-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202605' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202605 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202605 FOR VALUES FROM (''2026-05-01'') TO (''2026-06-01'')';
+        RAISE NOTICE 'user_activity_logs_202605: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202605: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202607 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202607 FOR VALUES FROM ('2026-07-01') TO ('2026-08-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202606' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202606 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202606 FOR VALUES FROM (''2026-06-01'') TO (''2026-07-01'')';
+        RAISE NOTICE 'user_activity_logs_202606: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202606: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202608 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202608 FOR VALUES FROM ('2026-08-01') TO ('2026-09-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202607' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202607 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202607 FOR VALUES FROM (''2026-07-01'') TO (''2026-08-01'')';
+        RAISE NOTICE 'user_activity_logs_202607: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202607: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202609 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202609 FOR VALUES FROM ('2026-09-01') TO ('2026-10-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202608' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202608 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202608 FOR VALUES FROM (''2026-08-01'') TO (''2026-09-01'')';
+        RAISE NOTICE 'user_activity_logs_202608: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202608: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202610 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202610 FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202609' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202609 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202609 FOR VALUES FROM (''2026-09-01'') TO (''2026-10-01'')';
+        RAISE NOTICE 'user_activity_logs_202609: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202609: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202611 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202611 FOR VALUES FROM ('2026-11-01') TO ('2026-12-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202610' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202610 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202610 FOR VALUES FROM (''2026-10-01'') TO (''2026-11-01'')';
+        RAISE NOTICE 'user_activity_logs_202610: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202610: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202612 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202612 FOR VALUES FROM ('2026-12-01') TO ('2027-01-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202611' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202611 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202611 FOR VALUES FROM (''2026-11-01'') TO (''2026-12-01'')';
+        RAISE NOTICE 'user_activity_logs_202611: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202611: Already exists, skipped.';
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202612' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202612 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202612 FOR VALUES FROM (''2026-12-01'') TO (''2027-01-01'')';
+        RAISE NOTICE 'user_activity_logs_202612: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202612: Already exists, skipped.';
+    END IF;
+END $$;
 
 -- 2027-01～2027-12
-CREATE TABLE user_activity_logs_202701 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202701 FOR VALUES FROM ('2027-01-01') TO ('2027-02-01');
 
-CREATE TABLE user_activity_logs_202702 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202702 FOR VALUES FROM ('2027-02-01') TO ('2027-03-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202701' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202701 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202701 FOR VALUES FROM (''2027-01-01'') TO (''2027-02-01'')';
+        RAISE NOTICE 'user_activity_logs_202701: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202701: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202703 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202703 FOR VALUES FROM ('2027-03-01') TO ('2027-04-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202702' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202702 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202702 FOR VALUES FROM (''2027-02-01'') TO (''2027-03-01'')';
+        RAISE NOTICE 'user_activity_logs_202702: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202702: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202704 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202704 FOR VALUES FROM ('2027-04-01') TO ('2027-05-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202703' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202703 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202703 FOR VALUES FROM (''2027-03-01'') TO (''2027-04-01'')';
+        RAISE NOTICE 'user_activity_logs_202703: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202703: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202705 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202705 FOR VALUES FROM ('2027-05-01') TO ('2027-06-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202704' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202704 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202704 FOR VALUES FROM (''2027-04-01'') TO (''2027-05-01'')';
+        RAISE NOTICE 'user_activity_logs_202704: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202704: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202706 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202706 FOR VALUES FROM ('2027-06-01') TO ('2027-07-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202705' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202705 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202705 FOR VALUES FROM (''2027-05-01'') TO (''2027-06-01'')';
+        RAISE NOTICE 'user_activity_logs_202705: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202705: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202707 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202707 FOR VALUES FROM ('2027-07-01') TO ('2027-08-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202706' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202706 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202706 FOR VALUES FROM (''2027-06-01'') TO (''2027-07-01'')';
+        RAISE NOTICE 'user_activity_logs_202706: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202706: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202708 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202708 FOR VALUES FROM ('2027-08-01') TO ('2027-09-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202707' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202707 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202707 FOR VALUES FROM (''2027-07-01'') TO (''2027-08-01'')';
+        RAISE NOTICE 'user_activity_logs_202707: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202707: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202709 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202709 FOR VALUES FROM ('2027-09-01') TO ('2027-10-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202708' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202708 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202708 FOR VALUES FROM (''2027-08-01'') TO (''2027-09-01'')';
+        RAISE NOTICE 'user_activity_logs_202708: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202708: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202710 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202710 FOR VALUES FROM ('2027-10-01') TO ('2027-11-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202709' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202709 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202709 FOR VALUES FROM (''2027-09-01'') TO (''2027-10-01'')';
+        RAISE NOTICE 'user_activity_logs_202709: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202709: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202711 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202711 FOR VALUES FROM ('2027-11-01') TO ('2027-12-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202710' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202710 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202710 FOR VALUES FROM (''2027-10-01'') TO (''2027-11-01'')';
+        RAISE NOTICE 'user_activity_logs_202710: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202710: Already exists, skipped.';
+    END IF;
+END $$;
 
-CREATE TABLE user_activity_logs_202712 (LIKE user_activity_logs INCLUDING ALL);
-ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202712 FOR VALUES FROM ('2027-12-01') TO ('2028-01-01');
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202711' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202711 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202711 FOR VALUES FROM (''2027-11-01'') TO (''2027-12-01'')';
+        RAISE NOTICE 'user_activity_logs_202711: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202711: Already exists, skipped.';
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'user_activity_logs_202712' AND table_schema = 'public'
+    ) THEN
+        EXECUTE 'CREATE TABLE user_activity_logs_202712 (LIKE user_activity_logs INCLUDING ALL)';
+        EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202712 FOR VALUES FROM (''2027-12-01'') TO (''2028-01-01'')';
+        RAISE NOTICE 'user_activity_logs_202712: Created and attached as partition.';
+    ELSE
+        RAISE NOTICE 'user_activity_logs_202712: Already exists, skipped.';
+    END IF;
+END $$;
 
 
 -- modules/weko-notifications
