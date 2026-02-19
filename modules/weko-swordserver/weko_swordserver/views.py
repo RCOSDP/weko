@@ -1087,7 +1087,7 @@ def _get_status_workflow_document(activity_id, recid):
         if not files_info:
             files_info = None
     else:
-        files_info = _get_file_info(record, record_url)
+        files_info = _get_file_info(record, links_record_url)
 
     raw_data = {
         "@id": record_url,
