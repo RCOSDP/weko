@@ -22,10 +22,8 @@ from invenio_db import db
 
 group_id_seq = Sequence('user_activity_log_group_id_seq', metadata=db.metadata)
 
-class _UserActivityLogBase(db.Model):
+class _UserActivityLogBase:
     """User activity log model."""
-
-    __tablename__ = 'user_activity_logs'
 
     id = db.Column(
         db.Integer(),
