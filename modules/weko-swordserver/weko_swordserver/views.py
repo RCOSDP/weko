@@ -1058,7 +1058,35 @@ def _get_status_workflow_document(activity_id, recid):
     # Get record uri
     record_url = "{}records/{}".format(request.url_root, recid)
     # Get file info
-    files_info = _get_file_info(record, record_url)
+    files_info = None
+    from weko_workflow.models import Activity
+    activity = Activity.query.filter_by(activity_id=activity_id).first()
+    if activity and activity.temp_data:
+        decoded = activity.temp_data.encode().decode('unicode_escape')
+        temp_data = json.loads(decoded)
+        files = temp_data.get("files")
+        files_info = {}
+        if files:
+            for file in files:
+                label = file.get("filename")
+                host_name = os.environ.get("INVENIO_WEB_HOST_NAME")
+                url = f"https://{host_name}/record/{recid}/files/{label}"
+                content_type = file.get("mimetype")
+                file_rel = (
+                    current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"]
+                    + current_app.config["WEKO_SWORDSERVER_FILE_SET_FILE"]
+                )
+                if label:
+                    files_info[label] = {
+                        "@id": url,
+                        "contentType": content_type,
+                        "rel": [file_rel],
+                        "derivedFrom": record_url
+                    }
+        if not files_info:
+            files_info = None
+    else:
+        files_info = _get_file_info(record, record_url)
 
     raw_data = {
         "@id": record_url,
