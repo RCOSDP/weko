@@ -1455,9 +1455,9 @@ class JsonLdMapper(JsonMapper):
                             if meta_key_no_index == path_key:
                                 metadata_value = metadata[meta_key]
                                 if is_regex:
-                                        metadata[path_key] = \
-                                        re.sub(from_str, lambda m: to_str, 
-                                               metadata_value)
+                                    metadata[path_key] = \
+                                    re.sub(from_str, lambda m: to_str, 
+                                            metadata_value)
                                 else:
                                     metadata[path_key] = \
                                     metadata_value.replace(from_str, to_str)
