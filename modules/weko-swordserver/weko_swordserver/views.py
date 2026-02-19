@@ -1056,7 +1056,8 @@ def _get_status_workflow_document(activity_id, recid):
         raise WekoSwordserverException("Activity created, but not found.", ErrorType.NotFound)
 
     # Get record uri
-    record_url = "{}records/{}".format(request.url_root, recid)
+    record_url = url_for("weko_swordserver.get_status_document", recid=recid, _external=True)
+    links_record_url = "{}records/{}".format(request.url_root, recid)
     # Get file info
     files_info = None
     from weko_workflow.models import Activity
@@ -1081,7 +1082,7 @@ def _get_status_workflow_document(activity_id, recid):
                         "@id": url,
                         "contentType": content_type,
                         "rel": [file_rel],
-                        "derivedFrom": record_url
+                        "derivedFrom": links_record_url
                     }
         if not files_info:
             files_info = None
@@ -1125,7 +1126,7 @@ def _get_status_workflow_document(activity_id, recid):
                 "contentType" : "text/html"
             },
             {
-                "@id" : record_url,
+                "@id" : links_record_url,
                 "rel" : ["alternate"],
                 "contentType" : "text/html"
             }
