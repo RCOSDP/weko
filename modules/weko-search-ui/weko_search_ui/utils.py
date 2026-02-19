@@ -931,7 +931,7 @@ def check_jsonld_import_items(
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
         mapper.data_path = data_path
-        item_metadatas, _ = mapper.to_item_metadata(json_ld)
+        item_metadatas, x = mapper.to_item_metadata(json_ld)
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
@@ -1447,7 +1447,8 @@ def handle_validate_item_import(list_record, schema) -> list:
     v2 = Draft4Validator(schema) if schema else None
     for record in list_record:
         errors = record.get("errors") or []
-        warnings = []
+        new_warnings = []
+        warnings = record.get("warnings") or []
         record_id = record.get("id")
         if record_id and (
             not represents_int(record_id) or re.search(r"([０-９])", record_id)
@@ -1472,7 +1473,7 @@ def handle_validate_item_import(list_record, schema) -> list:
                         last_key = path_list[-1]
                         target[last_key] = str(target[last_key])
                         target_path = ".".join([str(p) for p in path_list[:-2]])
-                        warnings.append(
+                        new_warnings.append(
                             _("Replace value of %(target_path)s from %(old_value)s to '%(new_value)s'.",
                                 target_path=target_path, old_value=target[last_key], new_value=str(target[last_key])
                             )
@@ -1490,13 +1491,14 @@ def handle_validate_item_import(list_record, schema) -> list:
 
         records = dict(**record)
         records["errors"] = errors if len(errors) else None
-        if len(warnings) > 0:
+        if len(new_warnings) > 0:
             warnings.append(
                 _("Specified %(type)s is different from existing %(existing_type)s.",
                     type="type:integer", existing_type="type:string"
                 )
             )
-            records["warnings"] = warnings if len(warnings) else None
+            warnings.extend(new_warnings)
+            records["warnings"] = warnings
         result.append(records)
 
     return result
