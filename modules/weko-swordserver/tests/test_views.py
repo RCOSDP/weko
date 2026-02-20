@@ -207,7 +207,7 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
     mocker_check_item.return_value = {
         "data_path": "/var/tmp/test",
         "register_type": "Direct",
-        "list_record": [{"status": "new", "errors": ["Item check error."], 
+        "list_record": [{"status": "new", "errors": ["Item check error."],
                          "warnings": ["Test warning message"]}],
     }
 
@@ -529,7 +529,7 @@ def test_put_object(
     mocker_check_item.return_value = {
         "data_path": "/var/tmp/test",
         "register_type": "Direct",
-        "list_record": [{"status": "keep", "errors": ["Item check error."], 
+        "list_record": [{"status": "keep", "errors": ["Item check error."],
                          "warnings": ["Test warning message"]}],
     }
 

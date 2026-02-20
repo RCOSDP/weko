@@ -1064,10 +1064,10 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
     }
 
     list_record = [
-        {   
+        {
             "metadata": {
                 'item_xxx': {
-                    'subitem_yyy':[ 
+                    'subitem_yyy':[
                         {"subitem_zzz": 123}
                     ]
                 }
@@ -1117,7 +1117,7 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
     }
 
     list_record = [
-        {   
+        {
             "metadata": {
                 'item_aaa': {
                     'subitem_bbb': {
@@ -1131,7 +1131,7 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
         with set_locale("en"):
             result = handle_validate_item_import(list_record, schema)
             assert "errors" in result[0]
-            
+
     with app.test_request_context():
         with set_locale("ja"):
             result = handle_validate_item_import(list_record, schema)

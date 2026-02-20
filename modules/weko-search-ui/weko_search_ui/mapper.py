@@ -1421,22 +1421,22 @@ class JsonLdMapper(JsonMapper):
                 rule = rules.get(rule_id, None)
                 if not isinstance(rule, dict):
                     warning_list.append(
-                        _("Replacement rule: '%(rule_id)s' is invalid.", 
+                        _("Replacement rule: '%(rule_id)s' is invalid.",
                         rule_id=rule_id))
                     continue
-                
+
                 from_str = rule.get("from", None)
                 to_str = rule.get("to", None)
                 target_path_list = rule.get("target_path", [])
 
                 if not(
-                    isinstance(from_str, str) and 
+                    isinstance(from_str, str) and
                     from_str != "" and
                     isinstance(to_str, str) and
                     isinstance(target_path_list, list)
                 ):
                     warning_list.append(
-                        _("Replacement rule: '%(rule_id)s' is invalid.", 
+                        _("Replacement rule: '%(rule_id)s' is invalid.",
                         rule_id=rule_id))
                     continue
 
@@ -1456,7 +1456,7 @@ class JsonLdMapper(JsonMapper):
                                 metadata_value = metadata[meta_key]
                                 if is_regex:
                                     metadata[path_key] = \
-                                    re.sub(from_str, lambda m: to_str, 
+                                    re.sub(from_str, lambda m: to_str,
                                             metadata_value)
                                 else:
                                     metadata[path_key] = \
@@ -1469,7 +1469,7 @@ class JsonLdMapper(JsonMapper):
             if warning_list:
                 raise ValueError(warning_list)
             return metadata, info
-        
+
         except Exception as e:
             info_warnings = info.get("warnings", [])
             if isinstance(e, ValueError) and isinstance(e.args[0], list):

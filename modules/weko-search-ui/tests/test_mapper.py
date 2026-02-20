@@ -5413,7 +5413,7 @@ class TestJsonLdMapper:
                     copy.deepcopy(metadata), copy.deepcopy(info))
                 assert any("置換処理に失敗しました。: jsonldマッピングの置換ルール"
                            "の型が不正です。"\
-                            in w for w in result_info["warnings"])  
+                            in w for w in result_info["warnings"])
             assert result_metadata == metadata
 
             # invalid rule_map
@@ -5424,7 +5424,7 @@ class TestJsonLdMapper:
                     "is_regex": False,
                     "target_path": ["key1"]
                 },
-            } 
+            }
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = ["invalid_val"]
             with set_locale("en"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
@@ -5472,7 +5472,7 @@ class TestJsonLdMapper:
                             in w for w in result_info["warnings"])
                 assert result_metadata["key1"] == "ab｜cd"
                 assert result_metadata["key2"] == "efg|hij"
-            
+
             with set_locale("ja"):
                 result_metadata, result_info = mapper.apply_import_replace_rules(
                     copy.deepcopy(metadata), copy.deepcopy(info))
@@ -5584,7 +5584,7 @@ class TestJsonLdMapper:
                     "is_regex": True,
                     "target_path": ["key3"]
                 }
-            } 
+            }
             app.config["WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP"] = {
                 "123": [
                     "is_regex_not_bool_false",

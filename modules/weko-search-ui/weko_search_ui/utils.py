@@ -1473,7 +1473,7 @@ def handle_validate_item_import(list_record, schema) -> list:
                             target = target[key]
                         last_key = path_list[-1]
                         target[last_key] = str(target[last_key])
-                        target_path = ".".join([str(p) for p in path_list[:-2]])                       
+                        target_path = ".".join([str(p) for p in path_list[:-2]])
                         new_warnings.append(
                             _("Replace value of %(target_path)s from %(old_value)s to '%(new_value)s'.",
                                 target_path=target_path, old_value=target[last_key], new_value=str(target[last_key])
