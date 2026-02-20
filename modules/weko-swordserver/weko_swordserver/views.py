@@ -313,10 +313,12 @@ def post_service_document():
     # Validate items in the check result
     for item in check_result.get("list_record") or [{}]:
         if not item or item.get("errors"):
+            warning = item.get("warnings", []) if item else []
             error_msg = (
                 ", ".join(item.get("errors"))
                 if item and item.get("errors") else "item_missing"
             )
+            error_msg += f", 'warnings': [{', '.join(warning)}]" if warning else ""
             current_app.logger.error(f"Error in check_import_items: {error_msg}")
             raise WekoSwordserverException(
                 f"Item check error: {error_msg}",
@@ -388,6 +390,8 @@ def post_service_document():
                 )
 
         elif register_type == "Workflow":
+            item["metadata"]["researchmap"] = item.get(
+                "researchmap_linkage", False)
             url, recid, action , error = import_items_to_activity(
                 item, request_info=request_info
             )
@@ -624,10 +628,12 @@ def put_object(recid):
     # only first item
     item = (check_result.get("list_record") or [{}])[0]
     if not item or item.get("errors"):
+        warning = item.get("warnings", []) if item else []
         error_msg = (
             ", ".join(item.get("errors"))
             if item and item.get("errors") else "item_missing"
         )
+        error_msg += f", 'warnings': [{', '.join(warning)}]" if warning else ""
         current_app.logger.error(f"Error in check_import_items: {error_msg}")
         raise WekoSwordserverException(
             f"Item check error: {error_msg}",
@@ -705,6 +711,8 @@ def put_object(recid):
         response = jsonify(_get_status_document(recid)), 200
 
     elif register_type == "Workflow":
+        item["metadata"]["researchmap"] = item.get(
+            "researchmap_linkage", False)
         url, _, action, error = import_items_to_activity(
             item, request_info=request_info
         )
