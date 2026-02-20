@@ -1192,6 +1192,7 @@ def test_handle_check_duplicate_record(app):
 
 
 # def handle_check_exist_record(list_record) -> list:
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_exist_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_handle_check_exist_record(app):
     case = unittest.TestCase()
     # case 1 import new items
@@ -1213,7 +1214,8 @@ def test_handle_check_exist_record(app):
     with open(filepath, encoding="utf-8") as f:
         result = json.load(f)
 
-    case.assertCountEqual(handle_check_exist_record(list_record), result)
+    with app.test_request_context():
+        case.assertCountEqual(handle_check_exist_record(list_record), result)
 
     # case 2 import items with id
     filepath = os.path.join(
@@ -1287,6 +1289,127 @@ def test_handle_check_exist_record(app):
         with set_locale("en"):
             case.assertCountEqual(handle_check_exist_record(list_record), result)
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_exist_record_put_auto_fill -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_exist_record_put_auto_fill(app,db):
+    class DummyRecord:
+        def __init__(self, recid="10", deleted=False):
+            self._recid = recid
+            self._deleted = deleted
+            self.pid = self
+
+        def is_deleted(self):
+            return self._deleted
+
+        def get(self, key):
+            if key == "recid":
+                return self._recid
+            return None
+    # case 5 no id,uri
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid") as mock_get_record:
+        mock_get_record.return_value = DummyRecord(recid="10", deleted=False)
+
+        filepath = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            "data",
+            "list_records",
+            "b4_handle_check_exist_record4.json",
+        )
+        with open(filepath, encoding="utf-8") as f:
+            list_record = json.load(f)
+
+        recid = "10"
+        with app.test_request_context("/sword/deposit/{}".format(recid), method="PUT"):
+            request.view_args = {"recid": recid}
+            result = handle_check_exist_record(list_record)
+            assert result[0]["id"] == recid
+            assert result[0]["uri"].endswith("/records/{}".format(recid))
+            assert result[0]["status"] == "keep"
+
+class DummyPid:
+    def __init__(self, deleted=False):
+        self._deleted = deleted
+    def is_deleted(self):
+        return self._deleted
+
+class DummyRecord:
+    def __init__(self, recid="", deleted=False):
+        self.pid = DummyPid(deleted)
+        self._recid = recid
+    def get(self, key):
+        if key == "recid":
+            return self._recid
+        return None
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_check_exist_record_branches -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_handle_check_exist_record_cases(app, db):
+    from weko_search_ui.utils import handle_check_exist_record
+
+    # 1. item_id is None, recid is set
+    list_record = [{"id": None, "uri": None}]
+    with app.test_request_context("/sword/deposit/100", method="PUT"):
+        request.view_args = {"recid": "100"}
+        result = handle_check_exist_record(list_record)
+        assert result[0]["id"] == "100"
+        assert result[0]["status"] is None
+
+    # 2. uri and system_url are different
+    list_record = [{"id": "101", "uri": "http://dummy/other/101"}]
+    with app.test_request_context("/sword/deposit/101", method="PUT"):
+        request.view_args = {"recid": "101"}
+        result = handle_check_exist_record(list_record)
+        assert result[0]["status"] is None
+        assert any("Specified URI and system URI do not match." in err for err in result[0].get("errors", []))
+
+    # 3. PIDDoesNotExistError occurs
+    list_record = [{"id": "102", "uri": None}]
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", side_effect=PIDDoesNotExistError("recid", "102")):
+        with app.test_request_context("/sword/deposit/102", method="PUT"):
+            request.view_args = {"recid": "102"}
+            result = handle_check_exist_record(list_record)
+            assert result[0]["status"] is None
+            assert any("Item does not exist in the system." in err for err in result[0].get("errors", []))
+
+    # 4. item_exist.pid.is_deleted() is True
+    list_record = [{"id": "103", "uri": None}]
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=DummyRecord(recid="103", deleted=True)):
+        with app.test_request_context("/sword/deposit/103", method="PUT"):
+            request.view_args = {"recid": "103"}
+            result = handle_check_exist_record(list_record)
+            assert result[0]["status"] is None
+
+    # 5. edit_mode is None
+    list_record = [{"id": "104", "uri": None, "edit_mode": None}]
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=DummyRecord(recid="104", deleted=False)):
+        with app.test_request_context("/sword/deposit/104", method="PUT"):
+            request.view_args = {"recid": "104"}
+            result = handle_check_exist_record(list_record)
+            assert result[0]["status"] is None
+            assert any("Please specify either \"Keep\" or \"Upgrade\"." in err for err in result[0].get("errors", []))
+
+    # 6. edit_mode is invalid value
+    list_record = [{"id": "105", "uri": None, "edit_mode": "delete"}]
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=DummyRecord(recid="105", deleted=False)):
+        with app.test_request_context("/sword/deposit/105", method="PUT"):
+            request.view_args = {"recid": "105"}
+            result = handle_check_exist_record(list_record)
+            assert result[0]["status"] is None
+            assert any("Please specify either \"Keep\" or \"Upgrade\"." in err for err in result[0].get("errors", []))
+
+    # 7. edit_mode is correct value
+    list_record = [{"id": "106", "uri": None, "edit_mode": "keep"}]
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=DummyRecord(recid="106", deleted=False)):
+        with app.test_request_context("/sword/deposit/106", method="PUT"):
+            request.view_args = {"recid": "106"}
+            result = handle_check_exist_record(list_record)
+            assert result[0]["status"] == "keep"
+
+    # 8. When item_id is an empty string
+    list_record = [{"id": "", "uri": None}]
+    with app.test_request_context("/sword/deposit/", method="PUT"):
+        request.view_args = {"recid": ""}
+        result = handle_check_exist_record(list_record)
+        assert result[0]["id"] is None
+        assert result[0]["status"] == "new"
 
 # def make_file_by_line(lines):
 def test_make_file_by_line(i18n_app):

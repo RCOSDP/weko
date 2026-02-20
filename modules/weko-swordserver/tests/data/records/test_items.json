@@ -99,4 +99,35 @@
         "resourcetype": "conference paper"
       }
     }
+,
+  {
+    "id": "filetest",
+    "pid": { "type": "depid", "value": "filetest", "revision_id": 0 },
+    "lang": "ja",
+    "owner": "99",
+    "title": "filetest_title",
+    "owners": [99],
+    "status": "published",
+    "$schema": "/items/jsonschema/15",
+    "pubdate": "2026-02-09",
+    "created_by": 99,
+    "owners_ext": {
+      "email": "filetest@nii.ac.jp",
+      "username": "fileuser",
+      "displayname": "File Test User"
+    },
+    "shared_user_ids": [],
+    "item_1617186331708": [
+      { "subitem_1551255647225": "filetest_title", "subitem_1551255648112": "ja" }
+    ],
+    "item_file": [
+      {
+        "url": {
+          "url": "http://TEST_SERVER.localdomain/files/filetest.pdf",
+          "label": "filetest.pdf"
+        },
+        "mimetype": "application/pdf"
+      }
+    ]
+  }
 ]
