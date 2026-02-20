@@ -116,10 +116,16 @@
         </div>
       </div>
     </div>
+    <!-- トースト -->
+    <Alert v-if="isToast" :alert="toastData" @click-close="isToast = !isToast" />
   </div>
 </template>
 
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n';
+
+import Alert from '~/components/common/Alert.vue';
+
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -158,6 +164,15 @@ const perPage = ref(props.conditions.perPage ?? '20');
 const sort = ref(props.conditions.sort ?? 'wtl');
 const order = ref(props.conditions.order ?? 'asc');
 let copyURL = '';
+const { t } = useI18n();
+const isToast = ref(false);
+const toastData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 
 /* ///////////////////////////////////
 // function
@@ -185,15 +200,18 @@ function copySearchCondition() {
   const hereURL = window.location.href.split('?')[0];
   copyURL = hereURL + '?' + urlSearchParam;
 
-  // クリップボードに貼り付け
+  // クリップボードにコピー
   navigator.clipboard.writeText(copyURL).then(
     () => {
-      alert('Copy successful');
+      toastData.value.loglevel = 'success';
+      toastData.value.msgstr = t('message.copySearch.copySuccess');
     },
     () => {
-      alert('Copy failed');
+      toastData.value.loglevel = 'error';
+      toastData.value.msgstr = t('message.copySearch.copyFailed');
     }
   );
+  isToast.value = true;
 }
 </script>
 
