@@ -217,7 +217,11 @@ def subitem_recs(subitems, subitem_key_list, schema, oai_key_list, metadata):
             else:
                 current_app.logger.debug("oai_key: {}, metadata: {}".format(oai_key, metadata))
         elif subschema.get('properties', None):
+<<<<<<< HEAD
             if oai_key and metadata and oai_key in metadata:
+=======
+            if oai_key and oai_key in metadata:
+>>>>>>> 351dad8bb (weko#47128 fix bug)
                 if subitem_key in subitems:
                     _tmp = subitems[subitem_key]
                 else:
@@ -1563,7 +1567,11 @@ class JPCOARMapper(BaseMapper):
             'datacite:geoLocation':
                 partial(add_geo_location, *args),
             'jpcoar:fundingReference':
+<<<<<<< HEAD
                 partial(add_funding_reference, version, *args),
+=======
+                partial(add_funding_reference, *args),
+>>>>>>> 351dad8bb (weko#47128 fix bug)
             'jpcoar:sourceIdentifier':
                 partial(add_source_identifier, *args),
             'jpcoar:sourceTitle':
