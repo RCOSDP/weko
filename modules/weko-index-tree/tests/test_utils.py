@@ -54,7 +54,7 @@ from invenio_accounts.testutils import login_user_via_session, client_authentica
 ######
 import json
 import pytest
-from mock import patch, MagicMock
+from mock import patch, MagicMock, Mock
 from datetime import date, datetime, timedelta
 from functools import wraps
 from operator import itemgetter
@@ -81,7 +81,7 @@ from invenio_deposit.api import Deposit
 
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
-from weko_index_tree.errors import IndexBaseRESTError
+from weko_index_tree.errors import IndexDeletedRESTError, IndexBaseRESTError
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
@@ -609,15 +609,31 @@ def test___get_redis_store(i18n_app):
 
 
 #+++ def lock_all_child_index(index_id: str, value: str):
-def test_lock_all_child_index(i18n_app, indices):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_lock_all_child_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_lock_all_child_index(app, i18n_app, indices, mocker):
     index_id = indices['index_non_dict'].id
     value = indices['index_non_dict'].index_name
+    locked_key = []
 
-    assert lock_all_child_index(index_id, value)
+    datastore = __get_redis_store()
+    lock_all_child_index(index_id, value, locked_key)
+    assert locked_key == ["lock_index_33", "lock_index_44", "lock_index_45"]
+    assert datastore.redis.exists("lock_index_33") == True
+    assert datastore.redis.exists("lock_index_44") == True
+    assert datastore.redis.exists("lock_index_45") == True
+    unlock_index(locked_key)
+
+    with patch("weko_index_tree.api.Indexes.get_recursive_tree", side_effect=Exception("Test Exception")):
+        mock_logger = mocker.patch("flask.current_app.logger.error")
+        locked_key = []
+        lock_all_child_index(index_id, value, locked_key)
+        assert locked_key == []
+        mock_logger.assert_called()
 
 
 #+++ def unlock_index(index_key):
-def test_unlock_index(i18n_app, indices):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_unlock_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_unlock_index(app, i18n_app, indices):
     datastore = __get_redis_store()
     locked_key_dict = f"lock_index_{indices['index_dict']['index_name']}_dict"
     locked_key_non_dict = f"lock_index_{indices['index_non_dict'].index_name}_non_dict"
@@ -644,26 +660,27 @@ def test_validate_before_delete_index(i18n_app, indices, mocker):
     index_id = indices['index_non_dict'].id
 
     mocker.patch("weko_index_tree.utils.is_index_locked", return_value=False)
-    mocker.patch('weko_index_tree.utils.lock_all_child_index', return_value=(True, ['lock_index_1', 'lock_index_2']))
+    mocker.patch('weko_index_tree.utils.lock_all_child_index', return_value=True)
     mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=False)
     mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=False)
     mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=False)
 
-    is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+    errors = []
+    locked_key = []
+    validate_before_delete_index(index_id, locked_key, errors)
     # 51994 case.05(validate_before_delete_index)
-    assert is_unlock == True
     assert errors == []
-    assert locked_key != []
+    assert locked_key == []
 
 
-# .tox/c1/bin/pytest --cov=weko-index-tree tests/test_utils.py::test_validate_before_delete_index_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_validate_before_delete_index_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 @pytest.mark.parametrize('validate', [
     'is_index_locked',
     'check_doi_in_index',
     'get_editing_items_in_index',
     'check_has_any_harvest_settings_in_index_is_locked'
 ])
-def test_validate_before_delete_index_error(i18n_app, indices, validate, mocker):
+def test_validate_before_delete_index_error(app, i18n_app, indices, validate, mocker):
     """
     Test validate_before_delete_index when return validation error.
 
@@ -678,9 +695,10 @@ def test_validate_before_delete_index_error(i18n_app, indices, validate, mocker)
     if validate == 'is_index_locked':
         mocker.patch("weko_index_tree.utils.is_index_locked", return_value=True)
 
-        is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+        errors = []
+        locked_key = []
+        validate_before_delete_index(index_id, locked_key, errors)
         # 51994 case.01(validate_before_delete_index)
-        assert is_unlock == False
         assert errors == [_('Index Delete is in progress on another device.')]
         assert locked_key == []
     else:
@@ -693,30 +711,36 @@ def test_validate_before_delete_index_error(i18n_app, indices, validate, mocker)
             mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=False)
             mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=False)
 
-            is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+            errors = []
+            locked_key = []
+            validate_before_delete_index(index_id, locked_key, errors)
             # 51994 case.02(validate_before_delete_index)
-            assert is_unlock == True
             assert errors == [_('The index cannot be deleted because there is a link from an item that has a DOI.')]
+            assert locked_key == []
         # get_editing_items_in_index is True
         elif validate == 'get_editing_items_in_index':
             mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=False)
             mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=True)
             mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=False)
 
-            is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+            errors = []
+            locked_key = []
+            validate_before_delete_index(index_id, locked_key, errors)
             # 51994 case.03(validate_before_delete_index)
-            assert is_unlock == True
             assert errors == [_('This index cannot be deleted because the item belonging to this index is being edited.')]
+            assert locked_key == []
         # check_has_any_harvest_settings_in_index_is_locked is True
         elif validate == 'check_has_any_harvest_settings_in_index_is_locked':
             mocker.patch('weko_index_tree.utils.check_doi_in_index', return_value=False)
             mocker.patch('weko_index_tree.utils.get_editing_items_in_index', return_value=False)
             mocker.patch('weko_index_tree.utils.check_has_any_harvest_settings_in_index_is_locked', return_value=True)
 
-            is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+            errors = []
+            locked_key = []
+            validate_before_delete_index(index_id, locked_key, errors)
             # 51994 case.04(validate_before_delete_index)
-            assert is_unlock == True
             assert errors == [_('The index cannot be deleted becase the index in harvester settings.')]
+            assert locked_key == []
 
 
 #+++ def is_index_locked(index_id):
@@ -732,18 +756,50 @@ def test_is_index_locked(i18n_app, indices, redis_connect):
 
 # def perform_delete_index(index_id, record_class, action: str):
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_perform_delete_index -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
-def test_perform_delete_index(app, db, test_indices, users):
+def test_perform_delete_index(app, db, test_indices, users, mocker):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         with app.test_request_context(headers=[("Accept-Language", "en")]):
             with patch("weko_index_tree.utils.is_index_locked", return_value=False):
+                mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
                 assert perform_delete_index(1, Indexes, "move")==('', ['The index cannot be deleted because there is a link from an item that has a DOI.'])
+                mock_unlock_index.assert_called()
+                unlock_index(["lock_index_1", "lock_index_11"])
             with patch("weko_index_tree.utils.check_doi_in_index", return_value=False):
                 with patch("weko_index_tree.utils.get_editing_items_in_index", return_value=["0"]):
+                    mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
                     assert perform_delete_index(1, Indexes, "move")==('', ['This index cannot be deleted because the item belonging to this index is being edited.'])
+                    mock_unlock_index.assert_called()
+                    unlock_index(["lock_index_1", "lock_index_11"])
                 with patch("weko_index_tree.utils.get_editing_items_in_index", return_value=[]):
+                    with patch("weko_index_tree.api.Indexes.get_self_path", return_value=None):
+                        mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
+                        mock_logger = mocker.patch("flask.current_app.logger.error")
+                        assert perform_delete_index(0, Indexes, "move")==('Failed to delete index.', ['Failed to delete index.'])
+                        mock_logger.assert_called()
+                        mock_unlock_index.assert_called()
+                        unlock_index(["lock_index_1", "lock_index_11"])
                     with patch("weko_index_tree.api.Indexes.delete_by_action", return_value=None):
-                        assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', [])
-                    assert perform_delete_index(1, Indexes, "delete")==('Index deleted successfully.', [])
+                        mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
+                        mock_logger = mocker.patch("flask.current_app.logger.error")
+                        assert perform_delete_index(1, Indexes, "move")==('Failed to delete index.', ['Failed to delete index.'])
+                        mock_logger.assert_called()
+                        mock_unlock_index.assert_called()
+                        unlock_index(["lock_index_1", "lock_index_11"])
+                    mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
+                    assert perform_delete_index(1, Indexes, "test")==('Index deleted successfully.', [])
+                    mock_unlock_index.assert_called()
+                    unlock_index(["lock_index_1", "lock_index_11"])
+                    with patch("weko_index_tree.api.Indexes.delete", return_value=[True]) as mock_delete_by_action:
+                        with patch("weko_deposit.api.WekoDeposit.delete_by_index_tree_id", return_value=True):
+                            mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
+                            assert perform_delete_index(1, Indexes, "all")==('Index deleted successfully.', [])
+                            mock_delete_by_action.assert_called()
+                            mock_unlock_index.assert_called()
+                            unlock_index(["lock_index_1", "lock_index_11"])
+        with patch("weko_index_tree.utils.validate_before_delete_index", return_value=True):
+            mock_unlock_index = mocker.patch("weko_index_tree.utils.unlock_index")
+            assert perform_delete_index(100, Indexes, "all")==('Failed to delete index.', ['Failed to delete index.'])
+            mock_unlock_index.assert_not_called()
 
 
 # def get_doi_items_in_index(index_id, recursively=False):
