@@ -959,18 +959,14 @@ def __get_redis_store():
     return redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
 
 
-def lock_all_child_index(index_id: str, value: str):
+def lock_all_child_index(index_id: str, value: str, locked_key: list):
     """Lock index.
 
     Args:
         index_id (str): index identifier.
         value (str): Lock value.
-
-    Returns:
-        bool: True if the index is locked.
-
+        locked_key (list): locked key list.
     """
-    locked_key = []
     try:
         from .api import Indexes
         redis_store = __get_redis_store()
@@ -982,8 +978,6 @@ def lock_all_child_index(index_id: str, value: str):
             locked_key.append(key_prefix + str(c_index.cid))
     except Exception as e:
         current_app.logger.error('Could not lock index:', e)
-        return False, locked_key
-    return True, locked_key
 
 
 def unlock_index(index_key):
@@ -1003,25 +997,23 @@ def unlock_index(index_key):
         current_app.logger.error('Could not unlock index:', e)
 
 
-def validate_before_delete_index(index_id):
+def validate_before_delete_index(index_id, locked_key, errors):
     """Validate index data before deleting the index.
 
     Args:
         index_id (str|int): Index identifier.
+        locked_key (list): Locked key list.
+        errors (list): Error list.
 
     Returns:
         (boolean, list, list): unlock flag and error list and locked keys list
 
     """
-    is_unlock = False
-    locked_key = []
-    errors = []
     if is_index_locked(index_id):
         errors.append(
             _('Index Delete is in progress on another device.'))
     else:
-        is_unlock, locked_key = lock_all_child_index(index_id,
-                                                     str(current_user.get_id()))
+        lock_all_child_index(index_id, str(current_user.get_id()), locked_key)
         if check_doi_in_index(index_id):
             errors.append(
                 _('The index cannot be deleted because there is'
@@ -1032,8 +1024,6 @@ def validate_before_delete_index(index_id):
         elif check_has_any_harvest_settings_in_index_is_locked(index_id):
             errors.append(_('The index cannot be deleted becase '
                             'the index in harvester settings.'))
-
-    return is_unlock, errors, locked_key
 
 
 def is_index_locked(index_id):
@@ -1071,12 +1061,11 @@ def perform_delete_index(index_id, record_class, action: str):
         tuple(str, list): delete message and error list
 
     """
-    is_unlock = True
     locked_key = []
     errors = []
     try:
         msg = ''
-        is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+        validate_before_delete_index(index_id, locked_key, errors)
         if len(errors) == 0:
             res = record_class.get_self_path(index_id)
             if not res:
@@ -1113,8 +1102,9 @@ def perform_delete_index(index_id, record_class, action: str):
             remarks=tb_info[0]
         )
         msg = 'Failed to delete index.'
+        errors.append(msg)
     finally:
-        if is_unlock:
+        if locked_key:
             unlock_index(locked_key)
     return msg, errors
 
