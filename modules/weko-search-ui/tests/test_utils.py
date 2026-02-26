@@ -1064,14 +1064,17 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
     }
 
     list_record = [
-        {   
+        {
             "metadata": {
                 'item_xxx': {
-                    'subitem_yyy':[ 
+                    'subitem_yyy':[
                         {"subitem_zzz": 123}
                     ]
                 }
-            }
+            },
+            "warnings": [
+                "existing_warning"
+            ]
         }
     ]
     with app.test_request_context():
@@ -1081,6 +1084,7 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
             target = list_record[0]["metadata"]['item_xxx']['subitem_yyy'][0]["subitem_zzz"]
             assert any("Replace value of" in w for w in warnings)
             assert any("is different from existing" in w for w in warnings)
+            assert any("existing_warning" in w for w in warnings)
             assert type(target) == str
 
     list_record[0]["metadata"]['item_xxx']['subitem_yyy'][0]["subitem_zzz"] = 456
@@ -1091,6 +1095,7 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
             warnings = result[0].get("warnings", [])
             assert any("へ置き換えました。" in w for w in warnings)
             assert any("と異なっています。" in w for w in warnings)
+            assert any("existing_warning" in w for w in warnings)
 
     schema = {
         "type": "object",
@@ -1112,7 +1117,7 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
     }
 
     list_record = [
-        {   
+        {
             "metadata": {
                 'item_aaa': {
                     'subitem_bbb': {
@@ -1126,7 +1131,7 @@ def test_handle_validate_item_import(app, mocker_itemtype, mocker):
         with set_locale("en"):
             result = handle_validate_item_import(list_record, schema)
             assert "errors" in result[0]
-            
+
     with app.test_request_context():
         with set_locale("ja"):
             result = handle_validate_item_import(list_record, schema)

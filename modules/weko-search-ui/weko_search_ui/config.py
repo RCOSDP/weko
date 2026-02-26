@@ -757,6 +757,12 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
 
+WEKO_SEARCH_UI_IMPORT_REPLACE_RULES = {}
+"""Strings to be replaced during item import."""
+
+WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP = {}
+"""Mapping of jsonld_mappings table 'id' to replacement rule keys."""
+
 CELERY_RESULT_PERSISTENT = True
 """ If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
 CELERY_TASK_TRACK_STARTED=True
