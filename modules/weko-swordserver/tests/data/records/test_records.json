@@ -202,5 +202,55 @@
       ]
     },
     "relation_version_is_last": true
+  },
+  {
+    "_oai": { "id": "oai:weko3.example.org:filetest", "sets": ["99"] },
+    "path": ["99"],
+    "owner": "99",
+    "recid": "filetest",
+    "title": ["filetest_title"],
+    "pubdate": { "attribute_name": "PubDate", "attribute_value": "2026-02-09" },
+    "_buckets": { "deposit": "filetest-bucket-uuid" },
+    "_deposit": {
+      "id": "filetest",
+      "pid": { "type": "depid", "value": "filetest", "revision_id": 0 },
+      "owner": "99",
+      "owners": [99],
+      "status": "published",
+      "created_by": 99,
+      "owners_ext": {
+        "email": "filetest@nii.ac.jp",
+        "username": "fileuser",
+        "displayname": "File Test User"
+      }
+    },
+    "item_title": "filetest_title",
+    "author_link": [],
+    "item_type_id": "99",
+    "publish_date": "2026-02-09",
+    "publish_status": "0",
+    "weko_shared_ids": [],
+    "item_1617186331708": {
+      "attribute_name": "Title",
+      "attribute_value_mlt": [
+        {
+          "subitem_1551255647225": "filetest_title",
+          "subitem_1551255648112": "ja"
+        }
+      ]
+    },
+    "item_file": {
+      "attribute_type": "file",
+      "attribute_value_mlt": [
+        {
+          "url": {
+            "url": "http://TEST_SERVER.localdomain/files/filetest.pdf",
+            "label": "filetest.pdf"
+          },
+          "mimetype": "application/pdf"
+        }
+      ]
+    },
+    "relation_version_is_last": true
   }
 ]
