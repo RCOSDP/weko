@@ -163,8 +163,6 @@ def update_es_records(ofqdn, nfqdn, id_file_path=None):
                     new_source = replace_fqdn_in_source(source, ofqdn, nfqdn)
 
                     try:
-                        if (failed_count + count) % 10 == 5:
-                            raise Exception
                         es.index(
                             index=index_name,
                             doc_type="_doc",
