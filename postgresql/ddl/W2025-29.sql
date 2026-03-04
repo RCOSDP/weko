@@ -1200,50 +1200,45 @@ If you received this message in error, please notify the [restricted_site_name_e
 
 [restricted_site_name_en]：[restricted_site_url]
 E-mail：[restricted_site_mail]', true, 3),
-    (11, 'シークレットURL提供のお知らせ／Notice of providing secret URL', '
-シークレットURL機能利用者　様
+    (11, 'シークレットURL提供のお知らせ／Notice of providing secret URL', '[restricted_university_institution]
+[restricted_fullname]
+
+[restricted_site_name_ja]です。
 
 [restricted_data_name]に登録されている[file_name]のシークレットURLを作成しました。
 
-以下のURLからダウンロードが可能です。
+下記アドレスよりダウンロードすることができます。
 
-ダウンロードURL：
 [secret_url]
 
-有効期限：[restricted_expiration_date]まで有効です
-ダウンロード回数：[restricted_download_count]回まで可能です。
+このURLは[restricted_expiration_date]まで有効です。ダウンロードは[restricted_download_count]回まで可能です。
 
-＊本URLは、当該コンテンツを特定の方に共有することを前提として発行されています。
-＊セキュリティ保護のため、第三者への転送・共有は固くご遠慮ください。
 ＊このメールは自動送信されているので返信しないでください。
 ＊このメールに心当たりのない方は、[restricted_site_name_ja]までご連絡ください。
 
 [restricted_site_name_ja]：[restricted_site_url]
 問い合わせ窓口：[restricted_site_mail]
 
+
 ----------------------------------------------------------------------------------
 
-Dear Secret URL Feature User,
+[restricted_university_institution]
+[restricted_fullname]
 
-A secret URL has been generated for the file [file_name] registered under [restricted_data_name].
+This is a message from [restricted_site_name_en].
+Secret URL for [file_name] registered in [restricted_data_name] is created.
 
-You can download the file from the link below:
+The data can be downloaded from the address below.
 
-Download URL:  
 [secret_url]
 
-Expiration Date: Valid until [restricted_expiration_date]
-Download Limit: Up to [restricted_download_count] downloads
+This URL is valid until [restricted_expiration_date]. You can download it up to [restricted_download_count] times.
 
-Please note the following:
-
-* This URL is issued on the premise that the content will be shared only with specific intended recipients.
-* For security reasons, please refrain from forwarding or sharing this URL with third parties.
-* This email was sent automatically; please do not reply.
-* If you received this message in error, please notify the [restricted_site_name_en].
+Please do not reply to this email as it has been sent automatically.
+If you received this message in error, please notify the [restricted_site_name_en].
 
 [restricted_site_name_en]：[restricted_site_url]
-Contact: [restricted_site_mail]
+E-mail：[restricted_site_mail]
 ', true, 1),
     (12, '利用申請のお知らせ / Notice of application for use', 'データ提供者 様
 
@@ -1442,12 +1437,7 @@ If you received this message in error, please notify the [restricted_site_name_e
 
 [restricted_site_name_en]：[restricted_site_url]
 E-mail：[restricted_site_mail]', true, 3)
--- ON CONFLICT (id) DO NOTHING;
--- secretURL mail update
-ON CONFLICT (id)
-DO UPDATE SET
-    mail_body = EXCLUDED.mail_body
-WHERE EXCLUDED.id = 11;
+ON CONFLICT (id) DO NOTHING;
 
 --
 -- Name: mail_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
