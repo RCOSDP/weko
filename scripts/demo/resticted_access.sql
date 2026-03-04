@@ -1628,6 +1628,12 @@ SET
 
 SELECT pg_catalog.setval('public.admin_settings_id_seq', (SELECT MAX(id) FROM admin_settings), true);
 
+--
+-- Update settings for existing restricted access configuration
+-- add: max_secret_download_limit, max_secret_expiration_date
+-- update: secret_expiration_date, secret_download_limit, expiration_date, download_limit
+--
+
 WITH updated_max_limit AS (
     SELECT
         id,

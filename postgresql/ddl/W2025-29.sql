@@ -1706,7 +1706,11 @@ VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'attribute_mapping',
 ON CONFLICT (name) DO NOTHING;
 
 RAISE NOTICE 'update restricted_access admin_settings';
--- update restricted_access admin_settings
+--
+-- Update settings for existing restricted access configuration
+-- add: max_secret_download_limit, max_secret_expiration_date
+-- update: secret_expiration_date, secret_download_limit, expiration_date, download_limit
+--
 WITH updated_max_limit AS (
     SELECT
         id,
