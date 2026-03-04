@@ -1314,48 +1314,51 @@ E-mail：[restricted_site_mail]',
     3
 ),
 (
-    11,
-    'シークレットURL提供のお知らせ／Notice of providing secret URL',
-    '[restricted_university_institution]
-[restricted_fullname]様
+    11, 
+    'シークレットURL提供のお知らせ／Notice of providing secret URL', '
+シークレットURL機能利用者　様
 
-[restricted_site_name_ja]です。
 [restricted_data_name]に登録されている[file_name]のシークレットURLを作成しました。
 
-下記アドレスよりダウンロードすることができます。
+以下のURLからダウンロードが可能です。
 
+ダウンロードURL：
 [secret_url]
 
-このURLは[restricted_expiration_date]まで有効です。
-ダウンロードは[restricted_download_count]回まで可能です。
+有効期限：[restricted_expiration_date]まで有効です
+ダウンロード回数：[restricted_download_count]回まで可能です。
 
+＊本URLは、当該コンテンツを特定の方に共有することを前提として発行されています。
+＊セキュリティ保護のため、第三者への転送・共有は固くご遠慮ください。
 ＊このメールは自動送信されているので返信しないでください。
 ＊このメールに心当たりのない方は、[restricted_site_name_ja]までご連絡ください。
 
 [restricted_site_name_ja]：[restricted_site_url]
 問い合わせ窓口：[restricted_site_mail]
 
-
 ----------------------------------------------------------------------------------
 
-[restricted_university_institution]
-[restricted_fullname]
+Dear Secret URL Feature User,
 
-This is a message from [restricted_site_name_en].
-Secret URL for [file_name] registered in [restricted_data_name] is created.
+A secret URL has been generated for the file [file_name] registered under [restricted_data_name].
 
-The data can be downloaded from the address below.
+You can download the file from the link below:
 
+Download URL:  
 [secret_url]
 
-This URL is valid until [restricted_expiration_date].
-You can download it up to [restricted_download_count] times.
+Expiration Date: Valid until [restricted_expiration_date]
+Download Limit: Up to [restricted_download_count] downloads
 
-Please do not reply to this email as it has been sent automatically.
-If you received this message in error, please notify the [restricted_site_name_en].
+Please note the following:
+
+* This URL is issued on the premise that the content will be shared only with specific intended recipients.
+* For security reasons, please refrain from forwarding or sharing this URL with third parties.
+* This email was sent automatically; please do not reply.
+* If you received this message in error, please notify the [restricted_site_name_en].
 
 [restricted_site_name_en]：[restricted_site_url]
-E-mail：[restricted_site_mail]',
+Contact: [restricted_site_mail]',
     true,
     1
 ),
@@ -1580,7 +1583,12 @@ E-mail：[restricted_site_mail]',
     true,
     3
 )
-ON CONFLICT (id) DO NOTHING;
+-- ON CONFLICT (id) DO NOTHING;
+-- secretURL mail update
+ON CONFLICT (id)
+DO UPDATE SET
+    mail_body = EXCLUDED.mail_body
+WHERE EXCLUDED.id = 11;
 
 --
 -- Name: mail_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
