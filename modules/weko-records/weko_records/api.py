@@ -1005,6 +1005,7 @@ class ItemTypes(RecordBase):
             specified_list: renew properties id list
             renew_value: None, ALL, VAL, LOC
         """
+        import copy
         # with db.session.begin_nested():
         result = {"msg":"Update ItemType({})".format(itemtype_id),"code":0}
         item_type = ItemTypes.get_by_id(itemtype_id)
@@ -1014,6 +1015,7 @@ class ItemTypes(RecordBase):
 
         data = pickle.loads(pickle.dumps(item_type.render, -1))
         item_type_mapping = Mapping.get_record(itemtype_id)
+        mapping_copy = copy.deepcopy(mapping_dict)
         pat1 = re.compile(r'cus_(\d+)')
         for idx, i in enumerate(data['table_row_map']['form']):
             if isinstance(i,dict) and 'key' in i:
@@ -1028,9 +1030,9 @@ class ItemTypes(RecordBase):
                         _prop = ItemTypeProps.get_record(_property_id)
                         if _prop:
                             # fix mapping
-                            if _property_id in mapping_dict:
-                                update_mapping = cls.update_mapping_without_static(item_type_mapping.get(_prop_id,{}),mapping_dict.get(_property_id)) \
-                                    if item_type_mapping else mapping_dict.get(_property_id)
+                            if _property_id in mapping_copy:
+                                update_mapping = cls.update_mapping_without_static(item_type_mapping.get(_prop_id,{}),mapping_copy.get(_property_id)) \
+                                    if item_type_mapping else mapping_copy.get(_property_id)
                                 data['table_row_map']['mapping'][_prop_id] = update_mapping
                             # data['meta_list'][_prop_id] = json.loads('{"input_maxItems": "9999","input_minItems": "1","input_type": "cus_'+str(_prop.id)+'","input_value": "","option": {"crtf": false,"hidden": false,"multiple": true,"oneline": false,"required": false,"showlist": false},"title": "'+_prop.name+'","title_i18n": {"en": "", "ja": "'+_prop.name+'"}}')
                             # data['schemaeditor']['schema'][_prop_id]=pickle.loads(pickle.dumps(_prop.schema, -1))
