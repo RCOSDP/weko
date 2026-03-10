@@ -1705,6 +1705,107 @@ INSERT INTO admin_settings (id, name, settings)
 VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'attribute_mapping', '{"shib_eppn": "", "shib_role_authority_name": "", "shib_mail": "", "shib_user_name": ""}')
 ON CONFLICT (name) DO NOTHING;
 
+RAISE NOTICE 'update restricted_access admin_settings';
+--
+-- Update settings for existing restricted access configuration
+-- add: max_secret_download_limit, max_secret_expiration_date
+-- update: secret_expiration_date, secret_download_limit, expiration_date, download_limit
+--
+WITH updated_max_limit AS (
+    SELECT
+        id,
+        settings,
+        CASE
+            WHEN NOT (settings->'secret_URL_file_download' ? 'max_secret_download_limit')
+                THEN jsonb_set(
+                    settings,
+                    '{secret_URL_file_download}',
+                    (settings->'secret_URL_file_download' || '{"max_secret_download_limit": 10}')::jsonb
+                )
+            ELSE settings
+        END AS max_limit
+    FROM admin_settings
+    WHERE name = 'restricted_access'
+),
+updated_max_expiration AS (
+    SELECT
+        id,
+        CASE
+            WHEN NOT (max_limit->'secret_URL_file_download' ? 'max_secret_expiration_date')
+                THEN jsonb_set(
+                    max_limit,
+                    '{secret_URL_file_download}',
+                    (max_limit->'secret_URL_file_download' || '{"max_secret_expiration_date": 30}')::jsonb
+                )
+            ELSE max_limit
+        END AS max_expiration
+    FROM updated_max_limit
+),
+updated_secret_expiration AS (
+    SELECT
+        id,
+        CASE
+            WHEN (max_expiration->'secret_URL_file_download'->>'secret_expiration_date_unlimited_chk')::boolean = true
+                AND (max_expiration->'secret_URL_file_download'->>'secret_expiration_date')::int = 9999999
+                THEN jsonb_set(
+                    max_expiration,
+                    '{secret_URL_file_download,secret_expiration_date}',
+                    to_jsonb((max_expiration->'secret_URL_file_download'->>'max_secret_expiration_date')::int)
+                )
+            ELSE max_expiration
+        END AS secret_expiration
+    FROM updated_max_expiration
+),
+updated_secret_limit AS (
+    SELECT
+        id,
+        CASE
+            WHEN (secret_expiration->'secret_URL_file_download'->>'secret_download_limit_unlimited_chk')::boolean = true
+                AND (secret_expiration->'secret_URL_file_download'->>'secret_download_limit')::int = 9999999
+                THEN jsonb_set(
+                    secret_expiration,
+                    '{secret_URL_file_download,secret_download_limit}',
+                    to_jsonb((secret_expiration->'secret_URL_file_download'->>'max_secret_download_limit')::int)
+                )
+            ELSE secret_expiration
+        END AS secret_limit
+    FROM updated_secret_expiration
+),
+updated_content_expiration AS (
+    SELECT
+        id,
+        CASE
+            WHEN (secret_limit->'content_file_download'->>'expiration_date_unlimited_chk')::boolean = true
+                AND (secret_limit->'content_file_download'->>'expiration_date')::int = 9999999
+                THEN jsonb_set(
+                    secret_limit,
+                    '{content_file_download,expiration_date}',
+                    to_jsonb(9999)
+                )
+            ELSE secret_limit
+        END AS content_expiration
+    FROM updated_secret_limit
+),
+updated_content_limit AS (
+    SELECT
+        id,
+        CASE
+            WHEN (content_expiration->'content_file_download'->>'download_limit_unlimited_chk')::boolean = true
+                AND (content_expiration->'content_file_download'->>'download_limit')::int = 9999999
+                THEN jsonb_set(
+                    content_expiration,
+                    '{content_file_download,download_limit}',
+                    to_jsonb(9999)
+                )
+            ELSE content_expiration
+        END AS content_limit
+    FROM updated_content_expiration
+)
+UPDATE admin_settings
+SET settings = updated_content_limit.content_limit
+FROM updated_content_limit
+WHERE admin_settings.id = updated_content_limit.id;
+
 RAISE NOTICE 'add record of authors_prefix';
 --${INVENIO_WEB_INSTANCE} authors_prefix default_settings "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##" 
 INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
