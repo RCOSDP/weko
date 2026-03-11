@@ -380,8 +380,9 @@ def test_build_cache(instance_path):
         OAISERVER_CACHE_KEY="DynamicOAISets::",
         OAISERVER_REGISTER_RECORD_SIGNALS=True,
         OAISERVER_REGISTER_SET_SIGNALS=True,
-        SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
-                                               'sqlite:///test.db')
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                         'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+
         )
     InvenioDB(app)
     InvenioCache(app)

@@ -1,0 +1,48 @@
+[
+    {
+        "affiliationInfo": [
+            {
+                "affiliationNameInfo": [
+                    {
+                        "affiliationName": "",
+                        "afilliationNameLang": "ja",
+                        "affiliationNameShowFlg": "true"
+                    }
+                ],
+                "affiliationPeriodInfo": [
+                    {
+                        "periodEnd": null,
+                        "periodStart": null
+                    }
+                ],
+                "identifierInfo": [
+                    {
+                        "affiliationId": "",
+                        "affiliationIdType": "1",
+                        "identifierShowFlg": "true"
+                    }
+                ]
+            }
+        ],
+        "authorIdInfo": [
+            {
+                "authorId": "1",
+                "authorIdShowFlg": "true",
+                "idType": "1"
+            }
+        ],
+        "authorNameInfo": [
+            {
+                "familyName": "高橋",
+                "firstName": "三郎",
+                "fullName": "高橋 三郎",
+                "language": "ja",
+                "nameFormat": "familyNmAndNm",
+                "nameShowFlg": "true"
+            }
+        ],
+        "emailInfo": [],
+        "id": "",
+        "pk_id": ""
+    }
+]

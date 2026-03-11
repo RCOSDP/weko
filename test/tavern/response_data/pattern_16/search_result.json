@@ -1,0 +1,57 @@
+{
+    "aggregations": {
+        "Access": {
+            "buckets": [],
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0
+        },
+        "Data Language": {
+            "buckets": [],
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0
+        },
+        "Data Type": {
+            "Data Type": {
+                "buckets": [],
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0
+            },
+            "doc_count": 0
+        },
+        "Distributor": {
+            "Distributor": {
+                "buckets": [],
+                "doc_count_error_upper_bound": 0,
+                "sum_other_doc_count": 0
+            },
+            "doc_count": 0
+        },
+        "Location": {
+            "buckets": [],
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0
+        },
+        "Temporal": {
+            "buckets": [],
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0
+        },
+        "Topic": {
+            "buckets": [],
+            "doc_count_error_upper_bound": 0,
+            "sum_other_doc_count": 0
+        },
+        "path": {
+            "buckets": [],
+            "doc_count_error_upper_bound": "0",
+            "sum_order_doc_count": "0"
+        }
+    },
+    "hits": {
+        "hits": [
+            {
+                
+            }
+        ]
+    }
+}

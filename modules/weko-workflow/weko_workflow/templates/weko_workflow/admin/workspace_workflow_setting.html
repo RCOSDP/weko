@@ -1,0 +1,104 @@
+{#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block body %}
+<input id="lang-code" type="hidden" value="{{lang_code}}" />
+<form class="form-inline" method="POST" name="set_workspace_workflow_setting_form" action={{url_for('workspaceworkflowsetting.index')}}>
+  {{ form.csrf_token }}
+  
+  {%- set select_flg = current_settings.workFlow_select_flg %}
+  {%- set selected_item_type_id = current_settings.item_type_id %}
+  {%- set selected_work_flow_id = current_settings.work_flow_id %}
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="form-inline col-sm-12">
+        <div class="form-group col-sm-12">
+          <div>
+            <label class="radio-inline">
+              <input type="radio" name="registrationRadio" value="1" {%- if select_flg == '1' %}checked{%- endif %}>{{_('Direct Registration')}}
+            </label>
+            <label class="radio-inline">
+              <input type="radio" name="registrationRadio" value="0" {%- if select_flg == '0' %}checked{%- endif %}>{{_('WorkFlow Registration')}}
+            </label>
+          </div>
+          <br/>
+          <div class="panel panel-info gray-color-class {% if select_flg != '1' %} hide{% endif %}" id="item-type-panel">
+            <div class="panel-body">
+              <label class="col-sm-2" for="item-type-lists">{{_('Item Type Select')}}</label>
+              <select class="col-sm-8"  name="itemType" style="display: inline-block;" id="item-type-lists">
+                <option value=""></option>
+                {% for item_type in item_type_list %}
+                <option value="{{ item_type.id }}" {%- if (item_type.id|string) == (selected_item_type_id|string) %}selected{%- endif %}>{{ item_type.name }}({{ item_type.tag }})</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="panel panel-info gray-color-class {% if select_flg != '0' %} hide{% endif %}" id="work-flow-panel">
+            <div class="panel-body">
+              <label class="col-sm-2">{{_('WorkFlow Select')}}</label>
+              <select class="col-sm-8" id="work-flow-lists"  name="workFlow">
+                <option value=""></option>
+                {% for work_flow in work_flow_list %}
+                <option value="{{ work_flow.id }}" {%- if (work_flow.id|string) == (selected_work_flow_id|string) %}selected{%- endif %}>{{ work_flow.flows_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="form-actions">
+    <div class="col-sm-offset-3 col-sm-10">
+      <button type="submit" name="submit" value="set_workspace_workflow_setting_form"
+          class="btn btn-primary ten-pixel-margin">
+        <span class="glyphicon glyphicon-save"></span>&nbsp
+            {{ _('Save') }}
+      </button>
+    </div>
+  </div>
+</form>
+{%- endblock %}
+
+{% block tail %}
+<script>
+  $(document).ready(function () {
+    $('input[name="registrationRadio"]').on('click', function () {
+        const selectedValue = $(this).val();
+        if (selectedValue === "1") {
+            // Select "Direct Registration"
+            $('#item-type-panel').removeClass('hide');
+            $('#work-flow-panel').addClass('hide');
+        } else if (selectedValue === "0") {
+            // "Select "WorkFlow Registration"
+            $('#work-flow-panel').removeClass('hide');
+            $('#item-type-panel').addClass('hide');
+        }
+    });
+  });
+</script>
+{% endblock %}

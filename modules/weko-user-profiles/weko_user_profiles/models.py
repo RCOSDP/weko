@@ -20,10 +20,15 @@
 
 """Database models for user profiles."""
 
+from flask import current_app
+from flask_babelex import lazy_gettext as _
 from invenio_accounts.models import User
 from invenio_db import db
+from invenio_files_rest.utils import create_boto3_s3_client
 from sqlalchemy import event
 from sqlalchemy.ext.hybrid import hybrid_property
+
+from weko_admin.models import AdminSettings
 
 from .validators import validate_username
 
@@ -84,45 +89,65 @@ class UserProfile(db.Model):
     position = db.Column('position', db.String(100))
 
     """Position"""
-    otherPosition = db.Column('otherPosition', db.String(100))
+    item1 = db.Column('otherPosition', db.String(100))
 
     """Phone number"""
-    phoneNumber = db.Column('phoneNumber', db.String(15))
+    item2 = db.Column('phoneNumber', db.String(15))
 
     """Affiliation institute name 1"""
     """Affiliation institute name (n)"""
-    instituteName = db.Column('instituteName', db.String(100))
+    item3 = db.Column('instituteName', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition = db.Column('institutePosition', db.String(255))
+    item4 = db.Column('institutePosition', db.String(255))
 
     """Affiliation institute name 2"""
     """Affiliation institute name (n)"""
-    instituteName2 = db.Column('instituteName2', db.String(100))
+    item5 = db.Column('instituteName2', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition2 = db.Column('institutePosition2', db.String(255))
+    item6 = db.Column('institutePosition2', db.String(255))
 
     """Affiliation institute name 3"""
     """Affiliation institute name (n)"""
-    instituteName3 = db.Column('instituteName3', db.String(100))
+    item7 = db.Column('instituteName3', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition3 = db.Column('institutePosition3', db.String(255))
+    item8 = db.Column('institutePosition3', db.String(255))
 
     """Affiliation institute name 4"""
     """Affiliation institute name (n)"""
-    instituteName4 = db.Column('instituteName4', db.String(100))
+    item9 = db.Column('instituteName4', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition4 = db.Column('institutePosition4', db.String(255))
+    item10 = db.Column('institutePosition4', db.String(255))
 
     """Affiliation institute name 5"""
     """Affiliation institute name (n)"""
-    instituteName5 = db.Column('instituteName5', db.String(100))
+    item11 = db.Column('instituteName5', db.String(100))
 
     """Affiliation institute position (n)"""
-    institutePosition5 = db.Column('institutePosition5', db.String(255))
+    item12 = db.Column('institutePosition5', db.String(255))
+
+    item13 = db.Column('item13', db.String(255))
+
+    item14 = db.Column('item14', db.String(255))
+
+    item15 = db.Column('item15', db.String(255))
+
+    item16 = db.Column('item16', db.String(255))
+
+    """s3_endpoint_url"""
+    s3_endpoint_url = db.Column('s3_endpoint_url', db.String(128))
+
+    """s3_region_name"""
+    s3_region_name = db.Column('s3_region_name', db.String(128))
+
+    """access_key"""
+    access_key = db.Column('access_key', db.String(128))
+
+    """secret_key"""
+    secret_key = db.Column('secret_key', db.String(128))
 
     @hybrid_property
     def username(self):
@@ -154,42 +179,109 @@ class UserProfile(db.Model):
         ).one()
 
     @classmethod
+    def get_by_displayname(cls, username):
+        """Get profile by username.
+
+        :param username: A username to query for (case insensitive).
+        """
+        return cls.query.filter(
+            UserProfile._displayname == username
+        ).first()
+
+    @classmethod
     def get_by_userid(cls, user_id):
         """Get profile by user identifier.
 
-        :param user_id: Identifier of a :class:`~invenio_accounts.models.User`.
-        :returns: A :class:`~invenio_userprofiles.models.UserProfile` instance
-            or ``None``.
+        Args:
+            user_id (int): user id.
+
+        Returns:
+            UserProfile: user profile object. If not found, return None.
         """
-        return cls.query.filter_by(user_id=user_id).one_or_none()
+        obj = cls.query.filter_by(user_id=user_id).one_or_none()
+        return obj if isinstance(obj, UserProfile) else None
 
     @property
     def is_anonymous(self):
         """Return whether this UserProfile is anonymous."""
         return False
 
-    def get_institute_data(self):
+    @property
+    def client_credentials_configured(self):
+        """Check whether S3 credentials are configured.
+        Returns:
+            bool: True if S3 credentials are configured, False otherwise.
+        """
+        return all([
+            self.s3_endpoint_url,
+            self.access_key,
+            self.secret_key,
+        ])
+
+    def create_s3_client(self):
+        """Create boto3 S3 client.
+        Returns:
+            boto3.client: Boto3 S3 client instance.
+        """
+        # Check if S3 credentials are configured
+        if not self.client_credentials_configured:
+            raise Exception(_('S3 setting none. Please check your profile.'))
+
+        return create_boto3_s3_client(
+            self.access_key, self.secret_key,
+            region_name=self.s3_region_name,
+            endpoint_url=self.s3_endpoint_url,
+        )
+
+    def get_institute_data(self, enable_custom=False):
         """Get institute data.
 
-        :return:
+        Args:
+            enable_custom (bool): enable customize profile fields.
+
+        Returns:
+            list: list of dict which contains affiliated institution name and position.
         """
-        institute_dict = {
-            1: {'subitem_affiliated_institution_name': self.instituteName,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition},
-            2: {'subitem_affiliated_institution_name': self.instituteName2,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition2},
-            3: {'subitem_affiliated_institution_name': self.instituteName3,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition3},
-            4: {'subitem_affiliated_institution_name': self.instituteName4,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition4},
-            5: {'subitem_affiliated_institution_name': self.instituteName5,
-                'subitem_affiliated_institution_position':
-                    self.institutePosition5}
-        }
+
+        # get setting from admin settings
+        profile_setting = AdminSettings.get('profiles_items_settings', dict_to_object=False)
+        if not profile_setting:
+            profile_setting = current_app.config.get("WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS", {})
+
+        item_field_settings = [
+            profile_setting.get("item"+ str(i), {}).get("visible", False)  for i in range(3, 17)]
+        institute_dict = [
+            {
+                "subitem_affiliated_institution_name": self.item3 \
+                    if not enable_custom or item_field_settings[0] else "",
+                'subitem_affiliated_institution_position': self.item4 \
+                    if not enable_custom or item_field_settings[1] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item5 \
+                    if not enable_custom or item_field_settings[2] else "",
+                'subitem_affiliated_institution_position': self.item6 \
+                    if not enable_custom or item_field_settings[3] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item7 \
+                    if not enable_custom or item_field_settings[4] else "",
+                'subitem_affiliated_institution_position': self.item8 \
+                    if not enable_custom or item_field_settings[5] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item9 \
+                    if not enable_custom or item_field_settings[6] else "",
+                'subitem_affiliated_institution_position': self.item10 \
+                    if not enable_custom or item_field_settings[7] else ""
+            },
+            {
+                'subitem_affiliated_institution_name': self.item11 \
+                    if not enable_custom or item_field_settings[8] else "",
+                'subitem_affiliated_institution_position': self.item12 \
+                    if not enable_custom or item_field_settings[9] else ""
+            }
+        ]
         return institute_dict
 
 

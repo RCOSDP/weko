@@ -1,0 +1,227 @@
+[
+    {
+        "id": "1",
+        "pid": { "type": "depid", "value": "1", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            "resourcetype": "conference paper"
+        }
+    },
+    {
+        "id": "2",
+        "pid": { "type": "depid", "value": "2", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_46ec",
+            "resourcetype": "thesis"
+        }
+    },
+    {
+        "id": "3",
+        "pid": { "type": "depid", "value": "3", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_2f33",
+            "resourcetype": "book"
+        }
+    },
+    {
+        "id": "4",
+        "pid": { "type": "depid", "value": "4", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_e059",
+            "resourcetype": "learning object"
+        }
+    },
+    {
+        "id": "5",
+        "pid": { "type": "depid", "value": "5", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/ACF7-8YT9",
+            "resourcetype": "aggregated data"
+        }
+    },
+    {
+        "id": "6",
+        "pid": { "type": "depid", "value": "6", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_c513",
+            "resourcetype": "image"
+        }
+    },
+    {
+        "id": "7",
+        "pid": { "type": "depid", "value": "7", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+            "resourcetype": "conference paper"
+        }
+    },
+    {
+        "id": "8",
+        "pid": { "type": "depid", "value": "8", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/c_2f33",
+            "resourcetype": "book"
+        }
+    },
+    {
+        "id": "9",
+        "pid": { "type": "depid", "value": "9", "revision_id": 0 },
+        "lang": "ja",
+        "owner": "1",
+        "title": "title",
+        "owners": [1],
+        "status": "published",
+        "$schema": "/items/jsonschema/15",
+        "pubdate": "2022-08-20",
+        "created_by": 1,
+        "owners_ext": {
+            "email": "wekosoftware@nii.ac.jp",
+            "username": "",
+            "displayname": ""
+        },
+        "shared_user_id": -1,
+        "item_1617186331708": [
+        { "subitem_1551255647225": "ff", "subitem_1551255648112": "ja" }
+        ],
+        "item_1617258105262": {
+            "resourceuri": "http://purl.org/coar/resource_type/ACF7-8YT9",
+            "resourcetype": "aggregated data"
+        }
+    }
+]

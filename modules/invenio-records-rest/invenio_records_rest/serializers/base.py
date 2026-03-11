@@ -181,7 +181,8 @@ class PreprocessorMixin(PreprocessorMixinInterface):
                 if k in item_type_mapping:
                     v = item_type_mapping.get(k)
                     prop_hidden = meta_option.get(k, {}).get('option', {}).get('hidden', False)
-                    if not v or not isinstance(v.get('jpcoar_mapping'), dict) \
+                    if not v or not isinstance(v, dict) \
+                            or not isinstance(v.get('jpcoar_mapping'), dict) \
                             or prop_hidden:
                         continue
                     for k1, v1 in v.get('jpcoar_mapping').items():

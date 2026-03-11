@@ -1,0 +1,1 @@
+ALTER TABLE resync_indexes ALTER COLUMN saving_format TYPE character varying(20);

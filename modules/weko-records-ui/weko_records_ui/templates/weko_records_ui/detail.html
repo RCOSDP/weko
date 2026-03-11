@@ -7,12 +7,13 @@
 #}
 {% extends config.WEKO_SEARCH_UI_BASE_PAGE_TEMPLATE %}
 
-{%- from "invenio_communities/macros.html" import community_header %}
+{%- from "invenio_communities/macros.html" import community_header with context  %}
 
 {%- block css %}
   {{ super() }}
   {% assets "weko_records_ui_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
   {% assets "weko_records_ui_bootstrap_popover_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  <link href="{{ url_for('static', filename='css/weko_theme/sidebar.css')}}" rel="stylesheet">
 {%- endblock css %}
 
 {%- block javascript %}
@@ -28,20 +29,10 @@
   {% assets "weko_records_ui_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   <script src="{{ url_for('static', filename='js/weko_records_ui/record_view_stats.js')}}"></script>
   {% assets "weko_records_ui_preview_carousel_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
-  {%- set site_info = site_info|get_site_info %}
-  {%- set addthis_user_id = site_info.get("addthis_user_id",config.ADDTHIS_USER_ID) %}  
-  <!-- start demo block-->
-  <script type="text/javascript">
-    //see https://www.addthis.com/academy/the-addthis_config-variable/
-  var addthis_config = {
-    data_track_addressbar: false,
-    pubid: '{{ addthis_user_id }}',
-  };
-  </script>
-  <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js"></script>
-  <!-- end demo block -->
   {% assets "weko_theme_js_widget" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
   {% assets "weko_records_ui_bootstrap_popover_js" %}<script src="{{ ASSET_URL }}"></script>{% endassets %}
+  <script src="{{ url_for('static', filename='js/weko_records_ui/request_mail.js')}}"></script>
+  <script src="{{ url_for('static', filename='js/weko_theme/sidebar.js')}}"></script>
 {%- endblock javascript %}
 
 {%- block page_body_tabs %}
@@ -87,16 +78,9 @@
       {% include "weko_theme/body_search.html" %}
     </div>
   </div>
-  <div class="row row-4" style="height:100%">
+  <div class="row row-4 d-flex" style="height: 100%" id="search_row">
     {% if (display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER)) or display_facet_search %}
-    <div id="detail-index" class="col-sm-{{width}} col-md-{{width}} col-lg-{{width}} no-print" style="height:100%">
-      {% if display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER) %}
-        {% include "weko_theme/body_index.html" %}
-      {% endif %}
-      {% if display_facet_search %}
-        {% include "weko_search_ui/body_facet_search.html" %}
-      {% endif %}
-    </div>
+      {% include "weko_theme/sidebar.html" %}
     {% endif %}
     <div id="item-main" {% if (display_index_tree or (current_user.is_authenticated and config.WEKO_SHOW_INDEX_FOR_AUTHENTICATED_USER)) or display_facet_search %}
     class="col-sm-{{12-width|int}} col-md-{{12-width|int}} col-lg-{{12-width|int}}"{% else %}class="col-sm-12 col-md-12 col-lg-12"{% endif %}>

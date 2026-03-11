@@ -18,7 +18,7 @@ class MockHandleClient:
 
     def __init__(self):
         pass
-    
+
     def instantiate_with_credentials(self, credential=None):
         return self.MockClient()
 
@@ -73,7 +73,26 @@ def test_register_handle(app, client):
         assert res.status_code == 200
 
 
-# def dbsession_clean(exception):   
+# .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_delete_handle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
+def test_delete_handle(app, client):
+    url = url_for(
+        "weko_handle.delete_handle", format="json", _external=True
+    )
+    mock_handle_client = MagicMock(side_effect=MockHandleClient)
+    with patch('weko_handle.api.EUDATHandleClient', mock_handle_client):
+        with pytest.raises(Exception) as e:
+            client.post(url)
+        assert e.type==TypeError
+        res = client.post(url, data={'hdl': ''})
+        assert res.status_code == 200
+        res = client.post(url, data={'hdl': '123/456'})
+        assert res.status_code == 200
+        app.config['WEKO_HANDLE_CREDS_JSON_PATH'] = ''
+        res = client.post(url, data={'hdl': '123/456'})
+        assert res.status_code == 200
+
+
+# def dbsession_clean(exception):
 def test_dbsession_clean(app):
     from weko_handle.views import dbsession_clean
 

@@ -1,13 +1,16 @@
 import pytest
 from flask import request,current_app,session,make_response
 from flask_login.utils import login_user
+import hashlib
 from weko_accounts.utils import (
     get_remote_addr,
     generate_random_str,
     parse_attributes,
     login_required_customize,
-    roles_required
+    roles_required,
+    get_sp_info
 )
+from weko_admin.models import AdminSettings
 
 
 #def get_remote_addr():
@@ -220,7 +223,7 @@ def test_generate_random_str(mocker):
 
 #def parse_attributes():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_utils.py::test_parse_attributes -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-def test_parse_attributes(app):
+def test_parse_attributes(app, db):
     current_app.config.update(
         WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP= {
             "SHIB_ATTR_EPPN":(True, 'shib_eppn'),
@@ -232,7 +235,7 @@ def test_parse_attributes(app):
         method="POST",data={"SHIB_ATTR_EPPN":"test_eppn","SHIB_ATTR_MAIL":"test@test.org"}
     ):
         attrs, error = parse_attributes()
-        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':""}
+        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':"G_test_eppn"}
         assert error == False
     with app.test_request_context(
         method="POST",data={}
@@ -244,7 +247,32 @@ def test_parse_attributes(app):
         "/?SHIB_ATTR_EPPN=test_eppn&SHIB_ATTR_MAIL=test@test.org",method="GET"
     ):
         attrs ,error = parse_attributes()
-        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':""}
+        assert attrs == {"shib_eppn":"test_eppn",'shib_mail':"test@test.org",'shib_user_name':"G_test_eppn"}
+        assert error == False
+    # eppn what length is 254
+    test_eppn = 'test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890' + \
+        'test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_eppn1234567890test_ep'
+    with app.test_request_context(
+        method="POST", data={"SHIB_ATTR_EPPN": test_eppn, "SHIB_ATTR_MAIL": "test@test.org"}
+    ):
+        attrs, error = parse_attributes()
+        hash_eppn = hashlib.sha256(test_eppn.encode()).hexdigest()
+        assert attrs == {"shib_eppn": test_eppn, "shib_mail": "test@test.org", "shib_user_name": "G_" + hash_eppn}
+        assert error == False
+    
+    # attribute_mapping is exist
+    attribute_mapping = {
+        'shib_eppn': 'eppn',
+        'shib_role_authority_name': 'HTTP_WEKOSOCIETYAFFILIATION',
+        'shib_mail': 'mail',
+        'shib_user_name': 'HTTP_WEKOID'
+    }
+    AdminSettings.update('attribute_mapping', attribute_mapping)
+    with app.test_request_context(
+        method="POST", data={"SHIB_ATTR_EPPN":"test_eppn","SHIB_ATTR_MAIL":"test@test.org",'eppn':'test_eppn2','mail':'test2@test2.org'}
+    ):
+        attrs, error = parse_attributes()
+        assert attrs == {"shib_eppn":"test_eppn2",'shib_mail':"test2@test2.org",'shib_user_name':"G_test_eppn2"}
         assert error == False
 
 #def login_required_customize(func):
@@ -311,3 +339,26 @@ def test_roles_required(app,users,mocker):
     with app.test_request_context(method="GET"):
         result = roles_required(roles)(lambda x,y:x+y)(x=1,y=2)
         assert result == 3
+
+#def get_sp_info():
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_utils.py::test_get_sp_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_get_sp_info(app):
+    with app.test_request_context('/?next=next_url'):
+        result = get_sp_info()
+        assert result == {
+            'sp_entityID': 'https://localhost/shibboleth-sp',
+            'sp_handlerURL': 'https://localhost/Shibboleth.sso',
+            'return_url': 'http://test_server.localdomain/secure/login.py'
+        }
+        assert session['next'] == 'next_url'
+
+    with app.test_request_context():
+        app.config['SP_ENTITYID'] = 'https://test-sp/shibboleth-sp'
+        app.config['SP_HANDLERURL'] = 'https://test-sp/Shibboleth.sso'
+        result = get_sp_info()
+        assert result == {
+            'sp_entityID': 'https://test-sp/shibboleth-sp',
+            'sp_handlerURL': 'https://test-sp/Shibboleth.sso',
+            'return_url': 'http://test_server.localdomain/secure/login.py'
+        }
+        assert session['next'] == '/'

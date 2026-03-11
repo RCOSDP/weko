@@ -152,6 +152,12 @@ class Client(db.Model):
         nullable=True, index=True)
     """Creator of the client application."""
 
+    user = db.relationship(
+        User,
+        backref=db.backref("oauth2clients", cascade="all, delete-orphan")
+    )
+    """Relationship to user."""
+
     client_id = db.Column(db.String(255), primary_key=True)
     """Client application ID."""
 
@@ -284,6 +290,33 @@ class Client(db.Model):
         ).count()
         return no_users
 
+    @classmethod
+    def get_by_user_id(cls, user_id):
+        """Get client_id, name by user_id.
+
+        Args:
+            user_id (int): User ID.
+
+        Returns:
+            list[Client]:
+                List of Client object. If not found, return empty list.
+        """
+        query = cls.query.filter(cls.user_id == user_id)
+        return [client for client in query.all() if isinstance(client, cls)]
+
+    @classmethod
+    def get_by_client_id(cls, client_id):
+        """Get client by client_id.
+
+        Args:
+            client_id (str): Client ID.
+
+        Returns:
+            Client: Client object. If not found, return `None`.
+        """
+        obj = cls.query.filter_by(client_id=client_id).one_or_none()
+        return obj if isinstance(obj, cls) else None
+
 
 class Token(db.Model):
     """A bearer token is the final token that can be used by the client."""
@@ -400,7 +433,7 @@ class Token(db.Model):
         :param user_id: User ID.
         :param scopes: The list of permitted scopes. (Default: ``None``)
         :param is_internal: If ``True`` it's a internal access token.
-             (Default: ``False``)
+            (Default: ``False``)
         :returns: A new access token.
         """
         with db.session.begin_nested():

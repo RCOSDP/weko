@@ -541,14 +541,13 @@ def build_rss_xml(data=None, index_id=0, page=1, count=20, term=0, lang=''):
     # Channel layer
     Et.SubElement(channel, 'title').text = 'WEKO3'
     Et.SubElement(channel, 'link').text = requested_url
+    Et.SubElement(channel, 'description').text = theme_config.THEME_SITENAME
     if index_id:
         index_detail = Indexes.get_index(index_id)
-        Et.SubElement(channel, 'description').text = index_detail.comment \
-            or index_detail.index_name \
-            or index_detail.index_name_english
-    else:
-        Et.SubElement(channel, 'description').text = \
-            theme_config.THEME_SITENAME
+        if index_detail:
+            Et.SubElement(channel, 'description').text = index_detail.comment \
+                or index_detail.index_name \
+                or index_detail.index_name_english
     current_time = datetime.now()
     Et.SubElement(
         channel,

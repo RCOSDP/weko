@@ -25,8 +25,6 @@ WEKO_INDEXTREE_JOURNAL_API = "/api/indextree/journal"
 
 WEKO_INDEXTREE_JOURNAL_LIST_API = "/api/journal"
 
-_IID = 'iid(tid,record_class="weko_indextree_journal.api:Journals")'
-
 WEKO_INDEXTREE_JOURNAL_REST_ENDPOINTS = dict(
     tid=dict(
         record_class='weko_indextree_journal.api:Journals',

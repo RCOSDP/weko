@@ -1,0 +1,9 @@
+id	pid_type	pid_value	pid_provider	status	object_type	object_uuid
+1	actid	<<activity_id>>	NULL	R	NULL	NULL
+2	recid	2000001	NULL	R	rec	<<uuid_2000001>>
+3	depid	2000001	NULL	R	rec	<<uuid_2000001>>
+4	parent	parent:2000001	NULL	R	rec	<<uuid_2000001>>
+5	oai	oai:<<host_name>>:02000001	oai	R	rec	<<uuid_2000001>>
+6	recid	2000001.1	NULL	R	rec	<<uuid_2000001.1>>
+7	depid	2000001.1	NULL	R	rec	<<uuid_2000001.1>>
+8	oai	oai:<<host_name>>:02000001.1	oai	R	rec	<<uuid_2000001.1>>

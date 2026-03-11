@@ -12,7 +12,7 @@ invenio-i18n==1.0.0
 # invenio-indexer==1.0.2
 invenio-jsonschemas==1.0.0
 invenio-logging==1.0.0b3
-invenio-marc21==1.0.0a8
+# invenio-marc21==1.0.0a8
 invenio-oauthclient==1.0.0
 invenio-pidrelations==1.0.0a4
 invenio-pidstore==1.0.0

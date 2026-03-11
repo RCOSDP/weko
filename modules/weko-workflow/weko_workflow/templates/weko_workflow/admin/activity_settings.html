@@ -1,0 +1,59 @@
+{# -*- coding: utf-8 -*-
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+  {%- extends admin_base_template %}
+  
+  {% block css %}
+    {{ super() }}
+    {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% endblock %}
+  
+  {%- block body %}
+  {%- set cur_lifetime = current_lifetime %}
+  {%- set lifetime_map = map_lifetime %}
+  <form class="form-inline" method="POST" name="set_search_author_form" action={{url_for('activity.index')}}>
+    {{ form.csrf_token }}
+    <div class="row">
+      <div class="col-sm-4 text-right">
+        <label >{{_('Display Approver Email')}}</label>
+      </div>
+      <div class="col-sm-8">
+        <label class="radio-inline">
+          <input type="radio" name="displayRadios" id="displayRadios1" value="1" {{ 'checked' if activity_display_flg == '1' }}>
+          {{_("Display")}}
+        </label>
+        <label class="radio-inline">
+          <input type="radio" name="displayRadios" id="displayRadios0" value="0" {{ 'checked' if activity_display_flg != '1' }}>
+          {{_("Hide")}}
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+     <div class="col-sm-offset-3 col-sm-10">
+      <button type="submit" name="submit" value="set_search_author_form"
+          class="btn btn-primary ten-pixel-margin">
+        <span class="glyphicon glyphicon-save"></span>&nbsp
+           {{ _('Save') }}
+      </button>
+     </div>
+    </div>
+  </form>
+  {%- endblock body %}
+  

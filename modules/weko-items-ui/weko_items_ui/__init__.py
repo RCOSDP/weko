@@ -20,8 +20,8 @@
 
 """UI for creating items."""
 
-from .ext import WekoItemsUI
+from .ext import WekoItemsUI, WekoItemsREST
 from .proxies import current_weko_items_ui
 from .version import __version__
 
-__all__ = ('__version__', 'WekoItemsUI', 'current_weko_items_ui')
+__all__ = ('__version__', 'WekoItemsUI', 'current_weko_items_ui', 'WekoItemsREST')

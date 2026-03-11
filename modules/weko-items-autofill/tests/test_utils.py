@@ -1,12 +1,16 @@
-from mock import patch
+from unittest.mock import patch
 import pytest
+import json
 from lxml import etree
 from invenio_cache import current_cache
+from flask import current_app
 
 from weko_records.models import ItemType, ItemTypeName
 from weko_workflow.models import ActionJournal
 
 from weko_items_autofill.utils import (
+    get_doi_record_data,
+    fetch_metadata_by_doi,
     is_update_cache,
     cached_api_json,
     get_item_id,
@@ -61,7 +65,10 @@ from weko_items_autofill.utils import (
     set_val_for_record_model,
     set_val_for_all_child,
     remove_sub_record_model_no_value,
+    get_researchmap_autofill_item,
+    get_researchmapid_record_data
 )
+from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS
 
 from tests.helpers import json_data, login, logout
 
@@ -236,7 +243,7 @@ def test_get_title_pubdate_path(app, itemtypes):
     }
 
     # not reached break
-    all_false_mapping = {"test1": {}, "test2": {}}
+    all_false_mapping = {"test1": {}, "test2": {}, "test3":""}
     with patch(
         "weko_items_autofill.utils.Mapping.get_record", return_value=all_false_mapping
     ):
@@ -244,9 +251,214 @@ def test_get_title_pubdate_path(app, itemtypes):
         assert result == {"pubDate": "", "title": {}}
 
 
+# def get_doi_record_data(doi, item_type_id, activity_id):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_doi_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_doi_record_data(mocker):
+    doi = "10.1234/test"
+    item_type_id = 1
+    activity_id = 2
+    fake_metadata = {"metainfo": {"foo": "bar", "empty": ""}}
+    fake_metainfo_cleaned = {"foo": "bar"}
+    fake_doi_result = {"title": "Test Title", "author": "Test Author"}
+
+    # patch WorkActivity.get_activity_metadata
+    mock_activity = mocker.patch("weko_items_autofill.utils.WorkActivity.get_activity_metadata", return_value=fake_metadata)
+    # patch remove_empty
+    mock_remove_empty = mocker.patch("weko_items_autofill.utils.remove_empty", return_value=fake_metainfo_cleaned)
+    # patch fetch_metadata_by_doi
+    mock_fetch_metadata = mocker.patch("weko_items_autofill.utils.fetch_metadata_by_doi", return_value=fake_doi_result)
+
+    from weko_items_autofill.utils import get_doi_record_data
+
+    # Act
+    result = get_doi_record_data(doi, item_type_id, activity_id)
+
+    # Assert
+    mock_activity.assert_called_once_with(activity_id)
+    mock_remove_empty.assert_called_once_with(fake_metadata["metainfo"])
+    mock_fetch_metadata.assert_called_once_with(doi, item_type_id, fake_metainfo_cleaned)
+    assert result == [{"title": "Test Title"}, {"author": "Test Author"}]
+
+
+# def fetch_metadata_by_doi(doi, item_type_id, original_metadeta=None):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fetch_metadata_by_doi -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_fetch_metadata_by_doi(app,db,itemtypes,mocker):
+
+    jalc_data = [{"id": "id_jalc"}, {"name_jalc": "test_name_jalc"}]
+    ichushi_data = [{"id": "id_ichushi"}, {"name_ichushi": "test_name_ichushi"}]
+    crossref_data = [{"id": "id_crossref"}, {"name_crossref": "test_name_crossref"}]
+    datacite_data = [{"id": "id_datacite"}, {"name_datacite": "test_name_datacite"}]
+    cinii_data = [{"id": "id_cinii"}, {"name_cinii": "test_name_cinii"}]
+
+    mocker.patch("weko_items_autofill.utils.get_current_api_certification",return_value={"cert_data": "test_id"})
+    mocker.patch("weko_workspace.utils.get_jalc_record_data",return_value=jalc_data)
+    mocker.patch("weko_workspace.utils.get_jamas_record_data",return_value=ichushi_data)
+    mocker.patch("weko_items_autofill.utils.get_crossref_record_data",return_value=crossref_data)
+    mocker.patch("weko_workspace.utils.get_datacite_record_data",return_value=datacite_data)
+    mocker.patch("weko_workspace.utils.get_cinii_record_data",return_value=cinii_data)
+
+    # with all api
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_API_LIST = [
+            "JaLC API",
+            "医中誌 Web API",
+            "CrossRef",
+            "DataCite",
+            "CiNii Research",
+        ],
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+            "医中誌 Web API",
+            "CrossRef",
+            "DataCite",
+            "CiNii Research",
+            "Original",
+        ],
+    )
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_ichushi": "test_name_ichushi",
+        "name_crossref": "test_name_crossref",
+        "name_datacite": "test_name_datacite",
+        "name_cinii": "test_name_cinii",
+        "name_original": "test_name_original"
+    }
+
+    # with only jalc
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+        ],
+    )
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+    }
+
+    # with jalc & original
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+            "Original",
+        ],
+    )
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_original": "test_name_original",
+    }
+
+    # with jalc & original(empty)
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+            "Original",
+        ],
+    )
+    original_metadata = {}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+    }
+
+    # with jalc & crossref
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+            "CrossRef",
+        ],
+    )
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_crossref": "test_name_crossref",
+    }
+
+    # with jalc & crossref & original(empty)
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+            "CrossRef",
+            "Original",
+        ],
+    )
+    original_metadata = {}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_crossref": "test_name_crossref",
+    }
+
+    # with jalc & crossref & original
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [
+            "JaLC API",
+            "CrossRef",
+            "Original",
+        ],
+    )
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_crossref": "test_name_crossref",
+        "name_original": "test_name_original",
+    }
+
+    # sword
+    app.config.update(
+        WEKO_ITEMS_AUTOFILL_TO_BE_USED = [],
+    )
+    meta_data_api = [
+        "JaLC API",
+        "医中誌 Web API",
+        "CrossRef",
+        "DataCite",
+        "CiNii Research",
+        "Original"
+    ]
+    original_metadata = {"id": "test_original", "name_original": "test_name_original"}
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata,meta_data_api=meta_data_api)
+    assert result == {
+        'id': 'id_jalc',
+        "name_jalc": "test_name_jalc",
+        "name_ichushi": "test_name_ichushi",
+        "name_crossref": "test_name_crossref",
+        "name_datacite": "test_name_datacite",
+        "name_cinii": "test_name_cinii",
+        "name_original": "test_name_original",
+    }
+
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",original_metadata)
+    assert result == {"id": "test_original", "name_original": "test_name_original"}
+
+    mocker.patch("weko_workspace.utils.get_jalc_record_data",side_effect=Exception("test_error"))
+    result = fetch_metadata_by_doi("test_doi","test_item_type_id",[],meta_data_api=meta_data_api)
+    assert result == {
+        "id": "id_ichushi",
+        "name_ichushi": "test_name_ichushi",
+        "name_crossref": "test_name_crossref",
+        "name_datacite": "test_name_datacite",
+        "name_cinii": "test_name_cinii",
+    }
+
+
+
 # def get_crossref_record_data(pid, doi, item_type_id):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_get_crossref_record_data(db, itemtypes, mocker):   
+def test_get_crossref_record_data(db, itemtypes, mocker):
     mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary")
     mocker.patch("weko_items_autofill.utils.get_crossref_data_by_key")
     mocker.patch("weko_items_autofill.utils.sort_by_item_type_order")
@@ -264,24 +476,24 @@ def test_get_crossref_record_data(db, itemtypes, mocker):
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[0][0].id)
         assert result == []
     current_cache.delete("crossref_datatest_pidtest_doi1")
-    
+
     with patch("weko_items_autofill.utils.CrossRefOpenURL.get_data",return_value={"error":None,"response":""}):
         # not exist itemtype
         result = get_crossref_record_data("test_pid","test_doi",300)
         assert result == []
-        
+
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[0][0].id)
         assert result == []
-        
+
         # not exist itemtype.form
         itemtypes[1][0].form = None
         db.session.merge(itemtypes[1][0])
         result = get_crossref_record_data("test_pid","test_doi",itemtypes[1][0].id)
         assert result == []
-    
+
     current_cache.delete("crossref_datatest_pidtest_doi1")
     current_cache.delete("crossref_datatest_pidtest_doi300")
-    current_cache.delete("crossref_datatest_pidtest_doi2")   
+    current_cache.delete("crossref_datatest_pidtest_doi2")
 
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_crossref_record_data2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
 def test_get_crossref_record_data2(db, itemtypes, mocker):
@@ -291,7 +503,7 @@ def test_get_crossref_record_data2(db, itemtypes, mocker):
     mocker.patch(
         "weko_items_autofill.utils.CrossRefOpenURL.get_data",
         return_value={'response': '<?xml version="1.0" encoding="UTF-8"?>\n<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body><query status="resolved" fl_count="0"><doi type="journal_article">10.17352/ojps.000010</doi><issn type="electronic">26407906</issn><journal_title>Open Journal of Plant Science</journal_title><contributors><contributor sequence="first" contributor_role="author"><given_name>Peertechz</given_name><surname>Publications</surname></contributor></contributors><year media_type="online">2018</year><publication_type>full_text</publication_type><article_title>Open Journal of Plant Science</article_title></query></body></query_result></crossref_result>', 'error': ''})
-        
+
     data = [
         {
             "test_item1": {
@@ -327,7 +539,7 @@ def test_get_crossref_record_data2(db, itemtypes, mocker):
     mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}})
     result = get_crossref_record_data("test_pid2", "test_doi2", itemtypes[0][0].id)
     assert result == []
-    
+
     mocker.patch("weko_items_autofill.utils.convert_crossref_xml_data_to_dictionary",return_value={'error': '','response': {'article_title': 'article title','contributor': [{'family': 'Test1', 'given': 'A.'}],'doi': 'xxx/yyy','journal_title': 'journal title'}})
     result = get_crossref_record_data("test_pid3", "test_doi3", 300)
     assert result == []
@@ -339,7 +551,7 @@ def test_get_crossref_record_data2(db, itemtypes, mocker):
     result = get_crossref_record_data("test_pid4", "test_doi4", itemtypes[1][0].id)
     assert result == []
 
-        
+
     current_cache.delete("crossref_datatest_pid1test_doi11")
     current_cache.delete("crossref_datatest_pid2test_doi21")
     current_cache.delete("crossref_datatest_pid3test_doi31")
@@ -479,6 +691,8 @@ def test_pack_data_with_multiple_type_cinii():
     assert result == [
         {"@value": "13402625", "@type": "PISSN"},
     ]
+    result = pack_data_with_multiple_type_cinii(data, "test_type1", "test_type2")
+    assert result == []
 
 
 # def get_cinii_creator_data(data):
@@ -487,10 +701,14 @@ def test_get_cinii_creator_data():
     data = json_data("data/cinii_response_sample1.json")['response']['creator']
     result = get_cinii_creator_data(data)
     test = [
-        {"@value":"テスト 太郎", "@language":"ja"},
-        {"@value":"TEST Taro", "@language":"en"},
-        {"@value":"テスト 三郎", "@language":"ja"},
-        {"@value":"TEST Saburo", "@language":"en"},
+        [
+            {"@value":"テスト 太郎", "@language":"ja"},
+            {"@value":"TEST Taro", "@language":"en"}
+        ],
+        [
+            {"@value":"テスト 三郎", "@language":"ja"},
+            {"@value":"TEST Saburo", "@language":"en"}
+        ],
     ]
     assert result == test
 
@@ -499,10 +717,14 @@ def test_get_cinii_creator_data():
 def test_get_cinii_contributor_data():
     data = json_data("data/cinii_response_sample1.json")['response']["contributor"]
     test = [
-        {"@value": "テスト 次郎", "@language": "ja"},
-        {"@value": "TEST Ziro", "@language": "en"},
-        {"@value": "テスト 花子", "@language": "ja"},
-        {"@value": "TEST Hanako", "@language": "en"},
+        [
+            {"@value": "テスト 次郎", "@language": "ja"},
+            {"@value": "TEST Ziro", "@language": "en"}
+        ],
+        [
+            {"@value": "テスト 花子", "@language": "ja"},
+            {"@value": "TEST Hanako", "@language": "en"}
+        ],
     ]
     result = get_cinii_contributor_data(data)
     assert result == test
@@ -576,7 +798,7 @@ def test_get_cinii_numpage(app, mocker):
     }
     result = get_cinii_numpage(data)
     assert result == {"@value": 6}
-    
+
     # not exist numPage, exist startingPage, endingPage
     data = {"prism:startingPage": "10", "prism:endingPage": "15"}
     result = get_cinii_numpage(data)
@@ -586,13 +808,13 @@ def test_get_cinii_numpage(app, mocker):
     data = {}
     result = get_cinii_numpage(data)
     assert result == {"@value": None}
-    
+
     # raise exception
     data = {"prism:startingPage": "a", "prism:endingPage": "b"}
     result = get_cinii_numpage(data)
     assert result == {"@value": None}
-    
-    
+
+
 
 # def get_cinii_date_data(data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_cinii_date_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -623,6 +845,10 @@ def test_get_cinii_data_by_key(app):
     result = get_cinii_data_by_key(api, "key")
     assert result == {}
 
+    api = {"response": None}
+    result = get_cinii_data_by_key(api, "key")
+    assert result == {}
+
     api = json_data("data/cinii_response_sample1.json")
     test = {
         "title": [
@@ -635,16 +861,24 @@ def test_get_cinii_data_by_key(app):
             {"@value": "別タイトル", "@language": "ja"},
         ],
         "creator": [
-            {"@value": "テスト 太郎", "@language": "ja"},
-            {"@value": "TEST Taro", "@language": "en"},
-            {"@value": "テスト 三郎", "@language": "ja"},
-            {"@value": "TEST Saburo", "@language": "en"},
+            [
+                {"@value": "テスト 太郎", "@language": "ja"},
+                {"@value": "TEST Taro", "@language": "en"}
+            ],
+            [
+                {"@value": "テスト 三郎", "@language": "ja"},
+                {"@value": "TEST Saburo", "@language": "en"}
+            ],
         ],
         "contributor": [
-            {"@value": "テスト 次郎", "@language": "ja"},
-            {"@value": "TEST Ziro", "@language": "en"},
-            {"@value": "テスト 花子", "@language": "ja"},
-            {"@value": "TEST Hanako", "@language": "en"}
+            [
+                {"@value": "テスト 次郎", "@language": "ja"},
+                {"@value": "TEST Ziro", "@language": "en"}
+            ],
+            [
+                {"@value": "テスト 花子", "@language": "ja"},
+                {"@value": "TEST Hanako", "@language": "en"}
+            ],
         ],
         "description": [
             {"@value": "this is test abstract.", "@type": "Abstract", "@language": "en"},
@@ -938,6 +1172,23 @@ def test_get_crossref_autofill_item(app, mocker):
         "title": [{"title": {"@value": "test1_subitem1", "model_id": "test_item1"}}]
     }
 
+# def get_researchmap_autofill_item(item_id):
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_researchmap_autofill_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_researchmap_autofill_item(app, mocker):
+    item_id = 100
+    test_jpcoar_item = {}
+
+    # jpcoar_itemのkeyがconfig内にない場合
+    with patch("weko_items_autofill.utils.get_item_id", return_value=test_jpcoar_item):
+        result = get_researchmap_autofill_item(item_id)
+        assert result == {}
+
+    test_jpcoar_item = {"title":{"@value":"subitem_11111111","@attributes":{"xml:lang": "subitem_11111111"},"model_id": "item_11111111"}} 
+
+    # jpcoar_itemのkeyがconfig内にある場合
+    with patch("weko_items_autofill.utils.get_item_id", return_value=test_jpcoar_item):
+        result = get_researchmap_autofill_item(item_id)
+        assert result == {"title":{"@value":"subitem_11111111","@attributes":{"xml:lang": "subitem_11111111"},"model_id": "item_11111111"}} 
 
 # def get_autofill_key_tree(schema_form, item, result=None):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_autofill_key_tree -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -1144,7 +1395,7 @@ def test_get_key_value():
             test.update(attributes_keys)
             assert result == test
 
-    
+
     # exist @attributes.xml:lang
     assert_test(
         item_name="test_item2",
@@ -1176,7 +1427,7 @@ def test_get_key_value():
         value_key="test11_subitem1",
         attributes_keys={"@language":"subject_lang","@scheme":"subject_subjectScheme","@URI":"subject_subjectURI"}
     )
-    
+
     # exist @attributes.dateType
     assert_test(
         item_name="test_item12",
@@ -1279,7 +1530,7 @@ def test_get_specific_key_path():
 
 # def build_record_model(item_autofill_key, api_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_build_record_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_build_record_model():
+def test_build_record_model(app):
     # not api_data,not item_autofill_key
     result = build_record_model([], [])
     assert result == []
@@ -1570,12 +1821,12 @@ def test_deepcopy():
 
 # def fill_data(form_model, autofill_data, is_multiple_data=False):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_fill_data -vv -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
-def test_fill_data():
+def test_fill_data(app):
     # autofill_data is not dict, list
     form_model = ""
     autofill_data = ""
     result = fill_data(form_model, autofill_data)
-    assert result == None
+    assert result == []
     
     # not multiple_data, form.get(key) is not list
     autofill_data = [{"@value": "A.Test1", "@language": "en"}]
@@ -1590,7 +1841,7 @@ def test_fill_data():
     result = fill_data(form_model, autofill_data)
     #assert form_model == test
     assert result == test
-    
+
     # not multiple_data, form.get(key) is list
     autofill_data = [{"@value": "A.Test1"}]
     form_model = {
@@ -1631,7 +1882,7 @@ def test_fill_data():
     result = fill_data(form_model,autofill_data)
     assert result == test
 
-    # 
+    #
     autofill_data = {"@value": "47"}
     form_model = [
         {"@value": {"test_item16": {"test16_subitem1": "@value"}}},
@@ -1649,6 +1900,98 @@ def test_fill_data():
     form_model = "test"
     fill_data(form_model, autofill_data)
 
+     # with schema and validate success
+    autofill_data = [{'@value': 'タイトル', '@language': 'ja'}]
+    form_model = {'item_30001_title0': [{'subitem_title': '@value', 'subitem_title_language': '@language'}]}
+    schema ={
+        "type": "object",
+        "properties": {
+            "item_30001_title0": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "subitem_title": {
+                            "type": "string",
+                            "title": "タイトル",
+                            "title_i18n": {
+                                "en": "Title",
+                                "ja": "タイトル"
+                            }
+                        },
+                        "subitem_title_language": {
+                            "enum": [
+                                None,
+                                "ja",
+                            ],
+                            "type": [
+                                "null",
+                                "string"
+                            ],
+                            "title": "言語",
+                        }
+                    }
+                },
+                "title": "Title",
+            }
+        }
+    }
+    expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # with schema and validate fail
+    autofill_data = [{'@value': 'タイトル', '@language': ''}]
+    expected  = {'item_30001_title0': [{'subitem_title': 'タイトル'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # with invalid schema and skip validate
+    autofill_data = [{'@value': 'タイトル', '@language': 'ja'}]
+    schema["properties"]["item_30001_title0"]["type"] = "object"
+    expected = {'item_30001_title0': [{'subitem_title': 'タイトル', 'subitem_title_language': 'ja'}]}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == expected
+
+    # duplicate language
+    autofill_data = [{"@value": "Title1", "@language": "en"}, {"@value": "Title2", "@language": "en"}]
+    expected = {'item_30001_title0': [{'subitem_title': 'Title1', 'subitem_title_language': 'en'}]}
+    result = fill_data(form_model, autofill_data, None, True)
+    assert result == expected
+
+    # schema with array items
+    schema = {"type": "array", "items": {"type": "object", "properties": {"prop1": {"type": "string"}}}}
+    autofill_data = [{"@value": "Title1"}]
+    form_model = {"prop1": "@value"}
+    result = fill_data(form_model, autofill_data, schema)
+    assert result == {"prop1": "Title1"}
+
+    # form_model is dict, autofill_data is str
+    autofill_data = "test_data"
+    form_model = {"test_key":"form_test"}
+    test = {"test_key":"test_data"}
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is list, autofill_data is str
+    autofill_data = "test_data"
+    form_model = [{"test_key":"form_test"}]
+    test = [{"test_key":"test_data"}]
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is list, autofill_data is str
+    autofill_data = "test_data"
+    form_model = [{"test_key":100}]
+    test = [{"test_key":[]}]
+    result = fill_data(form_model, autofill_data)
+    assert result == test
+
+    # form_model is list, autofill_data is int
+    autofill_data = 111
+    form_model = ""
+    result = fill_data(form_model, autofill_data)
+    assert result == None
 
 # def is_multiple(form_model, autofill_data):
 # .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_is_multiple -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
@@ -1688,11 +2031,11 @@ def test_get_workflow_journal(app, db, actions):
     db.session.commit()
 
     # not exist journal
-    result = get_workflow_journal(100)
+    result = get_workflow_journal(str(100))
     assert result == None
 
     # exist journal
-    result = get_workflow_journal(1)
+    result = get_workflow_journal(str(1))
     assert result == {"key": "value"}
 
 
@@ -1737,7 +2080,7 @@ def test_convert_crossref_xml_data_to_dictionary(mocker):
     }
     result = convert_crossref_xml_data_to_dictionary(data)
     assert result == test
-    
+
     result = convert_crossref_xml_data_to_dictionary(data,'utf-8')
     assert result == test
 
@@ -1747,16 +2090,16 @@ def test_convert_crossref_xml_data_to_dictionary(mocker):
 
     data = '<?xml version="1.0" encoding="UTF-8"?>\n<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body></body></query_result></crossref_result>'
     result = convert_crossref_xml_data_to_dictionary(data)
-    assert result == {'error': '', 'response': {}} 
-    
+    assert result == {'error': '', 'response': {}}
+
     data = '<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body></body></query_result></crossref_result>'
     result = convert_crossref_xml_data_to_dictionary(data)
-    assert result == {'error': '', 'response': {}} 
-    
+    assert result == {'error': '', 'response': {}}
+
     error_data = '<?xml version="1.0" encoding="UTF-8"?>\n<crossref_result xmlns="http://www.crossref.org/qrschema/2.0" version="2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.crossref.org/qrschema/2.0 https://www.crossref.org/schema/crossref_query_output2.0.xsd"><query_result><head><doi_batch_id>none</doi_batch_id></head><body></query_result></crossref_result>'
     result = convert_crossref_xml_data_to_dictionary(error_data)
-    assert result == {'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}} 
-    
+    assert result == {'error': 'Opening and ending tag mismatch: body line 2 and query_result, line 2, column 331 (<string>, line 2)','response': {}}
+
 
 
 # def _get_contributor_and_author_names(elem, contributor_roles, rtn_data):
@@ -1844,6 +2187,51 @@ def test_get_wekoid_record_data(app, client, users, records, itemtypes):
     result = get_wekoid_record_data(recid, item_type_id)
     assert result == test
     logout(app, client)
+
+# def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id) -> list:
+# .tox/c1/bin/pytest --cov=weko_items_autofill tests/test_utils.py::test_get_researchmapid_record_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-autofill/.tox/c1/tmp
+def test_get_researchmapid_record_data(app, db, itemtypes):
+    data = json_data("data/researchmap_test_data.json")
+    data = json.dumps(data)
+
+    test =  [{'item_1617186331708': [{'subitem_1551255647225': 'full-schema', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': '満艦飾', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'WEKO, 太郎', 'creatorNameLang': 'ja'}]}]}, {'item_1617186626617': [{'subitem_description': '描写', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': '出版者●●', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2024-02-05', 'subitem_1522300695726': '2024-02-05'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'jpn'}]}, {'item_1617258105262': {'resourcetype': 'article'}}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data):
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1358081, 3)
+        assert result == test
+
+    data_2 = json_data("data/researchmap_test_data_2.json")
+    data_2 = json.dumps(data_2)
+    test =  [{'item_1617186331708': [{'subitem_1551255647225': 'aaaaa', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': 'ああああ', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'Author English', 'creatorNameLang': 'en'}]}]}, {'item_1617186626617': [{'subitem_description': '国際・国内誌概要(英語)', 'subitem_description_language': 'en', 'subitem_description_type': ''}, {'subitem_description': '国際・国内誌概要(日本語)', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': 'pub_english', 'subitem_1522300295150': 'en'}, {'subitem_1522300316516': '出版者・発行元(日本語)', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2010-10-10', 'subitem_1522300695726': '2010-10-10'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'eng'}]}, {'item_1617258105262': {'resourcetype': 'conference paper'}}, {'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': '10.11501/3140078', 'subitem_1522306382014': 'DOI'}}]}, {'item_1617186941041': [{'subitem_1522650091861': 'aaaaa', 'subitem_1522650068558': 'en'}, {'subitem_1522650091861': 'ああああ', 'subitem_1522650068558': 'ja'}]}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        assert result == test
+
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 99999)
+        assert result == []
+
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 4)
+        assert result == []
+            
+    data = {
+    "error": "not_found",
+    "error_description": "ページが見つかりません。"
+    }
+    data = json.dumps(data)
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data):
+        with pytest.raises(Exception):
+            result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 999999, 3)
+
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
+        app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS = [{ 'type' : 'xxx' , "rm_name" : 'paper_title', "jpcore_name" : 'dc:title' , "weko_name" :"title"}])
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        assert result == []
+        
+    with patch("weko_items_autofill.utils.Researchmap.get_data", return_value=data_2):
+        app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS)
+        app.config.update(WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS= [{'achievement_type' : 'xxx','detail_type_name':'','JPCOAR_resource_type':'article'}])
+        test = [{'item_1617186331708': [{'subitem_1551255647225': 'aaaaa', 'subitem_1551255648112': 'en'}, {'subitem_1551255647225': 'ああああ', 'subitem_1551255648112': 'ja'}]}, {'item_1617186419668': [{'creatorNames': [{'creatorName': 'Author English', 'creatorNameLang': 'en'}]}]}, {'item_1617186626617': [{'subitem_description': '国際・国内誌概要(英語)', 'subitem_description_language': 'en', 'subitem_description_type': ''}, {'subitem_description': '国際・国内誌概要(日本語)', 'subitem_description_language': 'ja', 'subitem_description_type': ''}]}, {'item_1617186643794': [{'subitem_1522300316516': 'pub_english', 'subitem_1522300295150': 'en'}, {'subitem_1522300316516': '出版者・発行元(日本語)', 'subitem_1522300295150': 'ja'}]}, {'item_1617186660861': [{'subitem_1522300722591': '2010-10-10', 'subitem_1522300695726': '2010-10-10'}]}, {'item_1617186702042': [{'subitem_1551255818386': 'eng'}]}, {'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': '10.11501/3140078', 'subitem_1522306382014': 'DOI'}}]}, {'item_1617186941041': [{'subitem_1522650091861': 'aaaaa', 'subitem_1522650068558': 'en'}, {'subitem_1522650091861': 'ああああ', 'subitem_1522650068558': 'ja'}]}, {'item_1617186959569': {'subitem_1551256328147': '123'}}, {'item_1617186981471': {'subitem_1551256294723': '456'}}, {'item_1617187024783': {'subitem_1551256198917': '1'}}, {'item_1617187045071': {'subitem_1551256185532': '10'}}]
+        result,_ = get_researchmapid_record_data("M1cQhPtdmlrSRFo4", "published_papers", 1356383, 3)
+        assert result == test
 
 
 # def build_record_model_for_wekoid(item_type_id, item_map_data):

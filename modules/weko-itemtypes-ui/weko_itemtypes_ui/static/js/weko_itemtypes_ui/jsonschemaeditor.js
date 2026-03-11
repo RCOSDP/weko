@@ -206,7 +206,7 @@
 		},
 		export: function _export() {
 			var arr = [];
-			if (this.state.enum.length > 0) {
+			if (this.state.enum.length > 0 && !Array.isArray(this.state.enum)) {
 				arr = this.state.enum.split('|');
 			}
 			return {
@@ -276,7 +276,7 @@
 		},
 		export: function _export() {
 			var arr = [];
-			if (this.state.enum.length > 0) {
+			if (this.state.enum.length > 0 && !Array.isArray(this.state.enum)) {
 				arr = this.state.enum.split('|');
 			}
 			return {
@@ -343,7 +343,7 @@
 		},
 		export: function _export() {
 			var arr = [];
-			if (this.state.enum.length > 0) {
+			if (this.state.enum.length > 0 && !Array.isArray(this.state.enum)) {
 				arr = this.state.enum.split('|');
 				if (!arr.includes(null)) {
 					arr.unshift(null);

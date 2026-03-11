@@ -1,0 +1,43 @@
+{
+    "flow_define":{
+        "flow_name":"test flow",
+        "flow_status":"A",
+        "is_deleted":false
+    },
+    "item_type_name":{
+        "name":"test item type",
+        "has_site_license":true,
+        "is_active":true
+    },
+    "item_type":{
+        "name_id":1,
+        "harvesting_type":true,
+        "schema":{"type":"test schema"},
+        "form":{"type":"test form"},
+        "render":{"type":"test render"},
+        "tag":1,
+        "version_id":1,
+        "is_deleted":false
+    },
+    "work_flow":{
+        "flows_name":"test workflow",
+        "itemtype_id":1,
+        "flow_id":1,
+        "is_deleted":false,
+        "open_restricted":false,
+        "is_gakuninrdm":false
+    },
+    "activity":{
+        "activity_id":"1",
+        "workflow_id":1,
+        "flow_id":1,
+        "action_id":2,
+        "activity_login_user":1,
+        "activity_community_id":3,
+        "activity_confirm_term_of_use":true,
+        "title":"test",
+        "shared_user_id":-1,
+        "extra_info":{},
+        "action_order":6
+    }
+}

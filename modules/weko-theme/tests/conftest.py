@@ -1,22 +1,11 @@
 # -*- coding: utf-8 -*-
 #
-# This file is part of WEKO3.
+# This file is part of Invenio.
 # Copyright (C) 2017 National Institute of Informatics.
 #
-# WEKO3 is free software; you can redistribute it
-# and/or modify it under the terms of the GNU General Public License as
-# published by the Free Software Foundation; either version 2 of the
-# License, or (at your option) any later version.
-#
-# WEKO3 is distributed in the hope that it will be
-# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-# General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with WEKO3; if not, write to the
-# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
-# MA 02111-1307, USA.
+# Invenio is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+
 
 """Pytest configuration."""
 import os
@@ -107,6 +96,7 @@ from weko_records_ui.models import PDFCoverPageSettings
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, WEKO_PERMISSION_ROLE_COMMUNITY, EMAIL_DISPLAY_FLG
 from weko_groups import WekoGroups
 from weko_gridlayout.views import blueprint as weko_gridlayout_blueprint
+from weko_logging.audit import WekoLoggingUserActivity
 from weko_theme.ext import WekoTheme
 from weko_workflow import WekoWorkflow
 from weko_workflow.models import Activity, ActionStatus, Action, WorkFlow, FlowDefine, FlowAction
@@ -437,6 +427,11 @@ def base_app(instance_path):
                 get_parent_index_tree='/<string:version>/tree/index/<int:index_id>/parent',
                 tree_route='/tree',
                 item_tree_route='/tree/<string:pid_value>',
+                api_get_all_index_jp_en='/<string:version>/tree',
+                api_get_index_tree='/<string:version>/tree/<int:index_id>',
+                api_create_index='/<string:version>/tree/index',
+                api_update_index='/<string:version>/tree/index/<int:index_id>',
+                api_delete_index='/<string:version>/tree/index/<int:index_id>',
                 index_move_route='/tree/move/<int:index_id>',
                 default_media_type='application/json',
                 create_permission_factory_imp='weko_index_tree.permissions:index_tree_permission',
@@ -452,6 +447,7 @@ def base_app(instance_path):
         WEKO_INDEX_TREE_INDEX_ADMIN_TEMPLATE = 'weko_index_tree/admin/index_edit_setting.html',
         WEKO_INDEX_TREE_LIST_API = "/api/tree",
         WEKO_INDEX_TREE_API = "/api/tree/index/",
+        WEKO_INDEX_TREE_DEFAULT_DISPLAY_NUMBER = 5,
     )
     app_.url_map.converters['pid'] = PIDConverter
 
@@ -482,6 +478,7 @@ def base_app(instance_path):
     WekoAdmin(app_)
     WekoItemsUI(app_)
     WekoTheme(app_)
+    WekoLoggingUserActivity(app_)
 
     # InvenioCommunities(app_)
     app_.register_blueprint(invenio_communities_blueprint)
@@ -536,7 +533,7 @@ def i18n_app(app):
 
 @pytest.yield_fixture()
 def client_rest(app):
-    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    # app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
     with app.test_client() as client:
         yield client
 
@@ -549,8 +546,11 @@ def client_api(app):
 
 
 @pytest.yield_fixture()
-def client_request_args(app):
-    app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+def client_request_args(app, esindex):
+    try:
+        app.register_blueprint(create_blueprint(app, app.config['WEKO_INDEX_TREE_REST_ENDPOINTS']))
+    except AssertionError:
+        pass
     with app.test_client() as client:
         r = client.get('/', query_string={
             'index_id': '33',
@@ -608,7 +608,7 @@ def users(app, db):
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
         noroleuser = create_test_user(email='noroleuser@test.org')
-        
+
     role_count = Role.query.filter_by(name='System Administrator').count()
     if role_count != 1:
         sysadmin_role = ds.create_role(name='System Administrator')
@@ -636,7 +636,7 @@ def users(app, db):
     ds.add_role_to_user(user, repoadmin_role)
     ds.add_role_to_user(user, contributor_role)
     ds.add_role_to_user(user, comadmin_role)
-    
+
     # Assign access authorization
     with db.session.begin_nested():
         action_users = [
@@ -713,15 +713,15 @@ def users(app, db):
 def indices(app, db):
     with db.session.begin_nested():
         # Create a test Indices
-        testIndexOne = Index(index_name="testIndexOne",position=0, browsing_role="3,-98,-99",public_state=True,id=11)
-        testIndexTwo = Index(index_name="testIndexTwo",position=1, browsing_group="group_test1",public_state=True,id=22)
+        testIndexOne = Index(index_name="testIndexOne",position=10, browsing_role="3,-98,-99",public_state=True,id=11)
+        testIndexTwo = Index(index_name="testIndexTwo",position=11, browsing_group="group_test1",public_state=True,id=22)
         testIndexThree = Index(
             index_name="testIndexThree",
             browsing_role="3,-98,-99",
             public_state=True,
             harvest_public_state=True,
             id=33,
-            position=2,
+            position=12,
             public_date=datetime.today() + timedelta(days=1)
         )
         testIndexThreeChild = Index(
@@ -743,7 +743,7 @@ def indices(app, db):
         db.session.add(testIndexThree)
         db.session.add(testIndexThreeChild)
     db.session.commit()
-        
+
     return {
         'index_dict': dict(testIndexThree),
         'index_non_dict': testIndexThree,
@@ -766,10 +766,10 @@ def esindex(app,db_records):
             search.client.indices.create("test-weko-items",body=mapping)
             search.client.indices.put_alias(index="test-weko-items", name="test-weko")
         # print(current_search_client.indices.get_alias())
-    
+
     for depid, recid, parent, doi, record, item in db_records:
         search.client.index(index='test-weko-item-v1.0.0', doc_type='item-v1.0.0', id=record.id, body=record,refresh='true')
-    
+
 
     yield search
 
@@ -811,11 +811,11 @@ def db_records(db, instance_path, users):
             'parent': 0,
             'value': 'IndexB',
         }
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         Indexes.create(0, index_metadata)
 
- 
+
     yield result
 
 
@@ -835,7 +835,7 @@ def db_register(app, db):
         for data in action_datas:
             actions_db.append(Action(**data))
         db.session.add_all(actions_db)
-    
+
     actionstatus_datas = dict()
     with open('tests/data/action_status.json') as f:
         actionstatus_datas = json.load(f)
@@ -844,7 +844,7 @@ def db_register(app, db):
         for data in actionstatus_datas:
             actionstatus_db.append(ActionStatus(**data))
         db.session.add_all(actionstatus_db)
-    
+
     index = Index(
         public_state=True
     )
@@ -868,7 +868,7 @@ def db_register(app, db):
                          form={'type':'test form'},
                          render={'type':'test render'},
                          tag=1,version_id=1,is_deleted=False)
-    
+
     flow_action1 = FlowAction(status='N',
                      flow_id=flow_define.flow_id,
                      action_id=1,
@@ -913,9 +913,9 @@ def db_register(app, db):
                     activity_start=datetime.strptime('2022/04/14 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
                     activity_community_id=3,
                     activity_confirm_term_of_use=True,
-                    title='test', shared_user_id=-1, extra_info={},
+                    title='test', shared_user_ids=[], extra_info={},
                     action_order=6)
-    
+
     with db.session.begin_nested():
         db.session.add(index)
         db.session.add(flow_define)
@@ -926,7 +926,7 @@ def db_register(app, db):
         db.session.add(flow_action3)
         db.session.add(workflow)
         db.session.add(activity)
-    
+
     # return {'flow_define':flow_define,'item_type_name':item_type_name,'item_type':item_type,'flow_action':flow_action,'workflow':workflow,'activity':activity}
     return {
         'flow_define': flow_define,
@@ -943,7 +943,7 @@ def db_register(app, db):
 @pytest.fixture()
 def db_register2(app, db):
     session_lifetime = SessionLifetime(lifetime=60,is_delete=False)
-    
+
     with db.session.begin_nested():
         db.session.add(session_lifetime)
 
@@ -975,7 +975,7 @@ def records(db):
         db.session.add(rec1)
         db.session.add(rec2)
         db.session.add(rec3)
-        
+
         search_query_result = json_data("data/search_result.json")
 
     return(search_query_result)
@@ -1275,9 +1275,10 @@ def communities(app, db, user, indices):
     db.session.commit()
 
     comm0 = Community.create(community_id='comm1', role_id=r.id,
+                             page=0, ranking=0, curation_policy='',fixed_points=0, thumbnail_path='',catalog_json=[], login_menu_enabled=False,
                              id_user=user1.id, title='Title1',
                              description='Description1',
-                             root_node_id=33)
+                             root_node_id=33 )
     db.session.add(comm0)
 
     return comm0
@@ -1313,14 +1314,14 @@ def es(app):
     Don't create template so that the test or another fixture can modify the
     enabled events.
     """
-    current_search_client.indices.delete(index='*')
-    current_search_client.indices.delete_template('*')
+    current_search_client.indices.delete(index='test-*')
+    # current_search_client.indices.delete_template('*')
     list(current_search.create())
     try:
         yield current_search_client
     finally:
-        current_search_client.indices.delete(index='*')
-        current_search_client.indices.delete_template('*')
+        current_search_client.indices.delete(index='test-*')
+        # current_search_client.indices.delete_template('*')
 
 
 def generate_events(
@@ -1372,7 +1373,7 @@ def generate_events(
         ],
         double_click_window=0
     ).run()
-    current_search_client.indices.refresh(index='*')
+    current_search_client.indices.refresh(index='test-*')
 
 
 @pytest.yield_fixture()

@@ -142,8 +142,8 @@ require([
         } else {
             sessionStorage.setItem('search_type', '1');
         }
-
-        $('#search-form').submit(function (event) {
+        $('#search-form').off('submit');
+        $('#search-form').on('submit', function (event) {
             var search = '';
             search = insertParam(search, "page", 1);
             $('#search_type :input:checked').each(function () {
@@ -158,7 +158,8 @@ require([
 
             if ($('#community').val() && $('#q').val.trim().length > 0) {
                 $('#community').serializeArray().map(function (item) {
-                    search = insertParam(search, item.name, item.value);
+                  const paramName = (item.name === 'community') ? 'c' : item.name;
+                    search = insertParam(search, paramName, item.value);
                 })
             }
 
@@ -175,7 +176,7 @@ require([
                 key_sort = "-" + key_sort;
             }
 
-            if (!window.location.search.includes(key_sort)) {
+            if (!search.includes("sort")) {
                 search = insertParam(search, "sort", key_sort);
             }
 
@@ -190,34 +191,23 @@ require([
                 search = insertParam(search, "item_management", "delete");
                 window.location.href = "/admin/items/search" + search;
             } else {
-                window.location.href = "/search" + search + getFacetParameter();
+                let searchParam = window.facetSearchFunctions && window.facetSearchFunctions.getFacetSearchCondition ?
+                    window.facetSearchFunctions.getFacetSearchCondition() : new URLSearchParams();
+                let appendSearchParam = new URLSearchParams(search);
+                searchParam.set('search_type', appendSearchParam.get('search_type'));
+                searchParam.set('q', appendSearchParam.get('q'));
+
+                if(window.invenioSearchFunctions) {
+                    window.invenioSearchFunctions.reSearchInvenio(searchParam);
+                    $('#search-form').off('submit');
+                }else{
+                    window.location.href = "/search?" + searchParam;
+                }
             }
 
             // stop the form from submitting the normal way and refreshing the page
             event.preventDefault();
         })
-    }
-
-    /**
-     * Returns faceted search parameters.
-     * This function was created for the purpose of giving faceted search parameters to simple searches.
-     * Returns parameters for faceted searches from existing URLs, excluding simple, advanced, and INDEX searches.
-     * 
-     * @returns Faceted search parameters.
-     */
-    function getFacetParameter() {
-        let result = "";
-        let params = window.location.search.substring(1).split('&');
-        const conds = ['page', 'size', 'sort', 'timestamp', 'search_type', 'q', 'title', 'creator', 'date_range1_from', 'date_range1_to','time'];
-        for (let i = 0; i < params.length; i++) {
-            var keyValue = decodeURIComponent(params[i]).split('=');
-            var key = keyValue[0];
-            var value = keyValue[1];
-            if(key && !conds.includes(key) && !key.startsWith("text")) {
-                result += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(value);
-            }
-        }
-        return result;
     }
 
     function insertParam(search, key, value) {

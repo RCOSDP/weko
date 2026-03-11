@@ -1,0 +1,64 @@
+{# -*- coding: utf-8 -*-
+  #
+  # This file is part of WEKO3.
+  # Copyright (C) 2017 National Institute of Informatics.
+  #
+  # WEKO3 is free software; you can redistribute it
+  # and/or modify it under the terms of the GNU General Public License as
+  # published by the Free Software Foundation; either version 2 of the
+  # License, or (at your option) any later version.
+  #
+  # WEKO3 is distributed in the hope that it will be
+  # useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  # General Public License for more details.
+  #
+  # You should have received a copy of the GNU General Public License
+  # along with WEKO3; if not, write to the
+  # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+  # MA 02111-1307, USA.
+  #}
+  {# admin_base_templateを継承 #}
+  {%- extends admin_base_template %}
+  
+  {# CSSの定義 #}
+  {% block css %}
+    {{ super() }}  {# 親テンプレートのCSSを継承 #}
+    {# "weko_admin_profile_settings_css" と "weko_admin_css" に対応するCSSファイルを読み込む #}
+    {% assets "weko_admin_profile_settings_css" %}
+      <link href="{{ ASSET_URL }}" rel="stylesheet">
+    {% endassets %}
+    {% assets "weko_admin_css" %}
+      <link href="{{ ASSET_URL }}" rel="stylesheet">
+    {% endassets %}
+  {% endblock %}
+  
+  {# JavaScriptの定義 #}
+  {%- block javascript %}
+    {{ super() }}  {# 親テンプレートのJavaScriptを継承 #}
+    {# "weko_admin_profile_settings" のJavaScriptファイルを読み込む#}
+    {% assets "weko_admin_profile_settings" %}
+      <script type="text/babel" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    {# React.js用のライブラリ "weko_admin_statistics_reactjs_lib" を読み込む #}
+    {% assets "weko_admin_statistics_reactjs_lib" %}
+      <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+    {# React BootstrapのJavaScriptファイル "weko_admin_react_bootstrap_js" を読み込む #}
+    {% assets "weko_admin_react_bootstrap_js" %}
+      <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+    {% endassets %}
+  {%- endblock javascript %}
+  
+  {%- block body %}
+    {# モーダルウィンドウのテンプレートをインポート #}
+    {% from "weko_theme/macros/modal_page.html" import all_modal %}
+    <div id="root" class="col-xs-12"></div>
+    <input type="hidden" id="init_data" value='{{ data }}'/>
+    <input type="hidden" id="format_options" value='{{ format_options }}'/>
+    {# アラート表示用のコンテナ。警告やメッセージをここに表示するための要素 #}
+    <div id="alerts"></div>
+    <div id="alert-container"></div>
+    {{ all_modal() }}
+  {%- endblock body %}
+  

@@ -116,9 +116,8 @@ def schema(title="", multi_flag=multiple_flag):
                                     "format": "object",
                                     "properties": {
                                         "affiliationNameIdentifierScheme": {
-                                            "type": ["null", "string"],
-                                            "format": "select",
-                                            "enum": config.AFFILIATION_SCHEME_VAL,
+                                            "type": "string",
+                                            "format": "text",
                                             "title": "所属機関識別子Scheme",
                                         },
                                         "affiliationNameIdentifier": {
@@ -255,15 +254,15 @@ def form(
                             "type": "text",
                         },
                         {
-                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
-                            "title": "識別子URI",
-                            "title_i18n": {"en": "Name Identifier URI", "ja": "識別子URI"},
-                            "type": "text",
-                        },
-                        {
                             "key": "{}.nameIdentifiers[].nameIdentifier".format(key),
                             "title": "識別子",
                             "title_i18n": {"en": "Name Identifier", "ja": "識別子"},
+                            "type": "text",
+                        },
+                        {
+                            "key": "{}.nameIdentifiers[].nameIdentifierURI".format(key),
+                            "title": "識別子URI",
+                            "title_i18n": {"en": "Name Identifier URI", "ja": "識別子URI"},
                             "type": "text",
                         },
                     ],
@@ -367,6 +366,17 @@ def form(
                             "add": "New",
                             "items": [
                                 {
+                                    "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme".format(
+                                        key
+                                    ),
+                                    "title": "所属機関識別子Scheme",
+                                    "title_i18n": {
+                                        "en": "Affiliation Name Identifier Scheme",
+                                        "ja": "所属機関識別子Scheme",
+                                    },
+                                    "type": "text",
+                                },
+                                {
                                     "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifier".format(
                                         key
                                     ),
@@ -376,20 +386,6 @@ def form(
                                         "ja": "所属機関識別子",
                                     },
                                     "type": "text",
-                                },
-                                {
-                                    "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierScheme".format(
-                                        key
-                                    ),
-                                    "title": "所属機関識別子Scheme",
-                                    "title_i18n": {
-                                        "en": "Affiliation Name Identifier Scheme",
-                                        "ja": "所属機関識別子Scheme",
-                                    },
-                                    "titleMap": get_select_value(
-                                        config.AFFILIATION_SCHEME_VAL
-                                    ),
-                                    "type": "select",
                                 },
                                 {
                                     "key": "{}.affiliations[].affiliationNameIdentifiers[].affiliationNameIdentifierURI".format(

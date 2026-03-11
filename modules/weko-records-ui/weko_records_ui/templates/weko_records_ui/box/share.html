@@ -21,28 +21,49 @@
 
 <div class="well well2">
 <h4>{{_('Share')}}</h4>
+{%- set share_lang = "ja_JP" if current_i18n.language == "ja" else "en_US" %}
 {%- if config.get('ENABLE_COOKIE_CONSENT', False) %}
- <!-- AddThis Button BEGIN -->
- <div class="addthis_toolbox addthis_default_style addthis_32x32_style" addthis:url="{{ record.permalink_uri }}" data-name="addthis">
-  <a class="addthis_button_mendeley at300b" target="_blank" title="Mendeley" href="#"><span class="at-icon-wrapper" style="background-color: rgb(175, 18, 43); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-mendeley-1" title="Mendeley" alt="Mendeley" style="width: 32px; height: 32px;" class="at-icon at-icon-mendeley"><title id="at-svg-mendeley-1">Mendeley</title><g><path d="M26.24 18.08c-1.42-.08-1.95-.81-1.86-2.09.07-1.08.27-2.15.4-3.22-.02-1.68-.91-3.02-2.4-3.47-1.53-.45-2.87-.14-3.96 1.11-2.24 2.56-2.53 2.55-4.85-.04-1.11-1.24-2.76-1.6-4.24-.95-1.45.64-2.29 2.16-2.08 3.82.08.6.27 1.19.36 1.8.33 2.05-.1 2.61-2.15 3.04-1.03.22-1.85.76-1.98 1.92-.13 1.18.16 2.31 1.36 2.66.74.22 1.79.08 2.47-.31.93-.53 1.03-1.58.71-2.65-.6-1.98-.03-2.94 2.04-3.23.81-.11 1.7-.02 2.48.23 1.26.4 1.63 1.33 1.13 2.56-.43 1.07-.43 2.02.38 2.89.81.87 2.33 1.05 3.4.42 1.08-.64 1.44-1.75 1.01-3.06-.59-1.75-.08-2.69 1.75-3.02.68-.12 1.41-.11 2.09.02 1.77.35 2.3 1.33 1.78 3.08-.49 1.64.19 2.98 1.66 3.31 1.29.29 2.53-.59 2.79-1.95.27-1.56-.6-2.77-2.29-2.87zM15.89 18a2.463 2.463 0 0 1-2.36-2.48c.01-1.41 1.11-2.48 2.52-2.45 1.41.02 2.48 1.14 2.43 2.54-.04 1.37-1.21 2.44-2.59 2.39z"></path></g></svg></span></a>
-  <!--<a class="addthis_button_citeulike at300b" target="_blank" title="CiteULike" href="#"><span class="at-icon-wrapper" style="background-color: rgb(8, 136, 200); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-citeulike-2" title="CiteULike" alt="CiteULike" style="width: 32px; height: 32px;" class="at-icon at-icon-citeulike"><title id="at-svg-citeulike-2">CiteULike</title><g><path d="M26.41 8.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5zM26.41 14.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5zM26.41 20.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5zM26.41 26.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5z"></path></g></svg></span></a>-->
-  <a class="addthis_button_twitter at300b" title="Twitter" href="#"><span class="at-icon-wrapper" style="background-color: rgb(29, 161, 242); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-twitter-3" title="Twitter" alt="Twitter" style="width: 32px; height: 32px;" class="at-icon at-icon-twitter"><title id="at-svg-twitter-3">Twitter</title><g><path d="M27.996 10.116c-.81.36-1.68.602-2.592.71a4.526 4.526 0 0 0 1.984-2.496 9.037 9.037 0 0 1-2.866 1.095 4.513 4.513 0 0 0-7.69 4.116 12.81 12.81 0 0 1-9.3-4.715 4.49 4.49 0 0 0-.612 2.27 4.51 4.51 0 0 0 2.008 3.755 4.495 4.495 0 0 1-2.044-.564v.057a4.515 4.515 0 0 0 3.62 4.425 4.52 4.52 0 0 1-2.04.077 4.517 4.517 0 0 0 4.217 3.134 9.055 9.055 0 0 1-5.604 1.93A9.18 9.18 0 0 1 6 23.85a12.773 12.773 0 0 0 6.918 2.027c8.3 0 12.84-6.876 12.84-12.84 0-.195-.005-.39-.014-.583a9.172 9.172 0 0 0 2.252-2.336" fill-rule="evenodd"></path></g></svg></span></a>
-  <a class="addthis_button_facebook addthis_button_preferred_1 at300b" title="Facebook" href="#"><span class="at-icon-wrapper" style="background-color: rgb(59, 89, 152); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-facebook-5" title="Facebook" alt="Facebook" style="width: 32px; height: 32px;" class="at-icon at-icon-facebook"><title id="at-svg-facebook-5">Facebook</title><g><path d="M22 5.16c-.406-.054-1.806-.16-3.43-.16-3.4 0-5.733 1.825-5.733 5.17v2.882H9v3.913h3.837V27h4.604V16.965h3.823l.587-3.913h-4.41v-2.5c0-1.123.347-1.903 2.198-1.903H22V5.16z" fill-rule="evenodd"></path></g></svg></span></a>
-  <a class="addthis_button_print addthis_button_preferred_2 at300b" title="Print" href="#"><span class="at-icon-wrapper" style="background-color: rgb(115, 138, 141); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-print-6" title="Print" alt="Print" style="width: 32px; height: 32px;" class="at-icon at-icon-print"><title id="at-svg-print-6">Print</title><g><path d="M24.67 10.62h-2.86V7.49H10.82v3.12H7.95c-.5 0-.9.4-.9.9v7.66h3.77v1.31L15 24.66h6.81v-5.44h3.77v-7.7c-.01-.5-.41-.9-.91-.9zM11.88 8.56h8.86v2.06h-8.86V8.56zm10.98 9.18h-1.05v-2.1h-1.06v7.96H16.4c-1.58 0-.82-3.74-.82-3.74s-3.65.89-3.69-.78v-3.43h-1.06v2.06H9.77v-3.58h13.09v3.61zm.75-4.91c-.4 0-.72-.32-.72-.72s.32-.72.72-.72c.4 0 .72.32.72.72s-.32.72-.72.72zm-4.12 2.96h-6.1v1.06h6.1v-1.06zm-6.11 3.15h6.1v-1.06h-6.1v1.06z"></path></g></svg></span></a>
-  <a class="addthis_button_compact at300m" href="#"><span class="at-icon-wrapper" style="background-color: rgb(255, 101, 80); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-addthis-4" title="More" alt="More" style="width: 32px; height: 32px;" class="at-icon at-icon-addthis"><title id="at-svg-addthis-4">Addthis</title><g><path d="M18 14V8h-4v6H8v4h6v6h4v-6h6v-4h-6z" fill-rule="evenodd"></path></g></svg></span></a>
-  <div class="atclear"></div></div>
-    <!-- AddThis Button END -->
+<!-- Facebook Button BEGIN -->
+<div id="fb-root"></div>
+<script data-type="application/javascript" async defer crossorigin="anonymous" data-src="https://connect.facebook.net/{{share_lang}}/sdk.js#xfbml=1&version=v17.0" nonce="EBFJndwO" data-name="facebook"></script>
+<div data-name="facebook">
+  <div class="fb-share-button" data-href="{{ record.permalink_uri }}" data-layout="button_count" data-size="small">
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">
+      Share
+    </a>
+  </div>
+</div>
+<!-- Facebook Button END -->
+<!-- Twitter Button BEGIN -->
+<div data-name="x">
+  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" 
+    data-size="small" data-show-count="true">tweet</a>
+</div>
+<script data-type="application/javascript" async data-name="x" data-src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<!-- Twitter Button END -->
+
 {%- else %}
-  <!-- AddThis Button BEGIN -->
-  <div class="addthis_toolbox addthis_default_style addthis_32x32_style" addthis:url="{{ record.permalink_uri }}">
-  <a class="addthis_button_mendeley at300b" target="_blank" title="Mendeley" href="#"><span class="at-icon-wrapper" style="background-color: rgb(175, 18, 43); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-mendeley-1" title="Mendeley" alt="Mendeley" style="width: 32px; height: 32px;" class="at-icon at-icon-mendeley"><title id="at-svg-mendeley-1">Mendeley</title><g><path d="M26.24 18.08c-1.42-.08-1.95-.81-1.86-2.09.07-1.08.27-2.15.4-3.22-.02-1.68-.91-3.02-2.4-3.47-1.53-.45-2.87-.14-3.96 1.11-2.24 2.56-2.53 2.55-4.85-.04-1.11-1.24-2.76-1.6-4.24-.95-1.45.64-2.29 2.16-2.08 3.82.08.6.27 1.19.36 1.8.33 2.05-.1 2.61-2.15 3.04-1.03.22-1.85.76-1.98 1.92-.13 1.18.16 2.31 1.36 2.66.74.22 1.79.08 2.47-.31.93-.53 1.03-1.58.71-2.65-.6-1.98-.03-2.94 2.04-3.23.81-.11 1.7-.02 2.48.23 1.26.4 1.63 1.33 1.13 2.56-.43 1.07-.43 2.02.38 2.89.81.87 2.33 1.05 3.4.42 1.08-.64 1.44-1.75 1.01-3.06-.59-1.75-.08-2.69 1.75-3.02.68-.12 1.41-.11 2.09.02 1.77.35 2.3 1.33 1.78 3.08-.49 1.64.19 2.98 1.66 3.31 1.29.29 2.53-.59 2.79-1.95.27-1.56-.6-2.77-2.29-2.87zM15.89 18a2.463 2.463 0 0 1-2.36-2.48c.01-1.41 1.11-2.48 2.52-2.45 1.41.02 2.48 1.14 2.43 2.54-.04 1.37-1.21 2.44-2.59 2.39z"></path></g></svg></span></a>
-  <!--<a class="addthis_button_citeulike at300b" target="_blank" title="CiteULike" href="#"><span class="at-icon-wrapper" style="background-color: rgb(8, 136, 200); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-citeulike-2" title="CiteULike" alt="CiteULike" style="width: 32px; height: 32px;" class="at-icon at-icon-citeulike"><title id="at-svg-citeulike-2">CiteULike</title><g><path d="M26.41 8.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5zM26.41 14.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5zM26.41 20.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5zM26.41 26.25H4.82a1.25 1.25 0 0 1 0-2.5h21.59a1.25 1.25 0 0 1 0 2.5z"></path></g></svg></span></a>-->
-  <a class="addthis_button_twitter at300b" title="Twitter" href="#"><span class="at-icon-wrapper" style="background-color: rgb(29, 161, 242); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-twitter-3" title="Twitter" alt="Twitter" style="width: 32px; height: 32px;" class="at-icon at-icon-twitter"><title id="at-svg-twitter-3">Twitter</title><g><path d="M27.996 10.116c-.81.36-1.68.602-2.592.71a4.526 4.526 0 0 0 1.984-2.496 9.037 9.037 0 0 1-2.866 1.095 4.513 4.513 0 0 0-7.69 4.116 12.81 12.81 0 0 1-9.3-4.715 4.49 4.49 0 0 0-.612 2.27 4.51 4.51 0 0 0 2.008 3.755 4.495 4.495 0 0 1-2.044-.564v.057a4.515 4.515 0 0 0 3.62 4.425 4.52 4.52 0 0 1-2.04.077 4.517 4.517 0 0 0 4.217 3.134 9.055 9.055 0 0 1-5.604 1.93A9.18 9.18 0 0 1 6 23.85a12.773 12.773 0 0 0 6.918 2.027c8.3 0 12.84-6.876 12.84-12.84 0-.195-.005-.39-.014-.583a9.172 9.172 0 0 0 2.252-2.336" fill-rule="evenodd"></path></g></svg></span></a>
-  <a class="addthis_button_facebook addthis_button_preferred_1 at300b" title="Facebook" href="#"><span class="at-icon-wrapper" style="background-color: rgb(59, 89, 152); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-facebook-5" title="Facebook" alt="Facebook" style="width: 32px; height: 32px;" class="at-icon at-icon-facebook"><title id="at-svg-facebook-5">Facebook</title><g><path d="M22 5.16c-.406-.054-1.806-.16-3.43-.16-3.4 0-5.733 1.825-5.733 5.17v2.882H9v3.913h3.837V27h4.604V16.965h3.823l.587-3.913h-4.41v-2.5c0-1.123.347-1.903 2.198-1.903H22V5.16z" fill-rule="evenodd"></path></g></svg></span></a>
-  <a class="addthis_button_print addthis_button_preferred_2 at300b" title="Print" href="#"><span class="at-icon-wrapper" style="background-color: rgb(115, 138, 141); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-print-6" title="Print" alt="Print" style="width: 32px; height: 32px;" class="at-icon at-icon-print"><title id="at-svg-print-6">Print</title><g><path d="M24.67 10.62h-2.86V7.49H10.82v3.12H7.95c-.5 0-.9.4-.9.9v7.66h3.77v1.31L15 24.66h6.81v-5.44h3.77v-7.7c-.01-.5-.41-.9-.91-.9zM11.88 8.56h8.86v2.06h-8.86V8.56zm10.98 9.18h-1.05v-2.1h-1.06v7.96H16.4c-1.58 0-.82-3.74-.82-3.74s-3.65.89-3.69-.78v-3.43h-1.06v2.06H9.77v-3.58h13.09v3.61zm.75-4.91c-.4 0-.72-.32-.72-.72s.32-.72.72-.72c.4 0 .72.32.72.72s-.32.72-.72.72zm-4.12 2.96h-6.1v1.06h6.1v-1.06zm-6.11 3.15h6.1v-1.06h-6.1v1.06z"></path></g></svg></span></a>
-  <a class="addthis_button_compact at300m" href="#"><span class="at-icon-wrapper" style="background-color: rgb(255, 101, 80); line-height: 32px; height: 32px; width: 32px;"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 32 32" version="1.1" role="img" aria-labelledby="at-svg-addthis-4" title="More" alt="More" style="width: 32px; height: 32px;" class="at-icon at-icon-addthis"><title id="at-svg-addthis-4">Addthis</title><g><path d="M18 14V8h-4v6H8v4h6v6h4v-6h6v-4h-6z" fill-rule="evenodd"></path></g></svg></span></a>
-  <div class="atclear"></div></div>
-    <!-- AddThis Button END -->
+<div id="fb-root"></div>
+<!-- Facebook Button BEGIN -->
+<div id="fb-root"></div>
+<script async defer crossorigin="anonymous" src="https://connect.facebook.net/{{share_lang}}/sdk.js#xfbml=1&version=v17.0" nonce="Ap5DaXCL" ></script>
+<div>
+  <div class="fb-share-button" data-href="{{ record.permalink_uri }}" data-layout="button_count" data-size="small">
+    <a target="_blank" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Fdevelopers.facebook.com%2Fdocs%2Fplugins%2F&amp;src=sdkpreparse" class="fb-xfbml-parse-ignore">
+      Share
+    </a>
+  </div>
+</div>
+<!-- Facebook Button END -->
+<!-- Twitter Button BEGIN -->
+<div>
+  <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" 
+    data-size="small" data-show-count="true">
+    tweet
+  </a>
+<script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+</div>
+<!-- Twitter Button END -->
 {%- endif %}
 
   <h4>Cite as</h4>
@@ -71,6 +92,22 @@
       </invenio-csl-typeahead>
     </invenio-csl>
   </div>
+  <h4>Other</h4>
+<div>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<style>
+  .material-symbols-outlined {
+    font-variation-settings:
+    'FILL' 1,
+    'wght' 700,
+    'GRAD' 200,
+    'opsz' 48
+  }
+  </style>
+
+  <a href="javascript:void(0)" onclick="window.print(); return false;"><span class="material-symbols-outlined">print</span></a>
+</div>
+
 </div>
 
 <script src="/static/node_modules/bootstrap/dist/js/bootstrap.js"></script>

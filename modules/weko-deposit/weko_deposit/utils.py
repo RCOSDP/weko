@@ -21,12 +21,12 @@
 import traceback
 from sqlalchemy.orm.exc import NoResultFound
 from flask import current_app
-from .tasks import (extract_pdf_and_update_file_contents,
-                    extract_pdf_and_update_file_contents_with_index_api)
+from .tasks import extract_pdf_and_update_file_contents
 from .api import WekoDeposit
 import pypdfium2
 import os
 import subprocess
+import gc
 
 def update_pdf_contents_es(record_ids):
     """register the contents of the record PDF file in elasticsearch
@@ -35,8 +35,13 @@ def update_pdf_contents_es(record_ids):
     """
     deposits = WekoDeposit.get_records(record_ids)
     for dep in deposits:
-        file_infos = dep.get_pdf_info()
-        extract_pdf_and_update_file_contents.apply_async((file_infos, str(dep.id)))
+        try:
+            file_infos = dep.get_pdf_info()
+            extract_pdf_and_update_file_contents.apply_async((
+                file_infos, str(dep.id)))
+        except NoResultFound:
+            current_app.logger.error(f"Record with UUID: {dep.id} was not found in the item_metadata table.")
+            traceback.print_exc()
 
 def extract_text_from_pdf(filepath, max_size):
     """Read PDF file and extract text.
@@ -55,21 +60,33 @@ def extract_text_from_pdf(filepath, max_size):
         reader = pypdfium2.PdfDocument(filepath)
         texts = []
         total_bytes = 0
-        for page in reader:
-            text = page.get_textpage().get_text_range()
-            encoded = text.encode('utf-8', errors='replace')
-            if total_bytes + len(encoded) > max_size:
-                remain = max_size - total_bytes
-                texts.append(encoded[:remain].decode('utf-8', errors='ignore'))
-                break
-            else:
-                texts.append(text)
-                total_bytes += len(encoded)
+        for i in range(len(reader)):
+            page = reader.get_page(i)
+            textpage=None
+            try:
+                textpage = page.get_textpage()
+                text = textpage.get_text_range()
+                
+                encoded = text.encode('utf-8', errors='replace')
+                if total_bytes + len(encoded) > max_size:
+                    remain = max_size - total_bytes
+                    texts.append(encoded[:remain].decode('utf-8', errors='ignore'))
+                    break
+                else:
+                    texts.append(text)
+                    total_bytes += len(encoded)
+            finally:
+                if textpage is not None:
+                    textpage.close()
+                page.close()
         data = "".join(texts)
         data = "".join(data.splitlines())
     finally:
         if reader is not None:
             reader.close()
+        
+        del reader
+        gc.collect()
 
     return data
 
@@ -104,20 +121,3 @@ def extract_text_with_tika(filepath, max_size):
         data = encoded[:max_size].decode('utf-8', errors='ignore')
 
     return data
-
-
-
-def update_pdf_contents_es_with_index_api(record_ids):
-    """register the contents of the record PDF file in elasticsearch
-    Args:
-        record_ids (list): List of record uuids
-    """
-    deposits = WekoDeposit.get_records(record_ids)
-    for dep in deposits:
-        try:
-            file_infos = dep.get_pdf_info_reindex_command()
-            extract_pdf_and_update_file_contents_with_index_api.apply_async((
-                file_infos, str(dep.id)))
-        except NoResultFound:
-            current_app.logger.error(f"Record with UUID: {dep.id} was not found in the item_metadata table.")
-            traceback.print_exc()

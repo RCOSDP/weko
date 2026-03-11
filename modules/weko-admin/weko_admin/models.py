@@ -21,6 +21,7 @@
 """Database models for weko-admin."""
 
 from datetime import datetime
+import traceback
 
 from flask import current_app, escape, request
 from invenio_db import db
@@ -270,7 +271,7 @@ class AdminLangSettings(db.Model):
 
     __tablename__ = 'admin_lang_settings'
 
-    lang_code = db.Column(db.String(3), primary_key=True, nullable=False,
+    lang_code = db.Column(db.String(5), primary_key=True, nullable=False,
                           unique=True)
 
     lang_name = db.Column(db.String(30), nullable=False)
@@ -890,26 +891,34 @@ class StatisticsEmail(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     email_address = db.Column(db.String(255), nullable=False)
+    repository_id = db.Column(db.String(100), nullable=True, default='Root Index')
 
     @classmethod
-    def insert_email_address(cls, email_address):
+    def insert_email_address(cls, email_address ,repository_id):
         """Insert Email Address."""
         try:
             data_obj = StatisticsEmail()
             with db.session.begin_nested():
                 data_obj.email_address = email_address
+                data_obj.repository_id = repository_id
                 db.session.add(data_obj)
             db.session.commit()
-        except BaseException as ex:
+        except Exception as ex:
             db.session.rollback()
-            current_app.logger.debug(ex)
-            raise ex
+            current_app.logger.error(ex)
+            raise
         return cls
 
     @classmethod
     def get_all_emails(cls):
         """Get all recipient emails as a list."""
         all_objects = cls.query.all()
+        return [row.email_address for row in all_objects]
+
+    @classmethod
+    def get_emails_by_repo(cls, repository_id):
+        """Get all recipient emails as a list."""
+        all_objects = cls.query.filter_by(repository_id=repository_id).all()
         return [row.email_address for row in all_objects]
 
     @classmethod
@@ -931,10 +940,23 @@ class StatisticsEmail(db.Model):
                 delete_all = cls.query.delete()
             db.session.commit()
         except Exception as ex:
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
             db.session.rollback()
             raise ex
         return delete_all
+
+    @classmethod
+    def delete_by_repo(cls, repository_id):
+        """Delete all."""
+        try:
+            with db.session.begin_nested():
+                delete_by_repo = cls.query.filter_by(repository_id=repository_id).delete()
+            db.session.commit()
+        except Exception as ex:
+            current_app.logger.error(ex)
+            db.session.rollback()
+            raise
+        return delete_by_repo
 
 
 class RankingSettings(db.Model):
@@ -1059,9 +1081,15 @@ class FeedbackMailSetting(db.Model, Timestamp):
     )
     """Store system root url."""
 
+    repository_id = db.Column(
+        db.String(100),
+        nullable=False,
+        default='Root Index'
+    )
+
     @classmethod
     def create(cls, account_author, manual_mail,
-               is_sending_feedback, root_url):
+               is_sending_feedback, root_url, repo_id):
         """Create a feedback mail setting.
 
         Arguments:
@@ -1079,10 +1107,12 @@ class FeedbackMailSetting(db.Model, Timestamp):
                 new_record.manual_mail = manual_mail
                 new_record.is_sending_feedback = is_sending_feedback
                 new_record.root_url = root_url
+                new_record.repository_id = repo_id
                 db.session.add(new_record)
             db.session.commit()
-        except BaseException:
+        except Exception as ex:
             db.session.rollback()
+            current_app.logger.error(ex)
             return False
         return True
 
@@ -1102,8 +1132,26 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return []
 
     @classmethod
+    def get_feedback_email_setting_by_repo(cls, repo_id):
+        """Get all feedback email setting.
+
+        Returns:
+            class -- this class
+
+        """
+        if not repo_id:
+            repo_id = 'Root Index'
+        try:
+            with db.session.no_autoflush:
+                feedback_settings = cls.query.filter_by(repository_id=repo_id).all()
+                return feedback_settings
+        except Exception as ex:
+            current_app.logger.error(ex)
+            return []
+
+    @classmethod
     def update(cls, account_author,
-               manual_mail, is_sending_feedback, root_url):
+               manual_mail, is_sending_feedback, root_url, repo_id):
         """Update existed feedback mail setting.
 
         Arguments:
@@ -1119,11 +1167,12 @@ class FeedbackMailSetting(db.Model, Timestamp):
         """
         try:
             with db.session.begin_nested():
-                settings = cls.query.all()[0]
+                settings = cls.query.filter_by(repository_id=repo_id).first()
                 settings.account_author = account_author
                 settings.manual_mail = manual_mail
                 settings.is_sending_feedback = is_sending_feedback
                 settings.root_url = root_url
+                settings.repository_id = repo_id
                 db.session.merge(settings)
             db.session.commit()
             return True
@@ -1151,6 +1200,27 @@ class FeedbackMailSetting(db.Model, Timestamp):
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.debug(ex)
+            return False
+
+    @classmethod
+    def delete_by_repo(cls, repo_id):
+        """Delete the settings. default delete first setting.
+
+        Keyword Arguments:
+            id {int} -- The setting id (default: {1})
+
+        Returns:
+            bool -- true if delete success
+
+        """
+        try:
+            with db.session.begin_nested():
+                cls.query.filter_by(repository_id=repo_id).delete()
+            db.session.commit()
+            return True
+        except BaseException as ex:
+            db.session.rollback()
+            current_app.logger.error(ex)
             return False
 
 
@@ -1203,7 +1273,7 @@ class AdminSettings(db.Model):
                 else:
                     return admin_setting_object.settings
         except Exception as ex:
-            current_app.logger.debug('dict to object')
+            traceback.print_exc()
             current_app.logger.error(ex)
         return None
 
@@ -1335,6 +1405,7 @@ class SiteInfo(db.Model):
         nullable=True
     )
     """add this id."""
+    # Note: The column 'addthis_user_id' is deprecated and no longer in use.
 
     ogp_image = db.Column(
         db.Text,
@@ -1404,8 +1475,6 @@ class SiteInfo(db.Model):
                 query_object.notify = notify
                 query_object.google_tracking_id_user = escape(site_info.get(
                     "google_tracking_id_user").strip())
-                query_object.addthis_user_id = escape(site_info.get(
-                    "addthis_user_id").strip())
                 ogp_image_data = site_info.get("ogp_image").strip()
                 if ogp_image_data and request.url_root not in ogp_image_data:
                     url_ogp_image = update_ogp_image(ogp_image_data,
@@ -1471,6 +1540,12 @@ class FeedbackMailHistory(db.Model):
         nullable=False
     )
 
+    repository_id = db.Column(
+        db.String(100),
+        nullable=False,
+        default='Root Index'
+    )
+
     @classmethod
     def get_by_id(cls, id):
         """Get history by id.
@@ -1503,17 +1578,17 @@ class FeedbackMailHistory(db.Model):
         return next_id
 
     @classmethod
-    def get_all_history(cls):
+    def get_all_history(cls, repo_id=None):
         """Get all history record.
 
         Returns:
             list -- history
 
         """
-        result = cls.query.order_by(
-            desc(cls.id)
-        ).all()
-        return result
+        query = cls.query
+        if repo_id:
+            query = query.filter_by(repository_id=repo_id)
+        return query.order_by(desc(cls.id)).all()
 
     @classmethod
     def create(cls,
@@ -1525,7 +1600,8 @@ class FeedbackMailHistory(db.Model):
                count,
                error,
                parent_id=None,
-               is_latest=True):
+               is_latest=True,
+               repository_id=None):
         """Create history record.
 
         Arguments:
@@ -1553,11 +1629,12 @@ class FeedbackMailHistory(db.Model):
                 data.count = count
                 data.error = error
                 data.is_latest = is_latest
+                data.repository_id = repository_id
                 session.add(data)
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
     @classmethod
     def update_lastest_status(cls, id, status):
@@ -1682,7 +1759,7 @@ class FeedbackMailFailed(db.Model):
             session.commit()
         except BaseException as ex:
             session.rollback()
-            current_app.logger.debug(ex)
+            current_app.logger.error(ex)
 
 
 class Identifier(db.Model):
@@ -1793,7 +1870,10 @@ class FacetSearchSetting(db.Model):
     is_open = db.Column(db.Boolean(name='is_open'), default=True, nullable=False)
     """Indicates whether the faceted search item is open or closed, and if true, it is open."""
 
-    def __init__(self, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open):
+    search_condition = db.Column(db.String(20), nullable=False)
+    """Indicates search conditions for faceted search items; OR or AND can be set."""
+
+    def __init__(self, name_en, name_jp, mapping, aggregations, active, ui_type, display_number, is_open, search_condition):
         """Initial Facet search setting.
 
         Args:
@@ -1805,6 +1885,7 @@ class FacetSearchSetting(db.Model):
             ui_type:
             display_number:
             is_open:
+            search_condition:
         """
         self.name_en = name_en
         self.name_jp = name_jp
@@ -1814,6 +1895,7 @@ class FacetSearchSetting(db.Model):
         self.ui_type = ui_type
         self.display_number = display_number
         self.is_open = is_open
+        self.search_condition = search_condition
 
     def to_dict(self) -> dict:
         """Convert object to dictionary.
@@ -1830,7 +1912,8 @@ class FacetSearchSetting(db.Model):
             "active": self.active,
             "ui_type": self.ui_type,
             "display_number": self.display_number,
-            "is_open": self.is_open
+            "is_open": self.is_open,
+            "search_condition": self.search_condition
         }
 
     @classmethod

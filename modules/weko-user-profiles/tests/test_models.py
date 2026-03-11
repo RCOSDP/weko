@@ -23,6 +23,9 @@
 
 """Tests for user profile models."""
 
+import pytest
+from mock import patch
+
 from invenio_accounts.models import User
 
 from weko_user_profiles import UserProfile, WekoUserProfiles
@@ -112,7 +115,7 @@ def test_delete_cascade(app,db):
 
         assert UserProfile.get_by_userid(u.id) is None
 
-
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_create_profile -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
 def test_create_profile(app,db):
     """Test that userprofile can be patched using UserAccount constructor."""
     with app.app_context():
@@ -123,6 +126,14 @@ def test_create_profile(app,db):
         db.session.commit()
 
         user_id = user.id
+
+        profile = UserProfile(user=user, username="test_username")
+        # set displayname
+        profile.username = "test_displayname"
+        db.session.add(profile)
+        db.session.commit()
+
+        assert "test_displayname" == UserProfile.get_by_displayname("test_displayname").username
         # patch_user = User(
         #     id=user_id,
         #     email='updated_test@example.org',
@@ -165,3 +176,94 @@ def test_create_profile_with_null(app,db):
 
         user = User.query.get(user_id)
         assert user.profile is None
+
+
+# def get_institute_data(self):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_get_institute_data -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_get_institute_data(app,user_profiles):
+    """Test get_institute_data."""
+
+    # enable_custom=False,visible: any False
+    profile_conf = {
+        'fullname': {'visible': True}, 'displayname': {'visible': True},
+        'username': {'visible': True}, 'university': {'visible': True},
+        'department': {'visible': True}, 'position': {'visible': True},
+        'item1': {'visible': True}, 'item2': {'visible': True}, 'item3': {'visible': False},
+        'item4': {'visible': True}, 'item5': {'visible': True}, 'item6': {'visible': False},
+        'item7': {'visible': True}, 'item8': {'visible': True}, 'item9': {'visible': True},
+        'item10': {'visible': True}, 'item11': {'visible': True}, 'item12': {'visible': True},
+        'item13': {'visible': True}, 'item14': {'visible': True}, 'item15': {'visible': True},
+        'item16': {'visible': True}
+    }
+
+    with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf):
+        expected = [{
+            "subitem_affiliated_institution_name": getattr(user_profiles[0], "item"+str(i)),
+            "subitem_affiliated_institution_position": getattr(user_profiles[0], "item"+str(i+1))
+        } for i in range(3, 13, 2)]
+        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data(False)
+        assert expected == actual
+
+    # enable_custom=True,visible: any False
+    profile_conf_any_false = {
+        'fullname': {'visible': True}, 'displayname': {'visible': True},
+        'username': {'visible': True}, 'university': {'visible': True},
+        'department': {'visible': True}, 'position': {'visible': True},
+        'item1': {'visible': True}, 'item2': {'visible': True}, 'item3': {'visible': False},
+        'item4': {'visible': True}, 'item5': {'visible': True}, 'item6': {'visible': False},
+        'item7': {'visible': True}, 'item8': {'visible': True}, 'item9': {'visible': True},
+        'item10': {'visible': True}, 'item11': {'visible': True}, 'item12': {'visible': True},
+        'item13': {'visible': True}, 'item14': {'visible': True}, 'item15': {'visible': True},
+        'item16': {'visible': True}
+    }
+
+    with patch('weko_admin.models.AdminSettings.get', return_value=profile_conf_any_false):
+        expected = [{
+            "subitem_affiliated_institution_name": getattr(user_profiles[0], "item"+str(i)),
+            "subitem_affiliated_institution_position": getattr(user_profiles[0], "item"+str(i+1))
+        } for i in range(3, 13, 2)]
+        expected[0]["subitem_affiliated_institution_name"] = ""
+        expected[1]["subitem_affiliated_institution_position"] = ""
+        actual = UserProfile.query.filter_by(user_id = user_profiles[0].user_id).one().get_institute_data(True)
+        assert expected == actual
+
+
+# def client_credentials_configured(self):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_client_credentials_configured -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_client_credentials_configured(app):
+    # Test Case (Pos): not all of s3_endpoint_url, access_key, secret_key are set
+    profile = UserProfile()
+    assert not profile.client_credentials_configured
+
+    # Test Case (Pos): not all of s3_endpoint_url, access_key, secret_key are set
+    profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com")
+    assert not profile.client_credentials_configured
+
+    # Test Case (Pos): all of s3_endpoint_url, access_key, secret_key are set
+    profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com",
+                          access_key="accesskey",
+                          secret_key = "secretkey")
+    assert profile.client_credentials_configured
+
+
+# def create_s3_client(self):
+# .tox/c1/bin/pytest --cov=weko_user_profiles tests/test_models.py::test_create_s3_client -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-user-profiles/.tox/c1/tmp
+def test_create_s3_client(app, mocker):
+    # Test Case (Neg): S3 setting is NG
+    profile = UserProfile()
+    with pytest.raises(Exception) as ex:
+        profile.create_s3_client()
+    assert "S3 setting none. Please check your profile." in str(ex.value)
+
+    # Test Case (Pos): S3 setting is OK
+    profile = UserProfile(s3_endpoint_url = "https://s3.amazonaws.com",
+                          access_key="accesskey",
+                          secret_key="secretkey")
+
+    mocker_create = mocker.patch("weko_user_profiles.models.create_boto3_s3_client")
+    assert profile.create_s3_client()
+    args, called_kwargs = mocker_create.call_args
+    assert args[0] == "accesskey"
+    assert args[1] == "secretkey"
+    assert called_kwargs["region_name"] is None
+    assert called_kwargs["endpoint_url"] == "https://s3.amazonaws.com"

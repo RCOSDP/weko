@@ -21,16 +21,18 @@
 """Validation for import weko-authors."""
 
 import importlib
+import re
+from datetime import datetime
 from functools import reduce
 from operator import getitem
 
 from flask_babelex import gettext as _
 from invenio_db import db
 
-from weko_authors.models import AuthorsPrefixSettings
+from weko_authors.models import AuthorsPrefixSettings, AuthorsAffiliationSettings
 
 
-def validate_by_extend_validator(values=[], validator={}):
+def validate_by_extend_validator(item, values=[], validator={}):
     """Validate by specify validator.
 
     Args:
@@ -45,7 +47,7 @@ def validate_by_extend_validator(values=[], validator={}):
     if values and validator:
         _class = importlib.import_module(validator.get('class_name'))
         _func = getattr(_class, validator.get('func_name'))
-        errors = _func(values)
+        errors = _func(item, values)
     return errors
 
 
@@ -91,8 +93,7 @@ def validate_map(values=[], _map=[]):
                 errors_key.append(val['key'])
     return errors_key
 
-
-def validate_identifier_scheme(values=[]):
+def validate_identifier_scheme(item, values=[]):
     """Validate Identifier Scheme.
 
     Args:
@@ -113,6 +114,90 @@ def validate_identifier_scheme(values=[]):
                     errors.append(err_mgs.format(val['value']))
     return errors
 
+def validate_affiliation_identifier_scheme(item, values=[]):
+    """Validate Affiliation Identifier Scheme.
+
+    Args:
+        values (list, optional): List values with key path. Defaults to [].
+
+    Returns:
+        list: List errors message.
+
+    """
+    errors = []
+    err_msg = _("Specified Affiliation Identifier Scheme '{}' does not exist.")
+    if values:
+        with db.session.no_autoflush:
+            authors_prefix = AuthorsAffiliationSettings.query.all()
+            schemes = [prefix.scheme for prefix in authors_prefix]
+            for val in values:
+                if val['value'] and val['value'] not in schemes:
+                    errors.append(err_msg.format(val['value']))
+    return errors
+
+
+def validate_affiliation_period_start(item, values=[]):
+    """
+    periodStartをバリデーションする
+    チェックするのは以下
+    ・yyyy-mm-ddの形であるか
+
+    Args:
+        item (dict): インポートされるデータをdictに直したもの、ここでは使わない
+        values (list, optional): List values with key path. Defaults to [].
+
+    Returns:
+        list: List errors message.
+    """
+    errors = []
+    err_msg_format = _("External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}")
+    for val in values:
+        date = val["value"]
+        if date:
+            try:
+                datetime.strptime(date, "%Y-%m-%d")
+            except ValueError:
+                errors.append(err_msg_format.format(val['value']))
+    return errors
+
+def validate_affiliation_period_end(item, values=[]):
+    """
+    periodEndをバリデーションする
+    チェックするのは以下
+    ・yyyy-mm-ddの形であるか
+    ・対になるperiodStartが正しいフォーマットの時、periodStartがperiodEndより遅くないか
+
+    Args:
+        item (dict): インポートされるデータをdictに直したもの
+        values (list, optional): List values with key path. Defaults to [].
+
+    Returns:
+        list: List errors message.
+    """
+    errors = []
+    err_msg_format = _("External Affiliation Period must be in the format: yyyy-MM-dd, blank. {}")
+    err_msg = _("Period end must be after Period start.")
+    for val in values:
+        period_end = val["value"]
+        if period_end:
+            try:
+                datetime.strptime(period_end, "%Y-%m-%d")
+            except ValueError:
+                errors.append(err_msg_format.format(val['value']))
+                continue
+            reduce_keys = val['reduce_keys']
+            uplevel_data = reduce(getitem, reduce_keys[:-1], item)
+            period_start = uplevel_data["periodStart"]
+            if period_start:
+                try:
+                    period_start = datetime.strptime(period_start, "%Y-%m-%d")
+                    period_end = datetime.strptime(period_end, "%Y-%m-%d")
+                except ValueError:
+                    errors.append(err_msg_format.format(val['value']))
+                    continue
+                if period_start > period_end:
+                    errors.append(err_msg)
+    return errors
 
 def validate_external_author_identifier(item, values=[],
                                         existed_external_authors_id={}):
@@ -132,15 +217,17 @@ def validate_external_author_identifier(item, values=[],
     msg = _('External author identifier exists in DB.<br/>{}')
     for val in values:
         reduce_keys = val['reduce_keys']
-        idType = reduce(getitem, reduce_keys[:-1], item)['idType']
-        authorId = reduce(getitem, reduce_keys[:-1], item)['authorId']
-        if idType and authorId:
+        author_info = reduce(getitem, reduce_keys[:-1], item)
+        id_type = author_info.get("idType")
+        author_id = author_info.get("authorId")
+        if id_type and author_id:
             weko_ids_has_authorId = existed_external_authors_id \
-                .get(idType, {}) \
-                .get(authorId, [])
+                .get(id_type, {}) \
+                .get(author_id, [])
             if weko_ids_has_authorId \
                     and item.get('pk_id') not in weko_ids_has_authorId:
-                warnings.append(authorId)
+                warnings.append(author_id)
     if warnings:
         return msg.format('<br/>'.join(warnings))
     return None
+

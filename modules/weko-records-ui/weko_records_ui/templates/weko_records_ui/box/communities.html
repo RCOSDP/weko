@@ -1,0 +1,25 @@
+<div class="well well2 metadata">
+  <h4>{{_('Communities')}}</h4>
+  {% if belonging_community | length > 0  %}
+    {% for community in belonging_community %}
+      <div class="communities-area">
+        {% if community.thumbnail_path %}
+          {% if community.thumbnail_path | length > 0 %}
+            <div class="communities-area-thumbnail">
+              <a href="{{ url_for('invenio_communities.view', community_id=community.id, view='weko') }}">
+                <img src="{{ community.thumbnail_path }}" class="communities_thumbnail_img"
+                style="max-width: {{ config.WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_WIDTH }}px;
+                max-height: {{ config.WEKO_RECORDS_UI_COMMUNITIES_BOX_THUMBNAIL_HEIGHT }}px;" />
+              </a>
+            </div>
+          {% endif %}
+        {% endif %}
+        <div class="communities-area-title">
+          <h4>
+            <a href="{{ url_for('invenio_communities.view', community_id=community.id, view='weko') }}">{{ community.title }}</a>
+          </h4>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+</div>

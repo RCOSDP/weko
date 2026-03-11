@@ -19,7 +19,6 @@ from flask_login import current_user, login_required
 from invenio_cache import current_cache, current_cache_ext
 from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
-from weko_theme.utils import get_community_id, get_weko_contents
 from werkzeug.exceptions import NotFound
 from invenio_db import db
 
@@ -408,11 +407,13 @@ def get_widget_page_endpoints(widget_id, lang=''):
 def view_widget_page():
     """View user-created WidgetDesignPages."""
 
+    from weko_theme.utils import get_community_id
     community_id, ctx = get_community_id(request.args)
     try:
         page = WidgetDesignPage.get_by_url(request.path)
 
         # Check if has main and if it does use different template
+        from weko_theme.utils import get_weko_contents
         if page.settings:
             main_type = current_app.config['WEKO_GRIDLAYOUT_MAIN_TYPE']
             settings = json.loads(page.settings) \
@@ -442,12 +443,14 @@ def handle_not_found(exception, **extra):
     """Custom blueprint exception handler."""
     assert isinstance(exception, NotFound)  # Only handle 404 errors
 
+    from weko_theme.utils import get_community_id
     community_id, ctx = get_community_id(request.args)
     try:  # Check if the page exists
         page = WidgetDesignPage.get_by_url(request.path)
     except NoResultFound:
         page = None
 
+    from weko_theme.utils import get_weko_contents
     if page:
         _add_url_rule(page.url)
         if page.settings:
@@ -489,17 +492,18 @@ def _add_url_rule(url_or_urls):
 
 
 @blueprint_api.route('/access_counter_record/<string:repository_id>'
-                     '/<string:path>/<string:current_language>', methods=['GET'])
-def get_access_counter_record(repository_id, path,current_language):
+                     '/<path:path>/<string:current_language>', methods=['GET'])
+def get_access_counter_record(repository_id, path, current_language):
     """Get access Top page value."""
-    cached_data = current_cache.get('access_counter')
-    if path == "main":
-        widget_design_setting = WidgetDesignServices.get_widget_design_setting(
-            repository_id, current_language or get_default_language())
-    else:
-        page_id = WidgetDesignPage.get_by_url("/"+path).id
+    design_page = WidgetDesignPage.get_by_url("/" + path)
+    if design_page:
+        page_id = design_page.id
         widget_design_setting = WidgetDesignPageServices.get_widget_design_setting(
             page_id, current_language or get_default_language())
+    else:
+        page_id = "main"
+        widget_design_setting = WidgetDesignServices.get_widget_design_setting(
+            repository_id, current_language or get_default_language())
 
     widget_ids = [
         str(widget.get("widget_id")) for widget in widget_design_setting.get("widget-settings", {})
@@ -507,7 +511,9 @@ def get_access_counter_record(repository_id, path,current_language):
     ]
     if len(widget_ids) == 0:
         return abort(404)
-
+    
+    cached_key = "access_counter_{}".format(page_id)
+    cached_data = current_cache.get(cached_key)
     if not cached_data or set(list(json.loads(cached_data.data).keys())) != set(widget_ids):
         result = {}
         # need to logic check
@@ -544,7 +550,7 @@ def get_access_counter_record(repository_id, path,current_language):
         if result and len(result) > 0:
             cached_data = jsonify(result)
             ttl = current_app.config.get('INVENIO_CACHE_TTL', 50)
-            current_cache.set('access_counter', cached_data, ttl)
+            current_cache.set(cached_key, cached_data, ttl)
 
     return cached_data
 

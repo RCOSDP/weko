@@ -1,0 +1,62 @@
+{# -*- coding: utf-8 -*-
+#
+# This file is part of WEKO3.
+# Copyright (C) 2017 National Institute of Informatics.
+#
+# WEKO3 is free software; you can redistribute it
+# and/or modify it under the terms of the GNU General Public License as
+# published by the Free Software Foundation; either version 2 of the
+# License, or (at your option) any later version.
+#
+# WEKO3 is distributed in the hope that it will be
+# useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with WEKO3; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
+# MA 02111-1307, USA.
+#}
+
+{%- extends admin_base_template %}
+
+{% from "weko_admin/settings/_macros.html" import render_field, form_errors %}
+
+{% block css %}
+  {{ super() }}
+  {% assets "weko_theme_css_buttons" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+  {% assets "weko_admin_css" %}<link href="{{ ASSET_URL }}" rel="stylesheet">{% endassets %}
+{% endblock %}
+
+{%- block javascript %}
+  {{ super() }}
+  {% assets "invenio_mail_template" %}<script type="text/babel" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_statistics_reactjs_lib" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+  {% assets "weko_admin_react_bootstrap_js" %}<script type="text/javascript" src="{{ ASSET_URL }}"></script>{% endassets %}
+{%- endblock javascript %}
+
+{%- block body %}
+{% from "weko_theme/macros/modal_page.html" import all_modal %}
+<div id="alerts"></div>
+{{ all_modal() }}
+<div class="panel panel-info">
+  <div class="panel-heading">
+    <div class="panel-title">
+      <h4>
+        Mail Template
+        <a class="glyphicon glyphicon-info-sign pull-right" onclick="window.open('{{url_for('mailtemplates.help')}}', '_blank', 'location=no,toolbar=no,scrollbars=yes,resizable=no,top=500,left=500,width=400,height=400')"></a>
+      <h4>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div id="root" class="col-xs-12"></div>
+  </div>
+</div>
+<input type="hidden" id="init_data" value='{{ data }}'/>
+<input type="hidden" id="new" value='{{_("Add")}}'/>
+<input id="save_label" type="hidden" value='{{ _("Save") }}'/>
+<input type="hidden" id="subject_label" value='{{_("Subject")}}'>
+<input type="hidden" id="recipients_label" value='{{_("Recipients")}}'>
+<input type="hidden" id="message_miss_data" value='{{_("Please input the Mail Subject and Mail Body.")}}'/>
+{%- endblock body %}

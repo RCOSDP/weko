@@ -32,7 +32,7 @@ function Layout({isEditScreen}) {
 
 function FacetSearchLayout(
   {
-    name_en, name_jp, mapping, active, ui_type, is_open, display_number, aggregations, mapping_list
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, search_condition, aggregations, mapping_list, detail_condition
   }
 ) {
   const [_nameEN, _setNameEN] = useState(name_en);
@@ -42,6 +42,7 @@ function FacetSearchLayout(
   const [_uiType, _setUiType] = useState(ui_type);
   const [_isOpen, _setIsOpen] = useState(is_open);
   const [_displayNumber, _setDisplayNumber] = useState(display_number);
+  const [_searchCondition, _setSearchCondition] = useState(search_condition);
   const [_aggregations, _setAggregations] = useState(aggregations);
 
   function handleSaveFacetSearch() {
@@ -56,6 +57,23 @@ function FacetSearchLayout(
        ( !Number.isInteger(Number(_displayNumber)) || _displayNumber < 1 || _displayNumber > 99 ) ) {
       //The displayNumber must be set to an integer value between 1 and 99.
       errorMessage = (LABELS['lblDisplayNumberValidation1']);
+    } else {
+      //It is an error if the parameter name for faceted search overlaps with the parameter name used for detail search.
+      detail_condition.map((item) => {
+        if(item[1] === 'range' || item[1] === 'dateRange'){
+          //If the type is [range] or [dateRange], [_from] and [_to] are added to the parameter name.
+          if(item[0] + '_from' === _nameEN || item[0] + '_to' === _nameEN){
+            errorMessage = (LABELS['lblNameENValidation']);
+          }
+        } else if(item[1] === 'geo_distance') {
+          //If the type is [geo_distance], [_lat], [_lon] and [_distance] are added to the parameter names.
+          if(item[0] + '_lat' === _nameEN || item[0] + '_lon' === _nameEN || item[0] + '_distance' === _nameEN){
+            errorMessage = (LABELS['lblNameENValidation']);
+          }
+        } else if(item[0] === _nameEN) {
+          errorMessage = (LABELS['lblNameENValidation']);
+        }
+      });
     }
 
     if (errorMessage){
@@ -71,6 +89,7 @@ function FacetSearchLayout(
       ui_type: _uiType,
       is_open: _isOpen,
       display_number: _displayNumber,
+      search_condition: _searchCondition,
       aggregations: _aggregations,
       id:LABELS['lblFacetSearchId']
     }
@@ -101,9 +120,9 @@ function FacetSearchLayout(
    * @param {string} value UI Type
    * @returns True if the UI type does not allow RangeSlider selection; false otherwise.
    */
-  function isDisableRangeUi(value) {
-    return value!=="temporal";
-  }
+    function isDisableRangeUi(value) {
+      return value!=="temporal";
+    }
 
   /**
    * Returns whether or not the UI type allows displayNumber to be entered.
@@ -112,6 +131,10 @@ function FacetSearchLayout(
    */
   function isDisableDisplayNumber(value) {
     return value!=="CheckboxList";
+  }
+
+  function isRangeSlider(ui_type) {
+    return ui_type==='RangeSlider';
   }
 
   /**
@@ -132,7 +155,7 @@ function FacetSearchLayout(
    */
   function handleUiTypeRange(value) {
     let isDisable = isDisableRangeUi(value);
-    if(isDisable && _uiType==='RangeSlider') {
+    if(isDisable && isRangeSlider(_uiType)) {
       _setUiType("CheckboxList");
     }
     $("#uiType_Range").prop("disabled",isDisable);
@@ -149,6 +172,13 @@ function FacetSearchLayout(
       _setDisplayNumber(null);
     }
     $("#" + LABELS['lblDisplayNumber']).prop("disabled",isDisable);
+
+    let isSlider = isRangeSlider(event.target.value);
+    if(isSlider) {
+      _setSearchCondition("AND");
+      
+    }
+    $("#searchConditionOR").prop("disabled",isSlider);
   }
 
   return (
@@ -192,7 +222,7 @@ function FacetSearchLayout(
                     value={_uiType}
                     onChange={handleChangeUiType}>
               <option id='uiType_Checkbox' value="CheckboxList">CheckboxList</option>
-              <option value="SelectBox">SelectBox</option>
+              <option id='uiType_Select' value="SelectBox">SelectBox</option>
               {isDisableRangeUi(_mapping) && 
                 <option id='uiType_Range' value="RangeSlider" disabled>RangeSlider</option>}
               {!isDisableRangeUi(_mapping) &&
@@ -210,6 +240,10 @@ function FacetSearchLayout(
         <CustomAggregations aggregations={_aggregations}
                             setAggregations={_setAggregations}
                             mappingList={mapping_list}/>
+      </div>
+      <div className="row">
+        <InputSearchConditionComponent value={_searchCondition} setValue={_setSearchCondition}
+                              idName={LABELS['lblSearchCondition']} isSlider={isRangeSlider(_uiType)} />
       </div>
       <div className="row">
         <InputRadioComponent value={_active} setValue={_setActive}
@@ -314,6 +348,35 @@ function InputOpenCloseComponent({value, setValue, idName}) {
           <input type="radio" id="openCloseClose" checked={value === false}
                  onChange={handleChangeDisplay}/>
           {LABELS['lblOpenCloseClose']}
+        </label>
+      </div>
+    </div>
+  )
+}
+
+function InputSearchConditionComponent({value, setValue, idName, isSlider}) {
+
+  function handleChangeDisplay(event) {
+    setValue(event.target.value);
+  }
+
+  return (
+    <div className="form-group">
+      <label htmlFor={idName} className="control-label col-xs-2 text-right">
+        {idName}
+      </label>
+      <div className="controls col-xs-6">
+        <label className="radio-inline" htmlFor="searchConditionOR">
+          {isSlider && <input type="radio" id="searchConditionOR" checked={value === "OR"} value="OR"
+                 onChange={handleChangeDisplay} disabled/>}
+          {!isSlider && <input type="radio" id="searchConditionOR" checked={value === "OR"} value="OR"
+                 onChange={handleChangeDisplay} />}
+          {LABELS['lblSearchConditionOR']}
+        </label>
+        <label className="radio-inline" htmlFor="searchConditionAND">
+          <input type="radio" id="searchConditionAND" checked={value === "AND"} value="AND"
+                 onChange={handleChangeDisplay}/>
+          {LABELS['lblSearchConditionAND']}
         </label>
       </div>
     </div>
@@ -467,7 +530,7 @@ function CustomAggregations({aggregations, setAggregations, mappingList}) {
 
 function FacetSearchDetailsLayout(
   {
-    name_en, name_jp, mapping, active, ui_type, is_open, display_number, aggregations
+    name_en, name_jp, mapping, active, ui_type, is_open, display_number, search_condition, aggregations
   }
 ) {
 
@@ -508,6 +571,10 @@ function FacetSearchDetailsLayout(
               aggregations.map(item =>
                 <p>{item['agg_mapping'] + " - " + item['agg_value']}</p>)
             }</td>
+          </tr>
+          <tr>
+            <td><b>{LABELS['lblSearchCondition']}</b></td>
+            <td>{search_condition}</td>
           </tr>
           <tr>
             <td><b>{LABELS['lblActive']}</b></td>

@@ -43,18 +43,19 @@
         </span>
       </ol>
       <div class="row row-4"
-        ng-if="journal_info && vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1">
+        ng-if="journal_info">
         <div class="col-xs-12">
           <div class="col-xs-4" id="journal_info_img" style="padding:0 0 15px; display:none;">
           </div>
           <div class="col-xs-6">
-            <p style="font-size: 20px;" ng-bind="journal_title"></p>
             <div style="padding-left: 10px;">
               <p>{{journal_info.publication_title}}</p>
               <p>{{journal_info.publisher_name}}</p>
               <p>{{journal_info.language}}</p>
+              <p>{{journal_info.abstract}}</p>
+              <p>{{journal_info.print_identifier}}</p>
               <p>{{journal_info.online_identifier}}</p>
-              <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+              <p>{{journal_info.code_issnl}}</p>
               <p style="margin: 20px 0;">URL: <a
                   href="{{journal_info.openSearchUrl}}">{{journal_info.openSearchUrl}}</a></p>
             </div>
@@ -69,7 +70,6 @@
               <p>{{journal_info.coverage_depth}}</p>
               <p>{{journal_info.preceding_publication_title_id}}</p>
               <p>{{journal_info.ncid}}</p>
-              <p>{{journal_info.print_identifier}}</p>
               <p>{{journal_info.date_first_issue_online}}</p>
               <p>{{journal_info.ndl_callno}}</p>
               <p>{{journal_info.num_first_issue_online}}</p>
@@ -93,16 +93,38 @@
       </div>
     </div>
     <span ng-hide="sort_index_list(vm.invenioSearchResults.aggregations.path.buckets[0])"></span>
-    <div id="index_tree_list">
+    <div ng-if="typeIndexList() != 'root'">
+      <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img') || !journal_info " style="display: flex">
+        <div class="col-xs-4" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')">
+          <img ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
+            class="img-thumbnail ng-hide" id="thumbnail_img" style="max-width: 100%;"
+            alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}
+            ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
+        </div>
+        <div class="col-xs-6">
+          <span ng-if="!journal_info" style="padding: 0 10px">
+            <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div id="index_tree_list" style="padding-top: 10px;">
       <ul class="list-group">
         <div class="list-group-item break-word"
           ng-repeat="index_path in sorted_child_list track by $index"
           ng-if="typeIndexList !== 'root' || typeIndexList === 'root'"
           style="position: relative;">
+          <img ng-if="index_path.image_name.length > 0" ng-src="{{ index_path.image_name }}"
+          style="
+          max-width: {{ index_path.image_widht }}px;
+          max-height: {{ index_path.image_height }}px;
+          float: left;
+          margin-right: 10px; " />
           <a ng-href="/search?search_type=2&q={{ index_path.key.split('/').pop() }}{{commInfoIndex}}" style="
                 color: #333;
                 display: block;
                 padding-right: 25px;
+                overflow: hidden;
               ">
             <div>
                 <span class="glyphicon glyphicon-paperclip" aria-hidden="true"></span>
@@ -119,7 +141,7 @@
             </div>
           </a>
           <div style="padding-left: 14px">
-            <p ng-bind-html="display_comment(index_path.comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
+            <p style="width: 100%; word-wrap: break-word; overflow: hidden;">{{index_path.comment}}</p>
           </div>
           <span ng-if="index_path.rss_status" style="position: absolute;top: 9px;right: 15px;">
             <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"
@@ -129,22 +151,6 @@
           </span>
         </div>
       </ul>
-    </div>
-    <div ng-if="typeIndexList() != 'root'">
-      <div id="index_tree_img" ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img') || (vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="display: flex">
-        <div class="col-xs-4">
-          <img ng-if="vm.invenioSearchResults.aggregations.path.buckets[0][0].hasOwnProperty('img')" ng-src="{{vm.invenioSearchResults.aggregations.path.buckets[0][0].img}}"
-            class="img-thumbnail ng-hide" id="thumbnail_img" style="max-width: 100%;" 
-            alt={{vm.invenioSearchResults.aggregations.path.buckets[0][0].name.split('-/-')[$index]}}
-            ng-repeat="index_path in vm.invenioSearchResults.aggregations.path.buckets[0][0].key.split('/') track by $index">
-        </div>
-        <div class="col-xs-6">
-          <span ng-if="(vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 1 && !journal_info) || 
-          vm.invenioSearchResults.aggregations.path.buckets[0][0].display_format == 2" style="padding: 0 10px">
-            <p ng-bind-html="display_comment(vm.invenioSearchResults.aggregations.path.buckets[0][0].comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
-          </span>
-        </div>
-      </div>
     </div>
   </div>
 </div>

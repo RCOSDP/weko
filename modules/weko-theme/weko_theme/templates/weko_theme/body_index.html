@@ -1,4 +1,4 @@
-  {#
+{#
   # This file is part of WEKO3.
   # Copyright (C) 2017 National Institute of Informatics.
   #
@@ -18,7 +18,7 @@
   # MA 02111-1307, USA.
   #}
 
-  <div class="panel-group-tmp" id="body_index">
+  <div class="panel-group-tmp" id="body_index" class="index-content">
     {% if index_link_enabled  %}
     <div class="panel panel-default">
     {% else %}
@@ -46,12 +46,12 @@
     <div class="panel panel-default">
       <div class="panel-heading clearfix">
           {%-if community %}
-            {%- set community_param = '&community=' + community.id -%}
+            {%- set community_param = '&c=' + community.id -%}
             {%- set param = '&root_index=true&q=' + community.index.id|string + community_param -%}
           {%- else %}
             {%- set param = '&q=0' -%}
           {%- endif %}
-          <h3 class="panel-title"><a href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
+          <h3 class="panel-title"><a id="index-main-link" href="/search?page=1&size=20&search_type=2{{param}}">{{_('Index Tree')}}</a></h3>
       </div>
       <div id="index-height" name="index-height" hidden>{{ height }}</div>
       <div class="panel-body index-body" id="index-background" style="overflow: auto;">

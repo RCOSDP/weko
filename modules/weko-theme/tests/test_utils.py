@@ -15,18 +15,34 @@ from weko_theme.utils import (
 
 
 # def get_weko_contents(getargs):
-def test_get_weko_contents(i18n_app, users, client_request_args, communities,redis_connect):
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_get_weko_contents -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
+def test_get_weko_contents(i18n_app, users, client_request_args, communities, redis_connect, db):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_weko_contents('comm1')
+        assert get_weko_contents({'c': 'comm1'})
+
+    with patch("weko_theme.utils.get_index_link_list", return_value=[(11, 'TEST INDEX')]):
+        index_style = MagicMock()
+        index_style.index_link_enabled = False
+        with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
+            result = get_weko_contents('comm1')
+            assert result
+            assert not result['index_link_list']
+
+            index_style.index_link_enabled = True
+            with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
+                result = get_weko_contents('comm1')
+                assert result
+                assert result['index_link_list']
 
 
 # def get_community_id(getargs):
-def test_get_community_id(i18n_app, users, client_request_args, communities):
-    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert get_community_id(request.args)
+def test_get_community_id(i18n_app, communities, db):
+    assert get_community_id({'c': 'comm1'})
+    assert get_community_id({'c': 'comm2'})
 
 
 # def get_design_layout(repository_id):
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_get_design_layout -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_get_design_layout(i18n_app, users, client_request_args, communities):
     assert False in get_design_layout('Root Index')
     assert False in get_design_layout(False)
@@ -36,6 +52,7 @@ def test_get_design_layout(i18n_app, users, client_request_args, communities):
 
 
 # def has_widget_design(repository_id, current_language):
+# .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_has_widget_design -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_has_widget_design(i18n_app, users, client_request_args, communities):
     widget_design_setting = {
         "widget-settings": "widget-settings-9999"
@@ -63,7 +80,7 @@ def test_get_init_display_setting(i18n_app, users, client_request_args, communit
     i18n_app.config['WEKO_SEARCH_TYPE_DICT'] = {'INDEX': "WEKO_SEARCH_TYPE_DICT-INDEX"}
     i18n_app.config['COMMUNITIES_SORTING_OPTIONS'] = {'INDEX': "COMMUNITIES_SORTING_OPTIONS-INDEX"}
     test = MainScreenInitDisplaySetting()
-    
+
     with patch('weko_theme.utils.SearchManagement.get', return_value=search_setting):
         with patch('invenio_search.RecordsSearch.execute', return_value=dummy_response('{"hits": {"hits": [{"_source": {"path": ["44"]}},{"_source": {"path": ["11"]}}]}}')):
             with patch('weko_theme.utils.get_journal_info', return_value="get_journal_info"):
@@ -88,8 +105,8 @@ def test_get_init_display_setting(i18n_app, users, client_request_args, communit
             with patch('weko_items_ui.utils.get_ranking', return_value="get_ranking"):
                 search_setting.init_disp_setting["init_disp_screen_setting"] = "1"
                 assert isinstance(test.get_init_display_setting(), dict)
-        
+
         search_setting.init_disp_setting["init_disp_screen_setting"] = "2"
         assert isinstance(test.get_init_display_setting(), dict)
-    
+
     assert isinstance(test.get_init_display_setting(), dict)

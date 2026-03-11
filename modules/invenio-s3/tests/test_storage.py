@@ -10,6 +10,7 @@ from __future__ import absolute_import, print_function
 
 import errno
 import os
+import io
 import shutil
 import tempfile
 from io import BytesIO
@@ -22,10 +23,10 @@ from invenio_files_rest.errors import FileSizeError, StorageError, \
 from invenio_files_rest.limiters import FileSizeLimit
 from invenio_files_rest.models import Location
 from invenio_files_rest.storage import PyFSFileStorage
-from mock import patch
 from s3fs import S3File, S3FileSystem
-
+from unittest.mock import MagicMock, patch
 from invenio_s3 import S3FSFileStorage, config, s3fs_storage_factory
+from invenio_s3.storage import set_blocksize
 
 
 def test_factory(location, file_instance_mock):
@@ -41,14 +42,6 @@ def test_factory(location, file_instance_mock):
         fileinstance=file_instance_mock, default_location='s3://test')
     assert s3fs.fileurl == \
         's3://test/de/ad/beef-65bd-4d9b-93e2-ec88cc59aec5/data'
-
-
-def test_non_s3_path(location, tmpdir):
-    non_s3_path = os.path.join(tmpdir.dirname, 'test.txt')
-    s3fs = S3FSFileStorage(non_s3_path)
-    fs, path = s3fs._get_fs()
-    assert not isinstance(fs, S3FileSystem)
-
 
 @pytest.mark.parametrize('file_size', (
     1,
@@ -110,7 +103,15 @@ def test_delete(location, s3_bucket, s3fs_testpath, s3fs):
     os.urandom((S3FileSystem.default_block_size + 1)),
     os.urandom((S3FileSystem.default_block_size * 2)),
     os.urandom(((S3FileSystem.default_block_size * 2) + 1)),
-))
+    ),
+    ids=[
+        'small_data',
+        'exact_block_size',
+        'exact_block_size_plus_one',
+        'two_blocks',
+        'two_blocks_plus_one',
+    ],
+)
 def test_save(location, s3_bucket, s3fs_testpath, s3fs, get_md5, data):
     """Test save."""
     uri, size, checksum = s3fs.save(BytesIO(data))
@@ -235,7 +236,7 @@ def test_update_fail(location, s3fs, s3fs_testpath, get_md5):
     """Test update of file."""
 
     def fail_callback(total, size):
-        assert exists(s3fs_testpath)
+        assert fs.exists(s3fs_testpath)
         raise Exception('Something bad happened')
 
     s3fs.initialize(size=100)
@@ -257,36 +258,6 @@ def test_update_fail(location, s3fs, s3fs_testpath, get_md5):
     assert content[4:6] != b'ef'
 
 
-def test_checksum(location, s3fs, get_md5):
-    """Test fixity."""
-    # Compute checksum of license file
-    with open('LICENSE', 'rb') as fp:
-        data = fp.read()
-        checksum = get_md5(data)
-
-    counter = dict(size=0)
-
-    def callback(total, size):
-        counter['size'] = size
-
-    # Now do it with storage interface
-    with open('LICENSE', 'rb') as fp:
-        uri, size, save_checksum = s3fs.save(
-            fp, size=os.path.getsize('LICENSE'))
-    # assert checksum == save_checksum
-    # assert checksum == s3fs.checksum(
-    #   chunk_size=2,
-    #   progress_callback=callback)
-    # assert counter['size'] == size
-    # assert counter['size'] == os.path.getsize('LICENSE')
-
-    # No size provided, means progress callback isn't called
-    counter['size'] = 0
-    s = S3FSFileStorage(s3fs.fileurl)
-    # assert checksum == s.checksum(chunk_size=2, progress_callback=callback)
-    assert counter['size'] == 0
-
-
 def test_checksum_fail(location, s3fs):
     """Test fixity problems."""
 
@@ -297,28 +268,6 @@ def test_checksum_fail(location, s3fs):
     s3fs.save(open('LICENSE', 'rb'), size=os.path.getsize('LICENSE'))
 
     pytest.raises(StorageError, s3fs.checksum, progress_callback=callback)
-
-
-def test_copy(s3_bucket, location, s3fs):
-    """Test copy file."""
-    data = b'test'
-    s3fs.save(BytesIO(data))
-
-    s3_copy_path = 's3://{}/path/to/copy/data'.format(s3_bucket.name)
-    s3fs_copy = S3FSFileStorage(s3_copy_path)
-    s3fs_copy.copy(s3fs)
-
-    assert s3fs_copy.open().read() == data
-
-    tmppath = tempfile.mkdtemp()
-
-    s = PyFSFileStorage(os.path.join(tmppath, 'anotherpath/data'))
-    data = b'othertest'
-    s.save(BytesIO(data))
-    s3fs_copy.copy(s)
-    assert s3fs_copy.open().read() == data
-
-    shutil.rmtree(tmppath)
 
 
 def test_send_file(base_app, location, s3fs, database):
@@ -386,19 +335,19 @@ def test_send_file(base_app, location, s3fs, database):
 
         default_location.type = 's3'
         database.session.commit()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = True
         test_send_directly()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = False
         test_send_directly()
 
         default_location.s3_send_file_directly = False
         database.session.commit()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = True
         test_send_indirectly()
-        
+
         base_app.config['S3_SEND_FILE_DIRECTLY'] = False
         test_send_indirectly()
 
@@ -487,3 +436,231 @@ def test_non_unicode_filename(base_app, location, s3fs):
             'żółć.txt', mimetype='text/plain', checksum=checksum)
         assert res.status_code == 200
         assert res.headers['Content-Disposition'] == 'inline'
+
+def test_get_fs_with_s3_virtual_host(location, s3fs):
+    """Test _get_fs with S3 virtual host URL."""
+    location.type = 's3_vh'
+    s3fs.fileurl = 'https://bucket_name.s3.us-east-1.amazonaws.com/file_name'
+
+    fs, url = s3fs._get_fs()
+
+    assert isinstance(fs, S3FileSystem)
+    assert url == 's3://bucket_name/file_name'
+
+
+def test_get_fs_with_s3_path_style(location, s3fs):
+    """Test _get_fs with S3 path-style URL."""
+    location.type = 's3_vh'
+    s3fs.fileurl = 'https://s3.us-east-1.amazonaws.com/bucket_name/file_name'
+
+    fs, url = s3fs._get_fs()
+
+    assert isinstance(fs, S3FileSystem)
+    assert url == 's3://bucket_name/file_name'
+
+def test_get_fs_no_location(location, s3fs):
+    """Test _get_fs with no location type."""
+    s3fs.location = None
+    s3fs.fileurl = 's3://bucket_name/file_name'
+
+    with patch('invenio_s3.storage.PyFSFileStorage._get_fs', return_value=('fs_mock', 'url_mock')) as mock_super:
+        fs, url = s3fs._get_fs()
+
+    assert fs == 'fs_mock'
+    assert url == 'url_mock'
+
+
+@pytest.mark.parametrize('initial_data, update_data, seek, expected_result', [
+    (b'abcdefghij', b'XY', 4, b'abcdXYghij'),  # Update in the middle
+    (b'abcdefghij', b'XY', 0, b'XYcdefghij'),  # Update at the beginning
+    (b'abcdefghij', b'XY', 8, b'abcdefghXY'),  # Update at the end
+    (b'abcdefghij', b'XY', 10, b'abcdefghijXY'),  # Append at the end
+])
+def test_update(location, s3fs, initial_data, update_data, seek, expected_result):
+    """Test the update method."""
+    # Initialize the file with initial data
+    s3fs.save(BytesIO(initial_data))
+
+    # Perform the update
+    bytes_written, checksum = s3fs.update(
+        BytesIO(update_data), seek=seek, size=len(update_data)
+    )
+
+    # Verify the updated content
+    fs, path = s3fs._get_fs()
+    content = fs.open(path).read()
+    assert content == expected_result
+    assert bytes_written == len(update_data)
+
+def test_update_partial_write(location, s3fs):
+    """Test update with partial write due to an exception."""
+    s3fs.initialize(size=100)
+
+    def fail_callback(total, size):
+        raise Exception('Simulated failure during update')
+
+    # Perform the update and expect an exception
+    with pytest.raises(Exception):
+        s3fs.update(
+            BytesIO(b'partialdata'),
+            seek=10,
+            size=11,
+            progress_callback=fail_callback,
+        )
+
+    # Verify that the file content is partially updated
+    fs, path = s3fs._get_fs()
+    content = fs.open(path).read()
+    assert content[10:20] == b'partialdat'
+
+def test_copy_s3_to_s3(s3_bucket, location, s3fs):
+    """Test copying a file from one S3 location to another."""
+    # Save initial data to the source file
+    data = b's3_to_s3_test_data'
+    s3fs.save(BytesIO(data))
+
+    # Define the destination path
+    s3_copy_path = 's3://{}/path/to/copy/data'.format(s3_bucket.name)
+
+    # 修正: S3FSFileStorage のインスタンス生成時に必要な引数を渡す
+    s3fs_copy = S3FSFileStorage(
+        fileurl=s3_copy_path,
+        size=0,
+        modified=None,
+        clean_dir=True,
+        location=location
+    )
+
+    # Perform the copy
+    s3fs_copy.copy(s3fs)
+
+    # Verify the copied data
+    fs, path = s3fs_copy._get_fs()
+    with fs.open(path, 'rb') as f:
+        copied_data = f.read()
+    assert copied_data == data
+
+
+def test_copy_s3_to_local(s3_bucket, location, s3fs):
+    """Test copying a file from S3 to a local file system."""
+    # Save initial data to the source file
+    data = b's3_to_local_test_data'
+    s3fs.save(BytesIO(data))
+
+    # Define the local destination path
+    tmppath = tempfile.mkdtemp()
+    local_path = os.path.join(tmppath, 'local_copy_data')
+    local_storage = PyFSFileStorage(local_path)
+
+    # Perform the copy
+    local_storage.copy(s3fs)
+
+    # Verify the copied content
+    with open(local_path, 'rb') as f:
+        assert f.read() == data
+
+    # Clean up
+    shutil.rmtree(tmppath)
+
+def test_copy_fail(location, s3fs):
+    """Test copy failure handling."""
+    # Simulate a failure during the copy process
+    src = MagicMock()
+    src.fileurl = 's3://invalid/source/path'
+
+    with pytest.raises(Exception):
+        s3fs.copy(src)
+
+def test_remove_file(location, s3fs):
+    """Test the remove method for deleting a file."""
+    # Mock the file system and path
+    fs_mock = MagicMock()
+    path = 'path/to/file'
+
+    fs_mock.exists.return_value = True
+    fs_mock.rm = MagicMock()
+    s3fs.remove(fs_mock, path)
+
+@pytest.fixture
+def location_2():
+    """Locationモデルのモックを作成。"""
+    location = MagicMock()
+    location.type = None  # typeをNoneに設定
+    return location
+
+
+@pytest.fixture
+def s3fs_2(app, location_2):
+    """S3FSFileStorageのインスタンスを作成。"""
+    return S3FSFileStorage(
+        fileurl="s3://testbucket/testfile",
+        size=0,
+        modified=None,
+        clean_dir=True,
+        location=location_2
+    )
+
+
+def test_copy_with_local_repository(s3fs_2, mocker):
+    """self.location.typeがNoneの場合のcopyメソッドのテスト。"""
+    # モックのソースファイルを作成
+    src = MagicMock()
+    src.fileurl = "s3://testbucket/srcfile"
+
+    mock_super_copy = mocker.patch("invenio_s3.storage.PyFSFileStorage.copy")
+    s3fs_2.copy(src)
+    mock_super_copy.assert_called_once_with(src)
+
+@pytest.fixture
+def s3fs_3():
+    """S3FSFileStorageのインスタンスを作成（location=None）。"""
+    return S3FSFileStorage(
+        fileurl="s3://testbucket/testfile",
+        size=0,
+        modified=None,
+        clean_dir=True,
+        location=None  # locationをNoneに設定
+    )
+
+
+def test_copy_with_no_location(s3fs_3):
+    """self.locationがNoneの場合のcopyメソッドのテスト。"""
+    # モックのソースファイルを作成
+    src = MagicMock()
+    src.fileurl = "s3://testbucket/srcfile"
+
+    # 親クラスのcopyメソッドをモック
+    with patch("invenio_files_rest.storage.PyFSFileStorage.copy") as mock_copy:
+        s3fs_3.copy(src)
+
+        # 親クラスのcopyメソッドが呼び出されたことを確認
+        mock_copy.assert_called_once_with(src)
+
+
+class DummyClass:
+    def __init__(self, block_size, location):
+        self.block_size = block_size
+        self.location = location
+
+    @set_blocksize
+    def func(self, *args, **kwargs):
+        return "called"
+
+
+# .tox/c1/bin/pytest --cov=invenio_s3 tests/test_storage.py::test_blocksize -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-s3/.tox/c1/tmp
+def test_blocksize(app, location):
+    app.config['S3_MAXIMUM_NUMBER_OF_PARTS'] = 1000
+    app.config['S3_DEFAULT_BLOCK_SIZE'] = 64
+
+    obj = DummyClass(block_size=0, location=None)
+    result = obj.func()
+    assert result == "called"
+    assert obj.block_size == 64
+
+    obj.func(size=5000)
+    assert obj.block_size == 64
+
+    loc = MagicMock(type="s3", s3_maximum_number_of_parts=500, s3_default_block_size=128)
+    obj = DummyClass(block_size=10, location=loc)
+    obj.func(size=5000)
+    assert obj.block_size == 10  # 5000 // 500

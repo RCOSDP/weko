@@ -14,7 +14,10 @@ name_ja = "アクセス制限（日本語統制語彙）"
 name_en = "Access J"
 mapping = config.DEFAULT_MAPPING
 access = [None, "オープンアクセス", "制約付きアクセス ", "メタデータのみ", "エンバーゴ期間中"]
-lnag = [None, "jp"]
+lnag = [
+    None,
+    "ja"
+]
 
 
 def add(post_data, key, **kwargs):

@@ -335,7 +335,8 @@ CREATE TABLE public.workflow_flow_define (
     flow_name character varying(255),
     flow_user integer,
     flow_status character varying(1) NOT NULL,
-    is_deleted boolean NOT NULL
+    is_deleted boolean NOT NULL,
+    flow_type SMALLINT NOT NULL
 );
 
 
@@ -520,8 +521,8 @@ COPY public.workflow_flow_action_role (status, created, updated, id, flow_action
 -- Data for Name: workflow_flow_define; Type: TABLE DATA; Schema: public; Owner: invenio
 --
 
-COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted) FROM stdin;
-N	2020-12-06 07:55:09.297034	2020-12-06 07:55:43.83611	1	8256d01f-200e-4f3f-bd85-f40552efad9b	SimpleFlow	1	A	f
+COPY public.workflow_flow_define (status, created, updated, id, flow_id, flow_name, flow_user, flow_status, is_deleted, flow_type) FROM stdin;
+N	2020-12-06 07:55:09.297034	2020-12-06 07:55:43.83611	1	8256d01f-200e-4f3f-bd85-f40552efad9b	SimpleFlow	1	A	f   1
 \.
 
 

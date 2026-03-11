@@ -60,10 +60,10 @@ def base_app(instance_path):
         SERVER_NAME='test_server',
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-             'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-        #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        # SQLALCHEMY_DATABASE_URI=os.environ.get(
+        #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                         'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
         SEARCH_UI_SEARCH_INDEX="test-search-weko",
         WEKO_AUTHORS_ES_INDEX_NAME="test-weko-authors",
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",

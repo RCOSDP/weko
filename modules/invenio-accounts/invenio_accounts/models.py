@@ -18,6 +18,8 @@ from invenio_db import db
 from sqlalchemy.orm import validates
 from sqlalchemy_utils import IPAddressType, Timestamp
 
+from invenio_mail.models import MailTemplateUsers
+
 userrole = db.Table(
     'accounts_userrole',
     db.Column('user_id', db.Integer(), db.ForeignKey(
@@ -84,6 +86,8 @@ class User(db.Model, UserMixin):
                             backref=db.backref('users', lazy='dynamic'))
     """List of the user's roles."""
 
+    template = db.relationship('MailTemplateUsers', cascade='all, delete')
+
     @validates('last_login_ip', 'current_login_ip')
     def validate_ip(self, key, value):
         """Hack untrackable IP addresses."""
@@ -98,6 +102,11 @@ class User(db.Model, UserMixin):
         """Representation."""
         return 'User <id={0.id}, email={0.email}>'.format(self)
 
+    @classmethod
+    def get_email_by_id(cls, id):
+        """Get id, name by user_id. """
+        query = db.session.query(cls).with_entities(cls.email).filter(cls.id == id)
+        return query.first()
 
 class SessionActivity(db.Model, Timestamp):
     """User Session Activity model.
@@ -136,6 +145,9 @@ class SessionActivity(db.Model, Timestamp):
 
     device = db.Column(db.String(80), nullable=True)
     """User device."""
+
+    orgniazation_name = db.Column(db.String(255), nullable=True)
+    """User Organization."""
 
     @classmethod
     def query_by_expired(cls):

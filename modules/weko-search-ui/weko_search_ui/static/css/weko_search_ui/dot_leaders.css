@@ -24,22 +24,29 @@ ul.leaders li:after {
     "● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● ● "
 }
 
-ul.leaders span:first-child {
+ul.leaders .parent {
   padding-right: 5px;
-  background: #ffffff;
+  background: #ffffff !important;
   height:100%;
   max-width: 80%;
   display:inline-block;
 }
 
-ul.leaders span + span {
+.parent-div {
+  padding-right: 5px;
+  background: #ffffff;
+  height:100%;
+  max-width: 80%;
+  display:block;
+}
+
+ul.leaders .page-info {
   float: right;
   padding-left: 5px;
-  background: transparent;
+  background: #ffffff !important;
   position: relative;
   z-index: 1;
   height:100%;
-  background-color: #ffffff
 }
 
 .bg-color-white {
@@ -50,13 +57,13 @@ ul.leaders span + span {
   border-color: transparent !important;
 }
 
-.extention-button, 
-.extention-button:active, 
-.extention-button:focus, 
+.extention-button,
+.extention-button:active,
+.extention-button:focus,
 .extention-button:hover,
-.dot-button, 
-.dot-button:active, 
-.dot-button:focus, 
+.dot-button,
+.dot-button:active,
+.dot-button:focus,
 .dot-button:hover {
   color: #23527c;
   text-decoration: none;
@@ -72,19 +79,19 @@ ul.leaders span + span {
   text-overflow: ellipsis;
 }
 
-@media (max-width: 991px) { 
+@media (max-width: 991px) {
   .extention-button, .dot-button{
     width: 100%;
   }
 }
 
-@media (min-width: 992px) and (max-width: 1199px) { 
+@media (min-width: 992px) and (max-width: 1199px) {
   .extention-button, .dot-button{
     width: 80px;
   }
 }
 
-@media (min-width: 1199px) { 
+@media (min-width: 1199px) {
   .extention-button, .dot-button{
     width: 100px;
   }
@@ -94,4 +101,71 @@ td.fitwidth {
   width: 1px;
   white-space: nowrap;
   padding-right: 10px;
+}
+
+.tab-switch {
+  display: flex;
+  flex-wrap: wrap;
+  margin: auto;
+  justify-content: flex-start;
+  gap: 0 5px;
+}
+
+.tab-switch > label {
+  flex: 1 1 auto;
+  order: -1;
+  position: relative;
+  padding: .7em 1em;
+  text-align: center;
+  cursor: pointer;
+  transition:.3s all;
+}
+
+.tab-switch > label:hover,
+.tab-switch label:has(:checked) {
+  background-color: #757F96;
+  color: #fff;
+}
+
+.tab-switch label:has(:disabled) {
+  background-color: #dddddd;
+  color: #fff;
+  cursor : default;
+}
+
+.tab-switch input {
+  display: none;
+}
+
+.tab-switch > div {
+  display: none;
+  width: 100%;
+  padding: 5px 0 0 1.0em;
+}
+
+.tab-switch label:has(:checked) + div {
+  display: block;
+}
+
+.tab-contents-p {
+  margin: 0 0 2px;
+}
+
+.tab-content-box {
+  margin-bottom: 15px;
+}
+
+.and-more {
+  display: inline;
+  cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	border: 2px solid #303d58;
+	color: #303d58;
+  border-radius: 100vh;
+  padding: 0 2px;
+}
+
+.details-area {
+  display: inline;
 }

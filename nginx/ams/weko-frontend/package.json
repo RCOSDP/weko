@@ -1,0 +1,43 @@
+{
+  "name": "ams-alpha",
+  "private": true,
+  "scripts": {
+    "dev": "nuxt dev",
+    "dev:ssl": "nuxt dev --https --ssl-cert localhost.pem --ssl-key localhost-key.pem",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint:js": "eslint --ext \".js,.ts,.vue\" --ignore-path .gitignore .",
+    "lint:prettier": "prettier --check .",
+    "lint": "npm run lint:js && npm run lint:prettier",
+    "lintfix": "prettier --write --list-different . && npm run lint:js -- --fix"
+  },
+  "dependencies": {
+    "@nuxtjs/tailwindcss": "6.8.0",
+    "@vee-validate/i18n": "4.11.8",
+    "@vee-validate/rules": "4.11.8",
+    "@vuepic/vue-datepicker": "7.2.0",
+    "daisyui": "3.5.1",
+    "flowbite": "1.8.1",
+    "nodemailer": "6.9.7",
+    "nuxt": "3.6.5",
+    "nuxt-lodash": "2.5.0",
+    "sass": "1.65.1",
+    "vee-validate": "4.11.8",
+    "vue-i18n": "9.2.2"
+  },
+  "devDependencies": {
+    "@nuxtjs/eslint-config-typescript": "12.0.0",
+    "@typescript-eslint/eslint-plugin": "5.62.0",
+    "@typescript-eslint/parser": "5.62.0",
+    "@vue/eslint-config-prettier": "8.0.0",
+    "@types/node": "18.17.3",
+    "@types/nodemailer": "6.4.14",
+    "eslint": "8.47.0",
+    "eslint-plugin-prettier": "5.0.0",
+    "eslint-plugin-vue": "9.17.0",
+    "prettier": "3.0.2",
+    "typescript": "5.1.6"
+  }
+}

@@ -590,6 +590,12 @@
                     "email": "wekosoftware@nii.ac.jp",
                     "author_id": ""
                 }
+            ],
+            "request_mail_list": [
+                {
+                    "email": "wekosoftware@nii.ac.jp",
+                    "author_id": ""
+                }
             ]
         },
         "file_path": [

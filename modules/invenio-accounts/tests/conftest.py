@@ -31,6 +31,7 @@ from invenio_i18n import InvenioI18N
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.admin import role_adminview, session_adminview, \
@@ -69,7 +70,8 @@ def _app_factory(config=None):
         TESTING=True,
         WTF_CSRF_ENABLED=False,
         ACCOUNTS_JWT_ALOGORITHM = 'HS256',
-        ACCOUNTS_JWT_SECRET_KEY = 'None'
+        ACCOUNTS_JWT_SECRET_KEY = 'None',
+        WEKO_PERMISSION_SUPER_ROLE_USER = WEKO_PERMISSION_SUPER_ROLE_USER,
     )
 
     # Set key value session store to use Redis when running on TravisCI.
@@ -232,6 +234,7 @@ def users(app):
             ]
             db.session.add_all(action_roles)
             ds.add_role_to_user(user3, sysadmin_role)
+        db.session.commit()
 
     return [
         {'email': user1_email, 'id': user1_id,

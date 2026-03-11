@@ -79,7 +79,7 @@ class ComponentExclusionTarget extends React.Component {
         email: event.target.value.trim()
       }
       if (this.props.addEmailToList(new_email)) {
-        $('#custom_input_email').val('');
+        $('div#sltBoxListEmail>input#custom_input_email').val('');
         $('#sltBoxListEmail').animate({
           scrollTop: $("#custom_input_email").offset().top
         }, 1000);
@@ -92,14 +92,26 @@ class ComponentExclusionTarget extends React.Component {
       <div class="list-group" className="style-selected-box" id="sltBoxListEmail">
         {
           listEmail.map((item, id) => {
-            return (
-              <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
-                onClick={() => { this.handleClick(id) }}
-                key={id}
-                value={item.author_id}>
-                {item.email}
-              </a>
-            )
+            let v = item.author_id + '_' + item.email
+            if (item.author_id) {
+              return (
+                <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
+                  onClick={() => { this.handleClick(id) }}
+                  key={id}
+                  value={v}>
+                  {item.email}&nbsp;&nbsp;(Author&nbsp;ID:&nbsp;{item.author_id})
+                </a>
+              )
+            } else {
+              return (
+                <a className={`list-group-item list-group-item-action ${this.state.selectedId.indexOf(id) > -1 ? 'active' : ''}`}
+                  onClick={() => { this.handleClick(id) }}
+                  key={id}
+                  value={v}>
+                  {item.email}
+                </a>
+              )
+            }
           })
         }
         <input class="list-group-item list-group-item-action"
@@ -198,14 +210,20 @@ class TableUserEmailComponent extends React.Component {
           name = familyName + firstName;
         }
       }
-      if (row._source.emailInfo.length == 1) {
+      if (row._source.emailInfo.length >= 1) {
+        let mailData = [];
+        let mailList = [];
+        row._source.emailInfo.forEach(function(v, k) {
+          mailData.push(<p>{v.email}</p>);
+          mailList.push(v.email);
+        });
         return (
           <tr key={row._source.pk_id.toString()}>
                 <td>{name}</td>
-            <td>{row._source.emailInfo[0].email}</td>
+            <td>{mailData}</td>
             <td className="text-right">
               <button className="btn btn-info"
-                onClick={(event) => this.importEmail(event, row._source.pk_id, row._source.emailInfo[0].email)}>
+                onClick={(event) => this.importEmail(event, row._source.pk_id, mailList)}>
                   &nbsp;&nbsp;{IMPORT_BUTTON_NAME}&nbsp;&nbsp;
               </button>
             </td>
@@ -233,22 +251,16 @@ class TableUserEmailComponent extends React.Component {
     )
   }
 
-  importEmail(event, pk_id, email) {
-    let listUser = [];
-    $("#sltBoxListEmail > a").each(function () {
-      listUser.push(this.value);
-    });
-    if (listUser.indexOf(pk_id) == -1) {
-      event.target.disabled = true;
+  importEmail(event, pk_id, emails) {
+    event.target.disabled=true;
+    var props = this.props;
+    emails.forEach(function(v, k) {
       let data = {
-        "author_id": pk_id,
-        "email": email
+        "author_id" : pk_id,
+        "email" : v
       }
-      this.props.addEmailToList(data);
-    }
-    else {
-      alert(DUPLICATE_ERROR_MESSAGE);
-    }
+      props.addEmailToList(data);
+    });
   }
   render() {
     return (
@@ -561,18 +573,9 @@ class MainLayout extends React.Component {
       alert(DUPLICATE_ERROR_MESSAGE)
       return false;
     } else {
-      if (!data.author_id || !this.isDuplicateAuthorId(listEmail, data.author_id)) {
-        listEmail.push(data);
-        this.setState({ listEmail: listEmail })
-        return true;
-      } else {
-        const newList = listEmail.filter(item => item.author_id !== data.author_id)
-        newList.push(data)
-        this.setState({
-          listEmail: newList
-        })
-        return true;
-      }
+      listEmail.push(data);
+      this.setState({ listEmail: listEmail })
+      return true;
     }
   }
 
@@ -585,15 +588,6 @@ class MainLayout extends React.Component {
       }
     }
     this.setState({ listEmail: listRemainEmail });
-  }
-
-  isDuplicateAuthorId(listEmail, author_id) {
-    const authorIdList = Array.from(listEmail, item => {
-      if (item.author_id) {
-        return item.author_id
-      }
-    })
-    return authorIdList.indexOf(author_id) > -1
   }
 
   isDuplicateEmail(data, listEmail) {

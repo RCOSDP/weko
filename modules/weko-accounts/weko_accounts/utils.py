@@ -23,9 +23,36 @@ import random
 import string
 from functools import wraps
 
-from flask import abort, current_app, request, session
+from flask import abort, current_app, request, session, Flask
+from flask_limiter import Limiter
 from flask_login import current_user
 from flask_login.config import EXEMPT_METHODS
+import hashlib
+
+from .config import (
+    WEKO_API_LIMIT_RATE_DEFAULT,
+    WEKO_ACCOUNTS_WAYF_URL,
+    WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS,
+    WEKO_ACCOUNTS_DEFAULT_IDP,
+)
+
+limiter = Limiter(
+    app=None,
+    key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
+    default_limits=WEKO_API_LIMIT_RATE_DEFAULT,
+)
+"""Limiter for API rate per user.
+
+Limit the access rate for each endpoint.
+
+Example:
+
+    @blueprint.route("/")
+    @limiter.limit("10 per minute")
+    def api_view():
+        return "OK", 200
+
+"""
 
 
 def get_remote_addr():
@@ -41,30 +68,33 @@ def get_remote_addr():
 
     # current_app.logger.debug('{0} {1} {2}: {3}'.format(
     #     __file__, 'get_remote_addr()', 'request.headers', request.headers))
-    
-    address = None
-    if "WEKO_ACCOUNTS_REAL_IP" not in current_app.config or current_app.config["WEKO_ACCOUNTS_REAL_IP"] == None:
-        address = request.headers.get('X-Real-IP', None)
-        if address is None:
-            address = request.headers.get('X-Forwarded-For', None)
-            if address is not None:
-                address = address.encode('utf-8').split(b',')[0].strip().decode()
-    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "remote_addr":
-        address =request.remote_addr
-    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_real_ip":
-        address = request.headers.get('X-Real-IP', None)
-    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for":
-        address = request.headers.get('X-Forwarded-For', None)
-        if address is not None:
-            _tmp = address.encode('utf-8').split(b',')
-            address = _tmp[0].strip().decode()            
-    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for_rev":
-        address = request.headers.get('X-Forwarded-For', None)
-        if address is not None:
-            _tmp = address.encode('utf-8').split(b',')
-            address = _tmp[len(_tmp)-1].strip().decode()
 
-    if address == None or len(address)==0:
+    address = None
+    if (
+        "WEKO_ACCOUNTS_REAL_IP" not in current_app.config
+        or current_app.config["WEKO_ACCOUNTS_REAL_IP"] == None
+    ):
+        address = request.headers.get("X-Real-IP", None)
+        if address is None:
+            address = request.headers.get("X-Forwarded-For", None)
+            if address is not None:
+                address = address.encode("utf-8").split(b",")[0].strip().decode()
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "remote_addr":
+        address = request.remote_addr
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_real_ip":
+        address = request.headers.get("X-Real-IP", None)
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for":
+        address = request.headers.get("X-Forwarded-For", None)
+        if address is not None:
+            _tmp = address.encode("utf-8").split(b",")
+            address = _tmp[0].strip().decode()
+    elif current_app.config["WEKO_ACCOUNTS_REAL_IP"] == "x_forwarded_for_rev":
+        address = request.headers.get("X-Forwarded-For", None)
+        if address is not None:
+            _tmp = address.encode("utf-8").split(b",")
+            address = _tmp[len(_tmp) - 1].strip().decode()
+
+    if address == None or len(address) == 0:
         address = request.remote_addr
 
     current_app.logger.debug("IP Address:{}".format(address))
@@ -76,9 +106,8 @@ def generate_random_str(length=128):
     """Generate secret key."""
     rng = random.SystemRandom()
 
-    return ''.join(
-        rng.choice(string.ascii_letters + string.digits)
-        for _ in range(0, length)
+    return "".join(
+        rng.choice(string.ascii_letters + string.digits) for _ in range(0, length)
     )
 
 
@@ -87,15 +116,38 @@ def parse_attributes():
     attrs = {}
     error = False
 
-    for header, attr in current_app.config[
-            'WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP'].items():
+    # Get attribute mapping from admin settings
+    from weko_admin.models import AdminSettings
+
+    admin_settings = AdminSettings.get("attribute_mapping", dict_to_object=False)
+
+    for header, attr in current_app.config["WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP"].items():
         required, name = attr
-        value = request.form.get(header, '') if request.method == 'POST' \
-            else request.args.get(header, '')
+        if admin_settings:
+            target = admin_settings.get(name, header)
+        else:
+            target = header
+        value = (
+            request.form.get(target, "")
+            if request.method == "POST"
+            else request.args.get(target, "")
+        )
         attrs[name] = value
 
         if required and not value:
             error = True
+
+    if not error and not attrs.get("shib_user_name") and attrs.get("shib_eppn"):
+        if (
+            len(attrs["shib_eppn"])
+            > current_app.config["WEKO_ACCOUNTS_SHIB_USER_NAME_NO_HASH_LENGTH"]
+        ):
+            eppn = hashlib.sha256(attrs["shib_eppn"].encode("utf-8")).hexdigest()
+        else:
+            eppn = attrs["shib_eppn"]
+        attrs["shib_user_name"] = (
+            current_app.config["WEKO_ACCOUNTS_GAKUNIN_USER_NAME_PREFIX"] + eppn
+        )
 
     return attrs, error
 
@@ -134,6 +186,7 @@ def login_required_customize(func):
     :param func: The view function to decorate.
     :type func: function
     """
+
     @wraps(func)
     def decorated_view(*args, **kwargs):
         if request.method in EXEMPT_METHODS:
@@ -141,20 +194,22 @@ def login_required_customize(func):
         elif current_app.login_manager._login_disabled:
             return func(*args, **kwargs)
         elif not current_user.is_authenticated:
-            guest_token = session.get('guest_token')
+            guest_token = session.get("guest_token")
             if guest_token:
                 return func(*args, **kwargs)
             return current_app.login_manager.unauthorized()
         return func(*args, **kwargs)
+
     return decorated_view
 
 
-def roles_required(roles):
+def roles_required(roles, allow_anonymous=False):
     """Roles required.
 
     Args:
         roles (list): List roles.
     """
+
     def decorator(func):
         @wraps(func)
         def decorated_view(*args, **kwargs):
@@ -163,11 +218,13 @@ def roles_required(roles):
             elif current_app.login_manager._login_disabled:
                 return func(*args, **kwargs)
             elif not current_user.is_authenticated:
-                guest_token = session.get('guest_token')
+                guest_token = session.get("guest_token")
                 if guest_token:
                     return func(*args, **kwargs)
                 abort(401)
             else:
+                if allow_anonymous:
+                    return func(*args, **kwargs)
                 can = False
                 for role in current_user.roles:
                     if role and role.name in roles:
@@ -176,5 +233,48 @@ def roles_required(roles):
                 if not can:
                     abort(403)
             return func(*args, **kwargs)
+
         return decorated_view
+
     return decorator
+
+
+def get_sp_info():
+    """Get Service Provider (SP) information for Shibboleth login.
+
+    Returns:
+        dict: A dictionary containing SP entityID, handlerURL, and return URL.
+    """
+    _shib_login_url = current_app.config["WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL"]
+
+    session["next"] = request.args.get("next", "/")
+    return_url = _shib_login_url.format(request.url_root)
+
+    sp_entityID = "https://" + current_app.config["WEB_HOST_NAME"] + "/shibboleth-sp"
+    if "SP_ENTITYID" in current_app.config:
+        sp_entityID = current_app.config["SP_ENTITYID"]
+
+    sp_handlerURL = "https://" + current_app.config["WEB_HOST_NAME"] + "/Shibboleth.sso"
+    if "SP_HANDLERURL" in current_app.config:
+        sp_handlerURL = current_app.config["SP_HANDLERURL"]
+
+    wayf_url = WEKO_ACCOUNTS_WAYF_URL
+    if "WEKO_ACCOUNTS_WAYF_URL" in current_app.config:
+        wayf_url = current_app.config["WEKO_ACCOUNTS_WAYF_URL"]
+
+    wayf_additional_idps = WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS
+    if "WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS" in current_app.config:
+        wayf_additional_idps = current_app.config["WEKO_ACCOUNTS_WAYF_ADDITIONAL_IDPS"]
+
+    default_idp = WEKO_ACCOUNTS_DEFAULT_IDP
+    if "WEKO_ACCOUNTS_DEFAULT_IDP" in current_app.config:
+        default_idp = current_app.config["WEKO_ACCOUNTS_DEFAULT_IDP"]
+
+    return {
+        "sp_entityID": sp_entityID,
+        "sp_handlerURL": sp_handlerURL,
+        "return_url": return_url,
+        "wayf_url": wayf_url,
+        "wayf_additional_idps": wayf_additional_idps,
+        "default_idp": default_idp,
+    }
