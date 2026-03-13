@@ -179,220 +179,199 @@ def main():
             try:
                 rec = db.session.query(RecordMetadata).filter(RecordMetadata.id==item.id).one_or_none()
                 for old_key, new_key in id_match_key[item_type.id].items():
-                    if old_key in item.json:
-                        is_exist_item = True
-                    else:
-                        is_exist_item = False
-
-                    if old_key in rec.json:
-                        is_exist_rec = True
-                    else:
-                        is_exist_rec = False
-                        
-                    if not is_exist_item and not is_exist_rec:
+                    if old_key not in item.json:
                         continue
                     else:
                         update_flag = True
 
-                    if is_exist_item:
-                        item.json[new_key] = item.json.pop(old_key)
-                    else:
-                        current_app.logger.info(f"item_metadata[{item.id}] does not have {old_key} -> {new_key}.")
-                    if is_exist_rec:
-                        rec.json[new_key] = rec.json.pop(old_key)
-                    else:
-                        current_app.logger.info(f"record_metadata[{rec.id}] does not have {old_key} -> {new_key}.")
-                    
+                    item.json[new_key] = item.json.pop(old_key)
+                    rec.json[new_key] = rec.json.pop(old_key)
                     if item_key_data[old_key]['change_subitem_key']:
                         # geo location
                         if item_key_data[old_key]['prop_name'] == 'geolocation':
                             # item_metadata
-                            if is_exist_item:
-                                for i, subitem in enumerate(item.json[new_key]):
-                                    # geolocation place
-                                    if 'subitem_1551256842196' in subitem:
-                                        item.json[new_key][i]['subitem_geolocation_place'] = item.json[new_key][i].pop('subitem_1551256842196')
-                                        for j, subplace in enumerate(item.json[new_key][i]['subitem_geolocation_place']):
-                                            if 'subitem_1570008213846' in subplace:
-                                                item.json[new_key][i]['subitem_geolocation_place'][j]['subitem_geolocation_place_text'] = \
-                                                        item.json[new_key][i]['subitem_geolocation_place'][j].pop('subitem_1570008213846')
-                                    if 'subitem_1551256775293' in subitem:
-                                        if 'subitem_geolocation_place' in item.json[new_key][i]:
-                                            item.json[new_key][i]['subitem_geolocation_place'].append(
-                                                {'subitem_geolocation_place_text': item.json[new_key][i].pop('subitem_1551256775293')})
-                                        else:
-                                            item.json[new_key][i]['subitem_geolocation_place'] = \
-                                                    [{'subitem_geolocation_place_text': item.json[new_key][i].pop('subitem_1551256775293')}]
-                                    # geolocation point
-                                    if 'subitem_1551256778926' in subitem:
-                                        item.json[new_key][i]['subitem_geolocation_point'] = {}
-                                        if len(item.json[new_key][i]['subitem_1551256778926']) > 0:
-                                            if 'subitem_1551256783928' in subitem['subitem_1551256778926'][0]:
-                                                item.json[new_key][i]['subitem_geolocation_point']['subitem_point_longitude'] = \
-                                                        item.json[new_key][i]['subitem_1551256778926'][0].pop('subitem_1551256783928')
-                                            if 'subitem_1551256814806' in subitem['subitem_1551256778926'][0]:
-                                                item.json[new_key][i]['subitem_geolocation_point']['subitem_point_latitude'] = \
-                                                        item.json[new_key][i]['subitem_1551256778926'][0].pop('subitem_1551256814806')
-                                        item.json[new_key][i].pop('subitem_1551256778926')
-                                    # geolocation box
-                                    if 'subitem_1551256822219' in subitem:
-                                        item.json[new_key][i]['subitem_geolocation_box'] = {}
-                                        if len(item.json[new_key][i]['subitem_1551256822219']) > 0:
-                                            if 'subitem_1551256824945' in subitem['subitem_1551256822219'][0]:
-                                                item.json[new_key][i]['subitem_geolocation_box']['subitem_west_longitude'] = \
-                                                        item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256824945')
-                                            if 'subitem_1551256831892' in subitem['subitem_1551256822219'][0]:
-                                                item.json[new_key][i]['subitem_geolocation_box']['subitem_east_longitude'] = \
-                                                        item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256831892')
-                                            if 'subitem_1551256834732' in subitem['subitem_1551256822219'][0]:
-                                                item.json[new_key][i]['subitem_geolocation_box']['subitem_south_latitude'] = \
-                                                        item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256834732')
-                                            if 'subitem_1551256840435' in subitem['subitem_1551256822219'][0]:
-                                                item.json[new_key][i]['subitem_geolocation_box']['subitem_north_latitude'] = \
-                                                        item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256840435')
-                                        item.json[new_key][i].pop('subitem_1551256822219')
+                            for i, subitem in enumerate(item.json[new_key]):
+                                # geolocation place
+                                if 'subitem_1551256842196' in subitem:
+                                    item.json[new_key][i]['subitem_geolocation_place'] = item.json[new_key][i].pop('subitem_1551256842196')
+                                    for j, subplace in enumerate(item.json[new_key][i]['subitem_geolocation_place']):
+                                        if 'subitem_1570008213846' in subplace:
+                                            item.json[new_key][i]['subitem_geolocation_place'][j]['subitem_geolocation_place_text'] = \
+                                                    item.json[new_key][i]['subitem_geolocation_place'][j].pop('subitem_1570008213846')
+                                if 'subitem_1551256775293' in subitem:
+                                    if 'subitem_geolocation_place' in item.json[new_key][i]:
+                                        item.json[new_key][i]['subitem_geolocation_place'].append(
+                                            {'subitem_geolocation_place_text': item.json[new_key][i].pop('subitem_1551256775293')})
+                                    else:
+                                        item.json[new_key][i]['subitem_geolocation_place'] = \
+                                                [{'subitem_geolocation_place_text': item.json[new_key][i].pop('subitem_1551256775293')}]
+                                # geolocation point
+                                if 'subitem_1551256778926' in subitem:
+                                    item.json[new_key][i]['subitem_geolocation_point'] = {}
+                                    if len(item.json[new_key][i]['subitem_1551256778926']) > 0:
+                                        if 'subitem_1551256783928' in subitem['subitem_1551256778926'][0]:
+                                            item.json[new_key][i]['subitem_geolocation_point']['subitem_point_longitude'] = \
+                                                    item.json[new_key][i]['subitem_1551256778926'][0].pop('subitem_1551256783928')
+                                        if 'subitem_1551256814806' in subitem['subitem_1551256778926'][0]:
+                                            item.json[new_key][i]['subitem_geolocation_point']['subitem_point_latitude'] = \
+                                                    item.json[new_key][i]['subitem_1551256778926'][0].pop('subitem_1551256814806')
+                                    item.json[new_key][i].pop('subitem_1551256778926')
+                                # geolocation box
+                                if 'subitem_1551256822219' in subitem:
+                                    item.json[new_key][i]['subitem_geolocation_box'] = {}
+                                    if len(item.json[new_key][i]['subitem_1551256822219']) > 0:
+                                        if 'subitem_1551256824945' in subitem['subitem_1551256822219'][0]:
+                                            item.json[new_key][i]['subitem_geolocation_box']['subitem_west_longitude'] = \
+                                                    item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256824945')
+                                        if 'subitem_1551256831892' in subitem['subitem_1551256822219'][0]:
+                                            item.json[new_key][i]['subitem_geolocation_box']['subitem_east_longitude'] = \
+                                                    item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256831892')
+                                        if 'subitem_1551256834732' in subitem['subitem_1551256822219'][0]:
+                                            item.json[new_key][i]['subitem_geolocation_box']['subitem_south_latitude'] = \
+                                                    item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256834732')
+                                        if 'subitem_1551256840435' in subitem['subitem_1551256822219'][0]:
+                                            item.json[new_key][i]['subitem_geolocation_box']['subitem_north_latitude'] = \
+                                                    item.json[new_key][i]['subitem_1551256822219'][0].pop('subitem_1551256840435')
+                                    item.json[new_key][i].pop('subitem_1551256822219')
                             # records_metadata
-                            if is_exist_rec:
-                                for i, subitem in enumerate(rec.json[new_key]['attribute_value_mlt']):
-                                    # geolocation place
-                                    if 'subitem_1551256842196' in subitem:
+                            for i, subitem in enumerate(rec.json[new_key]['attribute_value_mlt']):
+                                # geolocation place
+                                if 'subitem_1551256842196' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'] = \
+                                            rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256842196')
+                                    for j, subplace in enumerate(rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place']):
+                                        if 'subitem_1570008213846' in subplace:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'][j]['subitem_geolocation_place_text'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'][j].pop('subitem_1570008213846')
+                                if 'subitem_1551256775293' in subitem:
+                                    if 'subitem_geolocation_place' in rec.json[new_key]['attribute_value_mlt'][i]:
+                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'].append(
+                                            {'subitem_geolocation_place_text': rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256775293')})
+                                    else:
                                         rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'] = \
-                                                rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256842196')
-                                        for j, subplace in enumerate(rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place']):
-                                            if 'subitem_1570008213846' in subplace:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'][j]['subitem_geolocation_place_text'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'][j].pop('subitem_1570008213846')
-                                    if 'subitem_1551256775293' in subitem:
-                                        if 'subitem_geolocation_place' in rec.json[new_key]['attribute_value_mlt'][i]:
-                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'].append(
-                                                {'subitem_geolocation_place_text': rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256775293')})
-                                        else:
-                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_place'] = \
-                                                    [{'subitem_geolocation_place_text': rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256775293')}]
-                                    # geolocation point
-                                    if 'subitem_1551256778926' in subitem:
-                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_point'] = {}
-                                        if len(rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256778926']) > 0:
-                                            if 'subitem_1551256783928' in subitem['subitem_1551256778926'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_point']['subitem_point_longitude'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256778926'][0].pop('subitem_1551256783928')
-                                            if 'subitem_1551256814806' in subitem['subitem_1551256778926'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_point']['subitem_point_latitude'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256778926'][0].pop('subitem_1551256814806')
-                                        rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256778926')
-                                    # geolocation box
-                                    if 'subitem_1551256822219' in subitem:
-                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box'] = {}
-                                        if len(rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219']) > 0:
-                                            if 'subitem_1551256824945' in subitem['subitem_1551256822219'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_west_longitude'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256824945')
-                                            if 'subitem_1551256831892' in subitem['subitem_1551256822219'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_east_longitude'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256831892')
-                                            if 'subitem_1551256834732' in subitem['subitem_1551256822219'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_south_latitude'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256834732')
-                                            if 'subitem_1551256840435' in subitem['subitem_1551256822219'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_north_latitude'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256840435')
-                                        rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256822219')
+                                                [{'subitem_geolocation_place_text': rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256775293')}]
+                                # geolocation point
+                                if 'subitem_1551256778926' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_point'] = {}
+                                    if len(rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256778926']) > 0:
+                                        if 'subitem_1551256783928' in subitem['subitem_1551256778926'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_point']['subitem_point_longitude'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256778926'][0].pop('subitem_1551256783928')
+                                        if 'subitem_1551256814806' in subitem['subitem_1551256778926'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_point']['subitem_point_latitude'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256778926'][0].pop('subitem_1551256814806')
+                                    rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256778926')
+                                # geolocation box
+                                if 'subitem_1551256822219' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box'] = {}
+                                    if len(rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219']) > 0:
+                                        if 'subitem_1551256824945' in subitem['subitem_1551256822219'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_west_longitude'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256824945')
+                                        if 'subitem_1551256831892' in subitem['subitem_1551256822219'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_east_longitude'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256831892')
+                                        if 'subitem_1551256834732' in subitem['subitem_1551256822219'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_south_latitude'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256834732')
+                                        if 'subitem_1551256840435' in subitem['subitem_1551256822219'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_geolocation_box']['subitem_north_latitude'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256822219'][0].pop('subitem_1551256840435')
+                                    rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256822219')
                         # funding reference
                         elif item_key_data[old_key]['prop_name'] == 'funding_reference':
                             # item_metadata
-                            if is_exist_item:
-                                for i, subitem in enumerate(item.json[new_key]):
-                                    # funder identifiers
-                                    if 'subitem_1551256454316' in subitem:
-                                        item.json[new_key][i]['subitem_funder_identifiers'] = {}
-                                        if len(subitem['subitem_1551256454316']) > 0:
-                                            if 'subitem_1551256614960' in subitem['subitem_1551256454316'][0]:
-                                                item.json[new_key][i]['subitem_funder_identifiers']['subitem_funder_identifier'] = \
-                                                        item.json[new_key][i]['subitem_1551256454316'][0].pop('subitem_1551256614960')
-                                            if 'subitem_1551256619706' in subitem['subitem_1551256454316'][0]:
-                                                item.json[new_key][i]['subitem_funder_identifiers']['subitem_funder_identifier_type'] = \
-                                                        item.json[new_key][i]['subitem_1551256454316'][0].pop('subitem_1551256619706')
-                                        item.json[new_key][i].pop('subitem_1551256454316')
-                                    # funder names
-                                    if 'subitem_1551256462220' in subitem:
-                                        item.json[new_key][i]['subitem_funder_names'] = []
-                                        for subname in item.json[new_key][i]['subitem_1551256462220']:
-                                            temp = {}
-                                            if 'subitem_1551256653656' in subname:
-                                                temp['subitem_funder_name'] = subname['subitem_1551256653656']
-                                            if 'subitem_1551256657859' in subname:
-                                                temp['subitem_funder_name_language'] = subname['subitem_1551256657859']
-                                            item.json[new_key][i]['subitem_funder_names'].append(temp)
-                                        item.json[new_key][i].pop('subitem_1551256462220')
-                                    # award numbers
-                                    if 'subitem_1551256665850' in subitem:
-                                        item.json[new_key][i]['subitem_award_numbers'] = {}
-                                        if len(subitem['subitem_1551256665850']) > 0:
-                                            if 'subitem_1551256671920' in subitem['subitem_1551256665850'][0]:
-                                                item.json[new_key][i]['subitem_award_numbers']['subitem_award_number'] = \
-                                                        item.json[new_key][i]['subitem_1551256665850'][0].pop('subitem_1551256671920')
-                                            if 'subitem_1551256679403' in subitem['subitem_1551256665850'][0]:
-                                                item.json[new_key][i]['subitem_award_numbers']['subitem_award_uri'] = \
-                                                        item.json[new_key][i]['subitem_1551256665850'][0].pop('subitem_1551256679403')
-                                        item.json[new_key][i].pop('subitem_1551256665850')
-                                    # funder titles
-                                    if 'subitem_1551256688098' in subitem:
-                                        item.json[new_key][i]['subitem_award_titles'] = []
-                                        for subname in item.json[new_key][i]['subitem_1551256688098']:
-                                            temp = {}
-                                            if 'subitem_1551256691232' in subname:
-                                                temp['subitem_award_title'] = subname['subitem_1551256691232']
-                                            if 'subitem_1551256694883' in subname:
-                                                temp['subitem_award_title_language'] = subname['subitem_1551256694883']
-                                            item.json[new_key][i]['subitem_award_titles'].append(temp)
-                                        item.json[new_key][i].pop('subitem_1551256688098')
+                            for i, subitem in enumerate(item.json[new_key]):
+                                # funder identifiers
+                                if 'subitem_1551256454316' in subitem:
+                                    item.json[new_key][i]['subitem_funder_identifiers'] = {}
+                                    if len(subitem['subitem_1551256454316']) > 0:
+                                        if 'subitem_1551256614960' in subitem['subitem_1551256454316'][0]:
+                                            item.json[new_key][i]['subitem_funder_identifiers']['subitem_funder_identifier'] = \
+                                                    item.json[new_key][i]['subitem_1551256454316'][0].pop('subitem_1551256614960')
+                                        if 'subitem_1551256619706' in subitem['subitem_1551256454316'][0]:
+                                            item.json[new_key][i]['subitem_funder_identifiers']['subitem_funder_identifier_type'] = \
+                                                    item.json[new_key][i]['subitem_1551256454316'][0].pop('subitem_1551256619706')
+                                    item.json[new_key][i].pop('subitem_1551256454316')
+                                # funder names
+                                if 'subitem_1551256462220' in subitem:
+                                    item.json[new_key][i]['subitem_funder_names'] = []
+                                    for subname in item.json[new_key][i]['subitem_1551256462220']:
+                                        temp = {}
+                                        if 'subitem_1551256653656' in subname:
+                                            temp['subitem_funder_name'] = subname['subitem_1551256653656']
+                                        if 'subitem_1551256657859' in subname:
+                                            temp['subitem_funder_name_language'] = subname['subitem_1551256657859']
+                                        item.json[new_key][i]['subitem_funder_names'].append(temp)
+                                    item.json[new_key][i].pop('subitem_1551256462220')
+                                # award numbers
+                                if 'subitem_1551256665850' in subitem:
+                                    item.json[new_key][i]['subitem_award_numbers'] = {}
+                                    if len(subitem['subitem_1551256665850']) > 0:
+                                        if 'subitem_1551256671920' in subitem['subitem_1551256665850'][0]:
+                                            item.json[new_key][i]['subitem_award_numbers']['subitem_award_number'] = \
+                                                    item.json[new_key][i]['subitem_1551256665850'][0].pop('subitem_1551256671920')
+                                        if 'subitem_1551256679403' in subitem['subitem_1551256665850'][0]:
+                                            item.json[new_key][i]['subitem_award_numbers']['subitem_award_uri'] = \
+                                                    item.json[new_key][i]['subitem_1551256665850'][0].pop('subitem_1551256679403')
+                                    item.json[new_key][i].pop('subitem_1551256665850')
+                                # funder titles
+                                if 'subitem_1551256688098' in subitem:
+                                    item.json[new_key][i]['subitem_award_titles'] = []
+                                    for subname in item.json[new_key][i]['subitem_1551256688098']:
+                                        temp = {}
+                                        if 'subitem_1551256691232' in subname:
+                                            temp['subitem_award_title'] = subname['subitem_1551256691232']
+                                        if 'subitem_1551256694883' in subname:
+                                            temp['subitem_award_title_language'] = subname['subitem_1551256694883']
+                                        item.json[new_key][i]['subitem_award_titles'].append(temp)
+                                    item.json[new_key][i].pop('subitem_1551256688098')
                             # records_metadata
-                            if is_exist_rec:
-                                for i, subitem in enumerate(rec.json[new_key]['attribute_value_mlt']):
-                                    # funder identifiers
-                                    if 'subitem_1551256454316' in subitem:
-                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_identifiers'] = {}
-                                        if len(subitem['subitem_1551256454316']) > 0:
-                                            if 'subitem_1551256614960' in subitem['subitem_1551256454316'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_identifiers']['subitem_funder_identifier'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256454316'][0].pop('subitem_1551256614960')
-                                            if 'subitem_1551256619706' in subitem['subitem_1551256454316'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_identifiers']['subitem_funder_identifier_type'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256454316'][0].pop('subitem_1551256619706')
-                                        rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256454316')
-                                    # funder names
-                                    if 'subitem_1551256462220' in subitem:
-                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_names'] = []
-                                        for subname in rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256462220']:
-                                            temp = {}
-                                            if 'subitem_1551256653656' in subname:
-                                                temp['subitem_funder_name'] = subname['subitem_1551256653656']
-                                            if 'subitem_1551256657859' in subname:
-                                                temp['subitem_funder_name_language'] = subname['subitem_1551256657859']
-                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_names'].append(temp)
-                                        rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256462220')
-                                    # award numbers
-                                    if 'subitem_1551256665850' in subitem:
-                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_numbers'] = {}
-                                        if len(subitem['subitem_1551256665850']) > 0:
-                                            if 'subitem_1551256671920' in subitem['subitem_1551256665850'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_numbers']['subitem_award_number'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256665850'][0].pop('subitem_1551256671920')
-                                            if 'subitem_1551256679403' in subitem['subitem_1551256665850'][0]:
-                                                rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_numbers']['subitem_award_uri'] = \
-                                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256665850'][0].pop('subitem_1551256679403')
-                                        rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256665850')
-                                    # funder titles
-                                    if 'subitem_1551256688098' in subitem:
-                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_titles'] = []
-                                        for subname in rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256688098']:
-                                            temp = {}
-                                            if 'subitem_1551256691232' in subname:
-                                                temp['subitem_award_title'] = subname['subitem_1551256691232']
-                                            if 'subitem_1551256694883' in subname:
-                                                temp['subitem_award_title_language'] = subname['subitem_1551256694883']
-                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_titles'].append(temp)
-                                        rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256688098')
+                            for i, subitem in enumerate(rec.json[new_key]['attribute_value_mlt']):
+                                # funder identifiers
+                                if 'subitem_1551256454316' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_identifiers'] = {}
+                                    if len(subitem['subitem_1551256454316']) > 0:
+                                        if 'subitem_1551256614960' in subitem['subitem_1551256454316'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_identifiers']['subitem_funder_identifier'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256454316'][0].pop('subitem_1551256614960')
+                                        if 'subitem_1551256619706' in subitem['subitem_1551256454316'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_identifiers']['subitem_funder_identifier_type'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256454316'][0].pop('subitem_1551256619706')
+                                    rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256454316')
+                                # funder names
+                                if 'subitem_1551256462220' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_names'] = []
+                                    for subname in rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256462220']:
+                                        temp = {}
+                                        if 'subitem_1551256653656' in subname:
+                                            temp['subitem_funder_name'] = subname['subitem_1551256653656']
+                                        if 'subitem_1551256657859' in subname:
+                                            temp['subitem_funder_name_language'] = subname['subitem_1551256657859']
+                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_funder_names'].append(temp)
+                                    rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256462220')
+                                # award numbers
+                                if 'subitem_1551256665850' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_numbers'] = {}
+                                    if len(subitem['subitem_1551256665850']) > 0:
+                                        if 'subitem_1551256671920' in subitem['subitem_1551256665850'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_numbers']['subitem_award_number'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256665850'][0].pop('subitem_1551256671920')
+                                        if 'subitem_1551256679403' in subitem['subitem_1551256665850'][0]:
+                                            rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_numbers']['subitem_award_uri'] = \
+                                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256665850'][0].pop('subitem_1551256679403')
+                                    rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256665850')
+                                # funder titles
+                                if 'subitem_1551256688098' in subitem:
+                                    rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_titles'] = []
+                                    for subname in rec.json[new_key]['attribute_value_mlt'][i]['subitem_1551256688098']:
+                                        temp = {}
+                                        if 'subitem_1551256691232' in subname:
+                                            temp['subitem_award_title'] = subname['subitem_1551256691232']
+                                        if 'subitem_1551256694883' in subname:
+                                            temp['subitem_award_title_language'] = subname['subitem_1551256694883']
+                                        rec.json[new_key]['attribute_value_mlt'][i]['subitem_award_titles'].append(temp)
+                                    rec.json[new_key]['attribute_value_mlt'][i].pop('subitem_1551256688098')
                 if update_flag:
                     flag_modified(item, "json")
                     flag_modified(rec, "json")
