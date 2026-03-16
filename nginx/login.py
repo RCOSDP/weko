@@ -51,11 +51,21 @@ else:
     response.raise_for_status()
     redirect = response.text
 
+    # Get Set-Cookie headers
+    set_cookie_values = []
+    try:
+        set_cookie_values = response.raw.headers.getlist('Set-Cookie')
+    except Exception:
+        set_cookie_values = [response.headers.get('Set-Cookie')]
+
     if redirect.startswith('/'):
         # Redirect to the Shibboleth login
         print('HTTP/1.1 302 Found')
         print('Content-Type: text/html')
         print('Location: ' + base_url + redirect)
+        for set_cookie in set_cookie_values:
+            if set_cookie:
+                print(f'Set-Cookie: {set_cookie}')
         print('')
     else:
         # Display the login page or the page before login processing with flash message
