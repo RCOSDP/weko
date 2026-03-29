@@ -17,7 +17,7 @@
     <Sessions lifetime="28800" timeout="3600" relayState="ss:mem" checkAddress="false"
       handlerSSL="false" cookieProps="http">
       <SSO entityID="https://idp.repo.nii.ac.jp/idp/shibboleth" discoveryProtocol="SAMLDS"
-        discoveryURL="test-ds.gakunin.nii.ac.jp/WAYF">
+        discoveryURL="ds.gakunin.nii.ac.jp/WAYF">
         SAML2
       </SSO>
       <Logout>SAML2 Local</Logout>
@@ -29,7 +29,7 @@
       <SessionInitiator type="Chaining" Location="/DS" isDefault="true" id="DS">
         <SessionInitiator type="SAML2" template="bindingTemplate.html" />
         <SessionInitiator type="Shib1" />
-        <SessionInitiator type="SAMLDS" URL="https://test-ds.gakunin.nii.ac.jp/WAYF" />
+        <SessionInitiator type="SAMLDS" URL="https://ds.gakunin.nii.ac.jp/WAYF" />
       </SessionInitiator>
     </Sessions>
     <Errors supportContact="root@localhost" helpLocation="/about.html"

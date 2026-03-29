@@ -152,7 +152,7 @@ services:
       - elasticsearch
       - rabbitmq
       - worker
-      - inbox
+      # - inbox
     logging:
       driver: "json-file"
       options:
@@ -376,7 +376,7 @@ services:
 #      - letsencrypt_html:/var/www/html
     links:
       - web
-      - inbox
+      # - inbox
     deploy:
       resources:
         limits:
@@ -389,46 +389,46 @@ services:
 #      - letsencrypt_html:/var/www/html
 #    command: ["--version"]
 
-  flower:
-    restart: "always"
-    image: mher/flower:0.9.5
-    command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
-    ports:
-      - "5501:5555"
-    links:
-      - rabbitmq
+  # flower:
+  #   restart: "always"
+  #   image: mher/flower:0.9.5
+  #   command: --broker=amqp://guest:guest@rabbitmq:5672// --broker_api=http://guest:guest@rabbitmq:5671/api/
+  #   ports:
+  #     - "5501:5555"
+  #   links:
+  #     - rabbitmq
 
-  inbox:
-    restart: "always"
-    build:
-      context: ./inbox
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    environment:
-      - ENABLE_PUSH_NOTIFICATIONS=True
-      - ICON=/static/images/weko-logo-256.png
-      - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
-      - MONGO_DB_NAME=inbox
-      - ON_RECEIVE_NOTIFICATION_WEBHOOK_URL=
-      - ALLOWED_ADMIN_ORIGINS=["*"]
-      - ALLOWED_ORIGINS=["*"]
-      - SUBSCRIBER=mailto:wekosoftware@nii.ac.jp
-      - VAPID_PUBLIC_KEY=
-      - VAPID_PRIVATE_KEY=
-    links:
-      - mongo
+  # inbox:
+  #   restart: "always"
+  #   build:
+  #     context: ./inbox
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - ENABLE_PUSH_NOTIFICATIONS=True
+  #     - ICON=/static/images/weko-logo-256.png
+  #     - MONGO_DB_URI=mongodb://inbox:ibpass123@mongo:27017
+  #     - MONGO_DB_NAME=inbox
+  #     - ON_RECEIVE_NOTIFICATION_WEBHOOK_URL=
+  #     - ALLOWED_ADMIN_ORIGINS=["*"]
+  #     - ALLOWED_ORIGINS=["*"]
+  #     - SUBSCRIBER=mailto:wekosoftware@nii.ac.jp
+  #     - VAPID_PUBLIC_KEY=
+  #     - VAPID_PRIVATE_KEY=
+  #   links:
+  #     - mongo
 
-  mongo:
-    restart: "always"
-    image: mongo:7.0.14
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=inbox
-      - MONGO_INITDB_ROOT_PASSWORD=ibpass123
-    ports:
-      - "27017:27017"
-    volumes:
-      - mongo_data:/data/db
+  # mongo:
+  #   restart: "always"
+  #   image: mongo:7.0.14
+  #   environment:
+  #     - MONGO_INITDB_ROOT_USERNAME=inbox
+  #     - MONGO_INITDB_ROOT_PASSWORD=ibpass123
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - mongo_data:/data/db
 
 #  kibana:
 #    build:
@@ -452,6 +452,6 @@ volumes:
   conf_data:
   pgsql-data:
   es-data:
-  mongo_data:
+  # mongo_data:
 #  letsencrypt_etc:
 #  letsencrypt_html:

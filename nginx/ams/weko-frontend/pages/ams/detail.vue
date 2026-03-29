@@ -76,6 +76,7 @@
               <button @click="openDataSet">
                 <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
               </button>
+              <div>Go to GakuNinRDM</div>
             </div>
           </div>
           <!-- リクエストメール（リクエストメールアドレス有&プロジェクトURL無） -->

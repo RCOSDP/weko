@@ -161,11 +161,11 @@ export default defineAppConfig({
    */
   shibLogin: {
     // 本番環境
-    // dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
-    // orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp',
+    dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
+    orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp',
     // テスト環境
-    dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
-    orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
+    // dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
+    // orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
     entityID: 'https://' + weko + '/shibboleth-sp',
     handlerURL: 'https://' + weko + '/Shibboleth.sso',
     returnURL: 'https://' + weko + '/secure/login.py?next=ams'

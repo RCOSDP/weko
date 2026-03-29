@@ -18,46 +18,70 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-# quit on errors and unbound symbols:
-set -o errexit
+set -euo pipefail
+
+BACKUP_DIR="./backup"
+ES_REPO_NAME="weko_backup"
+
+LATEST_SNAPSHOT="$(find "${BACKUP_DIR}/elasticsearch/backups" -maxdepth 1 -type f -name 'snapshot_*' -printf '%f\n' | sort | tail -n 1)"
+
+if [ -z "${LATEST_SNAPSHOT}" ]; then
+    echo "ERROR: no Elasticsearch snapshot found in ${BACKUP_DIR}/elasticsearch/backups" >&2
+    exit 1
+fi
 
 # create-database-begin
-docker-compose exec web invenio db drop --yes-i-know
-docker-compose exec web invenio db init
-docker-compose exec web invenio db create -v
+docker compose exec web invenio db drop --yes-i-know
+docker compose exec web invenio db init
+docker compose exec web invenio db create -v
 # create-database-end
 
 # postgresql-restore-begin
-docker cp ./scripts/demo/postgresql/weko.sql $(docker-compose ps -q postgresql):/
-docker-compose exec postgresql psql -U invenio -d invenio -f weko.sql
+docker cp "${BACKUP_DIR}/postgresql/weko.sql" "$(docker compose ps -q postgresql):/tmp/weko.sql"
+docker compose exec postgresql psql -U invenio -d invenio -f /tmp/weko.sql
 # postgresql-restore-end
 
 # elasticsearch-restore-begin
-docker-compose stop
-docker-compose start elasticsearch
+docker compose stop
+docker compose start elasticsearch
 sleep 10
-docker-compose exec elasticsearch \
-    curl -XDELETE http://localhost:9200/*
-docker-compose exec elasticsearch \
-    curl -X PUT \
-    http://localhost:9200/_snapshot/weko_backup \
+
+docker compose exec elasticsearch \
+    curl -fsS -X DELETE "http://localhost:9200/_all"
+
+docker compose exec elasticsearch \
+    curl -fsS -X PUT \
+    "http://localhost:9200/_snapshot/${ES_REPO_NAME}" \
     -H 'cache-control: no-cache' \
     -H 'content-type: application/json' \
     -d '{
             "type": "fs",
             "settings": {
-                "location": "/usr/share/elasticsearch/backups"
+                "location": "/usr/share/elasticsearch/backups",
+                "compress": true
             }
         }'
-docker cp ./scripts/demo/elasticsearch/backups $(docker-compose ps -q elasticsearch):/usr/share/elasticsearch/
-docker-compose exec elasticsearch chown -R elasticsearch:elasticsearch ./backups
-docker-compose exec elasticsearch \
-    curl -X POST \
-    http://localhost:9200/_snapshot/weko_backup/snapshot_all/_restore?wait_for_completion=true
-docker-compose start
+
+docker compose exec elasticsearch rm -rf /usr/share/elasticsearch/backups
+docker cp "${BACKUP_DIR}/elasticsearch/backups" "$(docker compose ps -q elasticsearch):/usr/share/elasticsearch/"
+
+docker compose exec elasticsearch chown -R elasticsearch:elasticsearch /usr/share/elasticsearch/backups
+
+docker compose exec elasticsearch \
+    curl -fsS -X POST \
+    "http://localhost:9200/_snapshot/${ES_REPO_NAME}/${LATEST_SNAPSHOT}/_restore" \
+    -H 'content-type: application/json' \
+    -d '{
+            "indices": "*",
+            "ignore_unavailable": true,
+            "include_global_state": false
+        }'
+
+docker compose start
 # elasticsearch-restore-end
 
 # contents-restore-begin
-sudo chown -R 1000:1000 ./scripts/demo/contents
-docker-compose exec web cp -r /code/scripts/demo/contents/tmp /var/
+docker cp "${BACKUP_DIR}/contents" "$(docker compose ps -q web):/code/backup/"
+docker compose exec web mkdir -p /var/tmp
+docker compose exec web sh -c 'cp -a /code/backup/contents/. /var/tmp/'
 # contents-restore-end

@@ -97,7 +97,6 @@ def authorize(*args, **kwargs):
     confirm = request.form.get('confirm', 'no')
     return confirm == 'yes'
 
-
 @blueprint.route('/token', methods=['POST', ])
 @oauth2.token_handler
 def access_token():
