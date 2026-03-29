@@ -1,5 +1,5 @@
 # Translations template for weko-admin.
-# Copyright (C) 2021 National Institute of Informatics
+# Copyright (C) 2026 National Institute of Informatics
 # This file is distributed under the same license as the weko-admin project.
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
 #
@@ -959,7 +959,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:94
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:112
-msgid "Aggregation month"
+msgid "Aggregation period"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/report.html:105
@@ -1429,6 +1429,12 @@ msgstr ""
 msgid "Index Tree/Facet Display Setting"
 msgstr ""
 
+#: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
+msgid ""
+"Please classify a check into the organization send a use of site license "
+"statistics email."
+msgstr ""
+
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
 msgid "Organization"
 msgstr ""
@@ -1439,7 +1445,7 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:79
 msgid ""
-"Select \"Send\" to automatically send a use of site license statistics "
+"Select \"Enable\" to automatically send a use of site license statistics "
 "email to the checked the organization."
 msgstr ""
 
@@ -1482,12 +1488,12 @@ msgstr ""
 msgid "(from - to)"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/site_license_settings.html:135
-msgid "Please input a correct number"
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:137
+msgid "Please input a correct number."
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/site_license_settings.html:136
-msgid "The range of ipAddress is not correct"
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:138
+msgid "The range of ipAddress is not correct."
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:142

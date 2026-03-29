@@ -998,8 +998,8 @@ msgstr "定型レポート"
 
 #: weko_admin/templates/weko_admin/admin/report.html:94
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:112
-msgid "Aggregation month"
-msgstr "月別集計"
+msgid "Aggregation period"
+msgstr "集計期間"
 
 #: weko_admin/templates/weko_admin/admin/report.html:105
 msgid "Type"
@@ -1468,30 +1468,29 @@ msgstr "注意書きの字数上限は1000字です。"
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:37
 msgid ""
 "Please classify a check into the organization send a use of site license "
-"statistics eamil."
-msgstr ""
+"statistics email."
+msgstr "サイトライセンス統計メールを送信する機関をチェックしてください。"
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:42
-#, fuzzy
 msgid "Organization"
-msgstr "組織名"
+msgstr "機関名"
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:76
 msgid "Automatic Send"
-msgstr ""
+msgstr "メール自動送信"
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:79
 msgid ""
-"Select \"Send\" to automatically send a use of site license statistics "
+"Select \"Enable\" to automatically send a use of site license statistics "
 "email to the checked the organization."
-msgstr ""
+msgstr ""有効"を選択するとチェックされた機関にサイトライセンス統計メールが自動送信されます。"
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:107
 msgid ""
 "When manually send a use of site license statistics email to the checked "
 "the organization, select the aggregation period and press the [Manual "
 "Send] button."
-msgstr ""
+msgstr "チェックされた機関にサイトライセンス統計メールを手動送信する場合、集計期間を設定して[メール手動送信]ボタンを押してください。"
 
 #: weko_admin/templates/weko_admin/admin/site_license_send_mail_settings.html:198
 #, fuzzy
@@ -1528,12 +1527,12 @@ msgid "(from - to)"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:135
-msgid "Please input a correct number"
-msgstr "正しい番号を入力してください"
+msgid "Please input a correct number."
+msgstr "正しい番号を入力してください。"
 
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:136
-msgid "The range of ipAddress is not correct"
-msgstr "IPアドレスの範囲が正しくありません"
+msgid "The range of ipAddress is not correct."
+msgstr "IPアドレスの範囲が正しくありません。"
 
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:142
 #: weko_admin/templates/weko_admin/admin/site_license_settings.html:153

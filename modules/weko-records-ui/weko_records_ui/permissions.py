@@ -90,7 +90,7 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
-def check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False, download_status={}):
+def check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False, download_status=None):
     """Check file download."""
     def site_license_check():
         # site license permission check
@@ -110,6 +110,30 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
             users = User.query.filter(User.id.in_(user_id_list)).all()
             emails = [x.email for x in users]
         return emails
+
+    def _is_open_date_past(acsrole):
+        """Check if file is open access by open date.
+
+        This value is decide whether display this file as open access or not.
+        If the file has open date, return if the open date is past or not.
+        If no date, return file's access role is open access or not.
+
+        Args:
+            acsrole (str): File permission
+
+        Returns:
+            bool: True if the file is open access, False otherwise.
+
+
+        """
+        from .utils import is_future
+        date = fjson.get('date')
+        if date and isinstance(date, list) and date[0]:
+            adt = date[0].get('dateValue')
+            if adt:
+                return not is_future(adt)
+
+        return acsrole == "open_access"
 
     def __check_user_permission(user_id_list):
         """Check user permission.
@@ -133,6 +157,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                     break
         return is_ok
 
+    download_status = download_status if download_status is not None else {}
     if fjson:
         is_can = True
         download_status["is_sitelicense_member"] = False
@@ -153,6 +178,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
         if current_user and \
                 current_user.is_authenticated and \
                 current_user.id in user_id_list:
+            if acsrole in ["open_access", "open_date"]:
+                download_status["is_open_access"] = _is_open_date_past(acsrole)
             return is_can
 
         # Super users
@@ -160,12 +187,14 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
             current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
         for role in list(current_user.roles or []):
             if role.name in supers:
+                if acsrole in ["open_access", "open_date"]:
+                    download_status["is_open_access"] = _is_open_date_past(acsrole)
                 return is_can
 
         try:
             from .utils import is_future
             # can access
-            if 'open_access' in acsrole:
+            if acsrole == "open_access":
                 if is_display_file_info:
                     # Always display the file info area in 'Detail' screen.
                     is_can = True
@@ -179,7 +208,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                             is_can = True
                     download_status["is_open_access"] = is_can
             # access with open date
-            elif 'open_date' in acsrole:
+            elif acsrole == "open_date":
                 if is_display_file_info:
                     # Always display the file info area in 'Detail' screen.
                     is_can = True
@@ -209,7 +238,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                         download_status["is_sitelicense_member"] = is_can
 
             # access with login user
-            elif 'open_login' in acsrole:
+            elif acsrole == "open_login":
                 if is_display_file_info:
                     # Always display the file info area in 'Detail' screen.
                     is_can = True
@@ -253,7 +282,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                             download_status["is_sitelicense_member"] = is_can
 
             #  can not access
-            elif 'open_no' in acsrole:
+            elif acsrole == "open_no":
                 if is_display_file_info:
                     # Allow display the file info area in 'Detail' screen.
                     is_can = True
@@ -268,7 +297,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, ch
                         is_can = True
                     else:
                         is_can = False
-            elif 'open_restricted' in acsrole:
+            elif acsrole == "open_restricted":
                 is_can = check_open_restricted_permission(record, fjson)
         except BaseException:
             abort(500)

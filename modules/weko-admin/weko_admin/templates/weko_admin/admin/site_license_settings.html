@@ -97,43 +97,47 @@
                     {{_('(from - to)')}}
                   </th>
                   <td>
-                    <div class="form-group" ng-repeat="ipAddressRangeDetail in ipDetail.addresses" ng-init="rangeIndex = $index">
+                    <div class="form-group" ng-repeat="ipAddressRangeDetail in ipDetail.addresses">
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.start_ip_address[0]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[0],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.start_ip_address[0],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> .
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.start_ip_address[1]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[1],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.start_ip_address[1],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> .
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.start_ip_address[2]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[2],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.start_ip_address[2],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> .
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.start_ip_address[3]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.start_ip_address[3],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.start_ip_address[3],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> -
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.finish_ip_address[0]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[0],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.finish_ip_address[0],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> .
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.finish_ip_address[1]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[1],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.finish_ip_address[1],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> .
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.finish_ip_address[2]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[2],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.finish_ip_address[2],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0"> .
                       <input type="text" class="form-control input-sm"
                       ng-model="ipAddressRangeDetail.finish_ip_address[3]"
-                      ng-keyup="chcckStr(ipAddressRangeDetail.finish_ip_address[3],$parent.$index)"
+                      ng-keyup="checkStr(ipAddressRangeDetail.finish_ip_address[3],$parent.$index,$index)"
                       size="1" maxlength="3" placeholder="0">
+                      <a type="button" class="btn btn-danger" style="margin-left: 8px;" ng-click="removeIpAddress($index,ipDetail,ipIndex)" ng-if="ipDetail.addresses.length>1"> 
+                            <span class="glyphicon glyphicon-trash"></span>&nbsp
+                               {{_('Delete')}}
+                      </a>
+                      <span id="span_[[$index]]" style="color:red" ng-show="ipCheckFlgArry[ipIndex][$index].ipCheckFlg" class="ng-hide">{{_('Please input a correct number.')}}</span>
+                      <span style="color:red" ng-show="ipCheckFlgArry[ipIndex][$index].ipRangeCheck" class="ng-hide">{{_('The range of ipAddress is not correct.')}}</span>
                       <p></p>
                     </div>
-                    <span id="span_[[$index]]" style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipCheckFlg" class="ng-hide">{{_('Please input a correct number')}}</span>
-                    <span style="color:red" ng-show="ipCheckFlgArry[ipIndex].ipRangeCheck" class="ng-hide">{{_('The range of ipAddress is not correct')}}</span>
                     <p></p>
                     <div class="form-group">
                       <button type="button" class="btn btn-success"
