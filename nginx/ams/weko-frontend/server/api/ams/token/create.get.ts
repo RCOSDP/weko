@@ -1,41 +1,51 @@
 export default defineEventHandler(async (event) => {
-  // process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'; // NOTE: オレオレ証明書を使用している場合は有効にする
+  const code = String(getQuery(event).code ?? '');
+  if (!code) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Missing authorization code.',
+    });
+  }
 
-  return await new Promise((resolve, reject) => {
-    let tokenType = '';
-    let accessToken = '';
-    let refreshToken = '';
-    let expires = 0;
-
-    const formData = new FormData();
-    formData.append('client_id', useRuntimeConfig().public.clientId);
-    formData.append('client_secret', useRuntimeConfig().clientSecret);
-    formData.append('grant_type', 'authorization_code');
-    formData.append('code', String(getQuery(event).code));
-    formData.append('redirect_uri', useRuntimeConfig().public.redirectURI);
-
-    $fetch(useAppConfig().wekoOrigin + '/oauth/token', {
+  const params = new URLSearchParams();
+  params.append('client_id', useRuntimeConfig().public.clientId);
+  params.append('client_secret', useRuntimeConfig().clientSecret);
+  params.append('grant_type', 'authorization_code');
+  params.append('code', code);
+  params.append('redirect_uri', useRuntimeConfig().public.redirectURI);
+  
+  try {
+    const response = await $fetch<{
+      token_type: string;
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+    }>(useAppConfig().wekoOrigin + '/oauth/token', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'POST',
-      body: formData,
-      onResponse({ response }) {
-        if (response.status === 200) {
-          tokenType = response._data.token_type;
-          accessToken = response._data.access_token;
-          refreshToken = response._data.refresh_token;
-          expires = response._data.expires_in;
-        }
-        resolve({ tokenType, accessToken, refreshToken, expires });
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
       },
-      onResponseError(context) {
-        // pm2にログファイル出力
-        console.log(context); // eslint-disable-line
-        reject(new Error('Failed to create access token.'));
-      }
-    }).catch((error) => {
-      // pm2にログファイル出力
-      console.log(error); // eslint-disable-line
-      reject(new Error('API execution failed.'));
+      body: params.toString(),
     });
+
+    return {
+      tokenType: response.token_type ?? '',
+      accessToken: response.access_token ?? '',
+      refreshToken: response.refresh_token ?? '',
+      expires: response.expires_in ?? 0,
+    };
+  } catch (error: any) {
+    console.error('oauth/token error', {
+      message: error?.message,
+      cause: error?.cause,
+      data: error?.data,
+      response: error?.response,
+    });
+
+  throw createError({
+    statusCode: error?.response?.status || 500,
+    statusMessage: error?.data?.error || 'Failed to create access token.',
   });
+  }
 });

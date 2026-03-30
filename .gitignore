@@ -110,3 +110,13 @@ nginx/keys/*.csr
 nginx/keys/*.key 
 nginx/*-metadata.xml
 
+backup/
+
+# local config files
+# regular file is nginx/ams/weko-frontend/app.config.ts
+nginx/ams/weko-frontend/.app.config.ts.prod
+nginx/ams/weko-frontend/.app.config.ts.dev
+# regular file is nginx/ams/weko-frontend/nuxt.config.ts
+nginx/ams/weko-frontend/.nuxt.config.ts.prod
+nginx/ams/weko-frontend/.nuxt.config.ts.dev
+

@@ -148,7 +148,7 @@ async function init() {
             }
             setTimeout(() => {
               location.reload();
-            }, 300);
+            }, 600);
           });
       }
     }

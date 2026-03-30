@@ -381,6 +381,10 @@ services:
       resources:
         limits:
           memory: 300m
+    environment:
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+    extra_hosts:
+      - "ms2db.ir.rcos.nii.ac.jp:host-gateway"
 
 #  certbot:
 #    image: certbot/certbot:latest

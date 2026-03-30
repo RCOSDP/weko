@@ -74,9 +74,12 @@
             </div>
             <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
               <button @click="openDataSet">
+              <center>
                 <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
+                <br/><div>Access GakuNinRDM project</div>
+                </center>
               </button>
-              <div>Go to GakuNinRDM</div>
+              
             </div>
           </div>
           <!-- リクエストメール（リクエストメールアドレス有&プロジェクトURL無） -->
