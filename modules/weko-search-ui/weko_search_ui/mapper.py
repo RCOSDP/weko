@@ -1930,6 +1930,7 @@ class JsonLdMapper(JsonMapper):
         Returns:
             str: The extracted text content from the file.
         """
+        
         data_path = self.data_path + "/data"
         try:
             file_path = os.path.join(data_path, filename)
@@ -1942,7 +1943,7 @@ class JsonLdMapper(JsonMapper):
             text_mimetypes = current_app.config["WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES"]
             # All mimetypes subject to text extraction (including text_mimetypes)
             extract_mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
-            if mimetype not in extract_mimetypes:
+            if mimetype not in (extract_mimetypes+text_mimetypes):
                 return data
 
             # Extract content from file
@@ -1973,6 +1974,11 @@ class JsonLdMapper(JsonMapper):
             current_app.logger.error(e)
             traceback.print_exc()
             raise PdfiumError(f"Failed to load PDF file: {filename}") from e
+        except Exception as e:
+            current_app.logger.error(e)
+            traceback.print_exc()
+            raise ValueError(f"Failed to load file: {filename}") from e
+        
         return data
 
     def to_rocrate_metadata(

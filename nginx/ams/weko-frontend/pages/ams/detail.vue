@@ -101,12 +101,14 @@
             </div>
           </div>
           <!-- ダウンロードランキング -->
+          <!--
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-dl-rank text-white font-bold">
               {{ $t('detailDLRank') }}
             </p>
           </div>
           <DownloadRank v-if="renderFlag && !isError" :current-number="currentNumber" @error="setError" />
+          -->
           <!-- エクスポート -->
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-export text-white font-bold">

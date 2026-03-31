@@ -37,7 +37,14 @@ WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = [
     'text/tab-separated-values',
     'text/xml',
     'application/x-tex',
-    'application/x-latex'
+    'application/x-latex',
+    'text/markdown',
+    'application/json',
+    'application/ld+json',
+    'text/vnd.yaml',
+    'text/yaml',
+    'text/x-yaml',
+    'application/x-yaml'
 ]
 
 WEKO_MIMETYPE_WHITELIST_FOR_ES = [
@@ -51,6 +58,7 @@ WEKO_MIMETYPE_WHITELIST_FOR_ES = [
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
     'application/vnd.oasis.opendocument.presentation',
     'application/pdf',
+    'application/rtf',
 ] + WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES
 
 
