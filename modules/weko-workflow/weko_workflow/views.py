@@ -2456,10 +2456,6 @@ def cancel_action(activity_id='0', action_id=0):
     cancel_record = None
     if cancel_item_id:
         cancel_record = WekoDeposit.get_record(cancel_item_id)
-    if (
-        cancel_record is None
-        or not (for_delete and not cancel_record.pid.pid_value.endswith('.0'))
-    ):
         try:
             with db.session.begin_nested():
                 if cancel_record:
