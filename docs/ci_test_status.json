@@ -1,0 +1,17 @@
+{
+  "failed": 1,
+  "generated_at_epoch": 1775570583,
+  "module_count": 1,
+  "passed": 0,
+  "results": [
+    {
+      "command": "docker compose -f /home/mhaya/weko/docker-compose2.yml exec -T web bash -lc cd modules/weko-redis && tox",
+      "duration_seconds": 0.07,
+      "exit_code": 1,
+      "module": "weko-redis",
+      "status": "failed",
+      "summary": "service \"web\" is not running"
+    }
+  ],
+  "timeout": 0
+}

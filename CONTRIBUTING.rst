@@ -62,15 +62,14 @@ Ready to contribute? Here's how to set up `weko` for local development.
 
       $ git clone git@github.com:your_name_here/weko.git
 
-3. Install your local copy into a virtualenv. Assuming you have
-   virtualenvwrapper installed, this is how you set up your fork for local
-   development:
+3. Set up the local development environment with Docker. The current
+   repository workflow uses ``install.sh`` to build containers, initialize
+   services, and populate the instance:
 
    .. code-block:: console
 
-      $ mkvirtualenv weko
       $ cd weko/
-      $ pip install -e .[all]
+      $ ./install.sh
 
 4. Create a branch for local development:
 
@@ -86,9 +85,8 @@ Ready to contribute? Here's how to set up `weko` for local development.
 
       $ ./run-tests.sh
 
-   The tests will provide you with test coverage and also check PEP8
-   (code style), PEP257 (documentation), flake8 as well as build the Sphinx
-   documentation and run doctests.
+   For targeted module work, you can also use the module-level commands
+   documented in ``README-TEST.md``.
 
 6. Commit your changes and push your branch to GitHub:
 
@@ -116,3 +114,30 @@ Before you submit a pull request, check that it meets these guidelines:
 3. The pull request should work for Python 2.7, 3.5 and 3.6. Check
    https://travis-ci.org/wekosoftware/weko/pull_requests
    and make sure that the tests pass for all supported Python versions.
+
+AI-Assisted Development Workflow
+--------------------------------
+
+When using coding agents such as Codex, Claude Code, Gemini CLI, or GitHub
+Copilot, follow a
+single shared workflow so repository knowledge accumulates instead of being
+rediscovered in each session.
+
+1. Treat ``AGENTS.md`` as the canonical agent instruction file.
+2. Before starting work, read ``AGENTS.md`` and then the project-root files
+   ``task_plan.md``, ``findings.md``, and ``progress.md``.
+3. Do not repeat full-repository exploration on every task. Read only the
+   target module and the files needed for the current change.
+4. Append reusable discoveries to ``findings.md``.
+5. Record actions taken, tests run, and failures encountered in
+   ``progress.md``.
+6. For multi-step work, add or update phases in ``task_plan.md``.
+7. Keep ``AGENTS.md`` short and durable. Store temporary investigation notes in
+   ``findings.md`` and ``progress.md`` instead of expanding ``AGENTS.md``.
+
+Pull requests should state:
+
+* Which persistent context files were reviewed.
+* Which persistent context files were updated.
+* What tests were run.
+* Any known gaps, assumptions, or follow-up work.

@@ -1,0 +1,23 @@
+name: Persistent Context Check
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  persistent-context:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check persistent context updates
+      run: |
+        chmod +x scripts/check_persistent_context.sh
+        scripts/check_persistent_context.sh "$BASE_REF" "$HEAD_REF"
+      env:
+        BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        HEAD_REF: ${{ github.sha }}

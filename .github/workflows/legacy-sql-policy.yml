@@ -1,0 +1,23 @@
+name: Legacy SQL Policy Check
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  legacy-sql-policy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Check for newly added legacy SQL files
+      run: |
+        chmod +x scripts/check_no_new_legacy_sql.sh
+        scripts/check_no_new_legacy_sql.sh "$BASE_REF" "$HEAD_REF"
+      env:
+        BASE_REF: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+        HEAD_REF: ${{ github.sha }}

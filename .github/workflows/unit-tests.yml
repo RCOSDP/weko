@@ -47,17 +47,20 @@ jobs:
           - weko-items-ui
           - weko-itemtypes-ui
           - weko-logging
+          - weko-notifications
           - weko-plugins
           - weko-records-ui
           - weko-records
           - weko-redis
           - weko-schema-ui
           - weko-search-ui
+          - weko-signposting
           - weko-sitemap
           - weko-swordserver
           - weko-theme
           - weko-user-profiles
           - weko-workflow
+          - weko-workspace
 
     steps:
     - name: Checkout code

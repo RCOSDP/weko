@@ -8,14 +8,26 @@
 - **主要ライブラリ**: Invenio 3 Framework(API,Web API用), Celery + RabbitMQ（タスクキュー）
 - **環境設定**: 環境変数は `docker-compose2.yml` ファイルで管理（機密情報はコードに直書きしない）。サーバ固有の設定は `scripts/instance.cfg` に記載する。
 
+## 継続作業の進め方 / Persistent Working Context
+- 今後のタスクでは、まず `AGENTS.md` を確認し、その後にプロジェクト直下の `task_plan.md`、`findings.md`、`progress.md` を読んで既存の調査結果と進捗を引き継ぐこと。
+- リポジトリ全体の再調査は毎回行わず、モジュール固有の追加発見のみを `findings.md` に追記すること。
+- 長い調査や複数ステップの改修では、`task_plan.md` にフェーズを追加し、`progress.md` に実行内容・テスト結果・失敗履歴を残すこと。
+- `AGENTS.md` には恒久的で高レベルな指示だけを置き、細かい調査メモや一時的な判断は `findings.md` と `progress.md` に残すこと。
+
+## リポジトリ構造の要点 / Repository Shape
+- このリポジトリは単一アプリではなく、`modules/` 配下に多数の `invenio-*` / `weko-*` パッケージを含むモノレポとして扱う。
+- 主要な起点は `install.sh`、`docker-compose2.yml`、`run-tests.sh`、`README.rst`、`README-TEST.md` である。
+- 改修依頼では、まず対象モジュールを特定し、必要な範囲だけを読む。全体探索は新しい領域に入るときだけ行う。
+
 ## 開発環境セットアップ / Development Setup
 - dockerを利用する。
 - リポジトリのクローン後、`install.sh` コマンドを実行すると、環境構築が開始される。
 - 環境構築後、`https://127.0.0.1/` でサーバにアクセスすることができる。
 
 ## テストの実行方法 / Testing
-- ユニットテストを実行: `python manage.py test`  
-  （またはpytest使用時: `pytest`）
+- リポジトリ全体の代表的なテスト入口は `./run-tests.sh` である。
+- 単一モジュールのテストは `python -m pytest modules/<module>` または `cd modules/<module> && python setup.py test` を基本とする。
+- Docker環境での手順や依存関係の補足は `README-TEST.md` を参照する。
 - 新機能を追加した際は必ず対応するテストコードを追加してください
 - テストが全てパスすることを確認してから変更を確定します
 
