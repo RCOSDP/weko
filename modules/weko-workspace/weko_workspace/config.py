@@ -315,6 +315,9 @@ WEKO_WORKSPACE_JALC_API_URL = 'https://api.japanlinkcenter.org/dois/'
 WEKO_WORKSPACE_DATACITE_API_URL = 'https://api.datacite.org/dois/'
 """DataCite API URL"""
 
+WEKO_WORKSPACE_ARXIV_API_URL = 'https://export.arxiv.org/api/query?search_query=doi:'
+"""arXiv API URL"""
+
 WEKO_WORKSPACE_CINII_REQUIRED_ITEM = [
     'title',
     'creator',
@@ -361,5 +364,47 @@ WEKO_WORKSPACE_DATACITE_REQUIRED_ITEM = [
 ]
 """DataCite required item"""
 
+WEKO_WORKSPACE_ARXIV_REQUIRED_ITEM = [
+    'title',
+    'identifier',
+    'date',
+    'description',
+    'creator',
+    'relation',
+    'subject',
+]
+
 WEKO_WORKSPACE_DATA_DEFAULT_LANGUAGE = 'en'
 """Default language for data"""
+
+WEKO_WORKSPACE_EXPORT_HEADERS = [
+    'No.',
+    _('Favorite Status'),
+    _('Read Status'),
+    _('Peer Review Status'),
+    _('Title'),
+    _('DOI Link'),
+    _('Resource Type'),
+    _('Author Name'),
+    _('Number of Accesses'),
+    _('Item Status'),
+    _('Journal Title'),
+    _('Conference Name'),
+    _('Volume'),
+    _('Issue'),
+    _('Funder Name'),
+    _('Award Title'),
+    _('Number of Downloads'),
+    _('Feedback Mail Status'),
+    _('Publication Date Header'),
+    _('Relation Type'),
+    _('Relation Titie'),
+    _('Relation URL or DOI'),
+    _('Related to Paper Status'),
+    _('Related to Data Status'),
+    _('Number of Document Files'),
+    _('Number of Published Files'),
+    _('Number of Embargo Files'),
+    _('Number of Restricted Files')
+]
+"""Export headers for workspace items."""

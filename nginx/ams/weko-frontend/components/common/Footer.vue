@@ -24,7 +24,7 @@
             </NuxtLink>
           </li> -->
           <li class="cursor-pointer">
-            <NuxtLink class="underline" to="" event="" @click="throughDblClick('/contact')">
+            <NuxtLink class="underline" to="" event="" @click="throughDblClick(`${appConf.amsPath ?? ''}/contact`)">
               <span>CONTACT</span>
             </NuxtLink>
           </li>
@@ -56,7 +56,7 @@
       <div class="flex flex-wrap lg:flex-nowrap items-center max-w-[245px] lg:max-w-full mx-auto md:mr-0">
         <p class="mr-[5px] cursor-pointer">
           <NuxtLink to="" event="" @click="throughDblClick('/')">
-            <img src="/img/logo/logo01.png" alt="AMS Logo" />
+            <img :src="`${appConf.amsImage ?? '/img'}/logo/logo01.png`" alt="AMS Logo" />
           </NuxtLink>
         </p>
         <p class="text-white text-xs leading-6 mt-auto">
@@ -70,6 +70,12 @@
 </template>
 
 <script setup>
+
+/* ///////////////////////////////////
+// const
+/////////////////////////////////// */
+const appConf = useAppConfig();
+
 /* ///////////////////////////////////
 // function
 /////////////////////////////////// */
@@ -77,8 +83,8 @@
  * ダブルクリックを制御する
  */
 function throughDblClick(route) {
-  if (route === '/contact') {
-    navigateTo('/contact');
+  if (route === `${appConf.amsPath ?? ''}/contact`) {
+    navigateTo(`${appConf.amsPath ?? ''}/contact`);
   } else if (location.pathname !== '/') {
     navigateTo('/');
   }

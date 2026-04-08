@@ -31,7 +31,7 @@ import tempfile
 import traceback
 import unicodedata
 import pytz
-from collections import OrderedDict, Counter
+from collections import OrderedDict, Counter, defaultdict
 from datetime import date, datetime, timedelta, timezone
 from io import StringIO
 
@@ -3602,14 +3602,14 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     """
     from weko_records.api import Mapping
     meta_options = None
-    item_type_mapping = None
     if item_type_id:
         meta_options = get_options_list(item_type_id, item_type_data)
-        if item_type_mapping is None and mapping_flag:
-            item_type_mapping = Mapping.get_record(item_type_id)
 
     if mapping_flag:
-        return meta_options, item_type_mapping
+        mapping = item_type_mapping
+        if not mapping:
+            mapping = Mapping.get_record(item_type_id)
+        return meta_options, mapping
     else:
         return meta_options
 
@@ -4469,24 +4469,18 @@ def make_stats_file_with_permission(item_type_id, recids,
     """Prepare TSV/CSV data for each Item Types.
 
     Args:
-        item_type_id (_type_): ItemType ID
-        recids (_type_): List records ID
-        records_metadata (_type_): _description_
-        permissions (_type_): _description_
+        item_type_id (str): ItemType ID
+        recids (str): List records ID
+        records_metadata (dict): _description_
+        permissions (dict): _description_
         export_path (str): path of temp_dir
 
     Returns:
-        _type_: _description_
-    """
-    """
-
-    Arguments:
-        item_type_id    --
-        recids          --
-    Returns:
-        ret             -- Key properties
-        ret_label       -- Label properties
-        records.attr_output -- Record data
+        ret(list): Key properties
+        ret_label(list): Label properties
+        ret_system(list): system list
+        ret_option(list): option list
+        records.attr_output(RecordsPermissionManager): Record data
 
     """
     # current_app.logger.error("item_type_id:{}".format(item_type_id))
@@ -4518,8 +4512,23 @@ def make_stats_file_with_permission(item_type_id, recids,
     item_type = ItemTypes.get_by_id(item_type_id).render
     table_row_properties = item_type['table_row_map']['schema'].get(
         'properties')
+    stack = [(table_row_properties[key], [key]) for key in item_type["table_row"]]
+    answer_list = []
+    array_properties = []
+    while stack:
+        property, prefix = stack.pop()
+        if not "type" in property:
+            continue
+        elif property["type"] == "object":
+            for key, sub_property in property["properties"].items():
+                stack.append((sub_property, prefix + [key]))
+        elif property["type"] == "array":
+            stack.append((property["items"], prefix + ["[]"]))
+            array_properties.append(prefix + ["[]"])
+        else:
+            answer_list.append(prefix)
 
-    class RecordsManager:
+    class RecordsPermissionManager:
         """Management data for exporting records."""
 
         first_recid = 0
@@ -4529,7 +4538,7 @@ def make_stats_file_with_permission(item_type_id, recids,
         attr_data = {}
         attr_output = {}
 
-        def __init__(self, record_ids, records_metadata):
+        def __init__(self, record_ids, records_metadata, permissions={}):
             """Class initialization."""
             def hide_metadata_email(record):
                 """Hiding emails only.
@@ -4551,7 +4560,7 @@ def make_stats_file_with_permission(item_type_id, recids,
 
                 record.pop('weko_creator_id')
                 return False
-
+            self.permissions = permissions
             self.recids = record_ids
             self.first_recid = record_ids[0]
             for record_id in record_ids:
@@ -4592,7 +4601,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             largest_size = 1
             self.attr_data['feedback_mail_list'] = {'max_size': 0}
             for record_id, record in self.records.items():
-                if permissions['check_created_id'](record):
+                if self.permissions['check_created_id'](record):
                     mail_list = FeedbackMailList.get_mail_list_by_item_id(
                         record.id)
                     self.attr_data['feedback_mail_list'][record_id] = [
@@ -4608,7 +4617,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             largest_size = 1
             self.attr_data['request_mail_list'] = {'max_size': 0}
             for record_id, record in self.records.items():
-                if permissions['check_created_id'](record):
+                if self.permissions['check_created_id'](record):
                     mail_list = RequestMailList.get_mail_list_by_item_id(
                         record.id)
                     self.attr_data['request_mail_list'][record_id] = [
@@ -4623,183 +4632,319 @@ def make_stats_file_with_permission(item_type_id, recids,
         def get_item_application(self):
             self.attr_data['item_application']={}
             for record_id, record in self.records.items():
-                if permissions['check_created_id'](record):
+                if self.permissions['check_created_id'](record):
                     item_application = ItemApplication.get_item_application_by_item_id(record.id)
                     self.attr_data['item_application'][record_id] = {'workflow':item_application.get('workflow',""),
                                                                     'terms':item_application.get('terms',""),
                                                                     'termsDescription':item_application.get('termsDescription',"")}
             return 0
-
-        def get_max_items(self, item_attrs):
+        
+        def get_max_items_from_map(self, item_fullpath_key, max_map):
             """Get max data each sub property in all exporting records."""
-            max_length = 0
             list_attr = []
-            for attr in item_attrs.split('.'):
+            splitted_attrs = item_fullpath_key.split('.')
+            for idx, attr in enumerate(splitted_attrs):
                 index_left_racket = attr.find('[')
                 if index_left_racket >= 0:
-                    list_attr.extend(
-                        [attr[:index_left_racket],
-                         attr[index_left_racket:]]
-                    )
+                    bracket_key = attr[index_left_racket:] if idx != len(splitted_attrs)-1 else "[]"
+                    list_attr.extend([attr[:index_left_racket], bracket_key])
                 else:
                     list_attr.append(attr)
 
             level = len(list_attr)
             if level == 1:
-                return self.attr_data[item_attrs]['max_size']
-            elif level > 1:
-                max_length = 1
-                for record in self.records:
-                    _data = self.records[record].get(list_attr[0])
-                    if _data:
-                        _data = _data['attribute_value_mlt']
-                        for attr in list_attr[1:]:
-                            if re.search(r'^\[\d+\]$', attr):
-                                idx = int(attr[1:-1])
-                                if isinstance(_data, list) \
-                                        and len(_data) > idx:
-                                    _data = _data[idx]
-                                else:
-                                    _data = []
-                                    break
-                            elif isinstance(_data, list):
-                                _data = _data[0]
-                                if isinstance(_data, dict) and _data.get(attr):
-                                    _data = _data.get(attr)
-                            elif isinstance(_data, dict) and _data.get(attr):
-                                _data = _data.get(attr)
-                            else:
-                                _data = []
-                                break
-                        if isinstance(_data, list) and len(_data) > max_length:
-                            max_length = len(_data)
+                canon_path = (list_attr[0], "[]")
+            else:
+                canon_path = tuple(list_attr)
+            max_length = max_map.get(canon_path, 1)
             return max_length
 
-        def get_subs_item(self,
-                          item_key,
-                          item_label,
-                          properties,
-                          data=None,
-                          is_object=False):
-            """Building key, label and data from key properties.
-
-            Arguments:
-                item_key    -- Key properties
-                item_label  -- Label properties
-                properties  -- Data properties
-                data        -- Record data
-                is_object   -- Is objecting property?
+        
+        def get_property_metadata(self, record, item_key, json_schema):
+            """Get property metadata from record.
+            Args:
+                record(dict): WekoRecord object
+                item_key(str): Key properties
+                json_schema(dict): JSON schema
             Returns:
-                o_ret       -- Key properties
-                o_ret_label -- Label properties
-                ret_data    -- Record data
+                property_metadata(any): Property metadata
+            """
+            property_metadata = record.get(item_key)
+
+            if isinstance(property_metadata, dict) \
+                and "attribute_value_mlt" in property_metadata:
+                if json_schema.get("type") == "array":
+                    return property_metadata["attribute_value_mlt"]
+                elif json_schema.get("type") == "object":
+                    return property_metadata["attribute_value_mlt"][0]
+            elif property_metadata:
+                return property_metadata
+            else:
+                return []
+        
+        def iter_list_lengths_with_canon_paths(self, root, array_properties):
+            """
+            Scan the root once, sequentially returning (normalized path, list length).
+            Normalized paths are stored as tuples (can be converted to strings later).
+            Rules:
+            - Form paths by concatenating dictionary keys with '.'
+            - Wildcard positions in arrays with '[]'
+            - Only yield (path, len) when the dictionary key points to an array value
+
+            Args:
+                root(str): root
+                array_properties(str): properties
 
             """
-            o_ret = []
-            o_ret_label = []
-            ret_data = []
-            max_items = self.get_max_items(item_key)
-            max_items = 1 if is_object else max_items
-            for idx in range(max_items):
-                key_list = []
-                key_label = []
-                key_data = []
-                for key in sorted(properties):
-                    if not is_object:
-                        new_key = '{}[{}].{}'.format(
-                            item_key, str(idx), key)
-                        new_label = '{}[{}].{}'.format(
-                            item_label, str(idx), properties[key].get('title'))
-                    else:
-                        new_key = '{}.{}'.format(item_key, key)
-                        new_label = '{}.{}'.format(
-                            item_label, properties[key].get('title'))
-
-                    if properties[key].get('format', '') == 'checkboxes':
-                        new_key += '[{}]'
-                        new_label += '[{}]'
-                        if isinstance(data, dict):
-                            data = [data]
-                        if data and data[idx].get(key):
-                            for idx_c in range(len(data[idx][key])):
-                                key_list.append(new_key.format(idx_c))
-                                key_label.append(new_label.format(idx_c))
-                                key_data.append(data[idx][key][idx_c])
-                        else:
-                            key_list.append(new_key.format('0'))
-                            key_label.append(new_label.format('0'))
-                            key_data.append('')
-                    elif properties[key]['type'] in ['array', 'object']:
-                        if data and idx < len(data) and data[idx].get(key):
-                            m_data = data[idx][key]
-                        else:
-                            m_data = None
-
-                        if properties[key]['type'] == 'object':
-                            new_properties = properties[key]['properties']
-                            new_is_object = True
-                        else:
-                            new_properties = \
-                                properties[key]['items']['properties']
-                            new_is_object = False
-
-                        sub, sublabel, subdata = self.get_subs_item(
-                            new_key, new_label, new_properties,
-                            m_data, new_is_object)
-                        key_list.extend(sub)
-                        key_label.extend(sublabel)
-                        key_data.extend(subdata)
-                    else:
-                        if 'iscreator' in new_key:
+            
+            stack = [(root, [], [])]
+            while stack:
+                node, path, canon_path = stack.pop()
+                if isinstance(node, dict):
+                    for k, v in node.items():
+                        if k == 'attribute_value_mlt' and isinstance(v, list):
+                            # attribute_value_mlt 配列は特別扱い
+                            # 親パスに '[]' を追加した形で記録
+                            mlt_path = path + ["[]"]
+                            if canon_path + ["[]"] not in array_properties:
+                                continue
+                            yield tuple(mlt_path), len(v)
+                            # attribute_value_mlt 配列はスキップして中身を探索
+                            for idx, elem in enumerate(v):
+                                stack.append((elem, path + [f"[{str(idx)}]"], path + ["[]"]))
                             continue
-                        if isinstance(data, dict):
-                            data = [data]
-                        key_list.append(new_key)
-                        key_label.append(new_label)
-                        if data and idx < len(data) and data[idx].get(key):
-                            key_data.append(escape_newline(data[idx][key]))
-                            # key_data.append(escape_str(data[idx][key]))
-                        else:
-                            key_data.append('')
+                        child_path = path + [k]
+                        child_canon_path = canon_path + [k]
+                        if isinstance(v, list):
+                            # 記録（この辞書キーが指す配列の長さ）
+                            if child_canon_path + ["[]"] not in array_properties:
+                                continue
+                            yield tuple(child_path), len(v)
+                            # 要素も探索して、下層にある「辞書キーが指す配列」を拾う
+                            for idx, elem in enumerate(v):
+                                # インデックスは正規化して '[]' にする
+                                stack.append((elem, child_path + [f"[{str(idx)}]"], child_canon_path + ["[]"]))
+                        elif isinstance(v, dict):
+                            stack.append((v, child_path, child_canon_path))
+                        # それ以外は無視
+                elif isinstance(node, list):
+                    # キー無しの配列。直接の記録対象外だが、下層の辞書キー配列を拾うため探索継続
+                    for idx, elem in enumerate(node):
+                        stack.append((elem, path + [f"[{str(idx)}]"], canon_path + ["[]"]))
+                # それ以外は無視
 
-                key_list_len = len(key_list)
-                for key_index in range(key_list_len):
-                    item_key_split = item_key.split('.')
-                    if 'filename' in key_list[key_index]:
-                        key_list.insert(0, '.file_path[{}]'.format(
-                            str(idx)))
-                        key_label.insert(0, '.ファイルパス[{}]'.format(
-                            str(idx)))
-                        output_path = ""
-                        if key_data[key_index]:
-                            file_path = "recid_{}/{}".format(str(self.cur_recid), key_data[key_index])
-                            output_path = file_path if os.path.exists(os.path.join(export_path,file_path)) else ""
-                        key_data.insert(0,output_path)
-                        break
-                    elif 'thumbnail_label' in key_list[key_index] \
-                            and len(item_key_split) == 2:
-                        if '[' in item_key_split[0]:
-                            key_list.insert(0, '.thumbnail_path[{}]'.format(
-                                str(idx)))
-                            key_label.insert(0, '.サムネイルパス[{}]'.format(
-                                str(idx)))
-                        else:
-                            key_list.insert(0, '.thumbnail_path')
-                            key_label.insert(0, '.サムネイルパス')
-                        if key_data[key_index]:
-                            key_data.insert(0, 'recid_{}/{}'.format(str(
-                                self.cur_recid), key_data[key_index]))
-                        else:
-                            key_data.insert(0, '')
-                        break
 
-                o_ret.extend(key_list)
-                o_ret_label.extend(key_label)
-                ret_data.extend(key_data)
+        def aggregate_max_lengths(self, objs, array_properties):
+            """
+            Aggregates multiple objects in linear time and returns the maximum array length per normalized full path.
+            The output key format is a string like ‘a.b[].c’.
 
-            return o_ret, o_ret_label, ret_data
+            Args:
+                objs(dict): objs
+                array_properties(str): properties
+            """
+            max_map = {}
+            for _, obj in objs.items():
+                for ptuple, L in self.iter_list_lengths_with_canon_paths(obj, array_properties):
+                    # ハッシュ表で最大化（定数時間）
+                    if ptuple in max_map:
+                        if L > max_map[ptuple]:
+                            max_map[ptuple] = L
+                    else:
+                        max_map[ptuple] = L
 
-    records = RecordsManager(recids, records_metadata)
+            return max_map
+        
+
+        
+        def get_headers(self, json_schema, table_row, max_map):
+            """Get headers from JSON schema.
+            Args:
+                json_schema (dict): JSON schema
+                table_row (list): Table row properties
+                max_map (dict): Max items map
+            Returns:
+                column_keys (list): Column keys
+                column_labels (list): Column labels
+            """
+            stack = [(json_schema[key], key, json_schema[key].get("title")) 
+                     for key in reversed(table_row)]
+            column_keys = []
+            column_labels = []
+            escape_list =[]
+            # Depth-first traversal
+            while stack:
+                schema_node, column_key, column_label = stack.pop()
+                if "type" not in schema_node:
+                    raise Exception("Invalid schema node: {}".format(column_key))
+
+                if schema_node["type"] == "object": # Object type
+                    for key in sorted(schema_node["properties"], reverse=True):
+                        if key == "iscreator":  # Skip iscreator field
+                            continue
+                        elif key == "filename": # Handle filename field
+                            # find index
+                            index_find_result = re.findall(r"\[\d+\]", column_key)
+                            if index_find_result:
+                                column_keys.append(".file_path{}".format(index_find_result[0]))
+                                column_labels.append(".ファイルパス{}".format(index_find_result[0]))
+                            else:
+                                column_keys.append(".file_path")
+                                column_labels.append(".ファイルパス")
+                        elif key == "thumbnail_label" \
+                            and len(column_key.split('.')) == 2: # Handle thumbnail_label field
+                            # find index
+                            index_find_result = re.findall(r"\[\d+\]", column_key)
+                            if len(index_find_result) > 1:
+                                column_keys.append(".thumbnail_path{}".format(index_find_result[1]))
+                                column_labels.append(".サムネイルパス{}".format(index_find_result[1]))
+                            elif len(index_find_result) == 1:
+                                column_keys.append(".thumbnail_path{}".format(index_find_result[0]))
+                                column_labels.append(".サムネイルパス{}".format(index_find_result[0]))
+                            else:
+                                column_keys.append(".thumbnail_path")
+                                column_labels.append(".サムネイルパス")
+                        sub_schema = schema_node["properties"][key]
+                        sub_key = "{}.{}".format(column_key, key) \
+                            if column_key else key
+                        sub_label = "{}.{}".format(
+                            column_label, sub_schema.get("title")) \
+                            if column_label else sub_schema.get("title")
+                        stack.append((sub_schema, sub_key, sub_label))
+                elif schema_node["type"] == "array": # Array type
+                    # Get max array size
+                    max_array_size = self.get_max_items_from_map(column_key, max_map)
+                    if "format" in schema_node and \
+                            schema_node["format"] == "checkboxes":
+                        # Special handling for checkboxes
+                        for id in range(max_array_size):
+                            column_keys.append(
+                                "{}[{}]".format(column_key, str(id)))
+                            column_labels.append("{}[{}]".format(
+                                column_label, str(id)))
+                    elif "items" in schema_node:
+                        # Get item schema
+                        item_schema = schema_node["items"]
+                        substack = []
+                        for idx in range(max_array_size):
+                            sub_key = "{}[{}]".format(column_key, str(idx))
+                            sub_label = "{}[{}]".format(column_label, str(idx))
+                            substack.append((item_schema, sub_key, sub_label))
+                        stack.extend(list(reversed(substack)))
+                else: # Primitive type
+                    column_keys.append(column_key)
+                    column_labels.append(column_label)
+                    escape_list.append(column_key)
+            return column_keys, column_labels, escape_list
+        
+
+        def flatten_metadata(self, record, table_row, json_schema):
+            """Flatten metadata from record.
+            Args:
+                record(dict): WekoRecord object
+                table_row(list): Table row properties
+                json_schema(dict): JSON schema
+            Returns:
+                res(dict): Flattened metadata
+            """
+            res = {}
+            for item_key in table_row:
+                property_metadata = self.get_property_metadata(
+                    record, item_key, json_schema.get(item_key, {}))
+                if not property_metadata:
+                    continue
+
+                stack = [(property_metadata, [item_key])]
+            
+                while stack:
+                    curr, path = stack.pop()
+                    if isinstance(curr, dict):
+                        for k, v in reversed(list(curr.items())):
+                            stack.append((v, path + [k]))
+                    elif isinstance(curr, list):
+                        for i, v in reversed(list(enumerate(curr))):
+                            stack.append((v, path + [i]))
+                    else:
+                        res[tuple(path)] = curr
+            return res
+        
+
+        def format_key(self, path_info):
+            """Format key from path info.
+            Args:
+                path_info (tuple): Path information as a tuple.
+            Returns:
+                str: Formatted key string.
+            """
+            if not path_info:
+                return ""
+
+            result = str(path_info[0]) if not isinstance(path_info[0], int) else f"[{path_info[0]}]"
+
+            for item in path_info[1:]:
+                if isinstance(item, int):
+                    result += f"[{item}]"
+                else:
+                    result += f".{item}"
+
+            return result
+        
+
+        def extract_all_metadata(self, headers, table_row, json_schema, escape_list):
+            """Extract all metadata for exporting records.
+            Args:
+                headers (list): Header data
+                table_row (list): Table row properties
+                json_schema (dict): JSON schema
+            """
+            data = defaultdict(lambda: [""] * len(self.recids))
+
+            for header in headers:
+                data[header]  # initialize
+            
+            # Traverse each record and flatten metadata
+            for idx, recid in enumerate(self.recids):
+                record = self.records[recid]
+                flat_metadata = self.flatten_metadata(record, table_row, json_schema)
+                for path_info, value in flat_metadata.items():
+                    formatted_key = self.format_key(path_info)
+                    if formatted_key in data:
+                        data[formatted_key][idx] = value
+                    # Special handling for file_path and thumbnail_path
+                    if "filename" in formatted_key or \
+                        "thumbnail_label" in formatted_key:
+                        splitted_key = formatted_key.split('.')
+                        if "filename" in splitted_key:
+                            # find index 
+                            index_find_result = re.findall(r"\[\d+\]", formatted_key)
+                            temp_file_path = "recid_{}/{}".format(str(recid), value)
+                            file_path_value = temp_file_path if os.path.exists(os.path.join(export_path,temp_file_path)) else ""
+                            if index_find_result:
+                                data[".file_path{}".format(index_find_result[0])][idx] = file_path_value
+                            else:
+                                data[".file_path"][idx] = file_path_value
+
+                        elif "thumbnail_label" in splitted_key \
+                            and len(splitted_key) == 3:
+                            # find index
+                            index_find_result = re.findall(r"\[\d+\]", formatted_key)
+                            temp_file_path = "recid_{}/{}".format(str(recid), value)
+                            if len(index_find_result) > 1:
+                                data[".thumbnail_path{}".format(index_find_result[1])][idx] = temp_file_path
+                            elif len(index_find_result) == 1:
+                                data[".thumbnail_path{}".format(index_find_result[0])][idx] = temp_file_path
+                            else:
+                                data[".thumbnail_path"][idx] = temp_file_path
+                        elif formatted_key in escape_list:
+                                data[formatted_key][idx]=escape_newline(data[formatted_key][idx])
+            # traverse headers to maintain order
+            data = list(zip(*[data[h] for h in headers]))
+
+            for ridx, recid in enumerate(self.recids):
+                self.attr_output[recid].extend(data[ridx])
+
+    
+    records = RecordsPermissionManager(recids, records_metadata, permissions=permissions)
 
     ret = ['#.id', '.uri']
     ret_label = ['#ID', 'URI']
@@ -4893,7 +5038,7 @@ def make_stats_file_with_permission(item_type_id, recids,
             cnri = pid_cnri.pid_value.replace(WEKO_SERVER_CNRI_HOST_LINK, '')
         records.attr_output[recid].append(cnri)
 
-        identifier = IdentifierHandle(record.pid_recid.object_uuid)
+        identifier = IdentifierHandle(record.pid_recid.object_uuid, record=record, item_type_id=item_type_id)
         doi_value, doi_type = identifier.get_idt_registration_data()
         doi_type_str = doi_type[0] if doi_type and doi_type[0] else ''
         doi_str = doi_value[0] if doi_value and doi_value[0] else ''
@@ -4923,61 +5068,30 @@ def make_stats_file_with_permission(item_type_id, recids,
 
         records.attr_output[recid].append(record[
             'pubdate']['attribute_value'])
+    max_map = records.aggregate_max_lengths(records.records, array_properties)
+    current_app.logger.debug("max_map:{}".format(max_map))
+    current_app.logger.debug("max_map keys count:{}".format(len(max_map.keys())))
 
-    for item_key in item_type.get('table_row'):
-        item = table_row_properties.get(item_key)
-        records.get_max_ins(item_key)
-        keys = []
-        labels = []
-        for recid in recids:
-            records.cur_recid = recid
-            # print("item.get(type):{}".format(item.get('type')))
-            # print("item_key:{}".format(item_key))
-            # print("records.attr_data[item_key]: {}".format(records.attr_data[item_key]))
-            if item.get('type') == 'array':
-                key, label, data = records.get_subs_item(
-                    item_key,
-                    item.get('title'),
-                    item['items']['properties'],
-                    records.attr_data[item_key][recid]
-                )
-                if not keys:
-                    keys = key
-                if not labels:
-                    labels = label
-                records.attr_output[recid].extend(data)
-            elif item.get('type') == 'object':
-                key, label, data = records.get_subs_item(
-                    item_key,
-                    item.get('title'),
-                    item['properties'],
-                    records.attr_data[item_key][recid],
-                    True
-                )
-                if not keys:
-                    keys = key
-                if not labels:
-                    labels = label
-                records.attr_output[recid].extend(data)
-            else:
-                if not keys:
-                    keys = [item_key]
-                if not labels:
-                    labels = [item.get('title')]
-                data = records.attr_data[item_key].get(recid) or {}
-                attr_val = data.get("attribute_value", "")
-                if isinstance(attr_val,str):
-                    records.attr_output[recid].append(attr_val)
-                else:
-                    records.attr_output[recid].extend(attr_val)
+    column_header_keys, column_header_labels, escape_list = records.get_headers(
+        table_row_properties, item_type['table_row'], max_map)
+    current_app.logger.debug("headers keys count:{}".format(len(column_header_keys)))
 
-        new_keys = []
-        for key in keys:
-            if 'file_path' not in key and 'thumbnail_path' not in key:
-                key = '.metadata.{}'.format(key)
-            new_keys.append(key)
-        ret.extend(new_keys)
-        ret_label.extend(labels)
+
+    records.extract_all_metadata(
+        column_header_keys,
+        item_type['table_row'],
+        table_row_properties,
+        escape_list
+    )
+
+    new_keys = []
+    for key in column_header_keys:
+        if 'file_path' not in key and 'thumbnail_path' not in key:
+            key = '.metadata.{}'.format(key)
+        new_keys.append(key)
+    ret.extend(new_keys)
+    ret_label.extend(column_header_labels)
+
 
     ret_system = []
     ret_option = []

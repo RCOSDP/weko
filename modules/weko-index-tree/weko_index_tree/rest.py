@@ -712,6 +712,21 @@ class GetIndex(ContentNegotiatedMethodView):
             raise VersionNotFoundRESTError()
 
     def get_v1(self, **kwargs):
+
+        def json_serialize(obj):
+            """Serialize object to JSON.
+
+            Args:
+                obj: The object to serialize.
+
+            Returns:
+                str: The serialized JSON string.
+            """
+            if isinstance(obj, (datetime, date)):
+                return obj.strftime("%Y%m%d")
+            else:
+                return str(obj)
+
         try:
             pid = kwargs.get('index_id')
 
@@ -1531,7 +1546,7 @@ class IndexManagementAPI(ContentNegotiatedMethodView):
         Returns:
             dict: A dictionary with allowed group roles.
         """
-        def _get_allowed_list(self, group_str): 
+        def _get_allowed_list(self, group_str):
             """Convert group string to allowed group roles."""
             return {
                 "allow": [{"id": role} for role in group_str.split(",")]

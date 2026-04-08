@@ -66,7 +66,7 @@
         to=""
         event=""
         style="cursor: pointer"
-        @click="throughDblClick(`/detail?sess=search&number=${item.id}`)">
+        @click="throughDblClick(`${appConf.amsPath ?? ''}/detail?sess=search&number=${item.id}`)">
         <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.title)">
           {{ itemInfo[appConf.roCrate.root.title][0] }}
         </span>
@@ -130,7 +130,7 @@
         <p class="data-note text-14px">
           {{ $t('file') + '：' }}
           <span class="font-medium">
-            <span v-if="itemInfo.mainEntity.length < 1" class="text-14px">
+            <span v-if="getFileLength(itemInfo.mainEntity) < 1" class="text-14px">
               {{ $t('unexist') }}
             </span>
             <NuxtLink
@@ -138,7 +138,7 @@
               class="underline text-miby-link-blue text-14px cursor-pointer"
               to=""
               event=""
-              @click="throughDblClick(`/files?number=${item.id}`)">
+              @click="throughDblClick(`${appConf.amsPath ?? ''}/files?number=${item.id}`)">
               {{ $t('exist') + `（${getFileLength(itemInfo.mainEntity)}）` }}
             </NuxtLink>
           </span>
@@ -150,18 +150,18 @@
     <!-- <div class="row-span-1 align-top text-right pr-2">
         <label class="swap swap-rotate">
           <input type="checkbox" class="hidden" />
-          <div class="swap-on w-7 rounded"><img src="/img/icon/icon_star-fill.svg" /></div>
-          <div class="swap-off w-7 rounded"><img src="/img/icon/icon_star.svg" /></div>
+          <div class="swap-on w-7 rounded"><img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_star-fill.svg`" /></div>
+          <div class="swap-off w-7 rounded"><img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_star.svg`" /></div>
         </label>
       </div> -->
     <!-- 閲覧数 -->
     <!-- <div class="row-span-3 flex justify-end items-end">
         <div class="data-note flex">
-          <img src="/img/icon/icon_star-fill-black.svg" alt="My List" class="mr-1" />
+          <img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_star-fill-black.svg`" alt="My List" class="mr-1" />
           <a>9,999</a>
         </div>
         <div class="data-note flex ml-1">
-          <img src="/img/icon/icon_eye-fill.svg" alt="Views" class="mr-1" />
+          <img :src="`${useAppConfig().amsImage ?? '/img'}/icon/icon_eye-fill.svg`" alt="Views" class="mr-1" />
           <a>9,999,999,999</a>
         </div>
       </div> -->
@@ -202,7 +202,7 @@ const thumbnailName = Object.prototype.hasOwnProperty.call(itemInfo, appConf.roC
   ? itemInfo[appConf.roCrate.root.thumbnail][0]
   : '';
 const loading = ref(true);
-const thumbnailPath = ref('/img/noimage_thumbnail.jpg');
+const thumbnailPath = ref(appConf.amsImage + '/noimage_thumbnail.jpg');
 
 /* ///////////////////////////////////
 // function
@@ -247,6 +247,7 @@ onMounted(() => {
       $fetch(appConf.wekoApi + '/records/' + props.item.id + '/files/' + thumbnailName, {
         timeout: useRuntimeConfig().public.apiTimeout,
         method: 'GET',
+        credentials: 'omit',
         headers: {
           'Cache-Control': 'no-store',
           Pragma: 'no-cache',
@@ -283,37 +284,37 @@ onMounted(() => {
     const field = itemInfo[appConf.roCrate.root.field][0];
     // 自然科学一般|Natural Science
     if (field.includes('自然科学一般') || /Natural\s?Science/.test(field)) {
-      thumbnailPath.value = '/img/naturalScience-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/naturalScience-sample.png';
       // ライフサイエンス|Life Science
     } else if (field.includes('ライフサイエンス') || /Life\s?Science/.test(field)) {
-      thumbnailPath.value = '/img/lifeScience-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/lifeScience-sample.png';
       // 情報通信|Informatics
     } else if (field.includes('情報通信') || field.includes('Informatics')) {
-      thumbnailPath.value = '/img/informatics-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/informatics-sample.png';
       // 環境|Environmental science
     } else if (field.includes('環境') || /Environmental\s?science/.test(field)) {
-      thumbnailPath.value = '/img/environmental-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/environmental-sample.png';
       // ナノテク・材料|Nanotechnology/Materials
     } else if (/ナノテク\s?・?\s?材料/.test(field) || /Nanotechnology\s?\/?\s?Materials/.test(field)) {
-      thumbnailPath.value = '/img/nanotech-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/nanotech-sample.png';
       // エネルギー|Energy Engineering
     } else if (field.includes('エネルギー') || /Energy\s?Engineering/.test(field)) {
-      thumbnailPath.value = '/img/energy-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/energy-sample.png';
       // ものづくり技術|Manufacturing Technology
     } else if (field.includes('ものづくり技術') || /Manufacturing\s?Technology/.test(field)) {
-      thumbnailPath.value = '/img/manufacturing-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/manufacturing-sample.png';
       // 社会基盤|Social Infrastructure
     } else if (field.includes('社会基盤') || /Social\s?Infrastructure/.test(field)) {
-      thumbnailPath.value = '/img/social-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/social-sample.png';
       // フロンティア|Frontier Technology
     } else if (field.includes('フロンティア') || /Frontier\s?Technology/.test(field)) {
-      thumbnailPath.value = '/img/frontier-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/frontier-sample.png';
       // 人文・社会|Humanities & Social Sciences
     } else if (/人文\s?・?\s?社会/.test(field) || /Humanities\s?&?\s?Social\s?Sciences/.test(field)) {
-      thumbnailPath.value = '/img/humanities-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/humanities-sample.png';
       // その他|Others
     } else if (field.includes('その他') || field.includes('Others')) {
-      thumbnailPath.value = '/img/others-sample.png';
+      thumbnailPath.value = appConf.amsImage + '/others-sample.png';
     }
   }
 });

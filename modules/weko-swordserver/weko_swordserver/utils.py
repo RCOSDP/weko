@@ -570,4 +570,3 @@ def notify_about_item(case, recid, user_id, record=None, shared_ids=[]):
             user_id, recid, user_id, record["item_title"], shared_ids
         )
         send_mail_item_deleted(recid, record, user_id, shared_ids)
-        

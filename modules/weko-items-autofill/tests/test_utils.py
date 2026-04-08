@@ -1040,7 +1040,7 @@ def test_get_crossref_relation_data(mocker):
     isbn = []
     doi = "test_doi"
     result = get_crossref_relation_data(isbn, doi)
-    assert result == [{"@value": "test_doi", "@type": "DOI"}]
+    assert result == [{"@value": "test_doi", "@type": "DOI","@relation_type": "isVersionOf"}]
 
     isbn = ["test_isbn1", "test_isbn2"]
     doi = ""
@@ -1394,6 +1394,20 @@ def test_get_key_value():
             test = {"@value":value_key}
             test.update(attributes_keys)
             assert result == test
+    
+    def assert_test2(item_name, parent_key, value_key, attributes_keys):
+        mock_effect = [{"key": value_key}]
+        mock_effect += [{"key": attributes_key} for attributes_key in attributes_keys.values()]
+        with patch(
+            "weko_items_autofill.utils.get_autofill_key_path",
+            side_effect=mock_effect,
+        ):
+            result = get_key_value(
+                schema_form, data[item_name]["jpcoar_mapping"]["relation"][parent_key], parent_key,data[item_name]["jpcoar_mapping"]["relation"]
+            )
+            test = {"@value":value_key}
+            test.update(attributes_keys)
+            assert result == test
 
 
     # exist @attributes.xml:lang
@@ -1434,6 +1448,20 @@ def test_get_key_value():
         parent_key="date",
         value_key="test12_subitem1",
         attributes_keys={"@type":"test12_subitem2"}
+    )
+
+    assert_test2(
+        item_name="test_item16",
+        parent_key="relatedIdentifier",
+        value_key="test16_subitem1.test16_subitem2",
+        attributes_keys={"@type":"test16_subitem1.test16_subitem2","@relation_type":"subitem_relation_type","@type":"test16_subitem1.test16_subitem3"}
+    )
+
+    assert_test2(
+        item_name="test_item17",
+        parent_key="relatedIdentifier",
+        value_key="test17_subitem1.test17_subitem2",
+        attributes_keys={"@type":"test17_subitem1.test16_subitem2","@type":"test17_subitem1.test16_subitem3"}
     )
 
 

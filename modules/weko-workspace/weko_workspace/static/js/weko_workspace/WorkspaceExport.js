@@ -80,7 +80,7 @@ function showExportModal() {
         text-align: center;
     ">
       <div style="height: auto;">
-        <h2 style="font-size: 14px; margin-bottom: 10px;">以下のオプションを選択してください:</h2>
+        <h2 style="font-size: 14px; margin-bottom: 10px;">${document.getElementById('please_select').innerText}</h2>
         <div style="
                 width: 100%;
                 background: #f8f9fa;
@@ -91,9 +91,9 @@ function showExportModal() {
                 justify-content: center;
                 gap: 10px;
                 ">
-            <button id="export_selected" class="btn btn-primary">選択アイテム出力</button>
-            <button id="export_all" class="btn btn-danger">全て出力</button>
-            <button id="export_cancel" class="btn btn-secondary">キャンセル</button>
+            <button id="export_selected" class="btn btn-primary">${document.getElementById('select_item').innerText}</button>
+            <button id="export_all" class="btn btn-primary">${document.getElementById('all_item').innerText}</button>
+            <button id="export_cancel" class="btn btn-secondary">${document.getElementById('cancel').innerText}</button>
         </div>
         <button id="close_modal" style="
             position: absolute;
@@ -144,11 +144,11 @@ function handleExportButtonClick(selectedOnly = false) {
   // 選択アイテムのみを出力する場合、チェックされたアイテムの ID を取得
   if (selectedOnly) {
     selectedIds = Array.from(document.querySelectorAll('tbody input[type="checkbox"]:checked'))
-      .map(cb => cb.closest('tr').querySelector('td:nth-child(2) strong a')?.href.split('/').pop());
+      .map(cb => cb.closest('tr').querySelector('td:nth-child(3) strong a')?.href.split('/').pop());
 
     // チェックボックスが1つも選択されていない場合、エラーメッセージを表示
     if (selectedIds.length === 0) {
-      showErrorMessage("エラー: 選択されたアイテムがありません。チェックボックスを選択してください。");
+      showErrorMessage(document.getElementById('no_items').innerText);
       return;
     }
   }
@@ -169,8 +169,8 @@ function getItemsFromWorkspace() {
 
 
 function getExportHeadersFromDOM() {
-  const ths = document.querySelectorAll('#itemListContainer thead th');
-  return Array.from(ths).map(th => th.innerText.trim());
+  const exportHeaderInput = document.getElementById('export_header').innerText.split(',');
+  return Array.from(exportHeaderInput).map(th => th.trim());
 }
 // TSV を作成してダウンロード
 function exportItemListToTSV(items, selectedOnly, selectedIds) {

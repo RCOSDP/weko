@@ -84,7 +84,7 @@ from weko_records.api import ItemTypeNames
 
 
 from .utils import get_datacite_record_data, get_jalc_record_data, \
-    get_cinii_record_data, get_jamas_record_data
+    get_cinii_record_data, get_jamas_record_data, get_arXiv_record_data
 from weko_records.serializers.utils import get_item_type_name, get_mapping
 from weko_records.api import ItemTypes
 from .defaultfilters import merge_default_filters
@@ -228,14 +228,19 @@ def get_workspace_itemlist():
         workspaceItem["peerReviewSts"] = peerReviewed
 
         # "doi": None,  # DOIリンク
-        identifiers = source.get("identifier", [])
+        relations = source.get("relation", [])
         workspaceItem["doi"] = ""
-        if identifiers:
-            for value in identifiers:
-                if value.get("value"):
-                    workspaceItem["doi"] = current_app.config.get("OAIHARVESTER_DOI_PREFIX", "") + "/" + identifiers[0].get("value", "")
-                    break
-
+        if isinstance(relations, dict):
+            for i,value in enumerate(relations.get("relatedIdentifier")):
+                if value.get("identifierType"):
+                    if value.get("identifierType") == "DOI":
+                        attributes = relations.get("@attributes", {})
+                        if attributes.get("relationType"):
+                            if str(attributes.get("relationType")[i]) == "['isVersionOf']":
+                                workspaceItem["doi"] = current_app.config.get("OAIHARVESTER_DOI_PREFIX", "") + "/" + value.get("value","")
+                                break
+                
+                    
         # "resourceType": None,  # リソースタイプ
         resourceType = source.get("type", [])
         workspaceItem["resourceType"] = resourceType[0] if resourceType else ""
@@ -468,6 +473,10 @@ def get_workspace_itemlist():
         username=userNm,
         workspaceItemList=workspaceItemList,
         defaultconditions=changeLang(lang, defaultconditions),
+        export_header=",".join([
+            str(header) 
+            for header in current_app.config["WEKO_WORKSPACE_EXPORT_HEADERS"]
+        ]),
     )
 
 
@@ -892,6 +901,35 @@ def get_auto_fill_record_data_dataciteapi():
         result['error'] = str(e)
     return jsonify(result)
 
+@blueprint_itemapi.route('/get_auto_fill_record_data_arXivapi', methods=['POST'])
+@login_required_customize
+def get_auto_fill_record_data_arXivapi():
+    """Get auto fill record data.
+
+    :return: record model as json
+    """
+    result = {
+        'result': '',
+        'items': '',
+        'error': ''
+    }
+    if request.headers['Content-Type'] != 'application/json':
+        result['error'] = _('Header Error')
+        return jsonify(result)
+
+    data = request.get_json()
+    search_data = data.get('search_data', '')
+    item_type_id = data.get('item_type_id', '')
+    try:
+        api_response = get_arXiv_record_data(
+            search_data, item_type_id)
+
+        result['result'] = api_response
+    except Exception as e:
+        current_app.logger.error(e)
+        current_app.logger.error(traceback.format_exc())
+        result['error'] = str(e)
+    return jsonify(result)
 
 @workspace_blueprint.route('/workflow_registration', methods=['POST'], endpoint='workflow_registration')
 @login_required

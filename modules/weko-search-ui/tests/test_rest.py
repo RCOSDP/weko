@@ -398,6 +398,10 @@ def test_IndexSearchResourceAPI(client_rest, db_register2, db_rocrate_mapping):
         res = client_rest.get('/v1/records', headers=headers)
         assert res.status_code == 200
 
+        headers = {'Accept-Language': 'ja,en-US;q=0.9,en;q=0.8'}
+        res = client_rest.get('/v1/records', headers=headers)
+        assert res.status_code == 200
+
         with patch('weko_search_ui.rest.SearchSetting.get_sort_key', return_value=False):
             res = client_rest.get('/v1/records')
             assert res.status_code == 200

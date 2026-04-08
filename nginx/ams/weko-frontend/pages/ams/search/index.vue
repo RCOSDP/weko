@@ -236,18 +236,14 @@
     <!-- 著者情報 -->
     <CreaterInfo ref="creater" />
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import VueDatePicker from '@vuepic/vue-datepicker';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import FilterColumn from '~/assets/data/filterSearchInfo.json';
 import ResultJson from '~/assets/data/searchResult.json';
 import Alert from '~/components/common/Alert.vue';
@@ -279,15 +275,20 @@ const aggregations: any = ref({});
 const renderFlag = ref(true);
 const creater = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 let filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
 const filterList = ref<any[]>([]);
 let filterNameDict = reactive({});
 const columnNameDict = reactive({});
 const isOpen = ref(false);
 let showFlagDict: any = reactive({}); // 一部を表示|全てを表示
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -299,6 +300,7 @@ let showFlagDict: any = reactive({}); // 一部を表示|全てを表示
 async function search() {
   setConditions();
   let statusCode = 0;
+  const isError = ref(false);
   const params = {
     q: conditions.keyword,
     search_type: conditions.type,
@@ -326,6 +328,7 @@ async function search() {
   await $fetch(useAppConfig().wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -360,31 +363,31 @@ async function search() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+      if (!visibleAlert.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_REQUEST;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      alertType.value = 'error';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.SEARCH_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -534,6 +537,7 @@ async function downloadResultList() {
   await $fetch(useAppConfig().wekoApi + '/records/list?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -551,28 +555,25 @@ async function downloadResultList() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.downloadResult';
-        alertCode.value = statusCode;
+      if (!visibleAlert.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT;
+        }
+        visibleAlert.value = true;
       }
-      alertType.value = 'error';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !visibleAlert.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
     }
   });
@@ -746,7 +747,7 @@ function checkExportURL() {
   conditions.detail = {};
   if (hereURL[1]) {
     sessionStorage.removeItem('conditions');
-    history.pushState('', '', '/search');
+    history.pushState('', '', `${appConf.amsPath ?? ''}/search`);
     const searchParams = new URLSearchParams(hereURL[1]);
     const params = Object.fromEntries(searchParams.entries());
     for (const key in params) {
@@ -835,15 +836,16 @@ function reflectCopyFilter(key: any, value: any) {
 // main
 /////////////////////////////////// */
 
-try {
-  checkExportURL();
-  await search();
-} catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
-  visibleAlert.value = true;
+async function init() {
+  try {
+    checkExportURL();
+    await search();
+  } catch (error) {
+    alertData.value = amsAlert.SEARCH_INDEX_MESSAGE_ERROR;
+    visibleAlert.value = true;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

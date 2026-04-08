@@ -170,7 +170,7 @@
                         <th class="w-3/12">{{ $t('comment') }}</th>
                       </tr>
                     </thead>
-                    <tbody v-if="filteredList.length && renderFlag">
+                    <tbody v-if="filteredList.length && renderFlag && !isError">
                       <TableStyle
                         v-for="file in divideFileList[Number(currentPage) - 1]"
                         :key="file"
@@ -191,7 +191,7 @@
                   :class="[selectedFiles.length == 0 ? 'bg-miby-dark-gray' : 'bg-miby-link-blue']"
                   :disabled="selectedFiles.length == 0"
                   @click="downloadFilesSelected(selectedFiles)">
-                  <img src="/img/icon/icon_dl-rank.svg" alt="Download" />
+                  <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_dl-rank.svg`" alt="Download" />
                   {{ $t('download') }} ({{ selectedFiles.length }} {{ $t('items') }})
                 </button>
               </div>
@@ -209,18 +209,14 @@
       </div>
     </main>
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
 import VueDatePicker from '@vuepic/vue-datepicker';
 
+import amsAlert from '~/assets/data/amsAlert.json';
 import FilterColumn from '~/assets/data/filesFilter.json';
 import Alert from '~/components/common/Alert.vue';
 import Pagination from '~/components/common/Pagination.vue';
@@ -243,15 +239,20 @@ const span = ref('total');
 const spanList = ref<string[]>([]);
 const selectedFiles = ref<string[]>([]);
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 let divideFileList: any[] = [];
 let createdDate = '';
 let isAllCheck = false;
 let filterColumnList = JSON.parse(JSON.stringify(FilterColumn));
 const filterList = ref<any[]>([]);
 let url = '';
+const isError = ref(false);
 
 /* ///////////////////////////////////
 // function
@@ -266,6 +267,7 @@ async function getFiles(number: string) {
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -302,31 +304,31 @@ async function getFiles(number: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = statusCode;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      alertType.value = 'error';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.FILES_DETAIL_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
+  return !isError.value;
 }
 
 /**
@@ -339,6 +341,7 @@ function downloadFilesAll() {
     $fetch(appConf.wekoApi + '/records/' + String(query.number) + '/files/all', {
       timeout: useRuntimeConfig().public.apiTimeout,
       method: 'GET',
+      credentials: 'omit',
       headers: {
         'Cache-Control': 'no-store',
         Pragma: 'no-cache',
@@ -355,29 +358,28 @@ function downloadFilesAll() {
         }
       },
       onResponseError({ response }) {
-        alertCode.value = 0;
         statusCode = response.status;
-        if (statusCode === 401) {
-          // 認証エラー
-          alertMessage.value = 'message.error.auth';
-        } else if (statusCode >= 500 && statusCode < 600) {
-          // サーバーエラー
-          alertMessage.value = 'message.error.server';
-          alertCode.value = statusCode;
-        } else {
-          // リクエストエラー
-          alertMessage.value = 'message.error.downloadAll';
-          alertCode.value = statusCode;
+        if (!isError.value) {
+          if (statusCode === 401) {
+            // 認証エラー
+            alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_AUTH;
+          } else if (statusCode >= 500 && statusCode < 600) {
+            // サーバーエラー
+            alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_SERVER;
+          } else {
+            // リクエストエラー
+            alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL;
+          }
+          visibleAlert.value = true;
+          isError.value = true;
         }
-        alertType.value = 'error';
-        visibleAlert.value = true;
       }
     }).catch(() => {
-      if (statusCode === 0) {
+      if (statusCode === 0 && !isError.value) {
         // fetchエラー
-        alertMessage.value = 'message.error.fetch';
-        alertType.value = 'error';
+        alertData.value = amsAlert.FILES_ALL_MESSAGE_ERROR_FETCH;
         visibleAlert.value = true;
+        isError.value = true;
       }
     });
   } else {
@@ -398,6 +400,7 @@ function downloadFilesSelected(filesList: string[]) {
   $fetch(appConf.wekoApi + '/records/' + String(query.number) + '/files/selected', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'POST',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -417,29 +420,28 @@ function downloadFilesSelected(filesList: string[]) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.downloadSelected';
-        alertCode.value = statusCode;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      alertType.value = 'error';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
+      alertData.value = amsAlert.FILES_SELECT_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -556,9 +558,7 @@ function clickAllCheckbox() {
   } else {
     isAllCheck = true;
     for (const file of divideFileList[Number(currentPage.value) - 1]) {
-      const fileUrl = Array.isArray(file[appConf.roCrate.root.file.url])
-        ? file[appConf.roCrate.root.file.url][0]
-        : file[appConf.roCrate.root.file.url];
+      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url]);
       // 格納場所がweko外部のファイルは除く
       if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
         if (!selectedFiles.value.includes(file['@id'])) {
@@ -581,9 +581,7 @@ function changeAllCheckBox() {
   if (selectedFiles.value.length >= divideLength) {
     let count = 0;
     for (const file of currentDivideFiles) {
-      const fileUrl = Array.isArray(file[appConf.roCrate.root.file.url])
-        ? file[appConf.roCrate.root.file.url][0]
-        : file[appConf.roCrate.root.file.url];
+      const fileUrl = setFileInfo(file[appConf.roCrate.root.file.url]);
       // 格納場所がweko外部のファイルは除く
       if (fileUrl.startsWith(useAppConfig().wekoOrigin)) {
         if (selectedFiles.value.includes(file['@id'])) {
@@ -613,10 +611,14 @@ function setPage(value: string) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status = 0, message: string) {
-  alertMessage.value = message;
-  alertCode.value = status;
-  alertType.value = 'error';
+function setError(status = '', message: string) {
+  alertData.value = {
+    msgid: status,
+    msgstr: message,
+    position: '',
+    width: '',
+    loglevel: 'error'
+  };
   visibleAlert.value = true;
 }
 
@@ -724,9 +726,9 @@ function clear() {
 function getURL() {
   const itemInfoUrl = sessionStorage.getItem('url')?.split('/');
   if (itemInfoUrl && itemInfoUrl[3] === 'search') {
-    url = `/detail?sess=search&number=${query.number}`;
+    url = `${appConf.amsPath ?? ''}/detail?sess=search&number=${query.number}`;
   } else {
-    url = `/detail?sess=top&number=${query.number}`;
+    url = `${appConf.amsPath ?? ''}/detail?sess=top&number=${query.number}`;
   }
 }
 
@@ -739,20 +741,36 @@ function throughDblClick() {
   }
 }
 
+/**
+ * マッピング済みのファイル情報を取得する
+ * マッピングされていない場合は空文字を返す
+ * @param info ファイル情報（格納場所）
+ * @returns ファイル情報
+ */
+function setFileInfo(info: any) {
+  const returnInfo = Array.isArray(info) ? info[0] : info;
+  return returnInfo || '';
+}
+
 /* ///////////////////////////////////
 // main
 /////////////////////////////////// */
 
-try {
-  await getFiles(String(query.number));
-  divideList(filteredList.value);
-  setSpanList();
-} catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
-  visibleAlert.value = true;
+async function init() {
+  isError.value = false;
+  try {
+    const successGetFiles = await getFiles(String(query.number));
+    if (!successGetFiles) {
+      return;
+    }
+    divideList(filteredList.value);
+    setSpanList();
+  } catch (error) {
+    alertData.value = amsAlert.FILES_MESSAGE_ERROR;
+    visibleAlert.value = true;
+  }
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle

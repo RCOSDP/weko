@@ -85,13 +85,13 @@
       ],
       "hasPart": [
         {
-          "@id": "data/sample.txt"
+          "@id": "sample.txt"
         },
         {
-          "@id": "data/data.csv"
+          "@id": "data.csv"
         },
         {
-          "@id": "data/test/data.csv"
+          "@id": "test/data.csv"
         },
         {
           "@id": "https://example.com/test/sample/1"
@@ -437,7 +437,7 @@
       "value": "Example Organization"
     },
     {
-      "@id": "data/data.csv",
+      "@id": "data.csv",
       "@type": "File",
       "dcterms:accessRights": "open_login",
       "datePublished": "2025-06-06",
@@ -459,7 +459,7 @@
       "wk:textExtraction": false
     },
     {
-      "@id": "data/test/data.csv",
+      "@id": "test/data.csv",
       "@type": "File",
       "dcterms:accessRights": "open_login",
       "datePublished": "2025-06-06",
@@ -481,7 +481,7 @@
       "wk:textExtraction": true
     },
     {
-      "@id": "data/sample.txt",
+      "@id": "sample.txt",
       "@type": "File",
       "dcterms:accessRights": "open_access",
       "datePublished": "2025-06-06",

@@ -1,15 +1,15 @@
 # Translations template for weko-workspace.
-# Copyright (C) 2025 National Institute of Informatics
+# Copyright (C) 2026 National Institute of Informatics
 # This file is distributed under the same license as the weko-workspace
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-workspace 0.1.0.dev20250201\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2025-10-03 16:33+0900\n"
+"POT-Creation-Date: 2026-02-03 09:20+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,69 +18,69 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.5.1\n"
 
-#: tests/conftest.py:202
+#: tests/conftest.py:205
 msgid "write your own license"
 msgstr ""
 
-#: tests/conftest.py:207
+#: tests/conftest.py:210
 msgid "Creative Commons CC0 1.0 Universal Public Domain Designation"
 msgstr ""
 
-#: tests/conftest.py:222
+#: tests/conftest.py:225
 msgid "Creative Commons Attribution 3.0 Unported (CC BY 3.0)"
 msgstr ""
 
-#: tests/conftest.py:234
+#: tests/conftest.py:237
 msgid "Creative Commons Attribution-ShareAlike 3.0 Unported (CC BY-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:248
+#: tests/conftest.py:251
 msgid "Creative Commons Attribution-NoDerivs 3.0 Unported (CC BY-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:262
+#: tests/conftest.py:265
 msgid "Creative Commons Attribution-NonCommercial 3.0 Unported (CC BY-NC 3.0)"
 msgstr ""
 
-#: tests/conftest.py:276
+#: tests/conftest.py:279
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported (CC "
 "BY-NC-SA 3.0)"
 msgstr ""
 
-#: tests/conftest.py:290
+#: tests/conftest.py:293
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivs 3.0 Unported (CC BY-"
 "NC-ND 3.0)"
 msgstr ""
 
-#: tests/conftest.py:305
+#: tests/conftest.py:308
 msgid "Creative Commons Attribution 4.0 International (CC BY 4.0)"
 msgstr ""
 
-#: tests/conftest.py:317
+#: tests/conftest.py:320
 msgid "Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:331
+#: tests/conftest.py:334
 msgid ""
 "Creative Commons Attribution-NoDerivatives 4.0 International (CC BY-ND "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:345
+#: tests/conftest.py:348
 msgid ""
 "Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC "
 "4.0)"
 msgstr ""
 
-#: tests/conftest.py:359
+#: tests/conftest.py:362
 msgid ""
 "Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International "
 "(CC BY-NC-SA 4.0)"
 msgstr ""
 
-#: tests/conftest.py:373
+#: tests/conftest.py:376
 msgid ""
 "Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 "
 "International (CC BY-NC-ND 4.0)"
@@ -135,29 +135,139 @@ msgstr ""
 msgid "Opened Elsewhere"
 msgstr ""
 
+#: weko_workspace/config.py:382
+msgid "Favorite Status"
+msgstr ""
+
+#: weko_workspace/config.py:383
+msgid "Read Status"
+msgstr ""
+
+#: weko_workspace/config.py:384
+msgid "Peer Review Status"
+msgstr ""
+
+#: weko_workspace/config.py:385
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:67
+msgid "Title"
+msgstr ""
+
+#: weko_workspace/config.py:386
+msgid "DOI Link"
+msgstr ""
+
+#: weko_workspace/config.py:387
+msgid "Resource Type"
+msgstr ""
+
+#: weko_workspace/config.py:388
+msgid "Author Name"
+msgstr ""
+
+#: weko_workspace/config.py:389
+msgid "Number of Accesses"
+msgstr ""
+
+#: weko_workspace/config.py:390
+msgid "Item Status"
+msgstr ""
+
+#: weko_workspace/config.py:391
+msgid "Journal Title"
+msgstr ""
+
+#: weko_workspace/config.py:392
+msgid "Conference Name"
+msgstr ""
+
+#: weko_workspace/config.py:393
+msgid "Volume"
+msgstr ""
+
+#: weko_workspace/config.py:394
+msgid "Issue"
+msgstr ""
+
+#: weko_workspace/config.py:395
+msgid "Funder Name"
+msgstr ""
+
+#: weko_workspace/config.py:396
+msgid "Award Title"
+msgstr ""
+
+#: weko_workspace/config.py:397
+msgid "Number of Downloads"
+msgstr ""
+
+#: weko_workspace/config.py:398
+msgid "Feedback Mail Status"
+msgstr ""
+
+#: weko_workspace/config.py:399
+msgid "Publication Date Header"
+msgstr ""
+
+#: weko_workspace/config.py:400
+msgid "Relation Type"
+msgstr ""
+
+#: weko_workspace/config.py:401
+msgid "Relation Titie"
+msgstr ""
+
+#: weko_workspace/config.py:402
+msgid "Relation URL or DOI"
+msgstr ""
+
+#: weko_workspace/config.py:403
+msgid "Related to Paper Status"
+msgstr ""
+
+#: weko_workspace/config.py:404
+msgid "Related to Data Status"
+msgstr ""
+
+#: weko_workspace/config.py:405
+msgid "Number of Document Files"
+msgstr ""
+
+#: weko_workspace/config.py:406
+msgid "Number of Published Files"
+msgstr ""
+
+#: weko_workspace/config.py:407
+msgid "Number of Embargo Files"
+msgstr ""
+
+#: weko_workspace/config.py:408
+msgid "Number of Restricted Files"
+msgstr ""
+
 #: weko_workspace/views.py:113
 #, python-format
 msgid "%(icon)s Workspace"
 msgstr ""
 
-#: weko_workspace/views.py:660
+#: weko_workspace/views.py:672
 msgid "The item type or workflow used for item registration has not been set."
 msgstr ""
 
-#: weko_workspace/views.py:779 weko_workspace/views.py:812
-#: weko_workspace/views.py:844 weko_workspace/views.py:875
+#: weko_workspace/views.py:791 weko_workspace/views.py:824
+#: weko_workspace/views.py:856 weko_workspace/views.py:887
+#: weko_workspace/views.py:917
 msgid "Header Error"
 msgstr ""
 
-#: weko_workspace/views.py:936
+#: weko_workspace/views.py:977
 msgid "Workflow ID is not set."
 msgstr ""
 
-#: weko_workspace/views.py:941
+#: weko_workspace/views.py:982
 msgid "Item type ID is not set."
 msgstr ""
 
-#: weko_workspace/views.py:985
+#: weko_workspace/views.py:1026
 msgid ""
 "The number of uploaded files does not match the number of files in the "
 "metadata."
@@ -175,165 +285,197 @@ msgstr ""
 msgid "Get"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:207
-#: weko_workspace/templates/weko_workspace/item_register.html:227
+#: weko_workspace/templates/weko_workspace/item_register.html:218
+#: weko_workspace/templates/weko_workspace/item_register.html:238
 msgid "File"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:248
+#: weko_workspace/templates/weko_workspace/item_register.html:259
 msgid "Metadata"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:261
+#: weko_workspace/templates/weko_workspace/item_register.html:272
 msgid "oa_policy_label"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:269
+#: weko_workspace/templates/weko_workspace/item_register.html:280
 msgid "oa_policy_export"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:275
+#: weko_workspace/templates/weko_workspace/item_register.html:286
 msgid "Please enter ISSN, eISSN, or journal title"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:276
+#: weko_workspace/templates/weko_workspace/item_register.html:287
 msgid "No Policy Information found"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:277
+#: weko_workspace/templates/weko_workspace/item_register.html:288
 msgid "An unknown error occurred"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:289
+#: weko_workspace/templates/weko_workspace/item_register.html:300
 msgid "Index Tree"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:311
+#: weko_workspace/templates/weko_workspace/item_register.html:322
 msgid "Regist"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:329
-#: weko_workspace/templates/weko_workspace/item_register.html:358
-#: weko_workspace/templates/weko_workspace/item_register.html:397
-#: weko_workspace/templates/weko_workspace/item_register.html:423
+#: weko_workspace/templates/weko_workspace/item_register.html:340
+#: weko_workspace/templates/weko_workspace/item_register.html:369
+#: weko_workspace/templates/weko_workspace/item_register.html:408
+#: weko_workspace/templates/weko_workspace/item_register.html:434
 msgid "WEKO"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:335
-#: weko_workspace/templates/weko_workspace/item_register.html:429
+#: weko_workspace/templates/weko_workspace/item_register.html:346
+#: weko_workspace/templates/weko_workspace/item_register.html:440
 msgid "At least one index should be selected."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:343
-#: weko_workspace/templates/weko_workspace/item_register.html:372
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:44
+#: weko_workspace/templates/weko_workspace/item_register.html:354
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:30
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:55
 msgid "Cancel"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:364
-#: weko_workspace/templates/weko_workspace/item_register.html:388
+#: weko_workspace/templates/weko_workspace/item_register.html:375
+#: weko_workspace/templates/weko_workspace/item_register.html:399
 msgid "The Required items is required. Please recheck and input."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:390
+#: weko_workspace/templates/weko_workspace/item_register.html:383
+msgid "Close"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/item_register.html:401
 msgid "The same file name cannot be registered."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/item_register.html:403
+#: weko_workspace/templates/weko_workspace/item_register.html:414
 msgid "The item is successfully registered."
 msgstr ""
 
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:21
+msgid "unread"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:22
+msgid "Action"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:23
+msgid "Item"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:24
+msgid "Stats"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:25
+msgid "Info"
+msgstr ""
+
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:26
-msgid "Please press Enter after inputting to search."
+msgid "Edit"
 msgstr ""
 
 #: weko_workspace/templates/weko_workspace/workspace_body_contents.html:27
-msgid "No results found matching your search criteria."
-msgstr ""
-
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:40
-msgid "Export Item List"
-msgstr ""
-
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:41
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:52
 msgid "Please select the following option:"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:42
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:28
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:53
 msgid "Selected Items"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:43
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:29
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:54
 msgid "All Items"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:45
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:31
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:56
 msgid ""
 "Error: There is no Selected items. Please check the item you want to "
 "export"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:53
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:38
+msgid "Type and press enter to search"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:39
+msgid "No results found matching your search criteria."
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:51
+msgid "Export Item List"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:62
+msgid "Grouping by year"
+msgstr ""
+
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:64
 msgid "Filter Display"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:55
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:66
 msgid "Publication Date"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:56
-msgid "Title"
-msgstr ""
-
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:57
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:68
 msgid "Number of accesses"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:58
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:69
 msgid "Number of downloads"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:79
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:90
 msgid "This item is excluded from the default condition save target."
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:80
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:91
 msgid "Would you like to remove the filter conditions?"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:84
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:95
 msgid "Filter"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:88
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:99
 msgid "Clear"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:92
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:103
 msgid "Save"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:96
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:107
 msgid "Reset"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:117
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:128
 msgid "Relation"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:118
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:129
 msgid "Document file"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:119
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:130
 msgid "Published"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:120
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:131
 msgid "Embargo"
 msgstr ""
 
-#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:121
+#: weko_workspace/templates/weko_workspace/workspace_body_contents.html:132
 msgid "Restricted"
 msgstr ""
 

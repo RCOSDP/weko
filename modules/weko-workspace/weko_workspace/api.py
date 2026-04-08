@@ -23,6 +23,7 @@
 import traceback
 import requests
 import urllib.parse
+import xmltodict
 from flask import current_app
 from . import config
 
@@ -418,6 +419,80 @@ class DATACITEURL:
             if result.status_code == 200:
                 response['response'] = result.json()
                 current_app.logger.debug(f"Datacite result: {response['response']}")
+        except Exception as e:
+            current_app.logger.error(e)
+            current_app.logger.error(traceback.format_exc())
+            response['error'] = str(e)
+        return response
+
+class arXivURL:
+    """The Class retrieves the metadata from arXiv."""
+
+    _timeout = config.WEKO_WORKSPACE_REQUEST_TIMEOUT
+    _proxy = {
+        'http': config.WEKO_WORKSPACE_SYS_HTTP_PROXY,
+        'https': config.WEKO_WORKSPACE_SYS_HTTPS_PROXY
+    }
+    def __init__(self, doi, timeout=None, http_proxy=None, https_proxy=None):
+        """Init DataciteURL API.
+
+        :param doi:
+        :param timeout:
+        :param http_proxy:
+        :param https_proxy:
+        """
+        if not doi:
+            raise ValueError('DOI is required.')
+        self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
+        if timeout:
+            self._timeout = timeout
+        if http_proxy:
+            self._proxy['http'] = http_proxy
+        if https_proxy:
+            self._proxy['https'] = https_proxy
+
+    def _create_endpoint(self):
+        """Create endpoint.
+
+        :return: endpoint string.
+        """
+        endpoint_url = self._doi
+        return endpoint_url
+
+
+    def _create_url(self):
+        """Create request URL.
+
+        :return:
+        """
+        endpoint = self._create_endpoint()
+
+        url =  config.WEKO_WORKSPACE_ARXIV_API_URL + endpoint
+        return url
+
+    @property
+    def url(self):
+        """URL property.
+
+        :return: Request URL
+        """
+        return self._create_url()
+
+    def _do_http_request(self):
+        return requests.get(self.url, timeout=self._timeout,
+                            proxies=self._proxy)
+
+    def get_data(self):
+        """This method retrieves the metadata from arXiv."""
+        response = {
+            'response': '',
+            'error': ''
+        }
+        try:
+            result = self._do_http_request()
+            if result.status_code == 200:
+                response['response'] = xmltodict.parse(result.text)
+                current_app.logger.debug(f"arXiv result: {response['response']}")
         except Exception as e:
             current_app.logger.error(e)
             current_app.logger.error(traceback.format_exc())

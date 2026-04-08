@@ -861,6 +861,25 @@ class TestIdentifierHandle:
         mock_mapping_data.assert_called_once()
         mock_get_metadata.assert_called_once_with(item_uuid)
 
+        with patch("weko_workflow.utils.WekoRecord.get_record", return_value=MagicMock(spec=WekoRecord)) as mock_get_record, \
+                patch("weko_workflow.utils.ItemTypes.get_by_id", return_value=MagicMock(spec=ItemType, id=1)) as mock_get_by_id, \
+                patch("weko_workflow.utils.Mapping.get_record", return_value=MagicMock(spec=Mapping)) as mock_get_mapping, \
+                patch("weko_workflow.utils.ItemsMetadata.get_record", return_value=MagicMock(spec=ItemsMetadata)) as mock_get_metadata, \
+                patch("weko_workflow.utils.get_full_mapping", return_value={"mapping": "mapping"}) as mock_mapping_data:
+            obj2 = IdentifierHandle(item_uuid,record={"id" : 1},item_type_id=1)
+        assert obj2.item_uuid == item_uuid
+        assert obj2.item_record is not None
+        mock_get_record.assert_not_called()
+        mock_get_by_id.assert_not_called()
+        mock_get_mapping.assert_called_once_with(1)
+        mock_mapping_data.assert_called_once()
+        mock_get_metadata.assert_called_once_with(item_uuid)
+
+        with patch("weko_workflow.utils.WekoRecord.get_record", return_value=MagicMock(spec=WekoRecord)) as mock_get_record, \
+                patch("weko_workflow.utils.ItemTypes.get_by_id", return_value=None) as mock_get_by_id:
+                with pytest.raises(ValueError) as e:
+                    obj3 = IdentifierHandle(item_uuid)
+                    assert str(e.value) == "item_type is None"
 #     def get_pidstore(self, pid_type='doi', object_uuid=None):
 
     # def check_pidstore_exist(self, pid_type, chk_value=None):

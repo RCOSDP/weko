@@ -7,9 +7,14 @@
   font-family: Arial, sans-serif;
   font-size: 14px;
 }
-.workspace-body-contents th,
+.workspace-body-contents th{
+  padding: 5px 12px 5px 12px;
+  border: 1px solid #ccc;
+  text-align: left;
+  vertical-align: top;
+}
 .workspace-body-contents td {
-  padding: 12px;
+  padding: 5px;
   border: 1px solid #ccc;
   text-align: left;
   vertical-align: top;
@@ -27,14 +32,29 @@
 .workspace-body-contents .checkbox-group {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 10px;
+  column-gap: 10px;
+  row-gap: 3px;
+  max-height: 713px;
+  overflow-y: auto;
   width: 100%;
-  padding: 10px;
+  padding: 0px 5px 0px 5px;
 }
+
+.workspace-body-contents .checkbox-group-single {
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+}
+
+.workspace-body-contents .checkbox-group-exclude {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  max-height: none;       
+  overflow-y: visible;
+
+}
+
 .workspace-body-contents .checkbox-group label {
   display: flex;
   align-items: center;
-  margin: 5px 0;
+  margin: 2px 0;
   white-space: normal;
   font-size: 14px;
   color: #333;
@@ -84,3 +104,22 @@
 .workspace-body-contents #itemListContainer td:nth-last-child(3) {
   width: 100px;
 }
+
+
+.unread_show {
+    display: inline-block;
+    background-color: orange;
+    color: black;
+    font-size: 80%;
+    border-radius: 12px;
+    margin-left: 8px;
+    text-align: center;
+    vertical-align: middle;
+    padding: 1px 7.5px;
+    visibility: visible;
+}
+
+.unread_hide {
+    visibility: hidden;
+}
+

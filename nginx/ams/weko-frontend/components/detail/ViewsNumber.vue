@@ -30,6 +30,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -62,6 +63,13 @@ const span = ref('total');
 const spanList = ref<string[]>([]);
 const regionStats = ref({});
 const openDetail = ref(false);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 
 /* ///////////////////////////////////
 // function
@@ -76,6 +84,7 @@ function getItemStats(span: string) {
   $fetch(useAppConfig().wekoApi + '/records/' + props.currentNumber + '/stats', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -94,14 +103,16 @@ function getItemStats(span: string) {
     onResponseError({ response }) {
       statusCode = response.status;
       if (statusCode === 500) {
-        emits('error', statusCode, 'message.error.error');
+        alertData.value = amsAlert.VIEWS_NUMBER_MESSAGE_ERROR;
       } else {
-        emits('error', statusCode, 'message.error.getItemViewsNumber');
+        alertData.value = amsAlert.VIEWS_NUMBER_MESSAGE_ERROR_GET_ITEM;
       }
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      alertData.value = amsAlert.VIEWS_NUMBER_MESSAGE_ERROR_FETCH;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }

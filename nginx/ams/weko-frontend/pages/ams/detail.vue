@@ -32,11 +32,12 @@
               @click-prev="changeDetail"
               @click-next="changeDetail" />
             <!-- アイテム情報 -->
-            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" />
+            <ItemInfo v-if="renderFlag" :item="itemDetail" :item-id="currentNumber" :oauth-error="oauthError" />
             <!-- アイテム内容 -->
+            <div v-if="oauthError">{{ $t('needToLogin') }}</div>
             <ItemContent v-if="renderFlag" :item="itemDetail" />
             <!-- 前/次 -->
-            <div class="pt-2.5 pb-28">
+            <div v-if="!isError" class="pt-2.5 pb-28">
               <Switcher
                 :sess="beforePage"
                 :prev-num="prevNum"
@@ -44,9 +45,10 @@
                 @click-prev="changeDetail"
                 @click-next="changeDetail" />
             </div>
+            <div v-else class="pt-2.5 pb-28" />
             <!-- 最上部に戻る -->
             <button id="page-top" class="hidden lg:block w-10 h-10 absolute right-5 bottom-[60px]" @click="scrollToTop">
-              <img src="/img/btn/btn-gototop.svg" alt="Top" />
+              <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop.svg`" alt="Top" />
             </button>
           </div>
         </div>
@@ -59,12 +61,25 @@
             </p>
           </div>
           <ViewsNumber
-            v-if="renderFlag"
+            v-if="renderFlag && !isError"
             :current-number="currentNumber"
             :created-date="createdDate"
             @error="setError" />
-          <!-- リクエストメール（未ログイン＆フィードバックアドレス有） -->
-          <div v-if="!isLogin && checkMailAddress">
+          <!-- GakuNinRDM（プロジェクトURL有） -->
+          <div v-if="projectUrl">
+            <div class="bg-miby-light-blue py-3 pl-5">
+              <p class="text-white font-bold">
+                {{ $t('GakuNinRDM') }}
+              </p>
+            </div>
+            <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
+              <button @click="openDataSet">
+                <img :src="`${appConf.amsImage ?? '/img'}/logo/gakunin_logo.svg`" alt="Send" />
+              </button>
+            </div>
+          </div>
+          <!-- リクエストメール（リクエストメールアドレス有&プロジェクトURL無） -->
+          <div v-else-if="checkMailAddress">
             <div class="bg-miby-light-blue py-3 pl-5">
               <p class="icons icon-mail text-white font-bold">
                 {{ $t('requestMail') }}
@@ -76,21 +91,8 @@
                 :class="[false ? 'bg-miby-dark-gray' : 'bg-sky-800']"
                 :disabled="false"
                 @click="openRequestMailModal">
-                <img src="/img/icon/icon_mail-send.svg" alt="Send" />
+                <img :src="`${appConf.amsImage ?? '/img'}/icon/icon_mail-send.svg`" alt="Send" />
                 {{ $t('request') }}
-              </button>
-            </div>
-          </div>
-          <!-- GakuNinRDM（ログイン済み＆プロジェクトID有） -->
-          <div v-else-if="isLogin && checkProjectId">
-            <div class="bg-miby-light-blue py-3 pl-5">
-              <p class="text-white font-bold">
-                {{ $t('GakuNinRDM') }}
-              </p>
-            </div>
-            <div class="bg-miby-bg-gray py-7 text-center flex justify-center items-center">
-              <button @click="openDataSet">
-                <img src="/img/logo/gakunin_logo.svg" alt="Send" />
               </button>
             </div>
           </div>
@@ -100,7 +102,7 @@
               {{ $t('detailDLRank') }}
             </p>
           </div>
-          <DownloadRank v-if="renderFlag" :current-number="currentNumber" @error="setError" />
+          <DownloadRank v-if="renderFlag && !isError" :current-number="currentNumber" @error="setError" />
           <!-- エクスポート -->
           <div class="bg-miby-light-blue py-3 pl-5">
             <p class="icons icon-export text-white font-bold">
@@ -112,7 +114,7 @@
       </div>
       <!-- 最上部に戻る -->
       <button id="page-top" class="block lg:hidden w-10 h-10 z-40 fixed right-5 bottom-2.5" @click="scrollToTop">
-        <img src="/img/btn/btn-gototop_sp.svg" alt="Return To Top" />
+        <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-gototop_sp.svg`" alt="Return To Top" />
       </button>
     </main>
     <!-- Loading -->
@@ -136,18 +138,14 @@
       @click-send="openLoading(false)"
       @complete-send="checkSendingResponse" />
     <!-- アラート -->
-    <Alert
-      v-if="visibleAlert"
-      :type="alertType"
-      :message="alertMessage"
-      :code="alertCode"
-      :position="alertPosition"
-      :width="alertWidth"
-      @click-close="visibleAlert = !visibleAlert" />
+    <Alert v-if="visibleAlert" :alert="alertData" @click-close="visibleAlert = !visibleAlert" />
   </div>
 </template>
 
 <script lang="ts" setup>
+import { onBeforeRouteLeave } from 'vue-router';
+
+import amsAlert from '~/assets/data/amsAlert.json';
 import Alert from '~/components/common/Alert.vue';
 import SearchForm from '~/components/common/SearchForm.vue';
 import CreaterInfo from '~/components/common/modal/CreaterInfo.vue';
@@ -201,15 +199,20 @@ const nextNum = ref(0);
 const creater = ref();
 const requestMail = ref();
 const visibleAlert = ref(false);
-const alertType = ref('info');
-const alertMessage = ref('');
-const alertCode = ref(0);
-const alertPosition = ref('');
-const alertWidth = ref('');
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 const isLoading = ref(true);
-const isLogin = ref(false);
+const isLogin = !!localStorage.getItem('token:access');
 const checkMailAddress = ref(false);
-const checkProjectId = ref(false);
+const oauthError = ref(false);
+let projectUrl = '';
+const isError = ref(false);
+let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
 /* ///////////////////////////////////
 // function
@@ -224,6 +227,7 @@ async function getDetail(number: string) {
   await $fetch(appConf.wekoApi + '/records/' + number, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -244,46 +248,42 @@ async function getDetail(number: string) {
           }
         }
 
-        // ログイン状況を取得する
-        isLogin.value = !!sessionStorage.getItem('login:state');
+        // プロジェクトURLの登録があるかどうか確認する
+        const urls = findProjectURL(itemDetail);
+        projectUrl = urls && urls[0] ? urls[0] : '';
 
-        // プロジェクトIDの登録があるかどうか確認する
-        // TODO: RoCrateキーは暫定のため、整理後再度指定要
-        checkProjectId.value = !!obj[appConf.roCrate.root.projectId]?.[0];
-
-        // フィードバックメールアドレスがあるかどうか確認する
+        // リクエストメールアドレスがあるかどうか確認する
         // @ts-ignore
         checkMailAddress.value = !!itemDetail.metadata.hasRequestmailAddress;
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.getItemDetail';
-        alertCode.value = statusCode;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        } else if (statusCode === 403 && isLogin) {
+          // アクセス権限エラー
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
+      alertData.value = amsAlert.DETAIL_ITEM_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -310,6 +310,7 @@ async function search(searchPage: string) {
   await $fetch(appConf.wekoApi + '/records?' + urlSearchParam, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -331,35 +332,34 @@ async function search(searchPage: string) {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
       switcherFlag.value = false;
       searchResult = [];
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.search';
-        alertCode.value = statusCode;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        } else if (statusCode === 403 && isLogin) {
+          // アクセス権限エラー
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
+      alertData.value = amsAlert.DETAIL_SEARCH_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -372,6 +372,7 @@ async function getParentIndex() {
   await $fetch(appConf.wekoApi + '/tree/index/' + indexId + '/parent', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -390,33 +391,32 @@ async function getParentIndex() {
       }
     },
     onResponseError({ response }) {
-      alertCode.value = 0;
       statusCode = response.status;
-      if (statusCode === 401) {
-        // 認証エラー
-        alertMessage.value = 'message.error.auth';
-      } else if (statusCode >= 500 && statusCode < 600) {
-        // サーバーエラー
-        alertMessage.value = 'message.error.server';
-        alertCode.value = statusCode;
-      } else {
-        // リクエストエラー
-        alertMessage.value = 'message.error.getIndex';
-        alertCode.value = statusCode;
+      if (!isError.value) {
+        if (statusCode === 401) {
+          // 認証エラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_OAUTH_ERROR;
+          oauthErrorRedirect();
+        } else if (statusCode === 403 && isLogin) {
+          // アクセス権限エラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_AUTH;
+        } else if (statusCode >= 500 && statusCode < 600) {
+          // サーバーエラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_SERVER;
+        } else {
+          // リクエストエラー
+          alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX;
+        }
+        visibleAlert.value = true;
+        isError.value = true;
       }
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
-      visibleAlert.value = true;
     }
   }).catch(() => {
-    if (statusCode === 0) {
+    if (statusCode === 0 && !isError.value) {
       // fetchエラー
-      alertMessage.value = 'message.error.fetch';
-      alertType.value = 'error';
-      alertPosition.value = '';
-      alertWidth.value = 'w-full';
+      alertData.value = amsAlert.DETAIL_INDEX_MESSAGE_ERROR_FETCH;
       visibleAlert.value = true;
+      isError.value = true;
     }
   });
 }
@@ -528,16 +528,25 @@ async function changeDetail(value: string) {
     try {
       openLoading(true);
       await getDetail(String(prevNum.value));
+      if (isError.value) {
+        return;
+      }
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
       useRouter().replace({
         query: { sess: beforePage, number: prevNum.value }
       });
       if (shift === 'shift-prev') {
         await setNumList(shift);
+        if (isError.value) {
+          return;
+        }
       }
       currentNumber = prevNum.value;
       shift = setSwitchNum();
       await getParentIndex();
+      if (isError.value) {
+        return;
+      }
       // 再レンダリング
       renderFlag.value = false;
       nextTick(() => {
@@ -561,16 +570,25 @@ async function changeDetail(value: string) {
     try {
       openLoading(true);
       await getDetail(String(nextNum.value));
+      if (isError.value) {
+        return;
+      }
       // REVIEW: pushでクエリを置き換える場合、ブラウザーバック対応をする
       useRouter().replace({
         query: { sess: beforePage, number: nextNum.value }
       });
       if (shift === 'shift-next') {
         await setNumList(shift);
+        if (isError.value) {
+          return;
+        }
       }
       currentNumber = nextNum.value;
       shift = setSwitchNum();
       await getParentIndex();
+      if (isError.value) {
+        return;
+      }
       // 再レンダリング
       renderFlag.value = false;
       nextTick(() => {
@@ -641,7 +659,7 @@ function clickParent(indexId: string) {
     sessionStorage.setItem('conditions', JSON.stringify({ type: '0', keyword: indexId }));
   }
 
-  navigateTo('/search/' + indexId);
+  navigateTo(`${appConf.amsPath ?? ''}/search/${indexId}`);
 }
 
 /**
@@ -663,9 +681,9 @@ function openRequestMailModal() {
  * 別ウィンドウでデータセットを開く
  */
 function openDataSet() {
-  // TODO: 下記urlにデータセットを開くアドレスを入れる
-  // const url = '';
-  // window.open(url, '_blank');
+  if (projectUrl.length > 0) {
+    window.open(projectUrl, '_blank');
+  }
 }
 
 /**
@@ -682,12 +700,14 @@ function openLoading(type: boolean) {
  * @param status ステータスコード
  * @param message エラーメッセージ
  */
-function setError(status = 0, message: string) {
-  alertMessage.value = message;
-  alertCode.value = status;
-  alertType.value = 'error';
-  alertPosition.value = '';
-  alertWidth.value = 'w-full';
+function setError(status = '', message: string) {
+  alertData.value = {
+    msgid: status,
+    msgstr: message,
+    position: '',
+    width: 'w-full',
+    loglevel: 'error'
+  };
   visibleAlert.value = true;
 }
 
@@ -697,18 +717,17 @@ function setError(status = 0, message: string) {
  */
 function checkSendingResponse(val: boolean) {
   if (val) {
-    alertType.value = 'success';
-    alertMessage.value = 'message.sendingSuccess';
-    alertPosition.value = 'toast-top pt-20';
-    alertWidth.value = 'w-auto';
+    alertData.value = {
+      msgid: '',
+      msgstr: 'message.sendingSuccess',
+      position: 'toast-top pt-20',
+      width: 'w-auto',
+      loglevel: 'success'
+    };
     // 入力内容初期化
     requestMail.value.initInput();
   } else {
-    alertType.value = 'error';
-    alertMessage.value = 'message.sendingFailed';
-    alertCode.value = 0;
-    alertPosition.value = 'toast-top pt-20';
-    alertWidth.value = 'w-auto';
+    alertData.value = amsAlert.DETAIL_MESSAGE_SENDING_FAILED;
   }
   (document.getElementById('loading_modal') as HTMLDialogElement).close();
   visibleAlert.value = true;
@@ -721,28 +740,87 @@ function scrollToTop() {
   scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/**
+ * 認証エラー時のリダイレクト処理
+ */
+function oauthErrorRedirect() {
+  oauthError.value = true;
+  sessionStorage.removeItem('item-url');
+  sessionStorage.setItem('item-url', window.location.pathname + window.location.search);
+  timeoutId = setTimeout(() => {
+    // 認証エラーの場合はログイン画面に遷移
+    navigateTo({
+      path: '/ams/login',
+      query: { source: 'detail' }
+    });
+  }, appConf.transitionTimeMs);
+}
+
+/**
+ * プロジェクトURLを取得
+ * @param itemDetail アイテム詳細
+ * @returns プロジェクトURL
+ */
+function findProjectURL(itemDetail: any) {
+  let projectUrls = [];
+  let isGrdmRelationType = false;
+  if (Object.prototype.hasOwnProperty.call(itemDetail, 'rocrate')) {
+    const graph = itemDetail.rocrate['@graph'];
+    for (const obj of graph) {
+      if (obj['@type'] === 'Dataset') {
+        if (obj.additionalType === 'subsection') {
+          if (obj['@id'] === 'プロジェクトURL/URL/URL/' && obj.text) {
+            projectUrls = obj.text;
+          }
+          if (
+            obj['@id'] === 'プロジェクトURL/関連タイプ/関連タイプ/' &&
+            Array.isArray(obj.text) &&
+            obj.text[0] === appConf.grdm.relationType
+          ) {
+            isGrdmRelationType = true;
+          }
+          if (appConf.grdm.url !== '' && Array.isArray(projectUrls)) {
+            projectUrls = projectUrls.filter((url: string) => url.startsWith(appConf.grdm.url));
+          }
+        }
+      }
+    }
+  }
+  if (isGrdmRelationType && projectUrls.length > 0) {
+    return projectUrls;
+  } else {
+    return [];
+  }
+}
+
 /* ///////////////////////////////////
 // main
 /////////////////////////////////// */
 
-try {
-  beforePage = String(query.sess);
-  currentNumber = Number(query.number);
-  await getDetail(String(currentNumber) ?? '0');
-  switcherFlag.value = setConditions(beforePage);
-  if (switcherFlag.value) {
-    await setNumList('initial');
-    shift = setSwitchNum();
+async function init() {
+  isError.value = false;
+  try {
+    beforePage = String(query.sess);
+    currentNumber = Number(query.number);
+    await getDetail(String(currentNumber) ?? '0');
+    if (isError.value) {
+      return;
+    }
+    switcherFlag.value = setConditions(beforePage);
+    if (switcherFlag.value) {
+      await setNumList('initial');
+      shift = setSwitchNum();
+      if (isError.value) {
+        return;
+      }
+    }
+    await getParentIndex();
+  } catch (error) {
+    alertData.value = amsAlert.DETAIL_MESSAGE_ERROR;
+    visibleAlert.value = true;
   }
-  await getParentIndex();
-} catch (error) {
-  alertCode.value = 0;
-  alertMessage.value = 'message.error.error';
-  alertType.value = 'error';
-  alertPosition.value = '';
-  alertWidth.value = 'w-full';
-  visibleAlert.value = true;
 }
+await init();
 
 /* ///////////////////////////////////
 // life cycle
@@ -754,5 +832,12 @@ onMounted(() => {
 
 onUpdated(() => {
   refreshToken();
+});
+
+onBeforeRouteLeave(() => {
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+    timeoutId = null;
+  }
 });
 </script>

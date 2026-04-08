@@ -1,0 +1,31 @@
+{
+  "@id": "./",
+  "@type": "Dataset",
+  "datePublished": "2025-10-22",
+  "name": "extract",
+  "description": "Item metadata for Item ID: 2000036. Title: extract.",
+  "wk:index": [
+    "1623632832836"
+  ],
+  "wk:publishStatus": "public",
+  "wk:feedbackMail": [],
+  "wk:requestMail": [],
+  "wk:grant": [],
+  "wk:editMode": "Keep",
+  "dc:title": [
+    {
+      "@id": "#:title_0",
+      "@type": "PropertyValue",
+      "value": "extract",
+      "language": "ja"
+    }
+  ],
+  "dc:type": {
+    "@id": "#:type_1",
+    "@type": "PropertyValue",
+    "rdf:resource": "departmental bulletin paper",
+    "value": "http://purl.org/coar/resource_type/c_6501"
+  },
+  "wk:itemLinks": [],
+  "wk:metadataAutoFill": false
+}
