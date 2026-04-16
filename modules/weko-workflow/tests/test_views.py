@@ -3504,6 +3504,35 @@ def test_cancel_action3(client, users,db, db_register_full_action, db_records, a
             client.post(url, json=input)
             mock_remove_file_cancel_action.assert_called_once()
 
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_cancel_action4 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [(0, 200)])
+def test_cancel_action4(client, users,db, db_register_full_action, db_records, add_file, users_index, status_code, mocker, caplog):
+    login(client=client, email=users[users_index]['email'])
+    activity_id = "9"
+    action_id = 1
+
+    with patch("weko_workflow.api.WorkActivity.get_activity_action_role",
+           return_value=({'allow': []}, {'allow': []})):
+        
+        with patch('weko_workflow.views.WekoRecord.get_record_by_pid', return_value=None):
+            with patch('weko_workflow.views.WekoRecord.update_item_link') as mock_update_item_link:
+                url = url_for('weko_workflow.cancel_action', activity_id=activity_id, action_id=action_id)
+                client.post(url, json={})
+                mock_update_item_link.assert_not_called()
+        
+        with patch('weko_workflow.views.get_cache_data', return_value=activity_id):
+            with patch('weko_workflow.views.delete_cache_data') as mock_delete_cache_data:
+                url = url_for('weko_workflow.cancel_action', activity_id=activity_id, action_id=action_id)
+                res = client.post(url, json={})
+                mock_delete_cache_data.assert_called()
+        
+        with patch('weko_workflow.views.get_cache_data', return_value="1-1661748792565"):
+            with patch('weko_workflow.views.delete_cache_data', side_effect=Exception("test error")):
+                url = url_for('weko_workflow.cancel_action', activity_id=activity_id, action_id=action_id)
+                with caplog.at_level('ERROR'):
+                    res = client.post(url, json={})
+                assert any("test error" in record.message for record in caplog.records)
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_cancel_action_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_cancel_action_guest(guest, db, db_register_full_action, mocker):
