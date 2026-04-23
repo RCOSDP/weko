@@ -189,9 +189,8 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*;
 
 RUN adduser --uid 1000 --disabled-password --gecos '' invenio
-COPY --from=build-env /home/invenio/.virtualenvs/invenio /home/invenio/.virtualenvs/invenio
-COPY --from=build-env /code /code
-RUN chown -R invenio:invenio /code /home/invenio/.virtualenvs/invenio
+COPY --chown=invenio:invenio --from=build-env /home/invenio/.virtualenvs/invenio /home/invenio/.virtualenvs/invenio
+COPY --chown=invenio:invenio --from=build-env /code /code
 
 # Make given VENV default:
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
