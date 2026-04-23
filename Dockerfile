@@ -89,11 +89,12 @@ RUN chmod +x /code/scripts/create-instance2.sh && /code/scripts/create-instance2
 
 FROM stage_5 AS build-env
 # Make given VENV default:
+USER invenio
 ENV PATH=/home/invenio/.virtualenvs/invenio/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV VIRTUALENVWRAPPER_PYTHON=/home/invenio/.virtualenvs/invenio/bin/python
 RUN pip install virtualenvwrapper
 RUN echo "source /home/invenio/.virtualenvs/invenio/bin/virtualenvwrapper.sh" >> ~/.bashrc ; echo "workon invenio" >> ~/.bashrc
-RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
+#RUN mv /home/invenio/.virtualenvs/invenio/var/instance/static /home/invenio/.virtualenvs/invenio/var/instance/static.org
 USER root
 RUN chown -R invenio:invenio /code
 USER invenio
