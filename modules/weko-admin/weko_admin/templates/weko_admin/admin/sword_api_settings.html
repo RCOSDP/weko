@@ -97,7 +97,7 @@
     </div>
   </div>
 
-  <div class="row form-group">
+  <div class="row form-group" {%- if not is_enable_duplicate_check %}style="display:none;"{% endif %}>
     <div class="col-sm-2 text-left">
         <label>{{_('Duplicate Check')}}</label>
     </div>

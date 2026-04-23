@@ -3752,7 +3752,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
             }
             const contributor_username = $(`#share_username_${contributor_id}`).val();
             const contributor_email = contributor_email_element.val();
-            if (contributor_email == '') {
+            if (contributor_username=='' && contributor_email == '') {
               continue;
             }
             check_contributor_user_info['username'] = contributor_username;

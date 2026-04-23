@@ -185,7 +185,7 @@ class UserProfile(db.Model):
         :param username: A username to query for (case insensitive).
         """
         return cls.query.filter(
-            UserProfile._displayname == username.lower()
+            UserProfile._displayname == username
         ).first()
 
     @classmethod

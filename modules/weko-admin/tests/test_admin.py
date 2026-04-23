@@ -2032,7 +2032,8 @@ class TestSwordAPISettingsView:
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
         assert kwargs["duplicate_check_value"] == ""
-
+        assert kwargs["is_enable_duplicate_check"] == False
+        
         # xml get
         # old_format exit and xml setting is workflow
         login_user_via_session(client,email=users[0]["email"])# sysadmin
@@ -2058,7 +2059,8 @@ class TestSwordAPISettingsView:
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
         assert kwargs["duplicate_check_value"] == ""
-
+        assert kwargs["is_enable_duplicate_check"] == False
+        
         # tsv/csv get
         # new_format exit
         AdminSettings.query.filter_by(name="sword_api_setting").delete()
@@ -2084,7 +2086,7 @@ class TestSwordAPISettingsView:
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
         assert kwargs["duplicate_check_value"] == "checked"
-
+        assert kwargs["is_enable_duplicate_check"] == False
         # xml get
         # new_format exit
         mock_render = mocker.patch("weko_admin.admin.SwordAPISettingsView.render", return_value=make_response())
@@ -2100,7 +2102,7 @@ class TestSwordAPISettingsView:
         assert kwargs["deleted_workflow_name_dict"] == '{"1": "test_workflow"}'
         assert kwargs["workflows"] == ["workflow 1"]
         assert kwargs["duplicate_check_value"] == "checked"
-
+        assert kwargs["is_enable_duplicate_check"] == False
 
         # not exist admin_settings
         default_settings = {
@@ -2180,7 +2182,8 @@ class TestSwordAPIJsonldSettingsView:
         assert args[0] == "weko_admin/admin/sword_api_jsonld_settings.html"
         assert kwargs["workflows"]
         assert kwargs["can_edit"]
-
+        assert kwargs["is_enable_duplicate_check"] == False
+        
         # post
         # success registration_type:Direct, active:True
         login_user_via_session(client,email=users[0]["email"])# sysadmin
@@ -2322,7 +2325,8 @@ class TestSwordAPIJsonldSettingsView:
         assert args[0] == "weko_admin/admin/sword_api_jsonld_settings.html"
         assert kwargs["workflows"]
         assert kwargs["can_edit"]
-
+        assert kwargs["is_enable_duplicate_check"] == False
+        
         # get
         # cannot edit
         mock_can_edit.return_value = False

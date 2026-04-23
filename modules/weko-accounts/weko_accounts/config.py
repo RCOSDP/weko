@@ -227,11 +227,11 @@ WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX = "_gakunin_groups"
 WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "prefix":"jc",
     "sysadm_group":"jc_roles_sysadm",
-    "role_keyword":"roles",
+    "role_keyword":"ro",
     "role_mapping":{
-        "repoadm":"Repository Administrator",
-        "comadm":"Community Administrator",
-        "contributor":"Contributor",
+        "radm":"Repository Administrator",
+        "cadm":"Community Administrator",
+        "cont":"Contributor",
     }
 }
 """Patterns for Gakunin group names."""

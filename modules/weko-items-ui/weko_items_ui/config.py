@@ -385,3 +385,6 @@ LINKAGE_MQ_QUEUE = Queue("cris_researchmap_linkage", exchange=LINKAGE_MQ_EXCHANG
 
 WEKO_ITEMS_UI_PROXY_POSTING = False
 """Setting for multiple proxy posters."""
+
+WEKO_ITEMS_UI_ENABLE_DUPLICATE_CHECK = False
+"""Setting for duplicate check."""

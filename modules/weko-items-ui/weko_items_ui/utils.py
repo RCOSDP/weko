@@ -2154,13 +2154,8 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                             key_label.append(new_label.format('0'))
                             key_data.append('')
                     elif properties[key]['type'] in ['array', 'object']:
-                        if data and idx < len(data):
-                            if isinstance(data, list) and data[idx].get(key):
-                                m_data = data[idx][key]
-                            elif isinstance(data, dict) and data.get(key):
-                                m_data = data[key]
-                            else:
-                                m_data = None
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
                         else:
                             m_data = None
 
@@ -4078,6 +4073,8 @@ def get_duplicate_fields(data):
 def check_duplicate(data, is_item=True, exclude_ids=[]):
     """Check if a record or item is duplicate in records_metadata.
 
+    If the setting for enabling/disabling the duplicate check function is False, it returns false.
+    
     Checks whether records or items in records_metadata are unique.
 
     If an identifier exists, returns True if a duplicate item exists.
@@ -4098,6 +4095,9 @@ def check_duplicate(data, is_item=True, exclude_ids=[]):
             - List of duplicate record IDs.
             - List of duplicate record URLs.
     """
+    if current_app.config.get("WEKO_ITEMS_UI_ENABLE_DUPLICATE_CHECK", False) is False:
+        return False, [], []
+    
     if isinstance(data, str):
         try:
             data = json.loads(data)
@@ -4742,13 +4742,8 @@ def make_stats_file_with_permission(item_type_id, recids,
                             key_label.append(new_label.format('0'))
                             key_data.append('')
                     elif properties[key]['type'] in ['array', 'object']:
-                        if data and idx < len(data):
-                            if isinstance(data, list) and data[idx].get(key):
-                                m_data = data[idx][key]
-                            elif isinstance(data, dict) and data.get(key):
-                                m_data = data[key]
-                            else:
-                                m_data = None
+                        if data and idx < len(data) and data[idx].get(key):
+                            m_data = data[idx][key]
                         else:
                             m_data = None
 

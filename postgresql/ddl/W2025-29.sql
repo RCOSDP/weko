@@ -161,13 +161,282 @@ CREATE TABLE IF NOT EXISTS user_activity_logs (
     log_group_id INTEGER,
     log JSONB NOT NULL,
     remarks TEXT,
-    CONSTRAINT pk_user_activity_logs PRIMARY KEY (id),
+    CONSTRAINT pk_user_activity_logs PRIMARY KEY (id, date),
+    CONSTRAINT uq_date UNIQUE (date),
     CONSTRAINT fk_user_activity_active_user_id
         FOREIGN KEY (user_id) REFERENCES accounts_user(id) ON DELETE SET NULL,
     CONSTRAINT fk_user_activity_community_id
         FOREIGN KEY (community_id) REFERENCES communities_community(id) ON DELETE SET NULL
-);
+) PARTITION BY RANGE (date);
 CREATE SEQUENCE IF NOT EXISTS user_activity_log_group_id_seq;
+
+-- 2026-01～2026-12
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202601' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202601 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202601 FOR VALUES FROM (''2026-01-01'') TO (''2026-02-01'')';
+    RAISE NOTICE 'user_activity_logs_202601: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202601: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202602' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202602 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202602 FOR VALUES FROM (''2026-02-01'') TO (''2026-03-01'')';
+    RAISE NOTICE 'user_activity_logs_202602: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202602: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202603' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202603 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202603 FOR VALUES FROM (''2026-03-01'') TO (''2026-04-01'')';
+    RAISE NOTICE 'user_activity_logs_202603: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202603: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202604' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202604 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202604 FOR VALUES FROM (''2026-04-01'') TO (''2026-05-01'')';
+    RAISE NOTICE 'user_activity_logs_202604: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202604: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202605' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202605 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202605 FOR VALUES FROM (''2026-05-01'') TO (''2026-06-01'')';
+    RAISE NOTICE 'user_activity_logs_202605: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202605: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202606' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202606 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202606 FOR VALUES FROM (''2026-06-01'') TO (''2026-07-01'')';
+    RAISE NOTICE 'user_activity_logs_202606: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202606: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202607' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202607 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202607 FOR VALUES FROM (''2026-07-01'') TO (''2026-08-01'')';
+    RAISE NOTICE 'user_activity_logs_202607: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202607: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202608' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202608 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202608 FOR VALUES FROM (''2026-08-01'') TO (''2026-09-01'')';
+    RAISE NOTICE 'user_activity_logs_202608: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202608: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202609' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202609 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202609 FOR VALUES FROM (''2026-09-01'') TO (''2026-10-01'')';
+    RAISE NOTICE 'user_activity_logs_202609: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202609: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202610' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202610 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202610 FOR VALUES FROM (''2026-10-01'') TO (''2026-11-01'')';
+    RAISE NOTICE 'user_activity_logs_202610: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202610: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202611' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202611 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202611 FOR VALUES FROM (''2026-11-01'') TO (''2026-12-01'')';
+    RAISE NOTICE 'user_activity_logs_202611: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202611: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202612' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202612 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202612 FOR VALUES FROM (''2026-12-01'') TO (''2027-01-01'')';
+    RAISE NOTICE 'user_activity_logs_202612: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202612: Already exists, skipped.';
+END IF;
+
+-- 2027-01～2027-12
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202701' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202701 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202701 FOR VALUES FROM (''2027-01-01'') TO (''2027-02-01'')';
+    RAISE NOTICE 'user_activity_logs_202701: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202701: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202702' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202702 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202702 FOR VALUES FROM (''2027-02-01'') TO (''2027-03-01'')';
+    RAISE NOTICE 'user_activity_logs_202702: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202702: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202703' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202703 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202703 FOR VALUES FROM (''2027-03-01'') TO (''2027-04-01'')';
+    RAISE NOTICE 'user_activity_logs_202703: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202703: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202704' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202704 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202704 FOR VALUES FROM (''2027-04-01'') TO (''2027-05-01'')';
+    RAISE NOTICE 'user_activity_logs_202704: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202704: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202705' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202705 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202705 FOR VALUES FROM (''2027-05-01'') TO (''2027-06-01'')';
+    RAISE NOTICE 'user_activity_logs_202705: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202705: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202706' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202706 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202706 FOR VALUES FROM (''2027-06-01'') TO (''2027-07-01'')';
+    RAISE NOTICE 'user_activity_logs_202706: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202706: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202707' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202707 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202707 FOR VALUES FROM (''2027-07-01'') TO (''2027-08-01'')';
+    RAISE NOTICE 'user_activity_logs_202707: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202707: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202708' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202708 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202708 FOR VALUES FROM (''2027-08-01'') TO (''2027-09-01'')';
+    RAISE NOTICE 'user_activity_logs_202708: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202708: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202709' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202709 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202709 FOR VALUES FROM (''2027-09-01'') TO (''2027-10-01'')';
+    RAISE NOTICE 'user_activity_logs_202709: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202709: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202710' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202710 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202710 FOR VALUES FROM (''2027-10-01'') TO (''2027-11-01'')';
+    RAISE NOTICE 'user_activity_logs_202710: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202710: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202711' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202711 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202711 FOR VALUES FROM (''2027-11-01'') TO (''2027-12-01'')';
+    RAISE NOTICE 'user_activity_logs_202711: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202711: Already exists, skipped.';
+END IF;
+
+IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_name = 'user_activity_logs_202712' AND table_schema = 'public'
+) THEN
+    EXECUTE 'CREATE TABLE user_activity_logs_202712 (LIKE user_activity_logs INCLUDING ALL)';
+    EXECUTE 'ALTER TABLE user_activity_logs ATTACH PARTITION user_activity_logs_202712 FOR VALUES FROM (''2027-12-01'') TO (''2028-01-01'')';
+    RAISE NOTICE 'user_activity_logs_202712: Created and attached as partition.';
+ELSE
+    RAISE NOTICE 'user_activity_logs_202712: Already exists, skipped.';
+END IF;
 
 -- modules/weko-notifications
 RAISE NOTICE 'Migration for module weko-notifications';
@@ -931,45 +1200,50 @@ If you received this message in error, please notify the [restricted_site_name_e
 
 [restricted_site_name_en]：[restricted_site_url]
 E-mail：[restricted_site_mail]', true, 3),
-    (11, 'シークレットURL提供のお知らせ／Notice of providing secret URL', '[restricted_university_institution]
-[restricted_fullname]
-
-[restricted_site_name_ja]です。
+   (11, 'シークレットURL提供のお知らせ／Notice of providing secret URL', '
+シークレットURL機能利用者　様
 
 [restricted_data_name]に登録されている[file_name]のシークレットURLを作成しました。
 
-下記アドレスよりダウンロードすることができます。
+以下のURLからダウンロードが可能です。
 
+ダウンロードURL：
 [secret_url]
 
-このURLは[restricted_expiration_date]まで有効です。ダウンロードは[restricted_download_count]回まで可能です。
+有効期限：[restricted_expiration_date]まで有効です
+ダウンロード回数：[restricted_download_count]回まで可能です。
 
+＊本URLは、当該コンテンツを特定の方に共有することを前提として発行されています。
+＊セキュリティ保護のため、第三者への転送・共有は固くご遠慮ください。
 ＊このメールは自動送信されているので返信しないでください。
 ＊このメールに心当たりのない方は、[restricted_site_name_ja]までご連絡ください。
 
 [restricted_site_name_ja]：[restricted_site_url]
 問い合わせ窓口：[restricted_site_mail]
 
-
 ----------------------------------------------------------------------------------
 
-[restricted_university_institution]
-[restricted_fullname]
+Dear Secret URL Feature User,
 
-This is a message from [restricted_site_name_en].
-Secret URL for [file_name] registered in [restricted_data_name] is created.
+A secret URL has been generated for the file [file_name] registered under [restricted_data_name].
 
-The data can be downloaded from the address below.
+You can download the file from the link below:
 
+Download URL:  
 [secret_url]
 
-This URL is valid until [restricted_expiration_date]. You can download it up to [restricted_download_count] times.
+Expiration Date: Valid until [restricted_expiration_date]
+Download Limit: Up to [restricted_download_count] downloads
 
-Please do not reply to this email as it has been sent automatically.
-If you received this message in error, please notify the [restricted_site_name_en].
+Please note the following:
+
+* This URL is issued on the premise that the content will be shared only with specific intended recipients.
+* For security reasons, please refrain from forwarding or sharing this URL with third parties.
+* This email was sent automatically; please do not reply.
+* If you received this message in error, please notify the [restricted_site_name_en].
 
 [restricted_site_name_en]：[restricted_site_url]
-E-mail：[restricted_site_mail]
+Contact: [restricted_site_mail]
 ', true, 1),
     (12, '利用申請のお知らせ / Notice of application for use', 'データ提供者 様
 
@@ -1168,8 +1442,12 @@ If you received this message in error, please notify the [restricted_site_name_e
 
 [restricted_site_name_en]：[restricted_site_url]
 E-mail：[restricted_site_mail]', true, 3)
-ON CONFLICT (id) DO NOTHING;
-
+-- ON CONFLICT (id) DO NOTHING;
+-- SecretURL mail template is updated, so use "DO UPDATE" for id=11
+ON CONFLICT (id)
+DO UPDATE SET
+    mail_body = EXCLUDED.mail_body
+WHERE EXCLUDED.id = 11;
 --
 -- Name: mail_templates_id_seq; Type: SEQUENCE SET; Schema: public; Owner: invenio
 --
@@ -1354,6 +1632,233 @@ CREATE TABLE IF NOT EXISTS cris_linkage_result (
         FOREIGN KEY (recid) REFERENCES pidstore_recid(recid),
     CONSTRAINT fk_cris_linkage_result_last_linked_item_item_metadata
         FOREIGN KEY (last_linked_item) REFERENCES item_metadata(id)
+);
+
+-- populate-instance.sh で追加・変更された内容
+RAISE NOTICE 'add record of access_actionsroles';
+--${INVENIO_WEB_INSTANCE} access allow "files-rest-object-read-version" role "${INVENIO_ROLE_REPOSITORY}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'files-rest-object-read-version', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Repository Administrator')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'files-rest-object-read-version' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Repository Administrator')
+);
+
+--${INVENIO_WEB_INSTANCE} access allow "files-rest-object-read-version" role "${INVENIO_ROLE_COMMUNITY}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'files-rest-object-read-version', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'files-rest-object-read-version' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+);
+
+--${INVENIO_WEB_INSTANCE} access allow "files-rest-object-read-version" role "${INVENIO_ROLE_CONTRIBUTOR}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'files-rest-object-read-version', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Contributor')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'files-rest-object-read-version' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Contributor')
+);
+
+--${INVENIO_WEB_INSTANCE} access allow "stats-api-access" role "${INVENIO_ROLE_COMMUNITY}" 
+INSERT INTO access_actionsroles (action, exclude, argument, role_id)
+SELECT 'stats-api-access', 'f', null, (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM access_actionsroles 
+  WHERE action = 'stats-api-access' 
+    AND role_id = (SELECT id FROM accounts_role WHERE name = 'Community Administrator')
+);
+
+RAISE NOTICE 'add record of api_certificate';
+--${INVENIO_WEB_INSTANCE} cert insert oaa "OAアシスト" 
+INSERT INTO api_certificate (api_code, api_name, cert_data)
+VALUES ('oaa', 'OAアシスト', '""')
+ON CONFLICT (api_name) DO NOTHING;
+
+RAISE NOTICE 'add record of admin_settings';
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 3 "site_license_mail_settings" "{'Root Index': {'auto_send_flag': False}}" 
+INSERT INTO admin_settings (id, name, settings)
+VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'site_license_mail_settings', '{"Root Index": {"auto_send_flag": false}}')
+ON CONFLICT (name)
+DO UPDATE SET settings =
+  CASE
+    WHEN NOT (admin_settings.settings ? 'Root Index')
+    THEN jsonb_build_object('Root Index', admin_settings.settings)
+    ELSE admin_settings.settings
+  END;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 6 "blocked_user_settings" "{'blocked_ePPNs': []}"
+INSERT INTO admin_settings (id, name, settings)
+VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'blocked_user_settings', '{"blocked_ePPNs": []}')
+ON CONFLICT (name) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 7 "shib_login_enable" "{'shib_flg': False}"
+INSERT INTO admin_settings (id, name, settings)
+VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'shib_login_enable', '{"shib_flg": false}')
+ON CONFLICT (name) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 8 "default_role_settings" "{'gakunin_role': '', 'orthros_outside_role': '', 'extra_role': ''}"
+INSERT INTO admin_settings (id, name, settings)
+VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'default_role_settings', '{"gakunin_role": "", "orthros_outside_role": "", "extra_role": ""}')
+ON CONFLICT (name) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} admin_settings create_settings 9 "attribute_mapping" "{'shib_eppn': '', 'shib_role_authority_name': '', 'shib_mail': '', 'shib_user_name': ''}"
+INSERT INTO admin_settings (id, name, settings)
+VALUES ((SELECT COALESCE(MAX(id),0)+1 FROM admin_settings), 'attribute_mapping', '{"shib_eppn": "", "shib_role_authority_name": "", "shib_mail": "", "shib_user_name": ""}')
+ON CONFLICT (name) DO NOTHING;
+
+RAISE NOTICE 'update restricted_access admin_settings';
+--
+-- Update settings for existing restricted access configuration
+-- add: max_secret_download_limit, max_secret_expiration_date
+-- update: secret_expiration_date, secret_download_limit, expiration_date, download_limit
+--
+WITH updated_max_limit AS (
+    SELECT
+        id,
+        settings,
+        CASE
+            WHEN NOT (settings->'secret_URL_file_download' ? 'max_secret_download_limit')
+                THEN jsonb_set(
+                    settings,
+                    '{secret_URL_file_download}',
+                    (settings->'secret_URL_file_download' || '{"max_secret_download_limit": 10}')::jsonb
+                )
+            ELSE settings
+        END AS max_limit
+    FROM admin_settings
+    WHERE name = 'restricted_access'
+),
+updated_max_expiration AS (
+    SELECT
+        id,
+        CASE
+            WHEN NOT (max_limit->'secret_URL_file_download' ? 'max_secret_expiration_date')
+                THEN jsonb_set(
+                    max_limit,
+                    '{secret_URL_file_download}',
+                    (max_limit->'secret_URL_file_download' || '{"max_secret_expiration_date": 30}')::jsonb
+                )
+            ELSE max_limit
+        END AS max_expiration
+    FROM updated_max_limit
+),
+updated_secret_expiration AS (
+    SELECT
+        id,
+        CASE
+            WHEN (max_expiration->'secret_URL_file_download'->>'secret_expiration_date_unlimited_chk')::boolean = true
+                AND (max_expiration->'secret_URL_file_download'->>'secret_expiration_date')::int = 9999999
+                THEN jsonb_set(
+                    max_expiration,
+                    '{secret_URL_file_download,secret_expiration_date}',
+                    to_jsonb((max_expiration->'secret_URL_file_download'->>'max_secret_expiration_date')::int)
+                )
+            ELSE max_expiration
+        END AS secret_expiration
+    FROM updated_max_expiration
+),
+updated_secret_limit AS (
+    SELECT
+        id,
+        CASE
+            WHEN (secret_expiration->'secret_URL_file_download'->>'secret_download_limit_unlimited_chk')::boolean = true
+                AND (secret_expiration->'secret_URL_file_download'->>'secret_download_limit')::int = 9999999
+                THEN jsonb_set(
+                    secret_expiration,
+                    '{secret_URL_file_download,secret_download_limit}',
+                    to_jsonb((secret_expiration->'secret_URL_file_download'->>'max_secret_download_limit')::int)
+                )
+            ELSE secret_expiration
+        END AS secret_limit
+    FROM updated_secret_expiration
+),
+updated_content_expiration AS (
+    SELECT
+        id,
+        CASE
+            WHEN (secret_limit->'content_file_download'->>'expiration_date_unlimited_chk')::boolean = true
+                AND (secret_limit->'content_file_download'->>'expiration_date')::int = 9999999
+                THEN jsonb_set(
+                    secret_limit,
+                    '{content_file_download,expiration_date}',
+                    to_jsonb(9999)
+                )
+            ELSE secret_limit
+        END AS content_expiration
+    FROM updated_secret_limit
+),
+updated_content_limit AS (
+    SELECT
+        id,
+        CASE
+            WHEN (content_expiration->'content_file_download'->>'download_limit_unlimited_chk')::boolean = true
+                AND (content_expiration->'content_file_download'->>'download_limit')::int = 9999999
+                THEN jsonb_set(
+                    content_expiration,
+                    '{content_file_download,download_limit}',
+                    to_jsonb(9999)
+                )
+            ELSE content_expiration
+        END AS content_limit
+    FROM updated_content_expiration
+)
+UPDATE admin_settings
+SET settings = updated_content_limit.content_limit
+FROM updated_content_limit
+WHERE admin_settings.id = updated_content_limit.id;
+
+RAISE NOTICE 'add record of authors_prefix';
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+SELECT 'NRID', 'NRID【非推奨】', 'https://nrid.nii.ac.jp/nrid/##', now(), now()
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM authors_prefix_settings 
+  WHERE scheme = 'NRID' 
+     OR scheme = 'NRID【非推奨】'
+);
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "ISNI" "ISNI" "http://www.isni.org/isni/##" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+VALUES ('ISNI', 'ISNI', 'http://www.isni.org/isni/##', now(), now())
+ON CONFLICT (scheme) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "VIAF" "VIAF" "https://viaf.org/viaf/##" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+VALUES ('VIAF', 'VIAF', 'https://viaf.org/viaf/##', now(), now())
+ON CONFLICT (scheme) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "kakenhi" "kakenhi【非推奨】" "" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+SELECT 'kakenhi', 'kakenhi【非推奨】', '', now(), now()
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM authors_prefix_settings 
+  WHERE scheme = 'kakenhi' 
+     OR scheme = 'kakenhi【非推奨】'
+);
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "Ringgold" "Ringgold" "" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+VALUES ('Ringgold', 'Ringgold', '', now(), now())
+ON CONFLICT (scheme) DO NOTHING;
+
+--${INVENIO_WEB_INSTANCE} authors_prefix default_settings "GRID" "GRID【非推奨】" "" 
+INSERT INTO authors_prefix_settings (name, scheme, url, created, updated)
+SELECT 'GRID', 'GRID【非推奨】', '', now(), now()
+WHERE NOT EXISTS (
+  SELECT 1 
+  FROM authors_prefix_settings 
+  WHERE scheme = 'GRID' 
+     OR scheme = 'GRID【非推奨】'
 );
 
 RAISE NOTICE 'End execution: Migration W2025-29.sql';

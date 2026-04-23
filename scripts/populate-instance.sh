@@ -127,6 +127,8 @@ ${INVENIO_WEB_INSTANCE} db init
 ${INVENIO_WEB_INSTANCE} db create -v
 ${INVENIO_WEB_INSTANCE} stats partition create $(date +%Y)
 ${INVENIO_WEB_INSTANCE} stats partition create $(date -d 'year' +%Y)
+${INVENIO_WEB_INSTANCE} logging partition create $(date +%Y)
+${INVENIO_WEB_INSTANCE} logging partition create $(date -d 'year' +%Y)
 # sphinxdoc-create-database-end
 
 # sphinxdoc-index-initialisation-begin
@@ -480,9 +482,9 @@ ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "NRID" "NRID【非推奨】" "https://nrid.nii.ac.jp/nrid/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "ISNI" "ISNI" ""
+       "ISNI" "ISNI" "http://www.isni.org/isni/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
-       "VIAF" "VIAF" ""
+       "VIAF" "VIAF" "https://viaf.org/viaf/##"
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \
        "AID" "AID" ""
 ${INVENIO_WEB_INSTANCE} authors_prefix default_settings \

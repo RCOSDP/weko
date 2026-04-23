@@ -65,6 +65,9 @@ setup(
     include_package_data=True,
     platforms="any",
     entry_points={
+        "flask.commands": [
+            "logging = weko_logging.cli:logging",
+        ],
         "invenio_base.apps": [
             "weko_logging_fs = weko_logging.fs:WekoLoggingFS",
             "weko_logging_user_activity = weko_logging.audit:WekoLoggingUserActivity",

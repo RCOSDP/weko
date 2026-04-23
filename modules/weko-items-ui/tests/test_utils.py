@@ -11402,6 +11402,12 @@ def test_get_duplicate_fields():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_check_duplicate -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_check_duplicate(app, users,db_records3):
     with app.test_request_context():
+        # Duplicate check disabled
+        app.config["WEKO_ITEMS_UI_ENABLE_DUPLICATE_CHECK"] = False
+        res, [], [] =  check_duplicate('',True)
+        assert res == False
+        
+        app.config["WEKO_ITEMS_UI_ENABLE_DUPLICATE_CHECK"] = True
         # JSON format NG
         res, [], [] =  check_duplicate('',True)
         assert res == False

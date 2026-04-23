@@ -859,13 +859,13 @@ class Indexes(object):
         )
 
         gakunin_map_prefix = gakunin_map_pattern.get("prefix", "jc")
-        role_keyword = gakunin_map_pattern.get("role_keyword", "roles")
+        role_keyword = gakunin_map_pattern.get("role_keyword", "ro")
 
         for role in roles:
             role_name = role.get("name", "")
             role_info = {"id": role.get("id"), "name": role_name}
             if role_name.startswith(gakunin_map_prefix):
-                if role_keyword in role_name:
+                if f"_{role_keyword}_" in role_name:
                     # gakunin_map group role
                     gakunin_map_role_groups.append(role)
                 else:
