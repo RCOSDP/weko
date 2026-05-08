@@ -623,7 +623,7 @@ msgstr "Feedback email feature"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:42
 msgid "Send"
-msgstr "Enable"
+msgstr "Send"
 
 #: weko_admin/template/weko_admin/admin/feedback_mail.html:43
 msgid "Do not send"

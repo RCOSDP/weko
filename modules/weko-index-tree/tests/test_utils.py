@@ -211,9 +211,10 @@ def test_reset_tree(app, db, users ,indextree_sample):
 
         with patch("flask_login.utils._get_user", return_value=users[0]['obj']): #noroleuser
             with app.test_request_context(headers=[("Accept-Language", "en")]):
-                tree = []
-                reset_tree(tree, ignore_more=True)
-                assert tree==[]
+                with patch("weko_index_tree.utils.orjson.loads", return_value="test_tree"):
+                    tree = []
+                    reset_tree(tree, ignore_more=True)
+                    assert tree==[]
 
                 tree = []
                 reset_tree(tree, ["10"], more_ids=["10"])

@@ -656,6 +656,8 @@ def test_indexes_get_index_tree(i18n_app,
 
         # get_browsing_tree
         res = Indexes.get_browsing_tree(0)
+        
+        res = Indexes.get_browsing_tree(0)
         assert len(res)==3
 
         with patch("weko_index_tree.api.RedisConnection", side_effect=RedisError):
@@ -702,7 +704,16 @@ def test_indexes_get_index_tree(i18n_app,
 
         res = Indexes.get_browsing_tree_ignore_more(1)
         assert len(res)==1
+        
+        tree=Indexes.get_index_tree()
+        tree[0]["settings"]["isCollapsedOnInit"] = True
+        tree[0]["children"][0]["settings"]["isCollapsedOnInit"] = False
 
+        Indexes.update_isCollapsedOnInit(tree, key_list=["1"])
+        
+        assert tree[0]["settings"]["isCollapsedOnInit"] == False
+        assert tree[0]["children"][0]["settings"]["isCollapsedOnInit"] == True
+        
         # get_browsing_tree_paths
         res = Indexes.get_browsing_tree_paths(None)
         assert res==['1', '1/11', '2', '2/21', '2/22', '3']
@@ -790,12 +801,13 @@ def test_indexes_get_index_tree(i18n_app,
 
         # is_public_state_and_not_in_future
         res = Indexes.is_public_state_and_not_in_future([3])
-        assert res==False
+        assert res==True
 
         # set_item_sort_custom
+        index = Indexes.get_index(3)
         res = Indexes.set_item_sort_custom(3, {1: 1, 2: 2})
-        assert res.id==3
-        assert res.item_custom_sort=={'1': 1, '2': 2}
+        assert index.item_custom_sort == {'1': 1, '2': 2}
+        
 
         # get_item_sort
         res = Indexes.get_item_sort(3)

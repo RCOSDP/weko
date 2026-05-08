@@ -117,6 +117,8 @@ def reset_tree(tree, path=None, more_ids=None, ignore_more=False, pid=0):
                 # tree.clear()
                 # tree.append(json.loads(str(v)))
                 tree[:] = orjson.loads(str(v))
+                from .api import Indexes
+                tree = Indexes.update_isCollapsedOnInit(tree)
 
             except KeyError:
                 reduce_index_by_role(tree, roles, groups)

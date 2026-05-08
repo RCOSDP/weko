@@ -38,9 +38,9 @@
       <table class="table table-striped table-bordered">
         <thead>
           <tr>
-            <th></th>
-            <th>{{_('Organization')}}</th>
-            <th>{{_('Email Address')}}</th>
+            <th style="text-align: center; padding-top: 1px; padding-bottom: 1px;">{{_('Send')}}<br><input type="checkbox" id="all-check"> </th>
+            <th style="vertical-align: middle;">{{_('Organization')}}</th>
+            <th style="vertical-align: middle;">{{_('Email Address')}}</th>
           </tr>
         </thead>
         <tbody>
@@ -76,14 +76,14 @@
             <h4>{{_('Automatic Send')}}</h4>
           </td>
           <td colspan="6">
-            <p>{{_('Select "Send" to automatically send a use of site license statistics email to the checked the organization.')}}</p>
+            <p>{{_('Select "Enable" to automatically send a use of site license statistics email to the checked the organization.')}}</p>
           </td>
         </tr>
         <tr>
           <td align="center"  style="width:150px">
             <label class="radio-inline" for="enable_auto_send">
               <input type="radio" name="dis_enable_auto_send" id="enable_auto_send" value="True" {{ 'checked' if auto_send else '' }}>
-              {{_('Send')}}
+              {{_('Enable')}}
             </label>
           </td>
           <td align="center" style="width:150px">
@@ -109,7 +109,7 @@
         </tr>
         <tr>
           <td>
-            {{_('Aggregation month')}}
+            {{_('Aggregation period')}}
           </td>
           <td>
             <select class="form-control" id="from_year_select" name="year">

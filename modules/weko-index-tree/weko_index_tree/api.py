@@ -30,7 +30,7 @@ from functools import partial
 from socketserver import DatagramRequestHandler
 
 from redis.exceptions import RedisError
-from flask import current_app
+from flask import current_app, session
 from flask_babelex import gettext as _
 from flask_login import current_user
 from invenio_accounts.models import Role
@@ -50,7 +50,7 @@ from .utils import cached_index_tree_json, check_doi_in_index, \
     check_restrict_doi_with_indexes, filter_index_list_by_role, \
     get_index_id_list, get_publish_index_id_list, get_tree_json, \
     get_user_roles, is_index_locked, reset_tree, sanitize, save_index_trees_to_redis
-
+from .config import WEKO_INDEX_TREE_STATE_PREFIX
 
 class Indexes(object):
     """Define API for index tree creation and update."""
@@ -576,6 +576,8 @@ class Indexes(object):
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
                 tree = orjson.loads(str(v))
+                tree = cls.update_isCollapsedOnInit(tree)
+                save_index_trees_to_redis(tree)
             except RedisError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
@@ -596,6 +598,7 @@ class Indexes(object):
                 datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
                 v = datastore.get("index_tree_view_" + os.environ.get('INVENIO_WEB_HOST_NAME') + "_" + current_i18n.language).decode("UTF-8")
                 tree = orjson.loads(str(v))
+                tree = cls.update_isCollapsedOnInit(tree)
             except KeyError:
                 tree = cls.get_index_tree(pid)
                 save_index_trees_to_redis(tree)
@@ -608,6 +611,36 @@ class Indexes(object):
         reset_tree(tree=tree, more_ids=more_ids, pid=pid)
         return tree
 
+    @classmethod
+    def update_isCollapsedOnInit(cls, tree, key_list=None):
+        """Update isCollapsedOnInit of index tree 
+    
+        Args:
+            tree (dict): Index tree
+            key_list (set): List of expanded index trees
+        
+        Returns:
+            tree (dict): Index tree
+        
+        """
+        if key_list is None:
+            key = current_app.config.get(
+                    "WEKO_INDEX_TREE_STATE_PREFIX",
+                    WEKO_INDEX_TREE_STATE_PREFIX
+                    )
+            key_list = set(session.get(key, []))
+            
+        for node in range(len(tree)):
+            if tree[node].get("children"):
+                cls.update_isCollapsedOnInit(tree[node].get("children"),key_list)
+            if str(tree[node].get("cid")) in key_list:
+                tree[node]["settings"]["isCollapsedOnInit"] = False
+            else:
+                tree[node]["settings"]["isCollapsedOnInit"] = True
+        return tree
+    
+    
+    
     @classmethod
     def get_browsing_tree_ignore_more(cls, pid=0):
         """Get browsing tree ignore more."""
