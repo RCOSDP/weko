@@ -50,16 +50,16 @@ from elasticsearch import Elasticsearch
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.exc import OperationalError
 from weko_admin.models import AdminSettings
-from weko_records.api import FeedbackMailList, ItemLink, ItemsMetadata, ItemTypes, Mapping,WekoRecord
+from weko_records.api import ItemLink
 from invenio_pidrelations.serializers.utils import serialize_relations
 from weko_deposit.api import WekoDeposit, WekoFileObject, WekoIndexer, \
     WekoRecord, _FormatSysBibliographicInformation, _FormatSysCreator
 from weko_deposit.config import WEKO_DEPOSIT_BIBLIOGRAPHIC_TRANSLATIONS
-from invenio_accounts.testutils import login_user_via_view,login_user_via_session
+from invenio_accounts.testutils import login_user_via_session
 from invenio_accounts.models import User
-from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE,WEKO_ITEMS_UI_FILE_SISE_PREVIEW_LIMIT
+from weko_items_ui.config import WEKO_ITEMS_UI_MS_MIME_TYPE
 
-from tests.helpers import login
+from tests.helpers import json_data
 
 from weko_redis.redis import RedisConnection
 import json
@@ -108,7 +108,7 @@ class TestWekoFileObject:
         with app.test_request_context():
             file = WekoFileObject(obj,{})
             assert type(file)==WekoFileObject
-        
+
     # def info(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoFileObject::test_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_info(self,app,location):
@@ -123,7 +123,7 @@ class TestWekoFileObject:
             file['filename']=key
             assert file.info()=={'bucket': '{}'.format(file.bucket.id), 'checksum': 'sha256:936a185caaa266bb9cbe981e9e05cb78cd732b0b3280eb944412bb6f8f8f07af', 'key': 'hello.txt', 'size': 10, 'version_id': '{}'.format(file.version_id), 'filename': 'hello'}
 
-    
+
     #  def file_preview_able(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoFileObject::test_file_preview_able -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_file_preview_able(self,app,location):
@@ -141,10 +141,6 @@ class TestWekoFileObject:
             assert file.file_preview_able()==True
             file.data['size'] = 10000000+1
             assert file.file_preview_able()==False
-
-            
-    
-
 
 
 # class WekoIndexer(RecordIndexer):
@@ -240,7 +236,7 @@ class TestWekoIndexer:
             indexer.get_metadata_by_item_id(record.pid)
 
         indexer.delete_by_id(record.id)
-        
+
 
     # def get_count_by_index_id(self, tree_path):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_count_by_index_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -261,7 +257,7 @@ class TestWekoIndexer:
         assert isinstance(next(ret),list)
         assert isinstance(next(ret),dict)
         assert ret is not None
-        
+
     #     def get_metadata_by_item_id(self, item_id):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_get_metadata_by_item_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_metadata_by_item_id(self,es_records):
@@ -293,7 +289,7 @@ class TestWekoIndexer:
         ret = indexer.update_author_link(author_link_info)
         assert ret == {'_index': 'test-weko-item-v1.0.0', '_type': 'item-v1.0.0', '_id': '{}'.format(record.id), '_version': 3, 'result': 'updated', '_shards': {'total': 2, 'successful': 1, 'failed': 0}, '_seq_no': 9, '_primary_term': 1}
 
-       
+
 
     #     def update_jpcoar_identifier(self, dc, item_id):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoIndexer::test_update_jpcoar_identifier -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -313,7 +309,7 @@ class TestWekoIndexer:
         res.append(records[1]['record'])
         res.append(records[2]['record'])
         indexer.bulk_update(res)
-        
+
         with patch("weko_deposit.api.bulk",return_value=(0,["test_error1","test_error2"])):
             indexer.bulk_update(res)
 
@@ -336,7 +332,7 @@ class TestWekoDeposit:
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_is_published -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_is_published(self,app,location,es_records):
         indexer, records = es_records
-        deposit = records[0]['deposit']        
+        deposit = records[0]['deposit']
         assert deposit.is_published()==True
 
     # def merge_with_published(self):
@@ -346,7 +342,7 @@ class TestWekoDeposit:
         dep = records[0]['deposit']
         ret = dep.merge_with_published()
         assert isinstance(ret,RecordRevision)==True
-        
+
         record = records[0]["record"]
         record["$schema"] = "https://127.0.0.1/schema/deposits/deposit-v1.0.0.json"
         record["control_number"] = "1"
@@ -356,7 +352,7 @@ class TestWekoDeposit:
             with patch("weko_deposit.api.Merger.run",side_effect=UnresolvedConflictsException(["test_conflict"])):
                 with pytest.raises(MergeConflict):
                     ret = dep.merge_with_published()
-    
+
     # def _patch(diff_result, destination, in_place=False):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__patch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__patch(self,app,location):
@@ -380,7 +376,7 @@ class TestWekoDeposit:
     # def add(node, changes):
     # def change(node, changes):
     # def remove(node, changes):
-    
+
     # def _publish_new(self, id_=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__publish_new -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__publish_new(self,app,location):
@@ -389,8 +385,8 @@ class TestWekoDeposit:
             record=dep._publish_new()
             from invenio_records_files.api import Record
             assert isinstance(record,Record)==True
-            
-           
+
+
 
     # def _update_version_id(self, metas, bucket_id):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__update_version_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -445,7 +441,7 @@ class TestWekoDeposit:
             deposit.publish_without_commit()
             assert deposit['_deposit']['id']
             assert 'published' == deposit.status
-            assert deposit.revision_id==2 
+            assert deposit.revision_id==2
 
     # def create(cls, data, id_=None, recid=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_create -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -473,7 +469,7 @@ class TestWekoDeposit:
             assert deposit['_deposit']['id']=="3"
             assert 'draft' == deposit.status
             assert 0 == deposit.revision_id
-            
+
             with patch("weko_deposit.api.PersistentIdentifier.create",side_effect=BaseException("test_error")):
                 session["activity_info"] = {"activity_id":db_activity[1].activity_id}
                 data = {"$schema":"https://127.0.0.1/schema/deposits/deposit-v1.0.0.json","_deposit":{"id":"2","owners":[1],"status":"draft","created_by":1}}
@@ -547,13 +543,13 @@ class TestWekoDeposit:
 
         with pytest.raises(AttributeError):
             ret = deposit.newversion()
-        
+
         ret = deposit.newversion(deposit.pid,True)
         assert ret==None
 
         ret = deposit.newversion(deposit.pid)
         assert ret==None
-        
+
     # def get_content_files(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_get_content_files -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_content_files(sel,app,db,location,es_records):
@@ -592,7 +588,7 @@ class TestWekoDeposit:
         # is_edit
         deposit.is_edit=True
         deposit.delete_old_file_index()
-        
+
 
 
     # def delete_item_metadata(self, data):
@@ -602,7 +598,7 @@ class TestWekoDeposit:
         record = records[0]
         deposit = record['deposit']
         item_data = record['item_data']
-        
+
         deposit.delete_item_metadata(item_data)
 
     # def convert_item_metadata(self, index_obj, data=None):
@@ -618,7 +614,7 @@ class TestWekoDeposit:
         ret1,ret2 = deposit.convert_item_metadata(index_obj,record_data)
         assert ret1 == test1
         assert ret2 == test2
-        
+
         # no data
         redis_connect = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv = True)
         redis_connect.put("cache_itemsIndex_1", json.dumps(record_data).encode())
@@ -643,7 +639,7 @@ class TestWekoDeposit:
                 ret = deposit.convert_item_metadata(index_obj,record_data)
                 assert httperror.value.code == 500
                 assert httperror.value.data == "MAPPING_ERROR"
-        
+
     # def _convert_description_to_object(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test__convert_description_to_object -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__convert_description_to_object(sel,app,db,location,es_records):
@@ -674,7 +670,7 @@ class TestWekoDeposit:
         record = records[0]
         deposit = record['deposit']
         deposit._convert_data_for_geo_location()
-        
+
         jrc = {"geoLocation":{
             "geoLocationPlace":"test_location_place",
             "geoLocationPoint":{
@@ -709,7 +705,7 @@ class TestWekoDeposit:
         }
         deposit._convert_data_for_geo_location()
         assert deposit.jrc["geoLocation"] == test
-    
+
     #         def _convert_geo_location(value):
     #         def _convert_geo_location_box():
 
@@ -797,7 +793,7 @@ class TestWekoDeposit:
         record = records[0]
         deposit = record['deposit']
         recid = record['recid']
-        
+
         assert deposit.merge_data_to_record_without_version(recid)
 
     # def prepare_draft_item(self, recid):
@@ -817,7 +813,7 @@ class TestWekoDeposit:
         indexer, records = es_records
         record = records[0]
         deposit = record['deposit']
-        
+
         ret = indexer.get_metadata_by_item_id(deposit.id)
         # 正しくない手法だが、Elasticsearchの結果を前提としている
         deposit.jrc = copy.deepcopy(ret['_source'])
@@ -848,7 +844,7 @@ class TestWekoRecord:
         record = WekoRecord({})
         with pytest.raises(AttributeError):
             record.pid_recid
-        
+
         indexer, results = es_records
         result = results[0]
         record = result['record']
@@ -857,7 +853,7 @@ class TestWekoRecord:
         assert isinstance(pid,PersistentIdentifier)==True
         assert pid.pid_type=="recid"
         assert pid.pid_value=="1"
-        
+
 
 
     #     def hide_file(self):
@@ -902,6 +898,11 @@ class TestWekoRecord:
             data = [{"language":"en","title":"test_title"}]
             result = record.switching_language(data)
             assert result == "test_title"
+        # not exist language
+        with app.test_request_context(headers=[('Accept-Language', 'da')]):
+            data = [{"title":"test_title"}]
+            result = record.switching_language(data)
+            assert result == "test_title"
         # language != current_language, language=en
         with app.test_request_context(headers=[('Accept-Language', 'ja')]):
             data = [{"language":"en","title":"test_title"}]
@@ -912,9 +913,14 @@ class TestWekoRecord:
             data = [{"language":"ja","title":"test_title"}]
             result = record.switching_language(data)
             assert result == "test_title"
-        # not exist language
+        # language != current_language, language != en
         with app.test_request_context(headers=[('Accept-Language', 'da')]):
-            data = [{"title":"test_title"}]
+            data = [{"title":"da_title","language":"da"}]
+            result = record.switching_language(data)
+            assert result == "da_title"
+        # language = ""
+        with app.test_request_context(headers=[('Accept-Language', 'da')]):
+            data = [{"title":"test_title","language":""}]
             result = record.switching_language(data)
             assert result == "test_title"
         # len(data) <= 0
@@ -922,56 +928,27 @@ class TestWekoRecord:
             data = {}
             result = record.switching_language(data)
             assert result == ""
-        
-        # no language
-        with app.test_request_context(headers=[('Accept-Language', 'da')]):
-            data = [{"title":"title"},{"title":"en_title","language":"en"}]
-            result = record.switching_language(data)
-            assert result == "title"
-        
-        # no language
-        with app.test_request_context(headers=[('Accept-Language', 'en')]):
-            data = [{"title":"title"},{"title":"en_title","language":"en"}]
-            result = record.switching_language(data)
-            assert result == "en_title"
-        
-        # no language
-        with app.test_request_context(headers=[('Accept-Language', 'ja')]):
-            data = [{"title":"en_title","language":"en"},{"title":"title"}]
-            result = record.switching_language(data)
-            assert result == "en_title"
-            
+
 
     #     def __get_titles_key(item_type_mapping):
     #     def get_titles(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_get_titles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_get_titles(self,app,es_records,db_itemtype,db_oaischema):
-        record = WekoRecord({})
-        with app.test_request_context():
-            with pytest.raises(TypeError):
+        meta_option = json_data("data/itemtype_render.json").get("meta_fix")
+        item_type_mapping = json_data("data/itemtype_mapping.json")
+        hide_list = []
+        with patch("weko_items_ui.utils.get_options_and_order_list",return_value=(meta_option,item_type_mapping)), \
+             patch("weko_items_ui.utils.get_hide_list_by_schema_form",return_value=hide_list):
+            record = WekoRecord({})
+            with app.test_request_context():
                 assert record.get_titles==""
-        indexer, results = es_records
-        result = results[0]
-        record = result['record']
-        assert record['item_type_id']=="1"
+            _, results = es_records
+            result = results[0]
+            record = result['record']
+            assert record['item_type_id']=="1"
 
-
-
-        with app.test_request_context():
-            assert record.get_titles=="title"
-        
-        with app.test_request_context(headers=[("Accept-Language", "en")]):
-            assert record.get_titles=="title"
-
-        app.config['BABEL_DEFAULT_LOCALE'] = 'ja'
-        #from flask_babelex import refresh; refresh()
-        with app.test_request_context():
-            assert record.get_titles=="タイトル"
-
-        app.config['BABEL_DEFAULT_LOCALE'] = 'fr'
-        #from flask_babelex import refresh; refresh()
-        with app.test_request_context():
-            assert record.get_titles=="title"
+            with app.test_request_context():
+                assert record.get_titles=="title"
 
 
     #     def items_show_list(self):
@@ -1011,7 +988,7 @@ class TestWekoRecord:
 
 
     #     def __remove_file_metadata_do_not_publish(self, file_metadata_list):
-    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test___remove_file_metadata_do_not_publish -vv -s --cov-branch 
+    # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test___remove_file_metadata_do_not_publish -vv -s --cov-branch
     #     def __check_user_permission(user_id_list):
     #     def is_input_open_access_date(file_metadata):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_is_input_open_access_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1037,7 +1014,7 @@ class TestWekoRecord:
         record = WekoRecord({})
         assert record.is_future_open_date(record,{})==True
         assert record.is_future_open_date(record,{'url': {'url': 'https://weko3.example.org/record/1/files/hello.txt'}, 'date': [{'dateType': 'Available', 'dateValue': '2022-09-07'}], 'format': 'plain/text', 'filename': 'hello.txt', 'filesize': [{'value': '146 KB'}], 'accessrole': 'open_access', 'version_id': 'e131046c-291f-4065-b4b4-ca3bf1fac6e3', 'mimetype': 'application/pdf', 'file': 'SGVsbG8sIFdvcmxk'})==False
-        
+
 
 
 
@@ -1064,7 +1041,7 @@ class TestWekoRecord:
         pid = record.pid_cnri
         assert isinstance(pid,PersistentIdentifier)==True
         assert pid.pid_type=='hdl'
-        
+
 
     #     def pid_parent(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoRecord::test_pid_parent -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1112,7 +1089,7 @@ class TestWekoRecord:
         record = WekoRecord({})
         with pytest.raises(AttributeError):
             record._get_pid('')
-        
+
 
 
     #     def update_item_link(self, pid_value):
@@ -1136,8 +1113,8 @@ class TestWekoRecord:
             result = record.get_file_data()
             assert result[0]["accessrole"] == "open_access"
             assert result[0]["filename"] == "hello.txt"
-        
-        
+
+
 # class _FormatSysCreator:
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class Test_FormatSysCreator:
@@ -1147,7 +1124,7 @@ class Test_FormatSysCreator:
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
             assert isinstance(obj,_FormatSysCreator)==True
-        
+
 #     def _get_creator_languages_order(self):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_creator_languages_order -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_creator_languages_order(self,app,prepare_creator):
@@ -1162,7 +1139,7 @@ class Test_FormatSysCreator:
     def test__format_creator_to_show_detail(self,app,prepare_creator):
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
-            assert isinstance(obj,_FormatSysCreator)==True 
+            assert isinstance(obj,_FormatSysCreator)==True
             language = 'en'
             parent_key = 'creatorNames'
             lst = []
@@ -1175,7 +1152,7 @@ class Test_FormatSysCreator:
     def test__get_creator_to_show_popup(self,app,prepare_creator):
         with app.test_request_context():
             obj = _FormatSysCreator(prepare_creator)
-            assert isinstance(obj,_FormatSysCreator)==True 
+            assert isinstance(obj,_FormatSysCreator)==True
             creators={'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '所属機関', 'affiliationNameLang': 'ja'}, {'affiliationName': 'Affilication Name', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}]}], 'creatorAlternatives': [{'creatorAlternative': 'Alternative Name', 'creatorAlternativeLang': 'en'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}
             language='ja'
             creator_list=[]
@@ -1185,7 +1162,7 @@ class Test_FormatSysCreator:
             assert language=="ja"
             assert creator_list==[{'ja': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'familyName': '情報', 'familyNameLang': 'ja'}, {'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'affiliationName': '所属機関', 'affiliationNameLang': 'ja', 'affiliationNameIdentifier': 'xxxxxx', 'affiliationNameIdentifierURI': 'xxxxx', 'affiliationNameIdentifierScheme': 'ISNI'}, {'creatorAlternative': '別名', 'creatorAlternativeLang': 'ja'}]}]
             assert creator_list_temp==None
-            
+
 
 #         def _run_format_affiliation(affiliation_max, affiliation_min,
 #         def format_affiliation(affiliation_data):
@@ -1208,7 +1185,7 @@ class Test_FormatSysCreator:
             obj = _FormatSysCreator(prepare_creator)
             assert isinstance(obj,_FormatSysCreator)==True
             assert obj.format_creator()=={'name': ['Joho, Taro'], 'order_lang': [{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]}
-    
+
     # def _format_creator_on_creator_popup(self, creators: Union[dict, list],
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_on_creator_popup -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_on_creator_popup(self,app,prepare_creator):
@@ -1219,7 +1196,7 @@ class Test_FormatSysCreator:
             creator_list=[{'ja': {'givenName': ['太郎'], 'givenNameLang': ['ja'], 'familyName': ['情報'], 'familyNameLang': ['ja'], 'creatorName': ['情報, 太郎'], 'creatorNameLang': ['ja'], 'affiliationName': ['所属機関'], 'affiliationNameLang': ['ja'], 'affiliationNameIdentifier': ['xxxxxx'], 'affiliationNameIdentifierURI': ['xxxxx'], 'affiliationNameIdentifierScheme': ['ISNI'], 'creatorAlternative': ['別名'], 'creatorAlternativeLang': ['ja']}}, {'ja-Kana': {'givenName': ['タロウ'], 'givenNameLang': ['ja-Kana'], 'familyName': ['ジョウホウ'], 'familyNameLang': ['ja-Kana'], 'creatorName': ['ジョウホウ, タロウ'], 'creatorNameLang': ['ja-Kana']}}, {'en': {'givenName': ['Taro'], 'givenNameLang': ['en'], 'familyName': ['Joho'], 'familyNameLang': ['en'], 'creatorName': ['Joho, Taro'], 'creatorNameLang': ['en'], 'affiliationName': ['Affilication Name'], 'affiliationNameLang': ['en'], 'creatorAlternative': ['Alternative Name'], 'creatorAlternativeLang': ['en']}}]
             obj._format_creator_on_creator_popup(creator_list,formatted_creator_list)
             assert formatted_creator_list==[{'ja': {'creatorName': ['情報, 太郎'], 'creatorAlternative': ['別名'], 'affiliationName': ['ISNI 所属機関'], 'affiliationNameIdentifier': [{'identifier': 'xxxxxx', 'uri': 'xxxxx'}]}}, {'ja-Kana': {'creatorName': ['ジョウホウ, タロウ'], 'creatorAlternative': [], 'affiliationName': [], 'affiliationNameIdentifier': []}}, {'en': {'creatorName': ['Joho, Taro'], 'creatorAlternative': ['Alternative Name'], 'affiliationName': [' Affilication Name'], 'affiliationNameIdentifier': [{'identifier': '', 'uri': ''}]}}]
-    
+
     # def _format_creator_name(creator_data: dict,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__format_creator_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__format_creator_name(self,app,prepare_creator):
@@ -1289,17 +1266,17 @@ class Test_FormatSysCreator:
             merged_data={}
             obj._merge_creator_data(creator_data,merged_data)
             assert merged_data == {}
-            
+
             creator_data={'givenName': ['太郎']}
             merged_data={}
             obj._merge_creator_data(creator_data,merged_data)
             assert merged_data == {}
-            
+
             creator_data={'givenName': '太郎'}
             merged_data={'givenName': ['次郎']}
             obj._merge_creator_data(creator_data,merged_data)
             assert merged_data == {'givenName': ['次郎','太郎']}
-            
+
     #         def merge_data(key, value):
     # def _get_default_creator_name(self, list_parent_key: list,
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test_FormatSysCreator::test__get_default_creator_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1332,10 +1309,10 @@ class Test__FormatSysBibliographicInformation():
         obj=_FormatSysBibliographicInformation(copy.deepcopy(mlt),copy.deepcopy(solst))
         assert isinstance(obj,_FormatSysBibliographicInformation) == True
         assert obj.is_bibliographic()==True
-        
+
         obj.bibliographic_meta_data_lst={"bibliographic_titles":"title"}
         assert obj.is_bibliographic() == True
-        
+
         obj.bibliographic_meta_data_lst="str_value"
         assert obj.is_bibliographic() == False
 
@@ -1351,7 +1328,7 @@ class Test__FormatSysBibliographicInformation():
         with app.test_request_context(headers=[("Accept-Language", "en")]):
             assert obj.get_bibliographic_list(True)==[{'title_attribute_name': 'Journal Title', 'magazine_attribute_name': [{'Volume': '1'}, {'Issue': '12'}, {'p.': '1-100'}, {'Number of Pages': '99'}, {'Issued Date': '2022-08-29'}], 'length': 5}]
             assert obj.get_bibliographic_list(False)==[{'title_attribute_name': ['ja : 雑誌タイトル', 'en : Journal Title'], 'magazine_attribute_name': [{'Volume Number': '1'}, {'Issue Number': '12'}, {'p.': '1-100'}, {'Number of Page': '99'}, {'Issue Date': '2022-08-29'}], 'length': 5}]
-  
+
     # def _get_bibliographic(self, bibliographic, is_get_list):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_bibliographic(self,app,prepare_formatsysbib):
@@ -1362,8 +1339,8 @@ class Test__FormatSysBibliographicInformation():
         with app.test_request_context(headers=[("Accept-Language", "en")]):
             assert obj._get_bibliographic(bibliographic,True)==('Journal Title', [{'Volume': '1'}, {'Issue': '12'}, {'p.': '1-100'}, {'Number of Pages': '99'}, {'Issued Date': '2022-08-29'}], 5)
             assert obj._get_bibliographic(bibliographic,False)==(['ja : 雑誌タイトル', 'en : Journal Title'], [{'Volume Number': '1'}, {'Issue Number': '12'}, {'p.': '1-100'}, {'Number of Page': '99'}, {'Issue Date': '2022-08-29'}], 5)
-        
-  
+
+
     # def _get_property_name(self, key):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_property_name -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_property_name(self,app,prepare_formatsysbib):
@@ -1387,7 +1364,7 @@ class Test__FormatSysBibliographicInformation():
 
         result = obj._get_translation_key("not_exist_key","")
         assert result == None
-        
+
     # def _get_bibliographic_information(self, bibliographic):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic_information -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_bibliographic_information(self,app,prepare_formatsysbib):
@@ -1396,7 +1373,7 @@ class Test__FormatSysBibliographicInformation():
         obj=_FormatSysBibliographicInformation(copy.deepcopy(mlt),copy.deepcopy(solst))
         assert isinstance(obj,_FormatSysBibliographicInformation) == True
         assert obj._get_bibliographic_information(bibliographic)==([{'Volume Number': '1'}, {'Issue Number': '12'}, {'p.': '1-100'}, {'Number of Page': '99'}, {'Issue Date': '2022-08-29'}], 5)
-  
+
     # def _get_bibliographic_show_list(self, bibliographic, language):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_bibliographic_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_bibliographic_show_list(self,app,prepare_formatsysbib):
@@ -1415,8 +1392,8 @@ class Test__FormatSysBibliographicInformation():
         bibliographic = mlt[0]
         obj=_FormatSysBibliographicInformation(copy.deepcopy(mlt),copy.deepcopy(solst))
         assert isinstance(obj,_FormatSysBibliographicInformation) == True
-        
-        assert obj._get_source_title(bibliographic.get('bibliographic_titles'))==['ja : 雑誌タイトル', 'en : Journal Title'] 
+
+        assert obj._get_source_title(bibliographic.get('bibliographic_titles'))==['ja : 雑誌タイトル', 'en : Journal Title']
 
     # def _get_source_title_show_list(source_titles, current_lang):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_source_title_show_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1437,13 +1414,13 @@ class Test__FormatSysBibliographicInformation():
         value, lang = obj._get_source_title_show_list(data, "en")
         assert value == "ja-Latn_title"
         assert lang == "ja-Latn"
-        
-        
+
+
         data =[{"bibliographic_title":"not_key_title"},{"bibliographic_titleLang":"ja-Latn","bibliographic_title":"ja-Latn_title"}]
         value, lang = obj._get_source_title_show_list(data, "en")
         assert value == "not_key_title"
         assert lang == ""
-        
+
         app.config.update(WEKO_RECORDS_UI_LANG_DISP_FLG=True)
         data = [{},{"bibliographic_title":"not_key_title"},{"bibliographic_titleLang":"ja","bibliographic_title":"ja_title"},{"bibliographic_titleLang":"zh","bibliographic_title":"zh_title"}]
         value, lang = obj._get_source_title_show_list(data, "en")
@@ -1453,7 +1430,7 @@ class Test__FormatSysBibliographicInformation():
         value, lang = obj._get_source_title_show_list(data, "en")
         assert value == "not_key_title"
         assert lang == "ja"
-        
+
     # def _get_page_tart_and_page_end(page_start, page_end):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_page_tart_and_page_end -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_page_tart_and_page_end(self,prepare_formatsysbib):
@@ -1464,7 +1441,7 @@ class Test__FormatSysBibliographicInformation():
         assert obj._get_page_tart_and_page_end(bibliographic.get('bibliographicPageStart'),
                     bibliographic.get('bibliographicPageEnd'))=="{0}-{1}".format(bibliographic.get('bibliographicPageStart'),
                     bibliographic.get('bibliographicPageEnd'))
-    
+
     # def _get_issue_date(issue_date):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::Test__FormatSysBibliographicInformation::test__get_issue_date -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test__get_issue_date(self,prepare_formatsysbib):

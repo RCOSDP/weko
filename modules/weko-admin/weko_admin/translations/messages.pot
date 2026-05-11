@@ -1,21 +1,21 @@
 # Translations template for weko-admin.
 # Copyright (C) 2026 National Institute of Informatics
 # This file is distributed under the same license as the weko-admin project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2021.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-07-29 21:12+0900\n"
+"POT-Creation-Date: 2026-03-25 17:42+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_admin/admin.py:105
 msgid "deny access"
@@ -516,11 +516,15 @@ msgstr ""
 msgid "Registered Users"
 msgstr ""
 
-#: weko_admin/utils.py:373
+#: weko_admin/utils.py:448
 msgid "Aggregation Month"
 msgstr ""
 
-#: weko_admin/utils.py:388
+#: weko_admin/utils.py:448
+msgid "Aggregation Period"
+msgstr ""
+
+#: weko_admin/utils.py:477
 msgid "Total Detail Views"
 msgstr ""
 
@@ -701,8 +705,7 @@ msgstr ""
 msgid "Edit"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
 msgid "Details"
 msgstr ""
 
@@ -1547,6 +1550,14 @@ msgstr ""
 
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:19
 msgid "Frequency"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+msgid "Send Date"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:58
+msgid "End of Month"
 msgstr ""
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:30

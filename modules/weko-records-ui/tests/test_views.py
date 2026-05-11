@@ -10,6 +10,7 @@ from weko_deposit.api import WekoRecord
 from werkzeug.exceptions import NotFound
 from sqlalchemy.orm.exc import MultipleResultsFound
 from jinja2.exceptions import TemplatesNotFound
+from weko_redis import RedisConnection
 from weko_workflow.models import (
     Action,
     ActionStatus,
@@ -806,16 +807,26 @@ def test_get_uri(app,client,db_sessionlifetime,records):
 
 # def charge():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_charge -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_charge(db,users,client):
+def test_charge(app,db,users,client,mocker):
     _data = {}
     url = url_for("weko_records_ui.charge",_external=True)
     _data['item_id'] = '1'
     _data['file_name'] = 'file_name'
     _data['title'] = 'title'
     _data['price'] = '110'
-    
+    client.set_cookie('TEST_SERVER', 'session', 'test_redis_key.signature')
+
+    redis = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv=True)
+    redis_key = 'charge_{}'.format(users[0]['obj'].get_id())
+
     with patch.object(db.session, "remove", lambda: None):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+            # redis_key is exists
+            redis.put(redis_key, _data['item_id'].encode('utf-8'))
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'error'}
+            redis.delete(redis_key)
+
             # 49
             with patch('weko_records_ui.views.check_charge', return_value='already'):
                 res = client.get(url, data=_data)
@@ -848,22 +859,139 @@ def test_charge(db,users,client):
                             mock_abort.assert_called_with(500)
                             mock_close_charge.assert_not_called()
 
-                with patch('weko_records_ui.views.create_charge', return_value='1'):
-                    # 53
-                    with patch('weko_records_ui.views.close_charge', return_value=True):
-                        res = client.get(url, data=_data)
-                        assert json.loads(res.data) == {'status': 'success'}
-                    # 54
-                    with patch('weko_records_ui.views.close_charge', return_value=False):
-                        res = client.get(url, data=_data)
-                        assert json.loads(res.data) == {'status': 'error'}
-                    
-                    with patch('weko_records_ui.views.close_charge', side_effect=Exception) as mock_close_charge:
-                        with patch("weko_records_ui.views.abort", return_value=make_response()) as mock_abort:
-                            res = client.get(url, data=_data)
-                            mock_close_charge.assert_called_once()
-                            mock_abort.assert_called_with(500)
+                with patch('weko_records_ui.views.create_charge', return_value='https://pt01.mul-pay.jp'):
+                    # charge is success
+                    res = client.get(url, data=_data)
+                    assert json.loads(res.data) == {'redirect_url': 'https://pt01.mul-pay.jp'}
+                    redis_value = redis.get(redis_key)
+                    assert redis_value.decode('utf-8') == _data['item_id']
+                    redis.delete(redis_key)
+                
+                with patch('weko_records_ui.views.create_charge', return_value=None):
+                    # charge is fail
+                    res = client.get(url, data=_data)
+                    assert json.loads(res.data) == {'status': 'error'}
+                    assert redis.redis.exists(redis_key) == 0
 
+# def charge_secure():
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_charge_secure -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_charge_secure(app, db, users, client, mocker):
+    _data = {}
+    url = url_for('weko_records_ui.charge_secure', session_id='test_session', _external=True)
+    _data['AccessID'] = 'access_id'
+
+    redis = RedisConnection().connection(db=app.config['CACHE_REDIS_DB'], kv=True)
+    redis_key = 'charge_{}'.format(users[0]['obj'].get_id())
+    redis.delete(redis_key)
+
+    with patch.object(db.session, "remove", lambda: None):
+        with patch('flask_login.utils._get_user', return_value=users[0]['obj']):
+            mocker_redirect = mocker.patch('weko_records_ui.views.redirect', return_value=make_response())
+            # redis_key is not exists
+            client.post(url, data=_data)
+            mocker_redirect.assert_called_with('/')
+            assert redis.redis.exists(redis_key) == 0
+
+            with patch('weko_records_ui.views.secure_charge', side_effect=Exception):
+                with patch('weko_records_ui.views.abort', return_value=make_response()) as mocker_abort:
+                    # secure_charge is fail
+                    redis.put(redis_key, '1'.encode('utf-8'))
+                    client.post(url, data=_data)
+                    mocker_abort.assert_called_with(500)
+                    assert redis.redis.exists(redis_key) == 0
+
+            with patch('weko_records_ui.views.secure_charge', return_value='connection_error'):
+                # secure_charge's return value is connection_error
+                redis.put(redis_key, '1'.encode('utf-8'))
+                client.post(url, data=_data)
+                mocker_redirect.assert_called_with('/records/1')
+                assert redis.redis.exists(redis_key) == 0
+            
+            with patch('weko_records_ui.views.secure_charge', return_value='api_error'):
+                # secure_charge's return value is api_error
+                redis.put(redis_key, '1'.encode('utf-8'))
+                client.post(url, data=_data)
+                mocker_redirect.assert_called_with('/records/1')
+                assert redis.redis.exists(redis_key) == 0
+
+            with patch('weko_records_ui.views.secure_charge', return_value=1):
+                with patch('weko_records_ui.views.close_charge', side_effect=Exception):
+                    with patch('weko_records_ui.views.abort', return_value=make_response()) as mocker_abort:
+                        # close_charge is fail
+                        redis.put(redis_key, '1'.encode('utf-8'))
+                        client.post(url, data=_data)
+                        mocker_abort.assert_called_with(500)
+                        assert redis.redis.exists(redis_key) == 0
+
+                with patch('weko_records_ui.views.close_charge'):
+                    # close_charge is success
+                    redis.put(redis_key, '1'.encode('utf-8'))
+                    client.post(url, data=_data)
+                    mocker_redirect.assert_called_with('/records/1')
+                    assert redis.redis.exists(redis_key) == 0
+        
+        def mock_restore_session_info(session_id, redis_connection):
+            mocker.patch('flask_login.utils._get_user', return_value=users[0]['obj'])
+        
+        # No session information
+        with patch('weko_records_ui.views.restore_session_info',
+                   side_effect=mock_restore_session_info) as mock_restore_session:
+            with patch('weko_records_ui.views.secure_charge', return_value=1):
+                with patch('weko_records_ui.views.close_charge'):
+                    redis.put(redis_key, '1'.encode('utf-8'))
+                    client.post(url, data=_data)
+                    mocker_redirect.assert_called_with('/records/1')
+                    assert redis.redis.exists(redis_key) == 0
+                    mock_restore_session.assert_called_once()
+                    args, _ = mock_restore_session.call_args
+                    assert args[0] == 'test_session'
+                    assert isinstance(args[1], RedisConnection)
+
+# def charge_show():
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_charge_show -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_charge_show(db, users, client, mocker):
+    _data = {}
+    url = url_for('weko_records_ui.charge_show', _external=True)
+    _data['item_id'] = '1'
+
+    with patch.object(db.session, 'remove', lambda: None):
+        with patch('flask_login.utils._get_user', return_value=users[0]['obj']):
+            mocker_check_charge = mocker.patch('weko_records_ui.views.check_charge')
+            # check_charge returns 'already'
+            mocker_check_charge.return_value = 'already'
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'success'}
+
+            # check_charge returns 'api_error'
+            mocker_check_charge.return_value = 'api_error'
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'error'}
+
+            # check_charge returns 'unknown_user'
+            mocker_check_charge.return_value = 'unknown_user'
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'error'}
+
+            # check_charge returns 'shared'
+            mocker_check_charge.return_value = 'shared'
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'error'}
+
+            # check_charge returns 'credit_error'
+            mocker_check_charge.return_value = 'credit_error'
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'error'}
+
+            # check_charge returns 'not_billed'
+            mocker_check_charge.return_value = 'not_billed'
+            res = client.get(url, data=_data)
+            assert json.loads(res.data) == {'status': 'error'}
+
+            # check_charge occurs an exception
+            mocker_check_charge.side_effect = Exception
+            with patch('weko_records_ui.views.abort', return_value=make_response()) as mocker_abort:
+                res = client.get(url, data=_data)
+                mocker_abort.assert_called_with(500)
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_default_view_method_fix35133(app, records, itemtypes, indexstyle,mocker):

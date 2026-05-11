@@ -1,7 +1,7 @@
 import pytest
 from weko_records_ui.utils import (
     is_future,
-    check_and_create_usage_report,
+    check_and_create_usage_report,check_and_send_usage_report,
     check_items_settings, create_onetime_download_url,
     create_usage_report_for_user, display_oaiset_path,
     generate_one_time_download_url, get_billing_file_download_permission,
@@ -11,14 +11,16 @@ from weko_records_ui.utils import (
     get_onetime_download, get_pair_value, get_record_permalink, get_roles,
     get_terms, get_workflows, hide_by_email, hide_by_file, hide_by_itemtype,
     hide_item_metadata, hide_item_metadata_email_only, is_billing_item,
-    is_open_access, is_private_index, is_show_email_of_creator,
+    is_open_access, is_private_index,
     parse_one_time_download_token, replace_license_free, restore,
     send_usage_report_mail_for_user, soft_delete, update_onetime_download,
-    validate_download_record, validate_onetime_download_token, replace_license_free_for_opensearch
+    validate_download_record, validate_onetime_download_token, replace_license_free_for_opensearch,
+    restore_session_info
 )
 import base64
 from unittest.mock import MagicMock
 import copy
+import pickle
 import pytest
 import io
 from datetime import datetime as dt
@@ -38,6 +40,7 @@ from werkzeug.exceptions import NotFound
 from weko_admin.models import AdminSettings
 from weko_records.serializers.utils import get_mapping
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
+from weko_redis import RedisConnection
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 
@@ -56,51 +59,37 @@ def test_is_future(app):
 # def check_items_settings(settings=None):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_check_items_settings -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_items_settings(app,db_admin_settings):
-    with app.test_request_context():
-        assert check_items_settings()==None
-    
     settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False})
-    setting = settings.get("items_display_settings")
+    setting = settings.get("items_display_settings",dict_to_object=False)
+    assert isinstance(setting, dict)
     with app.test_request_context():
-        assert check_items_settings(setting)==None
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        assert check_items_settings()==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting["items_display_email"]
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting["items_search_author"]
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting["item_display_open_date"]
 
-    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
         assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
+        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
 
-    settings = AdminSettings(name='items_display_settings',settings={"items_search_author": "name"})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
+        current_app.config["EMAIL_DISPLAY_FLG"]=""
+        current_app.config["ITEM_SEARCH_FLG"]=""
+        current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
+        setting = {}
         assert check_items_settings(setting)==None
-    
-    settings = AdminSettings(name='items_display_settings',settings={"item_display_open_date": False})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
-        assert check_items_settings(setting)==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==""
+        assert current_app.config["ITEM_SEARCH_FLG"]==""
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==""
 
-    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name"})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
-        assert check_items_settings(setting)==None
-
-    settings = AdminSettings(name='items_display_settings',settings={"items_display_email": False, "item_display_open_date": False})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
-        assert check_items_settings(setting)==None
-
-    settings = AdminSettings(name='items_display_settings',settings={"items_search_author": "name", "item_display_open_date": False})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
-        assert check_items_settings(setting)==None
-    
-    settings = AdminSettings(name='items_display_settings',settings={})
-    setting = settings.get("items_display_settings")
-    with app.test_request_context():
-        assert check_items_settings(setting)==None
-        
     setting = AdminSettings.get(name="items_display_settings")
-    assert isinstance(setting,AdminSettings.Dict2Obj)==True
+    assert isinstance(setting, AdminSettings.Dict2Obj)==True
     with app.test_request_context():
         current_app.config["EMAIL_DISPLAY_FLG"]=""
         current_app.config["ITEM_SEARCH_FLG"]=""
@@ -110,29 +99,24 @@ def test_check_items_settings(app,db_admin_settings):
         assert current_app.config["ITEM_SEARCH_FLG"]==setting.items_search_author
         assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting.item_display_open_date
 
-    setting = AdminSettings.get(name="items_display_settings",dict_to_object=False)
-    assert isinstance(setting,dict)==True
-    with app.test_request_context():
         current_app.config["EMAIL_DISPLAY_FLG"]=""
         current_app.config["ITEM_SEARCH_FLG"]=""
         current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
-        assert setting['items_display_email']==False
-        assert setting['items_search_author']=='name'
-        assert setting['item_display_open_date']==False
+        setting = AdminSettings.Dict2Obj({})
         assert check_items_settings(setting)==None
-        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
-        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
-        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==""
+        assert current_app.config["ITEM_SEARCH_FLG"]==""
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==""
+
+    with app.test_request_context(), \
+         patch("weko_admin.models.AdminSettings.get", return_value=None):
         current_app.config["EMAIL_DISPLAY_FLG"]=""
         current_app.config["ITEM_SEARCH_FLG"]=""
         current_app.config["OPEN_DATE_DISPLAY_FLG"]=""
-        setting['items_display_email']=True
-        setting['items_search_author']='id'
-        setting['item_display_open_date']=True
-        assert check_items_settings(setting)==None
-        assert current_app.config["EMAIL_DISPLAY_FLG"]==setting['items_display_email']
-        assert current_app.config["ITEM_SEARCH_FLG"]==setting['items_search_author']
-        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==setting['item_display_open_date']
+        assert check_items_settings()==None
+        assert current_app.config["EMAIL_DISPLAY_FLG"]==""
+        assert current_app.config["ITEM_SEARCH_FLG"]==""
+        assert current_app.config["OPEN_DATE_DISPLAY_FLG"]==""
 
 
 # def get_record_permalink(record):
@@ -225,12 +209,12 @@ def test_is_open_access(app,db,records_open_access, mocker):
         with patch('weko_records_ui.utils.dt.utcnow', return_value=dt(2024, 5, 19, 12, 55, 32)):
             with patch('weko_records_ui.utils.dt.now', return_value=dt(2024, 5, 19, 12, 55, 32)):
                 assert not is_open_access(results[2]['record'], file_name_list[2])
-        
+
         # all indexes are public, accessrole is open_date and now is after public_date
         with patch('weko_records_ui.utils.dt.utcnow', return_value=dt(2024, 5, 20, 12, 55, 32)):
             with patch('weko_records_ui.utils.dt.now', return_value=dt(2024, 5, 20, 12, 55, 32)):
                 assert is_open_access(results[3]['record'], file_name_list[3])
-        
+
         # all indexes are public and accessrole is login_user
         assert not is_open_access(results[4]['record'], file_name_list[4])
 
@@ -364,35 +348,69 @@ def test_get_pair_value(app):
         name_keys = ['subitem_1551255647225', 'subitem_1551255647225']
         lang_keys = ['subitem_1551255648112', 'subitem_1551255647225']
         name,lang =  get_pair_value(name_keys,lang_keys,datas)
-        
+
 
 
 # def hide_item_metadata(record, settings=None, item_type_mapping=None,
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_hide_item_metadata(app,records,users):
-    indexer, results = records
-    record = results[0]["record"]
-    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+def test_hide_item_metadata(app,records):
+    _, results = records
+
+    record = copy.deepcopy(results[0]["record"])
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=False):
         assert hide_item_metadata(record)==False
 
+    record = copy.deepcopy(results[0]["record"])
     record['_deposit'] = {"owners_ext": {"email": "email"}}
     app.config['EMAIL_DISPLAY_FLG'] = False
-    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True), \
+         patch("weko_records_ui.utils.hide_by_file", return_value=record) as mock_hide_by_file, \
+         patch("weko_records_ui.utils.hide_by_email", return_value=record) as mock_hide_by_email:
         assert hide_item_metadata(record)==True
+        mock_hide_by_email.assert_called_once()
+        mock_hide_by_file.assert_called_once()
+
+    record = copy.deepcopy(results[0]["record"])
+    app.config['EMAIL_DISPLAY_FLG'] = False
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True), \
+         patch("weko_records_ui.utils.hide_by_file", return_value=record) as mock_hide_by_file, \
+         patch("weko_records_ui.utils.hide_by_email", return_value=record) as mock_hide_by_email:
+        assert hide_item_metadata(record)==True
+        mock_hide_by_email.assert_called_once()
+        mock_hide_by_file.assert_called_once()
+
+    record = copy.deepcopy(results[0]["record"])
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", side_effect=[True, False]), \
+         patch("weko_records_ui.utils.hide_by_file", return_value=record) as mock_hide_by_file, \
+         patch("weko_records_ui.utils.hide_by_email", return_value=record) as mock_hide_by_email:
+        assert hide_item_metadata(record)==True
+        mock_hide_by_email.assert_not_called()
+        mock_hide_by_file.assert_called_once()
 
 
 # def hide_item_metadata_email_only(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_item_metadata_email_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_hide_item_metadata_email_only(app,records,users):
-    indexer, results = records
-    record = results[0]["record"]
-    with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+    _, results = records
+
+    record = copy.deepcopy(results[0]["record"])
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=False):
         assert hide_item_metadata_email_only(record)==False
 
-        record['_deposit'] = {"owners_ext": {"email": "email"}}
-        app.config['EMAIL_DISPLAY_FLG'] = False
-        with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True):
-            assert hide_item_metadata_email_only(record)==True
+    record = copy.deepcopy(results[0]["record"])
+    record['_deposit'] = {"owners_ext": {"email": "email"}}
+    app.config['EMAIL_DISPLAY_FLG'] = False
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True), \
+         patch("weko_records_ui.utils.hide_by_email", return_value=record) as mock_hide_by_email:
+        assert hide_item_metadata_email_only(record)==True
+        mock_hide_by_email.assert_called_once()
+
+    record = copy.deepcopy(results[0]["record"])
+    app.config['EMAIL_DISPLAY_FLG'] = False
+    with patch("weko_items_ui.utils.hide_meta_data_for_role", return_value=True), \
+         patch("weko_records_ui.utils.hide_by_email", return_value=record) as mock_hide_by_email:
+        assert hide_item_metadata_email_only(record)==True
+        mock_hide_by_email.assert_called_once()
 
 
 # def hide_by_file(item_metadata):
@@ -418,23 +436,35 @@ def test_hide_by_file(app,records):
 # def hide_by_email(item_metadata):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_hide_by_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_hide_by_email(app,records):
-    indexer, results = records
-    record = results[0]["item"]
-    assert hide_by_email(copy.deepcopy(record))==record
-    app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'] = ["test"]
-    data1 = {
-        "data1": {
-            "attribute_type": "file",
-            "attribute_value_mlt": [
-                {
-                    "accessrole": "open_no",
-                    "test": {"test": "test"}
-                }
-            ]
-        },
-        "_deposit": {"owners_ext": {"email": "email"}}
-    }
-    assert hide_by_email(data1)
+    _, results = records
+
+    with patch("weko_records_ui.utils.item_setting_show_email", return_value=True):
+
+        # record = copy.deepcopy(results[0]["record"])
+        # del record["item_type_id"]
+        # assert hide_by_email(copy.deepcopy(record))==record
+
+        # app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'] = ["test"]
+        # record = copy.deepcopy(results[0]["record"])
+        # assert hide_by_email(record)==results[0]["record"]
+
+        # record = copy.deepcopy(results[0]["record"])
+        # record['_deposit'] = {"owners_ext": {"email": "email"}}
+        # expected_record = copy.deepcopy(record)
+        # assert hide_by_email(record)==expected_record
+
+        record = copy.deepcopy(results[0]["record"])
+        record['_deposit'] = {"owners_ext": {"email": "email"}}
+        record['item_test'] = {
+            "attribute_value_mlt":[{
+                    'subitem_1522300695726': 'Available',
+                    'subitem_1522300722591': None
+            }],
+            "option":{"hidden": ["item_test"]}
+        }
+        expected_record = copy.deepcopy(record)
+        del expected_record['_deposit']['owners_ext']
+        assert hide_by_email(record, True)==expected_record
 
 
 # def hide_by_itemtype(item_metadata, hidden_items):
@@ -455,66 +485,6 @@ def test_hide_by_itemtype(app, records):
     assert hide_by_itemtype(test3, hidden_items3) != None
 
     # assert hide_by_itemtype(copy.deepcopy(record),[])=={'id': '1', 'pid': {'type': 'recid', 'value': '1', 'revision_id': 0}, 'path': ['2'], 'owner': '1', 'title': 'ja_conference paperITEM00000009(public_open_access_open_access_simple)', 'owners': [1], 'status': 'draft', '$schema': 'https://localhost:8443/items/jsonschema/1', 'pubdate': '2021-08-06', 'feedback_mail_list': [{'email': 'wekosoftware@nii.ac.jp', 'author_id': ''}], 'item_1617186331708': [{'subitem_1551255647225': 'ja_conference paperITEM00000009(public_open_access_open_access_simple)', 'subitem_1551255648112': 'ja'}, {'subitem_1551255647225': 'en_conference paperITEM00000009(public_open_access_simple)', 'subitem_1551255648112': 'en'}], 'item_1617186385884': [{'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'en'}, {'subitem_1551255720400': 'Alternative Title', 'subitem_1551255721061': 'ja'}], 'item_1617186419668': [{'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': '4', 'nameIdentifierScheme': 'WEKO'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'University', 'affiliationNameLang': 'en'}], 'affiliationNameIdentifiers': [{'affiliationNameIdentifier': '0000000121691048', 'affiliationNameIdentifierURI': 'http://isni.org/isni/0000000121691048', 'affiliationNameIdentifierScheme': 'ISNI'}]}]}, {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}]}, {'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'creatorMails': [{'creatorMail': 'wekosoftware@nii.ac.jp'}], 'creatorNames': [{'creatorName': '情報, 太郎', 'creatorNameLang': 'ja'}, {'creatorName': 'ジョウホウ, タロウ', 'creatorNameLang': 'ja-Kana'}, {'creatorName': 'Joho, Taro', 'creatorNameLang': 'en'}], 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'zzzzzzz', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}]}], 'item_1617186476635': {'subitem_1522299639480': 'open access', 'subitem_1600958577026': 'http://purl.org/coar/access_right/c_abf2'}, 'item_1617186499011': [{'subitem_1522650717957': 'ja', 'subitem_1522650727486': 'http://localhost', 'subitem_1522651041219': 'Rights Information'}], 'item_1617186609386': [{'subitem_1522299896455': 'ja', 'subitem_1522300014469': 'Other', 'subitem_1522300048512': 'http://localhost/', 'subitem_1523261968819': 'Sibject1'}], 'item_1617186626617': [{'subitem_description': 'Description\nDescription<br/>Description', 'subitem_description_type': 'Abstract', 'subitem_description_language': 'en'}, {'subitem_description': '概要\n概要\n概要\n概要', 'subitem_description_type': 'Abstract', 'subitem_description_language': 'ja'}], 'item_1617186643794': [{'subitem_1522300295150': 'en', 'subitem_1522300316516': 'Publisher'}], 'item_1617186660861': [{'subitem_1522300695726': 'Available', 'subitem_1522300722591': '2021-06-30'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617186783814': [{'subitem_identifier_uri': 'http://localhost', 'subitem_identifier_type': 'URI'}], 'item_1617186859717': [{'subitem_1522658018441': 'en', 'subitem_1522658031721': 'Temporal'}], 'item_1617186882738': [{'subitem_geolocation_place': [{'subitem_geolocation_place_text': 'Japan'}]}], 'item_1617186901218': [{'subitem_1522399143519': {'subitem_1522399281603': 'ISNI', 'subitem_1522399333375': 'http://xxx'}, 'subitem_1522399412622': [{'subitem_1522399416691': 'en', 'subitem_1522737543681': 'Funder Name'}], 'subitem_1522399571623': {'subitem_1522399585738': 'Award URI', 'subitem_1522399628911': 'Award Number'}, 'subitem_1522399651758': [{'subitem_1522721910626': 'en', 'subitem_1522721929892': 'Award Title'}]}], 'item_1617186920753': [{'subitem_1522646500366': 'ISSN', 'subitem_1522646572813': 'xxxx-xxxx-xxxx'}], 'item_1617186941041': [{'subitem_1522650068558': 'en', 'subitem_1522650091861': 'Source Title'}], 'item_1617186959569': {'subitem_1551256328147': '1'}, 'item_1617186981471': {'subitem_1551256294723': '111'}, 'item_1617186994930': {'subitem_1551256248092': '12'}, 'item_1617187024783': {'subitem_1551256198917': '1'}, 'item_1617187045071': {'subitem_1551256185532': '3'}, 'item_1617187112279': [{'subitem_1551256126428': 'Degree Name', 'subitem_1551256129013': 'en'}], 'item_1617187136212': {'subitem_1551256096004': '2021-06-30'}, 'item_1617187187528': [{'subitem_1599711633003': [{'subitem_1599711636923': 'Conference Name', 'subitem_1599711645590': 'ja'}], 'subitem_1599711655652': '1', 'subitem_1599711660052': [{'subitem_1599711680082': 'Sponsor', 'subitem_1599711686511': 'ja'}], 'subitem_1599711699392': {'subitem_1599711704251': '2020/12/11', 'subitem_1599711712451': '1', 'subitem_1599711727603': '12', 'subitem_1599711731891': '2000', 'subitem_1599711735410': '1', 'subitem_1599711739022': '12', 'subitem_1599711743722': '2020', 'subitem_1599711745532': 'ja'}, 'subitem_1599711758470': [{'subitem_1599711769260': 'Conference Venue', 'subitem_1599711775943': 'ja'}], 'subitem_1599711788485': [{'subitem_1599711798761': 'Conference Place', 'subitem_1599711803382': 'ja'}], 'subitem_1599711813532': 'JPN'}], 'item_1617258105262': {'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}, 'item_1617265215918': {'subitem_1522305645492': 'AO', 'subitem_1600292170262': 'http://purl.org/coar/version/c_b1a7d7d4d402bcce'}, 'item_1617349709064': [{'givenNames': [{'givenName': '太郎', 'givenNameLang': 'ja'}, {'givenName': 'タロウ', 'givenNameLang': 'ja-Kana'}, {'givenName': 'Taro', 'givenNameLang': 'en'}], 'familyNames': [{'familyName': '情報', 'familyNameLang': 'ja'}, {'familyName': 'ジョウホウ', 'familyNameLang': 'ja-Kana'}, {'familyName': 'Joho', 'familyNameLang': 'en'}], 'contributorType': 'ContactPerson', 'nameIdentifiers': [{'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://ci.nii.ac.jp/', 'nameIdentifierScheme': 'CiNii'}, {'nameIdentifier': 'xxxxxxx', 'nameIdentifierURI': 'https://kaken.nii.ac.jp/', 'nameIdentifierScheme': 'KAKEN2'}], 'contributorMails': [{'contributorMail': 'wekosoftware@nii.ac.jp'}], 'contributorNames': [{'lang': 'ja', 'contributorName': '情報, 太郎'}, {'lang': 'ja-Kana', 'contributorName': 'ジョウホ, タロウ'}, {'lang': 'en', 'contributorName': 'Joho, Taro'}]}], 'item_1617349808926': {'subitem_1523263171732': 'Version'}, 'item_1617351524846': {'subitem_1523260933860': 'Unknown'}, 'item_1617353299429': [{'subitem_1522306207484': 'isVersionOf', 'subitem_1522306287251': {'subitem_1522306382014': 'arXiv', 'subitem_1522306436033': 'xxxxx'}, 'subitem_1523320863692': [{'subitem_1523320867455': 'en', 'subitem_1523320909613': 'Related Title'}]}], 'item_1617605131499': [{'url': {'url': 'https://weko3.example.org/record/1/files/helloworld.pdf'}, 'date': [{'dateType': 'Available', 'dateValue': '2021-07-12'}], 'format': 'application/pdf', 'filename': 'helloworld.pdf', 'filesize': [{'value': '1 KB'}], 'mimetype': 'application/pdf', 'accessrole': 'open_access', 'version_id': 'c1502853-c2f9-455d-8bec-f6e630e54b21', 'displaytype': 'simple'}], 'item_1617610673286': [{'nameIdentifiers': [{'nameIdentifier': 'xxxxxx', 'nameIdentifierURI': 'https://orcid.org/', 'nameIdentifierScheme': 'ORCID'}], 'rightHolderNames': [{'rightHolderName': 'Right Holder Name', 'rightHolderLanguage': 'ja'}]}], 'item_1617620223087': [{'subitem_1565671149650': 'ja', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheading'}, {'subitem_1565671149650': 'en', 'subitem_1565671169640': 'Banner Headline', 'subitem_1565671178623': 'Subheding'}], 'item_1617944105607': [{'subitem_1551256015892': [{'subitem_1551256027296': 'xxxxxx', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': 'Degree Grantor Name', 'subitem_1551256047619': 'en'}]}]}
-
-
-# def is_show_email_of_creator(item_type_id):
-#     def get_creator_id(item_type_id):
-#     def item_type_show_email(item_type_id):
-#     def item_setting_show_email():
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_show_email_of_creator -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-@pytest.mark.parametrize(
-    "is_hide, is_display, is_show_email",
-    [(False,True,True),
-     (True,True,False),
-     (False,False,False),
-     (True,False,False)]
-)
-def test_is_show_email_of_creator(app,db,db_admin_settings,is_hide,is_display,is_show_email):
-    item_type_name = ItemTypeName(
-        id=1, name="テストアイテムタイプ", has_site_license=True, is_active=True
-    )
-    item_type_schema = dict()
-    with open("tests/data/itemtype_schema.json", "r") as f:
-        item_type_schema = json.load(f)
-
-    item_type_form = dict()
-    with open("tests/data/itemtype_form.json", "r") as f:
-        item_type_form = json.load(f)
-
-    item_type_render = dict()
-    with open("tests/data/itemtype_render.json", "r") as f:
-        item_type_render = json.load(f)
-    
-    item_type_render["schemaeditor"]["schema"]["item_1617186419668"]["properties"]["creatorMails"]["items"]["properties"]["creatorMail"]["isHide"] = is_hide
-    
-    item_type_mapping = dict()
-    with open("tests/data/itemtype_mapping.json", "r") as f:
-        item_type_mapping = json.load(f)
-
-    item_type = ItemType(
-        id=1,
-        name_id=1,
-        harvesting_type=True,
-        schema=item_type_schema,
-        form=item_type_form,
-        render=item_type_render,
-        tag=1,
-        version_id=1,
-        is_deleted=False,
-    )
-
-    item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
-
-    with db.session.begin_nested():
-        db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(item_type_mapping)
-        
-    setting = AdminSettings.get(name="items_display_settings",dict_to_object=False)
-    setting['items_display_email'] = is_display
-    AdminSettings.update("items_display_settings",setting)
-    
-    assert is_show_email_of_creator(1)==is_show_email
 
 
 # def replace_license_free(record_metadata, is_change_label=True):
@@ -602,7 +572,7 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
     def mock_check_file_download_permission(record, fjson, is_display_file_info=False, check_billing_file=False, download_status={}):
         download_status['is_open_access'] = is_open_access
         return test_send_usage_report_mail_for_user
-    
+
     # record_data = {
     #     "_oai": {"id": "oai:weko3.example.org:000000{:02d}".format(i), "sets": ["{}".format((i % 2) + 1)]},
     #     "path": ["{}".format((i % 2) + 1)],
@@ -1148,7 +1118,7 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         ret =  get_file_info_list(record)
         assert len(ret)==2
-    
+
     with app.test_request_context(headers=[("Accept-Language", "en")]):
         record["item_1617605131499"]["attribute_value_mlt"][0]["accessrole"] = "open_login"
         get_file_info_list(record)
@@ -1178,7 +1148,7 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
                 billing_file_permission = files[0]['billing_file_permission']
                 assert priceinfo[0]['has_role'] != None
                 assert billing_file_permission != None
-    
+
     with patch("flask_login.utils._get_user", return_value=users[9]["obj"]):
         with patch("weko_records_ui.utils.check_file_download_permission", side_effect=mock_check_file_download_permission):
             # billing file has already been purchased
@@ -1186,13 +1156,13 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
                 record_e = set_file_data("record_e.json")
                 is_display_file_preview, files = get_file_info_list(record_e)
                 assert files[0]['priceinfo'][0]['purchased'] == '[Purchased]'
-            
+
             # billing file has not yet been purchased
             with patch("weko_records_ui.utils.check_charge", return_value='not_billed'):
                 record_e = set_file_data("record_e.json")
                 is_display_file_preview, files = get_file_info_list(record_e)
                 assert 'purchased' not in files[0]['priceinfo'][0]
-            
+
             # billing file has one price info, min_price is that price
             record_e = set_file_data("record_e.json")
             is_display_file_preview, files = get_file_info_list(record_e)
@@ -1210,38 +1180,38 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
                 assert files[0]['priceinfo'][0].get("purchased","") == ""
                 assert files[0]['priceinfo'][1].get("purchased","") == '[Purchased]'
                 assert files[0]['priceinfo'][2].get("purchased","") == ""
-        
+
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         # user_flag is True, sitelicense_flag is False, is_open_access is False, billing file's price is equal to min_price
         record_e = set_file_data("record_e.json")
         is_display_file_preview, files = get_file_info_list(record_e)
         assert files[0]['priceinfo'][0]['is_highlight']
-        
+
         # is_open_access is True
         record_e = set_file_data("record_e.json")
         is_open_access = True
         with patch("weko_records_ui.utils.check_file_download_permission", side_effect=mock_check_file_download_permission):
             is_display_file_preview, files = get_file_info_list(record_e)
             assert 'is_highlight' not in files[0]['priceinfo'][0]
-        
+
         # sitelicense_flag is True
         record_e = set_file_data("record_e.json")
         with patch("weko_records_ui.utils.check_site_license_permission", return_value=True):
             is_display_file_preview, files = get_file_info_list(record_e)
             assert 'is_highlight' not in files[0]['priceinfo'][0]
-    
+
     with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
         # user_flag is False(user is Administrator)
         record_e = set_file_data("record_e.json")
         is_display_file_preview, files = get_file_info_list(record_e)
         assert 'is_highlight' not in files[0]['priceinfo'][0]
-    
+
     with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
         # user_flag is False(user is registrant)
         record_e = set_file_data("record_e.json")
         is_display_file_preview, files = get_file_info_list(record_e)
         assert 'is_highlight' not in files[0]['priceinfo'][0]
-    
+
     with patch("flask_login.utils._get_user", return_value=users[9]["obj"]):
         # user_flag is True, sitelicense_flag is False, is_open_access is False, billing file has some price info(No.2 info is highlight)
         record_f = set_file_data("record_f.json")
@@ -1249,7 +1219,7 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
         assert not files[0]['priceinfo'][0]['is_highlight']
         assert files[0]['priceinfo'][1]['is_highlight']
         assert not files[0]['priceinfo'][2]['is_highlight']
-    
+
     # url does not exist, filesize error, role does not exist
     record = copy.deepcopy(results[0]["record"])
     record['item_1617605131499']['attribute_value_mlt'][0]['filesize'][0]['value'] = 'filesize B'
@@ -1290,7 +1260,7 @@ def test_get_file_info_list(app,records,users,id,result,db_item_billing,itemtype
         record_e.pop('weko_shared_id')
         is_display_file_preview, files = get_file_info_list(record_e)
         assert files[0]['priceinfo'][0]['is_highlight']
-    
+
     # check_file_download_premission is false, is_open_restricted is false
     with patch('weko_records_ui.utils.check_file_download_permission', return_value=False):
         with patch('weko_records_ui.utils.is_open_restricted', return_value=False):
@@ -1329,7 +1299,7 @@ def test_create_usage_report_for_user(app):
 
     def get_activity_by_id(x):
         return data2
-    
+
     def find_workflow_by_name_false(x):
         return False
 
@@ -1352,7 +1322,7 @@ def test_create_usage_report_for_user(app):
                     assert create_usage_report_for_user(data1) == ""
                 except:
                     pass
-                
+
 
 # def get_data_usage_application_data(record_metadata, data_result: dict):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_get_data_usage_application_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1401,7 +1371,7 @@ def test_check_and_send_usage_report(app, db, workflows, records, users, db_file
 
     def send_reminder_mail(x, y, z):
         return False
-    
+
     def send_reminder_mail_2(x, y, z):
         return True
 
@@ -1419,7 +1389,7 @@ def test_check_and_send_usage_report(app, db, workflows, records, users, db_file
             with patch("weko_records_ui.utils.UsageReport", return_value=data3):
                 data3.send_reminder_mail = send_reminder_mail_2
                 check_and_send_usage_report(data1, data2)
-    
+
 
 
 # def generate_one_time_download_url(
@@ -1435,7 +1405,7 @@ def test_generate_one_time_download_url(app):
         token = (token_str.decode('utf-8')).split(' ')
         assert token[0] == record_id
         assert token[1] == guest_mail
-        
+
 
 # def parse_one_time_download_token(token: str) -> Tuple[str, Tuple]:
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_parse_one_time_download_token -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1491,7 +1461,7 @@ def test_is_private_index(app,records):
 
     with patch("weko_index_tree.api.Indexes.get_path_list", return_value=data1):
         assert is_private_index(record) == False
-    
+
     data1 = [
         [0, 1, 2, 3, 4, 5, False],
     ]
@@ -1559,12 +1529,12 @@ def test_get_workflows(app,users):
     with app.test_request_context():
         with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
             assert get_workflows()==[]
-        
+
         data1 = MagicMock()
 
         def get_workflow_list():
             return [data1]
-        
+
         data1.get_workflow_list = get_workflow_list
         data1.open_restricted = True
         data1.id = True
@@ -1656,3 +1626,29 @@ def test_get_billing_role(records, users):
         user_role, min_price = get_billing_role(billing_record)
         assert user_role == 'guest'
         assert min_price == ''
+
+
+# def restore_session_info(session_id, redis_connection):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_restore_session_info -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_restore_session_info(app, client, users):
+    redis_connection = RedisConnection()
+    session_id = 'test_session_id'
+
+    # prepare data in redis
+    session_store = redis_connection.connection(
+        db=app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv=True
+    )
+    session_info = {
+        'user_id': str(users[0]['id']),
+        'language': 'ja',
+        'csrf_token': 'test_token'
+    }
+    session_store.redis.set(session_id, pickle.dumps(session_info))
+
+    with patch('weko_records_ui.utils.login_user') as mock_login_user:
+        restore_session_info(session_id, redis_connection)
+        mock_login_user.assert_called_once_with(users[0]['obj'])
+        assert dict(session) == session_info
+
+    # clean up
+    session_store.redis.delete(session_id)

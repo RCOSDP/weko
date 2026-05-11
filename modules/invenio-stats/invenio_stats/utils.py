@@ -15,6 +15,7 @@ import operator
 import os
 import re
 import pickle
+import traceback
 from base64 import b64encode
 from datetime import datetime, timedelta
 from math import ceil
@@ -41,8 +42,6 @@ from invenio_accounts.models import Role
 from invenio_stats.utils_search import billing_file_search_factory
 from weko_accounts.utils import get_remote_addr
 from werkzeug.utils import import_string
-
-from weko_index_tree.models import Index
 
 from . import config
 from .models import StatsAggregation, StatsBookmark, StatsEvents
@@ -275,6 +274,8 @@ class QueryFileReportsHelper(object):
     def calc_billing_file_stats_reports(cls, res, data_list, all_groups):
         """Create response object for billing_file_download."""
         # Get all role names.
+        from weko_index_tree.models import Index
+
         roles = Role.query.all()
         role_name_list = ['guest'] + [role.name for role in roles]
 
@@ -412,21 +413,30 @@ class QueryFileReportsHelper(object):
         event = kwargs.get('event')
         year = kwargs.get('year')
         month = kwargs.get('month')
+        start_date = kwargs.get('start_date')
+        end_date = kwargs.get('end_date')
 
         try:
-            query_month = str(year) + '-' + str(month).zfill(2)
-            _, lastday = calendar.monthrange(year, month)
-            all_params = {'start_date': query_month + '-01',
-                          'end_date':
-                          query_month + '-' + str(lastday).zfill(2)
-                          + 'T23:59:59',
-                          "should":[{"bool":{"must_not":{"term":{"is_open_access":True}}}},
-                                    {"bool":{"must_not":{"exists":{"field":"is_open_access"}}}}]}
-            params = {'start_date': query_month + '-01',
-                      'end_date':
-                      query_month + '-' + str(lastday).zfill(2)
-                      + 'T23:59:59',
-                      'is_open_access': True}
+            if not start_date or not end_date:
+                query_month = str(year) + '-' + str(month).zfill(2)
+                _, lastday = calendar.monthrange(year, month)
+                start_date = query_month + '-01'
+                end_date = query_month + '-' + str(lastday).zfill(2)
+            else:
+                query_month = f"{start_date}-{end_date}"
+            all_params = {
+                'start_date': start_date,
+                'end_date': end_date + 'T23:59:59',
+                "should":[
+                    {"bool": {"must_not": {"term": {"is_open_access": True}}}},
+                    {"bool": {"must_not": {"exists": {"field": "is_open_access"}}}}
+                ]
+            }
+            params = {
+                'start_date': start_date,
+                'end_date': end_date + 'T23:59:59',
+                'is_open_access': True
+            }
 
             all_query_name = ''
             open_access_query_name = ''
@@ -456,6 +466,7 @@ class QueryFileReportsHelper(object):
             open_access_res = open_access.run(**params)
             cls.Calculation(open_access_res, open_access_list, event=event)
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
 
         result['date'] = query_month
@@ -474,14 +485,22 @@ class QueryFileReportsHelper(object):
         event = kwargs.get('event')
         year = kwargs.get('year')
         month = kwargs.get('month')
+        start_date = kwargs.get('start_date')
+        end_date = kwargs.get('end_date')
 
         try:
-            query_month = str(year) + '-' + str(month).zfill(2)
-            _, lastday = calendar.monthrange(year, month)
-            params = {'start_date': query_month + '-01',
-                      'end_date': query_month + '-' + str(lastday).zfill(2)
-                      + 'T23:59:59'}
+            if not start_date or not end_date:
+                query_month = str(year) + '-' + str(month).zfill(2)
+                _, lastday = calendar.monthrange(year, month)
+                start_date = query_month + '-01'
+                end_date = query_month + '-' + str(lastday).zfill(2)
+            else:
+                query_month = f"{start_date}-{end_date}"
 
+            params = {
+                'start_date': start_date,
+                'end_date': end_date + 'T23:59:59'
+            }
             all_query_name = ['get-file-download-per-user-report',
                               'get-file-preview-per-user-report']
             for query in all_query_name:
@@ -492,6 +511,7 @@ class QueryFileReportsHelper(object):
             cls.Calculation(all_res, all_list, event)
 
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
 
         result['date'] = query_month
@@ -539,6 +559,8 @@ class QuerySearchReportHelper(object):
             if not start_date or not end_date:
                 start_date, end_date = get_start_end_date(year, month)
                 result['date'] = str(year) + '-' + str(month).zfill(2)
+            else:
+                result['date'] = f"{start_date}-{end_date}"
             params = {'start_date': start_date,
                       'end_date': end_date + 'T23:59:59',
                       'agg_size': kwargs.get('agg_size', 0),
@@ -556,13 +578,15 @@ class QuerySearchReportHelper(object):
                 current_report['search_key'] = report['search_key']
                 current_report['count'] = report['count']
                 all.append(current_report)
-            all = sorted(all, key=lambda x:x['count'], reverse=True) 
+            all = sorted(all, key=lambda x:x['count'], reverse=True)
             result['all'] = all
         except es_exceptions.NotFoundError as e:
+            traceback.print_exc()
             current_app.logger.debug(
                 "Indexes do not exist yet:" + str(e.info['error']))
             result['all'] = []
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
             result['all'] = []
 
@@ -575,26 +599,21 @@ class QueryCommonReportsHelper(object):
     @classmethod
     def get_common_params(cls, **kwargs):
         """Get common params."""
-        year = kwargs.get('year')
-        month = kwargs.get('month')
         start_date = kwargs.get('start_date')
         end_date = kwargs.get('end_date')
         if not start_date or not end_date:
-            if month > 0 and month <= 12:
-                query_date = str(year) + '-' + str(month).zfill(2)
-                _, lastday = calendar.monthrange(year, month)
-                params = {'start_date': query_date + '-01',
-                          'end_date': query_date + '-'
-                          + str(lastday).zfill(2) + 'T23:59:59'}
-            else:
-                query_date = 'all'
-                params = {'interval': 'day'}
+            year = kwargs.get('year')
+            month = kwargs.get('month')
+            query_date = str(year) + '-' + str(month).zfill(2)
+            _, lastday = calendar.monthrange(year, month)
+            start_date = query_date + '-01'
+            end_date = query_date + '-' + str(lastday).zfill(2)
         else:
             query_date = start_date + '-' + end_date
-            params = {'start_date': start_date,
-                      'end_date': end_date + 'T23:59:59',
-                      'agg_size': kwargs.get('agg_size', 0),
-                      'agg_sort': kwargs.get('agg_sort', {'_term': 'desc'})}
+        params = {
+            'start_date': start_date,
+            'end_date': end_date + 'T23:59:59',
+        }
         return query_date, params
 
     @classmethod
@@ -655,6 +674,7 @@ class QueryCommonReportsHelper(object):
             Calculation(all_res, all_list)
 
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
 
         result['date'] = query_month
@@ -714,6 +734,7 @@ class QueryCommonReportsHelper(object):
                         institution_name_list)
 
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
 
         result['date'] = query_month
@@ -749,6 +770,7 @@ class QueryCommonReportsHelper(object):
             res = query.run(**params)
             Calculation(res, data_list)
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
 
         result['date'] = query_date
@@ -762,12 +784,12 @@ class QuerySitelicenseReportsHelper(object):
         """Get common params.
         Args:
             **kwargs (dict): start date,end_date.
-        
+
         Returns:
             string: Aggregation date.
             dict: Param by Elaticsearch Aggregation.
             list: List Aggregation date by month.
-        
+
         """
         start_date = kwargs.get('start_date')
         end_date = kwargs.get('end_date')
@@ -802,10 +824,12 @@ class QuerySitelicenseReportsHelper(object):
         """Get site license download report.
         Args:
             **kwargs (dict): start date,end_date.
-        
+
         Returns:
             dict: Dict calculation data.
         """
+        from weko_index_tree.models import Index
+
         def Calculation(query_list, all_res, datelist):
             """Calculation.
 
@@ -1047,12 +1071,18 @@ class QueryRecordViewPerIndexReportHelper(object):
         result = {}
         year = kwargs.get('year')
         month = kwargs.get('month')
+        start_date = kwargs.get('start_date')
+        end_date = kwargs.get('end_date')
 
         try:
-            query_month = str(year) + '-' + str(month).zfill(2)
-            _, lastday = calendar.monthrange(year, month)
-            start_date = query_month + '-01'
-            end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
+            if not start_date or not end_date:
+                query_month = str(year) + '-' + str(month).zfill(2)
+                _, lastday = calendar.monthrange(year, month)
+                start_date = query_month + '-01'
+                end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
+            else:
+                query_month = f"{start_date}-{end_date}"
+
             result = {'date': query_month, 'all': [], 'total': 0}
             first_search = True
             after_key = None
@@ -1074,6 +1104,7 @@ class QueryRecordViewPerIndexReportHelper(object):
                 count += cls.parse_bucket_response(aggs, result)
 
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
             return {}
 
@@ -1086,8 +1117,8 @@ class QueryRecordViewReportHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['buckets']: 
-            data = { 
+        for item in res['buckets']:
+            data = {
                 'record_id': item['record_id'],
                 'record_name': item['record_name'],
                 'index_names': item['record_index_names'],
@@ -1174,7 +1205,7 @@ class QueryRecordViewReportHelper(object):
                 _, lastday = calendar.monthrange(year, month)
                 start_date = query_date + '-01'
                 end_date = query_date + '-' + str(lastday).zfill(2)
-                query_date = start_date + '-' + end_date
+            query_date = start_date + '-' + end_date
             params = {'start_date': start_date,
                       'end_date': end_date + 'T23:59:59'}
             if not kwargs.get('ranking', False):
@@ -1187,9 +1218,11 @@ class QueryRecordViewReportHelper(object):
             cls.Calculation(all_res, all_list)
 
         except es_exceptions.NotFoundError as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
             result['all'] = []
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.debug(e)
 
         result['date'] = query_date
@@ -1564,8 +1597,8 @@ class QueryRankingHelper(object):
     @classmethod
     def Calculation(cls, res, data_list):
         """Create response object."""
-        for item in res['aggregations']['my_buckets']['buckets']: 
-            data = { 
+        for item in res['aggregations']['my_buckets']['buckets']:
+            data = {
                 'key': item['key'],
                 'count': int(item['my_sum']['value'])
             }

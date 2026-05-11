@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-07-29 21:12+0900\n"
+"POT-Creation-Date: 2026-03-25 17:42+0900\n"
 "PO-Revision-Date: 2018-01-19 19:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_admin/admin.py:105
 msgid "deny access"
@@ -538,11 +538,15 @@ msgstr "アカウント情報が無効です。再度確認してください"
 msgid "Registered Users"
 msgstr "登録ユーザー"
 
-#: weko_admin/utils.py:374
+#: weko_admin/utils.py:448
 msgid "Aggregation Month"
 msgstr "集計月"
 
-#: weko_admin/utils.py:388
+#: weko_admin/utils.py:448
+msgid "Aggregation Period"
+msgstr "集計期間"
+
+#: weko_admin/utils.py:477
 msgid "Total Detail Views"
 msgstr "詳細ビュー合計"
 
@@ -739,8 +743,7 @@ msgstr "作成"
 msgid "Edit"
 msgstr "編集"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
 msgid "Details"
 msgstr "詳細"
 
@@ -1587,6 +1590,14 @@ msgstr "送信間隔"
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:19
 msgid "Frequency"
 msgstr "頻度"
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+msgid "Send Date"
+msgstr "送信日"
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:58
+msgid "End of Month"
+msgstr "月末"
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:30
 msgid "Life Time"

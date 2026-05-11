@@ -21,6 +21,7 @@
 """Utilities for convert response json."""
 import copy
 import csv
+import traceback
 import orjson
 import math
 import os
@@ -28,7 +29,8 @@ import zipfile
 import pickle
 from datetime import datetime, timedelta
 from io import BytesIO, StringIO
-from typing import Dict, Tuple, Union
+from typing import Dict, Tuple, Union, overload
+from typing_extensions import Literal
 from invenio_search.api import RecordsSearch
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch_dsl.query import QueryString
@@ -326,6 +328,7 @@ def get_user_report_data():
             .outerjoin(userrole) \
             .group_by(Role.id).all()
     except Exception as e:
+        traceback.print_exc()
         current_app.logger.error('Could not retrieve user report data: ')
         current_app.logger.error(e)
         return {}
@@ -341,14 +344,23 @@ def get_user_report_data():
     return results
 
 
-def get_reports(type, year, month):
+@overload
+def get_reports(type, year, month, *, range: Literal[False]=False): ...
+@overload
+def get_reports(type, *, range: Literal[True], start_date, end_date): ...
+def get_reports(
+    type, year=None, month=None, range=False, start_date=None, end_date=None
+):
     """Get report data from db and modify.
     
     Args:
         type (str): report's type
-        year (str): report's aggregation year
-        month (str): report's aggregation month
-    
+        year (str): report's aggregation year, can specified when range is False.
+        month (str): report's aggregation month, can specified when range is False.
+        range (bool): flag to indicate date range in report content.
+        start_date (datetime): report's start date, required when range is True.
+        end_date (datetime): report's end date, required when range is True.
+
     Returns:
         dict: report's data for selected types
     """
@@ -365,13 +377,16 @@ def get_reports(type, year, month):
         target_types = current_app.config['WEKO_ADMIN_REPORT_TYPES']
     else:
         target_types.append(type)
-    
-    for target in target_types:
+
+    args = {'year': int(year), 'month': int(month)} if not range else {}
+    if range:
         args = {
-            'event': target,
-            'year': int(year),
-            'month': int(month)
+            'start_date': start_date.strftime('%Y-%m-%d'),
+            'end_date': end_date.strftime('%Y-%m-%d'),
         }
+
+    for target in target_types:
+        args.update({'event': target})
         result = {}
         if target in file_report_types:
             result = QueryFileReportsHelper.get(**args)
@@ -388,22 +403,32 @@ def get_reports(type, year, month):
         result_reports[target] = result
     return result_reports
 
-
-def package_reports(all_stats, year, month):
+@overload
+def package_reports(all_stats, year, month): ...
+@overload
+def package_reports(all_stats, *, report_date): ...
+def package_reports(
+    all_stats, year=None, month=None, report_date=None
+):
     """Package the .csv files into one zip file."""
     output_files = []
     zip_stream = BytesIO()
-    year = str(year)
-    month = str(month)
+
+    period = True
+    if not report_date:
+        period = False
+        report_date = str(year) + '-' + str(month)
+
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
+    file_name_mapping = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES']
     try:  # TODO: Make this into one loop, no need for two
         for stats_type, stats in all_stats.items():
-            file_name = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES'].get(
-                stats_type, '_')
-            file_name = 'logReport_' + file_name + year + '-' + month + '.' + file_format
+            report_name = file_name_mapping.get(stats_type, '_')
+            file_name = 'logReport_' + report_name + report_date + '.' + file_format
             output_files.append({
                 'file_name': file_name,
-                'stream': make_stats_file(stats, stats_type, year, month)})
+                'stream': make_stats_file(stats, stats_type, report_date, period),
+            })
 
         # Dynamically create zip from StringIO data into BytesIO
         report_zip = zipfile.ZipFile(zip_stream, 'w')
@@ -417,9 +442,10 @@ def package_reports(all_stats, year, month):
     return zip_stream
 
 
-def make_stats_file(raw_stats, file_type, year, month):
+def make_stats_file(raw_stats, file_type, report_date, period):
     """Make TSV/CSV report file for stats."""
-    header_row = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
+    header_title = current_app.config['WEKO_ADMIN_REPORT_HEADERS'].get(file_type)
+    header_sub = _('Aggregation Period') if period else _('Aggregation Month')
     sub_header_row = current_app.config['WEKO_ADMIN_REPORT_SUB_HEADERS'].get(
         file_type)
     file_output = StringIO()
@@ -427,14 +453,10 @@ def make_stats_file(raw_stats, file_type, year, month):
     file_delimiter = '\t' if file_format == 'tsv' else ','
     writer = csv.writer(file_output, delimiter=file_delimiter,
                         lineterminator="\n")
-    if file_type == 'site_access':
-        writer.writerows([[header_row],
-                      [_('Aggregation Month'), year + '-' + month],
-                      ['']])
-    else:
-        writer.writerows([[header_row],
-                        [_('Aggregation Month'), year + '-' + month],
-                        [''], [header_row]])
+    content = [[header_title], [header_sub, report_date], ['']]
+    if file_type != 'site_access':
+        content.append([header_title])
+    writer.writerows(content)
 
     if file_type == 'billing_file_download':
         col_dict_key = file_type.split('_', 1)[1]

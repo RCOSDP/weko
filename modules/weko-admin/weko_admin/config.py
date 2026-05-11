@@ -23,7 +23,7 @@
 from flask_babelex import gettext as __
 from flask_babelex import lazy_gettext as _
 
-WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 2
+WEKO_ADMIN_DEFAULT_AGGREGATION_MONTH = 1
 """default aggregation month for site license mail."""
 
 WEKO_ADMIN_DEFAULT_LIFETIME = 60

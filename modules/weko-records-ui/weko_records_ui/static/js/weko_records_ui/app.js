@@ -327,6 +327,7 @@ $(function() {
     handleDownloadBillingFile();
     handleConfirmButton();
     handleChargeBillingFile();
+    handleConfirmBillingFile();
 });
 
 function handleDownloadBillingFile(isVersionTable) {
@@ -378,7 +379,16 @@ function handleChargeBillingFile() {
     // 課金ボタン押下時の処理（課金確認メッセージOK時の処理）
     $('button#modal_charge').on('click', function () {
         $('#action_charge_confirmation').modal('hide');
+        const email = document.getElementById('current_user_email').value;
         const data = $('button#charge-button').data();
+        const charge_key = 'charge_' + email;
+        let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
+        if (charge_item) {
+            charge_item.push(data.itemid);
+        } else {
+            charge_item = [data.itemid];
+        }
+        window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
         let params = {
             'item_id': data.itemid,
             'file_name': data.filename,
@@ -391,6 +401,10 @@ function handleChargeBillingFile() {
             type: 'GET',
             contentType: 'application/json',
             success: function (data) {
+                if (data.redirect_url) {
+                    window.location.href = data.redirect_url;
+                    return;
+                }
                 if (data.status == 'success') {
                     $('#success_flag').val('true')
                     // 課金成功メッセージ表示
@@ -432,6 +446,26 @@ function handleChargeBillingFile() {
             // 画面を更新
             location.reload();
         }
+        else {
+            const email = document.getElementById('current_user_email').value;
+            const charge_key = 'charge_' + email;
+            const url = window.location.href;
+            const split_url = url.split('/');
+            const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
+            let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
+            if (charge_item) {
+                const index = charge_item.indexOf(itemid);
+                if (index != -1) {
+                    charge_item.splice(index, 1);
+                }
+                if (charge_item.length == 0) {
+                    window.sessionStorage.removeItem(charge_key);
+                }
+                else {
+                    window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+                }
+            }
+        }
     });
 
     $('button#charge_modal_close_icon').on('click', function () {
@@ -440,7 +474,77 @@ function handleChargeBillingFile() {
             // 画面を更新
             location.reload();
         }
+        else {
+            const email = document.getElementById('current_user_email').value;
+            const charge_key = 'charge_' + email;
+            const url = window.location.href;
+            const split_url = url.split('/');
+            const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
+            let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
+            if (charge_item) {
+                const index = charge_item.indexOf(itemid);
+                if (index != -1) {
+                    charge_item.splice(index, 1);
+                }
+                if (charge_item.length == 0) {
+                    window.sessionStorage.removeItem(charge_key);
+                }
+                else {
+                    window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+                }
+            }
+        }
     });
+}
+
+function handleConfirmBillingFile() {
+    const email = document.getElementById('current_user_email').value;
+    const charge_key = 'charge_' + email;
+    let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
+    const url = window.location.href;
+    const split_url = url.split('/');
+    const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
+    if (charge_item && charge_item.indexOf(itemid) >= 0) {
+        const index = charge_item.indexOf(itemid);
+        if (index != -1) {
+            charge_item.splice(index, 1);
+        }
+        if (charge_item.length == 0) {
+            window.sessionStorage.removeItem(charge_key);
+        }
+        else {
+            window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+        }
+        let params = {
+            'item_id': itemid,
+        }
+        params = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+        $.ajax({
+            url: '/charge/show' + '?' + params,
+            type: 'GET',
+            contentType: 'application/json',
+            success: function (data) {
+                if (data.status == 'success') {
+                    // 課金成功メッセージ表示
+                    const message = $('#charge_success').val();
+                    $('#charge_success_message').html(message);
+                    $('#action_charge_success').modal('show');
+                }
+                else {
+                    // 課金失敗メッセージ表示
+                    const message = $('#charge_error').val();
+                    $('#charge_success_message').html(message);
+                    $('#action_charge_success').modal('show');
+                }
+            },
+            error: function (error) {
+                // 課金失敗メッセージ表示
+                const message = $('#charge_error').val();
+                $('#charge_success_message').html(message);
+                $('#action_charge_success').modal('show');
+            }
+        });
+    }
 }
 
 /* Hide preview area show photo. */

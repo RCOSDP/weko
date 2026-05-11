@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko_admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2019-04-25 18:26+0900\n"
+"POT-Creation-Date: 2026-03-25 17:42+0900\n"
 "PO-Revision-Date: 2018-01-04 16:19+0100\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -141,6 +141,14 @@ msgstr ""
 
 #: weko_admin/config.py:216
 msgid "total"
+msgstr ""
+
+#: weko_admin/utils.py:448
+msgid "Aggregation Month"
+msgstr ""
+
+#: weko_admin/utils.py:448
+msgid "Aggregation Period"
 msgstr ""
 
 #: weko_admin/utils.py:502
@@ -358,13 +366,13 @@ msgstr ""
 msgid "(from - to)"
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:138
-msgid "Please input a correct number"
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:137
+msgid "Please input a correct number."
 msgstr ""
 
-#: weko_admin/templates/weko_admin/site_license.html:139
-msgid "The range of ipAddress is not correct"
-msgstr "IP Address range is not correct"
+#: weko_admin/templates/weko_admin/admin/site_license_settings.html:138
+msgid "The range of ipAddress is not correct."
+msgstr "IP Address range is not correct."
 
 #: weko_admin/templates/weko_admin/site_license.html:145
 #: weko_admin/templates/weko_admin/site_license.html:156
@@ -957,3 +965,11 @@ msgstr "Display Number must be an integer value from 1 to 99."
 #: weko_admin/templates/weko_admin/admin/facet_search_setting.html:65
 msgid "DisplayNumber Validation2"
 msgstr "If CheckboxList is selected, Display Number must be entered."
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+msgid "Send Date"
+msgstr ""
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:58
+msgid "End of Month"
+msgstr ""

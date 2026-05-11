@@ -35,6 +35,8 @@ class ShibUser(object):
         :param shib_attr: passed attribute for shibboleth user
         """
         self.shib_attr = shib_attr
+        if self.shib_attr.get('shib_handle'):
+            self.shib_attr['shib_handle']=self.shib_attr['shib_handle'][:255]
         self.user = None
         """The :class:`invenio_accounts.models.User` instance."""
         self.shib_user = None
@@ -149,6 +151,8 @@ class ShibUser(object):
                     shib_user.shib_ip_range_flag = self.shib_attr['shib_ip_range_flag']
                 if self.shib_attr['shib_organization']:
                     shib_user.shib_organization = self.shib_attr['shib_organization']
+                if self.shib_attr['shib_handle']:
+                    shib_user.shib_handle = self.shib_attr['shib_handle']
             db.session.commit()
         except SQLAlchemyError as ex:
             current_app.logger.error("SQLAlchemyError: {}".format(ex))
@@ -190,7 +194,7 @@ class ShibUser(object):
             shib_user_count = ShibbolethUser.query.filter_by(weko_uid=self.user.id).count()
             if shib_user_count > 0:
                 raise SQLAlchemyError("User already exists. (weko_uid={}, shib_eppn={})".format(self.user.id, self.shib_attr.get('shib_eppn')))
-            
+
             self.user.email = self.shib_attr['shib_mail']
             self.shib_user = ShibbolethUser.create(
                 self.user,

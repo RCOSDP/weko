@@ -45,6 +45,7 @@ from invenio_records_ui.signals import record_viewed
 from invenio_files_rest.signals import file_downloaded
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
+from urllib.parse import urljoin
 from weko_accounts.views import _redirect_method
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
@@ -58,6 +59,7 @@ from weko_records.serializers import citeproc_v1
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import custom_record_medata_for_export, \
     remove_weko2_special_character, selected_value_by_language
+from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkFlow
 
@@ -69,11 +71,11 @@ from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission, \
-    check_charge, create_charge, close_charge
+    check_charge, create_charge, close_charge, secure_charge
 from .utils import get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
-    is_show_email_of_creator,hide_by_itemtype
+    hide_by_itemtype, restore_session_info
 from .utils import restore as restore_imp
 from .utils import soft_delete as soft_delete_imp
 
@@ -283,8 +285,8 @@ def check_file_permission(record, fjson):
     Args:
         record (weko_deposit.api.WekoRecord): _description_
         fjson (dict): _description_
-    
-    """    
+
+    """
     return check_file_download_permission(record, fjson)
 
 
@@ -368,21 +370,22 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     :param kwargs: Additional view arguments based on URL rule.
     :returns: The rendered template.
     """
-    def _get_rights_title(result, rights_key, rights_values, current_lang, meta_options):
+    def _get_rights_title(result, rights_key_str, rights_values, current_lang, meta_options):
         """Get multi-lang rights title."""
-        item_key = rights_key.split('.')[0]
-        if item_key in meta_options:
-            if meta_options[item_key].get('title'):
-                item_title = meta_options[item_key]['title']
-            if meta_options[item_key]['title_i18n'].get(current_lang, None):
-                item_title = meta_options[item_key]['title_i18n'][current_lang]
-            elif meta_options[item_key]['title_i18n'].get('en', None):
-                item_title = meta_options[item_key]['title_i18n']['en']
-        if rights_values:
-            result[item_key] = {
-                'item_title': item_title,
-                'item_values': rights_values
-            }
+        for rights_key in rights_key_str.split(','):
+            item_key = rights_key.split('.')[0]
+            if item_key in meta_options:
+                if meta_options[item_key].get('title'):
+                    item_title = meta_options[item_key]['title']
+                if meta_options[item_key]['title_i18n'].get(current_lang, None):
+                    item_title = meta_options[item_key]['title_i18n'][current_lang]
+                elif meta_options[item_key]['title_i18n'].get('en', None):
+                    item_title = meta_options[item_key]['title_i18n']['en']
+            if rights_values:
+                result[item_key] = {
+                    'item_title': item_title,
+                    'item_values': rights_values
+                }
 
     # Check file permision if request is File Information page.
     file_order = int(request.args.get("file_order", -1))
@@ -449,7 +452,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         if hasattr(current_user, 'site_license_flag') else False
     send_info['site_license_name'] = current_user.site_license_name \
         if hasattr(current_user, 'site_license_name') else ''
-    
+
     record_viewed.send(
         current_app._get_current_object(),
         pid=pid,
@@ -478,7 +481,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         record["relation"] = res
     else:
         record["relation"] = {}
-    
+
     recstr = etree.tostring(
         getrecord(
             identifier=record['_oai'].get('id'),
@@ -489,48 +492,81 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
-    
+
     current_lang = current_i18n.language \
         if hasattr(current_i18n, 'language') else None
     # get title name
-    from weko_records.utils import get_options_and_order_list
     from weko_search_ui.utils import get_data_by_property
-    from weko_records.utils import get_options_and_order_list
+    from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+    from weko_workflow.utils import get_sub_item_value
+
     title_name = ''
     rights_values = {}
     accessRight = ''
-    solst, meta_options = get_options_and_order_list(
+    meta_options, item_type_mapping = get_options_and_order_list(
         record.get('item_type_id'))
-    item_type_mapping = Mapping.get_record(record.get('item_type_id'))
-    item_map = get_mapping(item_type_mapping, 'jpcoar_mapping')
-    suffixes = '.@attributes.xml:lang'
-    for key in item_map:
-        prefix = key.replace(suffixes, '')
-        if prefix == 'title' and key.find(suffixes) != -1:
+    hide_list = get_hide_list_by_schema_form(record.get('item_type_id'))
+    item_map = get_mapping(record.get('item_type_id'), 'jpcoar_mapping')
+
+    # get title info
+    title_value_key = 'title.@value'
+    title_lang_key = 'title.@attributes.xml:lang'
+    if title_value_key in item_map:
+        title_languages = []
+        _title_key_str = ''
+        if title_lang_key in item_map:
             # get language
-            title_languages, _title_key = get_data_by_property(
-                record, item_map, key)
-            # get value
-            title_values, _title_key1 = get_data_by_property(
-                record, item_map, prefix + '.@value')
-            title_name = selected_value_by_language(
-                title_languages,
-                title_values,
-                _title_key,
-                _title_key1,
-                current_lang,
-                record)
-        elif key == 'rights.@value':
-            _rights_values, _rights_key = get_data_by_property(
-                record, item_map, key)
-            if _rights_key:
-                _get_rights_title(rights_values, _rights_key,
-                                  _rights_values, current_lang, meta_options)
-        elif key == 'accessRights.@value':
-            accessRights, _access_rights_key = get_data_by_property(
-                record, item_map, key)
-            if accessRights and len(accessRights) > 0:
-                accessRight = accessRights[0]
+            title_languages, _title_key_str = get_data_by_property(
+                record, item_map, title_lang_key)
+        # get value
+        title_values, _title_key1_str = get_data_by_property(
+            record, item_map, title_value_key)
+        title_name = selected_value_by_language(
+            title_languages,
+            title_values,
+            _title_key_str,
+            _title_key1_str,
+            current_lang,
+            record,
+            meta_options,
+            hide_list)
+    # get rights info
+    rights_value_key = 'rights.@value'
+    if rights_value_key in item_map:
+        key_list = item_map.get(rights_value_key)
+        for k in key_list.split(","):
+            subkey_list = k.split('.')
+            _rights_values = []
+            attribute = record.get(subkey_list[0])
+            if attribute:
+                data_result = get_sub_item_value(attribute, subkey_list[-1])
+                if data_result:
+                    if isinstance(data_result, list):
+                        for value in data_result:
+                            _rights_values.append(value)
+                    elif isinstance(data_result, str):
+                        _rights_values.append(data_result)
+            prop_hidden = meta_options.get(subkey_list[0], {}).get('option', {}).get('hidden', False)
+            if not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
+                _get_rights_title(rights_values, k, _rights_values,
+                                    current_lang, meta_options)
+    # get accessRights info
+    accessRights_value_key = 'accessRights.@value'
+    if accessRights_value_key in item_map:
+        key_list = item_map.get(accessRights_value_key)
+        for k in key_list.split(","):
+            subkey_list = k.split('.')
+            prop_hidden = meta_options.get(subkey_list[0], {}).get('option', {}).get('hidden', False)
+            attribute = record.get(subkey_list[0])
+            if attribute and not prop_hidden and (subkey_list[0] not in hide_list or subkey_list[-1] not in hide_list):
+                data_result = get_sub_item_value(attribute, subkey_list[-1])
+                if data_result:
+                    if isinstance(data_result, list) and len(data_result) > 0:
+                        accessRight = data_result[0]
+                        break
+                    elif isinstance(data_result, str):
+                        accessRight = data_result
+                        break
 
     pdfcoverpage_set_rec = PDFCoverPageSettings.find(1)
     # Check if user has the permission to download original pdf file
@@ -563,7 +599,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         display_stats = display_setting.get('display_stats')
     else:
         display_stats = True
-    
+
     items_display_settings = AdminSettings.get(name='items_display_settings',
                                         dict_to_object=False)
     if items_display_settings:
@@ -605,12 +641,9 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     # Hide email of creator in pdf cover page
     if record.get('item_type_id'):
         item_type_id = record['item_type_id']
-    is_show_email = is_show_email_of_creator(item_type_id)
-    if not is_show_email:
-        # list_hidden = get_ignore_item(record['item_type_id'])
-        # record = hide_by_itemtype(record, list_hidden)
-        record = hide_by_email(record)
-    
+
+    record = hide_by_email(record, False)
+
     # Remove hide item
     from weko_items_ui.utils import get_ignore_item
     list_hidden = get_ignore_item(record['item_type_id'])
@@ -687,7 +720,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         flg_display_resourcetype = current_app.config.get('WEKO_RECORDS_UI_DISPLAY_RESOURCE_TYPE') ,
         search_author_flg=search_author_flg,
         billing_settings=billing_settings,
-        
+
         **ctx,
         **kwargs
     )
@@ -786,7 +819,7 @@ def set_pdfcoverpage_header():
         flash(_('PDF cover page settings have been updated.'),
               category='success')
         return redirect('/admin/pdfcoverpage')
-    
+
     return redirect('/admin/pdfcoverpage')
 
 
@@ -960,14 +993,14 @@ def get_uri():
     """_summary_
     ---
       post:
-        description: 
+        description:
         requestBody:
             required: true
             content:
             application/json: {"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}
         responses:
           200:
-    """  
+    """
     data = request.get_json()
     uri = data.get('uri')
     pid_value = data.get('pid_value')
@@ -1011,18 +1044,35 @@ def charge():
         title     : タイトル
         price     : 支払い金額
 
-    Response parameter(json):
-        status :
-            success      : 課金成功
-            already      : 課金済み
-            error        : 課金失敗
-            credit_error : 課金失敗(クレジットカード情報の不備)
+    Response parameter
+        json:
+            status:
+                already      : 課金済み
+                error        : 課金失敗
+                credit_error : 課金失敗(クレジットカード情報の不備)
+        redirect:
+            カード会社の3DS2.0画面へのリダイレクトURL
     '''
+    # Get session_id
+    session_id = request.cookies.get('session')
+
     item_id = request.values.get('item_id')
     file_name = request.values.get('file_name')
     title = request.values.get('title')
     price = request.values.get('price')
     file_url = current_app.config['THEME_SITEURL'] + f'/record/{item_id}/files/{file_name}'
+    ret_url = urljoin(
+        current_app.config['THEME_SITEURL'],
+        url_for('weko_records_ui.charge_secure', session_id=session_id.split('.')[0]),
+    )
+
+    # 課金中のアイテムIDをキャッシュから取得
+    redis_connection = RedisConnection()
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
+    cache_key = f'charge_{current_user.id}'
+    if datastore.redis.exists(cache_key):
+        # 課金中だったら課金しない
+        return jsonify({'status': 'error'})
 
     # 課金チェック
     try:
@@ -1037,14 +1087,14 @@ def charge():
 
     # 課金予約
     try:
-        trade_id = create_charge(current_user.id, int(item_id), price, title, file_url)
-        if trade_id in ['connection_error', 'api_error']:
+        redirect_url = create_charge(current_user.id, int(item_id), price, title, file_url, ret_url)
+        if redirect_url in ['connection_error', 'api_error']:
             # 課金失敗
             return jsonify({'status': 'error'})
-        if trade_id == 'credit_error':
+        if redirect_url == 'credit_error':
             # 課金失敗(クレジットカード情報の不備)
             return jsonify({'status': 'credit_error'})
-        if trade_id == 'already':
+        if redirect_url == 'already':
             # 課金済みだったら課金しない
             return jsonify({'status': 'already'})
     except Exception as e:
@@ -1052,14 +1102,88 @@ def charge():
         current_app.logger.error(e)
         return abort(500)
 
+    if not redirect_url:
+        # 課金失敗
+        return jsonify({'status': 'error'})
+
+    # 課金中のアイテムIDをキャッシュに保存
+    datastore.put(cache_key, str(item_id).encode('utf-8'), ttl_secs=300)
+
+    return jsonify({'redirect_url': redirect_url})
+
+@blueprint.route('/charge/secure/<string:session_id>', methods=['POST'])
+def charge_secure(session_id):
+    """3DS2.0認証後の課金処理を行う。
+
+    Request parameter:
+        session_id : セッションID(URLパラメータ)
+        AccessID : 課金予約時に取得したaccess_id(POSTパラメータ)
+
+    Response parameter
+        json:
+            status:
+                success : 課金成功
+                error   : 課金失敗
+    """
+    access_id = request.values.get('AccessID')
+    redis_connection = RedisConnection()
+
+    if not current_user.is_authenticated:
+        restore_session_info(session_id, redis_connection)
+
+    # 課金中のアイテムIDをキャッシュから取得
+    datastore = redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv=True)
+    cache_key = f'charge_{current_user.id}'
+    if not datastore.redis.exists(cache_key):
+        return redirect('/')
+
+    item_id = datastore.redis.get(cache_key).decode('utf-8')
+    redirect_url = '/records/{}'.format(item_id)
+    datastore.delete(cache_key)
+
+    # 3DS2.0認証後決済
+    try:
+        trade_id = secure_charge(current_user.id, access_id)
+        if trade_id in ['connection_error', 'api_error']:
+            # 課金失敗
+            return redirect(redirect_url)
+    except Exception as e:
+        current_app.logger.error(f'Error in secure_charge: user: {current_user.id}, access_id: {access_id}')
+        current_app.logger.error(e)
+        return abort(500)
+
     # 課金確定
-    try: 
-        charge_result = close_charge(current_user.id, trade_id)
-        if charge_result:
+    try:
+        close_charge(current_user.id, trade_id)
+        return redirect(redirect_url)
+    except Exception as e:
+        current_app.logger.error(f'Error in close_charge: user: {current_user.id}, trade_id: {trade_id}')
+        current_app.logger.error(e)
+        return abort(500)
+
+@blueprint.route('/charge/show', methods=['GET'])
+def charge_show():
+    """課金済みかどうかを確認する。
+
+    Request parameter:
+        item_id : アイテムID
+
+    Response parameter
+        json:
+            status:
+                success : 課金済み
+                error   : 課金失敗
+    """
+    item_id = request.values.get('item_id')
+    # 課金チェック
+    try:
+        charge_result = check_charge(current_user.id, int(item_id))
+        if charge_result == 'already':
+            # 課金済みの場合、課金成功
             return jsonify({'status': 'success'})
         else:
             return jsonify({'status': 'error'})
     except Exception as e:
-        current_app.logger.error(f'Error in close_charge: user: {current_user.id}, trade_id: {trade_id}')
+        current_app.logger.error(f'Error in check_charge: user: {current_user.id}, item_id: {item_id}')
         current_app.logger.error(e)
         return abort(500)

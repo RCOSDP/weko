@@ -22,6 +22,7 @@
 
 import base64
 import orjson
+import pickle
 from datetime import datetime as dt
 from datetime import timedelta
 from decimal import Decimal
@@ -29,11 +30,12 @@ from typing import NoReturn, Tuple, Dict
 from urllib.parse import quote
 
 from elasticsearch_dsl import Q
-from flask import abort, current_app, request
+from flask import abort, current_app, request, session
 from flask_babelex import gettext as _
 from flask_babelex import to_utc
+from flask_login import login_user
 from flask_security import current_user
-from invenio_accounts.models import Role
+from invenio_accounts.models import Role, User
 from invenio_cache import current_cache
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
@@ -52,6 +54,7 @@ from weko_records.models import ItemBilling
 from weko_records.serializers.utils import get_mapping
 from weko_records.utils import replace_fqdn
 from weko_records_ui.models import InstitutionName
+from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import WorkActivity, WorkFlow
 
@@ -92,9 +95,9 @@ def check_items_settings(settings=None):
         if isinstance(settings,dict):
             if 'items_display_email' in settings:
                 current_app.config['EMAIL_DISPLAY_FLG'] = settings['items_display_email']
-            if 'items_search_author' in settings:    
+            if 'items_search_author' in settings:
                 current_app.config['ITEM_SEARCH_FLG'] = settings['items_search_author']
-            if 'item_display_open_date' in settings:    
+            if 'item_display_open_date' in settings:
                 current_app.config['OPEN_DATE_DISPLAY_FLG'] = \
                 settings['item_display_open_date']
         else:
@@ -232,10 +235,10 @@ def is_open_access(record: Dict, file_name: str) -> bool:
     Args:
         record (dict): item's meta data
         file_name (str): target file name
-    
+
     Returns:
         bool: open access item or not
-    
+
     """
     from weko_records_ui.permissions import check_publish_status
     target_index_list = record['path']
@@ -256,7 +259,7 @@ def is_open_access(record: Dict, file_name: str) -> bool:
                     return True
                 if access_role == 'open_date':
                     if file.get('date') and file.get('date')[0] and file.get('date')[0].get('dateValue'):
-                        if dt.strptime(file.get('date')[0].get('dateValue'), 
+                        if dt.strptime(file.get('date')[0].get('dateValue'),
                                                 '%Y-%m-%d').date() <= dt.now().date():
                             return True
     return False
@@ -433,7 +436,7 @@ def get_license_pdf(license, item_metadata_json, pdf, file_item_id, footer_w,
     # current_app.logger.debug("footer_h:{}".format(footer_h))
     # current_app.logger.debug("cc_logo_xposition:{}".format(cc_logo_xposition))
     # current_app.logger.debug("item:{}".format(item))
-        
+
     from .views import blueprint
     license_icon_pdf_location = \
         current_app.config['WEKO_RECORDS_UI_LICENSE_ICON_PDF_LOCATION']
@@ -469,7 +472,7 @@ def get_pair_value(name_keys, lang_keys, datas):
     current_app.logger.debug("name_keys:{}".format(name_keys))
     current_app.logger.debug("lang_keys:{}".format(lang_keys))
     current_app.logger.debug("datas:{}".format(datas))
-    
+
     if len(name_keys) == 1 and len(lang_keys) == 1:
         if isinstance(datas, list):
             for data in datas:
@@ -509,7 +512,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
             record['item_type_id'], item_type_mapping, item_type_data
         )
         record = hide_by_itemtype(record, list_hidden)
-        
+
         hide_email = hide_meta_data_for_role(record)
         if hide_email:
             # Hidden owners_ext.email
@@ -518,7 +521,7 @@ def hide_item_metadata(record, settings=None, item_type_mapping=None,
                 del record['_deposit']['owners_ext']['email']
 
         if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
-            record = hide_by_email(record)
+            record = hide_by_email(record, True)
 
 
         record = hide_by_file(record)
@@ -539,7 +542,7 @@ def hide_item_metadata_email_only(record):
     check_items_settings()
 
     record['weko_creator_id'] = record.get('owner')
-    
+
     hide_email = hide_meta_data_for_role(record)
     if hide_email:
         # Hidden owners_ext.email
@@ -548,7 +551,7 @@ def hide_item_metadata_email_only(record):
             del record['_deposit']['owners_ext']['email']
 
     if hide_email and not current_app.config['EMAIL_DISPLAY_FLG']:
-        record = hide_by_email(record)
+        record = hide_by_email(record, True)
         return True
 
     record.pop('weko_creator_id')
@@ -579,6 +582,7 @@ def hide_by_email(item_metadata, force_flag=False):
     """Hiding emails.
 
     :param item_metadata:
+    :param force_flag: force to hide
     :return:
     """
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
@@ -586,15 +590,13 @@ def hide_by_email(item_metadata, force_flag=False):
     subitem_keys = current_app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS']
 
     item_type_id = item_metadata.get('item_type_id')
-
     if item_type_id:
         meta_options, type_mapping = get_options_and_order_list(item_type_id)
         hide_list = get_hide_list_by_schema_form(item_type_id)
-
         # Hidden owners_ext info
         if item_metadata.get('_deposit') and item_metadata['_deposit'].get('owners_ext'):
-            del item_metadata['_deposit']['owners_ext']
-
+            if force_flag or not show_email_flag:
+                del item_metadata['_deposit']['owners_ext']
         for item in item_metadata:
             _item = item_metadata[item]
             prop_hidden = meta_options.get(item, {}).get('option', {}).get('hidden', False)
@@ -656,44 +658,6 @@ def item_setting_show_email():
         is_display = False
     return is_display
 
-def is_show_email_of_creator(item_type_id):
-    """Check setting show/hide email for 'Detail' and 'PDF Cover Page' screen.
-
-    :param item_type_id: item type id of current record.
-    :return: True/False, True: show, False: hide.
-    """
-    def get_creator_id(item_type_id):
-        type_mapping = Mapping.get_record(item_type_id)
-        item_map = get_mapping(type_mapping, "jpcoar_mapping")
-        creator = 'creator.creatorName.@value'
-        creator_id = None
-        if creator in item_map:
-            creator_id = item_map[creator].split('.')[0]
-        return creator_id
-
-    def item_type_show_email(item_type_id):
-        # Get flag of creator's email hide from item type.
-        creator_id = get_creator_id(item_type_id)
-        if not creator_id:
-            return None
-        item_type = ItemTypes.get_by_id(item_type_id)
-        schema_editor = item_type.render.get('schemaeditor', {})
-        schema = schema_editor.get('schema', {})
-        creator = schema.get(creator_id)
-        if not creator:
-            return None
-        properties = creator.get('properties', {})
-        creator_mails = properties.get('creatorMails', {})
-        items = creator_mails.get('items', {})
-        properties = items.get('properties', {})
-        creator_mail = properties.get('creatorMail', {})
-        is_hide = creator_mail.get('isHide', None)
-        return is_hide
-
-    is_hide = item_type_show_email(item_type_id)
-    is_display = item_setting_show_email()
-
-    return not is_hide and is_display
 
 def replace_license_free(record_metadata, is_change_label=True):
     """Change the item name 'licensefree' to 'license_note'.
@@ -813,16 +777,16 @@ def get_file_info_list(record):
         for item in array_json:
             if str(item.get('id')) == str(key):
                 return item.get(get_key)
-            
+
     def is_price_highlight(p_file):
         """"Rerturn True if price is highlighted
-        
+
         Args:
             p_file (dict): all metadata of a record.
 
         Returns:
             bool: rerturn True if price is highlighted.
-        
+
         """
         min_price = p_file['min_price']
         user_flag = True
@@ -851,7 +815,7 @@ def get_file_info_list(record):
                     priceinfo['has_role'] and min_price == priceinfo['price']:
                     is_highlight = True
                 priceinfo['is_highlight'] = is_highlight
-    
+
     def is_display_purchased(p_file):
         """"Remove purchased from roles that do not have min_price
         Args:
@@ -1138,7 +1102,7 @@ def generate_one_time_download_url(
     :param record_id: File Version ID
     :param guest_mail: guest email
     :return:
-    """    
+    """
     secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
     download_pattern = current_app.config[
         'WEKO_RECORDS_UI_ONETIME_DOWNLOAD_PATTERN']
@@ -1539,7 +1503,7 @@ def get_google_detaset_meta(record,record_tree=None):
     # Required property check
     min_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MIN)
     max_length = current_app.config.get('WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX',WEKO_RECORDS_UI_GOOGLE_DATASET_DESCRIPTION_MAX)
-    
+
     for title in mtdata.findall('dc:title', namespaces=mtdata.nsmap):
         res_data['name'] = title.text
     for description in mtdata.findall('datacite:description', namespaces=mtdata.nsmap):
@@ -1746,3 +1710,21 @@ def get_billing_role(record: Dict) -> Tuple[str, str]:
 
     min_role = Role.query.get(int(min_price_info.get(billing_role_key)))
     return min_role.name, min_price_info.get(billing_price_key, '')
+
+def restore_session_info(session_id: str, redis_connection: RedisConnection) -> None:
+    """Restore session info.
+
+    Args:
+        session_id (str): Session ID
+        redis_connection (RedisConnection): Redis connection
+    """
+    # Get session data
+    session_store = redis_connection.connection(
+        db=current_app.config['ACCOUNTS_SESSION_REDIS_DB_NO'], kv=True)
+    session_data = pickle.loads(session_store.redis.get(session_id))
+    for k, v in session_data.items():
+        session[k] = v
+
+    # Login user
+    user = User.query.filter_by(id=session['user_id']).first()
+    login_user(user)

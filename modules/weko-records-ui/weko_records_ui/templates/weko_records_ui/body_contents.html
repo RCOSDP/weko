@@ -284,9 +284,9 @@
                               {{_('Charge')}}
                             </button>
                             {% include "weko_records_ui/modal_charge_confirmation.html" %}
-                            {% include "weko_records_ui/modal_charge_success.html" %}
                           {%- endif -%}
                         {%- endif -%}
+                        {% include "weko_records_ui/modal_charge_success.html" %}
                         <!-- Show button 'Information' -->
                         {%- set file_details_url = url_for('invenio_records_ui.recid_file_details', pid_value=pid.pid_value, filename=file.filename or '[No FileName]') %}
                         {%- if file.filename -%}

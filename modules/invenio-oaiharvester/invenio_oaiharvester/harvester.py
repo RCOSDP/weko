@@ -1453,9 +1453,7 @@ class DDIMapper(BaseMapper):
         """Process parsing DDI data."""
         def get_mapping_ddi():
             """Get DDI mapping."""
-            item_type_id = self.itemtype.id
-            type_mapping = Mapping.get_record(item_type_id)
-            item_map = get_mapping(type_mapping, "ddi_mapping")
+            item_map = get_mapping(self.itemtype.id, "ddi_mapping")
             lst_keys_x = list(item_map.keys())
             for i in lst_keys_x:
                 lst_keys.append(i)
@@ -1543,7 +1541,7 @@ class DDIMapper(BaseMapper):
             def get_same_key_from_form(sub_key):
                 """Get the same key with sub_key in form."""
                 for item_sub_key_form in item_sub_keys_form:
-                    if item_sub_key_form.replace("[]", "") == sub_key:
+                    if item_sub_key_form.replace("[]", "") in sub_key.split(','):
                         sub_key = item_sub_key_form
                         break
                 return sub_key

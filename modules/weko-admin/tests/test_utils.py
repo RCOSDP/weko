@@ -271,7 +271,7 @@ def test_get_user_report_data(users):
 
 # def get_reports(type, year, month):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_reports(client, mocker):
+def test_get_reports(app, mocker):
     file_download_result = {
         "all": [
             {'admin': 0, 'file_key': 'test1.pdf', 'group_counts': {'test1': 1, 'test2': 1}, 'index_list': 'index1', 'login': 0, 'no_login': 1, 'reg': 0, 'site_license': 1, 'total': 1},
@@ -411,19 +411,22 @@ def test_get_reports(client, mocker):
         else:
             return []
     
-    mocker.patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper)
-    mocker.patch('weko_admin.utils.QueryRecordViewReportHelper.get', return_value=detail_view_result)
-    mocker.patch('weko_admin.utils.QueryRecordViewPerIndexReportHelper.get', return_value=index_access_result)
-    mocker.patch('weko_admin.utils.QueryCommonReportsHelper.get', side_effect=common_reports_helper)
-    mocker.patch('weko_admin.utils.QuerySearchReportHelper.get', return_value=search_count_result)
-    mocker.patch('weko_admin.utils.get_user_report_data', return_value=user_roles_result)
-
     year = 2024
     month = 5
+    start_date = datetime(year, month, 1)
+    start_date_str = start_date.strftime("%Y-%m-%d")
+    end_date = datetime(year, month, 31)
+    end_date_str = end_date.strftime("%Y-%m-%d")
 
     # type is all
-    type = 'all'
-    result = get_reports(type, year, month)
+    report_type = 'all'
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_file_helper, \
+        patch('weko_admin.utils.QueryRecordViewReportHelper.get', return_value=detail_view_result) as mock_record_view_helper, \
+        patch('weko_admin.utils.QueryRecordViewPerIndexReportHelper.get', return_value=index_access_result) as mock_record_view_per_index_helper, \
+        patch('weko_admin.utils.QueryCommonReportsHelper.get', side_effect=common_reports_helper) as mock_common_helper, \
+        patch('weko_admin.utils.QuerySearchReportHelper.get', return_value=search_count_result) as mock_search_helper, \
+        patch('weko_admin.utils.get_user_report_data', return_value=user_roles_result) as mock_user_report_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'file_download': file_download_result,
         'file_preview': file_preview_result,
@@ -436,80 +439,175 @@ def test_get_reports(client, mocker):
         'user_roles': user_roles_result,
         'site_access': site_access_result
     }
+    mock_file_helper.assert_any_call(event='file_download', year=year, month=month)
+    mock_file_helper.assert_any_call(event='file_preview', year=year, month=month)
+    mock_file_helper.assert_any_call(event='billing_file_download', year=year, month=month)
+    mock_file_helper.assert_any_call(event='file_using_per_user', year=year, month=month)
+    mock_record_view_helper.assert_any_call(event='detail_view', year=year, month=month)
+    mock_record_view_per_index_helper.assert_any_call(event='index_access', year=year, month=month)
+    mock_common_helper.assert_any_call(event='top_page_access', year=year, month=month)
+    mock_common_helper.assert_any_call(event='site_access', year=year, month=month)
+    mock_search_helper.assert_any_call(event='search_count', year=year, month=month)
+    mock_user_report_helper.assert_called_once_with()
 
     # type is file_download
-    type = 'file_download'
-    result = get_reports(type, year, month)
+    report_type = 'file_download'
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'file_download': file_download_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'file_download': file_download_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is file_preview
-    type = 'file_preview'
-    result = get_reports(type, year, month)
+    report_type = 'file_preview'
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
     assert result == {
         'file_preview': file_preview_result
     }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'file_preview': file_preview_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is billing_file_download
-    type = 'billing_file_download'
-    result = get_reports(type, year, month)
+    report_type = 'billing_file_download'
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'billing_file_download': billing_file_download_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'billing_file_download': billing_file_download_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is detail_view
-    type = 'detail_view'
-    result = get_reports(type, year, month)
+    report_type = 'detail_view'
+    with patch('weko_admin.utils.QueryRecordViewReportHelper.get', return_value=detail_view_result) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'detail_view': detail_view_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QueryRecordViewReportHelper.get', return_value=detail_view_result) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'detail_view': detail_view_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is index_access
-    type = 'index_access'
-    result = get_reports(type, year, month)
+    report_type = 'index_access'
+    with patch('weko_admin.utils.QueryRecordViewPerIndexReportHelper.get', return_value=index_access_result) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'index_access': index_access_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QueryRecordViewPerIndexReportHelper.get', return_value=index_access_result) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'index_access': index_access_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is file_using_per_user
-    type = 'file_using_per_user'
-    result = get_reports(type, year, month)
+    report_type = 'file_using_per_user'
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'file_using_per_user': file_using_per_user_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QueryFileReportsHelper.get', side_effect=file_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'file_using_per_user': file_using_per_user_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is top_page_access
-    type = 'top_page_access'
-    result = get_reports(type, year, month)
+    report_type = 'top_page_access'
+    with patch('weko_admin.utils.QueryCommonReportsHelper.get', side_effect=common_reports_helper) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'top_page_access': top_page_access_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QueryCommonReportsHelper.get', side_effect=common_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'top_page_access': top_page_access_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is search_count
-    type = 'search_count'
-    result = get_reports(type, year, month)
+    report_type = 'search_count'
+    with patch('weko_admin.utils.QuerySearchReportHelper.get', return_value=search_count_result) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'search_count': search_count_result
     }
+    mock_helper.assert_called_once_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QuerySearchReportHelper.get', return_value=search_count_result) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'search_count': search_count_result
+    }
+    mock_helper.assert_called_once_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is user_roles
-    type = 'user_roles'
-    result = get_reports(type, year, month)
+    report_type = 'user_roles'
+    with patch('weko_admin.utils.get_user_report_data', return_value=user_roles_result) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'user_roles': user_roles_result
     }
+    mock_helper.assert_called_once_with()
+    with patch('weko_admin.utils.get_user_report_data', return_value=user_roles_result) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'user_roles': user_roles_result
+    }
+    mock_helper.assert_called_once_with()
 
     # type is site_access
-    type = 'site_access'
-    result = get_reports(type, year, month)
+    report_type = 'site_access'
+    with patch('weko_admin.utils.QueryCommonReportsHelper.get', side_effect=common_reports_helper) as mock_helper:
+        result = get_reports(report_type, year, month)
     assert result == {
         'site_access': site_access_result
     }
+    mock_helper.assert_called_with(event=report_type, year=year, month=month)
+    with patch('weko_admin.utils.QueryCommonReportsHelper.get', side_effect=common_reports_helper) as mock_helper:
+        result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
+    assert result == {
+        'site_access': site_access_result
+    }
+    mock_helper.assert_called_with(event=report_type, start_date=start_date_str, end_date=end_date_str)
 
     # type is test
-    type = 'test'
-    result = get_reports(type, year, month)
+    report_type = 'test'
+    result = get_reports(report_type, year, month)
+    assert result == {
+        'test': {}
+    }
+    result = get_reports(report_type, range=True, start_date=start_date, end_date=end_date)
     assert result == {
         'test': {}
     }
@@ -517,14 +615,20 @@ def test_get_reports(client, mocker):
 
 # def package_reports(all_stats, year, month):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_package_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_package_reports(client,mocker):
+def test_package_reports(client, mocker):
     mock_stream = StringIO()
     mock_stream.write("test")
-    mocker.patch("weko_admin.utils.make_stats_file",return_value=mock_stream)
-    all_stats = {
-        "file_download":"test_stats"
-    }
-    result = package_reports(all_stats,"2022","10")
+    all_stats = {"file_download":"test_stats"}
+
+    with patch("weko_admin.utils.make_stats_file", return_value=mock_stream) as mock_make_stats_file:
+        result = package_reports(all_stats, "2022", "10")
+    assert b"logReport_FileDownload_2022-10.tsv" in result.getvalue()
+    mock_make_stats_file.assert_called_once_with("test_stats", "file_download", "2022-10", False)
+
+    with patch("weko_admin.utils.make_stats_file", return_value=mock_stream) as mock_make_stats_file:
+        result = package_reports(all_stats, report_date="2022-10-01_2022-10-07")
+    assert b"logReport_FileDownload_2022-10-01_2022-10-07.tsv" in result.getvalue()
+    mock_make_stats_file.assert_called_once_with("test_stats", "file_download", "2022-10-01_2022-10-07", True)
 
     # raise Exception
     mocker.patch("weko_admin.utils.make_stats_file",side_effect=Exception("test_error"))
@@ -538,8 +642,7 @@ def test_make_stats_file(client,mocker, users):
     mocker.patch("weko_admin.utils.write_report_file_rows")
     raw_stats=""
     file_type = ""
-    year = "2022"
-    month = "10"
+    report_date = "2022-10"
 
     # filetype = index_access
     file_type = "index_access"
@@ -551,7 +654,7 @@ def test_make_stats_file(client,mocker, users):
         'Detail Views Per Index\n'\
         'Index,No. Of Views\n'\
         'Total Detail Views,10\n'
-    result = make_stats_file(raw_stats,file_type,year,month)
+    result = make_stats_file(raw_stats, file_type, report_date, False)
     assert result.getvalue() == test
 
     # filetype = billing_file_download
@@ -563,7 +666,7 @@ def test_make_stats_file(client,mocker, users):
         '""\n'\
         'No. Of Paid File Downloads\n'\
         'File Name,Registered Index Name,No. Of Times Downloaded,Non-Logged in User,System Administrator,Repository Administrator,Contributor,Community Administrator,General,Original Role,Student,Site License,Admin,Registrar\n'
-    result = make_stats_file(raw_stats,file_type,year,month)
+    result = make_stats_file(raw_stats, file_type, report_date, False)
     assert result.getvalue() == test
 
     # filetype = site_access
@@ -578,21 +681,23 @@ def test_make_stats_file(client,mocker, users):
         '""\n'\
         'Access Number Breakdown By Site License\n'\
         ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'
-    result = make_stats_file(raw_stats,file_type,year,month)
+    result = make_stats_file(raw_stats, file_type, report_date, False)
     assert result.getvalue() == test
+
+    report_date = "2022-10-01_2022-10-07"
     
     ## institution_name in raw_stats
     file_type = "site_access"
     raw_stats={"institution_name":"test_institution_name"}
     test = \
         'Access Count By Site License\n'\
-        'Aggregation Month,2022-10\n'\
+        'Aggregation Period,2022-10-01_2022-10-07\n'\
         '""\n'\
         ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
         '""\n'\
         'Access Number Breakdown By Site License\n'\
         'Institution Name,WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'
-    result = make_stats_file(raw_stats,file_type,year,month)
+    result = make_stats_file(raw_stats, file_type, report_date, True)
     assert result.getvalue() == test
     
     ## open_access not in raw_stats,institution_name not in raw_stats
@@ -600,12 +705,12 @@ def test_make_stats_file(client,mocker, users):
     raw_stats={"other_raw":"test_institution_name"}
     test = \
         'Access Count By Site License\n'\
-        'Aggregation Month,2022-10\n'\
+        'Aggregation Period,2022-10-01_2022-10-07\n'\
         '""\n'\
         ',WEKO Top Page Access Count,Number Of Searches,Number Of Views,Number Of File download,Number Of File Regeneration\n'\
         '""\n'\
         'Access Number Breakdown By Site License\n'
-    result = make_stats_file(raw_stats,file_type,year,month)
+    result = make_stats_file(raw_stats, file_type, report_date, True)
     assert result.getvalue() == test
     
     # filetype = other
@@ -613,11 +718,11 @@ def test_make_stats_file(client,mocker, users):
     raw_stats={}
     test = \
         'Detail Views Count\n'\
-        'Aggregation Month,2022-10\n'\
+        'Aggregation Period,2022-10-01_2022-10-07\n'\
         '""\n'\
         'Detail Views Count\n'\
         'Title,Registered Index Name,View Count,Non-logged-in User\n'
-    result = make_stats_file(raw_stats,file_type,year,month)
+    result = make_stats_file(raw_stats, file_type, report_date, True)
     assert result.getvalue() == test
 
 

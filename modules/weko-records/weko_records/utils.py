@@ -1059,7 +1059,7 @@ async def sort_meta_data_by_options(
             )
         return result
 
-    
+
     def get_value_by_selected_language(values,lang_key,current_lang):
         dict = convert_array_to_dict(values,lang_key)
         if dict.get(current_lang):
@@ -1068,7 +1068,7 @@ async def sort_meta_data_by_options(
             return dict.get("None")
         elif dict.get("en"):
             return dict.get("en")
-  
+
     def get_creator_comments(key,meta_options,creators,is_hide_email):
         """
         TODO: affiliationは未実装
@@ -1081,108 +1081,108 @@ async def sort_meta_data_by_options(
             if creator.get("creatorMails"):
                 opt = dict["{}.{}".format(key,"creatorMails")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
                         creator.pop("creatorMails")
                 opt = dict["{}.{}.{}".format(key,"creatorMails","creatorMail")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')|is_hide_email):
                         if creator.get("creatorMails"):
                             creator.pop("creatorMails")
-            
+
             if creator.get("familyNames"):
                 opt = dict["{}.{}".format(key,"familyNames")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("familyNames")
                     else:
                         creator["familyNames"] = get_value_by_selected_language(creator["familyNames"],"familyNameLang",current_lang)
                 opt = dict["{}.{}.{}".format(key,"familyNames","familyName")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("familyNames"):
                             creator.pop("familyNames")
-                        
+
             if creator.get("creatorNames"):
                 opt = dict["{}.{}".format(key,"creatorNames")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("creatorNames")
                     else:
                         creator["creatorNames"] = get_value_by_selected_language(creator["creatorNames"],"creatorNameLang",current_lang)
                 opt = dict["{}.{}.{}".format(key,"creatorNames","creatorName")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("creatorNames"):
                             creator.pop("creatorNames")
-            
+
             if creator.get("givenNames"):
                 opt = dict["{}.{}".format(key,"givenNames")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("givenNames")
                     else:
                         creator["givenNames"] = get_value_by_selected_language(creator["givenNames"],"givenNameLang",current_lang)
                 opt = dict["{}.{}.{}".format(key,"givenNames","givenName")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("givenNames"):
                             creator.pop("givenNames")
-            
+
             if creator.get("nameIdentifiers"):
                 opt = dict["{}.{}".format(key,"nameIdentifiers")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("nameIdentifiers")
                 opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierScheme")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("nameIdentifiers"):
                             creator.pop("nameIdentifiers")
-                        
+
                 opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifierURI")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("nameIdentifiers"):
                             creator.pop("nameIdentifiers")
-                            
+
                 opt = dict["{}.{}.{}".format(key,"nameIdentifiers","nameIdentifier")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         if creator.get("nameIdentifiers"):
-                            creator.pop("nameIdentifiers")        
+                            creator.pop("nameIdentifiers")
 
             if creator.get("creatorAffiliations"):
                 opt = dict["{}.{}".format(key,"creatorAffiliations")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("creatorAffiliations")
-            
+
             if creator.get("affiliationNameIdentifiers"):
                 opt = dict["{}.{}".format(key,"affiliationNameIdentifiers")]
                 if opt.get('option'):
-                    _opt = opt.get('option')    
+                    _opt = opt.get('option')
                     if (_opt.get('hide') | _opt.get('non_display')):
                         creator.pop("affiliationNameIdentifiers")
-        
+
             if creator.get("creatorNames") or creator.get("familyNames") or creator.get("givenNames"):
                 ret.append(creator)
-                    
+
         return ret
-        
-    
+
+
     def get_file_comments(record, files):
         """Check and get file info."""
 
@@ -1325,56 +1325,45 @@ async def sort_meta_data_by_options(
         item_type_id = record_hit["_source"].get("item_type_id") or src.get(
             "item_type_id"
         )
-        item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
-        language_dict = {}
-        suffixes = ".@attributes.xml:lang"
-        for key in item_map:
-            if key.find(suffixes) != -1:
-                # get language
-                title_languages, _title_key = get_data_by_property(src, item_map, key)
-                # get value
-                prefix = key.replace(suffixes, "")
-                title_values, _title_key1 = get_data_by_property(
-                    src, item_map, prefix + ".@value"
-                )
-                language_dict.update(
-                    {
-                        prefix: {
-                            "lang": title_languages,
-                            "lang-id": _title_key,
-                            "val": title_values,
-                            "val-id": _title_key1,
-                        }
-                    }
-                )
+        item_map = get_mapping(item_type_id, "jpcoar_mapping")
+
         # selected title
-        title_obj = language_dict.get("title")
-        if title_obj is not None:
-            lang_arr = title_obj.get("lang")
-            val_arr = title_obj.get("val")
-            lang_id = title_obj.get("lang-id")
-            val_id = title_obj.get("val-id")
-            if lang_arr and len(lang_arr) > 0 and lang_arr != "null":
-                result = selected_value_by_language(
-                    lang_arr, val_arr, lang_id, val_id, web_screen_lang, _item_metadata
-                )
-                if result is not None:
-                    for idx, val in enumerate(record_hit["_source"]["title"]):
-                        if val == result:
-                            arr = []
-                            record_hit["_source"]["title"][idx] = record_hit["_source"][
-                                "title"
-                            ][0]
-                            record_hit["_source"]["title"][0] = result
-                            arr.append(result)
-                            record_hit["_source"]["_comment"] = arr
-                            break
-            elif val_arr and len(val_arr) > 0:
-                record_hit["_source"]["_comment"] = [val_arr[0]]
+        from weko_items_ui.utils import get_hide_list_by_schema_form
+        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
+        hide_list = get_hide_list_by_schema_form(item_type_id)
+        title_value_key = 'title.@value'
+        title_lang_key = 'title.@attributes.xml:lang'
+        title_languages = []
+        title_values = []
+        _title_key_str = ''
+        _title_key1_str = ''
+        if title_value_key in item_map:
+            if title_lang_key in item_map:
+                # get language
+                title_languages, _title_key_str = get_data_by_property(
+                    src, item_map, title_lang_key)
+            # get value
+            title_values, _title_key1_str = get_data_by_property(
+                src, item_map, title_value_key)
+        if title_languages and len(title_languages) > 0:
+            result = selected_value_by_language(
+                title_languages, title_values, _title_key_str, _title_key1_str, web_screen_lang, _item_metadata, meta_options, hide_list
+            )
+            if result is not None:
+                for idx, val in enumerate(record_hit["_source"]["title"]):
+                    if val == result:
+                        arr = []
+                        record_hit["_source"]["title"][idx] = record_hit["_source"]["title"][0]
+                        record_hit["_source"]["title"][0] = result
+                        arr.append(result)
+                        record_hit["_source"]["_comment"] = arr
+                        break
+        elif title_values and len(title_values) > 0:
+            record_hit["_source"]["_comment"] = [title_values[0]]
+            record_hit["_source"]["title"][0] = title_values[0]
 
         if not item_type_id:
             return
-        solst, meta_options = get_options_and_order_list(item_type_id, item_type_data)
         solst_dict_array = convert_data_to_dict(solst)
         files_info = []
         creator_info = {}
@@ -1493,7 +1482,7 @@ def convert_array_to_dict(solst_dict_array,key):
                 dict['None']['creatorName'] = creator_names
         idx=idx+1
     return dict
-    
+
 
 def get_keywords_data_load(str):
     """Get a json of item type info.
@@ -1966,7 +1955,7 @@ def remove_weko2_special_character(s: str):
 
 
 def selected_value_by_language(
-    lang_array, value_array, lang_id, val_id, lang_selected, _item_metadata
+    lang_array, value_array, lang_key_str, val_key_str, lang_selected, _item_metadata, meta_option={}, hide_list=[]
 ):
     """Select value by language.
 
@@ -1976,76 +1965,89 @@ def selected_value_by_language(
     @param val_id:
     @param lang_selected:
     @param _item_metadata:
+    @param meta_option:
+    @param hide_list:
     @return:
     """
-    if (
-        (lang_array is not None)
-        and (value_array is not None)
-        and isinstance(lang_selected, str)
-    ):
-        if len(value_array) < 1:
-            return None
-        else:
-            if len(lang_array) > 0:
-                for idx, lang in enumerate(lang_array):
-                    lang_array[idx] = lang.strip()
-            if lang_selected in lang_array:  # Web screen display language
-                value = check_info_in_metadata(
-                    lang_id, val_id, lang_selected, _item_metadata
-                )
-                if value is not None:
-                    return value
-            
-            if len(value_array)>len(lang_array): # First title without language code
-                value0 = value_array[0]
-                tmp = copy.copy(value_array)
-                for lang in lang_array:
-                    value = check_info_in_metadata(
-                        lang_id, val_id, lang, _item_metadata
-                    )
-                    if value and value in tmp:
-                        tmp.remove(value)
-                if len(tmp)>0 and tmp[0]==value0:
-                    return tmp[0]
-            
-            if "ja-Latn" in lang_array:  # ja_Latn
-                value = check_info_in_metadata(
-                    lang_id, val_id, "ja-Latn", _item_metadata
-                )
-                if value is not None:
-                    return value
-            if "en" in lang_array and (
-                lang_selected != "ja"
-                or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
-            ):  # English
-                value = check_info_in_metadata(lang_id, val_id, "en", _item_metadata)
-                if value is not None:
-                    return value
-            # 1st language when registering items
-            if len(lang_array) > 0:
-                noreturn = False
-                for idx, lg in enumerate(lang_array):
-                    if current_app.config.get(
-                        "WEKO_RECORDS_UI_LANG_DISP_FLG", False
-                    ) and (
-                        (lg == "ja" and lang_selected == "en")
-                        or (lg == "en" and lang_selected == "ja")
-                    ):
-                        noreturn = True
-                        break
-                    if len(lg) > 0:
+    result = None
+    lang_key_list = lang_key_str.split(",")
+    val_key_list = val_key_str.split(",")
+    for val_key in val_key_list:
+        val_parent_key = val_key.split(".")[0]
+        val_sub_key = val_key.split(".")[-1]
+        prop_hidden = meta_option.get(val_parent_key, {}).get('option', {}).get('hidden', False)
+        for h in hide_list:
+            if h.startswith(val_parent_key) and h.endswith(val_sub_key):
+                prop_hidden = True
+        for lang_key in lang_key_list:
+            if val_parent_key == lang_key.split(".")[0]:
+                if (
+                    lang_array is not None
+                    and (value_array is not None and len(value_array) > 0)
+                    and isinstance(lang_selected, str)
+                    and not prop_hidden
+                ):
+                    if len(lang_array) > 0:
+                        for idx, lang in enumerate(lang_array):
+                            lang_array[idx] = lang.strip()
+                    if lang_selected in lang_array:  # Web screen display language
                         value = check_info_in_metadata(
-                            lang_id, val_id, lg, _item_metadata
+                            lang_key, val_key, lang_selected, _item_metadata
                         )
                         if value is not None:
-                            return value
-                if noreturn:
-                    return None
-            # 1st value when registering without language
-            if len(value_array) > 0:
-                return value_array[0]
-    else:
-        return None
+                            result = value
+
+                    if len(value_array)>len(lang_array): # First title without language code
+                        result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
+
+                    if not result and "ja-Latn" in lang_array:  # ja_Latn
+                        value = check_info_in_metadata(
+                            lang_key, val_key, "ja-Latn", _item_metadata
+                        )
+                        if value is not None:
+                            result = value
+                    if not result and "en" in lang_array and (
+                        lang_selected != "ja"
+                        or not current_app.config.get("WEKO_RECORDS_UI_LANG_DISP_FLG", False)
+                    ):  # English
+                        value = check_info_in_metadata(lang_key, val_key, "en", _item_metadata)
+                        if value is not None:
+                            result = value
+                    # 1st language when registering items
+                    if not result and len(lang_array) > 0:
+                        noreturn = False
+                        for idx, lg in enumerate(lang_array):
+                            if current_app.config.get(
+                                "WEKO_RECORDS_UI_LANG_DISP_FLG", False
+                            ) and (
+                                (lg == "ja" and lang_selected == "en")
+                                or (lg == "en" and lang_selected == "ja")
+                            ):
+                                noreturn = True
+                                break
+                            if len(lg) > 0:
+                                value = check_info_in_metadata(
+                                    lang_key, val_key, lg, _item_metadata
+                                )
+                                if value is not None:
+                                    result = value
+                        if noreturn:
+                            result = None
+                    # 1st value when registering without language
+                    if not result and len(value_array) > 0:
+                        result = check_info_in_metadata(lang_key, val_key, None, _item_metadata)
+            if not result:
+                break
+        if not result:
+            if (
+                (value_array is not None and len(value_array) > 0)
+                and isinstance(lang_selected, str)
+                and not prop_hidden
+            ):
+                result = check_info_in_metadata('', val_key, None, _item_metadata)
+        if result:
+            break
+    return result
 
 
 def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
@@ -2058,8 +2060,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
     @return
     """
     if (
-        len(str_key_lang) > 0
-        and (len(str_lang) > 0 or str_lang is None)
+        (str_lang is None or len(str_lang) > 0)
         and len(metadata) > 0
         and str_key_val is not None
         and len(str_key_val) > 0
@@ -2071,34 +2072,49 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
         metadata = (
             metadata.get("_item_metadata") if "_item_metadata" in metadata else metadata
         )
-        if str_key_lang[0] in metadata:
-            obj = metadata.get(str_key_lang[0]).get("attribute_value_mlt")
+        if str_key_val[0] in metadata:
+            obj = metadata.get(str_key_val[0])
+            if not isinstance(obj,list):
+                obj = obj.get("attribute_value_mlt",obj)
             save = obj
-            for ob in str_key_lang:
+            for ob in str_key_val:
                 if (
-                    ob not in str_key_lang[0]
-                    and ob not in str_key_lang[len(str_key_lang) - 1]
+                    ob not in str_key_val[0]
+                    and ob not in str_key_val[len(str_key_val) - 1]
                 ):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
-            for s in save:
-                if str_lang is None:
-                    value = s.get(str_key_val[len(str_key_val) - 1]).strip()
-                    if len(value) > 0:
-                        return value
-                if (
-                    s
-                    and isinstance(s, dict)
-                    and s.get(str_key_lang[-1])
-                    and s.get(str_key_val[-1])
-                ):
+            
+            if isinstance(save, list):
+                for s in save:
+                    if s is not None and str_lang is None:
+                        value = s
+                        if isinstance(s,dict):
+                            value = s.get(str_key_val[len(str_key_val) - 1]).strip()
+                        if len(value) > 0:
+                            return value
+    
                     if (
-                        s.get(str_key_lang[-1]).strip() == str_lang.strip()
-                        and str_key_val[-1] in s
-                        and len(s.get(str_key_val[-1]).strip()) > 0
+                        s
+                        and isinstance(s, dict)
+                        and s.get(str_key_lang[-1])
+                        and s.get(str_key_val[-1])
                     ):
-                        return s.get(str_key_val[-1])
+                        if (
+                            s.get(str_key_lang[-1]).strip() == str_lang.strip()
+                            and str_key_val[-1] in s
+                            and len(s.get(str_key_val[-1]).strip()) > 0
+                        ):
+                            return s.get(str_key_val[-1])
+            elif isinstance(save, dict):
+                if (
+                    save.get(str_key_lang[-1])
+                    and save.get(str_key_val[-1])
+                    and save.get(str_key_lang[-1]).strip() == str_lang.strip()
+                ):
+                    return save.get(str_key_val[-1])
+
     return None
 
 
@@ -2187,10 +2203,10 @@ def get_value_by_selected_lang(source_title, current_lang):
 
     if len(title_data_langs_none)>0:
         source = list(source_title.values())[0]
-        target = list(title_data_langs_none[0].values())[0] 
+        target = list(title_data_langs_none[0].values())[0]
         if source==target:
             return target
-        
+
     if value_latn:
         return value_latn
 

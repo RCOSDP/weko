@@ -36,7 +36,7 @@ def test_remove_xsd_prefix():
     test = {"test1":{"type":{"test_type1":1,"test_type2":2}}}
     result = remove_xsd_prefix(data)
     assert result == test
-    
+
 # def fix_json_schema(json_schema):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_fix_json_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
 def test_fix_json_schema():
@@ -67,11 +67,11 @@ def test_fix_min_max_multiple_item(client):
     data = {"properties":{"item1":{"maxItems":"can not perse"}}}
     result = fix_min_max_multiple_item(data)
     assert result == None
-    
+
     data = {"properties":{"item1":{"minItems":"can not perse"}}}
     result = fix_min_max_multiple_item(data)
     assert result == None
-    
+
 # def parse_required_item_in_schema(json_schema):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_parse_required_item_in_schema -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
 def test_parse_required_item_in_schema():
@@ -81,7 +81,7 @@ def test_parse_required_item_in_schema():
     # not exist required
     result = parse_required_item_in_schema(data)
     assert result == {"test":"value"}
-    
+
     # required is only pubdate
     data = {
         "required":["pubdate"],
@@ -89,7 +89,7 @@ def test_parse_required_item_in_schema():
     }
     result = parse_required_item_in_schema(data)
     assert result == {"required":["pubdate"],"test":"value"}
-    
+
     # not properties
     data = {
         "required":["item_12345"]
@@ -97,7 +97,7 @@ def test_parse_required_item_in_schema():
     result = parse_required_item_in_schema(data)
     assert result == None
     assert 1==2
-    
+
 # def helper_remove_empty_enum(data):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_helper_remove_empty_enum -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
 def test_helper_remove_empty_enum():
@@ -125,12 +125,12 @@ def test_add_required_subitem():
     # not data
     result = add_required_subitem({})
     assert result == None
-    
+
     # not exist properties
     data = {"items":{}}
     result = add_required_subitem(data)
     assert result == None
-    
+
     data = {
         "items":{
             "type":"object",
@@ -192,7 +192,7 @@ def test_add_required_subitem():
     }
     result = add_required_subitem(data)
     assert result == test
-    
+
 # def is_properties_exist_in_item(data):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_is_properties_exist_in_item -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
 def test_is_properties_exist_in_item():
@@ -200,7 +200,7 @@ def test_is_properties_exist_in_item():
     data = {"properties":"data"}
     result = is_properties_exist_in_item(data)
     assert result == True
-    
+
     # not exist properties or items
     data = {"not_properties":"data"}
     result = is_properties_exist_in_item(data)
@@ -259,20 +259,28 @@ def test_get_detail_node():
 
 # def get_all_mapping(item_value, mapping_type):
 # .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_get_all_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
-def test_get_all_mapping(mocker):
-    mocker.patch("weko_itemtypes_ui.utils.get_lst_mapping",return_value=["jpcoar.key1.key1_1","jpcoar.key2"])
-    data = {
-        "jpcoar":{
-            "key1":{
-                "key1_1":"value1_1"
+@pytest.mark.parametrize("data,expected", [
+    (
+        {
+            "jpcoar":{
+                "key1":{
+                    "key1_1":"value1_1"
+                },
+                "key2":"value2"
             },
-            "key2":"value2"
+            "oai_dc":""
         },
-        "oai_dc":""
-    }
+        ["jpcoar.key1.key1_1","jpcoar.key2"]
+    ),
+    ({},[])
+])
+def test_get_all_mapping(mocker, data, expected):
+    mocker.patch("weko_itemtypes_ui.utils.get_lst_mapping", return_value=expected)
+
     mapping_type="jpcoar"
-    result = get_all_mapping(data,mapping_type)
-    assert result == ["jpcoar.key1.key1_1","jpcoar.key2"]
+    result = get_all_mapping(data, mapping_type)
+    assert result == expected
+
 # def check_duplicate_mapping(
 #     def process_overlap():
 #  .tox/c1/bin/pytest --cov=weko_itemtypes_ui tests/test_utils.py::test_check_duplicate_mapping -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-itemtypes-ui/.tox/c1/tmp
@@ -368,7 +376,7 @@ def test_update_text_and_textarea(client,db):
          ]
          }
     ]
-    
+
     old_schema = {
         "properties":{
             "key1":{
@@ -411,7 +419,7 @@ def test_update_text_and_textarea(client,db):
         )
     db.session.add(item_type)
     db.session.commit()
-    
+
     ns,nf = update_text_and_textarea(item_type_id,new_schema,new_form)
     assert ns == {'properties': {'key1': {'properties': {'subitem_text_value': {'type': 'string', 'title': '値', 'format': 'text'}, 'subitem_text_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}}, 'key2': {'items': {'properties': {'subitem_text_value': {'type': 'string', 'title': '値', 'format': 'text'}, 'subitem_text_language': {'type': ['null', 'string'], 'title': '言語', 'format': 'select', 'editAble': True}}}, 'maxItems': 2}}}
     assert nf == [{'key': 'key1', 'items': [{'type': 'text', 'key': 'key1.subitem_text_value'}, {'type': 'select', 'key': 'key1.subitem_text_language'}]}]

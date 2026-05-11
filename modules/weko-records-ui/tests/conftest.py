@@ -190,6 +190,7 @@ def base_app(instance_path, search_class):
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
         REDIS_PORT="6379",
+        ACCOUNTS_SESSION_REDIS_DB_NO=1,
         JSONSCHEMAS_URL_SCHEME="http",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
@@ -5831,14 +5832,14 @@ def db_file_permission(app, db,users,records):
 @pytest.fixture()
 def db_admin_settings(db):
     with db.session.begin_nested():
-        db.session.add(AdminSettings(id=1,name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
-        db.session.add(AdminSettings(id=2,name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
-        db.session.add(AdminSettings(id=3,name='site_license_mail_settings',settings={"auto_send_flag": False}))
-        db.session.add(AdminSettings(id=4,name='default_properties_settings',settings={"show_flag": True}))
-        db.session.add(AdminSettings(id=5,name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
-        db.session.add(AdminSettings(id=6,name='billing_settings',settings={"tax_rate": 0.1, "currency_unit": "&yen;"}))
-        db.session.add(AdminSettings(id=7,name='proxy_settings',settings={"host": "", "port": "", "user": "", "password": "", "use_proxy": False}))
-        db.session.add(AdminSettings(id=8,name='repository_charge_settings',settings={"fqdn": "192.168.56.103", "user": "user", "sys_id": "sys", "password": "pass", "protocol": "http"}))
+        db.session.add(AdminSettings(name='items_display_settings',settings={"items_display_email": False, "items_search_author": "name", "item_display_open_date": False}))
+        db.session.add(AdminSettings(name='storage_check_settings',settings={"day": 0, "cycle": "weekly", "threshold_rate": 80}))
+        db.session.add(AdminSettings(name='site_license_mail_settings',settings={"auto_send_flag": False}))
+        db.session.add(AdminSettings(name='default_properties_settings',settings={"show_flag": True}))
+        db.session.add(AdminSettings(name='item_export_settings',settings={"allow_item_exporting": True, "enable_contents_exporting": True}))
+        db.session.add(AdminSettings(name='billing_settings',settings={"tax_rate": 0.1, "currency_unit": "&yen;"}))
+        db.session.add(AdminSettings(name='proxy_settings',settings={"host": "", "port": "", "user": "", "password": "", "use_proxy": False}))
+        db.session.add(AdminSettings(name='repository_charge_settings',settings={"fqdn": "192.168.56.103", "user": "user", "sys_id": "sys", "password": "pass", "protocol": "http"}))
     db.session.commit()
 
 

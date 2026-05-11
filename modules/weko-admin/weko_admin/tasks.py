@@ -22,7 +22,9 @@
 
 import os
 import shutil
-from datetime import datetime, timedelta
+import calendar
+from datetime import datetime, timedelta, timezone
+import traceback
 
 from celery import shared_task
 from celery.utils.log import get_task_logger
@@ -30,14 +32,13 @@ from flask import current_app, render_template
 from flask_babelex import gettext as _
 from flask_mail import Attachment
 from invenio_mail.api import send_mail
-from invenio_stats.utils import QueryCommonReportsHelper, \
-    QueryFileReportsHelper, QueryRecordViewPerIndexReportHelper, \
-    QueryRecordViewReportHelper, QuerySearchReportHelper
 
 from weko_admin.api import TempDirInfo
 
 from .models import AdminSettings, StatisticsEmail
-from .utils import StatisticMail, get_user_report_data, package_reports ,elasticsearch_reindex
+from .utils import (
+    StatisticMail, package_reports, elasticsearch_reindex, get_reports
+)
 from .views import handle_site_license_mail 
 from celery.task.control import inspect
 from weko_search_ui.tasks import check_celery_is_run
@@ -112,42 +113,32 @@ def is_reindex_running():
     return False
 
 @shared_task(ignore_results=True)
-def send_all_reports(report_type=None, year=None, month=None):
+def send_all_reports(report_type="all", *, schedule):
     """Query elasticsearch for each type of stats report."""
     # By default get the current month and year
-    now = datetime.now()
-    month = month or now.month
-    year = year or now.year
-    all_results = {
-        'file_download': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_download'),
-        'file_preview': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_preview'),
-        'index_access': QueryRecordViewPerIndexReportHelper.get(
-            year=year, month=month),
-        'detail_view': QueryRecordViewReportHelper.get(
-            year=year, month=month),
-        'file_using_per_user': QueryFileReportsHelper.get(
-            year=year, month=month, event='file_using_per_user'),
-        'top_page_access': QueryCommonReportsHelper.get(
-            year=year, month=month, event='top_page_access'),
-        'search_count': QuerySearchReportHelper.get(
-            year=year, month=month),
-        'user_roles': get_user_report_data(),
-        'site_access': QueryCommonReportsHelper.get(
-            year=year, month=month, event='site_access')
-    }
+    frequency = schedule['frequency']  # daily, weekly, monthly
+    now = datetime.now(tz=timezone.utc)
+
+    start_date, end_date = _get_start_end_date(now, frequency)
+
+    reports = get_reports(
+        report_type, range=True,
+        start_date=start_date, end_date=end_date,
+    )
+
     with current_app.app_context():
         # Allow for this to be used to get specific emails as well
-        reports = {}
-        if report_type is not None and report_type in all_results:
-            reports[report_type] = all_results[report_type]
+        if frequency == 'monthly':
+            zip_date = start_date.strftime('%Y-%m')
+            zip_stream = package_reports(reports, start_date.year, start_date.month)
         else:
-            reports = all_results
-
-        zip_date = str(year) + '-' + str(month).zfill(2)
+            zip_date = start_date.strftime('%Y-%m-%d')
+            if frequency == 'weekly':
+                zip_date += '_' + end_date.strftime('%Y-%m-%d')
+            zip_stream = package_reports(
+                reports, report_date=zip_date,
+            )
         zip_name = 'logReport_' + zip_date + '.zip'
-        zip_stream = package_reports(reports, year, month)
 
         recepients = StatisticsEmail.get_all_emails()
         attachments = [Attachment(zip_name,
@@ -163,7 +154,33 @@ def send_all_reports(report_type=None, year=None, month=None):
                       attachments=attachments)
             current_app.logger.info('[{0}] [{1}] '.format(0, 'Sent email'))
         except Exception as e:
+            traceback.print_exc()
             current_app.logger.info('[{0}] [{1}] '.format(1, 'Could not send'))
+
+
+def _get_start_end_date(dt, frequency):
+    """Get start date and end date.
+
+    Args:
+        dt (datetime):
+            The date to calculate from.
+        frequency (str):
+            The frequency of the report ('daily', 'weekly', 'monthly').
+    """
+    if frequency == 'daily':
+        # on 2 days ago
+        start_date = end_date = dt - timedelta(days=2)
+    elif frequency == 'weekly':
+        # from 8 days ago to 2 days ago
+        start_date = dt - timedelta(days=8)
+        end_date = dt - timedelta(days=2)
+    else:
+        # monthly,
+        # from first day of previous month to last day of previous month
+        end_date = dt.replace(day=1) - timedelta(days=1)
+        start_date = end_date.replace(day=1)
+
+    return start_date, end_date
 
 
 @shared_task(ignore_results=True)  # Set for timedelta(days=1)
@@ -175,7 +192,7 @@ def check_send_all_reports():
                                      dict_to_object=False)
         schedule = schedule if schedule else None
         if schedule and _due_to_run(schedule):
-            send_all_reports.delay()
+            send_all_reports.delay(schedule=schedule)
 
 
 @shared_task(ignore_results=True)
@@ -189,12 +206,24 @@ def _due_to_run(schedule):
     """Check if a task needs to be ran."""
     if not schedule['enabled']:
         return False
-    now = datetime.now()
-    return (schedule['frequency'] == 'daily') or \
-        (schedule['frequency'] == 'weekly'
-         and int(schedule['details']) == now.weekday()) or \
-        (schedule['frequency'] == 'monthly'
-         and int(schedule['details']) == now.day)
+    now = datetime.now(tz=timezone.utc)
+
+    if schedule['frequency'] == 'daily':
+        return True
+    if schedule['frequency'] == 'weekly':
+        return int(schedule['details']) == now.weekday()
+    if schedule['frequency'] == 'monthly':
+        if int(schedule['details']) == now.day:
+            return True
+        if int(schedule['details']) == -1:
+            return _is_end_of_month(now)
+    return False
+
+
+def _is_end_of_month(dt):
+    """Check if the date is end of month."""
+    _, last_day = calendar.monthrange(dt.year, dt.month)
+    return dt.day == last_day
 
 
 @shared_task(ignore_results=True)
