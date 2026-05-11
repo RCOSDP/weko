@@ -492,6 +492,14 @@ def base_app(instance_path):
     return app_
 
 
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
+
+
 @pytest.yield_fixture()
 def app(base_app):
     """Flask application fixture."""
@@ -504,11 +512,24 @@ def db(app):
     """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
-    drop_alembic_version_table()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
 
 @pytest.yield_fixture()
 def without_session_remove():
@@ -693,6 +714,7 @@ def users(app, db):
             ActionRoles(action='detail-page-acces', role=contributor_role),
         ]
         db.session.add_all(action_roles)
+    db.session.commit()
 
     return [
         {'email': noroleuser.email, 'id': noroleuser.id, 'obj': noroleuser},
@@ -791,6 +813,10 @@ def indices(app, db):
 
 @pytest.fixture
 def test_indices(app, db):
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
     def base_index(id, parent, position, harvest_public_state=True, public_state=True, public_date=None, coverpage_state=False, recursive_browsing_role=False,
                    recursive_contribute_role=False, recursive_browsing_group=False,
                    recursive_contribute_group=False, online_issn='', is_deleted=False):
@@ -827,6 +853,10 @@ def test_indices(app, db):
             is_deleted=is_deleted,
         )
 
+    try:
+        db.session.rollback()
+    except Exception:
+        pass
     with db.session.begin_nested():
         db.session.query(Index).delete()
     db.session.commit()
@@ -1008,6 +1038,11 @@ def es(app):
 
     search = LocalProxy(lambda: app.extensions["invenio-search"])
 
+    # Pre-cleanup: delete indices that might be left over from prior failed runs
+    search.client.indices.delete(index=app.config["INDEXER_DEFAULT_INDEX"], ignore=[400, 404])
+    search.client.indices.delete(index="test-weko-items", ignore=[400, 404])
+    search.client.indices.delete_alias(index="_all", name="test-weko", ignore=[400, 404])
+
     try:
         search.client.indices.create(app.config["INDEXER_DEFAULT_INDEX"],body=mapping)
         search.client.indices.put_alias(index=app.config["INDEXER_DEFAULT_INDEX"], name="test-weko")
@@ -1052,21 +1087,22 @@ def db_records(db, instance_path, users):
             result.append(create_record(record_data[d], item_data[d]))
     db.session.commit()
 
-    index_metadata = {
-            'id': 1,
-            'parent': 0,
-            'value': 'IndexA',
-        }
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        Indexes.create(0, index_metadata)
-    index_metadata = {
-            'id': 2,
-            'parent': 0,
-            'value': 'IndexB',
-        }
-
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
-        Indexes.create(0, index_metadata)
+    if not Index.query.get(1):
+        index_metadata = {
+                'id': 1,
+                'parent': 0,
+                'value': 'IndexA',
+            }
+        with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            Indexes.create(0, index_metadata)
+    if not Index.query.get(2):
+        index_metadata = {
+                'id': 2,
+                'parent': 0,
+                'value': 'IndexB',
+            }
+        with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+            Indexes.create(0, index_metadata)
 
 
     yield result

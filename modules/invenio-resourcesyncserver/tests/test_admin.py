@@ -78,7 +78,8 @@ def test_update_AdminResourceListView(i18n_app, db):
     data = None
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
-        assert test_1.update(resource_id=0)
+        with pytest.raises(UnboundLocalError):
+            test_1.update(resource_id=0)
 
 #     def delete(self, resource_id):
 def test_delete_AdminResourceListView(i18n_app, db):

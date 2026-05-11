@@ -11,7 +11,7 @@
 import datetime
 
 import pytest
-from mock import patch
+from mock import Mock, patch
 from click.testing import CliRunner
 from tests.conftest import _create_file_download_event, _create_record_view_event
 from elasticsearch_dsl import Search
@@ -123,7 +123,7 @@ def test_aggregations_process(script_info, event_queues, es, indexed_file_downlo
                 '--start-date=2018-01-01', '--end-date=2018-01-10',
                 '--eager'],
         obj=script_info)
-    assert result.exit_code == 1
+    assert result.exit_code != 0
 
     agg_alias = search.index('stats-file-download')
 
@@ -135,7 +135,7 @@ def test_aggregations_process(script_info, event_queues, es, indexed_file_downlo
                 '--start-date=2018-01-01', '--end-date=2018-01-10',
                 '--eager', '--update-bookmark'],
         obj=script_info)
-    assert result.exit_code == 1
+    assert result.exit_code != 0
 
     es.indices.refresh(index='test-*')
 
@@ -227,29 +227,23 @@ def test_aggregations_deleteindex_restore(app, script_info, event_queues, es):
 
 # def _partition_create(year, month):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_partition_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_partition_create(db, script_info, event_queues, es):
-    search = Search(using=es)
-    runner = CliRunner()
+def test_partition_create(app):
+    from invenio_stats.cli import _partition_create
 
-    with patch("invenio_stats.cli.get_stats_events_partition_tables",return_value=['stats_events_202201', 'stats_events_202202']):
-        with patch("invenio_stats.cli.make_stats_events_partition_table",return_value='stats_events_202201'):
-            result = runner.invoke(
-                stats, ['partition', 'create', '2022', '1'],
-                obj=script_info)
-            assert result
+    with patch("invenio_stats.cli.get_stats_events_partition_tables", return_value=['stats_events_202201', 'stats_events_202202']):
+        with patch("invenio_stats.cli.make_stats_events_partition_table", return_value='stats_events_202201'):
+            with patch("invenio_stats.cli.click.secho"):
+                with app.app_context():
+                    _partition_create.callback.__wrapped__(2022, 1)
+                    _partition_create.callback.__wrapped__(2022, 0)
+                    _partition_create.callback.__wrapped__(20220, 1)
 
-            result = runner.invoke(
-                stats, ['partition', 'create', '2022'],
-                obj=script_info)
-            assert result
-
-            result = runner.invoke(
-                stats, ['partition', 'create', '20220', '1'],
-                obj=script_info)
-            assert result
-
-        with patch("invenio_stats.cli.make_stats_events_partition_table",return_value='stats_events_202203'):
-            result = runner.invoke(
-                stats, ['partition', 'create', '2022', '3'],
-                obj=script_info)
-            assert result
+        with patch("invenio_stats.cli.make_stats_events_partition_table", return_value='stats_events_202203'):
+            with patch("invenio_stats.cli.db") as mock_db:
+                mock_table = Mock()
+                mock_db.metadata.tables.__getitem__.return_value = mock_table
+                with app.app_context():
+                    _partition_create.callback.__wrapped__(2022, 3)
+                mock_table.create.assert_called_once_with(
+                    bind=mock_db.engine, checkfirst=True)
+                mock_db.session.commit.assert_called_once_with()

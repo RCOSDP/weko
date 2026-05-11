@@ -46,7 +46,10 @@ from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
-from invenio_marc21 import InvenioMARC21
+try:
+    from invenio_marc21 import InvenioMARC21
+except ImportError:
+    InvenioMARC21 = None
 from invenio_indexer import InvenioIndexer
 from invenio_i18n import InvenioI18N
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
@@ -74,6 +77,12 @@ from invenio_stats.views import blueprint
 from tests.helpers import json_data, create_record
 
 
+TEST_DB_NAME = 'wekotest_stats_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'.format(
+    TEST_DB_NAME
+)
+
+
 def mock_iter_entry_points_factory(data, mocked_group):
     """Create a mock iter_entry_points function."""
     from pkg_resources import iter_entry_points
@@ -86,6 +95,30 @@ def mock_iter_entry_points_factory(data, mocked_group):
             for x in iter_entry_points(group=group, name=name):
                 yield x
     return entrypoints
+
+
+def install_mock_stats_queues():
+    """Replace stats queues with in-memory mocks for tests."""
+    for event_type, event_cfg in _current_stats.events.items():
+        queue_name = 'stats-{}'.format(event_type)
+        queued_events = []
+        mock_queue = Mock()
+        mock_queue.name = queue_name
+        mock_queue.routing_key = queue_name
+
+        def _publish(events, storage=queued_events):
+            storage.extend(events)
+
+        def _consume(payload=True, storage=queued_events):
+            events = list(storage)
+            storage[:] = []
+            return iter(events)
+
+        mock_queue.publish.side_effect = _publish
+        mock_queue.consume.side_effect = _consume
+        mock_queue.delete.side_effect = lambda storage=queued_events: storage.clear()
+        current_queues.queues[queue_name] = mock_queue
+        event_cfg.processor_config['queue'] = mock_queue
 
 
 @pytest.fixture()
@@ -219,12 +252,13 @@ def date_range(start_date, end_date):
 @pytest.yield_fixture()
 def event_queues(app, event_entrypoints):
     """Delete and declare test queues."""
-    current_queues.delete()
+    install_mock_stats_queues()
     try:
-        current_queues.declare()
         yield
     finally:
-        current_queues.delete()
+        for queue in current_queues.queues.values():
+            if hasattr(queue, 'delete'):
+                queue.delete()
 
 
 @pytest.yield_fixture()
@@ -259,10 +293,7 @@ def base_app(instance_path, mock_gethostbyaddr):
         CACHE_REDIS_HOST="redis",
         BABEL_DEFAULT_TIMEZONE='Asia/Tokyo',
         QUEUES_BROKER_URL="amqp://guest:guest@rabbitmq:5672//",
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite://'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -286,7 +317,9 @@ def base_app(instance_path, mock_gethostbyaddr):
         STATS_AGGREGATIONS=STATS_AGGREGATIONS,
         INDEXER_MQ_QUEUE = Queue("indexer", exchange=Exchange("indexer", type="direct"), routing_key="indexer",queue_arguments={"x-queue-type":"quorum"}),
         OAISERVER_ES_MAX_CLAUSE_COUNT = 3,
-        INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001"
+        INDEXER_DEFAULT_INDEX="test-events-stats-file-download-0001",
+        WEKO_PERMISSION_SUPER_ROLE_USER=['System Administrator', 'Repository Administrator'],
+        WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
     ))
     Babel(app_)
     InvenioI18N(app_)
@@ -303,7 +336,8 @@ def base_app(instance_path, mock_gethostbyaddr):
     InvenioIndexer(app_)
     InvenioOAuth2Server(app_)
     InvenioOAuth2ServerREST(app_)
-    InvenioMARC21(app_)
+    if InvenioMARC21 is not None:
+        InvenioMARC21(app_)
     InvenioSearch(app_, entry_point_group=None, client=Elasticsearch("http://elasticsearch:9200"))
 
     current_stats = LocalProxy(lambda: app_.extensions["invenio-stats"])
@@ -315,7 +349,9 @@ def app(base_app):
     """Flask application fixture with InvenioStats."""
     InvenioStats(base_app)
     with base_app.app_context():
-        yield base_app
+        with patch.object(current_queues, 'declare', return_value=None), \
+                patch.object(current_queues, 'delete', return_value=None):
+            yield base_app
 
 
 @pytest.yield_fixture()
@@ -823,7 +859,7 @@ def generate_file_events(app, event_type, file_number=5, event_number=100, robot
                     start_date=datetime.date(2022, 10, 1),
                     end_date=datetime.date(2022, 10, 7)):
     """Queued events for processing tests."""
-    current_queues.declare()
+    install_mock_stats_queues()
 
     def _unique_ts_gen():
         ts = 0

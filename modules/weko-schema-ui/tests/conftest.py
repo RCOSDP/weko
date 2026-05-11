@@ -29,6 +29,9 @@ import shutil
 import tempfile
 import time
 import uuid
+
+TEST_DB_NAME = "wekotest_weko_schema_ui_{}".format(uuid.uuid4().hex[:8])
+TEST_DB_URI = "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}".format(TEST_DB_NAME)
 from collections import OrderedDict
 from datetime import datetime, timedelta
 from os.path import dirname, exists, join
@@ -58,6 +61,7 @@ from invenio_communities import InvenioCommunities
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_deposit import InvenioDeposit
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
@@ -224,8 +228,7 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_TYPE="redis",
         CACHE_REDIS_DB=0,
@@ -367,14 +370,45 @@ def client_rest2(app):
         yield client
 
 
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
+
+
+
+@pytest.fixture(autouse=True)
+def mock_oaiserver_percolator():
+    """Avoid live Elasticsearch percolator calls during record fixture setup."""
+    with patch('invenio_oaiserver.receivers.get_record_sets', return_value=[]):
+        with patch('invenio_oaiserver.percolator.get_record_sets', return_value=[]):
+            with patch('invenio_oaiserver.receivers.OAIServerUpdater.__call__', return_value=None):
+                yield
+
+@pytest.fixture(autouse=True)
+def mock_indexer_upload_metadata():
+    """Avoid live metadata indexing in record-building fixtures."""
+    with patch('weko_deposit.api.WekoIndexer.upload_metadata', return_value=None):
+        yield
+
 @pytest.fixture()
 def db(app):
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
+    db_uri = str(db_.engine.url)
+    if not database_exists(db_uri):
+        create_database(db_uri)
+    db_.session.remove()
+    db_.engine.dispose()
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
+    db_.engine.dispose()
+    drop_alembic_version_table()
+    if database_exists(db_uri):
+        drop_database(db_uri)
 
 
 @pytest.fixture()

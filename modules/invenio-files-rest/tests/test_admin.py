@@ -54,6 +54,7 @@ def test_admin_views(app, db, dummy_location):
     """Test admin views."""
     app.config['SECRET_KEY'] = 'CHANGEME'
     InvenioAdmin(app, permission_factory=None, view_class_factory=lambda x: x)
+    dummy_location.default = False
 
     b1 = Bucket.create(location=dummy_location)
     obj = ObjectVersion.create(b1, 'test').set_location('placeuri', 1, 'chk')
@@ -110,9 +111,12 @@ class TestLocationModelView():
         with app.test_request_context("/admin/location/"):
             with patch("invenio_files_rest.admin.Location.query") as mock_query:
                 mock_query.filter_by.return_value.count.return_value = count
-                with mocker.patch("flask_admin.contrib.sqla.ModelView.index_view", return_value="OK") as _:
-                    result = view.index_view()
-                    assert result == "OK"
+                mocker.patch(
+                    "flask_admin.contrib.sqla.ModelView.index_view",
+                    return_value="OK"
+                )
+                result = view.index_view()
+                assert result == "OK"
             messages = get_flashed_messages(with_categories=True)
             if expected_msg:
                 assert (expected_cat, expected_msg) in messages
@@ -123,26 +127,29 @@ class TestLocationModelView():
         view = LocationModelView(Location, db.session)
 
         with app.test_request_context("/admin/location/"):
-            with mocker.patch("flask_admin.contrib.sqla.ModelView.index_view", return_value="OK"):
-                with patch("flask.current_app.logger") as mock_logger:
-                    # case: sqlalchemy error
-                    with patch("invenio_files_rest.admin.Location.query") as mock_query:
-                        mock_query.filter_by.return_value.count.side_effect = SQLAlchemyError("test error")
-                        result = view.index_view()
+            mocker.patch(
+                "flask_admin.contrib.sqla.ModelView.index_view",
+                return_value="OK"
+            )
+            with patch("flask.current_app.logger") as mock_logger:
+                # case: sqlalchemy error
+                with patch("invenio_files_rest.admin.Location.query") as mock_query:
+                    mock_query.filter_by.return_value.count.side_effect = SQLAlchemyError("test error")
+                    result = view.index_view()
 
-                        assert result == "OK"
-                        messages = get_flashed_messages(with_categories=True)
-                        assert messages == []
-                        mock_logger.error.assert_called_with("Error while checking default locations: test error")
+                    assert result == "OK"
+                    messages = get_flashed_messages(with_categories=True)
+                    assert messages == []
+                    mock_logger.error.assert_called_with("Error while checking default locations: test error")
 
-                    # case: unexpected error
-                    with patch("invenio_files_rest.admin.Location", side_effect=Exception("test error")):
-                        result = view.index_view()
+                # case: unexpected error
+                with patch("invenio_files_rest.admin.Location", side_effect=Exception("test error")):
+                    result = view.index_view()
 
-                        assert result == "OK"
-                        messages = get_flashed_messages(with_categories=True)
-                        assert messages == []
-                        mock_logger.exception.assert_called_with("unexpected error in index_view")
+                    assert result == "OK"
+                    messages = get_flashed_messages(with_categories=True)
+                    assert messages == []
+                    mock_logger.exception.assert_called_with("unexpected error in index_view")
 
     def test_on_model_change_default_conflict(self, app, db):
         model = make_location(default=True)
@@ -436,7 +443,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should see all locations in the database
                 total_locations = db.session.query(Location).count()
                 assert count == total_locations
@@ -448,7 +455,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
@@ -460,7 +467,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
@@ -470,7 +477,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count

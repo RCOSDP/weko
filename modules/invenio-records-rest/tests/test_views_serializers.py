@@ -15,6 +15,14 @@ import json
 
 import pytest
 from flask import current_app
+from mock import patch
+
+
+@pytest.fixture()
+def _mock_facet_search_query():
+    """Mock get_facet_search_query to avoid KeyError 'Data Language' from stale redis cache."""
+    with patch("weko_admin.utils.get_facet_search_query", return_value={}):
+        yield
 
 
 def json_record(*args, **kwargs):
@@ -58,7 +66,7 @@ def xml_search(*args, **kwargs):
         default_media_type='application/xml',
     ),
 )], indirect=['app'], scope='function')
-def test_default_serializer(app, db, es, indexed_records):
+def test_default_serializer(app, db, es, indexed_records, _mock_facet_search_query):
     """Test default serializer."""
     # Create records
     accept_json = [('Accept', 'application/json')]

@@ -4,7 +4,7 @@
 Create persistent project-level working notes so future requests can start from a small, reusable context instead of repeating broad repository discovery, and define a practical roadmap for making the full CI test suite reliably runnable.
 
 ## Current Phase
-Phase 19
+Phase 20
 
 ## Phases
 
@@ -90,6 +90,12 @@ Phase 19
 - [x] Identify environment-level blockers preventing the full module survey
 - [ ] Collect full pass/fail/timeout results for all modules
 - **Status:** in_progress
+
+### Phase 20: CI Entrypoint Realignment
+- [x] Make `run-tests.sh` return a failing exit code when any module fails
+- [x] Add a way to run only a selected subset of modules for CI sharding
+- [x] Repoint the unit-test workflow at `run-tests.sh` shards instead of per-module `tox`
+- **Status:** complete
 
 ## CI Test Stabilization Roadmap
 

@@ -19,6 +19,14 @@ from datetime import date, datetime, timedelta
 
 from invenio_search_ui.ext import InvenioSearchUI
 import pytest
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    from unittest.mock import patch as _patch
+    with _patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with _patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from mock import Mock, patch
 from flask import Flask
 from flask_babelex import Babel, lazy_gettext as _
@@ -515,6 +523,14 @@ def db(app):
     """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()

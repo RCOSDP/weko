@@ -29,6 +29,14 @@ import uuid
 import pytest
 from datetime import datetime,timedelta
 from unittest.mock import patch
+
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from kombu import Exchange, Queue
 from flask import Flask
 from flask_admin import Admin
@@ -43,6 +51,7 @@ from invenio_assets import InvenioAssets
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_STORAGE_CLASS,
     DEPOSIT_RECORDS_UI_ENDPOINTS,
@@ -69,7 +78,7 @@ from invenio_records import InvenioRecords
 from weko_redis.redis import RedisConnection
 from invenio_search import InvenioSearch
 from invenio_stats import InvenioStats
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
 from weko_admin.models import SessionLifetime,RankingSettings,Identifier,AdminSettings
@@ -115,6 +124,12 @@ from weko_groups import WekoGroups
 from .helpers import create_record, json_data
 
 
+TEST_DB_NAME = 'wekotest_weko_items_ui_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = (
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'
+).format(TEST_DB_NAME)
+
+
 # @event.listens_for(Engine, "connect")
 # def set_sqlite_pragma(dbapi_connection, connection_record):
 #     cursor = dbapi_connection.cursor()
@@ -149,8 +164,7 @@ def base_app(instance_path):
         SERVER_NAME="test_server",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv(
-            'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=[
@@ -328,16 +342,25 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
-    else:
-        db_.drop_all()
+    db_.session.remove()
+    db_.engine.dispose()
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 @pytest.fixture()
 def esindex(app,db_records, es):
     index_name = app.config["INDEXER_DEFAULT_INDEX"]
+
+    if not es.indices.exists(index=index_name):
+        with open("tests/data/mappings/item-v1.0.0.json", "r") as f:
+            record_mapping = json.load(f)
+        es.indices.create(index=index_name, body=record_mapping, ignore=[400])
 
     for depid, recid, parent, doi, record, item in db_records:
         es.index(index=index_name, doc_type='item-v1.0.0', id=record.id, body=record, refresh='true')

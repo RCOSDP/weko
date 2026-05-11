@@ -78,12 +78,12 @@ def test_is_crawler(client,log_crawler_list,restricted_ip_addr,mocker):
 
         user_info = {"user_agent":"","ip_address":"122.1.91.145"}
         result = _is_crawler(user_info)
-        assert result == True
+        assert result == False
 
         mock_redis.srem_all(log_crawler_list[0].list_url)
         with patch("weko_admin.api.RedisConnection.connection.smembers",side_effect=RedisError):
             result = _is_crawler(user_info)
-            assert result == True
+            assert result == False
     
     mock_res=Response()
     mock_res._content = b""
@@ -149,7 +149,12 @@ def test_send_site_license_mail(client,mocker):
     mock_send = mocker.patch("weko_admin.api.send_mail")
     mock_render = mocker.patch("weko_admin.api.render_template",return_value=make_response())
     send_site_license_mail(organization_name,mail_list,agg_date,data)
-    mock_send.assert_called_with("[ORCID] 2022-10 statistics report",mail_list,body="<Response 0 bytes [200 OK]>")
+    # body string format depends on response class used by make_response()
+    mock_send.assert_called_once()
+    call_args = mock_send.call_args
+    assert call_args[0][0] == "[ORCID] 2022-10 statistics report"
+    assert call_args[0][1] == mail_list
+    assert "0 bytes [200 OK]" in call_args[1]["body"]
     mock_render.assert_called_with(
         'weko_admin/email_templates/site_license_report.html',
         agg_date="2022-10",

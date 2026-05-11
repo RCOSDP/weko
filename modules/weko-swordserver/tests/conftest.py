@@ -26,6 +26,14 @@ from datetime import datetime, timedelta
 
 from invenio_theme import InvenioTheme
 import pytest
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    from unittest.mock import patch as _patch
+    with _patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with _patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail

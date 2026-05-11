@@ -184,13 +184,17 @@ def test_chunk_list(iterable, size, expected):
 #     def get_file_per_using_report(cls, **kwargs):
 #     def get(cls, **kwargs):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_file_reports_helper -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+@patch("weko_index_tree.utils.get_descendant_index_names")
+@patch("invenio_communities.models.Community")
 @pytest.mark.parametrize('aggregated_file_download_events',
                          [dict(file_number=1,
                                event_number=1,
                                start_date=datetime.date(2022, 10, 3),
                                end_date=datetime.date(2022, 10, 3))],
                          indirect=['aggregated_file_download_events'])
-def test_query_file_reports_helper(app, event_queues, aggregated_file_download_events):
+def test_query_file_reports_helper(mock_Community, mock_get_descendant_index_names, app, event_queues, aggregated_file_download_events):
+    mock_Community.query.get.return_value = MagicMock(root_node_id=1)
+    mock_get_descendant_index_names.return_value = []
     # calc_per_group_counts
     res = QueryFileReportsHelper.calc_per_group_counts('test1, test1, test2', {}, 1)
     assert res=={'test1': 2, 'test2': 1}
@@ -233,6 +237,8 @@ def test_query_file_reports_helper(app, event_queues, aggregated_file_download_e
     }
     _data_list = []
     _all_group = set()
+    app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] = ['System Administrator', 'Repository Administrator']
+    app.config['WEKO_PERMISSION_ROLE_COMMUNITY'] = ['Community Administrator']
     QueryFileReportsHelper.Calculation(_res, _data_list, _all_group)
     assert _data_list==[
         {'group_counts': {'test1': 1, 'test2': 1}, 'file_key': 'test1.pdf', 'index_list': 'index1', 'total': 1, 'admin': 0, 'reg': 0, 'login': 0, 'no_login': 1, 'site_license': 1},
@@ -616,10 +622,27 @@ def test_query_record_view_report_helper(mock_Community, mock_get_descendant_ind
         ]
     }
     _data_list = []
-    # Calculation
-    with pytest.raises(Exception) as e:
-        QueryRecordViewReportHelper.Calculation(_res, _data_list)
-    assert e.type==UnsupportedCompilationError
+    QueryRecordViewReportHelper.Calculation(_res, _data_list)
+    assert _data_list == [
+        {
+            'record_id': _id1,
+            'record_name': 'test name1',
+            'index_names': 'test index1',
+            'total_all': 2,
+            'pid_value': 1,
+            'total_not_login': 0,
+            'same_title': True,
+        },
+        {
+            'record_id': _id2,
+            'record_name': 'test name2',
+            'index_names': 'test index1',
+            'total_all': 1,
+            'pid_value': 2,
+            'total_not_login': 0,
+            'same_title': True,
+        },
+    ]
 
     # correct_record_title
     _res = [['2', ['name2old']]]

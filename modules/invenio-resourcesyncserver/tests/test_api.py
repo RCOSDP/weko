@@ -524,6 +524,8 @@ def test__validation_ChangeListHandler(i18n_app):
 def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     record_id = "8.9"
+    test_str.index = MagicMock()
+    test_str.index.public_state = False
 
     def _validation():
         return MagicMock()
@@ -755,7 +757,9 @@ def test_get_capability_content_ChangeListHandler(i18n_app):
 def test__date_validation_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     test_str.publish_date = datetime.datetime.now() - datetime.timedelta(days=5)
-    date_from = "20221107"
+    date_from = (
+        datetime.datetime.utcnow() - datetime.timedelta(days=1)
+    ).strftime("%Y%m%d")
 
     assert test_str._date_validation(date_from)
 

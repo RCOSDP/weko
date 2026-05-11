@@ -1182,8 +1182,8 @@ def test_get_list_schema(client, users):
     url = url_for("weko_authors.get_list_schema")
     login_user_via_session(client=client, email=users[0]['email'])
     test = {
-        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
-        "index":11
+        "list": client.application.config['WEKO_AUTHORS_LIST_SCHEME'],
+        "index": client.application.config['WEKO_AUTHORS_INDEX_ITEM_OTHER']
     }
     res = client.get(url)
     assert get_json(res) == test

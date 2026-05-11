@@ -228,8 +228,11 @@ class TestItemTypeMetaDataView:
 
         with patch("weko_itemtypes_ui.admin.is_import_running", return_value="is_import_running"):
             res = client.post(url,headers={"Content-Type":"application/json"})
-            assert json.loads(res.data)=={'msg': 'Item type cannot be updated becase import is in progress.'}
-            assert res.status_code == 400
+            if is_permission:
+                assert json.loads(res.data)=={'msg': 'Item type cannot be updated becase import is in progress.'}
+                assert res.status_code == 400
+            else:
+                assert res.status_code == 403
 
         with patch("weko_itemtypes_ui.admin.is_import_running", return_value=None),\
             patch("weko_workflow.utils.get_cache_data", return_value=True):
@@ -237,7 +240,7 @@ class TestItemTypeMetaDataView:
             if is_permission:
                 assert res.status_code == 400
                 result = json.loads(res.data)
-                assert result["msg"] == 'Item type cannot be updated becase import is in progress.'
+                assert result["msg"].startswith('Failed to register Item type.')
             else:
                 assert res.status_code == 403
 

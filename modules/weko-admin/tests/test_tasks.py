@@ -54,6 +54,7 @@ def test_send_all_reports(app, users, statistic_email_addrs,mocker):
 # def check_send_all_reports():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_tasks.py::test_check_send_all_reports -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_check_send_all_reports(app, admin_settings, mocker):
+    AdminSettings.update("report_email_schedule_settings", {})
     mock_send = mocker.patch("weko_admin.tasks.send_all_reports.delay")
     check_send_all_reports()
     mock_send.assert_not_called()
@@ -185,11 +186,11 @@ def test_reindex_EStoES(i18n_app,mocker,admin_settings):
     return_value.text = "test_mock"
     return_value.status_code = 200
 
-    with mocker.patch("weko_admin.utils.requests.put" , return_value=return_value):
-        with mocker.patch("weko_admin.utils.requests.post" , return_value=return_value):
-            with mocker.patch("weko_admin.utils.requests.delete" , return_value=return_value):
-                with mocker.patch("weko_admin.utils.requests.get" , return_value=return_value):
-                    assert 'completed' == reindex(False)
+    mocker.patch("weko_admin.utils.requests.put", return_value=return_value)
+    mocker.patch("weko_admin.utils.requests.post", return_value=return_value)
+    mocker.patch("weko_admin.utils.requests.delete", return_value=return_value)
+    mocker.patch("weko_admin.utils.requests.get", return_value=return_value)
+    assert 'completed' == reindex(False)
 
 
 def test_reindex_DBtoES(i18n_app,mocker,admin_settings,reindex_settings):
@@ -198,30 +199,28 @@ def test_reindex_DBtoES(i18n_app,mocker,admin_settings,reindex_settings):
     return_value.text = "test_mock"
     return_value.status_code = 200
 
-    with mocker.patch("weko_admin.utils.requests.put" , return_value=return_value):
-        with mocker.patch("weko_admin.utils.requests.post" , return_value=return_value):
-            with mocker.patch("weko_admin.utils.requests.delete" , return_value=return_value):
-                with mocker.patch("weko_admin.utils.requests.get" , return_value=return_value):
-                    with mocker.patch("invenio_oaiserver.receivers.update_affected_records" , return_value=""):
+    mocker.patch("weko_admin.utils.requests.put", return_value=return_value)
+    mocker.patch("weko_admin.utils.requests.post", return_value=return_value)
+    mocker.patch("weko_admin.utils.requests.delete", return_value=return_value)
+    mocker.patch("weko_admin.utils.requests.get", return_value=return_value)
+    mocker.patch("invenio_oaiserver.receivers.update_affected_records", return_value="")
 
-                        retVal1= OAISet(spec="1669370353014",name="index name" ,search_pattern="path[1669370353014]")
-                        retVal2= OAISet(spec="1669959650594",name="index name" ,search_pattern="path[1669959650594]")
-                        reindex_settings.session.add(retVal1)
-                        reindex_settings.session.add(retVal2)
-                        reindex_settings.session.commit()
+    retVal1= OAISet(spec="1669370353014",name="index name" ,search_pattern="path[1669370353014]")
+    retVal2= OAISet(spec="1669959650594",name="index name" ,search_pattern="path[1669959650594]")
+    reindex_settings.session.add(retVal1)
+    reindex_settings.session.add(retVal2)
+    reindex_settings.session.commit()
 
-                        assert 'completed' == reindex(True)
+    assert 'completed' == reindex(True)
 
 def test_reindex_raise(i18n_app,mocker,admin_settings):
-    with mocker.patch("weko_admin.tasks.elasticsearch_reindex" , side_effect=BaseException("test_error")):
-        try :
-            reindex(True)
+    mocker.patch("weko_admin.tasks.elasticsearch_reindex", side_effect=BaseException("test_error"))
+    try :
+        reindex(True)
 
-            assert False , "expected Exception raised but"
-        except BaseException as ex:
-            assert "test_error" in ex.args
-            admin_setting = AdminSettings.get('elastic_reindex_settings',False)
-            assert True == admin_setting.get('has_errored')
-
-
+        assert False , "expected Exception raised but"
+    except BaseException as ex:
+        assert "test_error" in ex.args
+        admin_setting = AdminSettings.get('elastic_reindex_settings',False)
+        assert True == admin_setting.get('has_errored')
 

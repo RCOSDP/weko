@@ -138,6 +138,11 @@ from weko_search_ui.config import SEARCH_UI_SEARCH_INDEX, WEKO_SEARCH_TYPE_DICT,
 from weko_redis.redis import RedisConnection
 from weko_admin.models import SessionLifetime
 from weko_admin.config import WEKO_ADMIN_MANAGEMENT_OPTIONS, WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
+
+TEST_DB_NAME = 'wekotest_resourcesyncserver_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'.format(
+    TEST_DB_NAME
+)
 from weko_index_tree.models import IndexStyle
 from weko_deposit.api import WekoDeposit, WekoRecord, WekoIndexer
 
@@ -220,8 +225,7 @@ def base_app(instance_path, request):
             'test'
         ),
         INDEX_IMG='indextree/36466818-image.jpg',
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
@@ -673,8 +677,11 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
-    drop_alembic_version_table()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()

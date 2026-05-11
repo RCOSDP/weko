@@ -10,12 +10,12 @@ import pytest
 import os
 import shutil
 import tempfile
-import pytest
+import uuid
 
 from flask import Flask
 from flask_babelex import Babel
 from flask_menu import Menu
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers, ActionRoles
@@ -28,6 +28,7 @@ from invenio_cache import InvenioCache
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest.ext import InvenioFilesREST
 from invenio_files_rest.models import Location
 from invenio_i18n import InvenioI18N
@@ -39,6 +40,9 @@ from weko_index_tree.models import Index
 
 from weko_logging.audit import WekoLoggingUserActivity
 from weko_logging.views import blueprint as logging_blueprint
+
+TEST_DB_NAME = "wekotest_weko_logging_{}".format(uuid.uuid4().hex[:8])
+TEST_DB_URI = "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}".format(TEST_DB_NAME)
 
 @pytest.fixture()
 def instance_path():
@@ -57,7 +61,7 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI','postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
 
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
@@ -116,16 +120,41 @@ def app(base_app):
 
 @pytest.fixture()
 def db(app):
-    # if not database_exists(str(db_.engine.url)) and \
-    #         app.config['SQLALCHEMY_DATABASE_URI'] != 'sqlite://':
-    #     create_database(db_.engine.url)
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
+    # Create partitions for date ranges used in tests
+    from datetime import date
+    from dateutil.relativedelta import relativedelta as rdelta
+    today = date.today()
+
+    def create_partition(year, month):
+        nm_month = month % 12 + 1
+        nm_year = year + (month // 12)
+        name = "user_activity_logs_{y}{m:02d}".format(y=year, m=month)
+        start = "{y}-{m:02d}-01".format(y=year, m=month)
+        end = "{y}-{m:02d}-01".format(y=nm_year, m=nm_month)
+        con2 = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+        try:
+            con2.execute(
+                "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
+                "FOR VALUES FROM ('{start}') TO ('{end}')".format(name=name, start=start, end=end)
+            )
+        except Exception:
+            pass
+        finally:
+            con2.close()
+
+    for delta_months in [0, 1, 3, 4, 5, 36, 60, 61]:
+        d = today - rdelta(months=delta_months)
+        create_partition(d.year, d.month)
     yield db_
     db_.session.remove()
-    db_.drop_all()
-
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 @pytest.fixture()
 def client(app):

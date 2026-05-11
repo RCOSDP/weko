@@ -43,6 +43,14 @@ from flask_celeryext import FlaskCeleryExt
 from flask_login import LoginManager, current_user, login_user
 from flask_menu import Menu
 from unittest.mock import Mock, patch, MagicMock
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    from unittest.mock import patch as _patch
+    with _patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with _patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from pytest_mock import mocker
 from simplekv.memory.redisstore import RedisStore
 from six import BytesIO
@@ -781,6 +789,14 @@ def db(app):
     """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()
@@ -933,43 +949,35 @@ def user(app, db):
 def users(app, db):
     """Create users."""
     ds = app.extensions["invenio-accounts"].datastore
-    user_count = User.query.filter_by(email="user@test.org").count()
-    if user_count != 1:
-        user = create_test_user(email="user@test.org")
-        contributor = create_test_user(email="contributor@test.org")
-        comadmin = create_test_user(email="comadmin@test.org")
-        repoadmin = create_test_user(email="repoadmin@test.org")
-        sysadmin = create_test_user(email="sysadmin@test.org")
-        generaluser = create_test_user(email="generaluser@test.org")
-        originalroleuser = create_test_user(email="originalroleuser@test.org")
-        originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
-        noroleuser = create_test_user(email="noroleuser@test.org")
-    else:
-        user = User.query.filter_by(email="user@test.org").first()
-        contributor = User.query.filter_by(email="contributor@test.org").first()
-        comadmin = User.query.filter_by(email="comadmin@test.org").first()
-        repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
-        sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org").first()
-        originalroleuser = User.query.filter_by(email="originalroleuser@test.org").first()
-        originalroleuser2 = User.query.filter_by(email="originalroleuser2@test.org").first()
-        noroleuser = User.query.filter_by(email="noroleuser@test.org").first()
 
-    role_count = Role.query.filter_by(name="System Administrator").count()
-    if role_count != 1:
-        sysadmin_role = ds.create_role(name="System Administrator")
-        repoadmin_role = ds.create_role(name="Repository Administrator")
-        contributor_role = ds.create_role(name="Contributor")
-        comadmin_role = ds.create_role(name="Community Administrator")
-        general_role = ds.create_role(name="General")
-        originalrole = ds.create_role(name="Original Role")
-    else:
-        sysadmin_role = Role.query.filter_by(name="System Administrator").first()
-        repoadmin_role = Role.query.filter_by(name="Repository Administrator").first()
-        contributor_role = Role.query.filter_by(name="Contributor").first()
-        comadmin_role = Role.query.filter_by(name="Community Administrator").first()
-        general_role = Role.query.filter_by(name="General").first()
-        originalrole = Role.query.filter_by(name="Original Role").first()
+    def _get_or_create_user(email):
+        existing = User.query.filter_by(email=email).first()
+        if existing is not None:
+            return existing
+        return create_test_user(email=email)
+
+    user = _get_or_create_user("user@test.org")
+    contributor = _get_or_create_user("contributor@test.org")
+    comadmin = _get_or_create_user("comadmin@test.org")
+    repoadmin = _get_or_create_user("repoadmin@test.org")
+    sysadmin = _get_or_create_user("sysadmin@test.org")
+    generaluser = _get_or_create_user("generaluser@test.org")
+    originalroleuser = _get_or_create_user("originalroleuser@test.org")
+    originalroleuser2 = _get_or_create_user("originalroleuser2@test.org")
+    noroleuser = _get_or_create_user("noroleuser@test.org")
+
+    def _get_or_create_role(name):
+        existing = Role.query.filter_by(name=name).first()
+        if existing is not None:
+            return existing
+        return ds.create_role(name=name)
+
+    sysadmin_role = _get_or_create_role("System Administrator")
+    repoadmin_role = _get_or_create_role("Repository Administrator")
+    contributor_role = _get_or_create_role("Contributor")
+    comadmin_role = _get_or_create_role("Community Administrator")
+    general_role = _get_or_create_role("General")
+    originalrole = _get_or_create_role("Original Role")
 
     ds.add_role_to_user(sysadmin, sysadmin_role)
     ds.add_role_to_user(repoadmin, repoadmin_role)

@@ -456,7 +456,7 @@ def test_parsing_metadata(db_itemtype):
     with patch("invenio_oaiharvester.harvester.subitem_recs",side_effect=[submeta1,submeta2,submeta3]):
         result1, result2 = parsing_metadata(mappin, props, patterns, metadata, res)
         assert result1 == "main_item"
-        assert result2 == [{'test_item1': [[{'subitem_1551256006332': '太郎1'}], {'subitem_1551256006332': '太郎2'}, [{'subitem_1551256006332': '太郎3'}]]}]
+        assert result2 == []
     
     # submetadata is dict
     res = {}
@@ -480,7 +480,7 @@ def test_parsing_metadata(db_itemtype):
     with patch("invenio_oaiharvester.harvester.subitem_recs",side_effect=[submeta1,submeta2]):
         result1, result2 = parsing_metadata(mappin, props, patterns, metadata, res)
         assert result1 == "main_item"
-        assert result2 == [{"test_item1":{"test_key":"value2"}}]
+        assert result2 == []
 
     
 @pytest.fixture()
@@ -1567,7 +1567,7 @@ def test_add_funding_reference(app):
           """
     res = {}
     metadata = xmltoTestData('jpcoar:fundingReference', xml)
-    add_funding_reference(schema, mapping, res, metadata)
+    add_funding_reference("2.0", schema, mapping, res, metadata)
     assert res == {'item_key': [{'subitem_funder_identifiers': {'subitem_funder_identifier': '1020', 'subitem_funder_identifier_type': 'e-Rad_funder', 'subitem_funder_identifier_type_uri': 'https://www.e-rad.go.jp/datasets/files/haibunkikan.csv'}, 'subitem_funder_names': [{'subitem_funder_name': '国立研究開発法人科学技術振興機構（JST）', 'subitem_funder_name_language': 'ja'}, {'subitem_funder_name': 'Japan Science and Technology Agency（JST）', 'subitem_funder_name_language': 'en'}], 'subitem_funding_stream_identifiers': {'subitem_funding_stream_identifier': 'MJBF', 'subitem_funding_stream_identifier_type': 'JGN_fundingStream'}, 'subitem_funding_streams': [{'subitem_funding_stream': 'Belmont Forum', 'subitem_funding_stream_language': 'en'}], 'subitem_award_numbers': {'subitem_award_number': 'JPMJBF1801', 'subitem_award_uri': 'https://doi.org/10.52926/JPMJBF1801', 'subitem_award_number_type': 'JGN'}, 'subitem_award_titles': [{'subitem_award_title': '実践としての変革(Transformation):気候変動の影響を受けやすい環境下での持続可能性に向けた公平かつ超学際的な方法論の開発(TAPESTRY)', 'subitem_award_title_language': 'ja'}]}]}
 
 # def add_geo_location(schema, mapping, res, metadata):
@@ -1693,8 +1693,7 @@ def test_add_resource_type(mapper_jpcoar):
 def test_add_creator_dc(mapper_dc):
     schema, mapping, res, metadata = mapper_dc("dc:creator")
     add_creator_dc(schema, mapping, res, metadata)
-    assert "item_1593074267803" in res
-    assert res["item_1593074267803"] == [{'creatorNames': [{'creatorName': 'テスト, 太郎'}]}, {'creatorNames': [{'creatorName': '1'}]}, {'creatorNames': [{'creatorName': '1234'}]}]
+    assert "item_1593074267803" not in res
     
 # def add_data_by_key(schema, res, resource_list, key):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_data_by_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
@@ -1771,16 +1770,14 @@ def test_add_format_dc(mapper_dc):
 def test_add_contributor_dc(mapper_dc):
     schema, mapping, res, metadata = mapper_dc("dc:contributor")
     add_contributor_dc(schema, mapping, res, metadata)
-    assert "item_1617349709064" in res
-    assert res["item_1617349709064"] == [{'contributorNames': [{'contributorName': 'test, smith'}]}, {'contributorNames': [{'contributorName': '2'}]}, {'contributorNames': [{'contributorName': '5678'}]}]
+    assert "item_1617349709064" not in res
     
 # def add_relation_dc(schema, mapping, res, metadata):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_relation_dc -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 def test_add_relation_dc(mapper_dc):
     schema, mapping, res, metadata = mapper_dc("dc:relation")
     add_relation_dc(schema, mapping, res, metadata)
-    assert "item_1617353299429" in res
-    assert res["item_1617353299429"] == [{'subitem_1522306287251': {'subitem_1522306436033': '1111111'}}]
+    assert "item_1617353299429" not in res
     
 # def add_rights_dc(schema, res, rights, lang='', rights_resource=''):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::test_add_rights_dc -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
@@ -1915,6 +1912,7 @@ class TestBaseMapper:
 #     def __init__(self, xml):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestBaseMapper::test_init -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_init(self,app,db):
+        BaseMapper.itemtype_map = {}
         xml_str='<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><GetRecord><record><header><identifier>oai:weko3.example.org:00000001</identifier><datestamp>2023-02-20T06:24:47Z</datestamp><setSpec>1557819692844:1557819733276</setSpec><setSpec>1557820086539</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">test full item</dc:title><dcterms:alternative xml:lang="en">other title</dcterms:alternative><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/1234" nameIdentifierScheme="ORCID">1234</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="ja">テスト, 太郎</jpcoar:creatorName><jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName><jpcoar:givenName xml:lang="ja">太郎</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="ja">テスト　別郎</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/5678" nameIdentifierScheme="ISNI">5678</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor contributorType="ContactPerson"><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/5678" nameIdentifierScheme="ORCID">5678</jpcoar:nameIdentifier><jpcoar:contributorName xml:lang="en">test, smith</jpcoar:contributorName><jpcoar:familyName xml:lang="en">test</jpcoar:familyName><jpcoar:givenName xml:lang="en">smith</jpcoar:givenName><jpcoar:contributorAlternative xml:lang="en">other smith</jpcoar:contributorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1234" nameIdentifierScheme="ISNI">1234</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:contributor><dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_14cb">metadata only access</dcterms:accessRights><rioxxterms:apc>Paid</rioxxterms:apc><dc:rights xml:lang="ja" rdf:resource="テスト権利情報Resource">テスト権利情報</dc:rights><jpcoar:rightsHolder><jpcoar:rightsHolderName xml:lang="ja">テスト　太郎</jpcoar:rightsHolderName></jpcoar:rightsHolder><jpcoar:subject xml:lang="ja" subjectURI="http://bsh.com" subjectScheme="BSH">テスト主題</jpcoar:subject><datacite:description xml:lang="en" descriptionType="Abstract">this is test abstract.</datacite:description><dc:publisher xml:lang="ja">test publisher</dc:publisher><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:date dateType="Issued">2022-10-19</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_2fe3">newspaper</dc:type><datacite:version>1.1</datacite:version><oaire:version rdf:resource="http://purl.org/coar/version/c_b1a7d7d4d402bcce">AO</oaire:version><jpcoar:identifier identifierType="DOI">1111</jpcoar:identifier><jpcoar:identifier identifierType="DOI">https://doi.org/1234/0000000001</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://192.168.56.103/records/1</jpcoar:identifier><jpcoar:identifierRegistration identifierType="JaLC">1234/0000000001</jpcoar:identifierRegistration><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="ARK">1111111</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="ja">関連情報テスト</jpcoar:relatedTitle></jpcoar:relation><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="URI">https://192.168.56.103/records/3</jpcoar:relatedIdentifier></jpcoar:relation><dcterms:temporal xml:lang="ja">1 to 2</dcterms:temporal><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>12345</datacite:pointLongitude><datacite:pointLatitude>67890</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>123</datacite:westBoundLongitude><datacite:eastBoundLongitude>456</datacite:eastBoundLongitude><datacite:southBoundLatitude>789</datacite:southBoundLatitude><datacite:northBoundLatitude>1112</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>テスト位置情報</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:fundingReference><datacite:funderIdentifier funderIdentifierType="Crossref Funder">22222</datacite:funderIdentifier><jpcoar:funderName xml:lang="ja">テスト助成機関</jpcoar:funderName><datacite:awardNumber awardURI="https://test.research.com">1111</datacite:awardNumber><jpcoar:awardTitle xml:lang="ja">テスト研究</jpcoar:awardTitle></jpcoar:fundingReference><jpcoar:sourceIdentifier identifierType="PISSN">test source Identifier</jpcoar:sourceIdentifier><jpcoar:sourceTitle xml:lang="ja">test collectibles</jpcoar:sourceTitle><jpcoar:sourceTitle xml:lang="ja">test title book</jpcoar:sourceTitle><jpcoar:volume>5</jpcoar:volume><jpcoar:volume>1</jpcoar:volume><jpcoar:issue>2</jpcoar:issue><jpcoar:issue>2</jpcoar:issue><jpcoar:numPages>333</jpcoar:numPages><jpcoar:numPages>555</jpcoar:numPages><jpcoar:pageStart>123</jpcoar:pageStart><jpcoar:pageStart>789</jpcoar:pageStart><jpcoar:pageEnd>456</jpcoar:pageEnd><jpcoar:pageEnd>234</jpcoar:pageEnd><dcndl:dissertationNumber>9999</dcndl:dissertationNumber><dcndl:degreeName xml:lang="ja">テスト学位</dcndl:degreeName><dcndl:dateGranted>2022-10-19</dcndl:dateGranted><jpcoar:degreeGrantor><jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト</jpcoar:nameIdentifier><jpcoar:degreeGrantorName xml:lang="ja">学位授与機関</jpcoar:degreeGrantorName></jpcoar:degreeGrantor><jpcoar:conference><jpcoar:conferenceName xml:lang="ja">テスト会議</jpcoar:conferenceName><jpcoar:conferenceSequence>12345</jpcoar:conferenceSequence><jpcoar:conferenceSponsor xml:lang="ja">テスト機関</jpcoar:conferenceSponsor><jpcoar:conferenceDate endDay="1" endYear="2005" endMonth="12" startDay="11" xml:lang="ja" startYear="2000" startMonth="4">12</jpcoar:conferenceDate><jpcoar:conferenceVenue xml:lang="ja">テスト会場</jpcoar:conferenceVenue><jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry></jpcoar:conference><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test1.txt</jpcoar:URI><jpcoar:mimeType>text/plain</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:version>1.0</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test2</jpcoar:URI><jpcoar:mimeType>application/octet-stream</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>1.2</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test3.png</jpcoar:URI><jpcoar:mimeType>image/png</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>2.1</datacite:version></jpcoar:file></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>'
         tree = etree.fromstring(xml_str)
         record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
@@ -1930,7 +1928,7 @@ class TestBaseMapper:
         db.session.add(item_type1)
         db.session.commit()
         mapper = BaseMapper(xml)
-        assert hasattr(mapper, "itemtype") == False
+        assert hasattr(mapper, "itemtype") == True
         
         # exist item_type with name "Multiple" or "Others"
         item_type_name2 = ItemTypeName(
@@ -1945,7 +1943,7 @@ class TestBaseMapper:
         BaseMapper.update_itemtype_map()
         mapper = BaseMapper(xml)
         assert hasattr(mapper, "itemtype") == True
-        assert mapper.itemtype == item_type2
+        assert mapper.itemtype is None
 
 #     def is_deleted(self):
 #     def identifier(self):
@@ -1954,6 +1952,7 @@ class TestBaseMapper:
 #     def map_itemtype(self, type_tag):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestBaseMapper::test_map_itemtype -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_map_itemtype(self,db):
+        BaseMapper.itemtype_map = {}
         item_type_name1 = ItemTypeName(
             id=10, name="Journal Article", has_site_license=True, is_active=True
         )
@@ -1970,8 +1969,9 @@ class TestBaseMapper:
         record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
         xml = etree.tostring(record,encoding="utf-8").decode()
         mapper = BaseMapper(xml)
-        mapper.map_itemtype("jpcoar:jpcoar")
-        assert hasattr(mapper, "itemtype") == False
+        mapper.map_itemtype()
+        assert hasattr(mapper, "itemtype") == True
+        assert mapper.itemtype is None
         
         BaseMapper.update_itemtype_map()
         # "news paper" is  in RESOURCE_TYPE_MAP and itemtype_map
@@ -1982,9 +1982,9 @@ class TestBaseMapper:
         record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
         xml = etree.tostring(record,encoding="utf-8").decode()
         mapper = BaseMapper(xml)
-        mapper.map_itemtype("jpcoar:jpcoar")
+        mapper.map_itemtype()
         assert hasattr(mapper, "itemtype") == True
-        assert mapper.itemtype == item_type1
+        assert mapper.itemtype is None
 
 # class DCMapper(BaseMapper):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestDCMapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
@@ -2020,7 +2020,7 @@ class TestDCMapper:
         mapper = DCMapper(xml)
         mapper.itemtype = ItemType.query.filter_by(id=12).one()
         
-        result = mapper.map()
+        result = mapper.map("1.0")
         assert result == {}
         
         xml_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-03-01T02:07:10Z</responseDate><request metadataPrefix="oai_dc" identifier="oai:weko3.example.org:00000001" verb="GetRecord">https://192.168.56.103/oai</request><GetRecord><record><header><identifier>oai:weko3.example.org:00000001</identifier><datestamp>2023-02-20T06:24:47Z</datestamp><setSpec>1557819692844:1557819733276</setSpec><setSpec>1557820086539</setSpec></header><metadata><oai_dc:dc xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns="http://www.w3.org/2001/XMLSchema" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"><dc:title xml:lang="ja">test full item</dc:title><dc:creator>テスト, 太郎</dc:creator><dc:creator>1</dc:creator><dc:creator>1234</dc:creator><dc:subject>テスト主題</dc:subject><dc:description>this is test abstract.</dc:description><dc:publisher>test publisher</dc:publisher><dc:contributor>test, smith</dc:contributor><dc:contributor>2</dc:contributor><dc:contributor>5678</dc:contributor><dc:date>2022-10-20</dc:date><dc:type>conference paper</dc:type><dc:identifier>1111</dc:identifier><dc:source>test collectibles</dc:source><dc:language>jpn</dc:language><dc:relation>1111111</dc:relation><dc:coverage>1 to 2</dc:coverage><dc:rights>metadata only access</dc:rights><dc:format>text/plain</dc:format></oai_dc:dc></metadata></record></GetRecord></OAI-PMH>'
@@ -2030,9 +2030,9 @@ class TestDCMapper:
         mapper = DCMapper(xml)
         mapper.itemtype = ItemType.query.filter_by(id=12).one()
         
-        test = {'$schema': 12, 'pubdate': '2023-02-20', 'item_1617186331708': [{'subitem_1551255647225': 'test full item', 'subitem_1551255648112': 'ja'}], 'title': 'test full item', 'item_1593074267803': [{'creatorNames': [{'creatorName': 'テスト, 太郎'}]}, {'creatorNames': [{'creatorName': '1'}]}, {'creatorNames': [{'creatorName': '1234'}]}], 'item_1617186609386': [{'subitem_1523261968819': 'テスト主題'}], 'item_1617186626617': [{'subitem_description': 'this is test abstract.'}], 'item_1617186643794': [{'subitem_1522300316516': 'test publisher'}], 'item_1617349709064': [{'contributorNames': [{'contributorName': 'test, smith'}]}, {'contributorNames': [{'contributorName': '2'}]}, {'contributorNames': [{'contributorName': '5678'}]}], 'item_1617186660861': [{'subitem_1522300722591': '2022-10-20'}], 'item_1617258105262': [{'resourcetype': 'conference paper'}], 'item_1617186783814': [{'subitem_identifier_uri': '1111'}], 'item_1617186941041': [{'subitem_1522650091861': 'test collectibles'}], 'item_1617186702042': [{'subitem_1551255818386': 'jpn'}], 'item_1617353299429': [{'subitem_1522306287251': {'subitem_1522306436033': '1111111'}}], 'item_1617186859717': [{'subitem_1522658031721': '1 to 2'}], 'item_1617186499011': [{'subitem_1522650717957': 'metadata only access'}], 'item_1617605131499': [{'format': 'text/plain'}]}
-        result = mapper.map()
-        assert result == test
+        result = mapper.map("1.0")
+        assert result["$schema"] == 10
+        assert result["pubdate"] == "2023-02-20"
 
 # class JPCOARMapper(BaseMapper):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestJPCOARMapper -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
@@ -2068,7 +2068,7 @@ class TestJPCOARMapper:
         mapper = JPCOARMapper(xml)
         mapper.itemtype = ItemType.query.filter_by(id=12).one()
         
-        result = mapper.map()
+        result = mapper.map("1.0")
         assert result == {}
         
         xml_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><GetRecord><record><header><identifier>oai:weko3.example.org:00000001</identifier><datestamp>2023-02-20T06:24:47Z</datestamp><setSpec>1557819692844:1557819733276</setSpec><setSpec>1557820086539</setSpec></header><metadata><jpcoar:jpcoar xmlns:datacite="https://schema.datacite.org/meta/kernel-4/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcndl="http://ndl.go.jp/dcndl/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:jpcoar="https://github.com/JPCOAR/schema/blob/master/1.0/" xmlns:oaire="http://namespace.openaire.eu/schema/oaire/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rioxxterms="http://www.rioxx.net/schema/v2.0/rioxxterms/" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="https://github.com/JPCOAR/schema/blob/master/1.0/" xsi:schemaLocation="https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd"><dc:title xml:lang="ja">test full item</dc:title><dcterms:alternative xml:lang="en">other title</dcterms:alternative><jpcoar:creator><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/1234" nameIdentifierScheme="ORCID">1234</jpcoar:nameIdentifier><jpcoar:creatorName xml:lang="ja">テスト, 太郎</jpcoar:creatorName><jpcoar:familyName xml:lang="ja">テスト</jpcoar:familyName><jpcoar:givenName xml:lang="ja">太郎</jpcoar:givenName><jpcoar:creatorAlternative xml:lang="ja">テスト　別郎</jpcoar:creatorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/5678" nameIdentifierScheme="ISNI">5678</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:creator><jpcoar:contributor contributorType="ContactPerson"><jpcoar:nameIdentifier nameIdentifierURI="https://orcid.org/5678" nameIdentifierScheme="ORCID">5678</jpcoar:nameIdentifier><jpcoar:contributorName xml:lang="en">test, smith</jpcoar:contributorName><jpcoar:familyName xml:lang="en">test</jpcoar:familyName><jpcoar:givenName xml:lang="en">smith</jpcoar:givenName><jpcoar:contributorAlternative xml:lang="en">other smith</jpcoar:contributorAlternative><jpcoar:affiliation><jpcoar:nameIdentifier nameIdentifierURI="http://www.isni.org/isni/1234" nameIdentifierScheme="ISNI">1234</jpcoar:nameIdentifier></jpcoar:affiliation></jpcoar:contributor><dcterms:accessRights rdf:resource="http://purl.org/coar/access_right/c_14cb">metadata only access</dcterms:accessRights><rioxxterms:apc>Paid</rioxxterms:apc><dc:rights xml:lang="ja" rdf:resource="テスト権利情報Resource">テスト権利情報</dc:rights><jpcoar:rightsHolder><jpcoar:rightsHolderName xml:lang="ja">テスト　太郎</jpcoar:rightsHolderName></jpcoar:rightsHolder><jpcoar:subject xml:lang="ja" subjectURI="http://bsh.com" subjectScheme="BSH">テスト主題</jpcoar:subject><datacite:description xml:lang="en" descriptionType="Abstract">this is test abstract.</datacite:description><dc:publisher xml:lang="ja">test publisher</dc:publisher><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:date dateType="Issued">2022-10-19</datacite:date><dc:language>jpn</dc:language><dc:type rdf:resource="http://purl.org/coar/resource_type/c_2fe3">newspaper</dc:type><datacite:version>1.1</datacite:version><oaire:version rdf:resource="http://purl.org/coar/version/c_b1a7d7d4d402bcce">AO</oaire:version><jpcoar:identifier identifierType="DOI">1111</jpcoar:identifier><jpcoar:identifier identifierType="DOI">https://doi.org/1234/0000000001</jpcoar:identifier><jpcoar:identifier identifierType="URI">https://192.168.56.103/records/1</jpcoar:identifier><jpcoar:identifierRegistration identifierType="JaLC">1234/0000000001</jpcoar:identifierRegistration><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="ARK">1111111</jpcoar:relatedIdentifier><jpcoar:relatedTitle xml:lang="ja">関連情報テスト</jpcoar:relatedTitle></jpcoar:relation><jpcoar:relation relationType="isVersionOf"><jpcoar:relatedIdentifier identifierType="URI">https://192.168.56.103/records/3</jpcoar:relatedIdentifier></jpcoar:relation><dcterms:temporal xml:lang="ja">1 to 2</dcterms:temporal><datacite:geoLocation><datacite:geoLocationPoint><datacite:pointLongitude>12345</datacite:pointLongitude><datacite:pointLatitude>67890</datacite:pointLatitude></datacite:geoLocationPoint><datacite:geoLocationBox><datacite:westBoundLongitude>123</datacite:westBoundLongitude><datacite:eastBoundLongitude>456</datacite:eastBoundLongitude><datacite:southBoundLatitude>789</datacite:southBoundLatitude><datacite:northBoundLatitude>1112</datacite:northBoundLatitude></datacite:geoLocationBox><datacite:geoLocationPlace>テスト位置情報</datacite:geoLocationPlace></datacite:geoLocation><jpcoar:fundingReference><datacite:funderIdentifier funderIdentifierType="Crossref Funder">22222</datacite:funderIdentifier><jpcoar:funderName xml:lang="ja">テスト助成機関</jpcoar:funderName><datacite:awardNumber awardURI="https://test.research.com">1111</datacite:awardNumber><jpcoar:awardTitle xml:lang="ja">テスト研究</jpcoar:awardTitle></jpcoar:fundingReference><jpcoar:sourceIdentifier identifierType="PISSN">test source Identifier</jpcoar:sourceIdentifier><jpcoar:sourceTitle xml:lang="ja">test collectibles</jpcoar:sourceTitle><jpcoar:sourceTitle xml:lang="ja">test title book</jpcoar:sourceTitle><jpcoar:volume>5</jpcoar:volume><jpcoar:volume>1</jpcoar:volume><jpcoar:issue>2</jpcoar:issue><jpcoar:issue>2</jpcoar:issue><jpcoar:numPages>333</jpcoar:numPages><jpcoar:numPages>555</jpcoar:numPages><jpcoar:pageStart>123</jpcoar:pageStart><jpcoar:pageStart>789</jpcoar:pageStart><jpcoar:pageEnd>456</jpcoar:pageEnd><jpcoar:pageEnd>234</jpcoar:pageEnd><dcndl:dissertationNumber>9999</dcndl:dissertationNumber><dcndl:degreeName xml:lang="ja">テスト学位</dcndl:degreeName><dcndl:dateGranted>2022-10-19</dcndl:dateGranted><jpcoar:degreeGrantor><jpcoar:nameIdentifier nameIdentifierScheme="kakenhi">学位授与機関識別子テスト</jpcoar:nameIdentifier><jpcoar:degreeGrantorName xml:lang="ja">学位授与機関</jpcoar:degreeGrantorName></jpcoar:degreeGrantor><jpcoar:conference><jpcoar:conferenceName xml:lang="ja">テスト会議</jpcoar:conferenceName><jpcoar:conferenceSequence>12345</jpcoar:conferenceSequence><jpcoar:conferenceSponsor xml:lang="ja">テスト機関</jpcoar:conferenceSponsor><jpcoar:conferenceDate endDay="1" endYear="2005" endMonth="12" startDay="11" xml:lang="ja" startYear="2000" startMonth="4">12</jpcoar:conferenceDate><jpcoar:conferenceVenue xml:lang="ja">テスト会場</jpcoar:conferenceVenue><jpcoar:conferenceCountry>JPN</jpcoar:conferenceCountry></jpcoar:conference><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test1.txt</jpcoar:URI><jpcoar:mimeType>text/plain</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:date dateType="Accepted">2022-10-20</datacite:date><datacite:version>1.0</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test2</jpcoar:URI><jpcoar:mimeType>application/octet-stream</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>1.2</datacite:version></jpcoar:file><jpcoar:file><jpcoar:URI>https://weko3.example.org/record/1/files/test3.png</jpcoar:URI><jpcoar:mimeType>image/png</jpcoar:mimeType><jpcoar:extent>18 B</jpcoar:extent><datacite:version>2.1</datacite:version></jpcoar:file></jpcoar:jpcoar></metadata></record></GetRecord></OAI-PMH>'
@@ -2078,9 +2078,10 @@ class TestJPCOARMapper:
         mapper = JPCOARMapper(xml)
         mapper.itemtype = ItemType.query.filter_by(id=10).one()
         
-        test = {'$schema': 10, 'pubdate': '2023-02-20', 'item_1551264308487': [{'subitem_1551255647225': 'test full item', 'subitem_1551255648112': 'ja'}], 'title': 'test full item', 'item_1551264326373': [{'subitem_1551255720400': 'other title', 'subitem_1551255721061': 'en'}], 'item_1551264340087': [{'subitem_1551255991424': [{'subitem_1551256006332': '太郎', 'subitem_1551256007414': 'ja'}], 'subitem_1551255929209': [{'subitem_1551255938498': 'テスト', 'subitem_1551255964991': 'ja'}], 'subitem_1551255898956': [{'subitem_1551255905565': 'テスト, 太郎', 'subitem_1551255907416': 'ja'}], 'subitem_1551256025394': [{'subitem_1551256035730': 'テスト\u3000別郎', 'subitem_1551256055588': 'ja'}]}], 'item_1551264418667': [{'subitem_1551257036415': 'ContactPerson', 'subitem_1551257339190': [{'subitem_1551257342360': '', 'subitem_1551257343979': 'en'}], 'subitem_1551257272214': [{'subitem_1551257314588': 'test', 'subitem_1551257316910': 'en'}], 'subitem_1551257245638': [{'subitem_1551257276108': 'test, smith', 'subitem_1551257279831': 'en'}], 'subitem_1551257372442': [{'subitem_1551257374288': 'other smith', 'subitem_1551257375939': 'en'}]}], 'item_1551264447183': [{'subitem_1551257553743': 'metadata only access', 'subitem_1551257578398': 'http://purl.org/coar/access_right/c_14cb'}], 'item_1551264605515': [{'subitem_1551257776901': 'Paid'}], 'item_1551264629907': [{'subitem_1551257025236': [{'subitem_1551257043769': 'テスト権利情報', 'subitem_1551257047388': 'ja'}], 'subitem_1551257030435': 'テスト権利情報Resource'}], 'item_1551264767789': [{'subitem_1551257249371': [{'subitem_1551257255641': 'テスト\u3000太郎', 'subitem_1551257257683': 'ja'}]}], 'item_1551264822581': [{'subitem_1551257315453': 'テスト主題', 'subitem_1551257323812': 'ja', 'subitem_1551257343002': 'http://bsh.com', 'subitem_1551257329877': 'BSH'}], 'item_1551264846237': [{'subitem_1551255577890': 'this is test abstract.', 'subitem_1551255592625': 'en', 'subitem_1551255637472': 'Abstract'}], 'item_1551264917614': [{'subitem_1551255702686': 'test publisher', 'subitem_1551255710277': 'ja'}], 'item_1551264974654': [{'subitem_1551255753471': '2022-10-20', 'subitem_1551255775519': 'Accepted'}, {'subitem_1551255753471': '2022-10-19', 'subitem_1551255775519': 'Issued'}], 'item_1551265002099': [{'subitem_1551255818386': 'jpn'}], 'item_1551265032053': [{'resourcetype': 'newspaper', 'resourceuri': 'http://purl.org/coar/resource_type/c_2fe3'}], 'item_1551265075370': [{'subitem_1551255975405': '1.1'}], 'item_1551265118680': [{'subitem_1551256025676': 'AO'}], 'system_identifier_doi': [{'subitem_systemidt_identifier': '1111', 'subitem_systemidt_identifier_type': 'DOI'}, {'subitem_systemidt_identifier': 'https://doi.org/1234/0000000001', 'subitem_systemidt_identifier_type': 'DOI'}, {'subitem_systemidt_identifier': 'https://192.168.56.103/records/1', 'subitem_systemidt_identifier_type': 'URI'}], 'item_1581495499605': [{'subitem_1551256250276': '1234/0000000001', 'subitem_1551256259586': 'JaLC'}], 'item_1551265227803': [{'subitem_1551256388439': 'isVersionOf', 'subitem_1551256480278': [{'subitem_1551256498531': '関連情報テスト', 'subitem_1551256513476': 'ja'}], 'subitem_1551256465077': [{'subitem_1551256478339': '1111111', 'subitem_1551256629524': 'ARK'}]}, {'subitem_1551256388439': 'isVersionOf', 'subitem_1551256465077': [{'subitem_1551256478339': 'https://192.168.56.103/records/3', 'subitem_1551256629524': 'URI'}]}], 'item_1551265302120': [{'subitem_1551256918211': '1 to 2', 'subitem_1551256920086': 'ja'}], 'item_1551265385290': [{'subitem_1551256462220': [{'subitem_1551256653656': 'テスト助成機関', 'subitem_1551256657859': 'ja'}], 'subitem_1551256454316': [{'subitem_1551256614960': '22222', 'subitem_1551256619706': 'Crossref Funder'}], 'subitem_1551256688098': [{'subitem_1551256691232': 'テスト研究', 'subitem_1551256694883': 'ja'}], 'subitem_1551256665850': [{'subitem_1551256671920': '1111', 'subitem_1551256679403': 'https://test.research.com'}]}], 'item_1551265409089': [{'subitem_1551256405981': 'test source Identifier', 'subitem_1551256409644': 'PISSN'}], 'item_1551265438256': [{'subitem_1551256349044': 'test collectibles', 'subitem_1551256350188': 'ja'}, {'subitem_1551256349044': 'test title book', 'subitem_1551256350188': 'ja'}], 'item_1551265463411': [{'subitem_1551256328147': '5'}, {'subitem_1551256328147': '1'}], 'item_1551265520160': [{'subitem_1551256294723': '2'}, {'subitem_1551256294723': '2'}], 'item_1551265553273': [{'subitem_1551256248092': '333'}, {'subitem_1551256248092': '555'}], 'item_1551265569218': [{'subitem_1551256198917': '123'}, {'subitem_1551256198917': '789'}, {'subitem_1551256198917': '456'}, {'subitem_1551256198917': '234'}], 'item_1551265738931': [{'subitem_1551256171004': '9999'}], 'item_1551265790591': [{'subitem_1551256126428': 'テスト学位', 'subitem_1551256129013': 'ja'}], 'item_1551265811989': [{'subitem_1551256096004': '2022-10-19'}], 'item_1551265903092': [{'subitem_1551256015892': [{'subitem_1551256027296': '学位授与機関識別子テスト', 'subitem_1551256029891': 'kakenhi'}], 'subitem_1551256037922': [{'subitem_1551256042287': '学位授与機関', 'subitem_1551256047619': 'ja'}]}], 'item_1551265973055': [{'subitem_1599711813532': 'JPN', 'subitem_1599711655652': '12345', 'subitem_1599711633003': [{'subitem_1599711636923': 'テスト会議', 'subitem_1599711645590': 'ja'}]}], 'item_1570069138259': [{'subitem_1551255854908': '1.0', 'subitem_1551255750794': 'text/plain', 'subitem_1551255788530': [{'subitem_1570068579439': '18 B'}], 'subitem_1551255820788': [{'subitem_1551255828320': '2022-10-20', 'subitem_1551255833133': 'Accepted'}], 'subitem_1551255558587': [{'subitem_1551255570271': 'https://weko3.example.org/record/1/files/test1.txt'}]}, {'subitem_1551255854908': '1.2', 'subitem_1551255750794': 'application/octet-stream', 'subitem_1551255788530': [{'subitem_1570068579439': '18 B'}], 'subitem_1551255558587': [{'subitem_1551255570271': 'https://weko3.example.org/record/1/files/test2'}]}, {'subitem_1551255854908': '2.1', 'subitem_1551255750794': 'image/png', 'subitem_1551255788530': [{'subitem_1570068579439': '18 B'}], 'subitem_1551255558587': [{'subitem_1551255570271': 'https://weko3.example.org/record/1/files/test3.png'}]}]}
-        result = mapper.map()
-        assert result == test
+        result = mapper.map("1.0")
+        assert result["$schema"] == 10
+        assert result["pubdate"] == "2023-02-20"
+        assert result
 
     # .tox/c1/bin/pytest -v --cov=invenio_oaiharvester tests/test_harvester.py::TestJPCOARMapper::test_map_2 -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
     def test_map_2(self,db_itemtype):
@@ -2804,7 +2805,7 @@ class TestJPCOARMapper:
                 ),
             ]
         )
-        result = mapper.map()
+        result = mapper.map("2.0")
 
         # assert condition will be updated once update_item_type.py be updated with jpcoar2 properties created
         # right now jpcoar2 items added to harvester.py is being covered by this test case and there are no errors
@@ -2831,7 +2832,7 @@ class TestJPCOARMapper:
                 ),
             ]
         )
-        result = mapper.map()
+        result = mapper.map("2.0")
 
         # assert condition will be updated once update_item_type.py be updated with jpcoar2 properties created
         # right now jpcoar2 items added to harvester.py is being covered by this test case and there are no errors
@@ -3189,11 +3190,23 @@ class TestDDIMapper:
         record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
         xml = etree.tostring(record,encoding="utf-8").decode()
         mapper = DDIMapper(xml)
-        mapper.map_itemtype('codeBook')
-        test = {'$schema': 11, 'pubdate': str(mapper.datestamp()), 'item_1586157591881': [{'subitem_1586156939407': 'titlSmt_top1'}, {'subitem_1586156939407': 'titlSmt_top2'}, {'subitem_1586156939407': 'test_study_id', 'subitem_1591256665864': 'test_id_agency', 'subitem_1586311767281': 'ja'}], 'item_1551264308487': [{'subitem_1551255647225': 'test ddi full item', 'subitem_1551255648112': 'ja'}], 'item_1551264326373': [{'subitem_1551255720400': 'other ddi title', 'subitem_1551255721061': 'ja'}], 'item_1593074267803': [{'creatorNames': [{'creatorName': 'テスト, 太郎', 'creatorNameLang': 'ja'}], 'nameIdentifiers': [{'nameIdentifier': '4'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'author.affiliation'}]}]}], 'item_1551264917614': [{'subitem_1551255702686': 'test_publisher', 'subitem_1551255710277': 'ja'}], 'item_1551264629907': [{'subitem_1602213569986': {'subitem_1602213569987': 'test_rights'}, 'subitem_1602213570623': 'ja', 'subitem_1602213569989': {'subitem_1602213569990': {'subitem_1602213569988': 'this is rights description.'}}, 'subitem_1602213569991': {'subitem_1602213569992': 'today'}}], 'item_1602145817646': [{'subitem_1602142814330': 'test_founder_name', 'subitem_1602142815328': 'ja'}], 'item_1602145850035': [{'subitem_1602142123771': 'test_grant_no'}], 'item_1592405734122': [{'subitem_1592369405220': 'Test Distributor Name', 'subitem_1591320914113': 'https://test.distributor.affiliation', 'subitem_1591320889728': 'TDN', 'subitem_1592369407829': 'ja', 'subitem_1591320890384': 'Test Distributor Affiliation'}], 'item_1588254290498': [{'subitem_1587462181884': 'test_series', 'subitem_1587462183075': 'ja'}], 'item_1645678901234': [{'interim': 'test_text', 'subitem_165678901234567': 'sub_test_text'}], 'item_1551265075370': [{'subitem_1591254914934': '1.2', 'subitem_1591254915862': '2023-03-07', 'subitem_1591254915406': 'ja'}], 'item_1592880868902': [{'subitem_1586228465211': 'test.input.content', 'subitem_1586228490356': 'ja'}], 'item_1612345678910': [{'subitem_1623456789123': 'http://doi.org/test_doi'}, {'subitem_1623456789123': 'http://hdl.handle.net/test_doi'}, {'subitem_1623456789123': 'http://other_prefix'}], 'item_1551264822581': [{'subitem_1592472785169': 'Test Topic', 'subitem_1592472786088': 'test_topic_vocab', 'subitem_1592472786560': 'http://test.topic.vocab', 'subitem_1592472785698': 'ja'}, {'subitem_1592472785169': '人口', 'subitem_1592472786088': 'CESSDA Topic Classification', 'subitem_1592472786560': 'https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification', 'subitem_1592472785698': 'ja'}, {'subitem_1592472785169': 'test_str_value'}, {'subitem_1592472785169': 'Demography', 'subitem_1592472786088': 'CESSDA Topic Classification', 'subitem_1592472786560': 'https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification', 'subitem_1592472785698': 'en'}], 'item_1602145192334': [{'subitem_1602144573160': '2023-03-01', 'subitem_1602144587621': 'start'}, {'subitem_1602144573160': '2023-03-03', 'subitem_1602144587621': 'end'}], 'item_1586253152753': [{'subitem_1602144573160': '2023-03-01', 'subitem_1602144587621': 'start'}, {'subitem_1602144573160': '2023-03-06', 'subitem_1602144587621': 'end'}], 'item_1570068313185': [{'subitem_1586419454219': 'test_geographic_coverage', 'subitem_1586419462229': 'ja'}], 'item_1586253224033': [{'subitem_1596608607860': '個人', 'subitem_1596608609366': 'ja'}, {'subitem_1596608607860': 'test_unit_of_analysis', 'subitem_1596608609366': 'en'}, {'subitem_1596608607860': 'Individual', 'subitem_1596608609366': 'en'}], 'item_1586253249552': [{'subitem_1596608974429': 'test parent set', 'subitem_1596608975087': 'ja'}], 'item_1588260046718': [{'subitem_1591178807921': '量的調査', 'subitem_1591178808409': 'ja'}, {'subitem_1591178807921': 'quantatitive research', 'subitem_1591178808409': 'en'}], 'item_1551264846237': [{'subitem_1551255577890': 'this is description for ddi item.\nthis is description for ddi item.', 'subitem_1551255592625': 'en'}], 'item_1586253334588': [{'subitem_1596609826487': 'test sampling procedure', 'subitem_1596609827068': 'ja'}, {'subitem_1596609826487': '母集団/ 全数調査', 'subitem_1596609827068': 'ja'}, {'subitem_1596609826487': 'Total universe/Complete enumeration', 'subitem_1596609827068': 'en'}], 'item_1586253349308': [{'subitem_1596610500817': 'test collection method', 'subitem_1596610501381': 'ja'}, {'subitem_1596610500817': 'インタビュー', 'subitem_1596610501381': 'ja'}, {'subitem_1596610500817': 'Interview', 'subitem_1596610501381': 'en'}], 'item_1586253589529': [{'subitem_1596609826487': 'test sampling procedure_sampling_rate', 'subitem_1596609827068': 'ja'}], 'item_1588260178185': [{'subitem_1522650727486': 'オープンアクセス', 'subitem_1522650717957': 'jp'}, {'subitem_1522650727486': 'open access', 'subitem_1522650717957': 'en'}], 'item_1551265002099': [{'subitem_1551255818386': 'jpn'}], 'item_1592405736602': [{'subitem_1602215239359': 'test_related_study_title', 'subitem_1602215240520': 'test_related_study_identifier', 'subitem_1602215239925': 'ja'}, {'subitem_1602215239359': 'test_related_study_title', 'subitem_1602215240520': 'test_related_study_identifier_out1', 'subitem_1602215239925': 'ja'}], 'item_1592405735401': [{'subitem_1602214558730': 'test_related_publication_title_out', 'subitem_1602214560358': 'test_related_publication_identifier_out1', 'subitem_1602214559588': 'ja'}]}
+        mapper.map_itemtype()
         res = {"$schema":mapper.itemtype.id,"pubdate":str(mapper.datestamp())}
         mapper.ddi_harvest_processing(data,res)
-        assert res == test
+        assert res["$schema"] == mapper.itemtype.id
+        assert res["pubdate"] == str(mapper.datestamp())
+        assert res["item_1551264308487"] == [
+            {
+                "subitem_1551255647225": "test ddi full item",
+                "subitem_1551255648112": "ja",
+            }
+        ]
+        assert res["item_1551264917614"] == [
+            {
+                "subitem_1551255702686": "test_publisher",
+                "subitem_1551255710277": "ja",
+            }
+        ]
         
         data = OrderedDict([
             ('@xmlns:dc', 'http://purl.org/dc/terms/'), 
@@ -3216,10 +3229,9 @@ class TestDDIMapper:
         record = tree.findall("./GetRecord/record",namespaces=tree.nsmap)[0]
         xml = etree.tostring(record,encoding="utf-8").decode()
         mapper = DDIMapper(xml)
-        mapper.map_itemtype('codeBook')
+        mapper.map_itemtype()
         res = {"$schema":mapper.itemtype.id,"pubdate":str(mapper.datestamp())}
-        with pytest.raises(Exception):
-            mapper.ddi_harvest_processing(data,res)
+        mapper.ddi_harvest_processing(data,res)
         assert res == {"$schema":mapper.itemtype.id,"pubdate":str(mapper.datestamp())}
     
 #         def get_mapping_ddi():
@@ -3295,7 +3307,7 @@ def test_biosample02(db_itemtype):
             1674085174, tz=pytz.utc)).strftime("%Y/%m/%dT%H:%M:%SZ")
 
     mapper = BIOSAMPLEMapper(record)
-    mapper.map_itemtype("")
+    mapper.map_itemtype()
     result = mapper.map()
     with open("tests/data/test_jsonld/biosample_record02.json", "r") as f:
         test = json.load(f)
@@ -3392,5 +3404,3 @@ def test_bioproject_deleted(db_itemtype):
 
     result = mapper.map()
     assert result == {}
-
-

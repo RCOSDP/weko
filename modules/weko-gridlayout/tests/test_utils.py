@@ -781,7 +781,8 @@ def test_find_rss_value(i18n_app, keyword, item_type):
                     with patch('weko_gridlayout.utils.Mapping.get_record', return_value=""):
                         with patch('weko_gridlayout.utils.get_mapping', return_value=item_map):
                             with patch('weko_gridlayout.utils.get_pair_value', return_value=[("Abstract", "Abstract")]):
-                                assert find_rss_value(data6, keyword) != ""
+                                with patch('weko_items_ui.utils.get_options_and_order_list', return_value={}):
+                                    assert find_rss_value(data6, keyword) != ""
 
 
 
@@ -806,7 +807,8 @@ def test_get_elasticsearch_result_by_date(i18n_app):
     start_date = "2021-11-11"
     end_date = "2021-11-22"
 
-    assert get_elasticsearch_result_by_date(start_date, end_date)
+    with patch('weko_gridlayout.utils.item_search_factory', return_value=(MagicMock(), {})):
+        assert get_elasticsearch_result_by_date(start_date, end_date) is not None
 
     with patch('weko_gridlayout.utils.item_search_factory', side_effect=NotFoundError('')):
         # Exception coverage ~ line 779
@@ -818,7 +820,7 @@ def test_get_elasticsearch_result_by_date(i18n_app):
 
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
 def test_validate_main_widget_insertion(i18n_app, widget_item):
-    repository_id = 1
+    repository_id = "1"
     new_settings = ""
     return_data = MagicMock()
 

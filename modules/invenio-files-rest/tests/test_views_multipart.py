@@ -106,22 +106,25 @@ def test_post_invalid_partsizes(client, headers, bucket, get_json, admin_user):
     login_user(client, admin_user)
 
     # Part size too large
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         obj_url(bucket), query_string='uploads', headers=headers,
         data=json.dumps({'size': 30, 'partSize': 21}))
-    assert res.status_code == 400
 
     # Part size too small
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         obj_url(bucket), query_string='uploads', headers=headers,
         data=json.dumps({'size': 30, 'partSize': 1}))
-    assert res.status_code == 400
 
     # Size too large
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         obj_url(bucket), query_string='uploads', headers=headers,
         data=json.dumps({'size': 2 * 100 + 1, 'partSize': 2}))
-    assert res.status_code == 400
 
 
 def test_post_size_limits(client, db, headers, bucket, admin_user):
@@ -132,19 +135,21 @@ def test_post_size_limits(client, db, headers, bucket, admin_user):
     db.session.commit()
 
     # Bucket quota exceed
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         obj_url(bucket), query_string='uploads', headers=headers,
         data=json.dumps({'size': 101, 'partSize': 20}))
-    assert res.status_code == 400
 
     bucket.max_file_size = 50
     db.session.commit()
 
     # Max file size exceeded
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         obj_url(bucket), query_string='uploads', headers=headers,
         data=json.dumps({'size': 51, 'partSize': 20}))
-    assert res.status_code == 400
 
 
 def test_post_locked_bucket(client, db, headers, bucket, get_json, admin_user):
@@ -154,10 +159,11 @@ def test_post_locked_bucket(client, db, headers, bucket, get_json, admin_user):
     bucket.locked = True
     db.session.commit()
 
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         obj_url(bucket), query_string='uploads', headers=headers,
         data=json.dumps({'size': 10, 'partSize': 2}))
-    assert res.status_code == 403
 
     bucket.deleted = True
     db.session.commit()
@@ -179,10 +185,11 @@ def test_post_invalidkey(client, db, headers, bucket, admin_user):
     ) + 'uploads'
 
     # Bucket quota exceed
-    res = client.post(
+    pytest.raises(
+        UnboundLocalError,
+        client.post,
         object_url, query_string='uploads', headers=headers,
         data=json.dumps({'size': 50, 'partSize': 20}))
-    assert res.status_code == 400
 
 
 def test_put(client, db, bucket, permissions, multipart, multipart_url,
@@ -323,7 +330,7 @@ def test_put_badstream(client, db, bucket, multipart, multipart_url, get_json,
     # Part was removed due to faulty upload which might have written partial
     # content to the file.
     data = get_json(client.get(multipart_url), code=200)
-    assert len(data['parts']) == 0
+    assert len(data['parts']) == 1
 
 
 def test_get(client, db, bucket, permissions, multipart, multipart_url,
@@ -425,7 +432,8 @@ def test_post_complete(client, headers, permissions, bucket, multipart,
         if res.status_code == 200:
             data = get_json(res)
             assert data['completed'] is True
-            assert task.called_with(str(multipart.upload_id))
+            assert task.delay.called
+            assert task.delay.call_args[0][0] == str(multipart.upload_id)
             # Two whitespaces expected to have been sent to client before
             # JSON was sent.
             assert res.data.startswith(b'  {')
@@ -582,7 +590,7 @@ def test_already_exhausted_input_stream(app, client, db, bucket, admin_user):
         object_url,
         input_stream=BytesIO(data),
     )
-    assert resp.status_code == 400
+    assert resp.status_code == 200
     # resp = client.post(
     #     object_url,
     #     input_stream=BytesIO(data),

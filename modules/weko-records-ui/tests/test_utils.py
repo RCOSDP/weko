@@ -259,12 +259,12 @@ def test_soft_delete(app, records, users):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    with patch("weko_records_ui.utils.RequestMailList.delete") as delete_request_mail:
-        assert soft_delete(record.pid.pid_value)==None
+    with patch("weko_records_ui.utils.RequestMailList.delete") as delete_request_mail,          patch("weko_deposit.api.WekoIndexer.update_es_data"),          patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),          patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),          patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
+        assert soft_delete(record.pid.pid_value) == None
         assert recid.status == PIDStatus.DELETED
         delete_request_mail.assert_called()
 
-    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]),          patch("weko_deposit.api.WekoIndexer.update_es_data"),          patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),          patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),          patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
         assert soft_delete(record.pid.pid_value) == None
 
         data1 = MagicMock()
@@ -274,8 +274,8 @@ def test_soft_delete(app, records, users):
             assert soft_delete(record.pid.pid_value) == None
 
     recid = results[0]["recid"]
-    with patch("weko_records_ui.utils.RequestMailList.delete") as delete_request_mail:
-        assert soft_delete(record.pid.pid_value)==None
+    with patch("weko_records_ui.utils.RequestMailList.delete") as delete_request_mail,          patch("weko_deposit.api.WekoIndexer.update_es_data"),          patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),          patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),          patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
+        assert soft_delete(record.pid.pid_value) == None
         delete_request_mail.assert_not_called()
 
 
@@ -285,11 +285,12 @@ def test_restore(app,records):
     indexer, results = records
     record = results[0]["record"]
     recid = results[0]["recid"]
-    assert restore(record.pid.pid_value)==None
+    with patch("weko_deposit.api.WekoIndexer.update_es_data"),          patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),          patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),          patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
+        assert restore(record.pid.pid_value) == None
 
-    soft_delete(record.pid.pid_value)
-    assert recid.status == PIDStatus.DELETED
-    assert restore(record.pid.pid_value)==None
+        soft_delete(record.pid.pid_value)
+        assert recid.status == PIDStatus.DELETED
+        assert restore(record.pid.pid_value) == None
     assert recid.status == PIDStatus.REGISTERED
 
 
@@ -1761,11 +1762,11 @@ def test_RoCrateConverter_convert(app, db):
     with open('tests/data/rocrate/test_mapping_records_metadata.json', 'r') as f:
         record_data = json.load(f)
     rocrate = converter.convert(record_data, mapping)
-    assert rocrate['@graph'][0]['prop1'] == 'value1'
+    assert rocrate['@graph'][0]['prop1'] == ['value1']
     assert rocrate['@graph'][0]['prop2'] == ['value2']
     assert rocrate['@graph'][0]['prop3'] == ['value3_1', 'value3_2']
-    assert rocrate['@graph'][0]['prop4_1'] == 'value4_1'
-    assert rocrate['@graph'][0]['prop4_2'] == 'value4_2'
+    assert rocrate['@graph'][0]['prop4_1'] == ['value4_1']
+    assert rocrate['@graph'][0]['prop4_2'] == ['value4_2']
     assert 'prop4_3' not in rocrate['@graph'][0]
     assert rocrate['@graph'][0]['prop5'] == ['value5_1', 'value5_2', 'value5_3']
     assert rocrate['@graph'][0]['prop6'] == ['value6_2']
@@ -1773,24 +1774,24 @@ def test_RoCrateConverter_convert(app, db):
     assert 'prop8' not in rocrate['@graph'][0]
     assert 'prop9' not in rocrate['@graph'][0]
     assert rocrate['@graph'][0]['prop10'] == ['value10_1_en', 'value10_2_1_en']
-    assert rocrate['@graph'][0]['prop_static'] == 'value_static'
+    assert rocrate['@graph'][0]['prop_static'] == ['value_static']
     assert 'prop_none' not in rocrate['@graph'][0]
     assert 'prop_none_lang' not in rocrate['@graph'][0]
 
     assert rocrate['@graph'][5]['name'] == 'name_en'
     assert rocrate['@graph'][5]['additionalType'] == 'tab'
-    assert rocrate['@graph'][2]['fileprop1'] == 'filevalue1_1'
-    assert rocrate['@graph'][2]['fileprop2'] == 'filevalue2_1'
+    assert rocrate['@graph'][2]['fileprop1'] == ['filevalue1_1']
+    assert rocrate['@graph'][2]['fileprop2'] == ['filevalue2_1']
     assert rocrate['@graph'][2]['fileprop3'] == ['filevalue3_1_1', 'filevalue3_2_1_1_1', 'filevalue3_2_1_1_2']
-    assert rocrate['@graph'][2]['fileprop_static'] == 'filevalue_static'
-    assert rocrate['@graph'][3]['fileprop1'] == 'filevalue1_2'
-    assert rocrate['@graph'][3]['fileprop2'] == 'filevalue2_2'
+    assert rocrate['@graph'][2]['fileprop_static'] == ['filevalue_static']
+    assert rocrate['@graph'][3]['fileprop1'] == ['filevalue1_2']
+    assert rocrate['@graph'][3]['fileprop2'] == ['filevalue2_2']
     assert rocrate['@graph'][3]['fileprop3'] == ['filevalue3_1_2', 'filevalue3_2_1_2_1', 'filevalue3_2_1_2_2']
-    assert rocrate['@graph'][3]['fileprop_static'] == 'filevalue_static'
-    assert rocrate['@graph'][4]['fileprop1'] == 'filevalue1_3'
-    assert rocrate['@graph'][4]['fileprop2'] == 'filevalue2_3'
+    assert rocrate['@graph'][3]['fileprop_static'] == ['filevalue_static']
+    assert rocrate['@graph'][4]['fileprop1'] == ['filevalue1_3']
+    assert rocrate['@graph'][4]['fileprop2'] == ['filevalue2_3']
     assert rocrate['@graph'][4]['fileprop3'] == ['filevalue3_1_3', 'filevalue3_2_1_3_1', 'filevalue3_2_1_3_2']
-    assert rocrate['@graph'][4]['fileprop_static'] == 'filevalue_static'
+    assert rocrate['@graph'][4]['fileprop_static'] == ['filevalue_static']
 
     rocrate = converter.convert(record_data, mapping, 'ja')
     assert rocrate['@graph'][0]['prop6'] == ['value6_3']
@@ -1855,7 +1856,7 @@ def test_delete_version(app, records):
     with patch(
         "weko_records_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
         with patch("weko_records_ui.utils.WekoDeposit.publish"):
-            with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+            with patch("weko_deposit.api.WekoIndexer.update_es_data"),                  patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),                  patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),                  patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
                 with patch(
                     "weko_records_ui.utils.call_external_system") as mock_external:
                     delete_version("1.1")
@@ -1874,7 +1875,7 @@ def test_delete_version(app, records):
     with patch(
         "weko_records_ui.utils.WekoDeposit.merge_data_to_record_without_version"):
         with patch("weko_records_ui.utils.WekoDeposit.publish"):
-            with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+            with patch("weko_deposit.api.WekoIndexer.update_es_data"),                  patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),                  patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),                  patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
                 with patch(
                     "weko_records_ui.utils.call_external_system") as mock_external:
                     delete_version("2.0")

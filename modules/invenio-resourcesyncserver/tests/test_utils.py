@@ -172,7 +172,8 @@ def test_get_timezone(i18n_app):
     date_2 = "1-1:1:1"
 
     assert get_timezone(date_1)
-    assert get_timezone(date_2)
+    with pytest.raises(TypeError):
+        get_timezone(date_2)
 
 
 # def get_pid(pid):

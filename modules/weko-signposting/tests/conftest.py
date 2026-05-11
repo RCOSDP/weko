@@ -18,7 +18,16 @@ import tempfile
 import json
 from unittest.mock import patch
 
+
+
 import pytest
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from flask import Flask
 from sqlalchemy_utils.functions import create_database, database_exists
 
@@ -120,6 +129,14 @@ def db(app):
     """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()

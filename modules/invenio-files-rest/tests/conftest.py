@@ -44,6 +44,7 @@ from invenio_files_rest.permissions import bucket_listmultiparts_all, \
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_files_rest.views import blueprint
 from weko_logging.audit import WekoLoggingUserActivity
+from weko_logging.activity_logger import UserActivityLogger
 
 
 @compiles(DropTable, 'postgresql')
@@ -118,11 +119,32 @@ def db(app):
     """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
+    db_.session().expire_on_commit = False
     yield db_
     db_.session.remove()
-    db_.drop_all()
-    drop_alembic_version_table()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
+
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger(monkeypatch):
+    """Avoid partitioned audit log writes during file-rest tests."""
+    monkeypatch.setattr(UserActivityLogger, 'info', lambda *args, **kwargs: None)
+    monkeypatch.setattr(UserActivityLogger, 'error', lambda *args, **kwargs: None)
 
 
 @pytest.yield_fixture()

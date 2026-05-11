@@ -103,21 +103,23 @@ def test_create_index(client_api, db, users, auth_headers):
     res = _request_process(_data)
     assert res.status_code == 400
 
-    with patch("weko_index_tree.api.Indexes.update", return_value=Index(id=100, index_name="Test Index")):
-        res = _request_process(_data)
-        res_data = json.loads(res.get_data(as_text=True))
-        assert res.status_code == 201
-        assert res_data["index_name"] == "Test Index"
+    with patch("weko_index_tree.api.Indexes.create", return_value=True):
+        with patch("weko_index_tree.api.Indexes.update", return_value=Index(id=100, index_name="Test Index")):
+            res = _request_process(_data)
+            res_data = json.loads(res.get_data(as_text=True))
+            assert res.status_code == 201
+            assert res_data["index_name"] == "Test Index"
 
     with patch("weko_index_tree.api.Indexes.create", return_value=False):
         res = _request_process(_data)
         assert res.status_code == 400
         assert res.get_data(as_text=True) == "Could not create data."
 
-    with patch("weko_index_tree.api.Indexes.update", return_value=None):
-        res = _request_process(_data)
-        assert res.status_code == 400
-        assert res.get_data(as_text=True) == "Could not update data."
+    with patch("weko_index_tree.api.Indexes.create", return_value=True):
+        with patch("weko_index_tree.api.Indexes.update", return_value=None):
+            res = _request_process(_data)
+            assert res.status_code == 400
+            assert res.get_data(as_text=True) == "Could not update data."
 
 
 # def dbsession_clean(exception):

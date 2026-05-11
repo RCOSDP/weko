@@ -7,6 +7,7 @@
 # under the terms of the MIT License; see LICENSE file for more details.
 
 from click.testing import CliRunner
+from flask.cli import ScriptInfo
 from invenio_db import db
 
 from invenio_oauth2server.cli import tokens_create, tokens_delete
@@ -30,9 +31,10 @@ Token "abcdef1234567890abcdef1234567890" deleted
 """
 
 
-def test_cli_tokens(app, script_info, settings_fixture):
+def test_cli_tokens(app, settings_fixture):
     """Test create user CLI."""
     runner = CliRunner()
+    script_info = ScriptInfo(create_app=lambda: app)
 
     result = runner.invoke(
         tokens_create,

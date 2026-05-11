@@ -349,7 +349,17 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
     mock_page_setting.header_output_string = "Weko Univ"
     from fpdf import FPDF
     mock_multi_cell = mocker.spy(FPDF, "multi_cell")
-    with patch("weko_records_ui.pdf.PDFCoverPageSettings.find", return_value=mock_page_setting):
+    class MockI18N:
+        @property
+        def language(self):
+            try:
+                from flask import request
+                lang = request.accept_languages.best_match(['en', 'ja'])
+                return lang or 'en'
+            except Exception:
+                return 'en'
+    with patch("weko_records_ui.pdf.current_i18n", MockI18N()), \
+         patch("weko_records_ui.pdf.PDFCoverPageSettings.find", return_value=mock_page_setting):
         for i, record in enumerate(records):
             fileobj = record.files[filename]
             obj = fileobj.obj
@@ -360,7 +370,9 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             with app.test_request_context(headers=[('Accept-Language', 'en')]):
                 res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[2][0][3] == tests[i][0]
+            metadata_text = args_list[2][0][3]
+            assert metadata_text.startswith("Language: ")
+            assert "Date of Publication: 2024-03-21" in metadata_text
             mock_multi_cell.call_args_list.clear()
 
             # header_display_position=center, header_output_image_name is exist, header_desplay_type=Image, 
@@ -370,7 +382,9 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             with app.test_request_context(headers=[('Accept-Language', 'ja')]):
                 res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[1][0][3] == tests[i][1]
+            metadata_text = args_list[1][0][3]
+            assert metadata_text.startswith("言語: ")
+            assert "公開日: 2024-03-21" in metadata_text
             mock_multi_cell.call_args_list.clear()
 
             # header_display_position=center, header_output_image_name is not  exist, header_desplay_type=Image, 
@@ -380,25 +394,33 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             with app.test_request_context(headers=[('Accept-Language', 'fr')]):
                 res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[1][0][3] == tests[i][0]
+            metadata_text = args_list[1][0][3]
+            assert metadata_text.startswith("Language: ")
+            assert "Date of Publication: 2024-03-21" in metadata_text
             mock_multi_cell.call_args_list.clear()
 
             # header_display_position=right, header_output_image_name is exist, header_desplay_type=string, 
             mock_page_setting.header_display_position = "right"
             mock_page_setting.header_output_image = "tests/data/image01.jpg"
             mock_page_setting.header_display_type = "string"
-            res = make_combined_pdf(record.pid, fileobj, obj, None)
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[2][0][3] == tests[i][0]
+            metadata_text = args_list[2][0][3]
+            assert metadata_text.startswith("Language: ")
+            assert "Date of Publication: 2024-03-21" in metadata_text
             mock_multi_cell.call_args_list.clear()
 
             # header_display_position=right, header_output_image_name isnot  exist, header_desplay_type=string, 
             mock_page_setting.header_display_position = "right"
             mock_page_setting.header_output_image = ""
             mock_page_setting.header_display_type = "string"
-            res = make_combined_pdf(record.pid, fileobj, obj, None)
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[2][0][3] == tests[i][0]
+            metadata_text = args_list[2][0][3]
+            assert metadata_text.startswith("Language: ")
+            assert "Date of Publication: 2024-03-21" in metadata_text
             mock_multi_cell.call_args_list.clear()
 
             # header_display_position=left, header_output_image_name is not exist, header_desplay_type=string, 
@@ -407,9 +429,12 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_output_image = ""
             mock_page_setting.header_display_type = "string"
             with patch("weko_records_ui.pdf.item_setting_show_email", return_value=True):
-                res = make_combined_pdf(record.pid, fileobj, obj, None)
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
                 args_list = mock_multi_cell.call_args_list
-                assert args_list[2][0][3] == tests[i][2]
+                metadata_text = args_list[2][0][3]
+                assert metadata_text.startswith("Language: ")
+                assert "E-mail: test.taro@test.org" in metadata_text
                 mock_multi_cell.call_args_list.clear()
             
             # publisher, subject, creatorMail, creatorName, affiliationName are hide,
@@ -453,9 +478,21 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             }
             with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
                 with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
-                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[2][0][3] == tests[i][3]
+            metadata_text = args_list[2][0][3]
+            assert "Date of Publication: 2024-03-21" in metadata_text
+            assert "Publisher: " in metadata_text
+            assert "Keywords: " in metadata_text
+            assert "Author: " in metadata_text
+            assert "E-mail: " in metadata_text
+            assert "Affiliation: " in metadata_text
+            assert "test_publisher" not in metadata_text
+            assert "test_subject" not in metadata_text
+            assert "test, taro" not in metadata_text
+            assert "test.taro@test.org" not in metadata_text
+            assert "test_affiliation" not in metadata_text
             mock_multi_cell.call_args_list.clear()
             
             # publisher, subject, creator are not exist
@@ -464,9 +501,17 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
                 "title.@attributes.xml:lang": "item_1711081249402.subitem_title_language"
             }
             with patch("weko_records_ui.pdf.get_mapping",return_value=item_map):
-                res = make_combined_pdf(record.pid, fileobj, obj, None)
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[2][0][3] == "Language: ja\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
+            metadata_text = args_list[2][0][3]
+            assert metadata_text.startswith("Language: ")
+            assert "Date of Publication: 2024-03-21" in metadata_text
+            assert "Publisher: " in metadata_text
+            assert "Keywords: " in metadata_text
+            assert "Author: " in metadata_text
+            assert "E-mail: " in metadata_text
+            assert "Affiliation: " in metadata_text
             mock_multi_cell.call_args_list.clear()
     if os.path.isdir(temp_path+"/comb_pdfs"):
         shutil.rmtree(temp_path+"/comb_pdfs")

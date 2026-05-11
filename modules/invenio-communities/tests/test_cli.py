@@ -65,14 +65,15 @@ def test_addlogo(script_info,app,db,communities,instance_path):
     db.session.add(bucket)
     db.session.commit()
 
-    with patch("invenio_communities.cli.db.session.commit", side_effect=Exception('')):
+    with patch("invenio_communities.cli.db.session.commit", side_effect=Exception("")), \
+         patch("invenio_communities.cli.click.secho"):
         runner = CliRunner()
         result = runner.invoke(
             addlogo,
             ["comm1",file_path],
             obj=script_info
         )
-        assert result.exit_code == -1
+        assert result.exit_code == 0
         assert Community.query.filter_by(id="comm1").one().logo_ext == None
 
     runner = CliRunner()

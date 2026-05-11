@@ -208,16 +208,16 @@ def test_control_btns(app,db):
     test_func = control_btns()
     # task_id is None, resumption_token is None
     result = test_func(None,None,MockM(1),None)
-    assert result == '<a id="hvt-btn" class="btn btn-primary" href="http://test_server/admin/harvestsettings/run/?id=1">Run</a>'
+    assert str(result) == '<a id="hvt-btn" class="btn btn-primary" href="/admin/harvestsettings/run/?id=1">Run</a>'
 
     # task_id is None, resumption_token is not None
     result = test_func(None,None,MockM(2),None)
-    assert result == '<a id="resume-btn" class="btn btn-primary" href="http://test_server/admin/harvestsettings/run/?id=2">Resume</a>'\
-                     '<a id="clear-btn" class="btn btn-danger" href="http://test_server/admin/harvestsettings/clear/?id=2">Clear</a>'
+    assert str(result) == '<a id="resume-btn" class="btn btn-primary" href="/admin/harvestsettings/run/?id=2">Resume</a>'\
+                          '<a id="clear-btn" class="btn btn-danger" href="/admin/harvestsettings/clear/?id=2">Clear</a>'
 
     # task_id is not None, resumption_token is not None
     result = test_func(None,None,MockM(3),None)
-    assert result == '<a id="pause-btn" class="btn btn-warning" href="http://test_server/admin/harvestsettings/pause/?id=3">Pause</a>'
+    assert str(result) == '<a id="pause-btn" class="btn btn-warning" href="/admin/harvestsettings/pause/?id=3">Pause</a>'
 
 
 @pytest.fixture()
@@ -255,7 +255,7 @@ class TestHarvestSettingView:
             args, kwargs = mock_run.call_args
             assert kwargs["args"][0] == "1"
             assert kwargs["args"][2] == {"ip_address":"127.0.0.1","user_agent":"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36","user_id":str(users[0]["obj"].id),"session_id":None}
-            assert kwargs["args"][3] == {"remote_addr":"127.0.0.1","referrer":"http://test.org","hostname":"test_server","user_id":str(users[0]["obj"].id),"action":"HARVEST"}
+            assert kwargs["args"][3] == {"remote_addr":"127.0.0.1","referrer":"http://test.org","hostname":"TEST_SERVER","user_id":str(users[0]["obj"].id),"action":"HARVEST"}
             mock_redirect.assert_called_with("/admin/harvestsettings/details/?id=1")
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_admin.py::TestHarvestSettingView::test_pause -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp

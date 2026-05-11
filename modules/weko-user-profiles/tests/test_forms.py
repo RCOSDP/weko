@@ -397,11 +397,11 @@ class TestProfileForm:
             # Create the form
             form = ProfileForm()
             
-            # Verify storage-related fields are removed
-            assert not hasattr(form, 'access_key')
-            assert not hasattr(form, 'secret_key')
-            assert not hasattr(form, 's3_endpoint_url')
-            assert not hasattr(form, 's3_region_name')
+            # Verify storage-related fields are removed from _fields
+            assert 'access_key' not in form._fields
+            assert 'secret_key' not in form._fields
+            assert 's3_endpoint_url' not in form._fields
+            assert 's3_region_name' not in form._fields
 
     def test_init_storage_fields_present_when_enabled(self, app):
         """Test that storage fields are present when feature flag is enabled."""

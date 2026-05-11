@@ -105,3 +105,5 @@ test/dummyfile/data
 # inbox
 inbox/
 ui-tests/test-results/
+
+.codex

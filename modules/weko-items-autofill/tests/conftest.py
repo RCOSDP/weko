@@ -20,7 +20,16 @@ import tempfile
 import pytest
 from flask import Flask
 from flask_babelex import Babel
+from mock import patch
 from sqlalchemy_utils.functions import create_database, database_exists
+
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 
 
 from invenio_access import InvenioAccess
@@ -147,6 +156,14 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()

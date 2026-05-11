@@ -26,6 +26,7 @@ import tempfile
 import uuid
 import json
 from datetime import datetime, timedelta
+from unittest.mock import patch
 from elasticsearch import Elasticsearch
 from invenio_accounts.utils import jwt_create_token
 from invenio_indexer import InvenioIndexer
@@ -53,6 +54,7 @@ from invenio_cache import InvenioCache
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import FileInstance, Location
 from invenio_i18n import InvenioI18N
@@ -97,6 +99,12 @@ from weko_admin.config import WEKO_ADMIN_COMMUNITY_ACCESS_LIST,WEKO_ADMIN_REPOSI
 from .helpers import json_data, create_record
 
 
+TEST_DB_NAME = 'wekotest_weko_admin_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = (
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'
+).format(TEST_DB_NAME)
+
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -135,10 +143,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         SERVER_NAME='test_server',
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #      'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         #SEARCH_ELASTIC_HOSTS=os.environ.get(
         #    'SEARCH_ELASTIC_HOSTS', None),
         SEARCH_ELASTIC_HOSTS=os.environ.get("SEARCH_ELASTIC_HOSTS", "elasticsearch"),
@@ -231,7 +236,11 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 @pytest.yield_fixture()
 def i18n_app(app):
@@ -280,10 +289,7 @@ def admin_app(instance_path):
         SECRET_KEY='SECRET KEY',
         SESSION_TYPE='memcached',
         SERVER_NAME='test_server',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         WEKO_ADMIN_FACET_SEARCH_SETTING={"name_en": "","name_jp": "","mapping": "","active": True,"aggregations": [],"display_number": 5,"is_open": True,"search_condition": "OR","ui_type": "CheckboxList"},
         WEKO_ADMIN_FACET_SEARCH_SETTING_TEMPLATE="weko_admin/admin/facet_search_setting.html"
     )
@@ -298,11 +304,15 @@ def admin_app(instance_path):
 @pytest.yield_fixture()
 def admin_db(admin_app):
     if not database_exists(str(db_.engine.url)):
-                create_database(str(db_.engine.url))
+        create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 
 @pytest.fixture()
@@ -675,9 +685,10 @@ def records(db,location):
 
     record_num = len(record_data)
     result = []
-    for d in range(record_num):
-        result.append(create_record(record_data[d], item_data[d]))
-        db.session.commit()
+    with patch("invenio_oaiserver.receivers.get_record_sets", return_value=[]):
+        for d in range(record_num):
+            result.append(create_record(record_data[d], item_data[d]))
+            db.session.commit()
 
     yield result
 

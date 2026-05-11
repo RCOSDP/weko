@@ -28,7 +28,8 @@ def test_index(app, client):
     url = url_for(
         "weko_handle.index", format="json", _external=True
     )
-    res = client.get(url)
+    with patch("weko_handle.views.render_template", return_value=""):
+        res = client.get(url)
     assert res.status_code == 200
 
 

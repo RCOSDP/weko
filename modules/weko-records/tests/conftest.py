@@ -34,7 +34,7 @@ from mock import patch
 
 import pytest
 from elasticsearch_dsl import response, Search
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from flask import Flask
 from flask_babelex import Babel
 from flask_menu import Menu
@@ -49,6 +49,7 @@ from invenio_admin import InvenioAdmin
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest.models import Location
 from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
@@ -80,6 +81,9 @@ from weko_records.models import (
 
 from tests.helpers import json_data, create_record
 
+TEST_DB_NAME = "wekotest_weko_records_{}".format(uuid.uuid4().hex[:8])
+TEST_DB_URI = "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}".format(TEST_DB_NAME)
+
 sys.path.append(os.path.dirname(__file__))
 
 @pytest.yield_fixture()
@@ -104,8 +108,7 @@ def base_app(instance_path):
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -177,6 +180,14 @@ def client(app):
     with app.test_client() as client:
         yield client
 
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
+
 @pytest.fixture()
 def db(app):
     """Database fixture."""
@@ -185,7 +196,11 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 
 @pytest.fixture()

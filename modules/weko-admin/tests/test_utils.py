@@ -139,12 +139,13 @@ def test_update_admin_lang_setting(language_setting):
         {"lang_code":"en","lang_name":"English2","is_registered":False,"sequence":10},
     ]
     result = update_admin_lang_setting(admin_lang_settings)
-    assert result == "success"
+    assert result is None
     assert AdminLangSettings.query.filter_by(lang_code="en").one().lang_name == "English2"
 
     with patch("weko_admin.utils.AdminLangSettings.update_lang",side_effect=Exception("test_error")):
-        result = update_admin_lang_setting(admin_lang_settings)
-        assert result=="test_error"
+        with pytest.raises(Exception) as ex:
+            update_admin_lang_setting(admin_lang_settings)
+        assert str(ex.value) == "test_error"
 
 
 # def get_selected_language():
@@ -462,7 +463,7 @@ def test_write_report_file_rows(db,users):
     writer = csv.writer(output,delimiter=",",lineterminator="\n")
     write_report_file_rows(writer,record,"file_using_per_user")
     assert output.getvalue() == ",Guest,10,5\n"\
-                                "user@test.org,,10,5\n"
+                                "user@test.org,test smith,10,5\n"
 
     # filetype is top_page_access
     record = [{"host":"test_host","ip":"123.456.789","count":"10"}]
@@ -509,9 +510,9 @@ def test_reset_redis_cache(redis_connect,mocker):
     assert redis_connect.get("test_cache") == b"new_value2"
 
     # raise Exception
-    with mocker.patch("weko_admin.utils.RedisConnection.connection",side_effect=Exception("test_error")):
-        with pytest.raises(Exception):
-            reset_redis_cache("test_cache","")
+    mocker.patch("weko_admin.utils.RedisConnection.connection",side_effect=Exception("test_error"))
+    with pytest.raises(Exception):
+        reset_redis_cache("test_cache","")
 
 
 # def is_exists_key_in_redis(key):

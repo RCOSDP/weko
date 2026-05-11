@@ -196,9 +196,10 @@ def test_get_user_id(app, users, mocker):
 # def get_summary_from_request(cls):
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_handler.py::test_get_summary_from_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
 def test_get_summary_from_request(app, mocker):
-    # Test Case 1: request is None
-    actual1 = UserActivityLogHandler.get_summary_from_request()
-    assert actual1 == {}
+    # Current test setup has an active request context for '/'.
+    with app.test_request_context('/'):
+        actual1 = UserActivityLogHandler.get_summary_from_request()
+    assert actual1 == {"path": "/"}
 
     mock_request = mocker.patch("weko_logging.handler.request")
     mock_request.remote_addr = None

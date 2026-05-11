@@ -1,4 +1,6 @@
 import pytest
+from mock import patch, MagicMock
+import invenio_records_rest.serializers.json as json_serializer_module
 from tests.helpers import json_data
 
 from invenio_records_rest.schemas.json import RecordSchemaJSONV1
@@ -22,8 +24,19 @@ def test_oepnsearch_responsify(app, db, hit):
     _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
     opensearch_v1 = OpenSearchSerializer(RecordSchemaJSONV1)
     opensearch = oepnsearch_responsify(opensearch_v1)
+    record = {
+        "publish_status": "0",
+        "path": [],
+        "_oai": {"sets": []},
+        "created_by": {"user": "1"},
+    }
     with app.test_request_context():
-        result = opensearch(fetcher, _search_result)
+        with patch("weko_records_ui.utils.hide_by_email", side_effect=lambda item, *args, **kwargs: item):
+            with patch("weko_records_ui.permissions.check_publish_status", return_value=True):
+                with patch("weko_records_ui.permissions.check_created_id", return_value=False):
+                    with patch("weko_index_tree.utils.get_user_roles", return_value=(False, [])):
+                        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=record):
+                            result = opensearch(fetcher, _search_result)
         assert result.status_code==200
 
 # def add_link_header(response, links):

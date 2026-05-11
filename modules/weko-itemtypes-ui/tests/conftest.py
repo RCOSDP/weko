@@ -58,6 +58,7 @@ from invenio_communities.models import Community
 from invenio_communities.views.ui import blueprint as invenio_communities_blueprint
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_deposit import InvenioDeposit
 from invenio_deposit.config import (
     DEPOSIT_DEFAULT_JSONSCHEMA,
@@ -91,7 +92,7 @@ from unittest.mock import patch
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_admin import WekoAdmin
 from weko_admin.config import WEKO_ADMIN_DEFAULT_ITEM_EXPORT_SETTINGS
 from weko_admin.models import RankingSettings, SessionLifetime, AdminSettings
@@ -135,6 +136,11 @@ from weko_itemtypes_ui.admin import itemtype_meta_data_adminview,itemtype_proper
 from weko_logging.audit import WekoLoggingUserActivity
 from tests.helpers import json_data, sync_sequence
 
+TEST_DB_NAME = 'wekotest_weko_itemtypes_ui_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = (
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'
+).format(TEST_DB_NAME)
+
 """Pytest configuration."""
 
 import shutil
@@ -172,8 +178,7 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv(
-            'SQLALCHEMY_DATABASE_URI', 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         ACCOUNTS_USERINFO_HEADERS=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=[
@@ -352,15 +357,29 @@ def admin_view(app):
     admin.add_view(rocratemapping_viewclass(**itemtype_rocrate_mapping_adminview["kwargs"]))
 
 
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
+
 @pytest.fixture()
 def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 
 @pytest.fixture()

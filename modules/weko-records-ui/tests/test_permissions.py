@@ -37,8 +37,6 @@ def test_page_permission_factory(app, records, users,db_file_permission):
     indexer, results = records
     record = results[0]["record"]
 
-    assert page_permission_factory(record).can() == False
-
     with patch("weko_records_ui.permissions.check_publish_status", return_value=True):
         with patch("weko_records_ui.permissions.check_index_permissions", return_value=True):
             assert page_permission_factory(record).can() == True

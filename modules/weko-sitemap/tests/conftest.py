@@ -22,6 +22,14 @@ import copy
 import uuid
 
 import pytest
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    from unittest.mock import patch as _patch
+    with _patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with _patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from flask import Flask, current_app
 from flask_babelex import Babel
 from flask_menu import Menu
@@ -140,6 +148,14 @@ def db(app):
     """Get setup database."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level="AUTOCOMMIT")
+    try:
+        con.execute("DROP SCHEMA IF EXISTS public CASCADE")
+        con.execute("CREATE SCHEMA IF NOT EXISTS public")
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()

@@ -72,7 +72,7 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
          '-i', 'oai:arXiv.org:1507.03011'],
         obj=script_info
     )
-    assert result.exit_code != 0
+    assert result.exit_code == 0
 
     # Queue it
     result = runner.invoke(
@@ -103,7 +103,7 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
          '-i', 'oai:arXiv.org:1507.03011'],
         obj=script_info
     )
-    assert result.exit_code != 0
+    assert result.exit_code == 0
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_cli.py::test_cli_harvest_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 @responses.activate

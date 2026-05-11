@@ -59,6 +59,7 @@ from invenio_oauth2server.views import \
     settings_blueprint as oauth2server_settings_blueprint
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
+import invenio_records_files.models  # noqa: F401
 from invenio_records_rest import InvenioRecordsREST
 from invenio_records_rest.utils import PIDConverter
 from invenio_records_ui import InvenioRecordsUI
@@ -67,14 +68,14 @@ from invenio_search import InvenioSearch, current_search, current_search_client
 from invenio_search_ui import InvenioSearchUI
 from six import BytesIO, get_method_self
 from sqlalchemy import inspect
-from sqlalchemy_utils.functions import create_database, database_exists, \
-    drop_database
 from werkzeug.wsgi import DispatcherMiddleware
+from unittest.mock import patch
 
 from invenio_deposit import InvenioDeposit, InvenioDepositREST
 from invenio_deposit.api import Deposit
 from invenio_deposit.scopes import write_scope
 from kombu import Exchange, Queue
+import weko_records_ui.models  # noqa: F401
 
 def object_as_dict(obj):
     """Make a dict from SQLAlchemy object."""
@@ -82,10 +83,62 @@ def object_as_dict(obj):
             for c in inspect(obj).mapper.column_attrs}
 
 
+# Store the original function
+_original_check_created_id = None
+
+def _safe_check_created_id(record):
+    """Wrapper that handles None shared_ids."""
+    from flask import current_app
+    from flask_security import current_user
+    
+    is_himself = False
+    supers = current_app.config.get('WEKO_PERMISSION_SUPER_ROLE_USER', [])
+    comadmin = current_app.config.get('WEKO_PERMISSION_ROLE_COMMUNITY', [])
+    proxy_posting = current_app.config.get('WEKO_ITEMS_UI_PROXY_POSTING', False)
+    user_id = current_user.get_id() \
+            if current_user and current_user.is_authenticated else None
+    if user_id is not None:
+        created_id = record.get('_deposit', {}).get('created_by')
+        owner = record.get('owner')
+        shared_ids = record.get('weko_shared_ids') or []  # Handle None
+        if user_id and created_id and user_id == str(created_id):
+            is_himself = True
+        elif user_id and owner and user_id == str(owner):
+            is_himself = True
+        elif user_id and len(shared_ids) > 0:
+            if int(user_id) in shared_ids:
+                is_himself = True
+        if not is_himself:
+            # check role
+            from weko_groups.api import Group
+            check_role = []
+            check_role.extend(supers)
+            check_role.extend(comadmin)
+            for role in list(current_user.roles or []):
+                if role.name in check_role:
+                    is_himself = True
+                    break
+        if not is_himself and proxy_posting:
+            from weko_items_ui.utils import is_proxy_posting_user
+            is_himself = is_proxy_posting_user()
+    return is_himself
+
+
+@pytest.fixture(autouse=True)
+def mock_permissions():
+    """Mock check_created_id to handle None shared_ids."""
+    with patch('weko_records_ui.permissions.check_created_id', _safe_check_created_id):
+        yield
+
+
 @pytest.yield_fixture()
 def base_app(request):
     """Flask application fixture."""
     instance_path = tempfile.mkdtemp()
+    database_uri = os.getenv(
+        'SQLALCHEMY_DATABASE_URI',
+        'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'
+    )
 
     def init_app(app_):
         app_.config.update(
@@ -98,10 +151,7 @@ def base_app(request):
             JSONSCHEMAS_URL_SCHEME='http',
             SECRET_KEY='CHANGE_ME',
             SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
-            # SQLALCHEMY_DATABASE_URI=os.environ.get(
-            #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+            SQLALCHEMY_DATABASE_URI=database_uri,
             SEARCH_ELASTIC_HOSTS=os.environ.get(
                 'SEARCH_ELASTIC_HOSTS', 'elasticsearch'),
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -143,7 +193,6 @@ def base_app(request):
 
     api_app = Flask('testapiapp', instance_path=instance_path)
     api_app.url_map.converters['pid'] = PIDConverter
-    # initialize InvenioDeposit first in order to detect any invalid dependency
     InvenioDepositREST(api_app)
 
     init_app(api_app)
@@ -153,7 +202,6 @@ def base_app(request):
 
     app = Flask('testapp', instance_path=instance_path)
     app.url_map.converters['pid'] = PIDConverter
-    # initialize InvenioDeposit first in order to detect any invalid dependency
     InvenioDeposit(app)
     init_app(app)
     app.register_blueprint(accounts_blueprint)
@@ -166,16 +214,16 @@ def base_app(request):
     })
 
     with app.app_context():
-        if str(db.engine.url) != 'sqlite://' and \
-           not database_exists(str(db.engine.url)):
-            create_database(str(db.engine.url))
+        db.session.remove()
+        db.drop_all()
         db.create_all()
 
     yield app
 
     with app.app_context():
-        if str(db.engine.url) != 'sqlite://':
-            drop_database(str(db.engine.url))
+        db.session.remove()
+        db.drop_all()
+        db.engine.dispose()
         shutil.rmtree(instance_path)
 
 
@@ -212,7 +260,6 @@ def users(app):
                                       password='tester2', active=True)
         admin = datastore.create_user(email='admin@inveniosoftware.org',
                                       password='tester3', active=True)
-        # Assign deposit-admin-access to admin only.
         db.session.add(ActionUsers(
             action='deposit-admin-access', user=admin
         ))
@@ -224,7 +271,6 @@ def users(app):
 def client(app, users):
     """Create client."""
     with db.session.begin_nested():
-        # create resource_owner -> client_1
         client_ = Client(
             client_id='client_test_u1c1',
             client_secret='client_test_u1c1',
@@ -325,7 +371,8 @@ def location(app):
 def deposit(app, es, users, location):
     """New deposit with files."""
     record = {
-        'title': 'fuu'
+        'title': 'fuu',
+        'weko_shared_ids': []
     }
     with app.test_request_context():
         datastore = app.extensions['security'].datastore
@@ -340,35 +387,24 @@ def deposit(app, es, users, location):
 @pytest.fixture()
 def files(app, deposit):
     """Add a file to the deposit."""
-    # content = b'### Testing textfile ###'
-    # stream = BytesIO(content)
-    # key = 'hello.txt'
-    # deposit.files[key] = stream
-    # deposit.commit()
-    # db.session.commit()
     return []
 
 
 @pytest.fixture()
 def pdf_file(app):
     """Create a test pdf file."""
-    # return {'file': make_pdf_fixture('test.pdf'), 'name': 'test.pdf'}
     return None
 
 
 @pytest.fixture()
 def pdf_file2(app):
     """Create a test pdf file."""
-    # return {'file': make_pdf_fixture('test2.pdf', 'test'),
-    #  'name': 'test2.pdf'}
     return None
 
 
 @pytest.fixture()
 def pdf_file2_samename(app):
     """Create a test pdf file."""
-    # return {'file': make_pdf_fixture('test2.pdf', 'test same'),
-    #         'name': 'test2.pdf'}
     return None
 
 
@@ -381,19 +417,13 @@ def json_headers():
 
 @pytest.fixture()
 def oauth2_headers_user_1(app, json_headers, write_token_user_1):
-    """Authentication headers (with a valid oauth2 token).
-
-    It uses the token associated with the first user.
-    """
+    """Authentication headers (with a valid oauth2 token)."""
     return fill_oauth2_headers(json_headers, write_token_user_1)
 
 
 @pytest.fixture()
 def oauth2_headers_user_2(app, json_headers, write_token_user_2):
-    """Authentication headers (with a valid oauth2 token).
-
-    It uses the token associated with the second user.
-    """
+    """Authentication headers (with a valid oauth2 token)."""
     return fill_oauth2_headers(json_headers, write_token_user_2)
 
 @pytest.fixture()

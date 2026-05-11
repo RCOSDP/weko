@@ -29,7 +29,7 @@ def test_package_export_log(db, users, redis_connect, location):
         remarks="test_remarks1"
     )
     log_data2 = UserActivityLog(
-        date=mock_date,
+        date=mock_date + timedelta(seconds=1),
         user_id=users[1]["id"],
         community_id=None,
         log_group_id=2,

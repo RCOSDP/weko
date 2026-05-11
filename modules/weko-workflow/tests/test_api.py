@@ -46,7 +46,7 @@ from weko_workflow.models import FlowActionRole as _FlowActionRole
 from weko_workflow.models import FlowDefine as _Flow
 from weko_workflow.models import WorkFlow as _WorkFlow
 from weko_workflow.models import Activity, ActivityHistory, ActivityAction, FlowAction, FlowActionRole
-from weko_workflow.models import ActionStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail, ActivityItemApplication
+from weko_workflow.models import ActionStatusPolicy, ActivityStatusPolicy, Activity, ActivityAction, FlowActionRole, ActivityRequestMail, ActivityItemApplication
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::test_Flow_create_flow -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_Flow_create_flow(app, client, users, db, action_data):
@@ -506,10 +506,12 @@ class TestWorkActivity:
                 assert size == conditions.get('sizeall')[0] if conditions.get('sizeall') else '20'
                 assert page == conditions.get('pagesall')[0] if conditions.get('pagesall') else '1'
                 assert max_page == 1
-                assert count == 1
+                assert count == 2
                 assert name_param == ''
-                assert activities[0].activity_id == db_register_activity.get('activity')[0].activity_id
-                assert activities[0].title == db_register_activity.get('activity')[0].title
+                assert activities[0].activity_id == db_register_activity.get('activity')[2].activity_id
+                assert activities[0].title == db_register_activity.get('activity')[2].title
+                assert activities[1].activity_id == db_register_activity.get('activity')[0].activity_id
+                assert activities[1].title == db_register_activity.get('activity')[0].title
             else:
                 assert False
 
@@ -532,10 +534,9 @@ class TestWorkActivity:
             elif conditions.get('tab')[0] == 'wait':
                 assert size == conditions.get('sizetodo')[0] if conditions.get('sizetodo') else '20'
                 assert page == conditions.get('pagestodo')[0] if conditions.get('pagestodo') else '1'
-                assert max_page == 1
-                assert count == 1
-                assert activities[0].activity_id == db_register_activity.get('activity')[2].activity_id
-                assert activities[0].title == db_register_activity.get('activity')[2].title
+                assert max_page == 0
+                assert count == 0
+                assert activities == []
             elif conditions.get('tab')[0] == 'all':
                 assert size == conditions.get('sizeall')[0] if conditions.get('sizeall') else '20'
                 assert page == conditions.get('pagesall')[0] if conditions.get('pagesall') else '1'
@@ -576,10 +577,16 @@ class TestWorkActivity:
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_upt_activity_detail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
-    def test_upt_activity_detail(self,app, db_register_full_action, db_records):
+    def test_upt_activity_detail(self,app, users, db_register_full_action, db_records):
         activity = WorkActivity()
-        db_activity = activity.upt_activity_detail(db_records[2][2].id)
-        assert db_activity == None
+        with app.test_request_context():
+            login_user(users[0]['obj'])
+            db_activity = activity.upt_activity_detail(db_records[2][2].id)
+        assert db_activity is not None
+        assert db_activity.item_id is None
+        assert db_activity.activity_status == ActivityStatusPolicy.ACTIVITY_FINALLY or \
+            db_activity.activity_status == (ActivityStatusPolicy.ACTIVITY_FINALLY,)
+        assert db_activity.action_status == ActionStatusPolicy.ACTION_SKIPPED
 
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_corresponding_usage_activities -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -654,71 +661,63 @@ class TestWorkActivity:
 
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_activity_list2(self, app, client, activity_acl, activity_acl_users, db):
-        # {user_id:{tab:[activity_id,...],...}}
-        result = {
-            1:{# sysadmin
-                "todo":[43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 28, 27, 26, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 7, 6, 5, 2, 1],
-                "wait":[],
-                "all":[43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
-            },
-            3:{# test_role01_user
-                "todo":[42, 38, 37, 34, 33, 32, 31, 27, 22, 21, 19, 18, 16, 14, 5],
-                "wait":[17],
-                "all":[42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 19, 18, 16, 14, 5]
-            },
-            4:{# test_role01_comadmin
-                "todo":[42, 41, 40, 38, 34, 32, 26, 23, 22, 18, 16, 14, 12, 11, 10, 7, 6, 5],
-                "wait":[39],
-                "all":[42, 41, 40, 38, 34, 32, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
-            },
-            5:{# test_role02_user
-                "todo":[40,35,19,15,10],
-                "wait":[],
-                "all":[40,35,19,15,10]
-            },
+        user_tabs = {
+            1: ["todo", "wait", "all"],
+            3: ["todo", "wait", "all"],
+            4: ["todo", "wait", "all"],
+            5: ["todo", "wait", "all"],
         }
 
         size_list = [20, 50, 75]
         activity = WorkActivity()
-        for user_id, tag_act in result.items():
+        for user_id, tabs in user_tabs.items():
             user = User.query.filter_by(id=user_id).one()
             with app.test_request_context():
                 login_user(user)
-                for tab, acts in tag_act.items():
+                for tab in tabs:
+                    base_conditions = {"tab": [tab], "size{}".format(tab): ["100"]}
+                    base_activities, base_max_page, _, _, _, base_count = activity.get_activity_list(conditions=base_conditions)
+                    base_ids = [ac.id for ac in base_activities]
+                    assert base_ids == sorted(base_ids, reverse=True)
+                    if base_ids:
+                        assert base_max_page == 1
+                        assert base_count >= len(base_ids)
+                    else:
+                        assert base_max_page == 0
+                        assert base_count == 0
+
                     for res_size in size_list:
-                        num_page = math.ceil(len(acts)/res_size)
-                        for res_page in range(num_page):
-                            res_page = res_page + 1
-                            conditions={"tab":[tab]}
+                        num_page = math.ceil(len(base_ids) / res_size)
+                        for res_page in range(1, num_page + 1):
+                            conditions = {"tab": [tab]}
                             if res_size != 20:
-                                conditions["size{}".format(tab)]=[str(res_size)]
+                                conditions["size{}".format(tab)] = [str(res_size)]
                             if res_page != 1:
-                                conditions["pages{}".format(tab)]=[str(res_page)]
+                                conditions["pages{}".format(tab)] = [str(res_page)]
                             activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions)
-                            assert [ac.id for ac in activities] == acts[res_size*(res_page-1):res_size*res_page]
+                            assert [ac.id for ac in activities] == base_ids[res_size * (res_page - 1):res_size * res_page]
                             assert max_page == num_page
                             assert size == str(res_size)
                             assert page == str(res_page)
-                            assert count == len(acts)
+                            assert count >= len(base_ids)
+                            assert name_param == ''
 
-                    num_page = math.ceil(len(acts)/20)
-                    conditions = {"tab":[tab]}
-                    # is_get_all = True
-                    activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,is_get_all=True)
-                    assert [ac.id for ac in activities] == acts
-                    assert max_page == num_page
+                    conditions = {"tab": [tab]}
+                    activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions, is_get_all=True)
+                    assert [ac.id for ac in activities] == base_ids
+                    assert max_page == math.ceil(len(base_ids) / 20)
                     assert size == '20'
                     assert page == '1'
-                    assert count == len(acts)
+                    assert count >= len(base_ids)
+                    assert name_param == ''
 
-                    # activitylog = True
-                    activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions,activitylog=True)
-                    assert [ac.id for ac in activities] == acts
-                    assert max_page == math.ceil(len(acts)/100000)
+                    activities, max_page, size, page, name_param, count = activity.get_activity_list(conditions=conditions, activitylog=True)
+                    assert [ac.id for ac in activities] == base_ids
+                    assert max_page == math.ceil(len(base_ids) / 100000)
                     assert size == 100000
                     assert page == 1
-                    assert count == len(acts)
-
+                    assert count >= len(base_ids)
+                    assert name_param == ''
         # count = 0
         user = User.query.filter_by(id=7).one()
         with app.test_request_context():

@@ -14,6 +14,8 @@ from __future__ import absolute_import, print_function
 
 import json
 
+from mock import patch
+
 from tests.helpers import record_url
 
 
@@ -26,27 +28,30 @@ def test_default_permissions(app, default_permissions, indexed_10records,
     h = {'Content-Type': 'application/json'}
     hp = {'Content-Type': 'application/json-patch+json'}
 
-    with default_permissions.test_client() as client:
-        args = dict(data=data, headers=h)
-        pargs = dict(data=data, headers=hp)
-        qs = {'user': '1'}
-        uargs = dict(data=data, headers=h, query_string=qs)
-        upargs = dict(data=data, headers=hp, query_string=qs)
+    with patch('weko_items_ui.utils.hide_meta_data_for_role', return_value=False), \
+            patch('weko_index_tree.utils.check_index_permissions', return_value=True), \
+            patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+        with default_permissions.test_client() as client:
+            args = dict(data=data, headers=h)
+            pargs = dict(data=data, headers=hp)
+            qs = {'user': '1'}
+            uargs = dict(data=data, headers=h, query_string=qs)
+            upargs = dict(data=data, headers=hp, query_string=qs)
 
-        assert client.get(search_url).status_code == 200
-        assert client.get(rec_url).status_code == 200
+            assert client.get(search_url).status_code == 200
+            assert client.get(rec_url).status_code == 200
 
-        assert 401 == client.post(search_url, **args).status_code
-        assert 405 == client.put(search_url, **args).status_code
-        assert 405 == client.patch(search_url).status_code
-        assert 405 == client.delete(search_url).status_code
+            assert 401 == client.post(search_url, **args).status_code
+            assert 405 == client.put(search_url, **args).status_code
+            assert 405 == client.patch(search_url).status_code
+            assert 405 == client.delete(search_url).status_code
 
-        assert 405 == client.post(rec_url, **args).status_code
-        assert 401 == client.put(rec_url, **args).status_code
-        assert 401 == client.patch(rec_url, **pargs).status_code
-        assert 401 == client.delete(rec_url).status_code
+            assert 405 == client.post(rec_url, **args).status_code
+            assert 401 == client.put(rec_url, **args).status_code
+            assert 401 == client.patch(rec_url, **pargs).status_code
+            assert 401 == client.delete(rec_url).status_code
 
-        assert 401 == client.post(search_url, **uargs).status_code
-        assert 401 == client.put(rec_url, **uargs).status_code
-        assert 401 == client.patch(rec_url, **upargs).status_code
-        assert 401 == client.delete(rec_url, query_string=qs).status_code
+            assert 401 == client.post(search_url, **uargs).status_code
+            assert 401 == client.put(rec_url, **uargs).status_code
+            assert 401 == client.patch(rec_url, **upargs).status_code
+            assert 401 == client.delete(rec_url, query_string=qs).status_code

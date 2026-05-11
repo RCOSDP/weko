@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -22,6 +24,7 @@ from scripts.generate_ci_test_inventory import WORKFLOW_PATH, parse_unit_test_ma
 DEFAULT_JSON = ROOT / "docs" / "ci_test_status.json"
 DEFAULT_MD = ROOT / "docs" / "ci_test_status.md"
 COMPOSE_FILE = ROOT / "docker-compose2.yml"
+DEFAULT_WORKSPACE_ROOT = ROOT / ".codex_tmp" / "weko-module-survey-workspace"
 
 
 @dataclass
@@ -34,12 +37,50 @@ class ModuleResult:
     summary: str
 
 
-def build_command(module: str, tox_env: str | None) -> List[str]:
+def prepare_workspace(workspace_root: Path) -> Path:
+    modules_src = ROOT / "modules"
+    modules_dst = workspace_root / "modules"
+
+    shutil.rmtree(workspace_root, ignore_errors=True)
+    modules_dst.mkdir(parents=True, exist_ok=True)
+
+    for module_dir in sorted(modules_src.iterdir()):
+        if not module_dir.is_dir():
+            continue
+        shutil.copytree(
+            module_dir,
+            modules_dst / module_dir.name,
+            ignore=shutil.ignore_patterns("__pycache__", ".tox"),
+        )
+
+    for root, dirs, files in os.walk(workspace_root):
+        os.chmod(root, 0o777)
+        for dirname in dirs:
+            os.chmod(Path(root) / dirname, 0o777)
+        for filename in files:
+            os.chmod(Path(root) / filename, 0o666)
+
+    return workspace_root
+
+
+def container_path(path: Path) -> str:
+    return str(path.resolve()).replace(str(ROOT), "/code", 1)
+
+
+def build_command(module: str, tox_env: str | None, workspace_root: Path) -> List[str]:
     tox_cmd = ["tox"]
     if tox_env:
         tox_cmd.extend(["-e", tox_env])
 
-    inner = "cd modules/{module} && {command}".format(
+    inner = (
+        "if ! python -m pip show tox >/dev/null 2>&1; then "
+        "python -m pip install --user --upgrade pip && "
+        "python -m pip install --user tox tox-setuptools-version pytest-timeout; "
+        "fi && "
+        "cd {workspace_root}/modules/{module} && "
+        "{command}"
+    ).format(
+        workspace_root=container_path(workspace_root),
         module=module,
         command=" ".join(tox_cmd),
     )
@@ -64,8 +105,21 @@ def short_summary(output: str) -> str:
     return lines[-1][:400]
 
 
-def run_module(module: str, tox_env: str | None, timeout_seconds: int) -> ModuleResult:
-    command = build_command(module, tox_env)
+def ensure_text(output: str | bytes | None) -> str:
+    if output is None:
+        return ""
+    if isinstance(output, bytes):
+        return output.decode("utf-8", errors="replace")
+    return output
+
+
+def run_module(
+    module: str,
+    tox_env: str | None,
+    timeout_seconds: int,
+    workspace_root: Path,
+) -> ModuleResult:
+    command = build_command(module, tox_env, workspace_root)
     started = time.monotonic()
 
     try:
@@ -94,9 +148,9 @@ def run_module(module: str, tox_env: str | None, timeout_seconds: int) -> Module
         duration = time.monotonic() - started
         output_parts = []
         if exc.stdout:
-            output_parts.append(exc.stdout)
+            output_parts.append(ensure_text(exc.stdout))
         if exc.stderr:
-            output_parts.append(exc.stderr)
+            output_parts.append(ensure_text(exc.stderr))
         return ModuleResult(
             module=module,
             status="timeout",
@@ -181,14 +235,24 @@ def parse_args() -> argparse.Namespace:
         default=str(DEFAULT_MD),
         help="Path for Markdown summary output.",
     )
+    parser.add_argument(
+        "--workspace-root",
+        default=str(DEFAULT_WORKSPACE_ROOT),
+        help="Writable temp directory used to stage the module workspace for tox.",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
     modules = args.modules or parse_unit_test_matrix(WORKFLOW_PATH)
+    workspace_base = Path(args.workspace_root)
+    workspace_root = prepare_workspace(
+        workspace_base.parent
+        / f"{workspace_base.name}-{int(time.time())}-{os.getpid()}"
+    )
     results = [
-        run_module(module, args.tox_env, args.timeout_seconds)
+        run_module(module, args.tox_env, args.timeout_seconds, workspace_root)
         for module in modules
     ]
 

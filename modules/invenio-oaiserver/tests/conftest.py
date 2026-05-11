@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import uuid
 import pytest
 import json
 from os.path import join, dirname
@@ -22,7 +23,7 @@ from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_celeryext import FlaskCeleryExt
 from flask_babelex import Babel
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from elasticsearch_dsl import response, Search
 
 from invenio_access import InvenioAccess
@@ -36,7 +37,10 @@ from invenio_db import InvenioDB
 from invenio_db import db as db_
 from invenio_indexer import InvenioIndexer
 from invenio_jsonschemas import InvenioJSONSchemas
-from invenio_marc21 import InvenioMARC21
+try:
+    from invenio_marc21 import InvenioMARC21
+except ImportError:
+    InvenioMARC21 = None
 from invenio_pidstore import InvenioPIDStore
 from invenio_records import InvenioRecords
 from invenio_search import InvenioSearch
@@ -50,6 +54,14 @@ from invenio_oaiserver.models import Identify, OAISet
 from invenio_oaiserver.views.server import blueprint
 from invenio_oaiserver.provider import OAIIDProvider
 from .helpers import load_records, remove_records, create_record_oai
+
+
+TEST_DB_NAME = 'wekotest_oaiserver_{0}'.format(uuid.uuid4().hex)
+TEST_DB_URI = os.getenv(
+    'SQLALCHEMY_DATABASE_URI',
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{0}'.format(
+        TEST_DB_NAME)
+)
 
 @pytest.yield_fixture()
 def instance_path():
@@ -77,8 +89,7 @@ def base_app(instance_path):
         SECRET_KEY='CHANGE_ME',
         # SQLALCHEMY_DATABASE_URI=os.environ.get('SQLALCHEMY_DATABASE_URI',
         #                                         'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                         'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SERVER_NAME='app',
         OAISERVER_ID_PREFIX='oai:inveniosoftware.org:recid/',
@@ -115,7 +126,8 @@ def base_app(instance_path):
     InvenioJSONSchemas(app_)
     InvenioRecords(app_)
     InvenioPIDStore(app_)
-    InvenioMARC21(app_)
+    if InvenioMARC21 is not None:
+        InvenioMARC21(app_)
     InvenioIndexer(app_)
     InvenioOAIServer(app_)
 
@@ -142,6 +154,7 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+    drop_database(str(db_.engine.url))
 
 @pytest.fixture()
 def users(app, db):

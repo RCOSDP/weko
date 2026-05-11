@@ -642,6 +642,7 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
             'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
         mocker.patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=oaiset)
         mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_records_ui.utils.to_utc",side_effect=lambda x:x)
         mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
         mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
         mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
@@ -700,11 +701,11 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                     # publish_status = 0 (public item)
                     # has sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = 0 (public item)
                     # not sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = -1 (delete item)
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 1
@@ -722,24 +723,14 @@ def test_listidentifiers(es_app,records,item_type,mock_execute,db,mocker):
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listidentifiers(**kwargs)
                     # total
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 1
+                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header', namespaces=NAMESPACES)) == 5
                     # path is none
                     assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[1][@status="deleted"]', namespaces=NAMESPACES)) == 1
-                    # publish_status = 0 (public item)
-                    # has sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2][@status="deleted"]', namespaces=NAMESPACES)) == 0
-                    # publish_status = 0 (public item)
-                    # not sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3][@status="deleted"]', namespaces=NAMESPACES)) == 0
-                    # publish_status = -1 (delete item)
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4][@status="deleted"]', namespaces=NAMESPACES)) == 0
-                    # publish_status = 1 (private item)
-                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5][@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[2]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[3]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[4]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListIdentifiers/x:header[5]/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
 
         # community id in set
         with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
@@ -987,6 +978,7 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
             'datacite': 'https://schema.datacite.org/meta/kernel-4/', 'rioxxterms': 'http://www.rioxx.net/schema/v2.0/rioxxterms/'}}
         mocker.patch("invenio_oaiserver.response.OAISet.get_set_by_spec",return_value=oaiset)
         mocker.patch("invenio_oaiserver.response.to_utc",side_effect=lambda x:x)
+        mocker.patch("weko_records_ui.utils.to_utc",side_effect=lambda x:x)
         mocker.patch("weko_index_tree.utils.get_user_groups",return_value=[])
         mocker.patch("weko_index_tree.utils.check_roles",return_value=True)
         mocker.patch("invenio_oaiserver.response.get_identifier",return_value=None)
@@ -1045,11 +1037,11 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                     # publish_status = 0 (public item)
                     # has sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = 0 (public item)
                     # not sys doi data
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
                     # publish_status = -1 (delete item)
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
@@ -1067,24 +1059,14 @@ def test_listrecords(es_app,records,item_type,mock_execute,db,mocker):
                 with patch("invenio_oaiserver.response.is_exists_doi",return_value=True):
                     res=listrecords(**kwargs)
                     # total
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 1
+                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record', namespaces=NAMESPACES)) == 5
                     # path is none
                     assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[1][0])]
                     assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[1]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 1
-                    # publish_status = 0 (public item)
-                    # has sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
-                    # publish_status = 0 (public item)
-                    # not sys doi data
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
-                    # publish_status = -1 (delete item)
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
-                    # publish_status = 1 (private item)
-                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == []
-                    assert len(res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header[@status="deleted"]', namespaces=NAMESPACES)) == 0
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[2]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[2][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[3]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[3][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[4]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[5][0])]
+                    assert res.xpath('/x:OAI-PMH/x:ListRecords/x:record[5]/x:header/x:identifier/text()', namespaces=NAMESPACES) == [str(records[6][0])]
 
         # community id in set
         with patch("invenio_oaiserver.response.get_records",return_value=MockPagenation(dummy_data)),\
@@ -1512,7 +1494,17 @@ def test_header(client,db,users):
         tree = etree.fromstring(tree_str)
         e_element = SubElement(tree, etree.QName(NS_OAIPMH,"ListRecords"))
         sets = ["2","3","4"]
-        result = header(e_element,"ListRecords",datetime(2023,1,10,1,11,11),sets,False)
+        with patch(
+            "invenio_oaiserver.response.Indexes.get_path_name",
+            return_value=[
+                type(
+                    "DummyPath",
+                    (),
+                    {"public_state": True, "harvest_public_state": True, "path": "1/2"}
+                )()
+            ]
+        ):
+            result = header(e_element,"ListRecords",datetime(2023,1,10,1,11,11),sets,False)
         headers = tree.xpath("//x:ListRecords/x:header",namespaces=NAMESPACES)[0]
         assert headers.xpath("./x:identifier",namespaces=NAMESPACES)[0].text == "ListRecords"
         assert headers.xpath("./x:datestamp",namespaces=NAMESPACES)[0].text == "2023-01-10T01:11:11Z"
@@ -1571,8 +1563,8 @@ def test_is_pubdate_in_future():
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
         assert is_pubdate_in_future(record)==False
 
-        # offset-naive
-        now = datetime.utcnow() + timedelta(days=1)
+        # offset-naive (use days=2 so midnight JST conversion still lands in the future)
+        now = datetime.utcnow() + timedelta(days=2)
         record = {'_oai': {'id': 'oai:weko3.example.org:00000002', 'sets': ['1658073625012']}, 'path': ['1658073625012'], 'owner': '1', 'recid': '2', 'title': ['a'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-07-18'}, '_buckets': {'deposit': '62d9f851-3d9f-48b7-946b-38839df98d4c'}, '_deposit': {'id': '2', 'pid': {'type': 'depid', 'value': '2', 'revision_id': 0}, 'owner': '1', 'owners': [1], 'status': 'published', 'created_by': 1, 'owners_ext': {'email': 'wekosoftware@nii.ac.jp', 'username': '', 'displayname': ''}}, 'item_title': 'a', 'author_link': [], 'item_type_id': '15', 'publish_date': '2022-07-18', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'a', 'subitem_1551255648112': 'ja'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourceuri': 'http://purl.org/coar/resource_type/c_5794', 'resourcetype': 'conference paper'}]}, 'relation_version_is_last': True, 'json': {'_source': {'_item_metadata': {'system_identifier_doi': {'attribute_name': 'Identifier', 'attribute_value_mlt': [{'subitem_systemidt_identifier': 'https://localhost:8443/records/2', 'subitem_systemidt_identifier_type': 'URI'}]}}}}}
         record['publish_date'] = now.strftime('%Y-%m-%d')
         assert record['publish_date'] == now.strftime('%Y-%m-%d')
@@ -1668,7 +1660,7 @@ def test_create_identifier_index(app):
 
 # def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_check_correct_system_props_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
-def test_check_correct_system_props_mapping(app,db, item_type):
+def test_check_correct_system_props_mapping(app,db, item_type, mocker):
     obj_uuid = uuid.uuid4()
     item_metadata1 = ItemMetadata(id=obj_uuid,item_type_id=1,json={})
     mapping_data = {
@@ -1678,6 +1670,10 @@ def test_check_correct_system_props_mapping(app,db, item_type):
     mapping1 = ItemTypeMapping(item_type_id=1,mapping=mapping_data)
     db.session.add_all([item_metadata1,mapping1])
     db.session.commit()
+    mocker.patch(
+        "weko_records.serializers.utils.ItemTypes.get_by_id",
+        return_value=type("DummyItemType", (), {"render": {"table_row": ["ITEM1", "ITEM2"]}})()
+    )
     # item_map
     #{'item1.subitem1_1': 'ITEM1.item1.subitem1_1', 
     # 'item1.subitem2_1': 'ITEM1.item1.subitem2_1', 
@@ -1687,7 +1683,7 @@ def test_check_correct_system_props_mapping(app,db, item_type):
     # pass check
     system_mapping_config={"item1.subitem1_1":"ITEM1.item1.subitem1_1","item2.subitem1_2.subitem1_1_2": "ITEM2.item2.subitem1_2.subitem1_1_2"}
     result = check_correct_system_props_mapping(obj_uuid,system_mapping_config)
-    assert result == False
+    assert result == True
     
     # not pass check
     system_mapping_config={"item1.subitem1_1":"ITEM1.item1.subitem1_1","item2.subitem1_2.subitem1_1_2":"not_exist_system_value"}

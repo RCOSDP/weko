@@ -16,13 +16,14 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import uuid
 
 import pytest
 from flask import Flask
 from flask_babelex import Babel
 from flask_mail import Mail
 from flask_menu import Menu
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from werkzeug.local import LocalProxy
 
 
@@ -36,6 +37,7 @@ from invenio_assets import InvenioAssets
 from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_i18n import InvenioI18N
 from invenio_oauth2server import InvenioOAuth2Server
 from invenio_pidrelations import InvenioPIDRelations
@@ -64,6 +66,10 @@ from weko_notifications.views import blueprint_api as weko_notifications_api_blu
 from .helpers import json_data
 
 
+TEST_DB_NAME = "wekotest_weko_notifications_{}".format(uuid.uuid4().hex[:8])
+TEST_DB_URI = "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}".format(TEST_DB_NAME)
+
+
 @pytest.yield_fixture()
 def instance_path():
     """Temporary instance path."""
@@ -85,9 +91,7 @@ def base_app(instance_path):
         SECRET_KEY="testing_key",
         SERVER_NAME="TEST_SERVER.localdomain",
         THEME_SITEURL="http://test_server.localdomain",
-        SQLALCHEMY_DATABASE_URI=os.getenv(
-            "SQLALCHEMY_DATABASE_URI",
-            "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest"),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         WEKO_NOTIFICATIONS=True,
     )
     Babel(app_)
@@ -142,7 +146,11 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 @pytest.fixture()
 def users(app, db):

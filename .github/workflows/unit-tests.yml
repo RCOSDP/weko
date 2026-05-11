@@ -8,59 +8,14 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 2
       matrix:
-        module:
-          - invenio-accounts
-          - invenio-communities
-          - invenio-db
-          - invenio-deposit
-          - invenio-files-rest
-          - invenio-iiif
-          - invenio-indexer
-          - invenio-mail
-          - invenio-oaiharvester
-          - invenio-oaiserver
-          - invenio-oauth2server
-          - invenio-previewer
-          - invenio-queues
-          - invenio-records-rest
-          - invenio-records
-          - invenio-resourcesyncclient
-          - invenio-resourcesyncserver
-          - invenio-s3
-          - invenio-stats
-          - weko-accounts
-          - weko-admin
-          - weko-authors
-          - weko-bulkupdate
-          - weko-deposit
-          - weko-gridlayout
-          - weko-groups
-          - weko-handle
-          - weko-index-tree
-          - weko-indextree-journal
-          - weko-items-autofill
-          - weko-items-ui
-          - weko-itemtypes-ui
-          - weko-logging
-          - weko-notifications
-          - weko-plugins
-          - weko-records-ui
-          - weko-records
-          - weko-redis
-          - weko-schema-ui
-          - weko-search-ui
-          - weko-signposting
-          - weko-sitemap
-          - weko-swordserver
-          - weko-theme
-          - weko-user-profiles
-          - weko-workflow
-          - weko-workspace
+        shard_index: [0, 1, 2, 3]
+    env:
+      WEKO_CI_SHARD_COUNT: 4
 
     steps:
     - name: Checkout code
@@ -130,13 +85,20 @@ jobs:
         docker compose -f docker-compose2.yml ps
         exit 1
 
-    - name: Install test dependencies
+    - name: Compute shard module list
+      id: shard_modules
       run: |
-          docker compose -f docker-compose2.yml exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
+        modules=$(python3 scripts/ci_test_shards.py --shard-index ${{ matrix.shard_index }} --shard-count ${WEKO_CI_SHARD_COUNT})
+        if [ -z "$modules" ]; then
+          echo "Shard ${{ matrix.shard_index }} has no modules."
+          exit 1
+        fi
+        echo "modules=$modules" >> "$GITHUB_OUTPUT"
+        echo "Shard ${{ matrix.shard_index }} modules: $modules"
 
-    - name: Run tox in ${{ matrix.module }}
+    - name: Run run-tests.sh in shard ${{ matrix.shard_index }}
       run: |
-          docker compose -f docker-compose2.yml exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
+          docker compose -f docker-compose2.yml exec -T web bash -lc "cd /code && WEKO_TEST_MODULES='${{ steps.shard_modules.outputs.modules }}' ./run-tests.sh"
 
     - name: Show logs if failed
       if: failure()

@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import sys
 
 from six import BytesIO
+from sqlalchemy import inspect
 
 if sys.version_info.major == 2:
     PY2 = True
@@ -22,8 +23,12 @@ else:
 
 def login_user(client, user):
     """Log in a specified user."""
+    user_id = None
+    if user:
+        identity = inspect(user).identity
+        user_id = identity[0] if identity else user.id
     with client.session_transaction() as sess:
-        sess['user_id'] = user.id if user else None
+        sess['user_id'] = user_id
         sess['_fresh'] = True
 
 

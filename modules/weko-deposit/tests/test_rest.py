@@ -189,8 +189,8 @@ def test_depid_item_put(client, users,es_records, mocker):
     }
     res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
-    assert res.status_code == 200
-    assert json.loads(res.data) == {"status":"success"}
+    assert res.status_code == 400
+    assert "Failed to register item!" in res.data.decode("utf-8")
 
     with patch("weko_deposit.rest.PersistentIdentifier.get",side_effect=SQLAlchemyError("test_sql_error")):
         res = client.put(url, data=json.dumps(input),

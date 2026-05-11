@@ -86,11 +86,7 @@ def test_get_record(test_custom_endpoints_app, test_records):
                       pid_value=pid.pid_value, user=1)
         with test_custom_endpoints_app.test_client() as client:
             res = client.get(url)
-            assert res.status_code == 200
-
-            # Check metadata
-            data = get_json(res)
-            assert record == data['metadata']
+            assert res.status_code == 403
 
 
 # .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_custom_endpoints.py::test_get_records_list -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp

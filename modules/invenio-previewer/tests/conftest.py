@@ -52,10 +52,18 @@ from invenio_records import InvenioRecords
 from invenio_records_files.api import Record, RecordsBuckets
 from invenio_records_ui import InvenioRecordsUI
 from six import BytesIO
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from invenio_previewer import InvenioPreviewer
 from invenio_previewer.bundles import previewer_base_css, previewer_base_js
+
+
+TEST_DB_NAME = 'wekotest_previewer_{0}'.format(uuid.uuid4().hex)
+TEST_DB_URI = os.getenv(
+    'SQLALCHEMY_DATABASE_URI',
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{0}'.format(
+        TEST_DB_NAME)
+)
 
 
 @pytest.yield_fixture(scope='session', autouse=True)
@@ -70,8 +78,7 @@ def app():
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI',
         #     'sqlite:///:memory:'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         RECORDS_UI_DEFAULT_PERMISSION_FACTORY=None,
         RECORDS_UI_ENDPOINTS=dict(
@@ -125,27 +132,30 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+    drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture(scope='session')
 def webassets(app):
     """Flask application fixture with assets."""
-    initial_dir = os.getcwd()
-    os.chdir(app.instance_path)
+    prism_base = os.path.join(app.instance_path, 'node_modules', 'prismjs')
+    prism_components = os.path.join(prism_base, 'components')
+    prism_themes = os.path.join(prism_base, 'themes')
+    prism_local_css = os.path.join(app.instance_path, 'css', 'prismjs')
+    os.makedirs(prism_components, exist_ok=True)
+    os.makedirs(prism_themes, exist_ok=True)
+    os.makedirs(prism_local_css, exist_ok=True)
 
-    script_info = ScriptInfo(create_app=lambda info: app)
-    script_info._loaded_app = app
-
-    runner = CliRunner()
-    runner.invoke(npm, obj=script_info)
-
-    subprocess.call(['npm', 'install'])
-    runner.invoke(collect, ['-v'], obj=script_info)
-    runner.invoke(assets, ['build'], obj=script_info)
+    with open(os.path.join(prism_base, 'prism.js'), 'w') as fp:
+        fp.write('window.Prism = window.Prism || {};')
+    with open(os.path.join(prism_components, 'prism-json.js'), 'w') as fp:
+        fp.write('window.Prism = window.Prism || {};')
+    with open(os.path.join(prism_themes, 'prism.css'), 'w') as fp:
+        fp.write('.token{}')
+    with open(os.path.join(prism_local_css, 'simple.css'), 'w') as fp:
+        fp.write('.language-json{} .language-markup{}')
 
     yield app
-
-    os.chdir(initial_dir)
 
 
 @pytest.yield_fixture()

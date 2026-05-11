@@ -25,6 +25,14 @@ import shutil
 import tempfile
 
 import pytest
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    from unittest.mock import patch as _patch
+    with _patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with _patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from flask import Flask, current_app
 from flask_admin import Admin
 from flask_babelex import Babel
@@ -82,6 +90,7 @@ def base_app(instance_path):
         WEKO_ADMIN_PROFILE_SETTING_TEMPLATE = 'weko_admin/admin/profiles_settings.html',
         TESTING=True,
         WTF_CSRF_ENABLED=False,
+        SECURITY_REGISTERABLE=True,
         WEKO_USERPROFILES_CUSTOMIZE_ENABLED=False,
         WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS = {
             "fullname": {"order": 1, "visible": False, "label_name": "氏名", "format": "text"},
@@ -151,11 +160,18 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
+    con = db_.engine.connect().execution_options(isolation_level='AUTOCOMMIT')
+    try:
+        con.execute('DROP SCHEMA IF EXISTS public CASCADE')
+        con.execute('CREATE SCHEMA IF NOT EXISTS public')
+    finally:
+        con.close()
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
 
 
 @pytest.fixture

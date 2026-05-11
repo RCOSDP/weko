@@ -21,7 +21,7 @@ import pytest
 from flask import Flask, url_for, Response
 from flask.cli import ScriptInfo
 from flask_babelex import Babel
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionUsers,ActionRoles
@@ -37,6 +37,7 @@ from invenio_communities.models import Community
 from invenio_db import InvenioDB
 from invenio_oauth2server import InvenioOAuth2Server, InvenioOAuth2ServerREST
 from invenio_db import db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.models import Location, FileInstance
 from invenio_indexer import InvenioIndexer
@@ -57,6 +58,12 @@ from weko_logging.audit import WekoLoggingUserActivity
 
 
 sys.path.append(os.path.dirname(__file__))
+
+
+TEST_DB_NAME = 'wekotest_weko_authors_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = (
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'
+).format(TEST_DB_NAME)
 
 class TestSearch(RecordsSearch):
     """Test record search."""
@@ -79,7 +86,7 @@ def search_class():
     yield TestSearch
 
 
-@pytest.yield_fixture()
+@pytest.yield_fixture(scope='module')
 def instance_path():
     """Temporary instance path."""
     path = tempfile.mkdtemp()
@@ -141,9 +148,7 @@ def base_app(request, instance_path,search_class):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-           'SQLALCHEMY_DATABASE_URI',
-           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -179,6 +184,7 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_FILE_PATH_KEY = "authors_import_result_file_path",
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
         WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
+        WEKO_DEPOSIT_ITEM_UPDATE_TASK_TTL=500,
         WEKO_PERMISSION_SUPER_ROLE_USER = ['System Administrator', 'Repository Administrator'],
         WEKO_PERMISSION_ROLE_COMMUNITY = ['Community Administrator']
     )
@@ -352,9 +358,8 @@ def base_app2(instance_path,search_class):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='app2',
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-           'SQLALCHEMY_DATABASE_URI',
-           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
+        WEKO_DEPOSIT_ITEM_UPDATE_TASK_TTL=500,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #    'SQLALCHEMY_DATABASE_URI',
         #    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/invenio'),
@@ -429,8 +434,11 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()
@@ -438,6 +446,19 @@ def client(app):
     """Get test client."""
     with app.test_client() as client:
         yield client
+
+
+@pytest.fixture(autouse=True)
+def disable_user_activity_logger(monkeypatch):
+    """Avoid partition-dependent activity log writes during tests."""
+    monkeypatch.setattr(
+        'weko_logging.activity_logger.UserActivityLogger.info',
+        lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        'weko_logging.activity_logger.UserActivityLogger.error',
+        lambda *args, **kwargs: None
+    )
 
 @pytest.fixture()
 def esindex(app):

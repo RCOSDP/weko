@@ -348,17 +348,29 @@ def test_get_sp_info(app):
         assert result == {
             'sp_entityID': 'https://localhost/shibboleth-sp',
             'sp_handlerURL': 'https://localhost/Shibboleth.sso',
-            'return_url': 'http://test_server.localdomain/secure/login.py'
+            'return_url': 'http://test_server.localdomain/secure/login.py',
+            'wayf_url': 'https://test-ds.gakunin.nii.ac.jp/WAYF',
+            'wayf_additional_idps': [{
+                'name': 'Orthros-Test',
+                'entityID': 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
+            }],
+            'default_idp': '',
         }
         assert session['next'] == 'next_url'
 
-    with app.test_request_context():
-        app.config['SP_ENTITYID'] = 'https://test-sp/shibboleth-sp'
-        app.config['SP_HANDLERURL'] = 'https://test-sp/Shibboleth.sso'
-        result = get_sp_info()
-        assert result == {
-            'sp_entityID': 'https://test-sp/shibboleth-sp',
-            'sp_handlerURL': 'https://test-sp/Shibboleth.sso',
-            'return_url': 'http://test_server.localdomain/secure/login.py'
-        }
-        assert session['next'] == '/'
+        with app.test_request_context():
+            app.config['SP_ENTITYID'] = 'https://test-sp/shibboleth-sp'
+            app.config['SP_HANDLERURL'] = 'https://test-sp/Shibboleth.sso'
+            result = get_sp_info()
+            assert result == {
+                'sp_entityID': 'https://test-sp/shibboleth-sp',
+                'sp_handlerURL': 'https://test-sp/Shibboleth.sso',
+                'return_url': 'http://test_server.localdomain/secure/login.py',
+                'wayf_url': 'https://test-ds.gakunin.nii.ac.jp/WAYF',
+                'wayf_additional_idps': [{
+                    'name': 'Orthros-Test',
+                    'entityID': 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
+                }],
+                'default_idp': '',
+            }
+        assert session['next'] == 'next_url'

@@ -14,6 +14,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import uuid
 
 import pytest
 from flask import Flask, url_for
@@ -40,6 +41,50 @@ from invenio_oauth2server.models import Client, Scope, Token
 from invenio_oauth2server.views import server_blueprint, settings_blueprint
 
 
+TEST_DB_NAME = 'wekotest_oauth2server_{0}'.format(uuid.uuid4().hex)
+TEST_DB_URI = os.getenv(
+    'SQLALCHEMY_DATABASE_URI',
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{0}'.format(
+        TEST_DB_NAME)
+)
+
+
+@pytest.fixture(scope='module')
+def create_app():
+    """Application factory fixture for pytest-invenio script_info."""
+    def factory(**config):
+        instance_path = tempfile.mkdtemp()
+        app = Flask('testcliapp', instance_path=instance_path)
+        app.config.update(
+            ACCOUNTS_REGISTER_BLUEPRINT=True,
+            LOGIN_DISABLED=False,
+            MAIL_SUPPRESS_SEND=True,
+            OAUTH2_CACHE_TYPE='simple',
+            OAUTHLIB_INSECURE_TRANSPORT=True,
+            SECRET_KEY='CHANGE_ME',
+            SECURITY_DEPRECATED_PASSWORD_SCHEMES=[],
+            SECURITY_PASSWORD_HASH='plaintext',
+            SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
+            SECURITY_PASSWORD_SCHEMES=['plaintext'],
+            SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
+            SQLALCHEMY_TRACK_MODIFICATIONS=True,
+            TESTING=True,
+            WTF_CSRF_ENABLED=False,
+        )
+        app.config.update(**config)
+
+        Babel(app)
+        Mail(app)
+        Menu(app)
+        Breadcrumbs(app)
+        InvenioDB(app)
+        InvenioAccountsUI(app)
+        InvenioOAuth2Server(app)
+        return app
+
+    return factory
+
+
 @pytest.fixture()
 def app(request):
     """Flask application fixture."""
@@ -58,8 +103,7 @@ def app(request):
             SECURITY_PASSWORD_SCHEMES=['plaintext'],
             # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
             #                                   'sqlite:///test.db'),
-            SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+            SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
             SQLALCHEMY_TRACK_MODIFICATIONS=True,
             TESTING=True,
             WTF_CSRF_ENABLED=False,
@@ -123,6 +167,7 @@ def api_app_with_test_view(api_app):
 def settings_fixture(app):
     """Fixture for testing settings views."""
     from invenio_oauth2server.proxies import current_oauth2server
+    app.kvsession_store.redis = MagicMock()
     with app.app_context():
         with db.session.begin_nested():
             datastore = app.extensions['security'].datastore
@@ -246,6 +291,7 @@ def models_fixture(app):
 def provider_fixture(app):
     """Fixture that contains test data for provider tests."""
     from invenio_oauth2server.proxies import current_oauth2server
+    app.kvsession_store.redis = MagicMock()
 
     # Mock the oauth client calls to prevent them from going online.
     oauth_client = create_oauth_client(app, 'oauth2test')

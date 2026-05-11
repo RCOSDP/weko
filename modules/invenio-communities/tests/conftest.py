@@ -31,7 +31,9 @@ import os
 import shutil
 import tempfile
 import json
+import uuid
 from os.path import dirname, exists, join
+from urllib.parse import urlsplit, urlunsplit
 import pytest
 from flask import Flask
 from flask_babelex import Babel
@@ -74,6 +76,20 @@ from invenio_communities.views.api import blueprint as api_blueprint
 from invenio_communities.views.ui import blueprint as ui_blueprint
 
 
+def _unique_database_uri(uri):
+    """Create an isolated database URI for each test app instance."""
+    parts = urlsplit(uri)
+    prefix, database_name = parts.path.rsplit('/', 1)
+    unique_name = '{}_{}'.format(database_name, uuid.uuid4().hex)
+    return urlunsplit((
+        parts.scheme,
+        parts.netloc,
+        '{}/{}'.format(prefix, unique_name),
+        parts.query,
+        parts.fragment,
+    ))
+
+
 @pytest.yield_fixture()
 def instance_path():
     path = tempfile.mkdtemp()
@@ -96,8 +112,10 @@ def base_app(instance_path, request):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI',
         #     'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=_unique_database_uri(os.getenv(
+            'SQLALCHEMY_DATABASE_URI',
+            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'
+        )),
         SEARCH_ELASTIC_HOSTS=os.environ.get(
             'SEARCH_ELASTIC_HOSTS', None),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -145,12 +163,18 @@ def app(base_app):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
+    database_url = str(db_.engine.url)
+    db_.session.remove()
+    db_.engine.dispose()
+    if database_exists(database_url):
+        drop_database(database_url)
+    create_database(database_url)
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    db_.engine.dispose()
+    if database_exists(database_url):
+        drop_database(database_url)
 
 
 @pytest.fixture()

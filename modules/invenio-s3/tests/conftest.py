@@ -15,6 +15,7 @@ import tempfile
 import boto3
 import pytest
 from flask import Flask, current_app
+from botocore.exceptions import ClientError
 from invenio_app.factory import create_api
 from invenio_db import InvenioDB
 from invenio_db import db as db_
@@ -139,7 +140,10 @@ def s3_bucket(app):
             aws_secret_access_key='test',
         )
         s3 = session.resource('s3')
-        bucket = s3.create_bucket(Bucket='test_invenio_s3')
+        try:
+            bucket = s3.create_bucket(Bucket='test_invenio_s3')
+        except ClientError as ex:
+            pytest.skip('mock_s3 is not intercepting boto3 calls: {}'.format(ex))
 
         yield bucket
 

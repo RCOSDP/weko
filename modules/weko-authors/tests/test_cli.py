@@ -168,7 +168,7 @@ def test_reindex_file_without_value(script_info):
     runner = CliRunner()
     result = runner.invoke(authors, ["reindex", "--yes-i-know", "--file"], obj=script_info)
 
-    assert "Error: --file option requires an argument" in result.output
+    assert "Error: Option '--file' requires an argument" in result.output
     assert result.exit_code == 2
 
 # --file specifies a non-existent file
@@ -206,7 +206,7 @@ def test_reindex_id_without_value(script_info):
     runner = CliRunner()
     result = runner.invoke(authors, ["reindex", "--yes-i-know", "--id"], obj=script_info)
 
-    assert "Error: --id option requires an argument" in result.output
+    assert "Error: Option '--id' requires an argument" in result.output
     assert result.exit_code == 2
 
 # --start-date without value
@@ -214,7 +214,7 @@ def test_reindex_start_date_without_value(script_info):
     runner = CliRunner()
     result = runner.invoke(authors, ["reindex", "--yes-i-know", "--start-date"], obj=script_info)
 
-    assert "Error: --start-date option requires an argument" in result.output
+    assert "Error: Option '--start-date' requires an argument" in result.output
     assert result.exit_code == 2
 
 # --start-date specifies an out-of-range date
@@ -238,7 +238,7 @@ def test_reindex_end_date_without_value(script_info):
     runner = CliRunner()
     result = runner.invoke(authors, ["reindex", "--yes-i-know", "--end-date"], obj=script_info)
 
-    assert "Error: --end-date option requires an argument" in result.output
+    assert "Error: Option '--end-date' requires an argument" in result.output
     assert result.exit_code == 2
 
 # --end-date specifies an out-of-range date

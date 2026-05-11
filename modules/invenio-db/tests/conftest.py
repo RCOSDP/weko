@@ -21,25 +21,86 @@ from mock import patch
 from os.path import dirname, join
 from pkg_resources import EntryPoint
 from werkzeug.utils import import_string
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+from sqlalchemy_utils.functions import create_database, database_exists, \
+    drop_database
 
 sys.path.append(os.path.dirname(__file__))
+
+
+def _remove_sqlite_listeners():
+    """Remove SQLite specific event listeners from Engine class."""
+    from invenio_db.shared import do_sqlite_connect, do_sqlite_begin
+    if event.contains(Engine, 'connect', do_sqlite_connect):
+        event.remove(Engine, 'connect', do_sqlite_connect)
+    if event.contains(Engine, 'begin', do_sqlite_begin):
+        event.remove(Engine, 'begin', do_sqlite_begin)
+
+
+def _safe_sqlite_connect(dbapi_connection, connection_record):
+    """Safe version of do_sqlite_connect that only executes PRAGMA for SQLite."""
+    # Check if this is actually a SQLite connection
+    connection_class_name = type(dbapi_connection).__module__
+    if 'sqlite' in connection_class_name.lower():
+        cursor = dbapi_connection.cursor()
+        cursor.execute('PRAGMA foreign_keys=ON')
+        cursor.close()
+
+
+def _safe_sqlite_begin(dbapi_connection):
+    """Safe version of do_sqlite_begin that only executes BEGIN for SQLite."""
+    connection_class_name = type(dbapi_connection).__module__
+    if 'sqlite' in connection_class_name.lower():
+        dbapi_connection.execute('BEGIN')
+
+
+@pytest.fixture(autouse=True, scope='function')
+def cleanup_sqlite_listeners():
+    """Cleanup SQLite listeners and replace with safe versions for PostgreSQL."""
+    import invenio_db.shared as shared_module
+    _remove_sqlite_listeners()
+    # Patch the functions to be safe for non-SQLite connections
+    original_connect = shared_module.do_sqlite_connect
+    original_begin = shared_module.do_sqlite_begin
+    shared_module.do_sqlite_connect = _safe_sqlite_connect
+    shared_module.do_sqlite_begin = _safe_sqlite_begin
+    yield
+    _remove_sqlite_listeners()
+    shared_module.do_sqlite_connect = original_connect
+    shared_module.do_sqlite_begin = original_begin
 
 
 @pytest.yield_fixture()
 def db(app):
     import invenio_db
     from invenio_db import shared
+    # Remove SQLite-specific event listeners that would fail on PostgreSQL
+    _remove_sqlite_listeners()
     db = invenio_db.db = shared.db = shared.SQLAlchemy(
         metadata=shared.MetaData(naming_convention=shared.NAMING_CONVENTION)
     )
     db.init_app(app)
-    if not database_exists(str(db.engine.url)):
-        create_database(str(db.engine.url))
+    # Remove listeners again after init_app as it may re-register them
+    _remove_sqlite_listeners()
+    database_url = str(db.engine.url)
+    db.session.remove()
+    db.engine.dispose()
+    # Remove listeners before database_exists as it creates a new engine
+    _remove_sqlite_listeners()
+    if database_exists(database_url):
+        _remove_sqlite_listeners()
+        drop_database(database_url)
+    _remove_sqlite_listeners()
+    create_database(database_url)
 
     yield db
     db.session.remove()
-    db.drop_all()
+    db.engine.dispose()
+    _remove_sqlite_listeners()
+    if database_exists(database_url):
+        _remove_sqlite_listeners()
+        drop_database(database_url)
     # os.remove(join(dirname(__file__),"../test.db"))
 
 

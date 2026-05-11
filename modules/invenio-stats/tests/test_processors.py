@@ -12,7 +12,7 @@ import logging
 from datetime import datetime
 
 import pytest
-from tests.conftest import _create_file_download_event
+from tests.conftest import _create_file_download_event, install_mock_stats_queues
 from elasticsearch_dsl import Search
 from tests.helpers import get_queue_size
 from invenio_queues.proxies import current_queues
@@ -253,7 +253,7 @@ def test_double_clicks(app, mock_event_queue, es):
                (2000, 6, 1, 10, 0, 11),
                (2000, 6, 1, 10, 0, 19),
                (2000, 6, 1, 10, 0, 22)]]
-    current_queues.declare()
+    install_mock_stats_queues()
     current_stats.publish(event_type, events)
     process_events(['file-download'])
     es.indices.refresh(index='*')

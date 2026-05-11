@@ -11,9 +11,13 @@
 
 from __future__ import absolute_import, print_function
 
+collect_ignore_glob = ["e2e/*"]
+
 import os
 import shutil
 import tempfile
+import uuid
+from urllib.parse import urlsplit, urlunsplit
 
 from invenio_access import InvenioAccess
 import pytest
@@ -60,8 +64,10 @@ def _app_factory(config=None):
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=_unique_database_uri(os.getenv(
+            'SQLALCHEMY_DATABASE_URI',
+            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'
+        )),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///'+os.path.join(instance_path,'test.db')),
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
@@ -88,20 +94,40 @@ def _app_factory(config=None):
     return app
 
 
+def _unique_database_uri(uri):
+    """Create an isolated database URI for each test app instance."""
+    parts = urlsplit(uri)
+    prefix, database_name = parts.path.rsplit('/', 1)
+    unique_name = '{}_{}'.format(database_name, uuid.uuid4().hex)
+    return urlunsplit((
+        parts.scheme,
+        parts.netloc,
+        '{}/{}'.format(prefix, unique_name),
+        parts.query,
+        parts.fragment,
+    ))
+
+
 def _database_setup(app, request):
     """Set up the database."""
     with app.app_context():
-        if not database_exists(str(db.engine.url)):
-            create_database(str(db.engine.url))
+        database_url = str(db.engine.url)
+        db.session.remove()
+        db.engine.dispose()
+        if database_exists(database_url):
+            drop_database(database_url)
+        create_database(database_url)
         db.create_all()
 
     def teardown():
         with app.app_context():
-            if database_exists(str(db.engine.url)):
-                drop_database(str(db.engine.url))
+            database_url = str(db.engine.url)
+            db.session.remove()
+            db.engine.dispose()
+            if database_exists(database_url):
+                drop_database(database_url)
             # Delete sessions in kvsession store
-            if hasattr(app, 'kvsession_store') and \
-                    isinstance(app.kvsession_store, RedisStore):
+            if hasattr(app, 'kvsession_store') and                     isinstance(app.kvsession_store, RedisStore):
                 app.kvsession_store.redis.flushall()
         shutil.rmtree(app.instance_path)
 

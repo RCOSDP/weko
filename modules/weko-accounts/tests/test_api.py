@@ -385,7 +385,7 @@ class TestShibUser:
 
         # exist self.user, issubset, ret is None
         attr = {
-            "shib_role_authority_name":"管理者;機関内のOrthros"
+            "shib_role_authority_name":"管理者;図書館員"
         }
         shibuser = ShibUser(attr)
         shibuser.user = users[0]["obj"]

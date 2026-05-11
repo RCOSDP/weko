@@ -66,11 +66,19 @@ def test_run_sync_import(app, test_resync):
 #def get_record(
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_tasks.py::test_get_record -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp
 def test_get_record(app):
-    res = get_record(
-        url='{}://{}/oai'.format('https', 'jpcoar.repo.nii.ac.jp'),
-        record_id=1,
-        metadata_prefix='jpcoar_1.0',
-    )
+    from unittest.mock import patch, MagicMock
+    oai_response = '''<?xml version='1.0' encoding='UTF-8'?>
+<OAI-PMH xmlns='http://www.openarchives.org/OAI/2.0/'>
+  <GetRecord></GetRecord>
+</OAI-PMH>'''
+    mock_resp = MagicMock()
+    mock_resp.text = oai_response
+    with patch('invenio_resourcesyncclient.tasks.requests.get', return_value=mock_resp):
+        res = get_record(
+            url='{}://{}/oai'.format('https', 'jpcoar.repo.nii.ac.jp'),
+            record_id=1,
+            metadata_prefix='jpcoar_1.0',
+        )
     assert res == []
 
 

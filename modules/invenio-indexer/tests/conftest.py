@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import uuid
 
 import pytest
 from celery.messaging import establish_connection
@@ -34,6 +35,10 @@ from kombu import Exchange, Queue
 def base_app(request):
     """Base application fixture."""
     instance_path = tempfile.mkdtemp()
+    db_uri = os.getenv(
+        'SQLALCHEMY_DATABASE_URI',
+        'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest')
+    db_uri = db_uri.rsplit('/', 1)[0] + '/wekotest_indexer_' + uuid.uuid4().hex
     app = Flask('testapp', instance_path=instance_path)
     app.config.update(
         SEARCH_ELASTIC_HOSTS=os.environ.get(
@@ -41,20 +46,19 @@ def base_app(request):
         BROKER_URL='amqp://guest:guest@rabbitmq:5672/',
         CELERY_BROKER_URL = 'amqp://guest:guest@rabbitmq:5672/',
         CELERY_ALWAYS_EAGER=True,
+        CELERY_TASK_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND='memory',
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_TASK_EAGER_PROPAGATES=True,
         CELERY_RESULT_BACKEND='cache',
         JSONSCHEMAS_URL_SCHEME='http',
         SECRET_KEY='CHANGE_ME',
         SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
         INDEXER_DEFAULT_INDEX='records-default-v1.0.0',
         INDEXER_DEFAULT_DOC_TYPE='default-v1.0.0',
-        INDEXER_MQ_QUEUE = Queue("indexer", 
-                                 exchange=Exchange("indexer", type="direct"), routing_key="indexer",auto_delete=False,queue_arguments={"x-queue-type":"quorum"}),
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        INDEXER_MQ_QUEUE = Queue("indexer",
+                                 exchange=Exchange("indexer", type="direct"), routing_key="indexer", auto_delete=False, queue_arguments={"x-queue-type": "quorum"}),
+        SQLALCHEMY_DATABASE_URI=db_uri,
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         TESTING=True,
     )
@@ -102,3 +106,13 @@ def queue(app):
             q.purge()
 
     return _queue
+
+
+@pytest.fixture(autouse=True)
+def purge_indexer_queue(app, queue):
+    """Ensure each test starts with an empty indexer queue."""
+    with app.app_context():
+        with establish_connection() as c:
+            q = queue(c)
+            q.declare()
+            q.purge()

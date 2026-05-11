@@ -22,20 +22,51 @@
 
 import copy
 import json
+
+import pytest
 from os.path import join
 import os
 import re
 import shutil
 import tempfile
 import uuid
+
+TEST_DB_NAME = "wekotest_weko_records_ui_{}".format(uuid.uuid4().hex[:8])
+TEST_DB_URI = "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}".format(TEST_DB_NAME)
+
 from datetime import datetime, timezone, timedelta
 from collections import OrderedDict
 from unittest.mock import patch
+
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
+
+
+@pytest.fixture(autouse=True)
+def mock_oaiserver_percolator():
+    """Avoid live Elasticsearch percolator calls during record fixture setup."""
+    with patch('invenio_oaiserver.receivers.get_record_sets', return_value=[]):
+        with patch('invenio_oaiserver.percolator.get_record_sets', return_value=[]):
+            with patch('invenio_oaiserver.receivers.OAIServerUpdater.__call__', return_value=None):
+                yield
+
+
+@pytest.fixture(autouse=True)
+def mock_indexer_upload_metadata():
+    """Avoid heavy metadata indexing in record-building fixtures."""
+    with patch('weko_deposit.api.WekoIndexer.upload_metadata', return_value=None):
+        yield
+
 from kombu import Exchange, Queue
 from sqlalchemy.sql import func
 from invenio_mail import InvenioMail
+from invenio_db.utils import drop_alembic_version_table
 
-import pytest
 from elasticsearch import Elasticsearch
 from flask import Flask
 from flask_babelex import Babel
@@ -79,7 +110,7 @@ from invenio_search import InvenioSearch, current_search_client
 from invenio_search_ui import InvenioSearchUI
 from invenio_theme import InvenioTheme
 from six import BytesIO
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime
 from weko_admin.models import AdminSettings
@@ -204,8 +235,7 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         SQLALCHEMY_ECHO=False,
         TESTING=True,
@@ -259,9 +289,9 @@ def base_app(instance_path):
         PDF_COVERPAGE_LANG_FILENAME=PDF_COVERPAGE_LANG_FILENAME,
         # JPAEXG_TTF_FILEPATH=JPAEXG_TTF_FILEPATH,
         # JPAEXG_TTF_FILEPATH = "/code/modules/weko-records-ui/weko_records_ui/fonts/ipaexg00201/ipaexg.ttf",
-        JPAEXG_TTF_FILEPATH="tests/fonts/ipaexg.ttf",
+        JPAEXG_TTF_FILEPATH="/../tests/fonts/ipaexg.ttf",
         # JPAEXM_TTF_FILEPATH=JPAEXM_TTF_FILEPATH,
-        JPAEXM_TTF_FILEPATH="tests/fonts/ipaexm.ttf",
+        JPAEXM_TTF_FILEPATH="/../tests/fonts/ipaexm.ttf",
         URL_OA_POLICY_HEIGHT=URL_OA_POLICY_HEIGHT,
         HEADER_HEIGHT=HEADER_HEIGHT,
         TITLE_HEIGHT=TITLE_HEIGHT,
@@ -360,7 +390,8 @@ def app(base_app):
 
 @pytest.fixture()
 def esindex(app):
-    current_search_client.indices.delete(index='test-*')
+    current_search_client.indices.delete(index='test-*', ignore=[400, 404])
+    current_search_client.indices.delete(index='test-weko', ignore=[400, 404])
     with open("tests/data/mappings/item-v1.0.0.json","r") as f:
         mapping = json.load(f)
     try:
@@ -374,7 +405,8 @@ def esindex(app):
     try:
         yield current_search_client
     finally:
-        current_search_client.indices.delete(index='test-*')
+        current_search_client.indices.delete(index='test-*', ignore=[400, 404])
+        current_search_client.indices.delete(index='test-weko', ignore=[400, 404])
 
 
 @pytest.yield_fixture()
@@ -382,11 +414,16 @@ def db(app):
     """Database fixture."""
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
+    db_.session.remove()
+    db_.engine.dispose()
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    drop_alembic_version_table()
+    db_.session.close()
+    db_.engine.dispose()
+    drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()

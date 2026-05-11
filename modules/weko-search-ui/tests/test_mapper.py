@@ -5288,7 +5288,7 @@ def test_set_by_jsonpath():
     set_by_jsonpath(data, "item_1.subitem_1", "value_1")
     assert data["item_1"]["subitem_1"] == "value_1"
 
-    set_by_jsonpath(data, "item_1.subitem_2.subsubitem_1", "value_2", {"item_1": {"subitem_2": {"default_factory": "default_value"}}})
+    set_by_jsonpath(data, "item_1.subitem_2.subsubitem_1", "value_2", {"item_1.subitem_2": {"default_factory": "default_value"}})
     assert data["item_1"]["subitem_2"]["default_factory"] == "default_value"
     assert data["item_1"]["subitem_2"]["subsubitem_1"] == "value_2"
 
@@ -5328,7 +5328,7 @@ def test_set_by_jsonpath():
         "pubdate": "2025-06-12",
         "item_1": {
             "subitem_1": "value_1",
-            "subitem_2": "value_2"
+            "subitem_2": {"default_factory": "default_value", "subsubitem_1": "value_2"}
         },
         "item_2": [
             {

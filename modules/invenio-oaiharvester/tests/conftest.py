@@ -49,7 +49,7 @@ from invenio_i18n import InvenioI18N
 from invenio_jsonschemas import InvenioJSONSchemas
 from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_index_tree.models import Index
 from weko_search_ui import WekoSearchUI
 from weko_theme import WekoTheme
@@ -71,7 +71,7 @@ from invenio_pidrelations import InvenioPIDRelations
 from invenio_records import InvenioRecords
 from invenio_records_rest import InvenioRecordsREST
 from invenio_search import InvenioSearch, current_search_client
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, RecordIdentifier
 from invenio_pidrelations.models import PIDRelation
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
@@ -100,6 +100,10 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
+    db_uri = os.getenv(
+        'SQLALCHEMY_DATABASE_URI',
+        'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest')
+    db_uri = db_uri.rsplit('/', 1)[0] + '/wekotest_oaiharvester_' + uuid.uuid4().hex
     app_ = Flask(
         "testapp",
         instance_path=instance_path,
@@ -115,8 +119,7 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI',
         #     'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=db_uri,
         TESTING=True,
         INDEX_IMG='indextree/36466818-image.jpg',
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
@@ -158,6 +161,10 @@ def base_app(instance_path):
     WekoRecords(app_)
     InvenioOAIHarvester(app_)
 
+    with app_.app_context():
+        if not database_exists(str(db_.engine.url)):
+            create_database(str(db_.engine.url))
+
     return app_
 
 
@@ -175,12 +182,11 @@ def client(app):
 
 @pytest.fixture()
 def db(app):
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
+    drop_database(str(db_.engine.url))
 
 
 @pytest.fixture()

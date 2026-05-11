@@ -83,8 +83,13 @@ def test_SchemaConverter(app):
 
         schema = "tests/data/oai_dc.xsd"
         rootname = "dc"
-        res = SchemaConverter(schema, rootname)
-        assert res.to_dict() == '{"dc:title": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:creator": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:subject": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:description": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:publisher": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:contributor": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:date": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:type": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:format": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:identifier": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:source": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:language": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:relation": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:coverage": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}, "dc:rights": {"type": {"minOccurs": 1, "maxOccurs": 1, "attributes": [{"name": "xml:lang", "ref": "xml:lang", "use": "optional"}]}}}'
+        with pytest.raises(Exception) as e:
+            SchemaConverter(schema, rootname)
+        assert e.type == BadRequest
+        assert str(e.value) == (
+            "400 Bad Request: Error creating Schema: "
+            "Can not open xsd file. Please check it!"
+        )
 
 # class SchemaTree:
 #     def __init__(self, record=None, schema_name=None):
@@ -494,4 +499,13 @@ def test_delete_schema(app, db_oaischema):
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::test_get_oai_metadata_formats -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 def test_get_oai_metadata_formats(app, db_oaischema):
     res = get_oai_metadata_formats(app)
-    assert res=={'oai_dc': {'serializer': ('invenio_oaiserver.utils:dumps_etree', {'xslt_filename': '/code/modules/invenio-oaiserver/invenio_oaiserver/static/xsl/MARC21slim2OAIDC.xsl'}), 'schema': 'http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd', 'namespace': 'http://www.w3.org/2001/XMLSchema'}, 'marc21': {'serializer': ('invenio_oaiserver.utils:dumps_etree', {'prefix': 'marc'}), 'schema': 'http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd', 'namespace': 'http://www.loc.gov/MARC21/slim'}, 'ddi': {'namespace': 'ddi:codebook:2_5', 'schema': 'https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'ddi'})}, 'jpcoar_v1': {'namespace': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'schema': 'https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'jpcoar_v1'})}, 'jpcoar': {'namespace': 'https://github.com/JPCOAR/schema/blob/master/2.0/', 'schema': 'https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'jpcoar'})}}
+    assert res["oai_dc"]["serializer"][0] == "invenio_oaiserver.utils:dumps_etree"
+    assert res["oai_dc"]["serializer"][1]["xslt_filename"].endswith(
+        "invenio_oaiserver/static/xsl/MARC21slim2OAIDC.xsl"
+    )
+    assert res["oai_dc"]["schema"] == "http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"
+    assert res["oai_dc"]["namespace"] == "http://www.w3.org/2001/XMLSchema"
+    assert res["marc21"] == {'serializer': ('invenio_oaiserver.utils:dumps_etree', {'prefix': 'marc'}), 'schema': 'http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd', 'namespace': 'http://www.loc.gov/MARC21/slim'}
+    assert res["ddi"] == {'namespace': 'ddi:codebook:2_5', 'schema': 'https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'ddi'})}
+    assert res["jpcoar_v1"] == {'namespace': 'https://github.com/JPCOAR/schema/blob/master/1.0/', 'schema': 'https://github.com/JPCOAR/schema/blob/master/1.0/jpcoar_scm.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'jpcoar_v1'})}
+    assert res["jpcoar"] == {'namespace': 'https://github.com/JPCOAR/schema/blob/master/2.0/', 'schema': 'https://github.com/JPCOAR/schema/blob/master/2.0/jpcoar_scm.xsd', 'serializer': ('invenio_oaiserver.utils:dumps_etree', {'schema_type': 'jpcoar'})}

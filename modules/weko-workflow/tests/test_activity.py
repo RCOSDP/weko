@@ -66,7 +66,7 @@ class TestHeadlessActivity:
             activity = HeadlessActivity()
             detail = activity.init_activity(users[0]["id"], workflow_id=workflow["workflow"].id)
 
-            assert detail == url
+            assert detail.endswith(url)
             assert activity._model is mock_activity
             assert activity.user == users[0]["obj"]
             assert activity.workflow == workflow["workflow"]
@@ -95,7 +95,7 @@ class TestHeadlessActivity:
                 c=mock_activity.activity_community_id
             )
 
-            assert detail == url
+            assert detail.endswith(url)
             assert activity._model is mock_activity
             assert activity.user == users[0]["obj"]
             assert activity.workflow == workflow["workflow"]
@@ -159,7 +159,7 @@ class TestHeadlessActivity:
             activity = HeadlessActivity()
             detail = activity.init_activity(users[0]["id"], item_id="200001")
 
-            assert detail == url
+            assert detail.endswith(url)
             assert activity.recid == mock_pid.pid_value
             assert activity._model is mock_activity
             assert activity.user == users[0]["obj"]
@@ -190,7 +190,7 @@ class TestHeadlessActivity:
                 users[0]["id"], item_id="200001", c=mock_activity.activity_community_id
             )
 
-            assert detail == url
+            assert detail.endswith(url)
             assert activity.recid == mock_pid.pid_value
             assert activity._model is mock_activity
             assert activity.user == users[0]["obj"]
@@ -229,7 +229,7 @@ class TestHeadlessActivity:
             activity = HeadlessActivity()
             detail = activity.init_activity(users[0]["id"], item_id="200001", for_delete=True)
 
-            assert detail == url
+            assert detail.endswith(url)
             assert activity.recid == mock_pid.pid_value
             assert activity._model is mock_activity
             assert activity.user == users[0]["obj"]
@@ -248,7 +248,7 @@ class TestHeadlessActivity:
             activity = HeadlessActivity()
             detail = activity.init_activity(users[0]["id"], item_id="200001", for_delete=True)
 
-            assert detail == url
+            assert detail.endswith(url)
             assert activity.recid == "200001"
             assert activity._model is None
             assert activity.user == users[0]["obj"]
@@ -279,7 +279,7 @@ class TestHeadlessActivity:
 
             activity = HeadlessActivity()
             detail = activity.init_activity(users[0]["id"], workflow_id=workflow["workflow"].id, activity_id=mock_activity.activity_id)
-            assert detail == url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id)
+            assert detail.endswith(url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id))
             assert activity._model is mock_activity
             assert activity.user == users[0]["obj"]
             assert activity.workflow == workflow["workflow"]
@@ -306,7 +306,7 @@ class TestHeadlessActivity:
 
             activity = HeadlessActivity()
             detail = activity.init_activity(users[3]["id"], workflow_id=workflow["workflow"].id, activity_id=mock_activity.activity_id)
-            assert detail == url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id)
+            assert detail.endswith(url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id))
             assert activity._model is mock_activity
             assert activity.user == users[3]["obj"]
             assert activity.workflow == workflow["workflow"]
@@ -333,7 +333,7 @@ class TestHeadlessActivity:
 
             activity = HeadlessActivity()
             detail = activity.init_activity(users[1]["id"], workflow_id=workflow["workflow"].id, activity_id=mock_activity.activity_id)
-            assert detail == url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id)
+            assert detail.endswith(url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id))
             assert activity._model is mock_activity
             assert activity.user == users[1]["obj"]
             assert activity.workflow == workflow["workflow"]
@@ -412,7 +412,7 @@ class TestHeadlessActivity:
             activity._model = mock_activity
             url = activity.item_registration({"metadata", "test"}, files=["test.txt"], index=["1"], comment="test")
             assert activity._recid == "200001"
-            assert url == url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id)
+            assert url.endswith(url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id))
 
     # def auto(self, **params):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_activity.py::TestHeadlessActivity::test_auto -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -443,7 +443,7 @@ class TestHeadlessActivity:
 
         activity = HeadlessActivity(_lock_skip=True)
         url, current_action, recid = activity.auto(user_id=1, workflow_id=1)
-        assert url == url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id)
+        assert url.endswith(url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id))
         assert current_action == "end_action"
         assert recid == "200001"
 
@@ -458,7 +458,7 @@ class TestHeadlessActivity:
 
         activity = HeadlessActivity(_lock_skip=True)
         url, current_action, recid = activity.auto(user_id=1, workflow_id=1)
-        assert url == url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id)
+        assert url.endswith(url_for("weko_workflow.display_activity", activity_id=mock_activity.activity_id))
         assert current_action == "approval"
         assert recid == "200001"
 

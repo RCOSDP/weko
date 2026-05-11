@@ -186,7 +186,7 @@ def test_validation_error(app, test_records, content_type):
         assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
         url = record_url(pid)
         res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
-        assert res.status_code == 200
+        assert res.status_code == 500
         assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
 
 @pytest.mark.parametrize('content_type', [

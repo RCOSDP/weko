@@ -24,9 +24,9 @@ import pytest
 from mock import patch
 from elasticsearch import Elasticsearch
 from elasticsearch import VERSION as ES_VERSION
-from elasticsearch.exceptions import RequestError
+from elasticsearch.exceptions import NotFoundError, RequestError
 from elasticsearch_dsl import response, Search
-from flask import Flask, url_for, Response
+from flask import Flask, Response, current_app, url_for
 from flask_login import LoginManager, UserMixin
 from tests.helpers import create_record
 
@@ -46,7 +46,7 @@ from invenio_records import InvenioRecords
 from invenio_rest import InvenioREST
 from invenio_search import InvenioSearch, RecordsSearch, current_search, \
     current_search_client
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_admin.models import AdminSettings,FacetSearchSetting
 from weko_records import WekoRecords
 from weko_records.models import ItemTypeName, ItemType, ItemTypeMapping
@@ -241,8 +241,7 @@ def app(request):
         # ),
         #SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
         #                                  'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
@@ -311,6 +310,7 @@ def db(app):
 
     db_.session.remove()
     db_.drop_all()
+    drop_database(str(db_.engine.url))
 
 
 @pytest.yield_fixture()
@@ -477,14 +477,24 @@ def register_record(id, indexer, index_path):
         "_updated": pytz.utc.localize(record.updated).isoformat() ,
         "_item_metadata":record_data
     }
-    indexer.client.index(
-        id=str(record.id),
-        version=record.revision_id,
-        version_type=indexer._version_type,
-        index=index,
-        doc_type=doc_type,
-        body=es_data
-    )
+    try:
+        indexer.client.index(
+            id=str(record.id),
+            version=record.revision_id,
+            version_type=indexer._version_type,
+            index=index,
+            doc_type=doc_type,
+            body=es_data
+        )
+    except NotFoundError:
+        indexer.client.index(
+            id=str(record.id),
+            version=record.revision_id,
+            version_type=indexer._version_type,
+            index=current_app.config["INDEXER_DEFAULT_INDEX"],
+            doc_type=doc_type,
+            body=es_data
+        )
     return pid, record
 
 @pytest.fixture()
@@ -670,3 +680,7 @@ def indexes(app, db):
     db.session.add(index1)
     db.session.commit()
     return index1
+TEST_DB_NAME = 'wekotest_records_rest_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'.format(
+    TEST_DB_NAME
+)

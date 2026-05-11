@@ -23,6 +23,7 @@
 import os, sys
 import shutil
 import tempfile
+import uuid
 
 import pytest
 from flask import Flask
@@ -40,6 +41,7 @@ from invenio_accounts.models import User, Role
 from invenio_accounts.testutils import create_test_user
 from invenio_communities.models import Community
 from invenio_db import InvenioDB, db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_i18n import InvenioI18N
 from invenio_oauth2server import InvenioOAuth2Server
 from weko_admin import WekoAdmin
@@ -53,6 +55,13 @@ from weko_logging.audit import WekoLoggingUserActivity
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
 from weko_accounts.views import blueprint
+from sqlalchemy_utils.functions import drop_database
+
+
+TEST_DB_NAME = 'wekotest_weko_accounts_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = (
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'
+).format(TEST_DB_NAME)
 
 @pytest.yield_fixture()
 def instance_path():
@@ -70,10 +79,7 @@ def base_app(instance_path):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='test_server.localdomain',
-        # SQLALCHEMY_DATABASE_URI=os.environ.get(
-        #  'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         THEME_SITEURL = 'https://localhost',
         CACHE_REDIS_URL=os.environ.get(
             "CACHE_REDIS_URL", "redis://redis:6379/0"
@@ -131,8 +137,28 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
+
+
+@pytest.fixture(autouse=True)
+def disable_user_activity_logger(monkeypatch):
+    """Avoid partition-dependent activity log inserts in tests."""
+    monkeypatch.setattr(
+        'weko_accounts.rest.UserActivityLogger.info',
+        lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        'weko_accounts.views.UserActivityLogger.info',
+        lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        'weko_accounts.views.UserActivityLogger.error',
+        lambda *args, **kwargs: None
+    )
 
 @pytest.yield_fixture()
 def client(app,session_time):

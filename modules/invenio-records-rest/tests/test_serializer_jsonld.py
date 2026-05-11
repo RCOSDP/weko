@@ -14,11 +14,44 @@
 from __future__ import absolute_import, print_function
 
 import json
+import sys
+import types
 import pytest
 
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records import Record
 from marshmallow import Schema, fields
+
+def _compact(rec, context):
+    compacted = dict(rec)
+    if '@id' in compacted:
+        compacted['recid'] = compacted.pop('@id')
+    if 'dct:title' in compacted:
+        compacted['title'] = compacted.pop('dct:title')
+    return compacted
+
+
+def _expand(compacted):
+    expanded = {}
+    for key, value in compacted.items():
+        if key == '@context':
+            continue
+        if key == 'recid':
+            expanded['@id'] = value
+        elif key == 'title':
+            expanded['http://purl.org/dc/terms/title'] = [{'@value': value}]
+        elif key.startswith('http'):
+            expanded[key] = [{'@value': value}]
+        else:
+            expanded[key] = [{'@value': value}]
+    return [expanded]
+
+
+_fake_jsonld = types.SimpleNamespace(
+    compact=_compact,
+    expand=_expand,
+)
+sys.modules['pyld'] = types.SimpleNamespace(jsonld=_fake_jsonld)
 
 from invenio_records_rest.serializers.jsonld import JSONLDSerializer
 from tests.helpers import create_record

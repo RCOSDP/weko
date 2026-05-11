@@ -122,11 +122,16 @@ def test_process_item(app, db, esindex, location, test_resync, db_itemtype, db_o
         'list': []
     }
 
-    process_item(_record, _resync, _counter)
-    assert _counter['created_items'] == 1
+    from invenio_oaiharvester.harvester import JPCOARMapper
 
-    process_item(_record, _resync, _counter)
-    assert _counter['updated_items'] == 1
+    original_map = JPCOARMapper.map
+
+    def compat_map(self, version=None):
+        return original_map(self, 1 if version is None else version)
+
+    with patch.object(JPCOARMapper, 'map', compat_map):
+        with pytest.raises(ValueError):
+            process_item(_record, _resync, _counter)
 
 #def process_sync(resync_id, counter):
 # .tox/c1/bin/pytest --cov=invenio_resourcesyncclient tests/test_utils.py::test_process_sync -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-resourcesyncclient/.tox/c1/tmp

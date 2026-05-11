@@ -14,6 +14,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import uuid
 
 import pytest
 from flask import Flask
@@ -23,9 +24,17 @@ from invenio_db import db as db_
 from invenio_pidstore import InvenioPIDStore
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.schema import DropConstraint, DropSequence, DropTable
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 
 from invenio_records import InvenioRecords
+
+
+TEST_DB_NAME = 'wekotest_records_{0}'.format(uuid.uuid4().hex)
+TEST_DB_URI = os.getenv(
+    'SQLALCHEMY_DATABASE_URI',
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{0}'.format(
+        TEST_DB_NAME)
+)
 
 
 @compiles(DropTable, 'postgresql')
@@ -57,8 +66,7 @@ def app(request):
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
         TESTING=True,
     )
@@ -82,6 +90,7 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+    drop_database(str(db_.engine.url))
 
 
 @pytest.fixture()
@@ -106,3 +115,4 @@ def custom_db(app, CustomMetadata):
     yield db_
     db_.session.remove()
     db_.drop_all()
+    drop_database(str(db_.engine.url))

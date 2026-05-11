@@ -35,6 +35,13 @@ python -m pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5.3,<5.0.0' 'mock==3.0
 ./run-tests.sh
 ```
 
+To limit the run to specific modules, set `WEKO_TEST_MODULES` with space-separated
+module names.
+
+```shell
+WEKO_TEST_MODULES="invenio-communities weko-workspace" ./run-tests.sh
+```
+
 #### Run single module
 
 ```shell
@@ -110,6 +117,12 @@ docker-compose exec web sh -c "pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5
 
 ```shell
 docker-compose exec web ./run-tests.sh
+```
+
+Inside Docker, the same filter can be used.
+
+```shell
+docker-compose exec web sh -c 'WEKO_TEST_MODULES="invenio-communities weko-workspace" ./run-tests.sh'
 ```
 
 #### Run single module

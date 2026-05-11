@@ -98,14 +98,14 @@ class TestMailTemplates:
                 'genre_name': 'Notification of secret URL provision'
             }
         ]
-        with mocker.patch('weko_admin.models.AdminSettings.get', return_value=None):
-            result = MailTemplates.get_templates()
-            assert result == expect
+        mocker.patch('weko_admin.models.AdminSettings.get', return_value=None)
+        result = MailTemplates.get_templates()
+        assert result == expect
 
         # Exception in toDict
-        with mocker.patch('invenio_mail.models.MailTemplates.toDict', side_effect=Exception):
-            result = MailTemplates.get_templates()
-            assert result == []
+        mocker.patch('invenio_mail.models.MailTemplates.toDict', side_effect=Exception)
+        result = MailTemplates.get_templates()
+        assert result == []
 
     # .tox/c1/bin/pytest --cov=invenio_mail tests/test_models.py::TestMailTemplates::test_get_by_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-mail/.tox/c1/tmp
     def test_get_by_id(self, app, mail_templates):

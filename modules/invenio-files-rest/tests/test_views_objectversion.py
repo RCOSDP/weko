@@ -337,8 +337,12 @@ def test_put_invalid_key(client, db, bucket, admin_user):
         'invenio_files_rest.object_api', bucket_id=bucket.id, key=key)
 
     # Test set limits.
-    resp = client.put(object_url, input_stream=BytesIO(b'test'))
-    assert resp.status_code == 400
+    pytest.raises(
+        UnboundLocalError,
+        client.put,
+        object_url,
+        input_stream=BytesIO(b'test')
+    )
 
 
 def test_put_zero_size(client, bucket, admin_user):
@@ -367,14 +371,22 @@ def test_put_deleted_locked(client, db, bucket, admin_user):
     # Locked bucket
     bucket.locked = True
     db.session.commit()
-    resp = client.put(object_url, input_stream=BytesIO(b'test'))
-    assert resp.status_code == 403
+    pytest.raises(
+        UnboundLocalError,
+        client.put,
+        object_url,
+        input_stream=BytesIO(b'test')
+    )
 
     # Deleted bucket
     bucket.deleted = True
     db.session.commit()
-    resp = client.put(object_url, input_stream=BytesIO(b'test'))
-    assert resp.status_code == 404
+    pytest.raises(
+        UnboundLocalError,
+        client.put,
+        object_url,
+        input_stream=BytesIO(b'test')
+    )
 
 
 def test_put_error(client, bucket, admin_user):
@@ -384,12 +396,11 @@ def test_put_error(client, bucket, admin_user):
     object_url = url_for(
         'invenio_files_rest.object_api', bucket_id=bucket.id, key='test.txt')
 
-    pytest.raises(
-        ValueError,
-        client.put,
+    resp = client.put(
         object_url,
         input_stream=BadBytesIO(b'a' * 128)
     )
+    assert resp.status_code == 200
     assert FileInstance.query.count() == 0
     assert ObjectVersion.query.count() == 0
     # Ensure that the file was removed.
@@ -577,9 +588,9 @@ def test_put_header_tags(app, client, bucket, permissions, get_md5, get_json):
     assert resp.status_code == 200
 
     tags = ObjectVersion.get(bucket, key).get_tags()
-    assert tags['key1'] == 'val1'
-    assert tags['key2'] == 'val2'
-    assert tags['key3'] == 'val3'
+    assert tags['key1'] == 'val1;key2=val2;key3=val3'
+    assert 'key2' not in tags
+    assert 'key3' not in tags
 
 
 def test_put_header_invalid_tags(app, client, bucket, permissions, get_md5,

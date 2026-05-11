@@ -122,6 +122,7 @@ def test_serialize_search(app, db):
 
 def test_serialize_search2(app, db, item_type):
     """Test JSON serialize."""
+    from unittest.mock import patch, MagicMock
     app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'] = ['creatorMails', 'contributorMails', 'mails']
 
     class TestSchema(Schema):
@@ -133,7 +134,10 @@ def test_serialize_search2(app, db, item_type):
         assert obj_uuid in ['a', 'b']
         return PersistentIdentifier(pid_type='recid', pid_value=data['pid'])
 
-    data = json.loads(JSONSerializer(TestSchema).serialize_search(
+    mock_user = MagicMock()
+    mock_user.get_id.return_value = None
+    with patch('weko_items_ui.utils.current_user', mock_user):
+     data = json.loads(JSONSerializer(TestSchema).serialize_search(
         fetcher,
         dict(
             hits=dict(

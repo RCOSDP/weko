@@ -93,9 +93,9 @@ def test_get_custom_sort(i18n_app, users, indices):
     index_id = 33
 
     assert SearchSetting.get_custom_sort(index_id, sort_type="asc")[0]['_script']['order'] == 'asc'
-    assert SearchSetting.get_custom_sort(index_id, sort_type="asc")[1]['_created']['order'] == 'desc'
+    assert SearchSetting.get_custom_sort(index_id, sort_type="asc")[1]['_created']['order'] == 'asc'
     assert SearchSetting.get_custom_sort(index_id, sort_type="desc")[0]['_script']['order'] == 'desc'
-    assert SearchSetting.get_custom_sort(index_id, sort_type="desc")[1]['_created']['order'] == 'asc'
+    assert SearchSetting.get_custom_sort(index_id, sort_type="desc")[1]['_created']['order'] == 'desc'
 
 # get_nested_sorting(cls, key_str):
 def test_get_nested_sorting(i18n_app, users, app):

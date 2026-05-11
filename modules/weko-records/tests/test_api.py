@@ -918,11 +918,11 @@ class TestItemTypes:
 
         with patch('weko_records.api.db.session.merge', return_value=""):
             with patch('weko_records.api.db.session.commit', return_value=""):
-                result = ItemTypes.reload(item_type_id)
+                result = ItemTypes.reload(item_type_id, item_type_mapping_with_form)
                 assert result["msg"] == "Fix ItemType({}) mapping".format(item_type_id)
                 assert result["code"] == 0
 
-                result = ItemTypes.reload(item_type_id, specified_list=[1000])
+                result = ItemTypes.reload(item_type_id, item_type_mapping_with_form, specified_list=[1000])
                 assert result["msg"] == "Update ItemType({})".format(item_type_id)
                 assert result["code"] == 0
 

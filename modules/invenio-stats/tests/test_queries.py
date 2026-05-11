@@ -460,7 +460,7 @@ def test_ESWekoFileRankingQuery(app, esindex):
 
     index = app.config["INDEXER_DEFAULT_INDEX"]
     doc_type = "stats-file-download"
-    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = 'Asia/Tokyo'
+    app.config['STATS_WEKO_DEFAULT_TIMEZONE'] = MockFunc
     def register(i):
         with open(f"tests/data/test_events/event_download{i:02}.json","r") as f:
             esindex.index(index=index, doc_type=doc_type, id=f"{i}", body=json.load(f), refresh="true")
@@ -494,4 +494,3 @@ def test_ESWekoFileRankingQuery(app, esindex):
     assert res['download_ranking']['buckets'][0]['doc_count'] == 2
     assert res['start_date'] == '2024-01-01T00:00:00'
     assert res['end_date'] == '2024-01-31T23:59:59'
-

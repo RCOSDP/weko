@@ -17,6 +17,7 @@ from __future__ import absolute_import, print_function
 from os.path import join
 import shutil
 import tempfile
+import uuid
 import os
 import datetime
 import json
@@ -27,7 +28,7 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 from flask_menu import Menu
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
@@ -111,8 +112,7 @@ def base_app(instance_path):
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                          'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         INVENIO_RESYNC_INDEXES_STATUS={
             'automatic': 'Automatic',
             'manual': 'Manual'
@@ -180,7 +180,10 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
+    try:
+        db_.drop_all()
+    finally:
+        drop_database(str(db_.engine.url))
 
 
 @pytest.fixture()
@@ -724,3 +727,7 @@ def test_resync(app, db, test_indices):
         db.session.add(resync_handler8)
         db.session.add(resync_log)
     db.session.commit()
+TEST_DB_NAME = 'wekotest_resourcesyncclient_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = 'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'.format(
+    TEST_DB_NAME
+)

@@ -55,6 +55,7 @@ def test_record_responsify(app):
 # .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_response.py::test_search_responsify -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
 def test_search_responsify(app, item_type):
     """Test JSON serialize."""
+    from unittest.mock import patch, MagicMock
     search_serializer = search_responsify(
         TestSerializer(), 'application/x-custom')
 
@@ -64,12 +65,15 @@ def test_search_responsify(app, item_type):
     tmp = [{'_source': {'item_type_id': '15', 'item_metadata': {'test': 'test'}}}]
     result = {"hits": {"hits": tmp}}
 
-    resp = search_serializer(fetcher, result)
-    assert resp.status_code == 200
-    assert resp.content_type == 'application/x-custom'
-    assert resp.get_data(as_text=True) == "1"
+    mock_i18n = MagicMock()
+    mock_i18n.language = 'en'
+    with patch('weko_records.utils.current_i18n', mock_i18n):
+        resp = search_serializer(fetcher, result)
+        assert resp.status_code == 200
+        assert resp.content_type == 'application/x-custom'
+        assert resp.get_data(as_text=True) == "1"
 
-    resp = search_serializer(
-        fetcher, result, code=201, headers=[('X-Test', 'test')])
-    assert resp.status_code == 201
-    assert resp.headers['X-Test'] == 'test'
+        resp = search_serializer(
+            fetcher, result, code=201, headers=[('X-Test', 'test')])
+        assert resp.status_code == 201
+        assert resp.headers['X-Test'] == 'test'

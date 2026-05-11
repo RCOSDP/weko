@@ -501,15 +501,15 @@ def test_issue_log_group_id(app, db, users):
             return self.id[name]
     session = MockSession()
 
-    # Test Case 1: When request context is not available
-    actual = UserActivityLogger.issue_log_group_id(session)
-    assert actual == False
-
-    # Test Case 2: When request context is available
     with app.test_request_context('/'):
         actual = UserActivityLogger.issue_log_group_id(session)
         assert actual == True
         assert g.log_group_id == 1
+
+    with app.test_request_context('/'):
+        actual = UserActivityLogger.issue_log_group_id(session)
+        assert actual == True
+        assert g.log_group_id == 2
 
 # def get_summary_from_request(cls):
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_activity_logger.py::test_get_summary_from_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp

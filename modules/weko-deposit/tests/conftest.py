@@ -45,6 +45,7 @@ from invenio_access.models import ActionUsers
 from invenio_admin import InvenioAdmin
 from invenio_assets import InvenioAssets
 from invenio_db import InvenioDB, db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_cache import InvenioCache
 from invenio_communities.models import Community
 from weko_user_profiles.models import UserProfile
@@ -113,6 +114,12 @@ from weko_logging.audit import WekoLoggingUserActivity
 from tests.helpers import json_data, create_record
 
 
+TEST_DB_NAME = 'wekotest_weko_deposit_{}'.format(uuid.uuid4().hex[:8])
+TEST_DB_URI = (
+    'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}'
+).format(TEST_DB_NAME)
+
+
 @pytest.yield_fixture()
 def instance_path():
     path = tempfile.mkdtemp()
@@ -153,9 +160,7 @@ def base_app(instance_path):
         JSONSCHEMAS_URL_SCHEME="http",
         SECRET_KEY="CHANGE_ME",
         SECURITY_PASSWORD_SALT="CHANGE_ME_ALSO",
-        SQLALCHEMY_DATABASE_URI=os.environ.get(
-            'SQLALCHEMY_DATABASE_URI',
-            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     "SQLALCHEMY_DATABASE_URI", "sqlite:///test.db"
         # ),
@@ -208,7 +213,8 @@ def base_app(instance_path):
             "internal report": "other",
             "report part": "other",
             "conference object": "conference output",
-        }
+        },
+        WEKO_RECORDS_UI_EMAIL_ITEM_KEYS=[]
     )
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
@@ -293,8 +299,23 @@ def db(app):
     db_.create_all()
     yield db_
     db_.session.remove()
-    db_.drop_all()
-    # drop_database(str(db_.engine.url))
+    try:
+        db_.drop_all()
+        drop_alembic_version_table()
+    finally:
+        drop_database(str(db_.engine.url))
+
+
+@pytest.fixture(autouse=True)
+def disable_user_activity_logger(monkeypatch):
+    monkeypatch.setattr(
+        'weko_logging.activity_logger.UserActivityLogger.info',
+        lambda *args, **kwargs: None
+    )
+    monkeypatch.setattr(
+        'weko_logging.activity_logger.UserActivityLogger.error',
+        lambda *args, **kwargs: None
+    )
 
 
 @pytest.fixture()

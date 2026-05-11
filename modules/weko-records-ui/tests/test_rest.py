@@ -207,8 +207,8 @@ def test_NeedRestrictedAccess_get_v1(app, client, db, make_record_need_restricte
     # Restricted access is approval : result is False
     pid_value = 13
     onetime_download = make_record_need_restricted_access['FileOnetimeDownload']['13']
-    # find_downloadable_only function can not execute on test.
-    with patch('weko_records_ui.models.FileOnetimeDownload.find_downloadable_only', return_value=[onetime_download]):
+    # Directly fix the approved-permission branch in the test environment.
+    with patch('weko_records_ui.permissions.check_permission_period', return_value=True):
         res = client.get(
             f'/{version}/records/{pid_value}/need-restricted-access',
             headers=headers_contributor,

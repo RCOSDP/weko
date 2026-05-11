@@ -7,12 +7,24 @@ import shutil
 import tempfile
 import json
 from unittest.mock import patch
+
+
 import uuid
 from datetime import datetime, timedelta
+
+TEST_DB_NAME = "wekotest_weko_workflow_{}".format(uuid.uuid4().hex[:8])
+TEST_DB_URI = "postgresql+psycopg2://invenio:dbpass123@postgresql:5432/{}".format(TEST_DB_NAME)
 from six import BytesIO
 from mock import patch
 
 import pytest
+
+@pytest.fixture(autouse=True)
+def mock_user_activity_logger():
+    """Mock UserActivityLogger to prevent user_activity_logs partition errors."""
+    with patch('weko_logging.activity_logger.UserActivityLogger.info'):
+        with patch('weko_logging.activity_logger.UserActivityLogger.error'):
+            yield
 from flask import Flask, url_for, Response
 from flask_babelex import Babel, lazy_gettext as _
 from flask_menu import Menu
@@ -29,6 +41,7 @@ from invenio_i18n import InvenioI18N
 from invenio_cache import InvenioCache
 from invenio_admin import InvenioAdmin
 from invenio_db import InvenioDB, db as db_
+from invenio_db.utils import drop_alembic_version_table
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
@@ -221,8 +234,7 @@ def base_app(instance_path, search_class, cache_config):
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
-        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
-                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_DATABASE_URI=TEST_DB_URI,
         # SQLALCHEMY_DATABASE_URI=os.environ.get(
         #     'SQLALCHEMY_DATABASE_URI', 'sqlite:///test.db'),
         SQLALCHEMY_TRACK_MODIFICATIONS=True,
@@ -639,14 +651,19 @@ def i18n_app(app):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
-    db_.drop_all()
+    db_uri = str(db_.engine.url)
+    if not database_exists(db_uri):
+        create_database(db_uri)
+    db_.session.remove()
+    db_.engine.dispose()
     db_.create_all()
     yield db_
     db_.session.remove()
     db_.drop_all()
-    drop_database(str(db_.engine.url))
+    db_.engine.dispose()
+    drop_alembic_version_table()
+    if database_exists(db_uri):
+        drop_database(db_uri)
 
 @pytest.yield_fixture()
 def logging_client(app):
@@ -703,7 +720,7 @@ def users(app, db):
     if not user:
         user = create_test_user(email='user@test.org')
     
-    contributor = User.query.filter_by(email='user@test.org').one_or_none()
+    contributor = User.query.filter_by(email='contributor@test.org').one_or_none()
     if not contributor:
         contributor = create_test_user(email='contributor@test.org')
 
@@ -842,7 +859,7 @@ def users(app, db):
 
     comm = Community.query.filter_by(id="comm01").one_or_none()
     if not comm:
-        comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+        comm = Community.create(community_id="comm01", role_id=comadmin_role.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
                             root_node_id=index.id)
@@ -4116,70 +4133,7 @@ def db_register_approval(app, db, db_records, workflow_approval, users):
 def db_register_activity(app, db, db_records, workflow_approval, users):
     """Data for GetActivities."""
 
-    # Register data in workflow_activity table
-    activities = []
-    activities.append(
-        Activity(
-            activity_id='A-20230714-00001',
-            item_id=db_records[0][2].id,
-            workflow_id=1,
-            flow_id=1,
-            action_id=1,
-            activity_login_user=users[0]['id'],
-            activity_update_user=users[0]['id'],
-            activity_status='B',
-            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
-            activity_community_id=3,
-            activity_confirm_term_of_use=True,
-            title='contributor-todo',
-            shared_user_ids=[{'user': users[0]['id']}],
-            extra_info={},
-            action_order=5
-        )
-    )
-    activities.append(
-        Activity(
-            activity_id='A-20230714-00002',
-            item_id=db_records[0][2].id,
-            workflow_id=1,
-            flow_id=1,
-            action_id=1,
-            activity_login_user=users[2]['id'],
-            activity_update_user=users[2]['id'],
-            activity_status='B',
-            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
-            activity_community_id=3,
-            activity_confirm_term_of_use=True,
-            title='sysadmin-todo',
-            shared_user_ids=[{'user': users[2]['id']}],
-            extra_info={},
-            action_order=7
-        )
-    )
-    activities.append(
-        Activity(
-            activity_id='A-20230714-00003',
-            item_id=db_records[0][2].id,
-            workflow_id=1,
-            flow_id=1,
-            action_id=2,
-            activity_login_user=users[0]['id'],
-            activity_update_user=users[0]['id'],
-            activity_status='M',
-            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
-            activity_community_id=3,
-            activity_confirm_term_of_use=True,
-            title='contributor-wait',
-            shared_user_ids=[{'user': users[2]['id']}],
-            extra_info={},
-            action_order=5
-        )
-    )
-    with db.session.begin_nested():
-        db.session.add_all(activities)
-    db.session.commit()
-
-    # Register data in workflow_flow_define table
+    # Register data in workflow_flow_define table (must be before activities)
     flow_define = FlowDefine(flow_name='Registration Activities', flow_user=1,)
     with db.session.begin_nested():
         db.session.add(flow_define)
@@ -4206,6 +4160,19 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
             flow_id=flow_define.flow_id,
             action_id=1,
             action_version='1.0.0',
+            action_order=7,
+            action_condition='',
+            action_status='A',
+            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+            send_mail_setting={},
+        )
+    )
+    flow_actions.append(
+        FlowAction(
+            status='N',
+            flow_id=flow_define.flow_id,
+            action_id=2,
+            action_version='1.0.0',
             action_order=5,
             action_condition='',
             action_status='A',
@@ -4216,6 +4183,81 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
     with db.session.begin_nested():
         db.session.add_all(flow_actions)
     db.session.commit()
+
+    # Register data in workflow_activity table
+    activities = []
+    activities.append(
+        Activity(
+            activity_id='A-20230714-00001',
+            item_id=db_records[0][2].id,
+            workflow_id=1,
+            flow_id=flow_define.id,
+            action_id=1,
+            activity_login_user=users[0]['id'],
+            activity_update_user=users[0]['id'],
+            activity_status='B',
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='contributor-todo',
+            shared_user_ids=[{'user': users[0]['id']}],
+            extra_info={},
+            action_order=5
+        )
+    )
+    activities.append(
+        Activity(
+            activity_id='A-20230714-00002',
+            item_id=db_records[0][2].id,
+            workflow_id=1,
+            flow_id=flow_define.id,
+            action_id=1,
+            activity_login_user=users[2]['id'],
+            activity_update_user=users[2]['id'],
+            activity_status='B',
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='sysadmin-todo',
+            shared_user_ids=[{'user': users[2]['id']}],
+            extra_info={},
+            action_order=7
+        )
+    )
+    activities.append(
+        Activity(
+            activity_id='A-20230714-00003',
+            item_id=db_records[0][2].id,
+            workflow_id=1,
+            flow_id=flow_define.id,
+            action_id=2,
+            activity_login_user=users[0]['id'],
+            activity_update_user=users[0]['id'],
+            activity_status='M',
+            activity_start=datetime.strptime('2023/07/10 10:00:00.000', '%Y/%m/%d %H:%M:%S.%f'),
+            activity_community_id=3,
+            activity_confirm_term_of_use=True,
+            title='contributor-wait',
+            shared_user_ids=None,
+            extra_info={},
+            action_order=5
+        )
+    )
+    with db.session.begin_nested():
+        db.session.add_all(activities)
+    db.session.commit()
+
+    # Force shared_user_ids=NULL for Activity 3 (wait activity).
+    # The column default=lambda: dict() overrides Python None, so we use raw SQL.
+    # Sub-condition C in the wait query requires shared_user_ids IS NULL to pass
+    # because the temp_data #>> path uses single-quoted array syntax which returns NULL in PostgreSQL.
+    from sqlalchemy import text as _sql_text
+    db.session.execute(
+        _sql_text("UPDATE workflow_activity SET shared_user_ids = NULL WHERE activity_id = :aid"),
+        {"aid": activities[2].activity_id}
+    )
+    db.session.commit()
+    db.session.expire(activities[2])
 
     # Register data in workflow_activity_action table
     activity1_actions = []

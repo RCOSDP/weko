@@ -11,6 +11,7 @@
 from flask import url_for
 from flask_admin import Admin
 from invenio_db import db
+from mock import MagicMock
 
 from invenio_oauth2server import InvenioOAuth2Server
 from invenio_oauth2server.admin import oauth2server_clients_adminview, \
@@ -21,6 +22,7 @@ def test_admin(models_fixture):
     """Test flask-admin interface."""
     app = models_fixture
     InvenioOAuth2Server(app)
+    app.kvsession_store.redis = MagicMock()
 
     assert isinstance(oauth2server_tokens_adminview, dict)
     assert isinstance(oauth2server_clients_adminview, dict)

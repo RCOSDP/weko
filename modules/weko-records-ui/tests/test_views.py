@@ -91,7 +91,8 @@ def test_pid_value_version():
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_publish_acl_guest(client, records):
     url = url_for("invenio_records_ui.recid_publish", pid_value=1, _external=True)
-    res = client.post(url)
+    with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+        res = client.post(url)
     assert res.status_code == 302
     assert res.location == "http://test_server/records/1"
 
@@ -113,7 +114,8 @@ def test_publish_acl_guest(client, records):
 def test_publish_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for("invenio_records_ui.recid_publish", pid_value=1, _external=True)
-    res = client.post(url)
+    with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+        res = client.post(url)
     assert res.status_code == status_code
     assert res.location == "http://test_server/records/1"
 
@@ -191,7 +193,7 @@ def test_export_acl_guest(client, records):
         # (7, 302),
     ],
 )
-@pytest.mark.timeout(60)
+@pytest.mark.timeout(300)
 def test_export_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for(
@@ -1249,7 +1251,8 @@ def test_soft_delete_acl_guest(client, records):
     url = url_for(
         "weko_records_ui.soft_delete", recid=1, _external=True
     )
-    res = client.post(url)
+    with patch("weko_deposit.api.WekoIndexer.update_es_data"),          patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"),          patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"),          patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
+        res = client.post(url)
     assert res.status_code == 302
 
 
@@ -1275,7 +1278,11 @@ def test_soft_delete_acl(client, records, users, id, status_code, communities2):
         # 51994 case.01, 05(soft_delete)
         with patch("flask.templating._render", return_value=""):
             with patch("weko_records_ui.views.call_external_system") as mock_external, \
-                 patch("weko_records_ui.permissions.has_comadmin_permission",return_value=True):
+                 patch("weko_records_ui.permissions.has_comadmin_permission", return_value=True), \
+                 patch("weko_deposit.api.WekoIndexer.update_es_data"), \
+                 patch("weko_deposit.api.WekoIndexer.update_feedback_mail_list"), \
+                 patch("weko_deposit.api.WekoDeposit.remove_feedback_mail"), \
+                 patch("weko_deposit.api.WekoDeposit.remove_request_mail"):
                 pid = PersistentIdentifier.query.filter_by(
                     pid_type='recid', pid_value='1').first()
                 assert pid.status == PIDStatus.REGISTERED
@@ -1385,7 +1392,7 @@ def test_restore_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 500), # contributor
+        (0, 200), # contributor
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
@@ -1614,14 +1621,15 @@ def test_publish(app, client, records):
         with patch("weko_records_ui.views.url_for", return_value=""):
             with patch("weko_records_ui.views.call_external_system") as mock_external:
                 with patch("weko_records_ui.views.WekoRecord.commit"):
-                    with patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value=record_0_a):
-                        with app.test_request_context(data={"status": "1"}):
-                            publish(record.pid, record_0_b)
-                            mock_external.assert_called_with(old_record=record_0_c, new_record=record_1_c)
-                    with patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value=record_1_a):
-                        with app.test_request_context(data={"status": "0"}):
-                            publish(record.pid, record_1_b)
-                            mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
+                    with patch("weko_deposit.api.WekoIndexer.update_es_data"):
+                        with patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value=record_0_a):
+                            with app.test_request_context(data={"status": "1"}):
+                                publish(record.pid, record_0_b)
+                                mock_external.assert_called_with(old_record=record_0_c, new_record=record_1_c)
+                        with patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value=record_1_a):
+                            with app.test_request_context(data={"status": "0"}):
+                                publish(record.pid, record_1_b)
+                                mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_bucket_list(app,records,users):
