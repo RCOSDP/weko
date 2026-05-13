@@ -33,7 +33,7 @@ def deleteItem(id):
         if i.pid_type == 'recid':
             itemid_list.append(i.pid_value)
 
-    """ remvoe duplicated uuid """
+    """ remove duplicated uuid """
     object_uuid_list = list(set(object_uuid_list))
     itemid_list = list(set(itemid_list))
 

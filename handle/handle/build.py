@@ -27,8 +27,8 @@ config = {
     'SERVER_ADMINS': ' '.join(['"%s"'%s for s in os.getenv('SERVER_ADMINS', "").split(" ")]),
     'REPLICATION_ADMINS': ' '.join(['"%s"'%s for s in os.getenv('REPLICATION_ADMINS', "").split(" ")]),
     'HANDLE_HOST_IP': os.getenv('HANDLE_HOST_IP', '0.0.0.0'),
-    'SERVER_PRIVATE_KEY_PEM': os.getenv('SERVER_PRIVATE_KEY_PEM', '').encode('ASCII'), # Explict convert to byte string
-    'SERVER_PUBLIC_KEY_PEM': os.getenv('SERVER_PUBLIC_KEY_PEM', '').encode('ASCII'), # Explict convert to byte string
+    'SERVER_PRIVATE_KEY_PEM': os.getenv('SERVER_PRIVATE_KEY_PEM', '').encode('ASCII'), # Explicit convert to byte string
+    'SERVER_PUBLIC_KEY_PEM': os.getenv('SERVER_PUBLIC_KEY_PEM', '').encode('ASCII'), # Explicit convert to byte string
     'STORAGE_TYPE': os.getenv('STORAGE_TYPE', ''),
     'SQL_URL': os.getenv('SQL_URL', ''),
     'SQL_DRIVER': os.getenv('SQL_DRIVER', 'com.mysql.jdbc.Driver'),
@@ -41,8 +41,8 @@ config = {
     'DESC': os.getenv('DESC', 'YOUR DESCRIPTION'),
     'CONTACT_EMAIL': os.getenv('CONTACT_EMAIL', 'YOUR EMAIL'),
     'ORG_NAME': os.getenv('ORG_NAME', 'YOUR ORG'),
-    'ADMIN_PRIVATE_KEY_PEM': os.getenv('SERVER_PRIVATE_KEY_PEM', '').encode('ASCII'), # Explict convert to byte string
-    'ADMIN_PUBLIC_KEY_PEM': os.getenv('SERVER_PUBLIC_KEY_PEM', '').encode('ASCII') # Explict convert to byte string
+    'ADMIN_PRIVATE_KEY_PEM': os.getenv('SERVER_PRIVATE_KEY_PEM', '').encode('ASCII'), # Explicit convert to byte string
+    'ADMIN_PUBLIC_KEY_PEM': os.getenv('SERVER_PUBLIC_KEY_PEM', '').encode('ASCII') # Explicit convert to byte string
 }
 
 # Create private / public keys based on config using hdl-convert-key tool
