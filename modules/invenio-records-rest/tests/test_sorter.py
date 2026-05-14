@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import pytest
 from elasticsearch_dsl import Search
 
+import invenio_records_rest.sorter as sorter
 from invenio_records_rest.sorter import default_sorter_factory, eval_field, \
     geolocation_sort, parse_sort_field, reverse_order
 
@@ -101,14 +102,16 @@ def test_default_sorter_factory(app):
     with app.test_request_context("?sort=myfield"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'asc'}}, {'field2': {'order': 'desc'}}]
+            [{'field1': {'order': 'asc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'desc', 'unmapped_type': 'long'}}]
         assert urlargs['sort'] == 'myfield'
 
     # Reverse sort
     with app.test_request_context("?sort=-myfield"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'desc'}}, {'field2': {'order': 'asc'}}]
+            [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'asc', 'unmapped_type': 'long'}}]
         assert urlargs['sort'] == '-myfield'
 
     # Invalid sort key
@@ -121,24 +124,72 @@ def test_default_sorter_factory(app):
     with app.test_request_context("/?q="):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'asc'}}, {'field2': {'order': 'desc'}}]
+            [{'field1': {'order': 'asc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'desc', 'unmapped_type': 'long'}}]
         assert urlargs == dict(sort='myfield')
 
     # Default sort with query
     with app.test_request_context("/?q=test"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'desc'}}, {'field2': {'order': 'asc'}}]
+            [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'asc', 'unmapped_type': 'long'}}]
         assert urlargs == dict(sort='-myfield')
 
     # Default sort with query that includes unicodes
     with app.test_request_context("/?q=tést"):
         query, urlargs = default_sorter_factory(Search(), 'myindex')
         assert query.to_dict()['sort'] == \
-            [{'field1': {'order': 'desc'}}, {'field2': {'order': 'asc'}}]
+            [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+             {'field2': {'order': 'asc', 'unmapped_type': 'long'}}]
         assert urlargs == dict(sort='-myfield')
 
     # Default sort another index
     with app.test_request_context("/?q=test"):
         query, urlargs = default_sorter_factory(Search(), 'aidx')
         assert 'sort' not in query.to_dict()
+
+
+def test_default_sorter_factory_without_request_context(app, monkeypatch):
+    """Test default sorter factory without request context."""
+    app.config["RECORDS_REST_SORT_OPTIONS"] = dict(
+        myindex=dict(
+            myfield=dict(
+                fields=['field1', '-field2'],
+            )
+        ),
+    )
+    app.config["RECORDS_REST_DEFAULT_SORT"] = dict(
+        myindex=dict(
+            query='-myfield',
+            noquery='myfield',
+        ),
+    )
+
+    with app.app_context():
+        query, urlargs = default_sorter_factory(Search(), 'myindex')
+
+    assert query.to_dict()['sort'] == \
+        [{'field1': {'order': 'asc', 'unmapped_type': 'long'}},
+         {'field2': {'order': 'desc', 'unmapped_type': 'long'}}]
+    assert urlargs == dict(sort='myfield')
+
+    app.config["RECORDS_REST_DEFAULT_SORT"] = {}
+    monkeypatch.setattr(
+        sorter,
+        "RECORDS_REST_DEFAULT_SORT",
+        dict(
+            myindex=dict(
+                query='-myfield',
+                noquery='myfield',
+            ),
+        ),
+    )
+
+    with app.test_request_context("/?q=test"):
+        query, urlargs = default_sorter_factory(Search(), 'myindex')
+
+    assert query.to_dict()['sort'] == \
+        [{'field1': {'order': 'desc', 'unmapped_type': 'long'}},
+         {'field2': {'order': 'asc', 'unmapped_type': 'long'}}]
+    assert urlargs == dict(sort='-myfield')

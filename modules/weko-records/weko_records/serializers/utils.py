@@ -834,33 +834,17 @@ class OpenSearchDetailData:
                                 else:
                                     fe.prism.issn(source_identifiers)
                         else:
-                            source_identifiers = source_identifier_metadata.get(
-                                    source_identifier_value_key)
-                            source_identifier_types = source_identifier_metadata.get(
-                                source_identifier_attr_type_key)
-                            if source_identifiers and source_identifier_types:
-                                if isinstance(source_identifiers, str):
-                                    source_identifiers = [source_identifiers]
-                                if isinstance(source_identifier_types, str):
-                                    source_identifier_types = [source_identifier_types]
-                                if len(source_identifiers) != len(source_identifier_types):
-                                    attr = item_metadata.get(item_id).get("attribute_value_mlt")
-                                    if not attr:
-                                        continue
-                                    for a in attr:
-                                        if a.get(source_identifier_attr_type_key.split('.')[1]) \
-                                            and a.get(source_identifier_value_key.split('.')[1]):
-                                            continue
-                                        value = next(iter(a.values()))
-                                        if value in source_identifiers:
-                                            source_identifiers.remove(value)
-                                        if value in source_identifier_types:
-                                            source_identifier_types.remove(value)
-                                for source_identifier_type, source_identifier in zip(
-                                    source_identifier_types, source_identifiers
-                                    ):
-                                    if source_identifier_type == 'ISSN':
-                                        fe.prism.issn(source_identifier)
+                            attr = item_metadata.get(item_id).get("attribute_value_mlt")
+                            if not attr:
+                                continue
+                            type_key = source_identifier_attr_type_key.split('.')[1]
+                            value_key = source_identifier_value_key.split('.')[1]
+                            for a in attr:
+                                source_identifier_type = a.get(type_key)
+                                source_identifier_value = a.get(value_key)
+                                if source_identifier_type and source_identifier_value \
+                                    and source_identifier_type == 'ISSN':
+                                    fe.prism.issn(source_identifier_value)
         except Exception as ex:
             current_app.logger.error(ex)
 

@@ -131,7 +131,7 @@ def test_agg_bucket_sort(app):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_parse_bucket_response -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_parse_bucket_response(app):
     _raw_res = {'buckets': [{'key': 'test_value'}], 'field': 'test_name'}
-    
+
     res = parse_bucket_response(_raw_res, {})
     assert res=={'test_name': 'test_value'}
 
@@ -145,7 +145,7 @@ def test_get_doctype(app):
 def test_is_valid_access(app):
     res = is_valid_access()
     assert res==True
-    
+
     with patch("invenio_stats.utils.get_remote_addr", return_value='0.0.0.0'):
         app.config['STATS_EXCLUDED_ADDRS'] = ['0.0.0.0']
         res = is_valid_access()
@@ -315,14 +315,14 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute, index):
         'get-file-download-per-user-report': None,
         'get-file-preview-per-user-report': None},
         _data_list)
-    assert _data_list=={} 
+    assert _data_list=={}
     QueryFileReportsHelper.Calculation(_report_res, _data_list)
     assert _data_list=={
         1: {'cur_user_id': 1, 'total_download': 2, 'total_preview': 5},
         2: {'cur_user_id': 2, 'total_download': 3},
         3: {'cur_user_id': 3, 'total_download': 4},
         4: {'cur_user_id': 4, 'total_preview': 1}}
-    
+
     expect_all_groups = []
     def mock_Calculation(res, data_list, all_groups=set(), event=None):
         if event == 'billing_file_download':
@@ -340,7 +340,7 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute, index):
     # get_file_stats_report
     with patch("invenio_stats.utils.QueryFileReportsHelper.Calculation", side_effect=mock_Calculation):
         with patch("invenio_stats.queries.ESTermsQuery.run", return_value=_res):
-            res = QueryFileReportsHelper.get_file_stats_report(event='file_download', year=2022, month=10) 
+            res = QueryFileReportsHelper.get_file_stats_report(event='file_download', year=2022, month=10)
             assert res=={
                 'all': _expect_data_list,
                 'all_groups': expect_all_groups,
@@ -356,7 +356,7 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute, index):
                 'open_access': _expect_data_list
             }
         with patch("invenio_stats.queries.ESTermsQuery.run", return_value=_billing_res):
-            res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10) 
+            res = QueryFileReportsHelper.get_file_stats_report(event='billing_file_download', year=2022, month=10)
             assert res=={
                 'all': _expect_billing_data_list,
                 'all_groups': expect_all_groups,
@@ -378,9 +378,9 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute, index):
 
     # get
     res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
     res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
     res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
     assert res=={'all': {}, 'date': '2022-10'}
     res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
@@ -398,9 +398,9 @@ def test_query_file_reports_helper(i18n_app, roles, mock_es_execute, index):
 def test_query_file_reports_helper_error(app):
     # get
     res = QueryFileReportsHelper.get(year=2022, month=10, event='file_download')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
     res = QueryFileReportsHelper.get(year=2022, month=10, event='billing_file_download')
-    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []} 
+    assert res=={'all': [], 'all_groups': [], 'date': '2022-10', 'open_access': []}
     res = QueryFileReportsHelper.get(year=2022, month=10, event='file_using_per_user')
     assert res=={'all': {}, 'date': '2022-10'}
     res = QueryFileReportsHelper.get(year=2022, month=10, event='test')
@@ -611,7 +611,7 @@ def test_query_access_counter_helper(app, es):
 }
     with patch('invenio_stats.queries.ESTermsQuery.run', return_value=_res):
         res = QueryAccessCounterHelper.get_top_page_access_counter(year=2022, month=10, start_date='2022-10-01', end_date='2022-10-10')
-        assert res=={'date': '2022-10-01-2022-10-10', 'all':{"count":152}}    
+        assert res=={'date': '2022-10-01-2022-10-10', 'all':{"count":152}}
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_query_access_counter_helper_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_access_counter_helper_error(app):
     # get_top_page_access_counter
@@ -665,6 +665,26 @@ def test_query_record_view_per_index_report_helper(app, es):
 
     res = QueryRecordViewPerIndexReportHelper.get(start_date='2022-10-01', end_date='2022-10-31')
     assert res=={'all': [], 'date': '2022-10-01-2022-10-31', 'total': 0}
+
+    # end_dateに時間が追加されているか
+    with patch.object(QueryRecordViewPerIndexReportHelper, 'build_query')\
+            as mock_build_query:
+        mock_agg_query = MagicMock()
+        mock_agg_query.execute.return_value.to_dict.return_value = {
+            'aggregations': {
+                QueryRecordViewPerIndexReportHelper.nested_path: {
+                    'my_buckets': {'buckets': []},
+                    'doc_count': 0
+                }
+            }
+        }
+        mock_build_query.return_value = mock_agg_query
+        with patch.object(QueryRecordViewPerIndexReportHelper,
+                          'parse_bucket_response', return_value=0):
+            QueryRecordViewPerIndexReportHelper.get(
+                start_date='2022-10-01', end_date='2022-10-31')
+            called_args = mock_build_query.call_args[0]
+            assert called_args[1] == '2022-10-31T23:59:59'
 
 def test_query_record_view_per_index_report_helper_error(app):
     # get
@@ -1086,7 +1106,7 @@ def test_StatsCliUtil(app, db):
     )
     assert not stats_cli.delete_data(True)
 
-    
+
 
     stats_cli = StatsCliUtil(
         StatsCliUtil.EVENTS_TYPE, _empty_types, verbose=False

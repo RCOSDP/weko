@@ -456,60 +456,196 @@ def test__set_publication_date(app):
 
 
 #     def _set_source_identifier(self, fe, item_map, item_metadata):
+# .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test__set_source_identifier -v -s -vv --cov-branch --cov-report=term --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test__set_source_identifier(app):
     sample_copy = copy.deepcopy(sample)
     fe = MagicMock()
     fe.prism = MagicMock()
-
-    def issn(item):
-        return item
-
-    fe.prism.issn = issn
+    fe.prism.issn = MagicMock()
 
     item_map = {
         "date.@value": "date.@value",
         "date.@attributes.dateType": "date.@attributes.dateType",
-        "sourceIdentifier.@value": "sourceIdentifier",
-        "sourceIdentifier.@attributes.identifierType": "sourceIdentifier.@attributes.identifierType",
     }
 
     item_metadata = {
-        "sourceIdentifier": "sourceIdentifier",
-        "@value": "@value",
-        "sourceIdentifier.@value": "sourceIdentifier",
-        "sourceIdentifier.@attributes.identifierType": "sourceIdentifier.@attributes.identifierType",
+    "item_1": {
+            "attribute_name": "Source Identifier",
+            "attribute_value_mlt": [
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source1"
+                },
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source2"
+                }
+            ]
+        }
     }
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_not_called()
+    fe.prism.issn.reset_mock()
 
-    assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
-
-    item_metadata["sourceIdentifier"] = {
-        "sourceIdentifier": "sourceIdentifier",
+    item_metadata = {
+    "item_1": {
+            "attribute_name": "Source Identifier",
+            "attribute_value_mlt": [
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source1"
+                },
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source2"
+                }
+            ]
+        }
     }
-
-    item_metadata["@value"] = {
-        "@value": "@value",
+    item_map = {
+        "date.@value": "date.@value",
+        "date.@attributes.dateType": "date.@attributes.dateType",
+        "sourceIdentifier.@value": "item_1.subitem_1",
+        "sourceIdentifier.@attributes.identifierType": "item_1.subitem_3",
     }
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_any_call("test_source1")
+    fe.prism.issn.assert_any_call("test_source2")
+    fe.prism.issn.reset_mock()
 
-    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
-        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    item_metadata = {
+    "item_1": {
+            "attribute_name": "Source Identifier",
+            "attribute_value_mlt": [
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source1"
+                },
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source2"
+                }
+            ]
+        },
+    "item_2": {
+        "attribute_name": "source2",
+        "attribute_value_mlt": [
+            {
+                "subitem_4": "ISSN",
+                "subitem_2": "test_source3"
+            }
+        ]
+    }
+}
+    item_map = {
+        "date.@value": "date.@value",
+        "date.@attributes.dateType": "date.@attributes.dateType",
+        "sourceIdentifier.@value": "item_1.subitem_1,item_2.subitem_2",
+        "sourceIdentifier.@attributes.identifierType": "item_1.subitem_3,item_2.subitem_4",
+    }
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_any_call("test_source1")
+    fe.prism.issn.assert_any_call("test_source2")
+    fe.prism.issn.assert_any_call("test_source3")
+    fe.prism.issn.reset_mock()
 
-    item_metadata["sourceIdentifier"] = [
-        "sourceIdentifier"
-    ]
+    item_metadata = {
+        "item_16": {
+            "attribute_name": "Title",
+            "attribute_value_mlt": [
+                {
+                    "subitem_15": "test_source",
+                    "subitem_15": "ja"
+                }
+            ]
+        }
+    }
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_not_called()
+    fe.prism.issn.reset_mock()
 
-    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
-        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    item_metadata = {
+    "item_1": {
+            "attribute_name": "Source Identifier",
+            "attribute_value_mlt": [
+                {
+                    "subitem_5": "ISSN",
+                    "subitem_6": "test_source1"
+                },
+            ]
+        }
+}
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_not_called()
+    fe.prism.issn.reset_mock()
 
-    sample_copy.output_type = "not_atom"
-    item_metadata["sourceIdentifier"] = "ISSN"
 
-    with patch("weko_records.serializers.utils.get_metadata_from_map", return_value=item_metadata):
-        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    sample_copy.output_type="rss"
 
-        item_metadata["sourceIdentifier.@attributes.identifierType"] = ["ISSN"]
-        item_metadata["sourceIdentifier"] = ["ISSN"]
+    item_metadata = {
+    "item_1": {
+            "attribute_name": "Source Identifier",
+            "attribute_value_mlt": [
+                {
+                    "subitem_3": "EISSN",
+                    "subitem_1": "test_source1"
+                },
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source2"
+                }
+            ]
+        },
+    "item_2": {
+        "attribute_name": "source2",
+        "attribute_value_mlt": [
+            {
+                "subitem_4": "ISSN",
+                "subitem_2": "test_source3"
+            }
+        ]
+    }
+}
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_any_call("test_source2")
+    fe.prism.issn.assert_any_call("test_source3")
+    assert fe.prism.issn.call_count == 2
+    fe.prism.issn.reset_mock()
 
-        assert sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata) == None
+    item_metadata = {
+    "item_1": {
+            "attribute_name": "Source Identifier",
+            "attribute_value_mlt": [
+                {
+                    "subitem_1": "test_source1"
+                },
+                {
+                    "subitem_3": "EISSN"
+                },
+                {
+                    "subitem_3": "ISSN",
+                    "subitem_1": "test_source2"
+                },
+            ]
+        }
+    }
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_any_call("test_source2")
+    assert fe.prism.issn.call_count == 1
+    fe.prism.issn.reset_mock()
+
+    item_metadata = {
+        "item_1": {
+                "attribute_name": "Source Identifier",
+            }
+        }
+    sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+    fe.prism.issn.assert_not_called()
+    fe.prism.issn.reset_mock()
+
+    with patch("weko_records.serializers.utils.get_metadata_from_map",side_effect=Exception("test error")):
+        sample_copy._set_source_identifier(fe=fe, item_map=item_map, item_metadata=item_metadata)
+        fe.prism.issn.assert_not_called()
 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_serializers_utils.py::test__set_author_info -v -s -vv --cov-branch --cov-report=term --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 #     def _set_author_info(self, fe, item_map, item_metadata, request_lang):

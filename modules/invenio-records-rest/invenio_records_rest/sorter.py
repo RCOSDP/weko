@@ -23,7 +23,7 @@ from __future__ import absolute_import, print_function
 import pickle
 
 import six
-from flask import current_app, request
+from flask import current_app, request, has_request_context
 
 from .config import RECORDS_REST_DEFAULT_SORT
 
@@ -126,12 +126,14 @@ def default_sorter_factory(search, index):
     :returns: Tuple of (query, URL arguments).
     """
     sort_arg_name = 'sort'
-    urlfield = request.values.get(sort_arg_name, '', type=str)
+    urlfield = request.values.get(sort_arg_name, '', type=str) \
+        if has_request_context() else ''
 
     # Get default sorting if sort is not specified.
     if not urlfield:
         # cast to six.text_type to handle unicodes in Python 2
-        has_query = request.values.get('q', type=six.text_type)
+        has_query = request.values.get('q', type=six.text_type) \
+            if has_request_context() else None
         if current_app.config.get('RECORDS_REST_DEFAULT_SORT'):
             urlfield = current_app.config['RECORDS_REST_DEFAULT_SORT'].get(
                 index, {}).get('query' if has_query else 'noquery', '')

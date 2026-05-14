@@ -1079,7 +1079,7 @@ class QueryRecordViewPerIndexReportHelper(object):
                 query_month = str(year) + '-' + str(month).zfill(2)
                 _, lastday = calendar.monthrange(year, month)
                 start_date = query_month + '-01'
-                end_date = query_month + '-' + str(lastday).zfill(2) + 'T23:59:59'
+                end_date = query_month + '-' + str(lastday).zfill(2)
             else:
                 query_month = f"{start_date}-{end_date}"
 
@@ -1089,6 +1089,7 @@ class QueryRecordViewPerIndexReportHelper(object):
             total = 1
             count = 0
             while count < total and (after_key or first_search):
+                end_date = end_date + 'T23:59:59'
                 agg_query = cls.build_query(start_date, end_date, after_key)
                 current_app.logger.debug(agg_query.to_dict())
                 temp_res = agg_query.execute().to_dict()
