@@ -1,0 +1,75 @@
+### テストの種類
+|マーカー名                                           |説明|
+|----------------------------------------------------|---|
+|ddi_mapping_schema                                  |マッピング画面表示時にddi_mappingのスキーマを指定するテスト|
+|get_all_mapping_schema                              |登録されているすべてのスキーマを取得するテスト|
+|get_ddi_mapping_schema                              |ddi_mappingのスキーマを取得するテスト|
+|get_invalid_mapping_schema                          |存在しないスキーマを指定するテスト|
+|get_jpcoar_mapping_schema                           |jpcoar_mappingのスキーマを取得するテスト|
+|get_jpcoar_v1_mapping_schema                        |jpcoar_v1_mappingのスキーマを取得するテスト|
+|get_lom_mapping_schema                              |lom_mappingのスキーマを取得するテスト|
+|get_oai_dc_mapping_schema                           |oai_dc_mappingのスキーマを取得するテスト|
+|jpcoar_mapping_schema                               |マッピング画面表示時にjpcoar_mappingのスキーマを指定するテスト|
+|jpcoar_v1_mapping_schema                            |マッピング画面表示時にjpcoar_v1_mappingのスキーマを指定するテスト|
+|lom_mapping_schema                                  |マッピング画面表示時にlom_mappingのスキーマを指定するテスト|
+|mapping_all_schema_ddi_mapping                      |ddi_mappingのスキーマを全件使用して編集するテスト|
+|mapping_all_schema_jpcoar_mapping                   |jpcoar_mappingのスキーマを全件使用して編集するテスト|
+|mapping_all_schema_jpcoar_vi_mapping                |jpcoar_v1_mappingのスキーマを全件使用して編集するテスト|
+|mapping_all_schema_lom_mapping                      |lom_mappingのスキーマを全件使用して編集するテスト|
+|mapping_all_schema_mapping_success_ddi_mapping      |ddi_mappingのスキーマをランダムで使用して編集するテスト|
+|mapping_all_schema_mapping_success_jpcoar_mapping   |jpcoar_mappingのスキーマをランダムで使用して編集するテスト|
+|mapping_all_schema_mapping_success_jpcoar_v1_mapping|jpcoar_v1_mappingのスキーマをランダムで使用して編集するテスト|
+|mapping_all_schema_mapping_success_lom_mapping      |lom_mappingのスキーマをランダムで使用して編集するテスト|
+|mapping_all_schema_mapping_success_oai_dc_mapping   |oai_dc_mappingのスキーマをらダムで使用して編集するテスト|
+|mapping_all_schema_oai_dc_mapping                   |oai_dc_mappingのスキーマを全件使用して編集するテスト|
+|mapping_duplicate_ddi                               |ddi_mappingのマッピング編集に使用するリクエストボディのmappingで重複エラーが発生するテスト|
+|mapping_duplicate_jpcoar1                           |jpcoar_v1_mappingのマッピング編集に使用するリクエストボディのmappingで重複エラーが発生するテスト|
+|mapping_duplicate_jpcoar2                           |jpcoar_mappingのマッピング編集に使用するリクエストボディのmappingで重複エラーが発生するテスト|
+|mapping_duplicate_lom                               |lom_mappingのマッピング編集に使用するリクエストボディのmappingで重複エラーが発生するテスト|
+|mapping_duplicate_oai_dc                            |oai_dc_mappingのマッピング編集に使用するリクエストボディのmappingで重複エラーが発生するテスト|
+|mapping_duplicate_success_dc                        |以下テストを実行する<br>・oai_dc_mappingの重複しているmappingで重複を無視して編集<br>・OAI-PMHでの出力確認|
+|mapping_duplicate_success_ddi                       |以下テストを実行する<br>ddi_mappingの重複しているmappingで重複を無視して編集<br>・OAI-PMHでの出力確認|
+|mapping_duplicate_success_jpcoar1                   |以下テストを実行する<br>・jpcoar_v1_mappingの重複しているmappingで重複を無視して編集<br>・OAI-PMHでの出力確認|
+|mapping_duplicate_success_jpcoar2                   |以下テストを実行する<br>・jpcoar_mappingの重複しているmappingで重複を無視して編集<br>・OAI-PMHでの出力確認|
+|mapping_duplicate_success_lom                       |lom_mappingの重複しているmappingで重複を無視して編集するテスト|
+|mapping_lom                                         |lom_mappingのマッピングを編集するテスト|
+|mapping_oai_pmh_dc                                  |以下テストを実行する<br>・oai_dc_mappingのマッピングの編集<br>・OAI-PMHでの出力確認|
+|mapping_oai_pmh_ddi                                 |以下テストを実行する<br>・ddi_mappingのマッピングの編集<br>・OAI-PMHでの出力確認|
+|mapping_oai_pmh_jpcoar1                             |以下テストを実行する<br>・jpcoar_v1_mappingのマッピングの編集<br>・OAI-PMHでの出力確認|
+|mapping_oai_pmh_jpcoar2                             |以下テストを実行する<br>・jpcoar_mappingのマッピングの編集<br>・OAI-PMHでの出力確認|
+|mapping_type_missing                                |マッピング編集時に編集対象が指定されていないテスト|
+|mapping_update_header_error_ddi                     |ddi_mappingのマッピング編集時のヘッダーでエラーが発生するテスト|
+|mapping_update_header_error_jpcoar1                 |jpcoar_v1_mappingのマッピング編集時のヘッダーでエラーが発生するテスト|
+|mapping_update_header_error_jpcoar2                 |jpcoar_mappingのマッピング編集時のヘッダーでエラーが発生するテスト|
+|mapping_update_header_error_lom                     |lom_mappingのマッピング編集時のヘッダーでエラーが発生するテスト|
+|mapping_update_header_error_oai_dc                  |oai_dc_mappingのマッピング編集時のヘッダーでエラーが発生するテスト|
+|mapping_update_item_type_id_missing_ddi             |ddi_mappingのマッピング編集に使用するリクエストボディのitem_type_idが欠損しているテスト|
+|mapping_update_item_type_id_missing_jpcoar1         |jpcoar_v1_mappingのマッピング編集に使用するリクエストボディのitem_type_idが欠損しているテスト|
+|mapping_update_item_type_id_missing_jpcoar2         |jpcoar_mappingのマッピング編集に使用するリクエストボディのitem_type_idが欠損しているテスト|
+|mapping_update_item_type_id_missing_lom             |lom_mappingのマッピング編集に使用するリクエストボディのitem_type_idが欠損しているテスト|
+|mapping_update_item_type_id_missing_oai_dc          |oai_dc_mappingのマッピング編集に使用するリクエストボディのitem_type_idが欠損しているテスト|
+|mapping_update_item_type_id_null_ddi                |ddi_mappingのマッピング編集に使用するリクエストボディのitem_type_idがnullであるテスト|
+|mapping_update_item_type_id_null_jpcoar1            |jpcoar_v1_mappingのマッピング編集に使用するリクエストボディのitem_type_idがnullであるテスト|
+|mapping_update_item_type_id_null_jpcoar2            |jpcoar_mappingのマッピング編集に使用するリクエストボディのitem_type_idがnullであるテスト|
+|mapping_update_item_type_id_null_lom                |lom_mappingのマッピング編集に使用するリクエストボディのitem_type_idがnullであるテスト|
+|mapping_update_item_type_id_null_oai_dc             |oai_dc_mappingのマッピング編集に使用するリクエストボディのitem_type_idがnullであるテスト|
+|mapping_update_item_type_id_string_ddi              |ddi_mappingのマッピング編集に使用するリクエストボディのitem_type_idがidでない文字列であるテスト|
+|mapping_update_item_type_id_string_jpcoar1          |jpcoar_v1_mappingのマッピング編集に使用するリクエストボディのitem_type_idがidでない文字列であるテスト|
+|mapping_update_item_type_id_string_jpcoar2          |jpcoar_mappingのマッピング編集に使用するリクエストボディのitem_type_idがidでない文字列であるテスト|
+|mapping_update_item_type_id_string_lom              |lom_mappingのマッピング編集に使用するリクエストボディのitem_type_idがidでない文字列であるテスト|
+|mapping_update_item_type_id_string_oai_dc           |oai_dc_mappingのマッピング編集に使用するリクエストボディのitem_type_idがidでない文字列であるテスト|
+|no_itemtypes                                        |アイテムタイプが登録されていない状態でマッピング画面にアクセスするテスト|
+|no_xsd                                              |oaiserver_schemaテーブルのxsdがnullの状態で以下のテストを実行する<br>・アイテムタイプの指定あり<br>・スキーマ指定なしでスキーマ取得<br>・スキーマ指定ありでスキーマ取得|
+|not_selected_itemtype                               |以下テストを実行する<br>・アイテムタイプの指定なし<br>・アイテムタイプの指定あり<br>・存在しないアイテムタイプの指定<br>・アイテムタイプの指定に文字列使用|
+|oai_dc_mapping_schema                               |マッピング画面表示時に以下のスキーマを指定するテストを実行する<br>・oai_dc_mapping<br>・存在しないスキーマ|
+
+
+### テスト実行ロール
+|マーカー名       |説明|
+|----------------|---|
+|system_admin    |システム管理者のロールを持つユーザーでのテスト|
+|repository_admin|リポジトリ管理者のロールを持つユーザーでのテスト|
+|community_admin |コミュニティ管理者のロールを持つユーザーでのテスト|
+|contributor     |コントリビュータのロールを持つユーザーでのテスト|
+|user            |ロールを持たないユーザーでのテスト|
+|guest           |ゲストユーザーでのテスト|

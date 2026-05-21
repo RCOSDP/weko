@@ -35,14 +35,14 @@ def create_itemtype_template():
         # Create template for entering data
         template = create_template(result['schema'])
         template['$schema'] = '/items/jsonschema/' + str(schema[0])
-        template['shared_user_id'] = -1
+        template['shared_user_ids'] = []
         with open('request_params/item_type_template/template/' + file_name + '.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(template, indent=4, ensure_ascii=False))
         
         # Create template for generating random data
         random_template, _ = create_random_template(result['schema'])
         random_template['$schema'] = '/items/jsonschema/' + str(schema[0])
-        random_template['shared_user_id'] = -1
+        random_template['shared_user_ids'] = []
         with open('request_params/item_type_template/template/' + file_name + '_random.json', 'w', encoding='utf-8') as f:
             f.write(json.dumps(random_template, indent=4, ensure_ascii=False))
 
@@ -163,9 +163,10 @@ def create_template(json):
     text_type = ['text', 'textarea', 'select', 'radios']
     result = {}
     for k, v in json.items():
-        if v.get('title') == 'Identifier Registration'\
-            or v.get('title').startswith('Persistent Identifier')\
-            or v.get('title') == 'File Information':
+        if v.get('title') \
+            and (v.get('title') == 'Identifier Registration'\
+                 or v.get('title').startswith('Persistent Identifier')\
+                 or v.get('title') == 'File Information'):
             continue
         if v.get('format'):
             if v.get('format') == 'datetime':
@@ -210,7 +211,10 @@ def create_random_template(json):
     result = {}
     has_uri = False
     for k, v in json.items():
-        if v.get('title') == 'Identifier Registration' or v.get('title').startswith('Persistent Identifier') or v.get('title') == 'File Information':
+        if v.get('title') \
+            and (v.get('title') == 'Identifier Registration' \
+                 or v.get('title').startswith('Persistent Identifier') \
+                 or v.get('title') == 'File Information'):
             continue
         if v.get('format'):
             if v.get('format') == 'datetime':

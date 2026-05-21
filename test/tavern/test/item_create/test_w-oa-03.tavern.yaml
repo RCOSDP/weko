@@ -1,11 +1,12 @@
 test_name: 個別登録_重複アイテムなし
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_no_duplicate
 
 stages:
   - name: workflow/activity/init
@@ -20,12 +21,12 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -34,13 +35,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -49,13 +50,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -65,7 +66,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data
+          function: helper.common.response_helper:response_save_register_data
           extra_kwargs:
             file_name: w-oa-03/item_type_30002.json
   - name: api/items/validate
@@ -75,13 +76,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -92,7 +93,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -100,7 +101,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -111,14 +112,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスでないことを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_iframe_save_model_response
+        function: helper.item_create.verify_helper:response_verify_iframe_save_model_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
 
@@ -126,11 +127,12 @@ stages:
 test_name: 個別登録_DOI重複1件
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_duplicate_doi_1
 
 stages:
   - name: prepare
@@ -142,7 +144,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03}"
@@ -159,13 +161,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -174,13 +176,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -189,13 +191,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -205,7 +207,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data
+          function: helper.common.response_helper:response_save_register_data
           extra_kwargs:
             file_name: w-oa-03/item_type_30002.json
   - name: api/items/validate
@@ -215,13 +217,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -232,7 +234,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -240,7 +242,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -251,14 +253,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"
@@ -268,11 +270,12 @@ stages:
 test_name: 個別登録_DOI重複2件
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_duplicate_doi_2
 
 stages:
   - name: prepare
@@ -284,7 +287,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03}"
@@ -301,13 +304,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 2
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -316,13 +319,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -331,13 +334,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -347,7 +350,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data
+          function: helper.common.response_helper:response_save_register_data
           extra_kwargs:
             file_name: w-oa-03/item_type_30002.json
   - name: api/items/validate
@@ -357,13 +360,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -374,7 +377,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -382,7 +385,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -393,27 +396,29 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"
           created_count: 2
+
 ---
 test_name: 個別登録_DOI重複10件
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_duplicate_doi_10
 
 stages:
   - name: prepare
@@ -425,7 +430,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03}"
@@ -442,13 +447,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 10
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -457,13 +462,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -472,13 +477,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -488,7 +493,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data
+          function: helper.common.response_helper:response_save_register_data
           extra_kwargs:
             file_name: w-oa-03/item_type_30002.json
   - name: api/items/validate
@@ -498,13 +503,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -515,7 +520,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -523,7 +528,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -534,14 +539,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"
@@ -551,11 +556,12 @@ stages:
 test_name: 個別登録_タイトル・資源タイプ・著者同一
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_same_title_resource_type_author
 
 stages:
   - name: prepare
@@ -567,11 +573,12 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_duplicate}"
             creation_count: 1
+            replace_title: false
   - name: workflow/activity/init
     request:
       url: "{host}/workflow/activity/init"
@@ -584,13 +591,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -599,13 +606,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -614,13 +621,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -630,7 +637,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -642,13 +649,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -659,7 +666,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -667,7 +674,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -678,14 +685,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"
@@ -695,11 +702,12 @@ stages:
 test_name: 個別登録_タイトルの表記ゆれ
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_title_variation
 
 stages:
   - name: prepare
@@ -711,7 +719,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_duplicate}"
@@ -728,13 +736,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -743,13 +751,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -758,13 +766,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -774,7 +782,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -786,13 +794,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -803,7 +811,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -811,7 +819,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -822,14 +830,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"
@@ -839,11 +847,12 @@ stages:
 test_name: 個別登録_タイトル不一致
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_title_not_match
 
 stages:
   - name: prepare
@@ -855,7 +864,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_duplicate}"
@@ -872,13 +881,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -887,13 +896,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -902,13 +911,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -918,7 +927,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -930,13 +939,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -947,7 +956,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -955,7 +964,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -966,14 +975,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスでないことを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_iframe_save_model_response
+        function: helper.item_create.verify_helper:response_verify_iframe_save_model_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
 
@@ -981,11 +990,12 @@ stages:
 test_name: 個別登録_資源タイプ不一致
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_resource_type_not_match
 
 stages:
   - name: prepare
@@ -997,11 +1007,12 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_duplicate}"
             creation_count: 1
+            replace_title: false
   - name: workflow/activity/init
     request:
       url: "{host}/workflow/activity/init"
@@ -1014,13 +1025,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -1029,13 +1040,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -1044,13 +1055,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -1060,7 +1071,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -1072,13 +1083,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -1089,7 +1100,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -1097,7 +1108,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -1108,14 +1119,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスでないことを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_iframe_save_model_response
+        function: helper.item_create.verify_helper:response_verify_iframe_save_model_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
 
@@ -1123,11 +1134,12 @@ stages:
 test_name: 個別登録_著者名不一致
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_author_not_match
 
 stages:
   - name: prepare
@@ -1139,11 +1151,12 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_duplicate}"
             creation_count: 1
+            replace_title: false
   - name: workflow/activity/init
     request:
       url: "{host}/workflow/activity/init"
@@ -1156,13 +1169,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -1171,13 +1184,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -1186,13 +1199,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -1202,7 +1215,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -1214,13 +1227,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -1231,7 +1244,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -1239,7 +1252,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -1250,14 +1263,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスでないことを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_iframe_save_model_response
+        function: helper.item_create.verify_helper:response_verify_iframe_save_model_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
 
@@ -1265,11 +1278,12 @@ stages:
 test_name: 個別登録_著者名順番変更
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_author_order_change
 
 stages:
   - name: prepare
@@ -1281,11 +1295,12 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_duplicate}"
             creation_count: 1
+            replace_title: false
   - name: workflow/activity/init
     request:
       url: "{host}/workflow/activity/init"
@@ -1298,13 +1313,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -1313,13 +1328,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -1328,13 +1343,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -1344,7 +1359,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -1356,13 +1371,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -1373,7 +1388,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -1381,7 +1396,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -1392,14 +1407,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"
@@ -1409,11 +1424,12 @@ stages:
 test_name: 個別登録_著者DB
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_author_db
 
 stages:
   - name: prepare item
@@ -1425,11 +1441,12 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.item_create_helper:create_item
+          function: helper.common.item_create_helper:create_item
           extra_kwargs:
             host: "{host}"
             create_info_file: "{create_info.w-oa-03_dup_author}"
             creation_count: 1
+            replace_title: false
   - name: prepare author
     request:
       url: "{host}"
@@ -1455,13 +1472,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           before_count: 1
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -1470,13 +1487,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -1485,13 +1502,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -1501,7 +1518,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data_with_change
+          function: helper.common.response_helper:response_save_register_data_with_change
           extra_kwargs:
             file_name: w-oa-03/item_type_30002_duplicate.json
             key_dict_file: item_type_30002_keys.json
@@ -1513,13 +1530,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: validate
@@ -1530,7 +1547,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -1538,7 +1555,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-03.success_case}"
           key: save_activity_data
@@ -1549,14 +1566,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       # ポップアップが表示されるレスポンスであることを確認
       verify_response_with:
-        function: helper.verify_helper:response_verify_duplicate_item
+        function: helper.item_create.verify_helper:response_verify_duplicate_item
         extra_kwargs:
           host: "{host}"
           file_name: "{expected_json.w-oa-03.duplicate_item}"

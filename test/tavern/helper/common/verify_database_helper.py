@@ -1,28 +1,9 @@
 from datetime import datetime, timedelta
 import json
 import os
-import psycopg2
 
-from helper.config import DATABASE, REPLACEMENT_DECISION_STRING
+from helper.config import REPLACEMENT_DECISION_STRING
 
-
-def connect_db():
-    """Connect to database
-    
-    Args:
-        None
-        
-    Returns:
-        psycopg2.extensions.connection: connection to database
-    """
-    conn = psycopg2.connect(
-        dbname=DATABASE['dbname'],
-        user=DATABASE['user'],
-        password=DATABASE['password'],
-        host=DATABASE['host'],
-        port=DATABASE['port'],
-    )
-    return conn
 
 def compare_db_data(cursor, folder_path, replace_params = {}, type_conversion_params = {}, datetime_columns=[]):
     """Compare data in database with data in excel file

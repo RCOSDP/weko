@@ -1,0 +1,16 @@
+{
+    "flow_id": 1,
+    "itemtype_id": 10002,
+    "workflow_id": 102,
+    "data_file": "request_params/prepare_item/item_info.json",
+    "title_key": "item_30002_title0.0.subitem_title",
+    "file_key": "item_30002_file35",
+    "identifier_key": "item_30002_identifier16",
+    "action_version": {
+        "3": "1.0.1",
+        "4": "2.0.0",
+        "5": "1.0.1",
+        "6": "1.0.0",
+        "7": "1.0.0"
+    }
+}

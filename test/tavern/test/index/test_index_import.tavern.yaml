@@ -1,0 +1,367 @@
+test_name: インデックス編集 アイテムインポート
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_edit_index_item_import
+  - system_admin
+  - repository_admin
+  - community_admin
+  - contributor
+  - user
+  - guest
+
+stages:
+  - name: GET login system admin
+    request:
+      url: "{host}/login/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.response_helper:response_save_csrf_token
+  - name: POST login system admin
+    request:
+      url: "{host}/login/"
+      method: POST
+      json:
+        email: wekosoftware@nii.ac.jp
+        password: uspass123
+        next: "/"
+        csrf_token: "{csrf_token}"
+      verify: false
+    response:
+      status_code: 200
+  - name: prepare index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/sysadmin/index_data_3.json"
+            invalid: true
+  - name: prepare import item
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_import_helper:import_item
+          extra_kwargs:
+            host: "{host}"
+            file_path: "./upload_file/prepare/デフォルトアイテムタイプ（フル）(30002).tsv"
+            target_index: 1623632832836
+            csrf_token: "{csrf_token}"
+  - name: edit index system admin
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/sysadmin/index_data_3.json"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "system_admin"
+            code: 200
+            index: "{index}"
+  - name: logout system admin
+    request:
+      url: "{host}/logout/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/"
+  - name: GET login repository admin
+    request:
+      url: "{host}/login/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.response_helper:response_save_csrf_token
+  - name: POST login repository admin
+    request:
+      url: "{host}/login/"
+      method: POST
+      json:
+        email: repoadmin@example.org
+        password: uspass123
+        next: "/"
+        csrf_token: "{csrf_token}"
+      verify: false
+    response:
+      status_code: 200
+  - name: edit index repository admin
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "repository_admin"
+            code: 200
+            index: "{index}"
+            result: "{import_result}"
+  - name: logout repository admin
+    request:
+      url: "{host}/logout/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/"
+  - name: GET login community admin
+    request:
+      url: "{host}/login/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.response_helper:response_save_csrf_token
+  - name: POST login community admin
+    request:
+      url: "{host}/login/"
+      method: POST
+      json:
+        email: comadmin@example.org
+        password: uspass123
+        next: "/"
+        csrf_token: "{csrf_token}"
+      verify: false
+    response:
+      status_code: 200
+  - name: edit index community admin within community
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/comadmin/index_data_3.json"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "community_admin_within_community"
+            code: 200
+            index: "{index}"
+            result: "{import_result}"
+  - name: edit index community admin outside community
+    request:
+      url: "{host}/api/tree/index/11"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/comadmin/index_data_11.json"
+    response:
+      status_code: 403
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "community_admin_outside_community"
+            code: 403
+            index: "{index}"
+            result: "{import_result}"
+  - name: logout community admin
+    request:
+      url: "{host}/logout/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/"
+  - name: GET login contributor
+    request:
+      url: "{host}/login/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.response_helper:response_save_csrf_token
+  - name: POST login contributor
+    request:
+      url: "{host}/login/"
+      method: POST
+      json:
+        email: contributor@example.org
+        password: uspass123
+        next: "/"
+        csrf_token: "{csrf_token}"
+      verify: false
+    response:
+      status_code: 200
+  - name: edit index contributor within community
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/contributor/index_data_3.json"
+    response:
+      status_code: 403
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "contributor_within_community"
+            code: 403
+            index: "{index}"
+          result: "{import_result}"
+  - name: edit index contributor outside community
+    request:
+      url: "{host}/api/tree/index/11"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/contributor/index_data_11.json"
+    response:
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "contributor_outside_community"
+            code: 403
+            index: "{index}"
+            result: "{import_result}"
+  - name: logout contributor
+    request:
+      url: "{host}/logout/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/"
+  - name: GET login user
+    request:
+      url: "{host}/login/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.response_helper:response_save_csrf_token
+  - name: POST login user
+    request:
+      url: "{host}/login/"
+      method: POST
+      json:
+        email: user@example.org
+        password: uspass123
+        next: "/"
+        csrf_token: "{csrf_token}"
+      verify: false
+    response:
+      status_code: 200
+  - name: edit index user
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/user/index_data_3.json"
+    response:
+      status_code: 403
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "user"
+            code: 403
+            index: "{index}"
+            result: "{import_result}"
+  - name: logout user
+    request:
+      url: "{host}/logout/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/"
+  - name: edit index guest
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/guest/index_data_3.json"
+    response:
+      status_code: 401
+      save:
+        $ext:
+          function: helper.index.verify_helper:verify_import
+          extra_kwargs:
+            role: "guest"
+            code: 401
+            index: "{index}"
+            result: "{import_result}"
+  - name: result
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_import
+        extra_kwargs:
+          result: "{import_result}"

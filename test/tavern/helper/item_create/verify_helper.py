@@ -3,11 +3,13 @@ from datetime import date, datetime, timedelta, timezone
 import difflib
 from email.header import decode_header
 import json
+import os
 import pprint
 from urllib.parse import urlparse, urlunparse
 
 from helper.config import INVENIO_WEB_HOST_NAME
-from helper.verify_database_helper import connect_db, compare_db_data
+from helper.common.connect_helper import connect_db
+from helper.common.verify_database_helper import compare_db_data
 
 def response_verify_common_response(response, file_name, key):
     """Verify common response
@@ -121,12 +123,13 @@ def response_verify_deposits_items_response(response, file_name, host, excepted=
     
     try:
         assert created_time >= second_before_time and created_time < now_time
-        assert response.json()['id'] == expect['id']
+        response_json = response.json()
+        assert response_json['id'] == expect['id']
         for k in expect['links']:
             if k == 'bucket':
-                expect['links'][k].startswith(expect['links'][k])
+                assert response_json['links'][k].startswith(expect['links'][k])
             else:
-                assert response.json()['links'][k] == expect['links'][k]
+                assert response_json['links'][k] == expect['links'][k]
     except AssertionError as e:
         assertion_error_handler(e, expect, response.json())
 
@@ -344,10 +347,7 @@ def response_verify_workflow_records(response, folder_path, activity_id, activit
             'initialization': '/api/deposits/items'
         },
         'files': [],
-        'metainfo': expect,
-        'weko_link': {
-            '1': '10'
-        }
+        'metainfo': expect
     }
     replace_params = {
         'workflow_activity': {
@@ -365,7 +365,7 @@ def response_verify_workflow_records(response, folder_path, activity_id, activit
             'activity_login_user': 'int',
             'activity_update_user': 'int',
             'activity_confirm_term_of_use': 'bool',
-            'shared_user_id': 'int',
+            'shared_user_ids': 'json',
             'extra_info': 'json',
             'action_order': 'int'
         }
@@ -398,7 +398,7 @@ def response_verify_temp_data_after_change_author_info(response, creator_key):
     name_identifiers = authors[0]['nameIdentifiers']
     for name_identifier in name_identifiers:
         if name_identifier['nameIdentifierScheme'] == 'WEKO':
-            assert name_identifier['nameIdentifier'] == '1'
+            assert name_identifier['nameIdentifier'] == '10'
 
 def response_verify_changed_data(response, folder_path, activity_id):
     """Verify changed data in the database after an activity
@@ -457,6 +457,11 @@ def verify_approval_mail(response, approval_type, title_key, data):
     Returns:
         None
     """
+    def get_files_sorted_desc(folder_path):
+        files = [f for f in os.listdir(folder_path) if os.path.isfile(os.path.join(folder_path, f))]
+        files.sort(reverse=True)
+        return files
+
     data = json.loads(data)
     if len(title_key.split('.')) == 3:
         title = data[title_key.split('.')[0]][int(title_key.split('.')[1])][title_key.split('.')[2]]
@@ -464,7 +469,8 @@ def verify_approval_mail(response, approval_type, title_key, data):
         title = data[title_key.split('.')[0]][title_key.split('.')[1]]
 
     if approval_type == 'request':
-        with open('mail/repoadmin', 'r') as f:
+        mail_files = get_files_sorted_desc('mail/repoadmin/new')
+        with open(os.path.join('mail/repoadmin/new', mail_files[0]), 'r') as f:
             request_mail = f.readlines()
             subject_idx = 0
             from_idx = 0
@@ -483,7 +489,8 @@ def verify_approval_mail(response, approval_type, title_key, data):
             colon_idx = decoded_subject.find(':')
             assert decoded_subject[colon_idx + 1:].strip() == f"[Approval Request] Please review and approve the item \"{title}\""
     elif approval_type == 'complete':
-        with open('mail/contributor', 'r') as f:
+        mail_files = get_files_sorted_desc('mail/contributor/new')
+        with open(os.path.join('mail/contributor/new', mail_files[0]), 'r') as f:
             request_mail = f.readlines()
             subject_idx = 0
             from_idx = 0

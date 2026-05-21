@@ -124,71 +124,71 @@
             "subitem_subject_language": ""
         }
     ],
-    "item_30002_catalog39": [
-        {
-            "catalog_file": {
-                "catalog_file_uri": "",
-                "catalog_file_object_type": ""
-            },
-            "catalog_rights": [
-                {
-                    "catalog_rights_right": "",
-                    "catalog_right_language": "",
-                    "catalog_right_rdf_resource": ""
-                }
-            ],
-            "catalog_titles": [
-                {
-                    "catalog_title": "",
-                    "catalog_title_language": ""
-                }
-            ],
-            "catalog_licenses": [
-                {
-                    "catalog_license": "",
-                    "catalog_license_type": "",
-                    "catalog_license_language": "",
-                    "catalog_license_rdf_resource": ""
-                }
-            ],
-            "catalog_subjects": [
-                {
-                    "catalog_subject": "",
-                    "catalog_subject_uri": "",
-                    "catalog_subject_scheme": "",
-                    "catalog_subject_language": ""
-                }
-            ],
-            "catalog_identifiers": [
-                {
-                    "catalog_identifier": "",
-                    "catalog_identifier_type": ""
-                }
-            ],
-            "catalog_contributors": [
-                {
-                    "contributor_type": "",
-                    "contributor_names": [
-                        {
-                            "contributor_name": "",
-                            "contributor_name_language": ""
-                        }
-                    ]
-                }
-            ],
-            "catalog_descriptions": {
+    "item_30002_catalog39": {
+        "catalog_file": {
+            "catalog_file_uri": "",
+            "catalog_file_object_type": ""
+        },
+        "catalog_rights": [
+            {
+                "catalog_right": "",
+                "catalog_right_language": "",
+                "catalog_right_rdf_resource": ""
+            }
+        ],
+        "catalog_titles": [
+            {
+                "catalog_title": "",
+                "catalog_title_language": ""
+            }
+        ],
+        "catalog_licenses": [
+            {
+                "catalog_license": "",
+                "catalog_license_type": "",
+                "catalog_license_language": "",
+                "catalog_license_rdf_resource": ""
+            }
+        ],
+        "catalog_subjects": [
+            {
+                "catalog_subject": "",
+                "catalog_subject_uri": "",
+                "catalog_subject_scheme": "",
+                "catalog_subject_language": ""
+            }
+        ],
+        "catalog_identifiers": [
+            {
+                "catalog_identifier": "",
+                "catalog_identifier_type": ""
+            }
+        ],
+        "catalog_contributors": [
+            {
+                "contributor_type": "",
+                "contributor_names": [
+                    {
+                        "contributor_name": "",
+                        "contributor_name_language": ""
+                    }
+                ]
+            }
+        ],
+        "catalog_descriptions": [
+            {
                 "catalog_description": "",
                 "catalog_description_type": "",
                 "catalog_description_language": ""
-            },
-            "catalog_access_rights": [
-                {
-                    "catalog_access_right": "",
-                    "catalog_access_right_rdf_resource": ""
-                }
-            ]
-        }
-    ],
+            }
+        ],
+        "catalog_access_rights": [
+            {
+                "catalog_access_right": "",
+                "catalog_access_right_rdf_resource": ""
+            }
+        ]
+    },
     "item_30002_edition41": [
         {
             "edition": "",
@@ -389,8 +389,8 @@
     },
     "item_30002_dcterms_date38": [
         {
-            "jpcoar_format": "",
-            "jpcoar_format_language": ""
+            "subitem_dcterms_date": "",
+            "subitem_dcterms_date_language": ""
         }
     ],
     "item_30002_issue_number25": {
@@ -432,8 +432,8 @@
     ],
     "item_30002_jpcoar_format40": [
         {
-            "original_language": "",
-            "original_language_language": ""
+            "jpcoar_format": "",
+            "jpcoar_format_language": ""
         }
     ],
     "item_30002_resource_type13": {
@@ -443,35 +443,13 @@
     "item_30002_volume_number24": {
         "subitem_volume": ""
     },
-    "item_30002_dataset_series42": [
-        {
-            "jpcoar_dataset_series": ""
-        }
-    ],
+    "item_30002_dataset_series42": {
+        "jpcoar_dataset_series": ""
+    },
     "item_30002_dcterms_extent46": [
         {
-            "publisher_names": [
-                {
-                    "publisher_name": "",
-                    "publisher_name_language": ""
-                }
-            ],
-            "publication_places": [
-                {
-                    "publication_place": ""
-                }
-            ],
-            "publisher_locations": [
-                {
-                    "publisher_location": ""
-                }
-            ],
-            "publisher_descriptions": [
-                {
-                    "publisher_description": "",
-                    "publisher_description_language": ""
-                }
-            ]
+            "dcterms_extent": "",
+            "dcterms_extent_language": ""
         }
     ],
     "item_30002_degree_grantor33": [
@@ -526,7 +504,8 @@
             ],
             "subitem_funder_identifiers": {
                 "subitem_funder_identifier": "",
-                "subitem_funder_identifier_type": ""
+                "subitem_funder_identifier_type": "",
+                "subitem_funder_identifier_type_uri": ""
             },
             "subitem_funding_stream_identifiers": {
                 "subitem_funding_stream_identifier": "",
@@ -537,8 +516,7 @@
     ],
     "item_30002_original_language43": [
         {
-            "subitem_dcterms_date": "",
-            "subitem_dcterms_date_language": ""
+            "original_language": ""
         }
     ],
     "item_30002_source_identifier22": [
@@ -567,14 +545,30 @@
     },
     "item_30002_publisher_information45": [
         {
-            "dcterms_extent": "",
-            "dcterms_extent_language": ""
+            "publisher_names": [
+                {
+                    "publisher_name": "",
+                    "publisher_name_language": ""
+                }
+            ],
+            "publication_places": [
+                {
+                    "publication_place": ""
+                }
+            ],
+            "publisher_locations": [
+                {
+                    "publisher_location": ""
+                }
+            ],
+            "publisher_descriptions": [
+                {
+                    "publisher_description": "",
+                    "publisher_description_language": ""
+                }
+            ]
         }
     ],
-    "item_30002_identifier_registration17": {
-        "subitem_identifier_reg_text": "",
-        "subitem_identifier_reg_type": ""
-    },
     "item_30002_bibliographic_information29": {
         "bibliographicPageEnd": "",
         "bibliographic_titles": [
@@ -593,5 +587,5 @@
         "bibliographicNumberOfPages": ""
     },
     "$schema": "/items/jsonschema/30002",
-    "shared_user_id": -1
+    "shared_user_ids": []
 }

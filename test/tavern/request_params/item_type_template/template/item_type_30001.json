@@ -302,7 +302,8 @@
             ],
             "subitem_funder_identifiers": {
                 "subitem_funder_identifier": "",
-                "subitem_funder_identifier_type": ""
+                "subitem_funder_identifier_type": "",
+                "subitem_funder_identifier_type_uri": ""
             },
             "subitem_funding_stream_identifiers": {
                 "subitem_funding_stream_identifier": "",
@@ -342,5 +343,5 @@
         "bibliographicNumberOfPages": ""
     },
     "$schema": "/items/jsonschema/30001",
-    "shared_user_id": -1
+    "shared_user_ids": []
 }

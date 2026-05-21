@@ -1,11 +1,12 @@
 test_name: 16-1
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
-  - usefixtures: 
+  - usefixtures:
     - mail_settings
+  - item_create_with_notification
 
 stages:
   - name: GET login repoadmin 1
@@ -17,7 +18,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_csrf_token
+          function: helper.common.response_helper:response_save_csrf_token
   - name: POST login repoadmin 1
     request:
       url: "{host}/login/"
@@ -37,7 +38,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_notification_token
+          function: helper.common.response_helper:response_save_notification_token
   - name: POST notifications repoadmin
     request:
       url: "{host}/account/settings/notifications/"
@@ -72,7 +73,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_csrf_token
+          function: helper.common.response_helper:response_save_csrf_token
   - name: POST login contributor
     request:
       url: "{host}/login/"
@@ -86,7 +87,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_login
+        function: helper.item_create.verify_helper:response_verify_login
         extra_kwargs:
           id: 3
   - name: GET notifications contributor
@@ -98,7 +99,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_notification_token
+          function: helper.common.response_helper:response_save_notification_token
   - name: POST notifications contributor
     request:
       url: "{host}/account/settings/notifications/"
@@ -127,12 +128,12 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -141,13 +142,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -156,13 +157,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -172,7 +173,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data
+          function: helper.common.response_helper:response_save_register_data
           extra_kwargs:
             file_name: item_type_30002.json
   - name: api/items/validate
@@ -182,13 +183,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: validate
@@ -199,7 +200,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -207,7 +208,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: save_activity_data
@@ -218,13 +219,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_iframe_save_model_response
+        function: helper.item_create.verify_helper:response_verify_iframe_save_model_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
   - name: api/deposits/items
@@ -234,19 +235,19 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_deposits_items_param
+          function: helper.common.request_helper:request_create_deposits_items_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_deposits_items_response
+        function: helper.item_create.verify_helper:response_verify_deposits_items_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           host: "{host}"
       save:
         $ext:
-          function: helper.response_helper:response_save_recid
+          function: helper.common.response_helper:response_save_recid
   - name: api/deposits/redirect/{recid}
     request:
       url: "{host}/api/deposits/redirect/{recid}"
@@ -254,14 +255,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_deposits_redirect_param
+          function: helper.common.request_helper:request_create_deposits_redirect_param
           extra_kwargs:
             data: "{register_data}"
             title_key: "{title_keys.30002}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: deposits_redirect
@@ -273,13 +274,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: tree
       save:
         $ext:
-          function: helper.response_helper:response_save_tree_data
+          function: helper.common.response_helper:response_save_tree_data
   - name: api/deposits/items/{recid}
     request:
       url: "{host}/api/deposits/items/{recid}"
@@ -287,13 +288,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_deposits_items_index_param
+          function: helper.common.request_helper:request_create_deposits_items_index_param
           extra_kwargs:
             indexes: "{tree_data}"
+            no_random: true
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_deposits_items_response
+        function: helper.item_create.verify_helper:response_verify_deposits_items_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           host: "{host}"
@@ -305,13 +307,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_action_param
+          function: helper.common.request_helper:request_create_action_param
           extra_kwargs:
             action_version: "{action_version.3}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: action_3
@@ -322,14 +324,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_action_param
+          function: helper.common.request_helper:request_create_action_param
           extra_kwargs:
             action_version: "{action_version.5}"
             link_data: []
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: action_5
@@ -342,7 +344,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_identifier_grant
+          function: helper.common.response_helper:response_save_identifier_grant
   - name: workflow/activity/action/{activity_id}/7
     request:
       url: "{host}/workflow/activity/action/{activity_id}/7"
@@ -350,14 +352,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_action_param
+          function: helper.common.request_helper:request_create_action_param
           extra_kwargs:
             action_version: "{action_version.7}"
             identifier: "{identifier_grant}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:verify_approval_mail
+        function: helper.item_create.verify_helper:verify_approval_mail
         extra_kwargs:
           approval_type: request
           title_key: "{title_keys.30002}"
@@ -380,7 +382,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_csrf_token
+          function: helper.common.response_helper:response_save_csrf_token
   - name: POST login repoadmin 2
     request:
       url: "{host}/login/"
@@ -395,7 +397,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_url_described_in_email
+          function: helper.common.response_helper:response_save_url_described_in_email
           extra_kwargs:
             target: repoadmin
             save_key: approval_url
@@ -413,14 +415,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_action_param
+          function: helper.common.request_helper:request_create_action_param
           extra_kwargs:
             action_version: "{action_version.4}"
             community: ''
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:verify_approval_mail
+        function: helper.item_create.verify_helper:verify_approval_mail
         extra_kwargs:
           approval_type: complete
           title_key: "{title_keys.30002}"

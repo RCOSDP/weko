@@ -1,0 +1,2559 @@
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP無効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_disabled_en
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: en
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: false
+
+---
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP無効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_disabled_ja
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: ja
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: true
+
+---
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP無効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_disabled_en_select_id
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: en
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: false
+          nodeid: "1623632832836"
+
+---
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP無効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_disabled_ja_select_id
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: ja
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: true
+          nodeid: "1623632832836"
+
+---
+test_name: リポジトリ管理者 ツリー閲覧情報取得 Redis使用・未使用
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_browsing_treeinfo_redis
+  - repository_admin
+
+stages:
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+  - name: api/tree?action=browsing with redis
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+
+---
+test_name: リポジトリ管理者 ツリー閲覧情報 非表示含む
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_browsing_treeinfo_all
+  - repository_admin
+
+stages:
+  - name: api/tree?action=browsing&more_ids=6/10
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+        more_ids: "6/10"
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_all.json"
+          role_id: 2
+
+---
+test_name: リポジトリ管理者 ツリー閲覧取得 コミュニティ指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_browsing_treeinfo_community_part
+  - repository_admin
+
+stages:
+  - name: api/tree?action=browsing&c=community1
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+        c: community1
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_community_part.json"
+          role_id: 2
+
+---
+test_name: リポジトリ管理者 ツリー閲覧取得 コミュニティ指定 非表示含む
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_browsing_treeinfo_community_all
+  - repository_admin
+
+stages:
+  - name: api/tree?action=browsing&c=community1&more_ids=6
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+        c: community1
+        more_ids: "6"
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_community_all.json"
+          role_id: 2
+
+---
+test_name: リポジトリ管理者 ツリー情報取得
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_treeinfo
+  - repository_admin
+
+stages:
+  - name: api/tree
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_all.json"
+          role_id: 2
+
+---
+test_name: リポジトリ管理者 インデックス情報取得
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_indexinfo
+  - repository_admin
+
+stages:
+  - name: api/tree/index (search)
+    request:
+      url: "{host}/api/tree/index/1"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_info
+        extra_kwargs:
+          id: "1"
+
+---
+test_name: リポジトリ管理者 インデックス情報取得 存在しないID
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_get_indexinfo_not_exist
+  - repository_admin
+
+stages:
+  - name: api/tree/index (search)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      json:
+        can_edit: true
+
+---
+test_name: リポジトリ管理者 インデックス新規作成
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index
+  - repository_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index"
+          user_id: 2
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: [1000]
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 リクエストボディなし
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_no_request_body
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json: {}
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not load data."
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 リクエストボディ不正
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_invalid_request_body
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json: "invalid_json"
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not add data."
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 ヘッダー不正
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_invalid_header
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data: "invalid_data"
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error
+        extra_kwargs:
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 親インデックス指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_with_parent
+  - repository_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index with Parent"
+          user_id: 2
+          parent_id: 1623632832836
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: [1000]
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 親インデックス指定 リクエストボディなし
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_with_parent_no_request_body
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      json: {}
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not load data."
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 親インデックス指定 リクエストボディ不正
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_with_parent_invalid_request_body
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      json: "invalid_json"
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not add data."
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 親インデックス指定 ヘッダー不正
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_with_parent_invalid_header
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data: "invalid_data"
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error
+        extra_kwargs:
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 親インデックス指定 ロック中
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_with_parent_locked
+  - repository_admin
+
+stages:
+  - name: prepare_lock_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_lock_index
+          extra_kwargs:
+            index_id: 1623632832836
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent Locked"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_locked
+        extra_kwargs:
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス編集
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: "{target_id_list}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 子インデックスあり
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_with_children
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_2.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_2.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_2.json"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: "{target_id_list}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 リクエストボディなし
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_no_request_body
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            invalid: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json: {}
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not load data."
+          index: "{index}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 ヘッダー不正
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_invalid_header
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            invalid: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data: "invalid_data"
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error
+        extra_kwargs:
+          index: "{index}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 ロック中
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_locked
+  - repository_admin
+
+stages:
+  - name: prepare_lock_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_lock_index
+          extra_kwargs:
+            index_id: "3"
+            edit: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/3"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_locked
+        extra_kwargs:
+          index: "{index}"
+          is_edit: true
+
+---
+test_name: リポジトリ管理者 インデックス編集 非公開(DOI含む)
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_private_doi
+  - repository_admin
+
+stages:
+  - name: prepare_item_with_doi
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            invalid: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            public: false
+            harvest: true
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_private_with_doi
+        extra_kwargs:
+          index: "{index}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 ハーベスト非公開(DOI含む)
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_harvest_private_doi
+  - repository_admin
+
+stages:
+  - name: prepare_item_with_doi
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            invalid: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            public: true
+            harvest: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_harvest_private_with_doi
+        extra_kwargs:
+          index: "{index}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 存在しないID
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_not_exist
+  - repository_admin
+
+stages:
+  - name: prepare_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not update data."
+          indices: "{index_list}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：公開
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_public
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_public_state.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_public_state.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_recursive_public_state.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：PDFカバーページ
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_pdfcoverpage
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_coverpage_check.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_coverpage_check.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_recursive_coverpage_check.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：閲覧権限（ロール）
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_browsing_role
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_browsing_role.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_browsing_role.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_recursive_browsing_role.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：編集権限（ロール）
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_contribute_role
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_contribute_role.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_contribute_role.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_recursive_contribute_role.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：閲覧権限（グループ）
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_browsing_group
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_browsing_group.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_browsing_group.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_recursive_browsing_group.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：編集権限（グループ）
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_contribute_group
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_contribute_group.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_recursive_contribute_group.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_recursive_contribute_group.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 再帰設定：統計設定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_recursive_statistics
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_biblio_flag.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_biblio_flag.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_biblio_flag.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 サムネイル設定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_thumbnail_settings
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_thumbnail_path
+      verify_response_with:
+        function: helper.index.verify_helper:verify_upload_thumbnail
+        extra_kwargs:
+          file_name: "thumbnail.png"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            thumbnail: "{thumbnail_path}"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+          thumbnail: "{thumbnail_path}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: "{target_id_list}"
+  - name: api/tree/index (edit) remove thumbnail
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+            thumbnail_delete: true
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_3.json"
+          image_delete: true
+  - name: api/tree?action=browsing after remove thumbnail
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: "{target_id_list}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 Set編集
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_set_editing
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1.json"
+            public: true
+            harvest: true
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_1.json"
+          public: true
+          harvest: true
+          oai_action: "edit"
+
+---
+test_name: リポジトリ管理者 インデックス編集 Set削除
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_set_deletion
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1.json"
+            public: false
+            harvest: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_1.json"
+          public: false
+          harvest: false
+          oai_action: "delete"
+
+---
+test_name: リポジトリ管理者 サムネイル設定 ファイル未設定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_thumbnail_no_file
+  - repository_admin
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "multipart/form-data"
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request_html
+
+---
+test_name: リポジトリ管理者 サムネイル設定 ファイル名未設定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_thumbnail_no_filename
+  - repository_admin
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_no_filename
+        extra_kwargs:
+          path: "./upload_file/thumbnail.png"
+          code: 400
+
+---
+test_name: リポジトリ管理者 インデックス削除
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index
+  - repository_admin
+
+stages:
+  - name: prepare_item_in_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+  - name: prepare_item_in_multi_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: [3,4]
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000002
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_deleted_index
+        extra_kwargs:
+          deleted_ids: [3]
+          single_item_ids: [2000001]
+          multi_item_ids: [2000002]
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          deleted_id_list: [3]
+
+---
+test_name: リポジトリ管理者 インデックス削除 子インデックスを含む
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_with_children
+  - repository_admin
+
+stages:
+  - name: prepare_item_parent
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 2
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+  - name: prepare_item_child1
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000002
+  - name: prepare_item_child2
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 4
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000003
+  - name: prepare_item_child3
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 5
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000004
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/2"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_deleted_index
+        extra_kwargs:
+          deleted_ids: [2]
+          single_item_ids: [2000001, 2000002, 2000003, 2000004]
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          deleted_id_list: [2,3,4,5]
+
+---
+test_name: リポジトリ管理者 インデックス削除 自身のみ削除
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_only
+  - repository_admin
+
+stages:
+  - name: prepare_item_parent
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 2
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+  - name: prepare_item_child1
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000002
+  - name: prepare_item_child2
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 4
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000003
+  - name: prepare_item_child3
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 5
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000004
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/2"
+      method: DELETE
+      params:
+        action: move
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_deleted_index
+        extra_kwargs:
+          deleted_ids: [2]
+          single_item_ids: [2000001]
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          deleted_id_list: [2]
+          edited_id_list: [3,4,5]
+
+---
+test_name: リポジトリ管理者 インデックス削除 指定アクション以外
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_invalid_action
+  - repository_admin
+
+stages:
+  - name: prepare_item_parent
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 2
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+  - name: prepare_item_child1
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000002
+  - name: prepare_item_child2
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 4
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000003
+  - name: prepare_item_child3
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 5
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: false
+            id: 2000004
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/2"
+      method: DELETE
+      params:
+        action: invalid_action
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_not_deleted_index
+        extra_kwargs:
+          target_ids: [2,3,4,5]
+          item_ids: [2000001, 2000002, 2000003, 2000004]
+
+---
+test_name: リポジトリ管理者 インデックス削除 存在しないID
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_not_exist
+  - repository_admin
+
+stages:
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/10000"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_delete_not_exist_index
+
+---
+test_name: リポジトリ管理者 インデックス削除 ロック中
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_locked
+  - repository_admin
+
+stages:
+  - name: prepare_lock_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_lock_index
+          extra_kwargs:
+            index_id: "3"
+            edit: true
+  - name: api/tree/index (delete)
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_locked
+        extra_kwargs:
+          index: "{index}"
+
+---
+test_name: リポジトリ管理者 インデックス削除 DOI
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_doi
+  - repository_admin
+
+stages:
+  - name: prepare_item_with_doi
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_delete_with_doi
+        extra_kwargs:
+          delete_id: 3
+
+---
+test_name: リポジトリ管理者 インデックス削除 編集中
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_being_edited
+  - repository_admin
+
+stages:
+  - name: prepare_item_being_edited
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 3
+            file_path: "./upload_file/test.txt"
+            is_doi: false
+            prepare_edit: true
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_delete_with_editing
+        extra_kwargs:
+          delete_id: 3
+
+---
+test_name: リポジトリ管理者 インデックス削除 ハーベスト設定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_harvest_setting
+  - repository_admin
+
+stages:
+  - name: prepare_harvest_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_harvest
+          extra_kwargs:
+            index_id: 3
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_delete_with_harvesting
+        extra_kwargs:
+          delete_id: 3
+
+---
+test_name: リポジトリ管理者 インデックス削除 インデックス未指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_no_specify
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/0"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 204
+      verify_response_with:
+        function: helper.index.verify_helper:verify_delete_no_specify_index
+        extra_kwargs:
+          indices: "{index_list}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 インデックス名0文字
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_name_zero_length
+  - repository_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: ""
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not add data."
+          count: "{index_count}"
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 インデックス名1文字
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_name_one_length
+  - repository_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "A"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "A"
+          user_id: 2
+
+---
+test_name: リポジトリ管理者 インデックス編集 日本語0文字
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_name_zero_length_japanese
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_empty_index_name.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_empty_index_name.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_empty_index_name.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 日本語1文字
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_name_one_length_japanese
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1char_index_name.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1char_index_name.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_1char_index_name.json"
+
+---
+test_name: リポジトリ管理者 インデックス編集 英語0文字
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_name_zero_length_english
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_empty_index_name_english.json"
+            invalid: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_empty_index_name_english.json"
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not update data."
+          index: "{index}"
+
+---
+test_name: リポジトリ管理者 インデックス編集 英語1文字
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_edit_index_name_one_length_english
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1char_index_name_english.json"
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/repoadmin/index_data_1char_index_name_english.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_edited_index
+        extra_kwargs:
+          file_path: "request_params/index/test_data/repoadmin/index_data_1char_index_name_english.json"

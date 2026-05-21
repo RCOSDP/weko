@@ -1,0 +1,15 @@
+INSERT INTO public.oaiserver_set(created,updated,id,spec,name,description,search_pattern) VALUES
+    ('2026-01-01 00:00:00','2026-01-01 00:00:00',1,'1','コミュニティインデックス','コミュニティインデックス','path:"1"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',2,'1:2','コミュニティサブインデックス1','Community Index->Community Sub Index1','path:"2"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',3,'1:2:3','コミュニティサブインデックス1-1','Community Index->Community Sub Index1->Community Sub Index1-1','path:"3"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',4,'1:2:4','コミュニティサブインデックス1-2','Community Index->Community Sub Index1->Community Sub Index1-2','path:"4"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',5,'1:2:5','コミュニティサブインデックス1-3','Community Index->Community Sub Index1->Community Sub Index1-3','path:"5"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',6,'1:6','コミュニティサブインデックス2','Community Index->Community Sub Index2','path:"6"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',7,'1:6:7','コミュニティサブインデックス2-1','Community Index->Community Sub Index2->Community Sub Index2-1','path:"7"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',8,'1:6:8','コミュニティサブインデックス2-2','Community Index->Community Sub Index2->Community Sub Index2-2','path:"8"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',9,'1:6:9','コミュニティサブインデックス2-3','Community Index->Community Sub Index2->Community Sub Index2-3','path:"9"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',10,'10','非コミュニティインデックス','非コミュニティインデックス','path:"10"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',11,'10:11','非コミュニティサブインデックス1','Not Community Index->Not Community Sub Index1','path:"11"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',12,'10:12','非コミュニティサブインデックス2','Not Community Index->Not Community Sub Index2','path:"12"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',13,'10:13','非コミュニティサブインデックス3','Not Community Index->Not Community Sub Index3','path:"13"')
+  , ('2026-01-01 00:00:00','2026-01-01 00:00:00',1623632832836,'1623632832836','サンプルインデックス','サンプルインデックス','path:"1623632832836"');

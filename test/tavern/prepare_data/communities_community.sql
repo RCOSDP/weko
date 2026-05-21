@@ -1,0 +1,3 @@
+INSERT INTO public.communities_community (created, updated, id, id_role, id_user, title, description, page, curation_policy, community_header, community_footer, last_record_accepted, logo_ext, ranking, fixed_points, deleted_at, thumbnail_path, login_menu_enabled, catalog_json, cnri, root_node_id, content_policy, group_id) VALUES
+    ('2026-01-01 00:00:00.000', '2026-01-01 00:00:00.000', 'community1', 4, 1, '', '', '', '', '', '', '2000-01-01 00:00:00.000', NULL, 0, 0, NULL, '', false, NULL, NULL, 1, '', NULL)
+  , ('2026-01-01 00:00:00.000', '2026-01-01 00:00:00.000', 'community2', 3, 1, '', '', '', '', '', '', '2000-01-01 00:00:00.000', NULL, 0, 0, NULL, '', false, NULL, NULL, 1, '', NULL);

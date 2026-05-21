@@ -1666,5 +1666,5 @@
         "max": 5
     },
     "$schema": "/items/jsonschema/10001",
-    "shared_user_id": -1
+    "shared_user_ids": []
 }

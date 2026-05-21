@@ -1,0 +1,2127 @@
+# Start System Administrator's Test
+test_name: システム管理者 ツリー編集画面表示 mAP有効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_display_map_enabled_en
+  - system_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}/ping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: true
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+
+---
+test_name: システム管理者 ツリー編集画面表示 mAP有効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_display_map_enabled_ja
+  - system_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}/ping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: false
+          map_groups: {"delete": "{role_ids}"}
+
+---
+test_name: システム管理者 ツリー編集画面表示 mAP有効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_display_map_enabled_en_select_id
+  - system_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}/ping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: true
+          nodeid: "1623632832836"
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+
+---
+test_name: システム管理者 ツリー編集画面表示 mAP有効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_display_map_enabled_ja_select_id
+  - system_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}/ping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: false
+          nodeid: "1623632832836"
+          map_groups: {"delete": "{role_ids}"}
+
+---
+test_name: システム管理者 インデックス新規作成 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_create_index_map_enabled
+  - system_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index"
+          user_id: 1
+          map: true
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 1
+          edited_id_list: [1000]
+
+---
+test_name: システム管理者 インデックス新規作成 親インデックス指定 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_create_index_with_parent_map_enabled
+  - system_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index with Parent"
+          user_id: 1
+          map: true
+          parent_id: 1623632832836
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 1
+          edited_id_list: [1000]
+
+---
+test_name: システム管理者 サムネイル設定 保存エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_thumbnail_save_error
+  - system_admin
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error_html
+
+---
+test_name: システム管理者 インデックス削除 サーバ内部エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - tree_editing_delete_index_internal_server_error
+  - system_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error
+        extra_kwargs:
+          indices: "{index_list}"
+
+# End System Administrator's Test
+---
+# Start Repository Administrator's Test
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP有効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_enabled_en
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: true
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+
+---
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP有効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_enabled_ja
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: false
+          map_groups: {"delete": "{role_ids}"}
+
+---
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP有効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_enabled_en_select_id
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: true
+          nodeid: "1623632832836"
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+
+---
+test_name: リポジトリ管理者 ツリー編集画面表示 mAP有効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_display_map_enabled_ja_select_id
+  - repository_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: false
+          nodeid: "1623632832836"
+          map_groups: {"delete": "{role_ids}"}
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_map_enabled
+  - repository_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index"
+          user_id: 2
+          map: true
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: [1000]
+
+---
+test_name: リポジトリ管理者 インデックス新規作成 親インデックス指定 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_create_index_with_parent_map_enabled
+  - repository_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1623632832836"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index with Parent"
+          user_id: 2
+          map: true
+          parent_id: 1623632832836
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 2
+          edited_id_list: [1000]
+
+---
+test_name: リポジトリ管理者 サムネイル設定 保存エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_thumbnail_save_error
+  - repository_admin
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error_html
+
+---
+test_name: リポジトリ管理者 インデックス削除 サーバ内部エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - tree_editing_delete_index_internal_server_error
+  - repository_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error
+        extra_kwargs:
+          indices: "{index_list}"
+
+# End Repository Administrator's Test
+---
+# Start Community Administrator's Test
+test_name: コミュニティ管理者 ツリー編集画面表示 mAP有効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_display_map_enabled_en
+  - community_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: true
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+
+---
+test_name: コミュニティ管理者 ツリー編集画面表示 mAP有効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_display_map_enabled_ja
+  - community_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: false
+          map_groups: {"delete": "{role_ids}"}
+
+---
+test_name: コミュニティ管理者 ツリー編集画面表示 mAP有効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_display_map_enabled_en_select_id
+  - community_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: en
+          coverpage: true
+          nodeid: "1623632832836"
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+
+---
+test_name: コミュニティ管理者 ツリー編集画面表示 mAP有効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_display_map_enabled_ja_select_id
+  - community_admin
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_indexedit_elements
+        extra_kwargs:
+          lang: ja
+          coverpage: false
+          nodeid: "1623632832836"
+          map_groups: {"delete": "{role_ids}"}
+
+---
+test_name: コミュニティ管理者 インデックス新規作成 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_create_index_map_enabled
+  - community_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 4
+
+---
+test_name: コミュニティ管理者 インデックス新規作成 親インデックス指定 mAP有効 コミュニティ管理内
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_create_index_with_parent_map_enabled_within_community
+  - community_admin
+
+stages:
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 201
+      verify_response_with:
+        function: helper.index.verify_helper:verify_created_index
+        extra_kwargs:
+          id: 1000
+          name: "Test New Index with Parent"
+          user_id: 5
+          map: true
+          parent_id: 1
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 4
+          edited_id_list: [1000]
+
+---
+test_name: コミュニティ管理者 インデックス新規作成 親インデックス指定 mAP有効 コミュニティ管理外
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_create_index_with_parent_map_enabled_outside_community
+  - community_admin
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/10"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 4
+
+---
+test_name: コミュニティ管理者 サムネイル設定 保存エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_thumbnail_save_error
+  - community_admin
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error_html
+
+---
+test_name: コミュニティ管理者 インデックス削除 サーバ内部エラー コミュニティ管理内
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_delete_index_internal_server_error_within_community
+  - community_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.index.verify_helper:verify_internal_server_error
+        extra_kwargs:
+          indices: "{index_list}"
+
+---
+test_name: コミュニティ管理者 インデックス削除 サーバ内部エラー コミュニティ管理外
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_comadmin
+  - tree_editing_delete_index_internal_server_error_outside_community
+  - community_admin
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/11"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          indices: "{index_list}"
+
+# End Community Administrator's Test
+---
+# Start Contributor's Test
+test_name: コントリビュータ ツリー編集画面表示 mAP有効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_display_map_enabled_en
+  - contributor
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+          language: en
+
+---
+test_name: コントリビュータ ツリー編集画面表示 mAP有効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_display_map_enabled_ja
+  - contributor
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"delete": "{role_ids}"}
+          language: ja
+
+---
+test_name: コントリビュータ ツリー編集画面表示 mAP有効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_display_map_enabled_en_select_id
+  - contributor
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+          language: en
+
+---
+test_name: コントリビュータ ツリー編集画面表示 mAP有効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_display_map_enabled_ja_select_id
+  - contributor
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"delete": "{role_ids}"}
+          language: ja
+
+---
+test_name: コントリビュータ インデックス新規作成 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_create_index_map_enabled
+  - contributor
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 3
+
+---
+test_name: コントリビュータ インデックス新規作成 親インデックス指定 mAP有効 コミュニティ管理内
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_create_index_with_parent_map_enabled_within_community
+  - contributor
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 3
+
+---
+test_name: コントリビュータ インデックス新規作成 親インデックス指定 mAP有効 コミュニティ管理外
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_create_index_with_parent_map_enabled_outside_community
+  - contributor
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/10"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: 3
+
+---
+test_name: コントリビュータ サムネイル設定 保存エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_thumbnail_save_error
+  - contributor
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          language: en
+
+---
+test_name: コントリビュータ インデックス削除 サーバ内部エラー コミュニティ管理内
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_delete_index_internal_server_error_within_community
+  - contributor
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          indices: "{index_list}"
+
+---
+test_name: コントリビュータ インデックス削除 サーバ内部エラー コミュニティ管理外
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_contributor
+  - tree_editing_delete_index_internal_server_error_outside_community
+  - contributor
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/11"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          indices: "{index_list}"
+
+# End Contributor's Test
+---
+# Start User's Test
+test_name: 一般ユーザー ツリー編集画面表示 mAP有効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_display_map_enabled_en
+  - user
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+          language: en
+
+---
+test_name: 一般ユーザー ツリー編集画面表示 mAP有効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_display_map_enabled_ja
+  - user
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"delete": "{role_ids}"}
+          language: ja
+
+---
+test_name: 一般ユーザー ツリー編集画面表示 mAP有効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_display_map_enabled_en_select_id
+  - user
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"add": ["jc_roles_weko3_example_org_groups_add1,jc_weko3_example_org_groups_add2,jc_weko3_example_org_groups_add3"]}
+          language: en
+
+---
+test_name: 一般ユーザー ツリー編集画面表示 mAP有効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_display_map_enabled_ja_select_id
+  - user
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          map_groups: {"delete": "{role_ids}"}
+          language: ja
+
+---
+test_name: 一般ユーザー インデックス新規作成 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_create_index_map_enabled
+  - user
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: -98
+
+---
+test_name: 一般ユーザー インデックス新規作成 親インデックス指定 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_create_index_with_parent_map_enabled
+  - user
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: -98
+
+---
+test_name: 一般ユーザー サムネイル設定 保存エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_thumbnail_save_error
+  - user
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden_html
+        extra_kwargs:
+          language: en
+
+---
+test_name: 一般ユーザー インデックス削除 サーバ内部エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_user
+  - tree_editing_delete_index_internal_server_error
+  - user
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 403
+      verify_response_with:
+        function: helper.index.verify_helper:verify_forbidden
+        extra_kwargs:
+          indices: "{index_list}"
+
+# End User's Test
+---
+# Start Guest's Test
+test_name: ゲスト ツリー編集画面表示 mAP有効 英語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_display_map_enabled_en
+  - guest
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      verify_response_with:
+        function: helper.index.verify_helper:verify_location_header
+        extra_kwargs:
+          expected_location: "{host}/admin/indexedit/"
+          host: "{host}"
+
+---
+test_name: ゲスト ツリー編集画面表示 mAP有効 日本語
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_display_map_enabled_ja
+  - guest
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      verify_response_with:
+        function: helper.index.verify_helper:verify_location_header
+        extra_kwargs:
+          expected_location: "{host}/admin/indexedit/"
+          host: "{host}"
+
+---
+test_name: ゲスト ツリー編集画面表示 mAP有効 英語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_display_map_enabled_en_select_id
+  - guest
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "enable"
+            lang: en
+            map: register
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      verify_response_with:
+        function: helper.index.verify_helper:verify_location_header
+        extra_kwargs:
+          expected_location: "{host}/admin/indexedit/1623632832836"
+          host: "{host}"
+
+---
+test_name: ゲスト ツリー編集画面表示 mAP有効 日本語 id指定
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_display_map_enabled_ja_select_id
+  - guest
+
+stages:
+  - name: prepare_pdfcoverpage
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_pdfcoverpage
+          extra_kwargs:
+            avail: "disable"
+            lang: ja
+            map: delete
+  - name: admin/indexedit
+    request:
+      url: "{host}/admin/indexedit/1623632832836"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      verify_response_with:
+        function: helper.index.verify_helper:verify_location_header
+        extra_kwargs:
+          expected_location: "{host}/admin/indexedit/1623632832836"
+          host: "{host}"
+
+---
+test_name: ゲスト インデックス新規作成 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_create_index_map_enabled
+  - guest
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/0"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index"
+    response:
+      status_code: 401
+      verify_response_with:
+        function: helper.index.verify_helper:verify_unauthorized
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: -99
+
+---
+test_name: ゲスト インデックス新規作成 親インデックス指定 mAP有効
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_create_index_with_parent_map_enabled
+  - guest
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/1"
+      method: POST
+      verify: false
+      json:
+        id: 1000
+        value: "Test New Index with Parent"
+    response:
+      status_code: 401
+      verify_response_with:
+        function: helper.index.verify_helper:verify_unauthorized
+        extra_kwargs:
+          count: "{index_count}"
+  - name: api/tree?action=browsing
+    request:
+      url: "{host}/api/tree"
+      method: GET
+      params:
+        action: browsing
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.index.verify_helper:verify_index_tree
+        extra_kwargs:
+          expected_tree_file: "response_data/index/index_tree_part.json"
+          role_id: -99
+
+---
+test_name: ゲスト サムネイル設定 保存エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_thumbnail_save_error
+  - guest
+
+stages:
+  - name: admin/indexedit/upload
+    request:
+      url: "{host}/admin/indexedit/upload"
+      method: POST
+      verify: false
+      files:
+        uploadFile: "./upload_file/thumbnail.png"
+    response:
+      status_code: 302
+      verify_response_with:
+        function: helper.index.verify_helper:verify_location_header
+        extra_kwargs:
+          expected_location: "{host}/admin/indexedit/upload"
+          host: "{host}"
+
+---
+test_name: ゲスト インデックス削除 サーバ内部エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_delete_index_internal_server_error
+  - guest
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:get_indices
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/3"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 401
+      verify_response_with:
+        function: helper.index.verify_helper:verify_unauthorized
+        extra_kwargs:
+          indices: "{index_list}"
+
+# End Guest's Test

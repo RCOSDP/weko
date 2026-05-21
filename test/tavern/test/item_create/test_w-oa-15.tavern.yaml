@@ -1,11 +1,12 @@
 test_name: 著者DBのID変更
 
 includes:
-  - !include config.yaml
+  - !include ../config.yaml
 
 marks:
   - usefixtures:
     - login_repoadmin
+  - item_create_change_author_id
 
 stages:
   - name: prepare author
@@ -33,12 +34,12 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_init_response
+        function: helper.item_create.verify_helper:response_verify_init_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-15.success_case}"
       save:
         $ext:
-          function: helper.response_helper:response_save_next_path
+          function: helper.common.response_helper:response_save_next_path
   - name: api/items/author_prefix_settings
     request:
       url: "{host}/api/items/author_prefix_settings"
@@ -47,13 +48,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: author_prefix_settings
       save:
         $ext:
-          function: helper.response_helper:response_save_author_prefix_settings
+          function: helper.common.response_helper:response_save_author_prefix_settings
   - name: accounts/settings/groups/grouplist
     request:
       url: "{host}/accounts/settings/groups/grouplist"
@@ -62,13 +63,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.item_registration.success_case}"
           key: grouplist
       save:
         $ext:
-          function: helper.response_helper:response_save_group_list
+          function: helper.common.response_helper:response_save_group_list
   - name: "{next_path}"
     request:
       url: "{host}{next_path}"
@@ -78,7 +79,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_register_data
+          function: helper.common.response_helper:response_save_register_data
           extra_kwargs:
             file_name: w-oa-15/item_type_30002.json
   - name: api/items/validate
@@ -88,13 +89,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_validate_param
+          function: helper.common.request_helper:request_create_validate_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-15.success_case}"
           key: validate
@@ -105,7 +106,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_activity_data_param
+          function: helper.common.request_helper:request_create_save_activity_data_param
           extra_kwargs:
             activity_id: "{activity_id}"
             data: "{register_data}"
@@ -113,7 +114,7 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-15.success_case}"
           key: save_activity_data
@@ -124,13 +125,13 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_save_param
+          function: helper.common.request_helper:request_create_save_param
           extra_kwargs:
             data: "{register_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_workflow_records
+        function: helper.item_create.verify_helper:response_verify_workflow_records
         extra_kwargs:
           folder_path: w-oa-15_expect
           activity_id: "{activity_id}"
@@ -151,7 +152,7 @@ stages:
       status_code: 200
       save:
         $ext:
-          function: helper.response_helper:response_save_author_search
+          function: helper.common.response_helper:response_save_author_search
   - name: api/authors/edit
     request:
       url: "{host}/api/authors/edit"
@@ -159,7 +160,7 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_author_edit_param
+          function: helper.common.request_helper:request_create_author_edit_param
           extra_kwargs:
             file_name: "{author_info.w-oa-15}"
             author_id: "{author_id}"
@@ -173,12 +174,12 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_temp_data_after_change_author_info
+        function: helper.item_create.verify_helper:response_verify_temp_data_after_change_author_info
         extra_kwargs:
           creator_key: "{creator_keys.30002}"
       save:
         $ext:
-          function: helper.response_helper:response_save_changed_data
+          function: helper.common.response_helper:response_save_changed_data
   - name: api/deposits/items
     request:
       url: "{host}/api/deposits/items"
@@ -186,19 +187,19 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_deposits_items_param
+          function: helper.common.request_helper:request_create_deposits_items_param
           extra_kwargs:
             data: "{changed_data}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_deposits_items_response
+        function: helper.item_create.verify_helper:response_verify_deposits_items_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-15.success_case}"
           host: "{host}"
       save:
         $ext:
-          function: helper.response_helper:response_save_recid
+          function: helper.common.response_helper:response_save_recid
   - name: api/deposits/redirect/{recid}
     request:
       url: "{host}/api/deposits/redirect/{recid}"
@@ -206,14 +207,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_deposits_redirect_param
+          function: helper.common.request_helper:request_create_deposits_redirect_param
           extra_kwargs:
             data: "{changed_data}"
             title_key: "{title_keys.30002}"
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-15.success_case}"
           key: deposits_redirect
@@ -225,13 +226,13 @@ stages:
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_common_response
+        function: helper.item_create.verify_helper:response_verify_common_response
         extra_kwargs:
           file_name: "{expected_json.w-oa-15.success_case}"
           key: tree
       save:
         $ext:
-          function: helper.response_helper:response_save_tree_data
+          function: helper.common.response_helper:response_save_tree_data
   - name: api/deposits/items/{recid}
     request:
       url: "{host}/api/deposits/items/{recid}"
@@ -239,13 +240,14 @@ stages:
       verify: false
       json:
         $ext:
-          function: helper.request_helper:request_create_deposits_items_index_param
+          function: helper.common.request_helper:request_create_deposits_items_index_param
           extra_kwargs:
             indexes: "{tree_data}"
+            no_random: true
     response:
       status_code: 200
       verify_response_with:
-        function: helper.verify_helper:response_verify_changed_data
+        function: helper.item_create.verify_helper:response_verify_changed_data
         extra_kwargs:
           folder_path: w-oa-15_expect2
           activity_id: "{activity_id}"

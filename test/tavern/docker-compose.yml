@@ -1,5 +1,3 @@
-version: '3.2'
-
 services:
   tavern:
     build:
@@ -8,7 +6,7 @@ services:
     environment:
       - TZ=Asia/Tokyo
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=WekoOpensearch123!
-    volumes: 
+    volumes:
       - type: bind
         source: .
         target: /tavern

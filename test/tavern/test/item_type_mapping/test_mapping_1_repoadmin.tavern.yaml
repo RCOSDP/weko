@@ -1,0 +1,1938 @@
+test_name: リポジトリ管理者 アイテムタイプ登録なし
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - no_itemtypes
+  - repository_admin
+
+stages:
+  - name: delete_itemtypes
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:delete_itemtypes
+  - name: admin/itemtypes/mapping/
+    request:
+      url: "{host}/admin/itemtypes/mapping/"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_contains
+        extra_kwargs:
+          expected_substring: "No itemtypes"
+
+---
+test_name: リポジトリ管理者 アイテムタイプ指定なし
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - not_selected_itemtype
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/
+    request:
+      url: "{host}/admin/itemtypes/mapping/"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/admin/itemtypes/mapping/1"
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_selected_value
+        extra_kwargs:
+          select_id: "item-type-lists"
+          expected_value: "{mapping_test.item_type_id}"
+          is_sysadmin: false
+  - name: admin/itemtypes/mapping/100
+    request:
+      url: "{host}/admin/itemtypes/mapping/100"
+      method: GET
+      verify: false
+    response:
+      status_code: 302
+      headers:
+        Location: "{host}/admin/itemtypes/mapping/1"
+  - name: admin/itemtypes/mapping/invalid
+    request:
+      url: "{host}/admin/itemtypes/mapping/invalid"
+      method: GET
+      verify: false
+    response:
+      status_code: 404
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_not_found
+
+---
+test_name: リポジトリ管理者 xsd欠損
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - no_xsd
+  - repository_admin
+
+stages:
+  - name: delete_xsd
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:delete_xsd
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}"
+      method: GET
+      verify: false
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_bad_request
+  - name: admin/itemtypes/mapping/schema
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema"
+      method: GET
+      verify: false
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_internal_server_error
+  - name: admin/itemtypes/mapping/schema/{schema_name}
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/{schema_name}"
+      method: GET
+      verify: false
+    response:
+      status_code: 500
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_internal_server_error
+
+---
+test_name: リポジトリ管理者 スキーマ名指定 ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - ddi_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=ddi_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=ddi_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_selected_value
+        extra_kwargs:
+          select_id: "jpcoar_lists"
+          expected_value: "ddi_mapping"
+          is_sysadmin: false
+
+---
+test_name: リポジトリ管理者 スキーマ名指定 jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - jpcoar_v1_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=jpcoar_v1_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=jpcoar_v1_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_selected_value
+        extra_kwargs:
+          select_id: "jpcoar_lists"
+          expected_value: "jpcoar_v1_mapping"
+          is_sysadmin: false
+
+---
+test_name: リポジトリ管理者 スキーマ名指定 jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - jpcoar_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=jpcoar_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=jpcoar_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_selected_value
+        extra_kwargs:
+          select_id: "jpcoar_lists"
+          expected_value: "jpcoar_mapping"
+          is_sysadmin: false
+
+---
+test_name: リポジトリ管理者 スキーマ名指定 lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - lom_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=lom_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=lom_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_selected_value
+        extra_kwargs:
+          select_id: "jpcoar_lists"
+          expected_value: "lom_mapping"
+          is_sysadmin: false
+
+---
+test_name: リポジトリ管理者 スキーマ名指定 oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - oai_dc_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=oai_dc_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=oai_dc_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_selected_value
+        extra_kwargs:
+          select_id: "jpcoar_lists"
+          expected_value: "oai_dc_mapping"
+          is_sysadmin: false
+  - name: admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=invalid_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/{mapping_test.item_type_id}?mapping_type=invalid_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_select_invalid_mapping
+
+---
+test_name: リポジトリ管理者 スキーマ取得 ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_ddi_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema/ddi_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/ddi_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_schema_definitions
+        extra_kwargs:
+          schema_name: ddi_mapping
+
+---
+test_name: リポジトリ管理者 スキーマ取得 jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_jpcoar_v1_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema/jpcoar_v1_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/jpcoar_v1_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_schema_definitions
+        extra_kwargs:
+          schema_name: jpcoar_v1_mapping
+
+---
+test_name: リポジトリ管理者 スキーマ取得 jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_jpcoar_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema/jpcoar_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/jpcoar_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_schema_definitions
+        extra_kwargs:
+          schema_name: jpcoar_mapping
+
+---
+test_name: リポジトリ管理者 スキーマ取得 lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_lom_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema/lom_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/lom_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_schema_definitions
+        extra_kwargs:
+          schema_name: lom_mapping
+
+---
+test_name: リポジトリ管理者 スキーマ取得 oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_oai_dc_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema/oai_dc_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/oai_dc_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_schema_definitions
+        extra_kwargs:
+          schema_name: oai_dc_mapping
+
+---
+test_name: リポジトリ管理者 スキーマ取得 存在しないスキーマ名
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_invalid_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema/invalid_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema/invalid_mapping"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      json:
+        {}
+
+---
+test_name: リポジトリ管理者 スキーマ取得 すべてのスキーマ
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - get_all_mapping_schema
+  - repository_admin
+
+stages:
+  - name: admin/itemtypes/mapping/schema
+    request:
+      url: "{host}/admin/itemtypes/mapping/schema"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_schema_definitions
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(JPCOAR2.0)
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_oai_pmh_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: jpcoar2.0_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_2.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_mapping"
+  - name: jpcoar2.0_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_jpcoar_mapping_1.json"
+  - name: jpcoar2.0_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_2.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(JPCOAR1.0)
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_oai_pmh_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: jpcoar1.0_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_v1_mapping"
+  - name: jpcoar1.0_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_jpcoar_v1_mapping_1.json"
+  - name: jpcoar1.0_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_v1_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(DC)
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_oai_pmh_dc
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: dc_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "oai_dc_mapping"
+  - name: dc_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_oai_dc_mapping_1.json"
+  - name: dc_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "oai_dc_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(DDI)
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_oai_pmh_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: ddi_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "ddi_mapping"
+  - name: ddi_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_ddi_mapping_1.json"
+  - name: ddi_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "ddi_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: lom_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_lom_mapping_1.json"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=null ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_null_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_null
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_null_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=null jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_null_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_null
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_null_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=null jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_null_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_null
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_null_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=null lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_null_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_null
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_null_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=null oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_null_oai_dc
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_null
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_null_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=文字列 ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_string_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_string
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_abc_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=文字列 jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_string_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_string
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_abc_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=文字列 jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_string_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_string
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_abc_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=文字列 lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_string_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_string
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_abc_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id=文字列 oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_string_oai_dc
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count 
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_string
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_abc_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id 欠損 ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_missing_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_missing
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_noid_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id 欠損 jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_missing_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_missing
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_noid_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id 欠損 jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_missing_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_missing
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_noid_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id 欠損 lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_missing_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_missing
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_noid_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 item_type_id 欠損 oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_item_type_id_missing_oai_dc
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_item_type_id_missing
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_noid_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_unexpected_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 ヘッダーエラー ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_header_error_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_header_error
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_header_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 ヘッダーエラー jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_header_error_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_header_error
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_header_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 ヘッダーエラー jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_header_error_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_header_error
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_header_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 ヘッダーエラー lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_header_error_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_header_error
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_header_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 更新失敗 ヘッダーエラー oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_update_header_error_oai_dc
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: update_header_error
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      headers:
+        Content-Type: "text/plain"
+      data:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/success/mapping_success_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_header_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 マッピングタイプ欠損
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_type_missing
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: missing_mapping_type
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/error/mapping_no_mapping_type_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_duplicate_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 マッピング重複 ddi_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: duplicate_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_duplicate_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 マッピング重複 jpcoar_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: duplicate_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_duplicate_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 マッピング重複 jpcoar_v1_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: duplicate_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_duplicate_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 マッピング重複 lom_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: duplicate_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_duplicate_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+
+---
+test_name: リポジトリ管理者 マッピング重複 oai_dc_mapping
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_oai_dc
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: duplicate_mapping
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_duplicate_error
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"

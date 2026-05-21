@@ -1,0 +1,40 @@
+test_name: <role_ja> マッピング編集 <exe_type> <mapping_type> <No>
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - <login>
+  - mapping_all_schema_<mapping_type>
+  - <role_mark>
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: <type>_edit_<No>
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/<role_folder>/<target_dir>/<file_name>"
+    response:
+      status_code: 302
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_location_header
+        extra_kwargs:
+          expected_location: "{host}/admin/itemtypes/mapping"
+          host: "{host}"

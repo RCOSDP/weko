@@ -359,7 +359,11 @@ def generate_semi_pair(keys, pairs, properties, number):
         dict: The semi-pair of values.
     """
     result = {}
+    if not pairs:
+        raise ValueError("The 'pairs' list is empty.")
     for i in range(len(keys)):
+        if i >= len(pairs[number % len(pairs)]):
+            raise IndexError(f"Index {i} is out of range for 'pairs' element with length {len(pairs[number % len(pairs)])}.")
         result[keys[i]] = pairs[number % len(pairs)][i]
         if not result[keys[i]] and mode > 1:
             result[keys[i]] = pairs[number % len(pairs) + 1][i]

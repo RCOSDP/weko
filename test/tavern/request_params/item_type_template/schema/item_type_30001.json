@@ -619,7 +619,19 @@
                                         "string"
                                     ],
                                     "format": "select",
-                                    "enum": []
+                                    "enum": [
+                                        null,
+                                        "e-Rad_Researcher",
+                                        "NRID",
+                                        "ORCID",
+                                        "ISNI",
+                                        "VIAF",
+                                        "AID",
+                                        "kakenhi",
+                                        "Ringgold",
+                                        "GRID",
+                                        "ROR"
+                                    ]
                                 }
                             }
                         }
@@ -701,7 +713,14 @@
                                                     "string"
                                                 ],
                                                 "format": "select",
-                                                "enum": []
+                                                "enum": [
+                                                    null,
+                                                    "kakenhi",
+                                                    "ISNI",
+                                                    "Ringgold",
+                                                    "GRID",
+                                                    "ROR"
+                                                ]
                                             }
                                         }
                                     }
@@ -1477,7 +1496,19 @@
                                         "string"
                                     ],
                                     "format": "select",
-                                    "enum": []
+                                    "enum": [
+                                        null,
+                                        "e-Rad_Researcher",
+                                        "NRID",
+                                        "ORCID",
+                                        "ISNI",
+                                        "VIAF",
+                                        "AID",
+                                        "kakenhi",
+                                        "Ringgold",
+                                        "GRID",
+                                        "ROR"
+                                    ]
                                 }
                             }
                         }
@@ -1627,7 +1658,14 @@
                                                     "string"
                                                 ],
                                                 "format": "select",
-                                                "enum": []
+                                                "enum": [
+                                                    null,
+                                                    "kakenhi",
+                                                    "ISNI",
+                                                    "Ringgold",
+                                                    "GRID",
+                                                    "ROR"
+                                                ]
                                             },
                                             "contributorAffiliationNameIdentifier": {
                                                 "title": "所属機関識別子",
@@ -1875,7 +1913,19 @@
                                         "string"
                                     ],
                                     "format": "select",
-                                    "enum": []
+                                    "enum": [
+                                        null,
+                                        "e-Rad_Researcher",
+                                        "NRID",
+                                        "ORCID",
+                                        "ISNI",
+                                        "VIAF",
+                                        "AID",
+                                        "kakenhi",
+                                        "Ringgold",
+                                        "GRID",
+                                        "ROR"
+                                    ]
                                 }
                             }
                         }
@@ -1982,7 +2032,6 @@
             }
         },
         "item_30001_resource_type11": {
-            "title": "Resource Type",
             "type": "object",
             "format": "object",
             "properties": {
@@ -2397,7 +2446,7 @@
                                 "format": "text"
                             },
                             "subitem_funder_identifier_type": {
-                                "title": "識別子タイプ",
+                                "title": "助成機関識別子タイプ",
                                 "type": [
                                     "null",
                                     "string"
@@ -2412,6 +2461,11 @@
                                     "ROR",
                                     "Other"
                                 ]
+                            },
+                            "subitem_funder_identifier_type_uri": {
+                                "title": "助成機関識別子タイプURI",
+                                "type": "string",
+                                "format": "text"
                             }
                         }
                     },

@@ -38,3 +38,19 @@ variables:
     w-oa-03: request_params/w-oa-03/authors.json
     w-oa-15: request_params/w-oa-15/authors.json
   application_name: "Tavern Test"
+  mapping_test:
+    item_type_id: 10002
+    metadata_id1: item_30002_title0
+    metadata_id2: item_1770351994085
+    test_file1: test_mapping_1_*.tavern.yaml
+    test_file2: test_mapping_duplicate.tavern.yaml
+  sleep_wait: 3
+  max_count: 10
+  timeout: 10
+  index_test:
+    entity_id: "https://weko3.example.org"
+    index_test_file1: test_index_1_*.tavern.yaml
+    index_test_file2: test_index_2.tavern.yaml
+    index_test_file3: test_index_3.tavern.yaml
+    depth: 2
+    num_per_level: 3

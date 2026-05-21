@@ -456,7 +456,19 @@
                             },
                             "nameIdentifierScheme": {
                                 "type": "select",
-                                "options": []
+                                "options": [
+                                    null,
+                                    "e-Rad_Researcher",
+                                    "NRID",
+                                    "ORCID",
+                                    "ISNI",
+                                    "VIAF",
+                                    "AID",
+                                    "kakenhi",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR"
+                                ]
                             }
                         }
                     }
@@ -519,7 +531,14 @@
                                         },
                                         "affiliationNameIdentifierScheme": {
                                             "type": "select",
-                                            "options": []
+                                            "options": [
+                                                null,
+                                                "kakenhi",
+                                                "ISNI",
+                                                "Ringgold",
+                                                "GRID",
+                                                "ROR"
+                                            ]
                                         }
                                     }
                                 }
@@ -631,282 +650,288 @@
         "max": 9999
     },
     "item_30002_catalog39": {
-        "type": "list",
-        "items": {
-            "type": "dict",
-            "properties": {
-                "catalog_file": {
+        "type": "dict",
+        "properties": {
+            "catalog_file": {
+                "type": "dict",
+                "properties": {
+                    "catalog_file_uri": {
+                        "type": "string",
+                        "min": 1,
+                        "max": 255
+                    },
+                    "catalog_file_object_type": {
+                        "type": "select",
+                        "options": [
+                            null,
+                            "thumbnail"
+                        ]
+                    }
+                }
+            },
+            "catalog_rights": {
+                "type": "list",
+                "items": {
                     "type": "dict",
                     "properties": {
-                        "catalog_file_uri": {
+                        "catalog_right": {
                             "type": "string",
                             "min": 1,
                             "max": 255
                         },
-                        "catalog_file_object_type": {
+                        "catalog_right_language": {
                             "type": "select",
                             "options": [
-                                "thumbnail"
+                                null,
+                                "ja",
+                                "ja-Kana",
+                                "ja-Latn",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        },
+                        "catalog_right_rdf_resource": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
+                        }
+                    }
+                }
+            },
+            "catalog_titles": {
+                "type": "list",
+                "items": {
+                    "type": "dict",
+                    "properties": {
+                        "catalog_title": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
+                        },
+                        "catalog_title_language": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "ja",
+                                "ja-Kana",
+                                "ja-Latn",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
                             ]
                         }
                     }
-                },
-                "catalog_rights": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "catalog_rights_right": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "catalog_right_language": {
-                                "type": "select",
-                                "options": [
-                                    null,
-                                    "ja",
-                                    "ja-Kana",
-                                    "ja-Latn",
-                                    "en",
-                                    "fr",
-                                    "it",
-                                    "de",
-                                    "es",
-                                    "zh-cn",
-                                    "zh-tw",
-                                    "ru",
-                                    "la",
-                                    "ms",
-                                    "eo",
-                                    "ar",
-                                    "el",
-                                    "ko"
-                                ]
-                            },
-                            "catalog_right_rdf_resource": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            }
+                }
+            },
+            "catalog_licenses": {
+                "type": "list",
+                "items": {
+                    "type": "dict",
+                    "properties": {
+                        "catalog_license": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
+                        },
+                        "catalog_license_type": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "file",
+                                "metadata",
+                                "thumbnail"
+                            ]
+                        },
+                        "catalog_license_language": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "ja",
+                                "ja-Kana",
+                                "ja-Latn",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
+                        },
+                        "catalog_license_rdf_resource": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
                         }
                     }
-                },
-                "catalog_titles": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "catalog_title": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "catalog_title_language": {
-                                "type": "select",
-                                "options": [
-                                    null,
-                                    "ja",
-                                    "ja-Kana",
-                                    "ja-Latn",
-                                    "en",
-                                    "fr",
-                                    "it",
-                                    "de",
-                                    "es",
-                                    "zh-cn",
-                                    "zh-tw",
-                                    "ru",
-                                    "la",
-                                    "ms",
-                                    "eo",
-                                    "ar",
-                                    "el",
-                                    "ko"
-                                ]
-                            }
+                }
+            },
+            "catalog_subjects": {
+                "type": "list",
+                "items": {
+                    "type": "dict",
+                    "properties": {
+                        "catalog_subject": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
+                        },
+                        "catalog_subject_uri": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
+                        },
+                        "catalog_subject_scheme": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "BSH",
+                                "DDC",
+                                "e-Rad_field",
+                                "JEL",
+                                "LCC",
+                                "LCSH",
+                                "MeSH",
+                                "NDC",
+                                "NDLC",
+                                "NDLSH",
+                                "SciVal",
+                                "UDC",
+                                "Other"
+                            ]
+                        },
+                        "catalog_subject_language": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "ja",
+                                "ja-Kana",
+                                "ja-Latn",
+                                "en",
+                                "fr",
+                                "it",
+                                "de",
+                                "es",
+                                "zh-cn",
+                                "zh-tw",
+                                "ru",
+                                "la",
+                                "ms",
+                                "eo",
+                                "ar",
+                                "el",
+                                "ko"
+                            ]
                         }
                     }
-                },
-                "catalog_licenses": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "catalog_license": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "catalog_license_type": {
-                                "type": "select",
-                                "options": [
-                                    "file",
-                                    "metadata",
-                                    "thumbnail"
-                                ]
-                            },
-                            "catalog_license_language": {
-                                "type": "select",
-                                "options": [
-                                    null,
-                                    "ja",
-                                    "ja-Kana",
-                                    "ja-Latn",
-                                    "en",
-                                    "fr",
-                                    "it",
-                                    "de",
-                                    "es",
-                                    "zh-cn",
-                                    "zh-tw",
-                                    "ru",
-                                    "la",
-                                    "ms",
-                                    "eo",
-                                    "ar",
-                                    "el",
-                                    "ko"
-                                ]
-                            },
-                            "catalog_license_rdf_resource": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            }
+                }
+            },
+            "catalog_identifiers": {
+                "type": "list",
+                "items": {
+                    "type": "dict",
+                    "properties": {
+                        "catalog_identifier": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
+                        },
+                        "catalog_identifier_type": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "DOI",
+                                "HDL",
+                                "URI"
+                            ]
                         }
                     }
-                },
-                "catalog_subjects": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "catalog_subject": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "catalog_subject_uri": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "catalog_subject_scheme": {
-                                "type": "select",
-                                "options": [
-                                    "BSH",
-                                    "DDC",
-                                    "e-Rad",
-                                    "LCC",
-                                    "LCSH",
-                                    "MeSH",
-                                    "NDC",
-                                    "NDLC",
-                                    "NDLSH",
-                                    "SciVal",
-                                    "UDC",
-                                    "Other"
-                                ]
-                            },
-                            "catalog_subject_language": {
-                                "type": "select",
-                                "options": [
-                                    null,
-                                    "ja",
-                                    "ja-Kana",
-                                    "ja-Latn",
-                                    "en",
-                                    "fr",
-                                    "it",
-                                    "de",
-                                    "es",
-                                    "zh-cn",
-                                    "zh-tw",
-                                    "ru",
-                                    "la",
-                                    "ms",
-                                    "eo",
-                                    "ar",
-                                    "el",
-                                    "ko"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "catalog_identifiers": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "catalog_identifier": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "catalog_identifier_type": {
-                                "type": "select",
-                                "options": [
-                                    "DOI",
-                                    "HDL",
-                                    "URI"
-                                ]
-                            }
-                        }
-                    }
-                },
-                "catalog_contributors": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "contributor_type": {
-                                "type": "select",
-                                "options": [
-                                    "HostingInstitution"
-                                ]
-                            },
-                            "contributor_names": {
-                                "type": "list",
-                                "items": {
-                                    "type": "dict",
-                                    "properties": {
-                                        "contributor_name": {
-                                            "type": "string",
-                                            "min": 1,
-                                            "max": 255
-                                        },
-                                        "contributor_name_language": {
-                                            "type": "select",
-                                            "options": [
-                                                null,
-                                                "ja",
-                                                "ja-Kana",
-                                                "ja-Latn",
-                                                "en",
-                                                "fr",
-                                                "it",
-                                                "de",
-                                                "es",
-                                                "zh-cn",
-                                                "zh-tw",
-                                                "ru",
-                                                "la",
-                                                "ms",
-                                                "eo",
-                                                "ar",
-                                                "el",
-                                                "ko"
-                                            ]
-                                        }
+                }
+            },
+            "catalog_contributors": {
+                "type": "list",
+                "items": {
+                    "type": "dict",
+                    "properties": {
+                        "contributor_type": {
+                            "type": "select",
+                            "options": [
+                                null,
+                                "HostingInstitution"
+                            ]
+                        },
+                        "contributor_names": {
+                            "type": "list",
+                            "items": {
+                                "type": "dict",
+                                "properties": {
+                                    "contributor_name": {
+                                        "type": "string",
+                                        "min": 1,
+                                        "max": 255
+                                    },
+                                    "contributor_name_language": {
+                                        "type": "select",
+                                        "options": [
+                                            null,
+                                            "ja",
+                                            "ja-Kana",
+                                            "ja-Latn",
+                                            "en",
+                                            "fr",
+                                            "it",
+                                            "de",
+                                            "es",
+                                            "zh-cn",
+                                            "zh-tw",
+                                            "ru",
+                                            "la",
+                                            "ms",
+                                            "eo",
+                                            "ar",
+                                            "el",
+                                            "ko"
+                                        ]
                                     }
                                 }
                             }
                         }
                     }
-                },
-                "catalog_descriptions": {
+                }
+            },
+            "catalog_descriptions": {
+                "type": "list",
+                "items": {
                     "type": "dict",
                     "properties": {
                         "catalog_description": {
@@ -917,6 +942,7 @@
                         "catalog_description_type": {
                             "type": "select",
                             "options": [
+                                null,
                                 "Abstract",
                                 "Methods",
                                 "TableOfContents",
@@ -948,39 +974,41 @@
                             ]
                         }
                     }
-                },
-                "catalog_access_rights": {
-                    "type": "list",
-                    "items": {
-                        "type": "pair",
-                        "keys": [
-                            "catalog_access_right",
-                            "catalog_access_right_rdf_resource"
+                }
+            },
+            "catalog_access_rights": {
+                "type": "list",
+                "items": {
+                    "type": "pair",
+                    "keys": [
+                        "catalog_access_right",
+                        "catalog_access_right_rdf_resource"
+                    ],
+                    "pairs": [
+                        [
+                            null,
+                            ""
                         ],
-                        "pairs": [
-                            [
-                                "embargoed access",
-                                "http://purl.org/coar/access_right/c_f1cf"
-                            ],
-                            [
-                                "metadata only access",
-                                "http://purl.org/coar/access_right/c_14cb"
-                            ],
-                            [
-                                "restricted access",
-                                "http://purl.org/coar/access_right/c_16ec"
-                            ],
-                            [
-                                "open access",
-                                "http://purl.org/coar/access_right/c_abf2"
-                            ]
+                        [
+                            "embargoed access",
+                            "http://purl.org/coar/access_right/c_f1cf"
+                        ],
+                        [
+                            "metadata only access",
+                            "http://purl.org/coar/access_right/c_14cb"
+                        ],
+                        [
+                            "open access",
+                            "http://purl.org/coar/access_right/c_abf2"
+                        ],
+                        [
+                            "restricted access",
+                            "http://purl.org/coar/access_right/c_16ec"
                         ]
-                    }
+                    ]
                 }
             }
-        },
-        "min": 1,
-        "max": 9999
+        }
     },
     "item_30002_edition41": {
         "type": "list",
@@ -2060,7 +2088,19 @@
                             },
                             "nameIdentifierScheme": {
                                 "type": "select",
-                                "options": []
+                                "options": [
+                                    null,
+                                    "e-Rad_Researcher",
+                                    "NRID",
+                                    "ORCID",
+                                    "ISNI",
+                                    "VIAF",
+                                    "AID",
+                                    "kakenhi",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR"
+                                ]
                             }
                         }
                     }
@@ -2175,7 +2215,14 @@
                                         },
                                         "contributorAffiliationScheme": {
                                             "type": "select",
-                                            "options": []
+                                            "options": [
+                                                null,
+                                                "kakenhi",
+                                                "ISNI",
+                                                "Ringgold",
+                                                "GRID",
+                                                "ROR"
+                                            ]
                                         },
                                         "contributorAffiliationNameIdentifier": {
                                             "type": "string",
@@ -2457,12 +2504,12 @@
         "items": {
             "type": "dict",
             "properties": {
-                "jpcoar_format": {
+                "subitem_dcterms_date": {
                     "type": "string",
                     "min": 1,
                     "max": 255
                 },
-                "jpcoar_format_language": {
+                "subitem_dcterms_date_language": {
                     "type": "select",
                     "options": [
                         null,
@@ -2522,7 +2569,19 @@
                             },
                             "nameIdentifierScheme": {
                                 "type": "select",
-                                "options": []
+                                "options": [
+                                    null,
+                                    "e-Rad_Researcher",
+                                    "NRID",
+                                    "ORCID",
+                                    "ISNI",
+                                    "VIAF",
+                                    "AID",
+                                    "kakenhi",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR"
+                                ]
                             }
                         }
                     }
@@ -2704,12 +2763,12 @@
         "items": {
             "type": "dict",
             "properties": {
-                "original_language": {
+                "jpcoar_format": {
                     "type": "string",
                     "min": 1,
                     "max": 255
                 },
-                "original_language_language": {
+                "jpcoar_format_language": {
                     "type": "select",
                     "options": [
                         null,
@@ -3057,124 +3116,50 @@
         }
     },
     "item_30002_dataset_series42": {
-        "type": "list",
-        "items": {
-            "type": "dict",
-            "properties": {
-                "jpcoar_dataset_series": {
-                    "type": "select",
-                    "options": [
-                        "True",
-                        "False"
-                    ]
-                }
+        "type": "dict",
+        "properties": {
+            "jpcoar_dataset_series": {
+                "type": "select",
+                "options": [
+                    null,
+                    "True",
+                    "False"
+                ]
             }
-        },
-        "min": 1,
-        "max": 9999
+        }
     },
     "item_30002_dcterms_extent46": {
         "type": "list",
         "items": {
             "type": "dict",
             "properties": {
-                "publisher_names": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "publisher_name": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "publisher_name_language": {
-                                "type": "select",
-                                "options": [
-                                    null,
-                                    "ja",
-                                    "ja-Kana",
-                                    "ja-Latn",
-                                    "en",
-                                    "fr",
-                                    "it",
-                                    "de",
-                                    "es",
-                                    "zh-cn",
-                                    "zh-tw",
-                                    "ru",
-                                    "la",
-                                    "ms",
-                                    "eo",
-                                    "ar",
-                                    "el",
-                                    "ko"
-                                ]
-                            }
-                        }
-                    }
+                "dcterms_extent": {
+                    "type": "string",
+                    "min": 1,
+                    "max": 255
                 },
-                "publication_places": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "publication_place": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            }
-                        }
-                    }
-                },
-                "publisher_locations": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "publisher_location": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            }
-                        }
-                    }
-                },
-                "publisher_descriptions": {
-                    "type": "list",
-                    "items": {
-                        "type": "dict",
-                        "properties": {
-                            "publisher_description": {
-                                "type": "string",
-                                "min": 1,
-                                "max": 255
-                            },
-                            "publisher_description_language": {
-                                "type": "select",
-                                "options": [
-                                    null,
-                                    "ja",
-                                    "ja-Kana",
-                                    "ja-Latn",
-                                    "en",
-                                    "fr",
-                                    "it",
-                                    "de",
-                                    "es",
-                                    "zh-cn",
-                                    "zh-tw",
-                                    "ru",
-                                    "la",
-                                    "ms",
-                                    "eo",
-                                    "ar",
-                                    "el",
-                                    "ko"
-                                ]
-                            }
-                        }
-                    }
+                "dcterms_extent_language": {
+                    "type": "select",
+                    "options": [
+                        null,
+                        "ja",
+                        "ja-Kana",
+                        "ja-Latn",
+                        "en",
+                        "fr",
+                        "it",
+                        "de",
+                        "es",
+                        "zh-cn",
+                        "zh-tw",
+                        "ru",
+                        "la",
+                        "ms",
+                        "eo",
+                        "ar",
+                        "el",
+                        "ko"
+                    ]
                 }
             }
         },
@@ -3449,6 +3434,11 @@
                                 "ROR",
                                 "Other"
                             ]
+                        },
+                        "subitem_funder_identifier_type_uri": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
                         }
                     }
                 },
@@ -3463,6 +3453,7 @@
                         "subitem_funding_stream_identifier_type": {
                             "type": "select",
                             "options": [
+                                null,
                                 "Crossref Funder",
                                 "JGN_fundingStream"
                             ]
@@ -3484,33 +3475,10 @@
         "items": {
             "type": "dict",
             "properties": {
-                "subitem_dcterms_date": {
+                "original_language": {
                     "type": "string",
                     "min": 1,
                     "max": 255
-                },
-                "subitem_dcterms_date_language": {
-                    "type": "select",
-                    "options": [
-                        null,
-                        "ja",
-                        "ja-Kana",
-                        "ja-Latn",
-                        "en",
-                        "fr",
-                        "it",
-                        "de",
-                        "es",
-                        "zh-cn",
-                        "zh-tw",
-                        "ru",
-                        "la",
-                        "ms",
-                        "eo",
-                        "ar",
-                        "el",
-                        "ko"
-                    ]
                 }
             }
         },
@@ -3633,58 +3601,108 @@
         "items": {
             "type": "dict",
             "properties": {
-                "dcterms_extent": {
-                    "type": "string",
-                    "min": 1,
-                    "max": 255
+                "publisher_names": {
+                    "type": "list",
+                    "items": {
+                        "type": "dict",
+                        "properties": {
+                            "publisher_name": {
+                                "type": "string",
+                                "min": 1,
+                                "max": 255
+                            },
+                            "publisher_name_language": {
+                                "type": "select",
+                                "options": [
+                                    null,
+                                    "ja",
+                                    "ja-Kana",
+                                    "ja-Latn",
+                                    "en",
+                                    "fr",
+                                    "it",
+                                    "de",
+                                    "es",
+                                    "zh-cn",
+                                    "zh-tw",
+                                    "ru",
+                                    "la",
+                                    "ms",
+                                    "eo",
+                                    "ar",
+                                    "el",
+                                    "ko"
+                                ]
+                            }
+                        }
+                    }
                 },
-                "dcterms_extent_language": {
-                    "type": "select",
-                    "options": [
-                        null,
-                        "ja",
-                        "ja-Kana",
-                        "ja-Latn",
-                        "en",
-                        "fr",
-                        "it",
-                        "de",
-                        "es",
-                        "zh-cn",
-                        "zh-tw",
-                        "ru",
-                        "la",
-                        "ms",
-                        "eo",
-                        "ar",
-                        "el",
-                        "ko"
-                    ]
+                "publication_places": {
+                    "type": "list",
+                    "items": {
+                        "type": "dict",
+                        "properties": {
+                            "publication_place": {
+                                "type": "string",
+                                "min": 1,
+                                "max": 255
+                            }
+                        }
+                    }
+                },
+                "publisher_locations": {
+                    "type": "list",
+                    "items": {
+                        "type": "dict",
+                        "properties": {
+                            "publisher_location": {
+                                "type": "string",
+                                "min": 1,
+                                "max": 255
+                            }
+                        }
+                    }
+                },
+                "publisher_descriptions": {
+                    "type": "list",
+                    "items": {
+                        "type": "dict",
+                        "properties": {
+                            "publisher_description": {
+                                "type": "string",
+                                "min": 1,
+                                "max": 255
+                            },
+                            "publisher_description_language": {
+                                "type": "select",
+                                "options": [
+                                    null,
+                                    "ja",
+                                    "ja-Kana",
+                                    "ja-Latn",
+                                    "en",
+                                    "fr",
+                                    "it",
+                                    "de",
+                                    "es",
+                                    "zh-cn",
+                                    "zh-tw",
+                                    "ru",
+                                    "la",
+                                    "ms",
+                                    "eo",
+                                    "ar",
+                                    "el",
+                                    "ko"
+                                ]
+                            }
+                        }
+                    }
                 }
             }
         },
         "min": 1,
         "max": 9999
-    },
-    "item_30002_identifier_registration17": {
-        "type": "dict",
-        "properties": {
-            "subitem_identifier_reg_text": {
-                "type": "string",
-                "min": 1,
-                "max": 255
-            },
-            "subitem_identifier_reg_type": {
-                "type": "select",
-                "options": [
-                    null,
-                    "JaLC",
-                    "Crossref",
-                    "DataCite",
-                    "PMID"
-                ]
-            }
-        }
     },
     "item_30002_bibliographic_information29": {
         "type": "dict",
@@ -3771,5 +3789,5 @@
         }
     },
     "$schema": "/items/jsonschema/30002",
-    "shared_user_id": -1
+    "shared_user_ids": []
 }

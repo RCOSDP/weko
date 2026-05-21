@@ -33,6 +33,16 @@
             "url": "https://ror.org/##"
         },
         {
+            "name": "e-Rad_Researcher",
+            "scheme": "e-Rad_Researcher",
+            "url": ""
+        },
+        {
+            "name": "NRID",
+            "scheme": "NRID【非推奨】",
+            "url": "https://nrid.nii.ac.jp/nrid/##"
+        },
+        {
             "name": "ISNI",
             "scheme": "ISNI",
             "url": "http://www.isni.org/isni/##"
@@ -48,9 +58,24 @@
             "url": ""
         },
         {
-            "name": "e-Rad_Researcher",
-            "scheme": "e-Rad_Researcher",
+            "name": "kakenhi",
+            "scheme": "kakenhi【非推奨】",
             "url": ""
+        },
+        {
+            "name": "Ringgold",
+            "scheme": "Ringgold",
+            "url": ""
+        },
+        {
+            "name": "GRID",
+            "scheme": "GRID【非推奨】",
+            "url": ""
+        },
+        {
+            "name": "researchmap",
+            "scheme": "researchmap",
+            "url": "https://researchmap.jp/##"
         }
     ],
     "grouplist": {},

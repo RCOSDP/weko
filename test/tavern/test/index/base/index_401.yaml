@@ -1,0 +1,103 @@
+test_name: <role_ja> インデックス新規作成 <No>
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - <login>
+  - tree_editing_create_index_generated
+  - <role_mark>
+
+stages:
+  - name: prepare_count_indices
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:count_indices
+  - name: api/tree/index (create)
+    request:
+      url: "{host}/api/tree/index/<No>"
+      method: POST
+      verify: false
+      json:
+        id: 100
+        value: "Index_Test"
+    response:
+      status_code: 401
+      verify_response_with:
+        function: helper.index.verify_helper:verify_unauthorized
+        extra_kwargs:
+          count: "{index_count}"
+
+---
+test_name: <role_ja> インデックス編集 <No>
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - <login>
+  - tree_editing_edit_index_generated
+  - <role_mark>
+
+stages:
+  - name: prepare_index
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.index.response_helper:set_target_id
+          extra_kwargs:
+            file_path: "request_params/index/test_data/<role_folder>/<file_name>"
+            invalid: true
+  - name: api/tree/index (edit)
+    request:
+      url: "{host}/api/tree/index/{target_id_list[0]}"
+      method: PUT
+      verify: false
+      json:
+        $ext:
+          function: helper.index.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/index/test_data/<role_folder>/<file_name>"
+    response:
+      status_code: 401
+      verify_response_with:
+        function: helper.index.verify_helper:verify_unauthorized
+        extra_kwargs:
+          index: "{index}"
+
+---
+test_name: <role_ja> インデックス削除 <No>
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - <login>
+  - tree_editing_delete_index_generated
+  - <role_mark>
+
+stages:
+  - name: delete index
+    request:
+      url: "{host}/api/tree/index/<No>"
+      method: DELETE
+      params:
+        action: all
+      verify: false
+    response:
+      status_code: 401
+      verify_response_with:
+        function: helper.index.verify_helper:verify_unauthorized
+        extra_kwargs:
+          target_ids: [<No>]

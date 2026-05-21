@@ -14,4 +14,6 @@ INSERT INTO public.item_type_name(created,updated,id,name,has_site_license,is_ac
   , (TIMESTAMP '2020-10-08 03:52:06.937',TIMESTAMP '2020-10-08 09:05:12.670',14,'Harvesting DDI',True,True)
   , (TIMESTAMP '2021-04-02 10:15:06.927',TIMESTAMP '2021-04-02 10:15:06.927',30001,'デフォルトアイテムタイプ（シンプル）',True,True)
   , (TIMESTAMP '2021-03-31 10:41:57.080',TIMESTAMP '2021-03-31 10:41:57.080',30002,'デフォルトアイテムタイプ（フル）',True,True)
-  , (TIMESTAMP '2025-01-15 01:56:51.988',TIMESTAMP '2025-01-15 01:56:51.988',10001,'デフォルトアイテムタイプ（シンプル）_max_5',True,True);
+  , (TIMESTAMP '2025-01-15 01:56:51.988',TIMESTAMP '2025-01-15 01:56:51.988',10001,'デフォルトアイテムタイプ（シンプル）_max_5',True,True)
+  , (TIMESTAMP '2026-02-06 04:27:51.030',TIMESTAMP '2026-02-06 04:27:51.030',10002,'デフォルトアイテムタイプ（フル）_重複',True,True)
+  ON CONFLICT (id) DO NOTHING;

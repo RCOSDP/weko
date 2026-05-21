@@ -46,7 +46,31 @@ TRUNCATE TABLE oauth2server_client CASCADE;
 
 TRUNCATE TABLE notifications_user_settings;
 
-TRUNCATE TABLE authors;
+-- truncate authors, author_community_relations
+TRUNCATE TABLE authors CASCADE;
+
+-- truncate index, communities_community, harvest_settings, journal,
+-- resync_indexes, author_affiliation_community_relations,
+-- author_community_relations, author_prefix_community_relations,
+-- communities_community_relations, communities_featured_community,
+-- resync_logs, user_activity_logs
+TRUNCATE TABLE index CASCADE;
+
+TRUNCATE TABLE oaiserver_schema;
+
+TRUNCATE TABLE pdfcoverpage_set;
+
+-- truncate accounts_role, access_actionsroles, accounts_userrole,
+-- communities_community, shibboleth_userrole, workflow_flow_action_role,
+-- workflow_userrole, author_affiliation_community_relations,
+-- author_community_relations, author_prefix_community_relations,
+-- communities_community_record, communities_featured_community,
+-- user_activity_logs
+TRUNCATE TABLE accounts_role RESTART IDENTITY CASCADE;
+
+TRUNCATE TABLE oaiserver_set;
+
+TRUNCATE TABLE oaiserver_identify;
 
 -- reset workflow_activity_id_seq
 SELECT setval('workflow_activity_id_seq', 1, false);
@@ -68,3 +92,6 @@ SELECT setval('item_type_mapping_id_seq', 40001, false);
 
 -- reset authors
 SELECT setval('authors_id_seq', 1, false);
+
+-- reset access_actionsroles
+SELECT setval('access_actionsroles_id_seq', 1, false);

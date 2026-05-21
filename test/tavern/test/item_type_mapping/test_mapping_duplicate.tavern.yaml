@@ -1,0 +1,769 @@
+# Start System Administrator's Test
+test_name: システム管理者 マッピング編集 OAI-PMH(JPCOAR2.0) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - mapping_duplicate_success_jpcoar2
+  - system_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: jpcoar2.0_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_2.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_mapping"
+  - name: jpcoar2.0_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_jpcoar_mapping_1.json"
+  - name: jpcoar2.0_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_2.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_mapping"
+
+---
+test_name: システム管理者 マッピング編集 OAI-PMH(JPCOAR1.0) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - mapping_duplicate_success_jpcoar1
+  - system_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: jpcoar1.0_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_v1_mapping"
+  - name: jpcoar1.0_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_jpcoar_v1_mapping_1.json"
+  - name: jpcoar1.0_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_v1_mapping"
+
+---
+test_name: システム管理者 マッピング編集 OAI-PMH(DC) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - mapping_duplicate_success_dc
+  - system_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: dc_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "oai_dc_mapping"
+  - name: dc_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_oai_dc_mapping_1.json"
+  - name: dc_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "oai_dc_mapping"
+
+---
+test_name: システム管理者 マッピング編集 OAI-PMH(DDI) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - mapping_duplicate_success_ddi
+  - system_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: ddi_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "ddi_mapping"
+  - name: ddi_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_ddi_mapping_1.json"
+  - name: ddi_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "ddi_mapping"
+
+---
+test_name: システム管理者 マッピング編集 lom_mapping 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_sysadmin
+  - mapping_duplicate_success_lom
+  - system_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: lom_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/sysadmin/duplicate/mapping_duplicate_lom_mapping_1.json"
+
+# End System Administrator's Test
+---
+# Start Repository Administrator's Test
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(JPCOAR2.0) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_success_jpcoar2
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: jpcoar2.0_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_2.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_mapping"
+  - name: jpcoar2.0_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_jpcoar_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_jpcoar_mapping_1.json"
+  - name: jpcoar2.0_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_2.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(JPCOAR1.0) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_success_jpcoar1
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: jpcoar1.0_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_v1_mapping"
+  - name: jpcoar1.0_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_jpcoar_v1_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_jpcoar_v1_mapping_1.json"
+  - name: jpcoar1.0_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "jpcoar_v1_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(DC) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_success_oai_dc
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: dc_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "oai_dc_mapping"
+  - name: dc_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_oai_dc_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_oai_dc_mapping_1.json"
+  - name: dc_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=oai_dc&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "oai_dc_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 OAI-PMH(DDI) 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_success_ddi
+  - repository_admin
+
+stages:
+  - name: prepare_record
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.common.item_create_helper:create_item
+          extra_kwargs:
+            host: "{host}"
+            create_info_file: "request_params/prepare_item/create_item_info.json"
+            creation_count: 1
+            target_index: 1623632832836
+            file_path: "./upload_file/test.txt"
+            is_doi: true
+            prepare_edit: false
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: ddi_oai_pmh_before_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "ddi_mapping"
+  - name: ddi_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_ddi_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_ddi_mapping_1.json"
+  - name: ddi_oai_pmh_after_edit
+    request:
+      url: "{host}/oai?verb=GetRecord&metadataPrefix=ddi&identifier=oai:weko3.example.org:02000001"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_oai_pmh
+        extra_kwargs:
+          item_type_id: 10002
+          schema_name: "ddi_mapping"
+
+---
+test_name: リポジトリ管理者 マッピング編集 lom_mapping 重複
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - usefixtures:
+    - login_repoadmin
+  - mapping_duplicate_success_lom
+  - repository_admin
+
+stages:
+  - name: prepare_table_rows_count
+    request:
+      url: "{host}"
+      method: GET
+      verify: false
+    response:
+      status_code: 200
+      save:
+        $ext:
+          function: helper.item_type_mapping.response_helper:get_table_rows_count
+          extra_kwargs:
+            table_names: ["item_type_mapping"]
+  - name: lom_edit
+    request:
+      url: "{host}/admin/itemtypes/mapping"
+      method: POST
+      verify: false
+      json:
+        $ext:
+          function: helper.item_type_mapping.request_helper:generate_request_body
+          extra_kwargs:
+            file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_lom_mapping_1.json"
+    response:
+      status_code: 200
+      verify_response_with:
+        function: helper.item_type_mapping.verify_helper:verify_success
+        extra_kwargs:
+          row_count: "{row_count.item_type_mapping}"
+          file_path: "request_params/item_type_mapping/test_data/repoadmin/duplicate/mapping_duplicate_lom_mapping_1.json"
+
+# End Repository Administrator's Test

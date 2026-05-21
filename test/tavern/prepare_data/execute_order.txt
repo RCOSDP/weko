@@ -5,3 +5,13 @@ workflow_flow_define.sql
 workflow_flow_action.sql
 workflow_workflow.sql
 jsonld_mappings.sql
+index.sql
+accounts_role.sql
+accounts_userrole.sql
+access_actionsroles.sql
+communities_community.sql
+oaiserver_schema.sql
+pdfcoverpage_set.sql
+oaiserver_identify.sql
+files_bucket.sql
+oaiserver_set.sql

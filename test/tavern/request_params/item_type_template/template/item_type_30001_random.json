@@ -409,7 +409,19 @@
                             },
                             "nameIdentifierScheme": {
                                 "type": "select",
-                                "options": []
+                                "options": [
+                                    null,
+                                    "e-Rad_Researcher",
+                                    "NRID",
+                                    "ORCID",
+                                    "ISNI",
+                                    "VIAF",
+                                    "AID",
+                                    "kakenhi",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR"
+                                ]
                             }
                         }
                     }
@@ -472,7 +484,14 @@
                                         },
                                         "affiliationNameIdentifierScheme": {
                                             "type": "select",
-                                            "options": []
+                                            "options": [
+                                                null,
+                                                "kakenhi",
+                                                "ISNI",
+                                                "Ringgold",
+                                                "GRID",
+                                                "ROR"
+                                            ]
                                         }
                                     }
                                 }
@@ -1088,7 +1107,19 @@
                             },
                             "nameIdentifierScheme": {
                                 "type": "select",
-                                "options": []
+                                "options": [
+                                    null,
+                                    "e-Rad_Researcher",
+                                    "NRID",
+                                    "ORCID",
+                                    "ISNI",
+                                    "VIAF",
+                                    "AID",
+                                    "kakenhi",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR"
+                                ]
                             }
                         }
                     }
@@ -1203,7 +1234,14 @@
                                         },
                                         "contributorAffiliationScheme": {
                                             "type": "select",
-                                            "options": []
+                                            "options": [
+                                                null,
+                                                "kakenhi",
+                                                "ISNI",
+                                                "Ringgold",
+                                                "GRID",
+                                                "ROR"
+                                            ]
                                         },
                                         "contributorAffiliationNameIdentifier": {
                                             "type": "string",
@@ -1405,7 +1443,19 @@
                             },
                             "nameIdentifierScheme": {
                                 "type": "select",
-                                "options": []
+                                "options": [
+                                    null,
+                                    "e-Rad_Researcher",
+                                    "NRID",
+                                    "ORCID",
+                                    "ISNI",
+                                    "VIAF",
+                                    "AID",
+                                    "kakenhi",
+                                    "Ringgold",
+                                    "GRID",
+                                    "ROR"
+                                ]
                             }
                         }
                     }
@@ -1793,6 +1843,11 @@
                                 "ROR",
                                 "Other"
                             ]
+                        },
+                        "subitem_funder_identifier_type_uri": {
+                            "type": "string",
+                            "min": 1,
+                            "max": 255
                         }
                     }
                 },
@@ -1963,5 +2018,5 @@
         }
     },
     "$schema": "/items/jsonschema/30001",
-    "shared_user_id": -1
+    "shared_user_ids": []
 }

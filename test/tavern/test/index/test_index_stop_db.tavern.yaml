@@ -1,0 +1,22 @@
+test_name: ゲスト ツリー情報取得 400エラー
+
+includes:
+  - !include ../config.yaml
+
+marks:
+  - tree_editing_get_treeinfo_400_error
+  - guest
+  - skip_before_hook
+
+stages:
+  - name: api/tree
+    request:
+      url: "{host}/api/tree?action=browsing"
+      method: GET
+      verify: false
+    response:
+      status_code: 400
+      verify_response_with:
+        function: helper.index.verify_helper:verify_bad_request
+        extra_kwargs:
+          message: "Could not load data."

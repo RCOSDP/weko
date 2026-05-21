@@ -4,17 +4,18 @@ import random
 
 def request_create_validate_param(data, file_metadata=None):
     """Create params for {host}/api/items/validate
-    
+
     Args:
-        data (str): register data written in json string
-        file_upload_info (str): file upload info written in json string
-    
+        data(str): register data written in json string
+        file_upload_info(str, optional): file upload info written in json string
+
     Returns:
         dict: params for {host}/api/items/validate
             item_id (str): item id
             data (dict): register data
     """
-    data = json.loads(data)
+    if isinstance(data, str):
+        data = json.loads(data)
     item_id = data['$schema'].split('/')[-1]
     params = {
         'item_id': item_id,
@@ -23,24 +24,27 @@ def request_create_validate_param(data, file_metadata=None):
     if file_metadata is not None:
         metadata = json.loads(file_metadata)
         keys = list(metadata.keys())
-        params['data'][keys[0]] = metadata[keys[0]]
+        if keys[0] not in params['data'].keys():
+            params['data'][keys[0]] = metadata[keys[0]]
     return params
+
 
 def request_create_save_activity_data_param(activity_id, data, title_key):
     """ Create params for {host}/workflow/save_activity_data
-    
+
     Args:
-        activity_id (str): activity_id
-        data (str): register data written in json string
-        title_key (str): key of title from item type schema
-    
+        activity_id(str): activity_id
+        data(str|dict): register data written in json string
+        title_key(str): key of title from item type schema
+
     Returns:
         dict: params for {host}/workflow/save_activity_data
             activity_id (str): activity id
-            shared_user_id (int): shared user id
+            shared_user_ids (list): shared user ids
             title (str): title
     """
-    data = json.loads(data)
+    if isinstance(data, str):
+        data = json.loads(data)
     try:
         if len(title_key.split('.')) == 3:
             title = data[title_key.split('.')[0]][int(title_key.split('.')[1])][title_key.split('.')[2]]
@@ -50,26 +54,28 @@ def request_create_save_activity_data_param(activity_id, data, title_key):
         title = ''
     return {
         'activity_id': activity_id,
-        'shared_user_id': data['shared_user_id'],
+        'shared_user_ids': data['shared_user_ids'],
         'title': title
     }
 
+
 def request_create_save_param(data, url=None, file_upload_info=None, file_metadata=None):
     """Create params for {host}/items/iframe/model/save
-    
+
     Args:
-        data (str): register data written in json string
-        url (str): url written in json string
-        file_upload_info (str): file upload info written in json string
-        file_metadata (str): file metadata written in json string
-        
+        data(str|dict): register data written in json string
+        url(str, optional): url written in json string
+        file_upload_info(str, optional): file upload info written in json string
+        file_metadata(str, optional): file metadata written in json string
+
     Returns:
         dict: params for {host}/items/iframe/model/save
             endpoints (dict): endpoints
             files (list): files
             metainfo (dict): metainfo
     """
-    data = json.loads(data)
+    if isinstance(data, str):
+        data = json.loads(data)
     params = {
         'endpoints': {
             'initialization': '/api/deposits/items'
@@ -92,44 +98,49 @@ def request_create_save_param(data, url=None, file_upload_info=None, file_metada
     if file_metadata is not None:
         metadata = json.loads(file_metadata)
         keys = list(metadata.keys())
-        params['metainfo'][keys[0]] = metadata[keys[0]]
+        if keys[0] not in params['metainfo'].keys():
+            params['metainfo'][keys[0]] = metadata[keys[0]]
     return params
 
 def request_create_deposits_items_param(data=None):
     """Create params for {host}/api/deposits/items
-    
+
     Args:
-        data (str): register data written in json string
-    
+        data(str|dict, optional): register data written in json string
+
     Returns:
         dict: params for {host}/api/deposits/items
             $schema (str): schema
     """
     if data is None:
         return {}
-    data = json.loads(data)
+    if isinstance(data, str):
+        data = json.loads(data)
     return {
         '$schema': data['$schema']
     }
 
+
 def request_create_deposits_redirect_param(data, title_key, file_metadata=None):
     """Create params for {host}/api/deposits/redirect/{recid}
-    
+
     Args:
-        data (str): register data written in json string
-        title_key (str): key of title from item type schema
-    
+        data(str|dict): register data written in json string
+        title_key(str): key of title from item type schema
+        file_metadata(str, optional): file metadata written in json string
+
     Returns:
         dict: params for {host}/api/deposits/redirect/{recid}
             $schema (str): schema
             lang (str): lang
             pubdate (str): publish date
-            shared_user_id (int): shared user id
+            shared_user_ids (list): shared user ids
             title (str): title
             [key] (list or dict): item data with value
-            deleted_items (list): item keys with no value 
+            deleted_items (list): item keys with no value
     """
-    data = json.loads(data)
+    if isinstance(data, str):
+        data = json.loads(data)
     if file_metadata is not None:
         metadata = json.loads(file_metadata)
         keys = list(metadata.keys())
@@ -147,7 +158,7 @@ def request_create_deposits_redirect_param(data, title_key, file_metadata=None):
         '$schema': data['$schema'],
         'lang': 'ja',
         'pubdate': data['pubdate'],
-        'shared_user_id': data['shared_user_id'],
+        'shared_user_ids': data['shared_user_ids'],
         'title': title
     }
 
@@ -163,12 +174,14 @@ def request_create_deposits_redirect_param(data, title_key, file_metadata=None):
     return_params['deleted_items'] = deleted_items
     return return_params
 
-def request_create_deposits_items_index_param(indexes):
+
+def request_create_deposits_items_index_param(indexes, no_random):
     """Create params for {host}/api/deposits/items/{recid}
-    
+
     Args:
-        indexes (str): index id list written in string
-    
+        indexes(str): index id list written in string
+        no_random(bool): no random choice if True
+
     Returns:
         dict: params for {host}/api/deposits/items/{recid}
             actions (str): actions
@@ -176,18 +189,26 @@ def request_create_deposits_items_index_param(indexes):
     """
     return {
         'actions': 'private',
-        'index': [random.choice(eval(indexes))]
+        'index': [random.choice(eval(indexes))] if not no_random else eval(indexes)
     }
 
-def request_create_action_param(action_version, link_data = None, identifier = None, community = None):
+
+def request_create_action_param(
+        action_version,
+        link_data = None,
+        identifier = None,
+        community = None,
+        is_doi=False
+    ):
     """Create params for {host}/workflow/activity/action/{activity_id}/{action_id}
-    
+
     Args:
-        action_version (str): action version
-        link_data (str): link data written in json string
-        identifier (str): identifier written in json string
-        community (str): community id
-    
+        action_version(str): action version
+        link_data(str, optional): link data written in json string
+        identifier(str, optional): identifier written in json string
+        community(str, optional): community id
+        is_doi(bool, optional): is doi granted
+
     Returns:
         dict: params for {host}/workflow/activity/action/{activity_id}/{action_id}
             action_version (str): action version
@@ -213,15 +234,19 @@ def request_create_action_param(action_version, link_data = None, identifier = N
         return_params['link_data'] = link_data
     if identifier is not None:
         identifier = json.loads(identifier)
-        return_params['identifier_grant'] = '0'
+        return_params['identifier_grant'] = '1' if is_doi else '0'
         return_params['identifier_grant_crni_link'] = identifier['crni_link']
-        return_params['identifier_grant_jalc_cr_doi_link'] = identifier['jalc_cr_doi_link'] + identifier['jalc_cr_doi_suffix']
+        return_params['identifier_grant_jalc_cr_doi_link'] = \
+            identifier['jalc_cr_doi_link'] + identifier['jalc_cr_doi_suffix']
         return_params['identifier_grant_jalc_cr_doi_suffix'] = identifier['jalc_cr_doi_suffix']
-        return_params['identifier_grant_jalc_dc_doi_link'] = identifier['jalc_dc_doi_link'] + identifier['jalc_dc_doi_suffix']
+        return_params['identifier_grant_jalc_dc_doi_link'] = \
+            identifier['jalc_dc_doi_link'] + identifier['jalc_dc_doi_suffix']
         return_params['identifier_grant_jalc_dc_doi_suffix'] = identifier['jalc_dc_doi_suffix']
-        return_params['identifier_grant_jalc_doi_link'] = identifier['jalc_doi_link'] + identifier['jalc_doi_suffix']
+        return_params['identifier_grant_jalc_doi_link'] = \
+            identifier['jalc_doi_link'] + identifier['jalc_doi_suffix']
         return_params['identifier_grant_jalc_doi_suffix'] = identifier['jalc_doi_suffix']
-        return_params['identifier_grant_ndl_jalc_doi_link'] = identifier['ndl_jalc_doi_link'] + identifier['ndl_jalc_doi_suffix']
+        return_params['identifier_grant_ndl_jalc_doi_link'] = \
+            identifier['ndl_jalc_doi_link'] + identifier['ndl_jalc_doi_suffix']
         return_params['identifier_grant_ndl_jalc_doi_suffix'] = identifier['ndl_jalc_doi_suffix']
     if community is not None:
         return_params['community'] = community
@@ -230,13 +255,14 @@ def request_create_action_param(action_version, link_data = None, identifier = N
         return_params['temporary_save'] = 0
     return return_params
 
+
 def request_create_author_edit_param(file_name, author_id):
     """Create params for {host}/api/author/edit
-    
+
     Args:
-        file_name (str): file name of author register data
-        author_id (str): author id
-        
+        file_name(str): file name of author register data
+        author_id(str): author id
+
     Returns:
         dict: params for {host}/api/author/edit
             author (dict): author register data

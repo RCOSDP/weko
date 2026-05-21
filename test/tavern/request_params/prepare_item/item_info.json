@@ -1,0 +1,593 @@
+{
+    "pubdate": "2026-01-01",
+    "$schema": "/items/jsonschema/30002",
+    "shared_user_ids": [],
+    "item_30002_apc5": {
+        "subitem_apc": "Paid"
+    },
+    "item_30002_date11": [
+        {
+            "subitem_date_issued_type": "Accepted",
+            "subitem_date_issued_datetime": "2026-01-01"
+        }
+    ],
+    "item_30002_file35": [
+        {
+            "url": {
+                "url": "https://weko3.example.org/record/{id}/files/test.txt",
+                "label": "本文URLラベル",
+                "objectType": "abstract"
+            },
+            "date": [
+                {
+                    "dateType": "Available",
+                    "dateValue": "2026-01-01"
+                }
+            ],
+            "format": "text/plain",
+            "version": "v1.0",
+            "fileDate": [
+                {
+                    "fileDateType": "Accepted",
+                    "fileDateValue": "2026-01-01"
+                }
+            ],
+            "filename": "test.txt",
+            "filesize": [
+                {
+                    "value": "9 B"
+                }
+            ],
+            "accessrole": "open_access",
+            "displaytype": "detail",
+            "licensefree": "自由ライセンス",
+            "licensetype": "license_free"
+        }
+    ],
+    "item_30002_title0": [
+        {
+            "subitem_title": "タイトル",
+            "subitem_title_language": "ja"
+        }
+    ],
+    "item_30002_rights6": [
+        {
+            "subitem_rights": "権利情報",
+            "subitem_rights_language": "ja",
+            "subitem_rights_resource": "権利情報Resource"
+        }
+    ],
+    "item_30002_creator2": [
+        {
+            "givenNames": [
+                {
+                    "givenName": "太郎",
+                    "givenNameLang": "ja"
+                }
+            ],
+            "creatorType": "作成者タイプ",
+            "familyNames": [
+                {
+                    "familyName": "山田",
+                    "familyNameLang": "ja"
+                }
+            ],
+            "creatorMails": [
+                {
+                    "creatorMails": "taro.yamada@example.org"
+                }
+            ],
+            "creatorNames": [
+                {
+                    "creatorName": "太郎, 山田",
+                    "creatorNameLang": "ja",
+                    "creatorNameType": "Personal"
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "creator_1",
+                    "nameIdentifierURI": "http://example.org/creator/1",
+                    "nameIdentifierScheme": "ORCID"
+                }
+            ],
+            "creatorAffiliations": [
+                {
+                    "affiliationNames": [
+                        {
+                            "affiliationName": "所属機関名",
+                            "affiliationNameLang": "ja"
+                        }
+                    ],
+                    "affiliationNameIdentifiers": [
+                        {
+                            "affiliationNameIdentifier": "creator_affiliation_1",
+                            "affiliationNameIdentifierURI": "http://example.org/affiliation/1",
+                            "affiliationNameIdentifierScheme": "kakenhi"
+                        }
+                    ]
+                }
+            ],
+            "creatorAlternatives": [
+                {
+                    "creatorAlternative": "ヤマダ タロウ",
+                    "creatorAlternativeLang": "ja"
+                }
+            ]
+        }
+    ],
+    "item_30002_subject8": [
+        {
+            "subitem_subject": "主題",
+            "subitem_subject_uri": "http://example.org/subject/1",
+            "subitem_subject_scheme": "BSH",
+            "subitem_subject_language": "ja"
+        }
+    ],
+    "item_30002_catalog39": {
+        "catalog_file": {
+            "catalog_file_uri": "http://example.org/catalog/1",
+            "catalog_file_object_type": "thumbnail"
+        },
+        "catalog_rights": [
+            {
+                "catalog_right": "カタログ権利情報",
+                "catalog_right_language": "ja",
+                "catalog_right_rdf_resource": "権利RDFリソース"
+            }
+        ],
+        "catalog_titles": [
+            {
+                "catalog_title": "カタログタイトル",
+                "catalog_title_language": "ja"
+            }
+        ],
+        "catalog_licenses": [
+            {
+                "catalog_license": "カタログライセンス",
+                "catalog_license_type": "file",
+                "catalog_license_language": "ja",
+                "catalog_license_rdf_resource": "ライセンスRDFリソース"
+            }
+        ],
+        "catalog_subjects": [
+            {
+                "catalog_subject": "カタログ主題",
+                "catalog_subject_uri": "http://example.org/catalog/subject/1",
+                "catalog_subject_scheme": "DDC",
+                "catalog_subject_language": "ja"
+            }
+        ],
+        "catalog_identifiers": [
+            {
+                "catalog_identifier": "catalog_1",
+                "catalog_identifier_type": "DOI"
+            }
+        ],
+        "catalog_contributors": [
+            {
+                "contributor_type": "HostingInstitution",
+                "contributor_names": [
+                    {
+                        "contributor_name": "提供機関名",
+                        "contributor_name_language": "ja"
+                    }
+                ]
+            }
+        ],
+        "catalog_descriptions": [
+            {
+                "catalog_description": "カタログ内容記述",
+                "catalog_description_type": "Abstract",
+                "catalog_description_language": "ja"
+            }
+        ],
+        "catalog_access_rights": [
+            {
+                "catalog_access_right": "embargoed access",
+                "catalog_access_right_rdf_resource": "http://purl.org/coar/access_right/c_f1cf"
+            }
+        ]
+    },
+    "item_30002_edition41": [
+        {
+            "edition": "版",
+            "edition_language": "ja"
+        }
+    ],
+    "item_30002_heading36": [
+        {
+            "subitem_heading_headline": "小見出し",
+            "subitem_heading_language": "ja",
+            "subitem_heading_banner_headline": "大見出し"
+        }
+    ],
+    "item_30002_version14": {
+        "subitem_version": "v2.0"
+    },
+    "item_30002_language12": [
+        {
+            "subitem_language": "jpn"
+        }
+    ],
+    "item_30002_page_end28": {
+        "subitem_end_page": "4"
+    },
+    "item_30002_relation18": [
+        {
+            "subitem_relation_name": [
+                {
+                    "subitem_relation_name_text": "関連名称",
+                    "subitem_relation_name_language": "ja"
+                }
+            ],
+            "subitem_relation_type": "isVersionOf",
+            "subitem_relation_type_id": {
+                "subitem_relation_type_select": "ARK",
+                "subitem_relation_type_id_text": "ark:/12345/abcd"
+            }
+        }
+    ],
+    "item_30002_temporal19": [
+        {
+            "subitem_temporal_text": "時間的範囲",
+            "subitem_temporal_language": "ja"
+        }
+    ],
+    "item_30002_publisher10": [
+        {
+            "subitem_publisher": "出版者",
+            "subitem_publisher_language": "ja"
+        }
+    ],
+    "item_30002_conference34": [
+        {
+            "subitem_conference_date": {
+                "subitem_conference_period": "1年間",
+                "subitem_conference_end_day": "31",
+                "subitem_conference_end_year": "2026",
+                "subitem_conference_end_month": "12",
+                "subitem_conference_start_day": "1",
+                "subitem_conference_start_year": "2026",
+                "subitem_conference_start_month": "1",
+                "subitem_conference_date_language": "ja"
+            },
+            "subitem_conference_names": [
+                {
+                    "subitem_conference_name": "会議名",
+                    "subitem_conference_name_language": "ja"
+                }
+            ],
+            "subitem_conference_places": [
+                {
+                    "subitem_conference_place": "開催地",
+                    "subitem_conference_place_language": "ja"
+                }
+            ],
+            "subitem_conference_venues": [
+                {
+                    "subitem_conference_venue": "開催会場",
+                    "subitem_conference_venue_language": "ja"
+                }
+            ],
+            "subitem_conference_country": "USA",
+            "subitem_conference_sequence": "回次",
+            "subitem_conference_sponsors": [
+                {
+                    "subitem_conference_sponsor": "主催機関",
+                    "subitem_conference_sponsor_language": "ja"
+                }
+            ]
+        }
+    ],
+    "item_30002_contributor3": [
+        {
+            "givenNames": [
+                {
+                    "givenName": "花子",
+                    "givenNameLang": "ja"
+                }
+            ],
+            "familyNames": [
+                {
+                    "familyName": "佐藤",
+                    "familyNameLang": "ja"
+                }
+            ],
+            "contributorType": "ContactPerson",
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "contributor_1",
+                    "nameIdentifierURI": "http://example.org/contributor/1",
+                    "nameIdentifierScheme": "ORCID"
+                }
+            ],
+            "contributorMails": [
+                {
+                    "contributorMail": "hanako.sato@example.com"
+                }
+            ],
+            "contributorNames": [
+                {
+                    "lang": "ja",
+                    "nameType": "Personal",
+                    "contributorName": "佐藤 花子"
+                }
+            ],
+            "contributorAffiliations": [
+                {
+                    "contributorAffiliationNames": [
+                        {
+                            "contributorAffiliationName": "寄与者所属機関名",
+                            "contributorAffiliationNameLang": "ja"
+                        }
+                    ],
+                    "contributorAffiliationNameIdentifiers": [
+                        {
+                            "contributorAffiliationNameIdentifier": "contributor_affiliation_1",
+                            "contributorAffiliationURI": "http://example.org/contributor/affiliation/1",
+                            "contributorAffiliationScheme": "ISNI"
+                        }
+                    ]
+                }
+            ],
+            "contributorAlternatives": [
+                {
+                    "contributorAlternative": "サトウ ハナコ",
+                    "contributorAlternativeLang": "ja"
+                }
+            ]
+        }
+    ],
+    "item_30002_description9": [
+        {
+            "subitem_description": "内容記述",
+            "subitem_description_type": "Methods",
+            "subitem_description_language": "ja"
+        }
+    ],
+    "item_30002_identifier16": [
+        {
+            "subitem_identifier_uri": "http://doi.org/10.5678/example",
+            "subitem_identifier_type": "DOI"
+        }
+    ],
+    "item_30002_page_start27": {
+        "subitem_start_page": "3"
+    },
+    "item_30002_degree_name31": [
+        {
+            "subitem_degreename": "学位名",
+            "subitem_degreename_language": "ja"
+        }
+    ],
+    "item_30002_geolocation20": [
+        {
+            "subitem_geolocation_box": {
+                "subitem_east_longitude": "139.7745",
+                "subitem_north_latitude": "35.7300",
+                "subitem_south_latitude": "35.6581",
+                "subitem_west_longitude": "139.7000"
+            },
+            "subitem_geolocation_place": [
+                {
+                    "subitem_geolocation_place_text": "位置情報"
+                }
+            ],
+            "subitem_geolocation_point": {
+                "subitem_point_latitude": "35.6895",
+                "subitem_point_longitude": "139.6917"
+            }
+        }
+    ],
+    "item_30002_access_rights4": {
+        "subitem_access_rights": "open_access",
+        "subitem_access_rights_rdf_resource": "http://purl.org/coar/access_right/c_abf2"
+    },
+    "item_30002_date_granted32": {
+        "subitem_dategranted": "2026-01-15"
+    },
+    "item_30002_dcterms_date38": [
+        {
+            "subitem_dcterms_date": "2026-02-01",
+            "subitem_dcterms_date_language": "ja"
+        }
+    ],
+    "item_30002_issue_number25": {
+        "subitem_issue": "2"
+    },
+    "item_30002_rights_holder7": [
+        {
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "rights_holder_1",
+                    "nameIdentifierURI": "http://example.org/rights_holder/1",
+                    "nameIdentifierScheme": "ORCID"
+                }
+            ],
+            "rightHolderNames": [
+                {
+                    "rightHolderName": "権利者名",
+                    "rightHolderLanguage": "ja"
+                }
+            ]
+        }
+    ],
+    "item_30002_source_title23": [
+        {
+            "subitem_source_title": "収録物名",
+            "subitem_source_title_language": "ja"
+        }
+    ],
+    "item_30002_version_type15": {
+        "subitem_version_type": "AO",
+        "subitem_peer_reviewed": "Not peer reviewed",
+        "subitem_version_resource": "http://purl.org/coar/version/c_b1a7d7d4d402bcce"
+    },
+    "item_30002_volume_title44": [
+        {
+            "volume_title": "部編名",
+            "volume_title_language": "ja"
+        }
+    ],
+    "item_30002_jpcoar_format40": [
+        {
+            "jpcoar_format": "物理的形態",
+            "jpcoar_format_language": "ja"
+        }
+    ],
+    "item_30002_resource_type13": {
+        "resourceuri": "http://purl.org/coar/resource_type/c_5794",
+        "resourcetype": "conference paper"
+    },
+    "item_30002_volume_number24": {
+        "subitem_volume": "1"
+    },
+    "item_30002_dataset_series42": {
+        "jpcoar_dataset_series": "True"
+    },
+    "item_30002_dcterms_extent46": [
+        {
+            "dcterms_extent": "大きさ",
+            "dcterms_extent_language": "ja"
+        }
+    ],
+    "item_30002_degree_grantor33": [
+        {
+            "subitem_degreegrantor": [
+                {
+                    "subitem_degreegrantor_name": "学位授与機関名",
+                    "subitem_degreegrantor_language": "ja"
+                }
+            ],
+            "subitem_degreegrantor_identifier": [
+                {
+                    "subitem_degreegrantor_identifier_name": "degree_grantor_1",
+                    "subitem_degreegrantor_identifier_scheme": "kakenhi"
+                }
+            ]
+        }
+    ],
+    "item_30002_number_of_pages26": {
+        "subitem_number_of_pages": "5"
+    },
+    "item_30002_alternative_title1": [
+        {
+            "subitem_alternative_title": "別タイトル",
+            "subitem_alternative_title_language": "ja"
+        }
+    ],
+    "item_30002_funding_reference21": [
+        {
+            "subitem_award_titles": [
+                {
+                    "subitem_award_title": "研究課題名",
+                    "subitem_award_title_language": "ja"
+                }
+            ],
+            "subitem_funder_names": [
+                {
+                    "subitem_funder_name": "助成機関名",
+                    "subitem_funder_name_language": "ja"
+                }
+            ],
+            "subitem_award_numbers": {
+                "subitem_award_uri": "http://example.org/award/12345",
+                "subitem_award_number": "award_1",
+                "subitem_award_number_type": "JGN"
+            },
+            "subitem_funding_streams": [
+                {
+                    "subitem_funding_stream": "プログラム情報",
+                    "subitem_funding_stream_language": "ja"
+                }
+            ],
+            "subitem_funder_identifiers": {
+                "subitem_funder_identifier": "funder_1",
+                "subitem_funder_identifier_type": "Crossref Funder",
+                "subitem_funder_identifier_type_uri": "http://example.org/funder/1"
+            },
+            "subitem_funding_stream_identifiers": {
+                "subitem_funding_stream_identifier": "funding_stream_1",
+                "subitem_funding_stream_identifier_type": "JGN_fundingStream",
+                "subitem_funding_stream_identifier_type_uri": "http://example.org/funding_stream/1"
+            }
+        }
+    ],
+    "item_30002_original_language43": [
+        {
+            "original_language": "原文の言語"
+        }
+    ],
+    "item_30002_source_identifier22": [
+        {
+            "subitem_source_identifier": "source_identifier_1",
+            "subitem_source_identifier_type": "PISSN"
+        }
+    ],
+    "item_30002_holding_agent_name37": [
+        {
+            "holding_agent_names": [
+                {
+                    "holding_agent_name": "所蔵機関名",
+                    "holding_agent_name_language": "ja"
+                }
+            ],
+            "holding_agent_name_identifier": {
+                "holding_agent_name_identifier_uri": "http://example.org/holding_agent/1",
+                "holding_agent_name_identifier_value": "holding_agent_1",
+                "holding_agent_name_identifier_scheme": "ISNI"
+            }
+        }
+    ],
+    "item_30002_dissertation_number30": {
+        "subitem_dissertationnumber": "学位授与番号"
+    },
+    "item_30002_publisher_information45": [
+        {
+            "publisher_names": [
+                {
+                    "publisher_name": "出版者名",
+                    "publisher_name_language": "ja"
+                }
+            ],
+            "publication_places": [
+                {
+                    "publication_place": "出版地（国名コード）"
+                }
+            ],
+            "publisher_locations": [
+                {
+                    "publisher_location": "出版地"
+                }
+            ],
+            "publisher_descriptions": [
+                {
+                    "publisher_description": "出版者注記",
+                    "publisher_description_language": "ja"
+                }
+            ]
+        }
+    ],
+    "item_30002_bibliographic_information29": {
+        "bibliographicPageEnd": "14",
+        "bibliographic_titles": [
+            {
+                "bibliographic_title": "雑誌タイトル",
+                "bibliographic_titleLang": "ja"
+            }
+        ],
+        "bibliographicPageStart": "13",
+        "bibliographicIssueDates": {
+            "bibliographicIssueDate": "2026-02-15",
+            "bibliographicIssueDateType": "Issued"
+        },
+        "bibliographicIssueNumber": "12",
+        "bibliographicVolumeNumber": "11",
+        "bibliographicNumberOfPages": "15"
+    },
+    "item_1770351994085": {
+        "subitem_title": "重複タイトル",
+        "subitem_title_language": "ja"
+    }
+}
