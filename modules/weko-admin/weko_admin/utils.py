@@ -417,7 +417,8 @@ def package_reports(
     period = True
     if not report_date:
         period = False
-        report_date = str(year) + '-' + str(month)
+        dt = datetime(int(year), int(month), 1)
+        report_date = dt.strftime('%Y-%m')
 
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
     file_name_mapping = current_app.config['WEKO_ADMIN_REPORT_FILE_NAMES']

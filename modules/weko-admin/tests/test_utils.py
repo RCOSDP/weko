@@ -626,6 +626,11 @@ def test_package_reports(client, mocker):
     mock_make_stats_file.assert_called_once_with("test_stats", "file_download", "2022-10", False)
 
     with patch("weko_admin.utils.make_stats_file", return_value=mock_stream) as mock_make_stats_file:
+        result = package_reports(all_stats, "2022", "05")
+    assert b"logReport_FileDownload_2022-05.tsv" in result.getvalue()
+    mock_make_stats_file.assert_called_once_with("test_stats", "file_download", "2022-05", False)
+
+    with patch("weko_admin.utils.make_stats_file", return_value=mock_stream) as mock_make_stats_file:
         result = package_reports(all_stats, report_date="2022-10-01_2022-10-07")
     assert b"logReport_FileDownload_2022-10-01_2022-10-07.tsv" in result.getvalue()
     mock_make_stats_file.assert_called_once_with("test_stats", "file_download", "2022-10-01_2022-10-07", True)

@@ -267,23 +267,6 @@ msgstr "統計設定"
 msgid "Site License Usage Statistics Report"
 msgstr "サイトライセンス利用統計"
 
-#: weko_admin/config.py:129
-msgid "No. Of File Downloads"
-msgstr "ファイルダウンロード回数"
-
-#: weko_admin/config.py:130
-msgid "No. Of File Previews"
-msgstr "ファイルプレビュー数"
-
-#: weko_admin/config.py:131
-msgid "No. Of Paid File Downloads"
-msgstr "課金ファイルダウンロード回数"
-
-#: weko_admin/config.py:132
-#, fuzzy
-msgid "No. Of Paid File Previews"
-msgstr "ファイルプレビュー数"
-
 #: weko_admin/config.py:133
 msgid "Detail Views Per Index"
 msgstr "インデックス毎の詳細ビュー"
@@ -313,21 +296,33 @@ msgstr "ユーザー所属情報"
 msgid "Access Count By Site License"
 msgstr "サイトライセンス別アクセス数"
 
-#: weko_admin/config.py:144
-msgid "Open-Access No. Of File Downloads"
+#: weko_admin/config.py:159
+msgid "Number of File Downloads"
+msgstr "ファイルダウンロード回数"
+
+#: weko_admin/config.py:160
+msgid "Number of File Previews"
+msgstr "ファイルプレビュー数"
+
+#: weko_admin/config.py:161
+msgid "Number of Paid File Downloads"
+msgstr "課金ファイルダウンロード回数"
+
+#: weko_admin/config.py:173
+msgid "Number of Open-Access File Downloads"
 msgstr "オープンアクセスファイルダウンロード数"
 
-#: weko_admin/config.py:145
-msgid "Open-Access No. Of File Previews"
+#: weko_admin/config.py:174
+msgid "Number of Open-Access File Previews"
 msgstr "オープンアクセスファイルプレビュー数"
 
-#: weko_admin/config.py:158
-msgid "Open-Access No. Of Paid File Downloads"
-msgstr "オープンアクセス課金ファイルダウンロード数"
-
-#: weko_admin/config.py:146
+#: weko_admin/config.py:175
 msgid "Access Number Breakdown By Site License"
 msgstr "サイトライセンス別アクセス数内訳"
+
+#: weko_admin/config.py:176
+msgid "Number of Open-Access Paid File Downloads"
+msgstr "オープンアクセス課金ファイルダウンロード数"
 
 #: weko_admin/config.py:152 weko_admin/config.py:157
 msgid "File Name"
@@ -341,12 +336,12 @@ msgstr "登録インデックス名"
 msgid "No. Of Times Downloaded"
 msgstr "ファイルダウンロード回数"
 
-#: weko_admin/config.py:153 weko_admin/config.py:157
-msgid "Non-Logged In User"
+#: weko_admin/config.py:183 weko_admin/config.py:188
+msgid "Non-Logged in User"
 msgstr "未ログインユーザー"
 
-#: weko_admin/config.py:154 weko_admin/config.py:157
-msgid "Logged In User"
+#: weko_admin/config.py:184 weko_admin/config.py:189
+msgid "Logged in User"
 msgstr "ログインユーザー"
 
 #: weko_admin/config.py:154 weko_admin/config.py:159

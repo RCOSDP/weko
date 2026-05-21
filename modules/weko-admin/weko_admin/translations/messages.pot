@@ -280,22 +280,6 @@ msgstr ""
 msgid "statistics report"
 msgstr ""
 
-#: weko_admin/config.py:129
-msgid "No. Of File Downloads"
-msgstr ""
-
-#: weko_admin/config.py:130
-msgid "No. Of File Previews"
-msgstr ""
-
-#: weko_admin/config.py:131
-msgid "No. Of Paid File Downloads"
-msgstr ""
-
-#: weko_admin/config.py:132
-msgid "No. Of Paid File Previews"
-msgstr ""
-
 #: weko_admin/config.py:133
 msgid "Detail Views Per Index"
 msgstr ""
@@ -325,20 +309,32 @@ msgstr ""
 msgid "Access Count By Site License"
 msgstr ""
 
-#: weko_admin/config.py:144
-msgid "Open-Access No. Of File Downloads"
+#: weko_admin/config.py:159
+msgid "Number of File Downloads"
 msgstr ""
 
-#: weko_admin/config.py:145
-msgid "Open-Access No. Of File Previews"
+#: weko_admin/config.py:160
+msgid "Number of File Previews"
 msgstr ""
 
-#: weko_admin/config.py:146
+#: weko_admin/config.py:161
+msgid "Number of Paid File Downloads"
+msgstr ""
+
+#: weko_admin/config.py:173
+msgid "Number of Open-Access File Downloads"
+msgstr ""
+
+#: weko_admin/config.py:174
+msgid "Number of Open-Access File Previews"
+msgstr ""
+
+#: weko_admin/config.py:175
 msgid "Access Number Breakdown By Site License"
 msgstr ""
 
-#: weko_admin/config.py:158
-msgid "Open-Access No. Of Paid File Downloads"
+#: weko_admin/config.py:176
+msgid "Number of Open-Access Paid File Downloads"
 msgstr ""
 
 #: weko_admin/config.py:152 weko_admin/config.py:157
@@ -353,12 +349,12 @@ msgstr ""
 msgid "No. Of Times Downloaded"
 msgstr ""
 
-#: weko_admin/config.py:153 weko_admin/config.py:158
-msgid "Non-Logged In User"
+#: weko_admin/config.py:183 weko_admin/config.py:188
+msgid "Non-Logged in User"
 msgstr ""
 
-#: weko_admin/config.py:154 weko_admin/config.py:159
-msgid "Logged In User"
+#: weko_admin/config.py:184 weko_admin/config.py:189
+msgid "Logged in User"
 msgstr ""
 
 #: weko_admin/config.py:154 weko_admin/config.py:159

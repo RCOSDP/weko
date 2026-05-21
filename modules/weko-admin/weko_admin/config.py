@@ -156,9 +156,9 @@ WEKO_ADMIN_REPORT_TYPES = [
 """Types for the report"""
 
 WEKO_ADMIN_REPORT_HEADERS = {
-    'file_download': _('No. Of File Downloads'),
-    'file_preview': _('No. Of File Previews'),
-    'billing_file_download': _('No. Of Paid File Downloads'),
+    'file_download': _('Number of File Downloads'),
+    'file_preview': _('Number of File Previews'),
+    'billing_file_download': _('Number of Paid File Downloads'),
     'index_access': _('Detail Views Per Index'),
     'detail_view': _('Detail Views Count'),
     'file_using_per_user': _('Usage Count By User'),
@@ -170,23 +170,23 @@ WEKO_ADMIN_REPORT_HEADERS = {
 """Headers for the report .csv files"""
 
 WEKO_ADMIN_REPORT_SUB_HEADERS = {
-    'file_download': _('Open-Access No. Of File Downloads'),
-    'file_preview': _('Open-Access No. Of File Previews'),
+    'file_download': _('Number of Open-Access File Downloads'),
+    'file_preview': _('Number of Open-Access File Previews'),
     'site_access': _('Access Number Breakdown By Site License'),
-    'billing_file_download': _('Open-Access No. Of Paid File Downloads')
+    'billing_file_download': _('Number of Open-Access Paid File Downloads')
 }
 """Sub-Headers for the report .csv files"""
 
 WEKO_ADMIN_REPORT_COLS = {
     'file_download': [
         _('File Name'), _('Registered Index Name'),
-        _('No. Of Times Downloaded'), _('Non-Logged In User'),
-        _('Logged In User'), _('Site License'), _('Admin'),
+        _('No. Of Times Downloaded'), _('Non-Logged in User'),
+        _('Logged in User'), _('Site License'), _('Admin'),
         _('Registrar')],
     'file_preview': [
         _('File Name'), _('Registered Index Name'),
-        _('No. Of Times Viewed'), _('Non-Logged In User'),
-        _('Logged In User'), _('Site License'), _('Admin'),
+        _('No. Of Times Viewed'), _('Non-Logged in User'),
+        _('Logged in User'), _('Site License'), _('Admin'),
         _('Registrar')],
     'index_access': [_('Index'), _('No. Of Views')],
     'detail_view': [

@@ -23,26 +23,6 @@ msgstr ""
 msgid "deny access"
 msgstr "Denied access"
 
-#: weko_admin/admin.py:291
-msgid "No. Of File Downloads"
-msgstr "Number of File Downloads"
-
-#: weko_admin/admin.py:292
-msgid "Open-Access No. Of File Downloads"
-msgstr "Number of Open-Access File Downloads"
-
-#: weko_admin/admin.py:294
-msgid "No. Of File Previews"
-msgstr "Number of File Previews"
-
-#: weko_admin/admin.py:295
-msgid "Open-Access No. Of File Previews"
-msgstr "Number of Open-Access File Previews"
-
-#: weko_admin/config.py:158
-msgid "Open-Access No. Of Paid File Downloads"
-msgstr "Number of Open-Access Paid File Downloads"
-
 #: weko_admin/admin.py:301
 msgid "Aggregation Monh"
 msgstr ""
@@ -58,14 +38,6 @@ msgstr ""
 #: weko_admin/admin.py:305
 msgid "No. Of Times Downloaded/Viewed"
 msgstr "Number of  Downloads/Views"
-
-#: weko_admin/admin.py:305
-msgid "Non-Logged In User"
-msgstr "Non-Logged in User"
-
-#: weko_admin/admin.py:306
-msgid "Logged In User"
-msgstr "Logged in User"
 
 #: weko_admin/admin.py:306
 msgid "Site License"
@@ -110,6 +82,42 @@ msgstr ""
 #: weko_admin/api.py:157
 msgid "Site License Usage Statistics Report"
 msgstr ""
+
+#: weko_admin/config.py:159
+msgid "Number of File Downloads"
+msgstr "Number of File Downloads"
+
+#: weko_admin/config.py:160
+msgid "Number of File Previews"
+msgstr "Number of File Previews"
+
+#: weko_admin/config.py:161
+msgid "Number of Paid File Downloads"
+msgstr "Number of Paid File Downloads"
+
+#: weko_admin/config.py:173
+msgid "Number of Open-Access File Downloads"
+msgstr "Number of Open-Access File Downloads"
+
+#: weko_admin/config.py:174
+msgid "Number of Open-Access File Previews"
+msgstr "Number of Open-Access File Previews"
+
+#: weko_admin/config.py:175
+msgid "Access Number Breakdown By Site License"
+msgstr "Access Number Breakdown By Site License"
+
+#: weko_admin/config.py:176
+msgid "Number of Open-Access Paid File Downloads"
+msgstr "Number of Open-Access Paid File Downloads"
+
+#: weko_admin/config.py:183 weko_admin/config.py:188
+msgid "Non-Logged in User"
+msgstr "Non-Logged in User"
+
+#: weko_admin/config.py:184 weko_admin/config.py:189
+msgid "Logged in User"
+msgstr "Logged in User"
 
 #: weko_admin/config.py:195
 msgid "SetSpec"
