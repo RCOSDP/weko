@@ -1,5 +1,6 @@
 import pytest
 import json
+import unittest
 from mock import patch
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -127,6 +128,120 @@ class TestJournals:
             index_id = 1000
             result = Journals.get_journal_by_index_id(index_id)
             assert result == None
+
+
+#    def get_journal_by_is_output(cls, is_output):
+# .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_api.py::TestJournals::test_get_journal_by_is_output_no_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
+    def test_get_journal_by_is_output_no_data(self, i18n_app, db):
+        # 58157 - case.6
+        result = Journals.get_journal_by_is_output(True)
+        assert result == None
+
+        result = Journals.get_journal_by_is_output(False)
+        assert result == None
+
+
+# .tox/c1/bin/pytest --cov=weko_indextree_journal tests/test_api.py::TestJournals::test_get_journal_by_is_output -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-indextree-journal/.tox/c1/tmp
+    def test_get_journal_by_is_output(self, i18n_app, test_journals):
+        # 58157 - case.7
+        result = Journals.get_journal_by_is_output(True)
+        assert dict(result[0]) == {
+            'access_type': 'F',
+            'coverage_depth': 'abstract',
+            'coverage_notes': '',
+            'date_first_issue_online': '2022-01-01',
+            'date_last_issue_online': '2022-01-01',
+            'date_monograph_published_online': '',
+            'date_monograph_published_print': '',
+            'deleted': '',
+            'embargo_info': '',
+            'first_author': '',
+            'first_editor': '',
+            'ichushi_code': '',
+            'id': 1,
+            'index_id': 1,
+            'is_output': True,
+            'jstage_code': '',
+            'language': 'en',
+            'monograph_edition': '',
+            'monograph_volume': '',
+            'ncid': '',
+            'ndl_bibid': '',
+            'ndl_callno': '',
+            'num_first_issue_online': '',
+            'num_first_vol_online': '',
+            'num_last_issue_online': '',
+            'num_last_vol_online': '',
+            'online_identifier': '',
+            'owner_user_id': 0,
+            'parent_publication_title_id': '',
+            'preceding_publication_title_id': '',
+            'print_identifier': '',
+            'publication_title': 'test journal 1',
+            'publication_type': 'serial',
+            'publisher_name': '',
+            'title_alternative': '',
+            'title_id': 1,
+            'title_transcription': '',
+            'title_url': 'search?search_type=2&q=1',
+            'abstract': '',
+            'code_issnl': ''
+        }
+
+        # 58157 - case.8
+        result = Journals.get_journal_by_is_output(False)
+        assert dict(result[0]) == {
+            'access_type': 'F',
+            'coverage_depth': 'abstract',
+            'coverage_notes': '',
+            'date_first_issue_online': '2022-01-01',
+            'date_last_issue_online': '2022-01-01',
+            'date_monograph_published_online': '',
+            'date_monograph_published_print': '',
+            'deleted': '',
+            'embargo_info': '',
+            'first_author': '',
+            'first_editor': '',
+            'ichushi_code': '',
+            'id': 2,
+            'index_id': 2,
+            'is_output': False,
+            'jstage_code': '',
+            'language': 'en',
+            'monograph_edition': '',
+            'monograph_volume': '',
+            'ncid': '',
+            'ndl_bibid': '',
+            'ndl_callno': '',
+            'num_first_issue_online': '',
+            'num_first_vol_online': '',
+            'num_last_issue_online': '',
+            'num_last_vol_online': '',
+            'online_identifier': '',
+            'owner_user_id': 0,
+            'parent_publication_title_id': '',
+            'preceding_publication_title_id': '',
+            'print_identifier': '',
+            'publication_title': 'test journal 2',
+            'publication_type': 'serial',
+            'publisher_name': '',
+            'title_alternative': '',
+            'title_id': 2,
+            'title_transcription': '',
+            'title_url': 'search?search_type=2&q=2',
+            'abstract': '',
+            'code_issnl': ''
+        }
+
+        # 58157 - case.10
+        with i18n_app.app_context():
+            with unittest.TestCase.assertLogs(i18n_app.logger, level='DEBUG') as log:
+                with patch("invenio_db.db.session.query",side_effect=SQLAlchemyError()):
+                    with pytest.raises(SQLAlchemyError):
+                        result = Journals.get_journal_by_is_output(True)
+                        assert result == None
+                        assert "[100] Data acquisition error (DB error). Error:" in log.output[0]
+                        assert "[100] [Get By is_output ] End with error." in log.output[1]
 
 
 #    def get_all_journals(cls):

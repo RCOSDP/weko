@@ -359,7 +359,7 @@ def test_indices(app, db):
 
 @pytest.fixture
 def test_journals(app, db, test_indices):
-    def base_data(id):
+    def base_data(id, is_output):
         return Journal(
             id=id,
             index_id=id,
@@ -372,13 +372,14 @@ def test_journals(app, db, test_indices):
             publication_type="serial",
             access_type="F",
             language="en",
-            is_output=True,
+            is_output=is_output,
             abstract='',
             code_issnl=''
         )
 
     with db.session.begin_nested():
-        db.session.add(base_data(1))
+        db.session.add(base_data(1, True))
+        db.session.add(base_data(2, False))
     db.session.commit()
 
 @pytest.fixture()

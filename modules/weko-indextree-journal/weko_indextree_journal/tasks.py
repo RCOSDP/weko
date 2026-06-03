@@ -25,6 +25,7 @@ import os
 
 import numpy
 from celery import shared_task
+from sqlalchemy.exc import SQLAlchemyError
 from flask import Blueprint, current_app
 
 from .api import Journals
@@ -54,10 +55,9 @@ def export_journal_task(p_path):
     :param p_path:
     """
     current_app.logger.debug('Export journal task is running.')
+    # Get processing status to verify whether there is another working task
+    db_processing_status = Journal_export_processing.get()
     try:
-        # Get processing status to verify whether there is another working task
-        db_processing_status = Journal_export_processing.get()
-
         if db_processing_status is None:
             db_processing_status = Journal_export_processing()
             db_processing_status.status = False
@@ -131,7 +131,7 @@ def export_journal_task(p_path):
         header_string = "\t".join(header)
 
         # Get journal data.
-        journals = Journals.get_all_journals()
+        journals = Journals.get_journal_by_is_output(is_output=True)
         journals_list = []
         if journals is not None:
             for item in journals:
@@ -226,6 +226,11 @@ def export_journal_task(p_path):
         return journals_list
         # jsonList = json.dumps({"results" : results})
         # Save journals information to file
+    except SQLAlchemyError as ex:
+        current_app.logger.error(
+            '[{0}] [{1}] End with Data acquisition error (DB error). Error:{2}'.format(
+                100, 'Export Journal Task', ex)
+        )
     except Exception as ex:
         current_app.logger.error(
             '[{0}] [{1}] End with unknown error. Error:{2}'.format(

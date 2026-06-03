@@ -248,6 +248,34 @@ class Journals(object):
                 error('[{0}] End with unknown error. Error:{1}'.format(1, ex))
             db.session.rollback()
             return None
+    
+    @classmethod
+    def get_journal_by_is_output(cls, is_output):
+        """
+        Get journal information by is_output.
+
+        :param is_output: Output target flag.
+        :return: A journal object.
+        """
+        try:
+            obj = db.session.query(Journal).filter_by(is_output=is_output).all()
+
+            if not obj:
+                return None
+
+            return obj
+        except SQLAlchemyError as e:
+            current_app.logger.error(
+                '[{0}] Data acquisition error (DB error). Error: {1}'.format(
+                    100, e)
+            )
+            current_app.logger.error(
+                '[{0}] [{1}] End with error.'.format(
+                    100, 'Get By is_output '
+                )
+            )
+            db.session.rollback()
+            raise e
 
     @classmethod
     def get_all_journals(cls):
