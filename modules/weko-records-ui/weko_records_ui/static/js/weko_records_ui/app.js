@@ -498,6 +498,9 @@ function handleChargeBillingFile() {
 }
 
 function handleConfirmBillingFile() {
+    if (!document.getElementById('current_user_email')) {
+        return;
+    }
     const email = document.getElementById('current_user_email').value;
     const charge_key = 'charge_' + email;
     let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));

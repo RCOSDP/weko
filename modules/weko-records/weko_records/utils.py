@@ -904,6 +904,11 @@ async def sort_meta_data_by_options(
                     result = get_author_comment(
                         data_result, key, result, is_specify_newline_array
                     )
+                elif "is_biographic_prop" in data_result[key] \
+                        and data_result[key].pop("is_biographic_prop"):
+                    for k, v in data_result[key].items():
+                        if "value" in v:
+                            result.append(v["value"])
                 else:
                     if "lang_id" in data_result[key]:
                         lang_id = (
@@ -2076,7 +2081,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                     for x in save:
                         if x.get(ob):
                             save = x.get(ob)
-            
+
             if isinstance(save, list):
                 for s in save:
                     if s is not None and str_lang is None:
@@ -2085,7 +2090,7 @@ def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
                             value = s.get(str_key_val[len(str_key_val) - 1]).strip()
                         if len(value) > 0:
                             return value
-    
+
                     if (
                         s
                         and isinstance(s, dict)
@@ -2492,7 +2497,12 @@ def add_biographic(
     )
     stt_key.append(bibliographic_key)
     is_specify_newline_array.append({s["key"]: True})
-    data_result.update({bibliographic_key: {s["key"]: {"value": [bibliographic]}}})
+    data_result.update({
+        bibliographic_key: {
+            s["key"]: {"value": bibliographic},
+            "is_biographic_prop": True
+        }
+    })
 
     return stt_key, data_result, is_specify_newline_array
 
