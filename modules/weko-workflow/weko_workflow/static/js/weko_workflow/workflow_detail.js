@@ -48,6 +48,10 @@ require([
    */
   function startLoading(actionButton) {
     actionButton.prop('disabled', true);
+    $('.btn_quit').prop('disabled', true);
+    $('.btn-approval').prop('disabled', true);
+    $('.btn-draft').prop('disabled', true);
+    $('.btn-reject').prop('disabled', true);
     $(".lds-ring-background").removeClass("hidden");
   }
 
@@ -57,6 +61,10 @@ require([
    */
   function endLoading(actionButton) {
     actionButton.removeAttr("disabled");
+    $('.btn_quit').removeAttr("disabled");
+    $('.btn-approval').removeAttr("disabled");
+    $('.btn-draft').removeAttr("disabled");
+    $('.btn-reject').removeAttr("disabled");
     $(".lds-ring-background").addClass("hidden");
   }
 

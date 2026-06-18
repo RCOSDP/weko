@@ -2429,6 +2429,12 @@ def cancel_action(activity_id='0', action_id=0):
         res = ResponseMessageSchema().load({"code":-1, "msg":"can not get activity detail"})
         return jsonify(res.data), 500
 
+    
+    if activity_detail.action_status != ActionStatusPolicy.ACTION_DOING:
+        current_app.logger.error("cancel_action: activity status is not doing")
+        res = ResponseMessageSchema().load({"code":-1, "msg":"activity status is not doing"})
+        return jsonify(res.data), 500
+
     activity = dict(
         activity_id=activity_id,
         action_id=action_id,
@@ -2448,8 +2454,8 @@ def cancel_action(activity_id='0', action_id=0):
             try:
                 pid = PersistentIdentifier.get('recid', pid_value)
             except PIDDoesNotExistError:
-                current_app.logger.error("cancel_action: can not get PersistIdentifier")
-                res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistIdentifier"})
+                current_app.logger.error("cancel_action: can not get PersistentIdentifier")
+                res = ResponseMessageSchema().load({"code":-1, "msg":"can not get PersistentIdentifier"})
                 return jsonify(res.data), 500
             cancel_item_id = pid.object_uuid
     for_delete = activity_detail.flow_define.flow_type == WEKO_WORKFLOW_DELETION_FLOW_TYPE

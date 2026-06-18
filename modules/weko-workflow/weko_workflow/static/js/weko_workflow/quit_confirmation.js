@@ -10,7 +10,9 @@ require([
   // Handle Continue btn on modal Quit confirmation
   $('#btn_cancel').on('click', function () {
     $("#action_quit_confirmation").modal("hide");
-    $("#btn_quit").attr("disabled", true);
+    $("#btn-approval").attr("disabled", true);
+    $("#btn-draft").attr("disabled", true);
+    $("#btn-reject").attr("disabled", true);
     let comment = ''
     let community = $('#community_id').text();
     let community_para = ''
@@ -47,10 +49,21 @@ require([
         } else {
           alert(data.msg);
           $("#btn_quit").attr("disabled", false);
+          $("#btn-approval").attr("disabled", false);
+          $("#btn-draft").attr("disabled", false);
+          $("#btn-reject").attr("disabled", false);
         }
       },
       function (errmsg) {
-        alert('Server error.');
+        if (errmsg && errmsg.msg) {
+          alert(errmsg.msg);
+        } else {
+          alert("Server error.");
+        }
+        $("#btn_quit").attr("disabled", false);
+        $("#btn-approval").attr("disabled", false);
+        $("#btn-draft").attr("disabled", false);
+        $("#btn-reject").attr("disabled", false);
       });
   });
 
