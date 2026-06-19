@@ -11,14 +11,16 @@
 from __future__ import absolute_import, print_function
 
 import pytest
+import uuid
+import os
 from invenio_admin import InvenioAdmin
 from wtforms.validators import ValidationError
 from unittest.mock import patch, MagicMock
 from flask import get_flashed_messages
 from sqlalchemy.exc import SQLAlchemyError
 
-from invenio_files_rest.admin import require_slug, validate_uri, LocationModelView
-from invenio_files_rest.models import Bucket, ObjectVersion, Location
+from invenio_files_rest.admin import require_slug, validate_uri, LocationModelView, FileInstanceModelView
+from invenio_files_rest.models import Bucket, ObjectVersion, Location, FileInstance
 
 def test_require_slug():
     """Test admin views."""
@@ -93,6 +95,133 @@ def make_location(**overrides):
     )
     defaults.update(overrides)
     return Location(**defaults)
+
+
+class TestFileInstanceModelView():
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model(self, app, db, mocker, dummy_location):
+        """Test delete_model when file exists on disk."""
+        
+        # dummy_location.uri配下にテストファイルを作成
+        test_file_path = os.path.join(dummy_location.uri, 'test-file.txt')
+        with open(test_file_path, 'w') as f:
+            f.write('test content')
+        
+        # ファイルが存在することを確認
+        assert os.path.exists(test_file_path)
+        
+        model = MagicMock()
+        model.id = uuid.uuid4()
+        model.uri = test_file_path
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        mock_file_query = MagicMock()
+        mock_file_query.filter_by.return_value.one_or_none.return_value = MagicMock()
+        mocker.patch('invenio_files_rest.admin.FileInstance.query', mock_file_query)
+        mock_update_location_size = mocker.patch('invenio_files_rest.admin.update_location_size')
+        mock_super = mocker.patch("flask_admin.contrib.sqla.ModelView.delete_model")
+
+        result = view.delete_model(model)
+
+        # ファイルが削除されたか確認
+        assert not os.path.exists(test_file_path)
+        mock_super.assert_called_once_with(model)
+        mock_update_location_size.assert_called_once_with()
+
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_file_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_file_not_found(self, app, db, mocker):
+        """Test delete_model when file does not exist in database."""
+        
+        model = MagicMock()
+        model.id = uuid.uuid4()
+        model.uri = '/tmp/nonexistent-file'
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        # Mock os.path.exists to return False (file does not exist on disk)
+        mocker.patch('invenio_files_rest.admin.os.path.exists', return_value=False)
+        
+        # Mock FileInstance.query to return None (file not found in database)
+        mock_query = MagicMock()
+        mock_query.filter_by.return_value.one_or_none.return_value = None
+        mocker.patch('invenio_files_rest.admin.FileInstance.query', mock_query)
+
+        # Verify that FileNotFoundError is raised
+        with pytest.raises(FileNotFoundError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'File not found' in str(exc_info.value)
+
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_db_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_db_only(self, app, db, mocker):
+        """Test delete_model when file exists only in database, not on disk."""
+        
+        model = MagicMock()
+        model.id = uuid.uuid4()
+        model.uri = '/tmp/nonexistent-file'
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        # Mock os.path.exists to return False (file does not exist on disk)
+        mocker.patch('invenio_files_rest.admin.os.path.exists', return_value=False)
+        
+        # Mock FileInstance.query to return a file instance (file exists in DB)
+        mock_file = MagicMock()
+        mock_query = MagicMock()
+        mock_query.filter_by.return_value.one_or_none.return_value = mock_file
+        mocker.patch('invenio_files_rest.admin.FileInstance.query', mock_query)
+
+        mock_update_location_size = mocker.patch('invenio_files_rest.admin.update_location_size')
+        mock_super = mocker.patch("flask_admin.contrib.sqla.ModelView.delete_model")
+
+        result = view.delete_model(model)
+
+        mock_super.assert_called_once_with(model)
+        mock_update_location_size.assert_called_once_with()
+    
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_invalid_uri_or_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_invalid_uri_or_id(self, app, db, mocker):
+        """Test delete_model when file URI is invalid."""
+        model = MagicMock()
+        model.uri = None
+        model.id = uuid.uuid4()
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        with pytest.raises(ValueError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Invalid uri or id' in str(exc_info.value)
+
+        model = MagicMock()
+        model.uri = '/tmp/test-file'
+        model.id = None
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        with pytest.raises(ValueError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Invalid uri or id' in str(exc_info.value)
+    
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_not_exists_uri_or_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_not_exists_uri_or_id(self, app, db, mocker):
+        class Model:
+            pass
+        
+        model = Model()
+        model.uri = '/tmp/test-file'
+        view = FileInstanceModelView(FileInstance, db.session)
+        
+        with pytest.raises(AttributeError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Model has no attribute uri or id' in str(exc_info.value)
+
+        model = Model()
+        model.id = uuid.uuid4()
+        view = FileInstanceModelView(FileInstance, db.session)
+        
+        with pytest.raises(AttributeError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Model has no attribute uri or id' in str(exc_info.value)
 
 
 class TestLocationModelView():
