@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS mail_templates (
 -- modules/invenio-mail/invenio_mail/alembic/b1495e98969b_create_mailtemplateusers.py
 PERFORM 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = current_schema() AND t.typname = 'mailtype';
 IF NOT FOUND THEN
-    CREATE TYPE mailtype AS ENUM ('recipient', 'cc', 'bcc');
+    CREATE TYPE mailtype AS ENUM ('RECIPIENT', 'CC', 'BCC');
     RAISE NOTICE 'CREATE TYPE mailtype: created successfully';
 ELSE
     RAISE NOTICE 'CREATE TYPE mailtype: already exists, skipping';

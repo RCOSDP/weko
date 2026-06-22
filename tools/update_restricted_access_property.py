@@ -1,4 +1,5 @@
 import json
+import logging
 import sys
 import traceback
 
@@ -15,6 +16,19 @@ def main(target_item_type_property_id, update_type):
         target_item_type_property_id (int): The ID of the target item type property to update.
         update_type (str): The type of update to perform, either "enable" or "disable".
     """
+    # for logging set to info level
+    format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
+            '%(message)s [file %(pathname)s line %(lineno)d in %(funcName)s]'
+    datefmt = '%Y-%m-%d %H:%M:%S'
+    formatter = logging.Formatter(fmt=format, datefmt=datefmt)
+
+    current_app.logger.setLevel("INFO")
+    if current_app.logger.handlers:
+        # if app.logger has handlers, set level and formatter
+        for h in current_app.logger.handlers:
+            h.setLevel("INFO")
+            h.setFormatter(formatter)
+
     try:
         with db.session.begin_nested():
             update_item_type_property(target_item_type_property_id, update_type)
@@ -25,6 +39,7 @@ def main(target_item_type_property_id, update_type):
         current_app.logger.error(str(ex))
         current_app.logger.error("Failed to update restricted access property.")
         current_app.logger.error(traceback.format_exc())
+        sys.exit(1)
 
 def update_item_type_property(target_item_type_property_id, update_type):
     """Update the schema, form, and forms of a specific item type property.

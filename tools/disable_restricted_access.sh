@@ -1,3 +1,7 @@
+set -euo pipefail
+IFS=$'\n\t'
+trap 'rc=$?; echo "Error: ${BASH_COMMAND} (line $LINENO) exited with ${rc}" >&2; exit ${rc}' ERR
+
 SETTING_FILE=scripts/instance.cfg
 RESTRICTED_ACCESS_PROPERTY=30015
 
@@ -69,10 +73,14 @@ else
 fi
 
 docker cp scripts/demo/disable_restricted_access.sql $(docker compose ps -q postgresql):/tmp/disable_restricted_access.sql
-docker-compose exec postgresql psql -U invenio -d invenio -f /tmp/disable_restricted_access.sql
+docker-compose exec postgresql psql -U invenio -d invenio -v ON_ERROR_STOP=1 -f /tmp/disable_restricted_access.sql
 
 docker-compose exec web invenio shell tools/update_restricted_access_property.py $RESTRICTED_ACCESS_PROPERTY disable
 
-docker-compose exec web bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/invenio.cfg"
-docker-compose down
-docker-compose up -d
+# verify the update
+tools/verify_restricted_update.sh $SETTING_FILE False
+docker compose exec web invenio shell tools/verify_restricted_records.py disable
+
+# docker-compose exec web bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/invenio.cfg"
+# docker-compose down
+# docker-compose up -d
