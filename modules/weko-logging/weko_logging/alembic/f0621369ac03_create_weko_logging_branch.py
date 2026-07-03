@@ -5,25 +5,24 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""update"""
+"""Create weko_logging branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b21aaf04d802'
-down_revision = '0d2fe6767b9c'
-branch_labels = ()
+revision = 'f0621369ac03'
+down_revision = None
+branch_labels = ('weko_logging',)
 depends_on = None
 
 
 def upgrade():
     """Upgrade database."""
-    op.create_unique_constraint(op.f('uq_index_id'), 'index', ['id'])
-    
+    pass
+
 
 def downgrade():
     """Downgrade database."""
-    op.drop_constraint(op.f('uq_index_id'), 'index', type_='unique')
-    rm 
+    pass

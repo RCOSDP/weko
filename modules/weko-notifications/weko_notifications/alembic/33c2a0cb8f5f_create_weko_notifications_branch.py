@@ -5,16 +5,16 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""initial"""
+"""Create weko_notifications branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '4aadad0a1ff7'
+revision = '33c2a0cb8f5f'
 down_revision = None
-branch_labels = ('weko_authors',)
+branch_labels = ('weko_notifications',)
 depends_on = None
 
 

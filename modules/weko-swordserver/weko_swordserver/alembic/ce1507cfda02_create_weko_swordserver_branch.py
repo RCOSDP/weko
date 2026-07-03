@@ -1,20 +1,20 @@
-# -*- coding: utf-8 -*-
 #
-# Copyright (C) 2022 National Institute of Informatics.
+# This file is part of Invenio.
+# Copyright (C) 2016-2018 CERN.
 #
-# WEKO-Records is free software; you can redistribute it and/or modify it
+# Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""Create weko_records branch."""
+"""Create weko_swordserver branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '10e311ab03bf'
+revision = 'ce1507cfda02'
 down_revision = None
-branch_labels = ('weko_records',)
+branch_labels = ('weko_swordserver',)
 depends_on = None
 
 

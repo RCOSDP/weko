@@ -5,16 +5,16 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""initial"""
+"""Create weko_workspace branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'd758395731f2'
+revision = 'f78348c12d44'
 down_revision = None
-branch_labels = ('invenio_resourcesyncclient',)
+branch_labels = ('weko_workspace',)
 depends_on = None
 
 

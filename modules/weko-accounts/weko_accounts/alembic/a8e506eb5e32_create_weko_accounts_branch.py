@@ -5,25 +5,24 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""add_column"""
+"""Create weko_accounts branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b6cb93e7e896'
-down_revision = 'ad3fd78b0175'
-branch_labels = ()
+revision = 'a8e506eb5e32'
+down_revision = None
+branch_labels = ('weko_accounts',)
 depends_on = None
 
 
 def upgrade():
     """Upgrade database."""
-    op.add_column('journal', sa.Column('abstract', sa.Text(), nullable=True))
-    op.add_column('journal', sa.Column('code_issnl', sa.Text(), nullable=True))
+    pass
+
 
 def downgrade():
     """Downgrade database."""
-    op.drop_column('journal', 'abstract')
-    op.drop_column('journal', 'code_issnl')
+    pass

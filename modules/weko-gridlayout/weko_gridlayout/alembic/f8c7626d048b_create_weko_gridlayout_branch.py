@@ -5,16 +5,16 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""initial"""
+"""Create weko_gridlayout branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'f887f008a2d0'
+revision = 'f8c7626d048b'
 down_revision = None
-branch_labels = ('weko_groups',)
+branch_labels = ('weko_gridlayout',)
 depends_on = None
 
 
