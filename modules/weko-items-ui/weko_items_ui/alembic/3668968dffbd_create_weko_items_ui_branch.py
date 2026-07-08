@@ -5,17 +5,17 @@
 # Invenio is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
 
-"""Create weko-items-ui branch."""
+"""Create weko_items_ui branch."""
 
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'e4fdaedc126c'
+revision = '3668968dffbd'
 down_revision = None
 branch_labels = ('weko_items_ui',)
-depends_on = 'weko_records'
+depends_on = None
 
 
 def upgrade():

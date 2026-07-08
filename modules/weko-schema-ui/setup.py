@@ -108,6 +108,12 @@ setup(
             'schema_access = '
             'weko_schema_ui.permissions:action_schema_access',
         ],
+        'invenio_db.models': [
+            'weko_schema_ui = weko_schema_ui.models',
+        ],
+        'invenio_db.alembic': [
+            'weko_schema_ui = weko_schema_ui:alembic',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,
