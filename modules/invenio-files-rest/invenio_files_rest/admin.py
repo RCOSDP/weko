@@ -31,6 +31,7 @@ from wtforms.fields import StringField, SelectField, IntegerField
 from wtforms.fields import BooleanField
 from wtforms.validators import ValidationError, NumberRange, Length, Optional
 from wtforms.widgets import PasswordInput
+from invenio_files_rest.utils import update_location_size
 
 from .models import Bucket, FileInstance, Location, MultipartObject, \
     ObjectVersion, slug_pattern
@@ -425,7 +426,7 @@ class FileInstanceModelView(ModelView):
     filter_converter = FilterConverter()
     can_create = False
     can_edit = False
-    can_delete = False
+    can_delete = True
     can_view_details = True
     column_formatters = dict(
         objects=link('Objects', lambda o: url_for(
@@ -473,6 +474,27 @@ class FileInstanceModelView(ModelView):
             current_app.logger.exception(str(exc))  # pragma: no cover
             flash(_('Failed to run fixity checks.'),
                   'error')  # pragma: no cover
+    
+    def delete_model(self, model):
+        if not hasattr(model, 'uri') or not hasattr(model, 'id'):
+            raise AttributeError('Model has no attribute uri or id')
+        
+        if not model.uri or not model.id:
+            raise ValueError('Invalid uri or id')
+        
+        if os.path.exists(model.uri):
+            os.remove(model.uri)
+            result = super().delete_model(model)
+            update_location_size()
+            return result
+        else:
+            file = FileInstance.query.filter_by(id=model.id).one_or_none()
+            if file is not None:
+                result = super().delete_model(model)
+                update_location_size()
+                return result
+            else:
+                raise FileNotFoundError('File not found. The file does not exist or was already deleted.')
 
 
 class MultipartObjectModelView(ModelView):
