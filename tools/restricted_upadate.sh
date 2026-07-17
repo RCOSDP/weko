@@ -21,6 +21,32 @@ IFS=$'\n\t'
 SETTING_FILE=${CONFIG_PATH}/${REPO}/instance.cfg
 RESTRICTED_ACCESS_PROPERTY=30015
 
+# check if required files exist
+FILE_ERRORS=0
+if [ ! -f "$SETTING_FILE" ]; then
+  echo "Error: ${SETTING_FILE} not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "scripts/demo/resticted_access.sql" ]; then
+  echo "Error: scripts/demo/resticted_access.sql not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "tools/update_restricted_access_property.py" ]; then
+  echo "Error: tools/update_restricted_access_property.py not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "tools/verify_restricted_update.sh" ]; then
+  echo "Error: tools/verify_restricted_update.sh not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "tools/verify_restricted_records.py" ]; then
+  echo "Error: tools/verify_restricted_records.py not found" >&2
+  FILE_ERRORS=1
+fi
+if [ $FILE_ERRORS -ne 0 ]; then
+  exit 2
+fi
+
 # echo Backup file
 #cp $SETTING_FILE `date +${SETTING_FILE}_%Y%m%d`
 
@@ -111,10 +137,19 @@ fi
 ###docker-compose exec postgresql psql -U invenio -d invenio -v ON_ERROR_STOP=1 -f /tmp/resticted_access.sql
 kubectl cp -n weko3pg -c postgres scripts/demo/resticted_access.sql ${PG_MASTER}:/tmp/resticted_access.sql
 kubectl exec -n weko3pg -c postgres ${PG_MASTER} -- psql -U invenio -d ${DB} -v ON_ERROR_STOP=1 -f /tmp/resticted_access.sql
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to execute resticted_access.sql" >&2
+  kubectl exec -n weko3pg -c postgres ${PG_MASTER} -- rm /tmp/resticted_access.sql
+  exit 1
+fi
 kubectl exec -n weko3pg -c postgres ${PG_MASTER} -- rm /tmp/resticted_access.sql
 
 ###docker-compose exec web invenio shell tools/update_restricted_access_property.py $RESTRICTED_ACCESS_PROPERTY enable
 kubectl exec -n weko3 -c web ${WEB_POD} -- invenio shell tools/update_restricted_access_property.py $RESTRICTED_ACCESS_PROPERTY enable
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to execute update_restricted_access_property.py" >&2
+  exit 1
+fi
 
 # verify the update
 tools/verify_restricted_update.sh $SETTING_FILE True

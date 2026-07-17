@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-set -euo pipefail
+###set -euo pipefail
 IFS=$'\n\t'
-trap 'rc=$?; echo "Error: ${BASH_COMMAND} (line ${LINENO}) exited with ${rc}" >&2; exit ${rc}' ERR
+###trap 'rc=$?; echo "Error: ${BASH_COMMAND} (line ${LINENO}) exited with ${rc}" >&2; exit ${rc}' ERR
 
 SETTING_FILE="$1"
 ENABLE_FLAG="$2"

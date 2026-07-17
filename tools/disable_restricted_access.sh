@@ -13,13 +13,38 @@ PG_MASTER=$(kubectl get po -n weko3pg -l spilo-role=master --no-headers | awk '{
 DATABASE=$(echo ${REPO} | tr .- _)
 GITHUB_PATH=https://raw.githubusercontent.com/RCOSDP/weko/refs/heads/${BRANCH}
 
-set -euo pipefail
+###set -euo pipefail
 IFS=$'\n\t'
-trap 'rc=$?; echo "Error: ${BASH_COMMAND} (line $LINENO) exited with ${rc}" >&2; exit ${rc}' ERR
+###trap 'rc=$?; echo "Error: ${BASH_COMMAND} (line $LINENO) exited with ${rc}" >&2; exit ${rc}' ERR
 
 ###SETTING_FILE=scripts/instance.cfg
 SETTING_FILE=${CONFIG_PATH}/${REPO}/instance.cfg
 RESTRICTED_ACCESS_PROPERTY=30015
+
+FILE_ERRORS=0
+if [ ! -f "$SETTING_FILE" ]; then
+  echo "Error: ${SETTING_FILE} not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "scripts/demo/disable_restricted_access.sql" ]; then
+  echo "Error: scripts/demo/disable_restricted_access.sql not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "tools/update_restricted_access_property.py" ]; then
+  echo "Error: tools/update_restricted_access_property.py not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "tools/verify_restricted_update.sh" ]; then
+  echo "Error: tools/verify_restricted_update.sh not found" >&2
+  FILE_ERRORS=1
+fi
+if [ ! -f "tools/verify_restricted_records.py" ]; then
+  echo "Error: tools/verify_restricted_records.py not found" >&2
+  FILE_ERRORS=1
+fi
+if [ $FILE_ERRORS -ne 0 ]; then
+  exit 2
+fi
 
 # echo Backup file
 # cp $SETTING_FILE `date +${SETTING_FILE}_%Y%m%d`
@@ -100,15 +125,24 @@ fi
 ###docker-compose exec postgresql psql -U invenio -d invenio -v ON_ERROR_STOP=1 -f /tmp/disable_restricted_access.sql
 kubectl cp -n weko3pg -c postgres scripts/demo/disable_restricted_access.sql ${PG_MASTER}:/tmp/disable_restricted_access.sql
 kubectl exec -n weko3pg -c postgres ${PG_MASTER} -- psql -U invenio -d ${DB} -v ON_ERROR_STOP=1 -f /tmp/disable_restricted_access.sql
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to execute disable_restricted_access.sql" >&2
+  kubectl exec -n weko3pg -c postgres ${PG_MASTER} -- rm /tmp/disable_restricted_access.sql
+  exit 1
+fi
 kubectl exec -n weko3pg -c postgres ${PG_MASTER} -- rm /tmp/disable_restricted_access.sql
 
 ###docker-compose exec web invenio shell tools/update_restricted_access_property.py $RESTRICTED_ACCESS_PROPERTY disable
 kubectl exec -n weko3 -c web ${WEB_POD} -- invenio shell tools/update_restricted_access_property.py $RESTRICTED_ACCESS_PROPERTY disable 
+if [ $? -ne 0 ]; then
+  echo "Error: Failed to execute update_restricted_access_property.py" >&2
+  exit 1
+fi
 
 # verify the update
 tools/verify_restricted_update.sh $SETTING_FILE False
 ###docker compose exec web invenio shell tools/verify_restricted_records.py disable
-kubectl exec -n weko3 -c web ${WEB_POD} -- invenio shell tools/verify_restricted_records.py enable
+kubectl exec -n weko3 -c web ${WEB_POD} -- invenio shell tools/verify_restricted_records.py disable
 
 # docker-compose exec web bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/invenio.cfg"
 # docker-compose down
