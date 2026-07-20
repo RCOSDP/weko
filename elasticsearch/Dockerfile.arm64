@@ -18,8 +18,15 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
+# Elasticsearch 6.8.23 for arm64.
+# The official docker.elastic.co image used by ./Dockerfile is amd64-only for the
+# 6.x series (arm64 images exist only from 7.8+), so here Elasticsearch is installed
+# from the release tarball on top of an arm64-native JDK image. Plugin / keystore /
+# S3 setup is delegated to scripts/provision-elasticsearch.sh to stay in sync with
+# the main ./Dockerfile.
 FROM arm64v8/openjdk:8-jdk-buster
 
+WORKDIR /usr/share/elasticsearch
 ARG ELASTICSEARCH_S3_ACCESS_KEY
 ARG ELASTICSEARCH_S3_SECRET_KEY
 ARG ELASTICSEARCH_S3_ENDPOINT
@@ -29,36 +36,32 @@ ENV ELASTICSEARCH_S3_SECRET_KEY=${ELASTICSEARCH_S3_SECRET_KEY}
 ENV ELASTICSEARCH_S3_ENDPOINT=${ELASTICSEARCH_S3_ENDPOINT}
 ENV ELASTICSEARCH_S3_BUCKET=${ELASTICSEARCH_S3_BUCKET}
 
-WORKDIR /usr/share
-RUN groupadd -g 1000 elasticsearch && \
+# Install Elasticsearch 6.8.23 from the release tarball (arm64-native JDK base image).
+# buster has been moved to archive.debian.org, so repoint apt before updating.
+RUN sed -i 's/deb.debian.org/archive.debian.org/g; s/security.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
+    groupadd -g 1000 elasticsearch && \
     useradd -u 1000 -g elasticsearch elasticsearch && \
-    apt update && \
-    apt install -y curl nano && \
+    apt-get -o Acquire::Check-Valid-Until=false update && \
+    apt-get install -y curl nano && \
     curl -L -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.8.23.tar.gz && \
-    tar -xvf elasticsearch-6.8.23.tar.gz && \
-    mv elasticsearch-6.8.23 elasticsearch && \
-    echo 'xpack.security.enabled: false' >> elasticsearch/config/elasticsearch.yml && \
-    echo 'xpack.ml.enabled: false' >> elasticsearch/config/elasticsearch.yml && \
-    echo 'http.host: 0.0.0.0' >> elasticsearch/config/elasticsearch.yml && \
-    echo 'transport.host: 0.0.0.0' >> elasticsearch/config/elasticsearch.yml && \    
-    echo 'path.repo: "/usr/share/elasticsearch/backups"' >> elasticsearch/config/elasticsearch.yml && \
-    chown -R elasticsearch:elasticsearch elasticsearch
+    tar -xf elasticsearch-6.8.23.tar.gz --strip-components=1 && \
+    rm -f elasticsearch-6.8.23.tar.gz && \
+    echo 'xpack.security.enabled: false' >> config/elasticsearch.yml && \
+    echo 'xpack.ml.enabled: false' >> config/elasticsearch.yml && \
+    echo 'http.host: 0.0.0.0' >> config/elasticsearch.yml && \
+    echo 'transport.host: 0.0.0.0' >> config/elasticsearch.yml && \
+    mkdir -p backups data && \
+    chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
 
+# Install Elasticsearch plugins / keystore / S3 credentials via the shared script.
+# provision-elasticsearch.sh selects its Docker branch by detecting /.dockerenv,
+# which BuildKit does not create during build, so materialize it for this stage.
+COPY scripts/provision-elasticsearch.sh /tmp/
 COPY elasticsearch/dic/character/kui.txt /usr/share/elasticsearch/config
+RUN touch /.dockerenv && \
+    /tmp/provision-elasticsearch.sh && \
+    chown -R elasticsearch:elasticsearch /usr/share/elasticsearch
 
-RUN chown -R elasticsearch:elasticsearch elasticsearch && \
-    mkdir -p elasticsearch/backups && \
-    chown -R elasticsearch:elasticsearch elasticsearch/backups && \
-    mkdir -p elasticsearch/data && \
-    chown -R elasticsearch:elasticsearch elasticsearch/data && \
-    /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch ingest-attachment && \
-    /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch analysis-kuromoji && \
-    /usr/share/elasticsearch/bin/elasticsearch-plugin install --batch repository-s3
-    
 USER elasticsearch
-ENV JAVA_HOME=/usr/local/openjdk-18/bin/java
 ENV discovery.type=single-node
-ENV xpack.security.enabled: false
-ENV xpack.ml.enabled: false
-
-CMD cd /usr/share/elasticsearch && ./bin/elasticsearch
+CMD ["/usr/share/elasticsearch/bin/elasticsearch"]

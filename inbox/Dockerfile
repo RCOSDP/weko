@@ -6,7 +6,12 @@ WORKDIR $APP_HOME
 
 FROM base AS production
 
-RUN apt-get update && apt-get install -y git
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        git \
+        g++ \
+        build-essential \
+    && rm -rf /var/lib/apt/lists/*
 RUN git clone --branch nii_main https://github.com/RCOSDP/coar-notify-inbox.git $APP_HOME
 
 RUN pip install --upgrade pip
