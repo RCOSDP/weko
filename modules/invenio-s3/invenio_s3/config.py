@@ -49,6 +49,10 @@ See `Configuring Credentials
 for more information.
 """
 
+S3_READONLY_ACCCESS_KEY_ID = None
+S3_READONLY_SECRECT_ACCESS_KEY = None
+"""The access key, secret key to use when downloading files from the client."""
+
 S3_URL_EXPIRATION = 60
 """Number of seconds the file serving URL will be valid.
 

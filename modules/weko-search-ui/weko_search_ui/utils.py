@@ -2245,7 +2245,7 @@ def import_items_to_system(
             if list_unuse_uri:
                 for uri in list_unuse_uri:
                     file = current_files_rest.storage_factory(fileurl=uri, size=1)
-                    fs, path = file._get_fs()
+                    fs, path = file._get_fs(mode='wb')
                     if fs.exists(path):
                         file.delete()
                 delete_cache_data(cache_key)
