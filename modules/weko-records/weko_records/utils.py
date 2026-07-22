@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 import pytz
-from flask import current_app, json, Flask
+from flask import current_app, g, has_app_context, json, Flask
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -1544,15 +1544,32 @@ async def sort_meta_data_by_options(
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
 
-        item_type = ItemTypes.get_by_id(item_type_id)
-        hide_list = []
-        if item_type:
-            solst, meta_options = get_options_and_order_list(
-                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
-            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        # Item-type derived data (item type, option/order lists, hide list and
+        # JPCOAR mapping) depends only on item_type_id and is read-only for the
+        # rest of this function. A search results page renders many hits that
+        # share the same item type, so memoize these per request (flask.g,
+        # cleared each request) to avoid recomputing them for every hit.
+        _it_cache = None
+        if has_app_context():
+            _it_cache = getattr(g, '_sort_meta_item_type_cache', None)
+            if _it_cache is None:
+                _it_cache = g._sort_meta_item_type_cache = {}
+        if _it_cache is not None and item_type_id in _it_cache:
+            item_type, solst, meta_options, hide_list, item_map = \
+                _it_cache[item_type_id]
         else:
-            solst, meta_options = get_options_and_order_list(item_type_id)
-        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+            item_type = ItemTypes.get_by_id(item_type_id)
+            hide_list = []
+            if item_type:
+                solst, meta_options = get_options_and_order_list(
+                    item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+                hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+            else:
+                solst, meta_options = get_options_and_order_list(item_type_id)
+            item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+            if _it_cache is not None:
+                _it_cache[item_type_id] = \
+                    (item_type, solst, meta_options, hide_list, item_map)
         title_value_key = 'title.@value'
         title_lang_key = 'title.@attributes.xml:lang'
         title_languages = []
