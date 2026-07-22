@@ -1641,6 +1641,14 @@ async def sort_meta_data_by_options(
             return
 
         solst_dict_array = convert_data_to_dict(solst)
+        # Index solst_dict_array by key once (first occurrence wins) so the
+        # value-matching loop below can look entries up in O(1) instead of
+        # rescanning the whole list for every metadata item of every field.
+        solst_dict_by_key = {}
+        for _s in solst_dict_array:
+            _s_key = _s.get("key")
+            if _s_key is not None and _s_key not in solst_dict_by_key:
+                solst_dict_by_key[_s_key] = _s
         files_info = []
         creator_info = None
         thumbnail = None
@@ -1722,29 +1730,33 @@ async def sort_meta_data_by_options(
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
-                    for s in solst_dict_array:
-                        s_key = s.get("key")
-
-                        tmp = m.get(s_key)
-                        if tmp:
-                            s["value"] = (
-                                tmp
-                                if not s["value"]
-                                else "{}{} {}".format(
-                                    s["value"],
-                                    current_app.config.get(
-                                        "WEKO_RECORDS_SYSTEM_COMMA", ""
-                                    ),
-                                    tmp,
-                                )
+                    # Each meta_data entry is a single-key {key: value} dict;
+                    # look the matching solst entry up directly instead of
+                    # scanning the whole solst_dict_array.
+                    for s_key, tmp in m.items():
+                        if not tmp:
+                            continue
+                        s = solst_dict_by_key.get(s_key)
+                        if s is None:
+                            continue
+                        s["value"] = (
+                            tmp
+                            if not s["value"]
+                            else "{}{} {}".format(
+                                s["value"],
+                                current_app.config.get(
+                                    "WEKO_RECORDS_SYSTEM_COMMA", ""
+                                ),
+                                tmp,
                             )
-                            s["parent_option"] = {
-                                "required": option.get("required"),
-                                "show_list": option.get("showlist"),
-                                "specify_newline": option.get("crtf"),
-                                "hide": option.get("hidden"),
-                            }
-                            break
+                        )
+                        s["parent_option"] = {
+                            "required": option.get("required"),
+                            "show_list": option.get("showlist"),
+                            "specify_newline": option.get("crtf"),
+                            "hide": option.get("hidden"),
+                        }
+                        break
 
         # Format data to display on item list
         items = get_comment(
