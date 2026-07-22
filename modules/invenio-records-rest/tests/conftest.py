@@ -610,12 +610,17 @@ def item_type(db):
         mapping = json.load(f)
     
     item_type_mapping = ItemTypeMapping(id=15, item_type_id=15, mapping=mapping)
-    
+
     with db.session.begin_nested():
+        # Add and flush the item type before the FK-referencing mapping.
+        # ItemType uses SQLAlchemy-Continuum versioning, under which a single
+        # interleaved flush can emit the item_type_mapping INSERT ahead of its
+        # parent item_type row and raise a foreign-key violation.
         db.session.add(item_type_name)
         db.session.add(item_type)
+        db.session.flush()
         db.session.add(item_type_mapping)
-    
+
     return item_type, item_type_mapping
 
 @pytest.fixture()
