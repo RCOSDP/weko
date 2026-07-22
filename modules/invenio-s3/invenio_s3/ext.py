@@ -27,7 +27,7 @@ class InvenioS3(object):
             self.init_app(app)
 
     # @cached_property
-    def init_s3fs_info(self, location):
+    def init_s3fs_info(self, location, mode='wb'):
         """Gather all the information needed to start the S3FSFileSystem."""
         if 'S3_ACCCESS_KEY_ID' in current_app.config:
             current_app.config['S3_ACCESS_KEY_ID'] = current_app.config[
@@ -49,9 +49,20 @@ class InvenioS3(object):
                 DeprecationWarning
             )
 
+        if mode == 'wb':
+            access_key = location.access_key if location.access_key \
+                else current_app.config.get('S3_ACCESS_KEY_ID', '')
+            secret_key = location.secret_key if location.secret_key \
+                else current_app.config.get('S3_SECRET_ACCESS_KEY', '')
+        else:
+            access_key = location.readonly_access_key if location.readonly_access_key \
+                else current_app.config.get('S3_READONLY_ACCESS_KEY_ID', '')
+            secret_key = location.readonly_secret_key if location.readonly_secret_key \
+                else current_app.config.get('S3_READONLY_SECRET_ACCESS_KEY', '')
+
         info = dict(
-            key=current_app.config.get('S3_ACCESS_KEY_ID', ''),
-            secret=current_app.config.get('S3_SECRET_ACCESS_KEY', ''),
+            key=access_key,
+            secret=secret_key,
             client_kwargs={},
             config_kwargs={
                 's3': {
@@ -71,10 +82,10 @@ class InvenioS3(object):
         if region_name:
             info['client_kwargs']['region_name'] = region_name
 
-        if location.type == current_app.config.get('S3_LOCATION_TYPE_S3_PATH_VALUE') or \
-            location.type == current_app.config.get('S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'):
-            info['key'] = location.access_key
-            info['secret'] = location.secret_key
+        if (location.type == current_app.config.get('S3_LOCATION_TYPE_S3_PATH_VALUE') or
+            location.type == current_app.config.get('S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE')):
+            info['key'] = access_key
+            info['secret'] = secret_key
             info['client_kwargs']['endpoint_url'] = location.s3_endpoint_url
             region_name = location.s3_region_name
             if region_name:

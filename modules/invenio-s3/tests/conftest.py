@@ -118,6 +118,8 @@ def location(location_path, database):
         type='s3',
         access_key='',
         secret_key='',
+        readonly_access_key='',
+        readonly_secret_key='',
         s3_endpoint_url="https://s3.amazonaws.com",
         s3_send_file_directly=True,
         s3_maximum_number_of_parts=1000,
