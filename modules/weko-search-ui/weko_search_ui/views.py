@@ -243,12 +243,13 @@ def search():
                         # disply_setting = dict(size=100, timestamp=ts)
 
         index_link_list = get_index_link_list()
+
+        # Get display control settings (fetch once, reuse for all sub-settings).
+        display_control = get_search_setting().get("display_control", {})
+
         # Get Facet search setting.
         display_facet_search = (
-            get_search_setting()
-            .get("display_control", {})
-            .get("display_facet_search", {})
-            .get("status", False)
+            display_control.get("display_facet_search", {}).get("status", False)
         )
         ctx.update(
             {
@@ -258,10 +259,7 @@ def search():
 
         # Get index tree setting.
         display_index_tree = (
-            get_search_setting()
-            .get("display_control", {})
-            .get("display_index_tree", {})
-            .get("status", False)
+            display_control.get("display_index_tree", {}).get("status", False)
         )
         ctx.update(
             {
@@ -271,10 +269,7 @@ def search():
 
         # Get display_community setting.
         display_community = (
-            get_search_setting()
-            .get("display_control", {})
-            .get("display_community", {})
-            .get("status", False)
+            display_control.get("display_community", {}).get("status", False)
         )
         ctx.update({"display_community": display_community})
 
