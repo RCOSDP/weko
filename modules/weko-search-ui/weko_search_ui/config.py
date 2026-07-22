@@ -793,3 +793,12 @@ WEKO_ACCESS_RIGHTS_CHOICES = [ "embargoed access", "metadata only access", "open
 
 WEKO_SEARCH_FIX_ACCESSRIGHTS = False
 """ If true, the value of accessrights will be modified. """
+
+WEKO_SEARCH_DETAIL_KEYWORD_CACHE_TTL = 300
+"""Cache lifetime (seconds) for get_search_detail_keyword() results.
+
+The detail-search conditions depend only on the current language, the
+authentication state, and infrequently-changing item types / indexes /
+settings, so they are cached for a short time to avoid rebuilding them on
+every page render. Set to 0 to disable expiration or a small value to reduce
+staleness."""
