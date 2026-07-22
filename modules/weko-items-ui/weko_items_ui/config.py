@@ -208,6 +208,14 @@ WEKO_ITEMS_UI_RANKING_DEFAULT_SETTINGS = {
 
 WEKO_ITEMS_UI_RANKING_BUFFER = 100
 
+WEKO_ITEMS_UI_RANKING_CACHE_TTL = 300
+"""Cache lifetime (seconds) for get_ranking() results.
+
+The ranking is expensive to build (several Elasticsearch aggregations plus a
+per-item permission check). It is cached for a short time, keyed per guest /
+authenticated user so a user never sees another user's permission-filtered
+result. Set to 0 to disable expiration or a small value to reduce staleness."""
+
 WEKO_ITEMS_UI_SEARCH_RANK_KEY_FILTER = ['']
 
 WEKO_ITEMS_UI_SHARED_USER_ROLE_ID_LIST = [1,2,3]

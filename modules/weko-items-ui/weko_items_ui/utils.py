@@ -23,6 +23,7 @@
 import calendar
 import copy
 import csv
+import hashlib
 import json
 import os
 import re
@@ -3860,6 +3861,34 @@ def get_ranking(settings):
             if index["children"]:
                 _get_index_info(index["children"], index_info)
 
+    from invenio_cache import current_cache
+
+    # The ranking is expensive (several ES aggregations + a per-item
+    # permission check). It also depends on the current user, because
+    # permission filtering can surface a user's own not-yet-public items.
+    # Cache it for a short TTL keyed per guest / authenticated user so one
+    # user never sees another user's permission-filtered result.
+    # Guard on the cache extension so the function still works where the
+    # cache is not configured (e.g. some test setups).
+    ranking_cache_key = None
+    if current_app.extensions.get('invenio-cache') is not None:
+        _sig = json.dumps({
+            'statistical_period': getattr(settings, 'statistical_period', None),
+            'display_rank': getattr(settings, 'display_rank', None),
+            'new_item_period': getattr(settings, 'new_item_period', None),
+            'rankings': getattr(settings, 'rankings', None),
+        }, sort_keys=True, default=str)
+        _user_part = 'u{}'.format(current_user.get_id()) \
+            if (current_user and current_user.is_authenticated) else 'guest'
+        ranking_cache_key = 'get_ranking_{host}_{date}_{user}_{sig}'.format(
+            host=os.environ.get('INVENIO_WEB_HOST_NAME', ''),
+            date=date.today().strftime('%Y-%m-%d'),
+            user=_user_part,
+            sig=hashlib.md5(_sig.encode('utf-8')).hexdigest())
+        cached_ranking = current_cache.get(ranking_cache_key)
+        if cached_ranking is not None:
+            return cached_ranking
+
     current_app.logger.debug("get_ranking start")
 
     rank_buffer = current_app.config['WEKO_ITEMS_UI_RANKING_BUFFER']
@@ -3978,6 +4007,11 @@ def get_ranking(settings):
         current_app.logger.debug("finished getting new_items data from ES")
         rankings['new_items'] = get_permission_record('new_items', result, settings.display_rank, has_permission_indexes)
 
+    if ranking_cache_key is not None:
+        current_cache.set(
+            ranking_cache_key, rankings,
+            timeout=current_app.config.get(
+                'WEKO_ITEMS_UI_RANKING_CACHE_TTL', 300))
     return rankings
 
 
