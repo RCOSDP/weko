@@ -446,11 +446,21 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 return _redirect_method(has_next=True)
             abort(403)
 
+    # Cache Indexes.get_index() results by path so this loop and the
+    # "belonging communities" loop below reuse the same lookups instead of
+    # re-querying the DB for every path in record.navi (an N+1 done twice).
+    _index_by_path = {}
+
+    def _get_index_by_path(path):
+        if path not in _index_by_path:
+            _index_by_path[path] = Indexes.get_index(index_id=path)
+        return _index_by_path[path]
+
     path_name_dict = {'ja': {}, 'en': {}}
     for navi in record.navi:
         path_arr = navi.path.split('/')
         for path in path_arr:
-            index = Indexes.get_index(index_id=path)
+            index = _get_index_by_path(path)
             idx_name = index.index_name or ""
             idx_name_en = index.index_name_english
             path_name_dict['ja'][path] = idx_name.replace(
@@ -756,7 +766,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     for navi in record.navi:
         path_arr = navi.path.split('/')
         for path in path_arr:
-            index = Indexes.get_index(index_id=path)
+            index = _get_index_by_path(path)
             from weko_workflow.api import GetCommunity
             communities = GetCommunity.get_community_by_root_node_id(index.id)
             if communities is not None:
