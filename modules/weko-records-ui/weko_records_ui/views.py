@@ -568,13 +568,32 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     _perf_end("item_link_info", t0)
 
     t0 = _perf_start()
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'
+    # Building the full JPCOAR OAI-PMH XML is expensive and is only needed for
+    # the Google Scholar / Dataset meta tags. It depends only on the record, so
+    # cache it keyed by OAI id + record revision (an edit bumps the revision and
+    # invalidates the entry immediately) with a short TTL as a backstop. Skip
+    # the cache when the cache extension is not configured (e.g. some tests).
+    from invenio_cache import current_cache
+    _oai_id = record['_oai'].get('id')
+    _xml_cache_key = None
+    recstr = None
+    if current_app.extensions.get('invenio-cache') is not None and _oai_id:
+        _xml_cache_key = 'record_jpcoar_xml_{}_{}'.format(
+            _oai_id, getattr(record, 'revision_id', ''))
+        recstr = current_cache.get(_xml_cache_key)
+    if recstr is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=_oai_id,
+                metadataPrefix='jpcoar',
+                verb='getrecord'
+            )
         )
-    )
+        if _xml_cache_key is not None:
+            current_cache.set(
+                _xml_cache_key, recstr,
+                timeout=current_app.config.get(
+                    'WEKO_RECORDS_UI_GOOGLE_XML_CACHE_TTL', 300))
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
