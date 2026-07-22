@@ -4,6 +4,8 @@ from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
 
+from invenio_cache import current_cache
+
 from weko_admin.models import SearchManagement
 from weko_index_tree.models import Index
 from weko_search_ui.api import (
@@ -138,6 +140,7 @@ def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
     
     # not exist search_management
     with patch("weko_search_ui.api.Indexes.get_browsing_tree",return_value=index_tree):
+        current_cache.clear()
         res = get_search_detail_keyword("")
     assert type(res) == str
     res = json.loads(res)
@@ -159,6 +162,7 @@ def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
     db.session.add(search_management)
     db.session.commit()
     with patch("weko_search_ui.api.Indexes.get_browsing_tree",return_value=index_tree):
+        current_cache.clear()
         res = get_search_detail_keyword("")
     assert type(res) == str
     test = {"condition_setting":[

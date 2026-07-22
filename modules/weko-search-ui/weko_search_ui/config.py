@@ -780,3 +780,12 @@ ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
 
 ROCRATE_METADATA_WK_CONTEXT_V1 = "http://purl.org/wk/v1/wk-context.jsonld"
 """ Metadata context file name for RO-Crate+Bagit. """
+
+WEKO_SEARCH_DETAIL_KEYWORD_CACHE_TTL = 300
+"""Cache lifetime (seconds) for get_search_detail_keyword() results.
+
+The detail-search conditions depend only on the current language, the
+authentication state, and infrequently-changing item types / indexes /
+settings, so they are cached for a short time to avoid rebuilding them on
+every page render. Set to 0 to disable expiration or a small value to reduce
+staleness."""

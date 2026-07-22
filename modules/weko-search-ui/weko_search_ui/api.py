@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import os
 import unicodedata
 import markupsafe
 from operator import index
@@ -167,6 +168,22 @@ class SearchSetting(object):
 
 def get_search_detail_keyword(str_):
     """Get search detail keyword."""
+    from invenio_cache import current_cache
+
+    # The result depends only on the current language and whether the user is
+    # authenticated (guest vs. authenticated get different browsing trees);
+    # item types / indexes / settings change infrequently. Cache it for a short
+    # TTL so the detail-search conditions are not rebuilt on every page render.
+    # (str_ is not used by the body, so it does not affect the result/key.)
+    cache_key = "search_detail_keyword_{host}_{lang}_{auth}".format(
+        host=os.environ.get('INVENIO_WEB_HOST_NAME', ''),
+        lang=current_i18n.language,
+        auth='auth' if (current_user and current_user.is_authenticated)
+             else 'guest')
+    cached = current_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     res = sm.get()
     options = None
     key_options = dict()
@@ -220,6 +237,10 @@ def get_search_detail_keyword(str_):
     key_options_str.replace("False", "false")
     key_options_str.replace("True", "true")
 
+    current_cache.set(
+        cache_key, key_options_str,
+        timeout=current_app.config.get(
+            'WEKO_SEARCH_DETAIL_KEYWORD_CACHE_TTL', 300))
     return key_options_str
 
 
