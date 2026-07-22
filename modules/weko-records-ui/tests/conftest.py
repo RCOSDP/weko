@@ -716,14 +716,21 @@ def itemtypes(app, db):
     item_type_mapping = ItemTypeMapping(id=1, item_type_id=1, mapping=item_type_mapping)
 
     with db.session.begin_nested():
+        # Add item type names and item types first and flush them, so the
+        # item_type rows exist before the FK-referencing item_type_mapping
+        # rows are inserted. ItemType uses SQLAlchemy-Continuum versioning,
+        # under which a single interleaved flush can emit the item_type_mapping
+        # INSERTs ahead of their parent item_type rows and raise a foreign-key
+        # violation (fk_item_type_mapping_item_type_id_item_type).
         db.session.add(item_type_name)
-        db.session.add(item_type)
-        db.session.add(item_type_mapping)
         db.session.add(item_type_name_31001)
-        db.session.add(item_type_31001)
-        db.session.add(item_type_mapping_31001)
         db.session.add(item_type_name_31002)
+        db.session.add(item_type)
+        db.session.add(item_type_31001)
         db.session.add(item_type_31002)
+        db.session.flush()
+        db.session.add(item_type_mapping)
+        db.session.add(item_type_mapping_31001)
         db.session.add(item_type_mapping_31002)
 
     return {
