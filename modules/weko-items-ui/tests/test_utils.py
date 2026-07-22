@@ -9435,15 +9435,18 @@ def test_get_ranking(app, users, db_records, db_ranking, esindex,mocker):
     mocker.patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=[])
     mocker.patch("weko_deposit.api.WekoRecord.switching_language", return_value="test")
     data = [{'key': '3', 'count': 5}, {'key': '1', 'count': 4}, {'key': '4', 'count': 2}]
+    from invenio_cache import current_cache
     with patch("weko_items_ui.utils.WekoQueryRankingHelper.get", return_value=data):
         settings = db_ranking['settings']
         with app.test_request_context():
             # get all ranking
+            current_cache.clear()
             result = get_ranking(settings)
             assert result == {'most_reviewed_items': [{'key': '3', 'rank': 1, 'count': 5, 'title': 'test', 'url': '../records/3'}, {'key': '1', 'rank': 2, 'count': 4, 'title': 'test', 'url': '../records/1'}, {'key': '4', 'rank': 3, 'count': 2, 'title': 'test', 'url': '../records/4'}], 'most_downloaded_items': [], 'created_most_items_user': [], 'most_searched_keywords': [], 'new_items': []}
 
             # get no ranking
             ranking_settings = RankingSettings(is_show=True,new_item_period=12,statistical_period=365,display_rank=10,rankings={"new_items": False, "most_reviewed_items": False, "most_downloaded_items": False, "most_searched_keywords": False, "created_most_items_user": False})
+            current_cache.clear()
             result = get_ranking(ranking_settings)
             assert result == {}
 
