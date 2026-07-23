@@ -9450,6 +9450,63 @@ def test_get_ranking(app, users, db_records, db_ranking, esindex,mocker):
             result = get_ranking(ranking_settings)
             assert result == {}
 
+
+def test_get_ranking_cache(app, users, db_records, db_ranking, esindex, mocker):
+    """Cache behaviour of get_ranking (2-1).
+
+    Verifies: (1) a cache HIT skips the ES aggregation on the second call,
+    (2) different authenticated users use different keys (permission-filtered
+    results must not leak), and (3) the UI language is part of the key.
+    """
+    index_json = [
+        {"children": [], "cid": 1, "pid": 0, "name": "idx1", "id": "1"},
+    ]
+    mocker.patch("weko_items_ui.utils.Indexes.get_browsing_tree_ignore_more", return_value=index_json)
+    mocker.patch("weko_items_ui.utils.get_options_and_order_list", return_value=(None, None))
+    mocker.patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=[])
+    mocker.patch("weko_deposit.api.WekoRecord.switching_language", return_value="test")
+    data = [{'key': '3', 'count': 5}, {'key': '1', 'count': 4}]
+    from invenio_cache import current_cache
+    settings = db_ranking['settings']
+
+    # (1) cache HIT: second call must NOT call the ES ranking helper again.
+    with app.test_request_context():
+        current_cache.clear()
+        with patch("weko_items_ui.utils.WekoQueryRankingHelper.get", return_value=data) as m_es:
+            r1 = get_ranking(settings)
+            assert m_es.call_count == 1
+            r2 = get_ranking(settings)
+            assert m_es.call_count == 1  # served from cache
+        assert r1 == r2
+
+    # (2) per-user isolation + (3) language: capture the key used via current_cache.get.
+    keys = []
+    real_get = current_cache.get
+
+    def _spy_get(key, *a, **k):
+        keys.append(key)
+        return real_get(key, *a, **k)
+
+    def _run(user_id, lang):
+        with app.test_request_context():
+            with patch("weko_items_ui.utils.current_user") as mu, \
+                 patch("weko_items_ui.utils.current_i18n") as mi:
+                mu.is_authenticated = True
+                mu.get_id.return_value = user_id
+                mi.language = lang
+                get_ranking(settings)
+
+    with patch("weko_items_ui.utils.WekoQueryRankingHelper.get", return_value=data):
+        with patch.object(current_cache, "get", side_effect=_spy_get):
+            _run("111", "ja")   # user A, ja
+            _run("222", "ja")   # user B, ja  -> different user
+            _run("111", "en")   # user A, en  -> different language
+    # three distinct keys: user111/ja, user222/ja, user111/en
+    assert len(set(keys)) == 3, keys
+    assert any("u111" in k for k in keys) and any("u222" in k for k in keys)
+    assert any("_ja_" in k for k in keys) and any("_en_" in k for k in keys)
+
+
 # def __sanitize_string(s: str):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test___sanitize_string -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test___sanitize_string():
