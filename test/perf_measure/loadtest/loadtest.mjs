@@ -15,13 +15,20 @@ const label = process.argv[2] || 'run';
 const CONC = parseInt(process.argv[3] || '16', 10);
 const TOTAL = parseInt(process.argv[4] || '400', 10);
 const SIZE = parseInt(process.argv[5] || '100', 10);
+// which server path to hammer: search (REST API) | top | detail
+const TARGET = process.argv[6] || 'search';
+const DETAIL_RECID = process.argv[7] || '3000001';
 const BASE = process.env.BASE || 'https://127.0.0.1:18443';
 const HOSTHDR = process.env.HOSTHDR || 'weko3.example.org';
 const EMAIL = process.env.EMAIL || 'wekosoftware@nii.ac.jp';
 const PASSWORD = process.env.PASSWORD || 'uspass123';
 const OUTDIR = process.env.OUTDIR || new URL('../results', import.meta.url).pathname;
-const PATH = `/search?search_type=0&size=${SIZE}&q=`; // API is served under /search too via api? use REST:
-const API_PATH = `/api/records/?search_type=0&size=${SIZE}&page=1&q=`;
+const TARGET_PATHS = {
+  search: `/api/records/?search_type=0&size=${SIZE}&page=1&q=`,
+  top: `/`,
+  detail: `/records/${DETAIL_RECID}`,
+};
+const TARGET_PATH = TARGET_PATHS[TARGET] || TARGET_PATHS.search;
 
 const agent = new https.Agent({ rejectUnauthorized: false, keepAlive: true, maxSockets: CONC + 4 });
 const base = new URL(BASE);
@@ -82,7 +89,7 @@ async function run() {
   const jar = await login();
   const cookie = cookieHeader(jar);
   // warm-up
-  await raw('GET', API_PATH, { headers: { Cookie: cookie } });
+  await raw('GET', TARGET_PATH, { headers: { Cookie: cookie } });
 
   const lat = [];
   let issued = 0, ok = 0, bad = 0;
@@ -93,7 +100,7 @@ async function run() {
       issued++;
       const s = Date.now();
       try {
-        const r = await raw('GET', API_PATH, { headers: { Cookie: cookie } });
+        const r = await raw('GET', TARGET_PATH, { headers: { Cookie: cookie } });
         (r.status === 200 ? ok++ : bad++);
       } catch (e) { bad++; }
       lat.push(Date.now() - s);
@@ -105,7 +112,7 @@ async function run() {
   lat.sort((a, b) => a - b);
   const mean = lat.reduce((s, x) => s + x, 0) / lat.length;
   const out = {
-    label, concurrency: CONC, total: TOTAL, size: SIZE,
+    label, target: TARGET, concurrency: CONC, total: TOTAL, size: SIZE,
     ok, bad, wall_s: wall.toFixed(2),
     throughput_rps: (ok / wall).toFixed(2),
     p50_ms: pct(lat, 50), p90_ms: pct(lat, 90), p95_ms: pct(lat, 95),
@@ -113,7 +120,7 @@ async function run() {
     mean_ms: mean.toFixed(1),
   };
   const line =
-    `label=${label} conc=${CONC} n=${ok}/${TOTAL} wall=${out.wall_s}s ` +
+    `label=${label} target=${TARGET} conc=${CONC} n=${ok}/${TOTAL} wall=${out.wall_s}s ` +
     `rps=${out.throughput_rps} p50=${out.p50_ms} p90=${out.p90_ms} ` +
     `p95=${out.p95_ms} p99=${out.p99_ms} max=${out.max_ms} mean=${out.mean_ms}ms`;
   console.log(line);
