@@ -7,7 +7,28 @@
 - データ: ダミーレコード約3000件(recid 3000001..3003000)+ 既存1件。ES `relation_version_is_last=true` 3001件。
 - 認証: アイテム詳細・検索結果はゲスト不可のため admin ログインで計測。
 - コード切替: web は作業ツリーを `/code` にバインドマウント。`git checkout` + uwsgi `touch-reload` で before/after を切替。
-- 手順・スクリプト: [RUNBOOK.md](./RUNBOOK.md) / `run_all.sh` / `measure.sh` / `browser/measure_browser.mjs` / `seed_records.py`
+- 手順・スクリプト: [RUNBOOK.md](./RUNBOOK.md) / `run_all.sh` / `measure.sh` / `browser/measure_browser.mjs` / `seed_records.py` / `loadtest/`
+
+## 総まとめ (TL;DR)
+
+3種類の計測で `fix/issues61802` の効果を多面的に検証した。**結論: 平常時にリグレッション(悪化)は無く、
+アクセスが混雑するほど大きく効く**(修正の狙いどおり)。
+
+| # | 計測 | 条件 | 主指標 | 結果 |
+|---|------|------|--------|------|
+| ① | curl(逐次) | クリーン, 1req ずつ | median | 全ページ before ≈ after(**悪化なし**) |
+| ② | Chromium(逐次) | クリーン, 1req ずつ | median | 全ページ before ≈ after(**悪化なし**) |
+| ③ | **並行負荷** | 検索API, 同時4〜16 | throughput / p50 | **スループット約2.2x / p50 約1/2**(検索一覧) |
+
+- **代表値**: 検索 REST API の並行負荷で **スループット 0.66→1.43 req/s(2.2x)**、
+  **400件の総処理 603s→280s(2.15x)**、**p50 レイテンシ 約半減**(並行度16で 23.7s→11.0s)。
+- **なぜ逐次(①②)で差が出ないのに並行(③)で出るか**: 修正は1リクエストあたりの DB/ES アクセスと CPU 計算を
+  削るもの。CPU に余裕があればその差は待ち時間に現れないが、サーバ容量(uwsgi 2×2=約4並列)が飽和すると
+  削減分がそのままスループット/レイテンシ改善として観測される。**本番の混雑時・多テナント環境ほど効果が大きい**。
+- **評価は median / p90 / throughput で行う**。max は before/after・環境を問わず 6〜16s の単発 spike が出るが、
+  これは uwsgi ワーカーのリサイクル・GC・ES 一時遅延といった構造的ノイズ(クリーン環境でも残存)。
+
+以下、各計測の詳細。
 
 ## 重要: 2つの計測環境 — 結果が環境の CPU 余裕度で大きく変わる
 
