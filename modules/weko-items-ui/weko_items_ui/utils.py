@@ -3880,8 +3880,13 @@ def get_ranking(settings):
         }, sort_keys=True, default=str)
         _user_part = 'u{}'.format(current_user.get_id()) \
             if (current_user and current_user.is_authenticated) else 'guest'
-        ranking_cache_key = 'get_ranking_{host}_{date}_{user}_{sig}'.format(
+        # Ranking titles are language-dependent (record.get_titles ->
+        # switching_language() picks the title for current_i18n.language), so
+        # the language must be part of the key or a cached ja page would serve
+        # ja titles to an en request within the TTL.
+        ranking_cache_key = 'get_ranking_{host}_{lang}_{date}_{user}_{sig}'.format(
             host=os.environ.get('INVENIO_WEB_HOST_NAME', ''),
+            lang=current_i18n.language,
             date=date.today().strftime('%Y-%m-%d'),
             user=_user_part,
             sig=hashlib.md5(_sig.encode('utf-8')).hexdigest())

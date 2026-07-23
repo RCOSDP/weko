@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import hashlib
 import os
 import unicodedata
 import markupsafe
@@ -169,22 +170,39 @@ class SearchSetting(object):
 def get_search_detail_keyword(str_):
     """Get search detail keyword."""
     from invenio_cache import current_cache
+    from weko_index_tree.utils import get_user_groups, get_user_roles
 
-    # The result depends only on the current language and whether the user is
-    # authenticated (guest vs. authenticated get different browsing trees);
-    # item types / indexes / settings change infrequently. Cache it for a short
-    # TTL so the detail-search conditions are not rebuilt on every page render.
-    # (str_ is not used by the body, so it does not affect the result/key.)
-    cache_key = "search_detail_keyword_{host}_{lang}_{auth}".format(
+    # Fetch the SearchManagement row once (used both for the cache key signature
+    # and for building the result), so an admin's settings change invalidates
+    # the cache immediately.
+    res = sm.get()
+
+    # The result of the "iid" index checkboxes is pruned per user by
+    # reduce_index_by_role(roles, groups), so the cache key MUST include the
+    # user's admin flag + role ids + group ids; otherwise one authenticated
+    # user could see (or lose) another user's index visibility. It also depends
+    # on the UI language and the search-condition settings.
+    if current_user and current_user.is_authenticated:
+        is_admin, role_ids = get_user_roles(is_super_role=False)
+        group_ids = get_user_groups()
+        user_part = 'a{admin}_r{roles}_g{groups}'.format(
+            admin=1 if is_admin else 0,
+            roles='-'.join(map(str, sorted(role_ids or []))),
+            groups='-'.join(map(str, sorted(group_ids or []))))
+    else:
+        user_part = 'guest'
+    settings_sig = hashlib.md5(
+        json.dumps(res.search_conditions if res else None,
+                   sort_keys=True, default=str).encode('utf-8')).hexdigest()
+    cache_key = "search_detail_keyword_{host}_{lang}_{user}_{sig}".format(
         host=os.environ.get('INVENIO_WEB_HOST_NAME', ''),
         lang=current_i18n.language,
-        auth='auth' if (current_user and current_user.is_authenticated)
-             else 'guest')
+        user=user_part,
+        sig=settings_sig)
     cached = current_cache.get(cache_key)
     if cached is not None:
         return cached
 
-    res = sm.get()
     options = None
     key_options = dict()
     if res:
