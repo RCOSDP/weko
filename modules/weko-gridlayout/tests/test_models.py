@@ -185,6 +185,38 @@ def test_update_WidgetDesignSetting(i18n_app, db):
     assert not WidgetDesignSetting.update("1", MagicMock())
 
 
+def test_select_by_repository_id_request_cache(i18n_app, db):
+    """common-C: select_by_repository_id is memoized per request on flask.g,
+    the HIT returns the cached value, and update()/create() invalidate it."""
+    from flask import g
+    test1 = WidgetDesignSetting(repository_id="1", settings='{"a": 1}')
+    db.session.add(test1)
+    db.session.commit()
+
+    with i18n_app.test_request_context():
+        # (1) HIT: first select populates g cache; a second select must not
+        # touch the DB (patch the query to raise if used).
+        r1 = WidgetDesignSetting.select_by_repository_id("1")
+        assert r1.get("settings") == '{"a": 1}'
+        with patch.object(WidgetDesignSetting, "query") as m_query:
+            m_query.filter_by.side_effect = AssertionError("DB hit on cached read")
+            r2 = WidgetDesignSetting.select_by_repository_id("1")
+        assert r2 == r1  # served from g cache, no DB access
+
+        # (2) update() invalidates the per-request cache -> next select rebuilds
+        # and returns the new value.
+        assert WidgetDesignSetting.update("1", '{"a": 2}')
+        r3 = WidgetDesignSetting.select_by_repository_id("1")
+        assert r3.get("settings") == '{"a": 2}'
+
+    # (3) create() invalidates too (fresh request).
+    with i18n_app.test_request_context():
+        WidgetDesignSetting.select_by_repository_id("2")  # cache miss -> {}
+        assert WidgetDesignSetting.create("2", '{"b": 9}')
+        r4 = WidgetDesignSetting.select_by_repository_id("2")
+        assert r4.get("settings") == '{"b": 9}'
+
+
 #     def create(cls, repository_id, settings=None):
 def test_create_WidgetDesignSetting(i18n_app, db):
     test1 = WidgetDesignSetting(repository_id="1")
