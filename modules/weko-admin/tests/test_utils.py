@@ -111,12 +111,49 @@ def test_allowed_file():
 # def get_search_setting():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_search_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_search_setting(app,search_management):
+    from weko_admin.utils import delete_search_setting_cache
+    delete_search_setting_cache()
     with patch("weko_admin.utils.SearchManagement.get",return_value=None):
         result = get_search_setting()
         assert result == WEKO_ADMIN_MANAGEMENT_OPTIONS
 
+    # the two calls observe different underlying state, so invalidate the
+    # short-TTL cache between them (update() does this in real usage).
+    delete_search_setting_cache()
     result = get_search_setting()
     assert result=={"init_disp_setting":{"init_disp_index":"","init_disp_index_disp_method":"0","init_disp_screen_setting":"0"}}
+
+
+def test_get_search_setting_cache(app, search_management):
+    """D: get_search_setting is served from a short-TTL cache (2nd call does not
+    hit SearchManagement), delete_search_setting_cache() invalidates it, and a
+    returned copy cannot corrupt the cache."""
+    from weko_admin.utils import delete_search_setting_cache
+    from weko_admin.models import SearchManagement
+    delete_search_setting_cache()
+
+    with patch("weko_admin.utils.SearchManagement.get",
+               wraps=SearchManagement.get) as m_get:
+        # 1st call populates the cache
+        r1 = get_search_setting()
+        n1 = m_get.call_count
+        assert n1 >= 1
+        # 2nd call is served from cache -> SearchManagement.get not called again
+        r2 = get_search_setting()
+        assert m_get.call_count == n1
+    assert r1 == r2
+
+    # returned value is a copy: mutating it must not corrupt the cache
+    r2["_injected"] = 1
+    r3 = get_search_setting()
+    assert "_injected" not in r3
+
+    # invalidation forces a rebuild (SearchManagement.get called again)
+    delete_search_setting_cache()
+    with patch("weko_admin.utils.SearchManagement.get", return_value=None) as m_none:
+        r4 = get_search_setting()
+        assert m_none.called
+    assert r4 == WEKO_ADMIN_MANAGEMENT_OPTIONS
 
 # def get_admin_lang_setting():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_admin_lang_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
