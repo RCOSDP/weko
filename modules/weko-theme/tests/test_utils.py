@@ -35,6 +35,19 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities, re
                 assert result['index_link_list']
 
 
+def test_get_weko_contents_fetches_search_setting_once(
+        i18n_app, users, client_request_args, communities, redis_connect, db):
+    """common-A: get_weko_contents reads the search setting once per call
+    (display_control fetched once and reused for the 3 sub-settings)."""
+    import weko_theme.utils as theme_utils
+    real = theme_utils.get_search_setting()
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_theme.utils.get_search_setting",
+                   return_value=real) as m_ss:
+            get_weko_contents({'c': 'comm1'})
+    assert m_ss.call_count == 1
+
+
 # def get_community_id(getargs):
 def test_get_community_id(i18n_app, communities, db):
     assert get_community_id({'c': 'comm1'})

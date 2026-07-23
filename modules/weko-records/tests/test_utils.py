@@ -1478,6 +1478,60 @@ async def test_sort_meta_data_by_options(i18n_app, db, admin_settings, mocker,
         )
     await sort_meta_data_by_options(record_hit,settings,item_type)
 
+
+@pytest.mark.asyncio
+async def test_sort_meta_data_by_options_memoization(
+        i18n_app, db, admin_settings, mocker):
+    """4-3: item-type derived data is memoized per request on flask.g, so a
+    second hit of the SAME item type in the same request does not re-fetch the
+    item type, and both hits produce an identical processed result (the cached
+    data must be treated read-only and not corrupt the 2nd hit)."""
+    mocker.patch("weko_records_ui.permissions.check_file_download_permission",
+                 return_value=True)
+    _item_type_name = ItemTypeName(name="test")
+    item_type = ItemTypes.create(
+        name="test",
+        item_type_name=_item_type_name,
+        schema=json_data("data/item_type/item_type_schema.json"),
+        render=json_data("data/item_type/item_type_render1.json"),
+        form=json_data("data/item_type/item_type_form1.json"),
+        tag=1,
+    )
+    settings = AdminSettings.get('items_display_settings')
+
+    with i18n_app.test_request_context():
+        # Mock the item-type helpers to trivial valid values so the memo tuple
+        # is fully built and cached on flask.g. get_by_id is spied to count
+        # DB fetches: it must run once for two hits of the same item_type_id.
+        real_get_by_id = ItemTypes.get_by_id
+        calls = {"n": 0}
+
+        def _counting_get_by_id(item_type_id, **kw):
+            calls["n"] += 1
+            return real_get_by_id(item_type_id, **kw)
+
+        with patch("weko_records.utils.ItemTypes.get_by_id",
+                   side_effect=_counting_get_by_id), \
+             patch("weko_records.utils.get_options_and_order_list",
+                   return_value=([], {})), \
+             patch("weko_records.serializers.utils.get_mapping",
+                   return_value={}), \
+             patch("weko_items_ui.utils.get_hide_list_by_schema_form",
+                   return_value=[]):
+            rh1 = json_data("data/record_hit/record_hit1.json")
+            await sort_meta_data_by_options(rh1, settings, item_type)
+            after_first = calls["n"]
+            rh2 = json_data("data/record_hit/record_hit1.json")
+            await sort_meta_data_by_options(rh2, settings, item_type)
+
+        # the item type was fetched once and reused for the 2nd hit (memoized)
+        assert after_first == 1, after_first
+        assert calls["n"] == 1, calls["n"]
+        # deterministic: identical input -> identical processed output
+        # (memoized item-type data was not mutated by the 1st hit).
+        assert rh1["_source"] == rh2["_source"]
+
+
 params=[
     ("data/item_type/item_type_render4.json",
      "data/item_type/item_type_form4.json",
