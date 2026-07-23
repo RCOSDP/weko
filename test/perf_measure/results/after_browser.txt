@@ -1,8 +1,8 @@
-# Parallel-load headless-Chromium E2E  label=after  time=2026-07-23T14:20:56.894Z
-# base=https://weko3.example.org:18443 detail_recid=3000001 concurrency=6 total_per_url=48
-# metric = navigation start -> networkidle (JS + AJAX) under 6 concurrent page loads, seconds
+# Parallel-load headless-Chromium E2E  label=after  time=2026-07-23T14:50:24.901Z
+# base=https://weko3.example.org:18443 detail_recid=3000001 concurrency=20 total_per_url=100
+# metric = navigation start -> networkidle (JS + AJAX) under 20 concurrent page loads, seconds
 
      URL     min     med    mean     p90     p95     max     rps       n
-     top   1.895   2.723   3.931   8.130   9.025  12.869    1.50      48
-  detail   1.317   1.606   2.469   6.861   7.036   7.705    2.03      48
-  search   1.613   2.150   2.829   7.663   7.778   8.237    2.06      48
+     top   7.052  12.691  11.997  14.321  15.183  20.509    1.52     100
+  detail   3.018   8.679   7.835  11.833  11.968  14.594    2.15     100
+  search   3.245   6.441   7.884  11.683  12.138  15.866    2.17     100

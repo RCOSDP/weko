@@ -34,15 +34,15 @@ run_label() { # $1=label $2=expected_marker
 }
 
 echo "=== AFTER ($AFTER_REF) ==="
-git checkout "$AFTER_REF" >/dev/null 2>&1; reload; wait_up
+git checkout "$AFTER_REF" -- modules/ >/dev/null 2>&1; reload; wait_up
 run_label after 1
 
 echo "=== BEFORE ($BEFORE_REF) ==="
-git checkout "$BEFORE_REF" >/dev/null 2>&1; reload; wait_up
+git checkout "$BEFORE_REF" -- modules/ >/dev/null 2>&1; reload; wait_up
 run_label before 0
 
 echo "=== restore AFTER ==="
-git checkout "$AFTER_REF" >/dev/null 2>&1; reload; wait_up
+git checkout "$AFTER_REF" -- modules/ >/dev/null 2>&1; reload; wait_up
 
 # publish scratch results into the tracked results dir now that switching is done
 cp "$SCRATCH/after_browser.txt" "$RESULTS/after_browser.txt"

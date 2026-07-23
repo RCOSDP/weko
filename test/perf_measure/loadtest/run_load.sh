@@ -42,15 +42,15 @@ measure() { # $1=label $2=expected_marker
 }
 
 echo "=== AFTER ($AFTER_REF) ==="
-git checkout "$AFTER_REF" >/dev/null 2>&1; reload; wait_up
+git checkout "$AFTER_REF" -- modules/ >/dev/null 2>&1; reload; wait_up
 measure after 1
 
 echo "=== BEFORE ($BEFORE_REF) ==="
-git checkout "$BEFORE_REF" >/dev/null 2>&1; reload; wait_up
+git checkout "$BEFORE_REF" -- modules/ >/dev/null 2>&1; reload; wait_up
 measure before 0
 
 echo "=== restore AFTER ==="
-git checkout "$AFTER_REF" >/dev/null 2>&1; reload; wait_up
+git checkout "$AFTER_REF" -- modules/ >/dev/null 2>&1; reload; wait_up
 
 for c in "${CONCS[@]}"; do
   cp "$SCRATCH/load_after_c${c}.txt"  "$RESULTS/load_after_c${c}.txt"
