@@ -16,7 +16,7 @@ RESULTS=/home/mhaya/weko/test/perf_measure/results
 # working tree dirty and block the git checkout that switches before/after code.
 SCRATCH=/tmp/weko_parallel_browser_out
 mkdir -p "$SCRATCH"
-SCRIPT=/home/mhaya/weko/test/perf_measure/browser/measure_browser_parallel.mjs
+SCRIPT=/tmp/weko_perf_scripts/browser/measure_browser_parallel.mjs
 COMPOSE="docker compose -f docker-compose.arm64.yml -p weko"
 
 reload() { $COMPOSE exec -T web bash -lc 'touch /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini' >/dev/null 2>&1; }
@@ -29,7 +29,7 @@ run_label() { # $1=label $2=expected_marker
   echo "  marker=$m (expect $2)"
   if [ "$m" != "$2" ]; then echo "  ABORT: code not switched as expected"; exit 1; fi
   flush
-  ( cd test/perf_measure/browser && \
+  ( cd /tmp/weko_perf_scripts/browser && \
     OUTDIR="$SCRATCH" node "$SCRIPT" "$1" "$RECID" "$TOTAL" "$CONC" )
 }
 

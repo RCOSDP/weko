@@ -23,7 +23,7 @@ AFTER_REF=fix/issues61802
 BEFORE_REF=3de23b2dd
 RESULTS=/home/mhaya/weko/test/perf_measure/results
 SCRATCH=/tmp/weko_loadtest_out; mkdir -p "$SCRATCH"
-LT=/home/mhaya/weko/test/perf_measure/loadtest/loadtest.mjs
+LT=/tmp/weko_perf_scripts/loadtest.mjs
 COMPOSE="docker compose -f docker-compose.arm64.yml -p weko"
 
 reload() { $COMPOSE exec -T web bash -lc 'touch /home/invenio/.virtualenvs/invenio/var/instance/conf/uwsgi.ini' >/dev/null 2>&1; }
