@@ -6,14 +6,14 @@
   "size": 100,
   "ok": 100,
   "bad": 0,
-  "wall_s": "70.84",
-  "throughput_rps": "1.41",
-  "p50_ms": 13848,
-  "p90_ms": 14358,
-  "p95_ms": 14542,
-  "p99_ms": 15137,
-  "min_ms": 1827,
-  "max_ms": 15664,
-  "mean_ms": "12964.3"
+  "wall_s": "69.75",
+  "throughput_rps": "1.43",
+  "p50_ms": 13617,
+  "p90_ms": 14092,
+  "p95_ms": 14322,
+  "p99_ms": 15441,
+  "min_ms": 1753,
+  "max_ms": 16432,
+  "mean_ms": "12737.4"
 }
-label=after_c20 conc=20 n=100/100 wall=70.84s rps=1.41 p50=13848 p90=14358 p95=14542 p99=15137 max=15664 mean=12964.3ms
+label=after_c20 conc=20 n=100/100 wall=69.75s rps=1.43 p50=13617 p90=14092 p95=14322 p99=15441 max=16432 mean=12737.4ms
