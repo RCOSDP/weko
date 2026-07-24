@@ -98,14 +98,17 @@ def control_btns():
 def index_query():
     """Get index list."""
     if any(role.name in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in current_user.roles):
-        return Index.query.all()
+        return Index.query.filter(Index.is_deleted == False).all()
     else:
         index_list = []
         repositories = Community.get_repositories_by_user(current_user)
         for repository in repositories:
             index = Indexes.get_child_list_recursive(repository.root_node_id)
             index_list.extend(index)
-        return Index.query.filter(Index.id.in_([int(index) for index in index_list])).all()
+        return Index.query.filter(
+            Index.id.in_([int(index) for index in index_list]),
+            Index.is_deleted == False
+        ).all()
 
 
 class HarvestSettingView(ModelView):
