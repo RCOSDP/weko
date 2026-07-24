@@ -96,6 +96,8 @@ class LocationModelView(ModelView):
         quota_size=_('Quota Size'),
         access_key=_('Access Key'),
         secret_key=_('Secret Key'),
+        readonly_access_key=_('Readonly Access Key'),
+        readonly_secret_key=_('Readonly Secret Key'),
         s3_endpoint_url=_('S3_ENDPOINT_URL'),
         s3_send_file_directly=_('S3_SEND_FILE_DIRECTLY'),
         s3_default_block_size=_('S3_DEFAULT_BLOCK_SIZE'),
@@ -109,7 +111,7 @@ class LocationModelView(ModelView):
     column_default_sort = 'name'
     form_base_class = SecureForm
     form_columns = (
-        'name', 'uri', 'type', 'access_key', 'secret_key',
+        'name', 'uri', 'type', 'access_key', 'secret_key', 'readonly_access_key', 'readonly_secret_key',
         's3_endpoint_url', 's3_send_file_directly',
         's3_default_block_size', 's3_maximum_number_of_parts',
         's3_region_name', 's3_signature_version', 's3_url_expiration',
@@ -118,11 +120,18 @@ class LocationModelView(ModelView):
         'type': LazyChoices(
             lambda: current_app.config['FILES_REST_LOCATION_TYPE_LIST'])
     }
+    form_widget_args = {
+        'type': {'onchange': 'checkLocationType()'}
+    }
     form_extra_fields = {
         'access_key': PasswordField('access_key',
                                     widget=PasswordInput(hide_value=False)),
         'secret_key': PasswordField('secret_key',
                                     widget=PasswordInput(hide_value=False)),
+        'readonly_access_key': PasswordField('readonly_access_key',
+                                             widget=PasswordInput(hide_value=False)),
+        'readonly_secret_key': PasswordField('readonly_secret_key',
+                                             widget=PasswordInput(hide_value=False)),
         's3_endpoint_url': StringField('endpoint_url'),
         's3_send_file_directly': BooleanField('send_file_directly'),
         's3_default_block_size': IntegerField('default_block_size', validators=[NumberRange(min=0), Optional()]),
