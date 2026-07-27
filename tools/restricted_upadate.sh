@@ -154,7 +154,7 @@ fi
 # verify the update
 tools/verify_restricted_update.sh $SETTING_FILE True
 ###docker compose exec web invenio shell tools/verify_restricted_records.py enable
-kubectl exec -n weko3 -c web ${WEB_POD} -- invenio shell tools/verify_restricted_records.py enable
+#kubectl exec -n weko3 -c web ${WEB_POD} -- invenio shell tools/verify_restricted_records.py enable
 
 # docker-compose exec web bash -c "jinja2 /code/scripts/instance.cfg > /home/invenio/.virtualenvs/invenio/var/instance/invenio.cfg"
 # docker-compose down
