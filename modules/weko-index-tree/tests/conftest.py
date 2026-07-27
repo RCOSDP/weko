@@ -505,6 +505,15 @@ def db(app):
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
+    _now = datetime.now()
+    _p_start = _now.date().replace(day=1)
+    _p_end = (_p_start + timedelta(days=31)).replace(day=1)
+    _p_name = "user_activity_logs_{}_{:02d}".format(_now.year, _now.month)
+    db_.session.execute(
+        "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
+        "FOR VALUES FROM ('{start}') TO ('{end}');".format(
+            name=_p_name, start=_p_start, end=_p_end))
+    db_.session.commit()
     yield db_
     db_.session.remove()
     db_.drop_all()

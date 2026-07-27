@@ -1161,6 +1161,10 @@ def perform_delete_index(index_id, record_class, action: str):
             operation="INDEX_DELETE",
             target_key=index_id
         )
+    except IndexDeletedRESTError:
+        db.session.rollback()
+        msg = f'Index with ID {index_id} does not exist.'
+        errors.append(msg)
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(

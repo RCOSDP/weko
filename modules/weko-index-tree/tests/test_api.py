@@ -958,12 +958,6 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         res = Indexes.get_self_path(32, with_deleted=True)
         assert res==(3, 32, '3/32', 'テストインデックス 3-/-テストインデックス 32', 'Test index 3-/-Test index 32', 2, True, None, '', '3,-99', 'g1,g2,-89', True, True)
 
-        # get_child_list_recursive
-        res = Indexes.get_child_list_recursive(3)
-        assert res==['3', '31']
-        res = Indexes.get_child_list_recursive(3, with_deleted=True)
-        assert res==['3', '31', '32', '33']
-
         # recs_reverse_query
         res = Indexes.recs_reverse_query(32)
         res_obj = db.session.query(res).all()
@@ -1158,6 +1152,27 @@ def test_indexes_get_index_tree(i18n_app, db, redis_connect, users, db_records, 
         # update_item_sort_custom_es
         res = Indexes.update_item_sort_custom_es("33", [{"1": "1", "2": "2"}])
         assert res==None
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_get_child_list_recursive -v -s -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_child_list_recursive(i18n_app, db, redis_connect, users, db_records, test_indices, communities, mocker):
+    os.environ['INVENIO_WEB_HOST_NAME'] = "test"
+    mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': 'group',
+                'role_keyword': 'key'
+            },
+            'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User'],
+            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator']
+    })
+    with i18n_app.test_client() as client:
+        # get_child_list_recursive
+        res = Indexes.get_child_list_recursive(3)
+        assert res==['3', '31']
+        res = Indexes.get_child_list_recursive(3, with_deleted=True)
+        assert res==['3', '31', '32', '33']
+
+        res = Indexes.get_child_list_recursive(6)
+        assert res==[]
 
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_get_index_with_role_group -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_index_with_role_group(app, db, mocker):
