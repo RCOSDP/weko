@@ -116,3 +116,6 @@ if __name__ == '__main__':
         target_item_type_property_id = int(args[1])
         update_type = args[2]
         main(target_item_type_property_id, update_type)
+    else:
+        print("This script requires two arguments: <target_item_type_property_id> <update_type>")
+        sys.exit(1)
