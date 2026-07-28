@@ -1218,10 +1218,14 @@ class Indexes(object):
 
             recursive_p = recursive_p.union_all(union_query_p)
             path_index_searchs = db.session.query(recursive_p).filter_by(
-                pid=0).one()
+                pid=0).one_or_none()
+            if path_index_searchs is None:
+                return None
             return path_index_searchs.path
 
         path_index_searchs = recursive_p()
+        if path_index_searchs is None:
+            return []
 
         query_t = db.session.query(
             Index.parent.label("pid"),
