@@ -233,8 +233,9 @@ WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "role_mapping":{
         "radm":"Repository Administrator",
         "cadm":"Community Administrator",
-        "cont":"Contributor",
-    }
+        "cont":"Contributor"
+    },
+    "group_keyword":"gr"
 }
 """Patterns for Gakunin group names."""
 
