@@ -40,6 +40,7 @@ from sqlalchemy.orm.exc import FlushError
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import UUIDType
 from weko_index_tree.models import Index
+from weko_accounts.api import create_fqdn_from_entity_id, is_map_sysadm_role
 
 from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestExpiryTimeError, InclusionRequestMissingError, \
@@ -596,16 +597,18 @@ class Community(db.Model, Timestamp):
             str: Display name of the community owner.
         """
         if self.owner and hasattr(self.owner, 'name'):
-            roles_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
-            role_mapping = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_mapping"]
-            sysadm_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["sysadm_group"]
+            pattern = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]
+            prefix = pattern["prefix"]
+            role_key = pattern["role_keyword"]
+            role_mapping = pattern["role_mapping"]
+            fqdn = create_fqdn_from_entity_id()
             owner_name = self.owner.name
-            if owner_name == sysadm_key:
-                return "System Administrator"
-            if owner_name and roles_key in owner_name:
-                suffix = owner_name.split(roles_key + '_')[-1]
-                if suffix in role_mapping.keys():
-                    owner_name = role_mapping[suffix]
+            if is_map_sysadm_role(owner_name):
+                return current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            for suffix, display_name in role_mapping.items():
+                expected_owner_name = f'{prefix}_{fqdn}_{role_key}_{suffix}'
+                if owner_name == expected_owner_name:
+                    return display_name
             return owner_name
 
 class FeaturedCommunity(db.Model, Timestamp):

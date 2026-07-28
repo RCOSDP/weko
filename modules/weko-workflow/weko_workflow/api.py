@@ -44,6 +44,7 @@ from sqlalchemy.sql import exists
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.types import String
+from weko_accounts.api import map_role_condition
 from weko_deposit.api import WekoDeposit
 from weko_logging.activity_logger import UserActivityLogger
 from weko_notifications import Notification, NotificationClient
@@ -730,11 +731,7 @@ class WorkFlow(object):
         wfs = []
         current_user_roles = [role.id for role in current_user.roles]
         if isinstance(workflows, list):
-            role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
-            prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
-            role = Role.query.filter(
-                ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
-            ).all()
+            role = Role.query.filter(not_(map_role_condition())).all()
             while workflows:
                 tmp = workflows.pop(0)
                 list_hide = Role.query.outerjoin(WorkflowRole) \

@@ -38,12 +38,13 @@ from flask_admin import expose
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_db import db
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, not_
 from weko_index_tree.models import Index
 from wtforms.validators import ValidationError, Length
 from wtforms import FileField, RadioField, StringField
 from wtforms.utils import unset_value
 from invenio_i18n.ext import current_i18n
+from weko_accounts.api import map_role_condition, map_group_condition
 from weko_gridlayout.services import WidgetDesignPageServices
 from weko_handle.api import Handle
 from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
@@ -563,15 +564,12 @@ class CommunityModelView(ModelView):
         'owner': {
             'allow_blank': False,
             'query_factory': lambda: db.session.query(Role).filter(
-                ~(
-                    Role.name.like(f"%{current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('role_keyword','')}%") &
-                    Role.name.startswith(current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('prefix',''))
-                )
-            ).all(),
+                not_(map_role_condition())).all(),
         },
         'group': {
             'allow_blank': False,
-            'query_factory': lambda: db.session.query(Role).filter(Role.name.like("%_groups_%")).all()
+            'query_factory': lambda: db.session.query(Role).filter(
+                map_group_condition()).all()
         }
     }
     form_extra_fields = {

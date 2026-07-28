@@ -30,6 +30,7 @@ from weko_index_tree.models import Index
 
 import urllib.parse
 import requests
+from sqlalchemy import or_, false
 
 
 _datastore = LocalProxy(lambda: current_app.extensions['security'].datastore)
@@ -567,9 +568,10 @@ def update_roles(map_group_list, roles, indices=[]):
     role_names = set({role.name for role in roles})
 
     new_role_names = [role_name for role_name in map_group_list if role_name and role_name not in role_names]
-    roles_to_remove = [role_name for role_name in role_names if role_name not in map_group_list and role_name.startswith('jc_')]
+    roles_to_remove = [role_name for role_name in role_names
+                       if role_name not in map_group_list
+                       and is_map_managed_name(role_name)]
 
-    
     new_roles = []
     remove_role_ids = []
     try:
@@ -608,7 +610,7 @@ def bind_roles_to_indices(indices=[], new_roles=[], remove_role_ids=[]):
                 for role_id in remove_role_ids:
                     if role_id in browsing_roles:
                         browsing_roles.remove(role_id)
-            
+
                 # bind new roles
                 browsing_default_permission = current_app.config.get('WEKO_INDEXTREE_GAKUNIN_GROUP_DEFAULT_BROWSING_PERMISSION', False)
                 for role in new_roles:
@@ -682,7 +684,7 @@ def remove_contribute_role(self, role_id):
 
 def create_fqdn_from_entity_id():
     """Create a fully qualified domain name (FQDN) from the entity ID.
-    
+
     Returns:
         str: FQDN derived from the entity ID.
     """
@@ -693,3 +695,136 @@ def create_fqdn_from_entity_id():
     parsed_url = urlparse(idp_entity_id)
     fqdn = parsed_url.netloc.split(":")[0].replace('.', '_').replace('-', '_')
     return fqdn
+
+def map_role_condition():
+    """Return a SQLAlchemy condition matching GakuNin mAP roles.
+
+    Matches the configured system administrator and roles whose names
+    begin with the configured repository-specific role prefix. Returns a
+    false SQL expression when the required settings are absent.
+
+    Returns:
+        sqlalchemy.sql.elements.ColumnElement: Condition for filtering roles.
+    """
+    if not _is_gakunin_map_configured():
+        return false()
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    sysadm_key = pattern.get("sysadm_group")
+    prefix = pattern.get("prefix")
+    role_key = pattern["role_keyword"]
+    repo_id = create_fqdn_from_entity_id()
+    role_pattern = f"{prefix}_{repo_id}_{role_key}_"
+    return or_(
+        Role.name == sysadm_key,
+        Role.name.startswith(role_pattern, autoescape=True)
+    )
+
+def map_group_condition():
+    """Return a SQLAlchemy condition matching GakuNin mAP groups.
+
+    Matches roles whose names begin with the configured repository-specific
+    group prefix. Returns a false SQL expression when required settings are
+    absent.
+
+    Returns:
+        sqlalchemy.sql.elements.ColumnElement: Condition for filtering roles.
+    """
+    if not _is_gakunin_map_configured():
+        return false()
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    prefix = pattern.get("prefix")
+    group_key = pattern.get("group_keyword")
+    repo_id = create_fqdn_from_entity_id()
+    group_pattern = f"{prefix}_{repo_id}_{group_key}_"
+    return Role.name.startswith(group_pattern, autoescape=True)
+
+def is_map_managed_name(role_name):
+    """Return whether a role name belongs to the configured GakuNin mAP.
+
+    A matching name is the configured system administrator group or has the
+    repository-specific GakuNin mAP prefix. Non-string values and missing
+    settings return ``False``.
+
+    Args:
+        role_name(str): Role name to evaluate.
+
+    Returns:
+        bool: ``True`` when the role is a GakuNin mAP role or group.
+    """
+    if not isinstance(role_name, str) or not _is_gakunin_map_configured():
+        return False
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    prefix = pattern.get("prefix")
+    repo_id = create_fqdn_from_entity_id()
+    repoid_pattern = f"{prefix}_{repo_id}_"
+    return is_map_sysadm_role(role_name) or role_name.startswith(repoid_pattern)
+
+def is_map_role(role_name):
+    """Return whether a role name is a configured GakuNin mAP role.
+
+    The configured system administrator group is also treated as a role.
+    Non-string values and missing required settings return ``False``.
+
+    Args:
+        role_name(str): Role name to evaluate.
+
+    Returns:
+        bool: ``True`` when the role is a GakuNin mAP role.
+    """
+    if not isinstance(role_name, str) or not _is_gakunin_map_configured():
+        return False
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    prefix = pattern.get("prefix")
+    role_key = pattern.get("role_keyword")
+    repo_id = create_fqdn_from_entity_id()
+    role_pattern = f"{prefix}_{repo_id}_{role_key}_"
+    return is_map_sysadm_role(role_name) or role_name.startswith(role_pattern)
+
+def is_map_group(role_name):
+    """Return whether a role name is a configured GakuNin mAP group.
+
+    Non-string values and missing required settings return ``False``.
+
+    Args:
+        role_name(str): Role name to evaluate.
+
+    Returns:
+        bool: ``True`` when the role is a GakuNin mAP group.
+    """
+    if not isinstance(role_name, str) or not _is_gakunin_map_configured():
+        return False
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    prefix = pattern.get("prefix")
+    group_key = pattern.get("group_keyword")
+    repo_id = create_fqdn_from_entity_id()
+    group_pattern = f"{prefix}_{repo_id}_{group_key}_"
+    return role_name.startswith(group_pattern)
+
+def is_map_sysadm_role(role_name):
+    """Return whether a role name is the configured system administrator group.
+
+    Non-string values and missing required settings return ``False``.
+
+    Args:
+        role_name(str): Role name to evaluate.
+
+    Returns:
+        bool: ``True`` when the role is the system administrator group.
+    """
+    if not isinstance(role_name, str) or not _is_gakunin_map_configured():
+        return False
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    sysadm = pattern.get("sysadm_group")
+    return role_name == sysadm
+
+def _is_gakunin_map_configured():
+    """Return whether the required GakuNin mAP settings are configured.
+
+    Both the group-pattern dictionary and IdP entity ID must be truthy.
+
+    Returns:
+        bool: ``True`` when both required settings are configured.
+    """
+    pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+    idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+    return bool(pattern and idp_entity_id)

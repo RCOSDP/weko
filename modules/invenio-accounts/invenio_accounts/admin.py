@@ -26,12 +26,13 @@ from flask_security.utils import hash_password
 from invenio_communities.models import Community
 from invenio_db import db
 from passlib import pwd
-from sqlalchemy import func
+from sqlalchemy import not_
 from werkzeug.local import LocalProxy
 from collections import OrderedDict
 from wtforms.fields import BooleanField, SelectMultipleField
 from wtforms.validators import DataRequired
 
+from weko_accounts.api import is_map_group, map_role_condition, map_group_condition
 from weko_workflow.models import WorkFlow, WorkflowRole
 
 from .cli import commit
@@ -89,19 +90,15 @@ class UserView(ModelView):
         form_class.role = QuerySelectMultipleField(
             'Roles',
             query_factory=lambda: (
-                Role.query.filter(
-                    ~(
-                        Role.name.like(f"%{current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['role_keyword']}%") &
-                        Role.name.startswith(current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']['prefix'])
-                    )
-                ).filter(~Role.name.like('%_groups_%')).all()
+                Role.query.filter(not_(map_role_condition())
+                ).filter(not_(map_group_condition())).all()
             ),
             get_label='name',
             widget=Select2Widget(multiple=True)
         )
         form_class.group = QuerySelectMultipleField(
             'Groups',
-            query_factory=lambda: Role.query.filter(Role.name.like('%_groups_%')).all(),
+            query_factory=lambda: Role.query.filter(map_group_condition()).all(),
             get_label='name',
             widget=Select2Widget(multiple=True)
         )
@@ -126,8 +123,8 @@ class UserView(ModelView):
 
     def on_form_prefill(self, form, id):
         obj = self.get_one(id)
-        form.role.data = [role for role in obj.roles if '_groups_' not in role.name]
-        form.group.data = [role for role in obj.roles if '_groups_' in role.name]
+        form.role.data = [role for role in obj.roles if not is_map_group(role.name)]
+        form.group.data = [role for role in obj.roles if is_map_group(role.name)]
 
     def on_model_change(self, form, User, is_created):
         """Hash password when saving."""
