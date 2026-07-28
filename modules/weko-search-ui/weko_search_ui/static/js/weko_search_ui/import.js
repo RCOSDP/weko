@@ -38,15 +38,10 @@ const register_with = document.getElementById("register_with").value;
 const start_date = document.getElementById("start_date").value;
 const end_date = document.getElementById("end_date").value;
 const importResult = document.getElementById("import_result").value;
-const end = document.getElementById("end").value;
 const statusLabel = document.getElementById("status").value;
-const action = document.getElementById("action").value;
-const workflow_status = document.getElementById("workflow_status").value;
 const done = document.getElementById("done").value;
 const to_do = document.getElementById("to_do").value;
 const doing = document.getElementById("doing").value;
-const processing = document.getElementById("processing").value;
-const waiting = document.getElementById("waiting").value;
 const result_label = document.getElementById("result").value;
 const succses = document.getElementById("succses").value;
 const next = document.getElementById("next").value;
@@ -105,42 +100,14 @@ function getResultErrorMsg(error_id) {
     case 'item_is_being_edit':
       msg = item_is_being_edit;
       break;
+    case 'failed_to_update_elasticsearch':
+      msg = failed_to_update_elasticsearch;
+      break;
   }
   if (msg === '') {
     return error_id;
   } else {
     return 'Error msg : ' + msg;
-  }
-}
-
-function getTaskResult(task_result) {
-  if (!task_result) return '';
-  if (task_result.success) return succses;
-
-  const errorMessages = {
-    is_duplicated_doi,
-    is_withdraw_doi,
-    item_is_deleted,
-    item_is_being_edit,
-    failed_to_update_elasticsearch
-  };
-  const msg = errorMessages[task_result.error_id] || '';
-  return msg === '' ? '' : error + ': ' + msg;
-}
-
-function getTaskStatusLabel(taskStatus) {
-  if (!taskStatus) return '';
-  switch (taskStatus) {
-    case "PENDING":
-      return waiting;
-    case "STARTED":
-      return processing;
-    case "SUCCESS":
-      return done;
-    case "FAILURE":
-      return "FAILURE";
-    default:
-      return '';
   }
 }
 
@@ -1156,10 +1123,8 @@ class ResultComponent extends React.Component {
         [start_date]: item.start_date ? item.start_date : '',
         [end_date]: item.end_date ? item.end_date : '',
         [item_id]: item.item_id || '',
-        [statusLabel]: getTaskStatusLabel(item.task_status),
-        [importResult]: getTaskResult(item.task_result),
-        [action]: item.task_result ? (item.task_result.success ? end : (item.task_status && item.task_status === "STARTED") ? "Started" : "Error") : "Start",
-        [workflow_status]: item.task_status ? 
+        [statusLabel]: item.task_result ? (item.task_result.success ? succses : (item.task_status && item.task_status === "STARTED") ? "Started" : "Error") : "Start",
+        [importResult]: item.task_status ? 
             item.task_status === "PENDING" ? to_do : 
             item.task_status === "STARTED" ? doing : 
             (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done : 
@@ -1248,7 +1213,7 @@ class ResultComponent extends React.Component {
                         {item.item_id || ''}</a>
                       </td>
                       <td>
-                        {item.task_result ? (item.task_result.success ? end : (item.task_status && item.task_status === "STARTED") ? "Started" : <strong>Error</strong>) : "Start"}
+                        {item.task_result ? (item.task_result.success ? succses : (item.task_status && item.task_status === "STARTED") ? "Started" : <strong>Error</strong>) : "Start"}
                       </td>
                       <td>
                         {item.task_status ? 
@@ -1260,8 +1225,6 @@ class ResultComponent extends React.Component {
                         '' : 
                         ''}
                       </td>
-                      <td>{getTaskStatusLabel(item.task_status)}</td>
-                      <td>{getTaskResult(item.task_result)}</td>
                     </tr>
                   )
                 })
