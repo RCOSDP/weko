@@ -550,7 +550,7 @@ class ItemImportView(BaseView):
                     else ""
                 )
                 end_date = (
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
                     if task.successful() or task.failed()
                     else ""
                 )
