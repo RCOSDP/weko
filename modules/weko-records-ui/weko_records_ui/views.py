@@ -446,11 +446,21 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
                 return _redirect_method(has_next=True)
             abort(403)
 
+    # Cache Indexes.get_index() results by path so this loop and the
+    # "belonging communities" loop below reuse the same lookups instead of
+    # re-querying the DB for every path in record.navi (an N+1 done twice).
+    _index_by_path = {}
+
+    def _get_index_by_path(path):
+        if path not in _index_by_path:
+            _index_by_path[path] = Indexes.get_index(index_id=path)
+        return _index_by_path[path]
+
     path_name_dict = {'ja': {}, 'en': {}}
     for navi in record.navi:
         path_arr = navi.path.split('/')
         for path in path_arr:
-            index = Indexes.get_index(index_id=path)
+            index = _get_index_by_path(path)
             idx_name = index.index_name or ""
             idx_name_en = index.index_name_english
             path_name_dict['ja'][path] = idx_name.replace(
@@ -526,13 +536,32 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     else:
         record["relation"] = {}
 
-    recstr = etree.tostring(
-        getrecord(
-            identifier=record['_oai'].get('id'),
-            metadataPrefix='jpcoar',
-            verb='getrecord'
+    # Building the full JPCOAR OAI-PMH XML is expensive and is only needed for
+    # the Google Scholar / Dataset meta tags. It depends only on the record, so
+    # cache it keyed by OAI id + record revision (an edit bumps the revision and
+    # invalidates the entry immediately) with a short TTL as a backstop. Skip
+    # the cache when the cache extension is not configured (e.g. some tests).
+    from invenio_cache import current_cache
+    _oai_id = record['_oai'].get('id')
+    _xml_cache_key = None
+    recstr = None
+    if current_app.extensions.get('invenio-cache') is not None and _oai_id:
+        _xml_cache_key = 'record_jpcoar_xml_{}_{}'.format(
+            _oai_id, getattr(record, 'revision_id', ''))
+        recstr = current_cache.get(_xml_cache_key)
+    if recstr is None:
+        recstr = etree.tostring(
+            getrecord(
+                identifier=_oai_id,
+                metadataPrefix='jpcoar',
+                verb='getrecord'
+            )
         )
-    )
+        if _xml_cache_key is not None:
+            current_cache.set(
+                _xml_cache_key, recstr,
+                timeout=current_app.config.get(
+                    'WEKO_RECORDS_UI_GOOGLE_XML_CACHE_TTL', 300))
     et=etree.fromstring(recstr)
     google_scholar_meta = get_google_scholar_meta(record,record_tree=et)
     google_dataset_meta = get_google_detaset_meta(record,record_tree=et)
@@ -704,22 +733,25 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
         list_hidden = get_ignore_item(item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
     record = hide_by_itemtype(record, list_hidden)
 
+    # Get display control settings (fetch once, reuse for all sub-settings).
+    display_control = get_search_setting().get("display_control", {})
+
     # Get Facet search setting.
-    display_facet_search = get_search_setting().get("display_control", {}).get(
+    display_facet_search = display_control.get(
         'display_facet_search', {}).get('status', False)
     ctx.update({
         "display_facet_search": display_facet_search
     })
 
     # Get index tree setting.
-    display_index_tree = get_search_setting().get("display_control", {}).get(
+    display_index_tree = display_control.get(
         'display_index_tree', {}).get('status', False)
     ctx.update({
         "display_index_tree": display_index_tree
     })
 
     # Get display_community setting.
-    display_community = get_search_setting().get("display_control", {}).get(
+    display_community = display_control.get(
         'display_community', {}).get('status', False)
     ctx.update({
         "display_community": display_community
@@ -753,7 +785,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     for navi in record.navi:
         path_arr = navi.path.split('/')
         for path in path_arr:
-            index = Indexes.get_index(index_id=path)
+            index = _get_index_by_path(path)
             from weko_workflow.api import GetCommunity
             communities = GetCommunity.get_community_by_root_node_id(index.id)
             if communities is not None:

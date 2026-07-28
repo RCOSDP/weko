@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 import pytz
-from flask import current_app, json, Flask
+from flask import current_app, g, has_app_context, json, Flask
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -1580,15 +1580,32 @@ async def sort_meta_data_by_options(
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
 
-        item_type = ItemTypes.get_by_id(item_type_id)
-        hide_list = []
-        if item_type:
-            solst, meta_options = get_options_and_order_list(
-                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
-            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        # Item-type derived data (item type, option/order lists, hide list and
+        # JPCOAR mapping) depends only on item_type_id and is read-only for the
+        # rest of this function. A search results page renders many hits that
+        # share the same item type, so memoize these per request (flask.g,
+        # cleared each request) to avoid recomputing them for every hit.
+        _it_cache = None
+        if has_app_context():
+            _it_cache = getattr(g, '_sort_meta_item_type_cache', None)
+            if _it_cache is None:
+                _it_cache = g._sort_meta_item_type_cache = {}
+        if _it_cache is not None and item_type_id in _it_cache:
+            item_type, solst, meta_options, hide_list, item_map = \
+                _it_cache[item_type_id]
         else:
-            solst, meta_options = get_options_and_order_list(item_type_id)
-        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+            item_type = ItemTypes.get_by_id(item_type_id)
+            hide_list = []
+            if item_type:
+                solst, meta_options = get_options_and_order_list(
+                    item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+                hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+            else:
+                solst, meta_options = get_options_and_order_list(item_type_id)
+            item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+            if _it_cache is not None:
+                _it_cache[item_type_id] = \
+                    (item_type, solst, meta_options, hide_list, item_map)
         title_value_key = 'title.@value'
         title_lang_key = 'title.@attributes.xml:lang'
         title_languages = []
@@ -1624,6 +1641,14 @@ async def sort_meta_data_by_options(
             return
 
         solst_dict_array = convert_data_to_dict(solst)
+        # Index solst_dict_array by key once (first occurrence wins) so the
+        # value-matching loop below can look entries up in O(1) instead of
+        # rescanning the whole list for every metadata item of every field.
+        solst_dict_by_key = {}
+        for _s in solst_dict_array:
+            _s_key = _s.get("key")
+            if _s_key is not None and _s_key not in solst_dict_by_key:
+                solst_dict_by_key[_s_key] = _s
         files_info = []
         creator_info = None
         thumbnail = None
@@ -1705,29 +1730,33 @@ async def sort_meta_data_by_options(
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
-                    for s in solst_dict_array:
-                        s_key = s.get("key")
-
-                        tmp = m.get(s_key)
-                        if tmp:
-                            s["value"] = (
-                                tmp
-                                if not s["value"]
-                                else "{}{} {}".format(
-                                    s["value"],
-                                    current_app.config.get(
-                                        "WEKO_RECORDS_SYSTEM_COMMA", ""
-                                    ),
-                                    tmp,
-                                )
+                    # Each meta_data entry is a single-key {key: value} dict;
+                    # look the matching solst entry up directly instead of
+                    # scanning the whole solst_dict_array.
+                    for s_key, tmp in m.items():
+                        if not tmp:
+                            continue
+                        s = solst_dict_by_key.get(s_key)
+                        if s is None:
+                            continue
+                        s["value"] = (
+                            tmp
+                            if not s["value"]
+                            else "{}{} {}".format(
+                                s["value"],
+                                current_app.config.get(
+                                    "WEKO_RECORDS_SYSTEM_COMMA", ""
+                                ),
+                                tmp,
                             )
-                            s["parent_option"] = {
-                                "required": option.get("required"),
-                                "show_list": option.get("showlist"),
-                                "specify_newline": option.get("crtf"),
-                                "hide": option.get("hidden"),
-                            }
-                            break
+                        )
+                        s["parent_option"] = {
+                            "required": option.get("required"),
+                            "show_list": option.get("showlist"),
+                            "specify_newline": option.get("crtf"),
+                            "hide": option.get("hidden"),
+                        }
+                        break
 
         # Format data to display on item list
         items = get_comment(

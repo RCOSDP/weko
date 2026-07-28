@@ -71,6 +71,7 @@ from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_records import InvenioRecords
 from weko_redis.redis import RedisConnection
 from invenio_search import InvenioSearch
+from invenio_cache import InvenioCache
 from invenio_stats import InvenioStats
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
@@ -279,6 +280,7 @@ def base_app(instance_path):
     InvenioOAuth2Server(app_)
     InvenioSearch(app_)
     InvenioStats(app_)
+    InvenioCache(app_)
     Menu(app_)
     WekoAccounts(app_)
     WekoRecords(app_)
@@ -336,6 +338,20 @@ def db(app):
     else:
         db_.drop_all()
     db_.create_all()
+    # create_all() only creates the parent "user_activity_logs" table
+    # (declared as a range-partitioned table), not its child partitions.
+    # Without a partition covering the current date, any activity logging
+    # during a test fails with "no partition of relation ... found". Create
+    # the current-month partition so tests that trigger logging can run.
+    _now = datetime.now()
+    _p_start = _now.date().replace(day=1)
+    _p_end = (_p_start + timedelta(days=31)).replace(day=1)
+    _p_name = "user_activity_logs_{}_{:02d}".format(_now.year, _now.month)
+    db_.session.execute(
+        "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
+        "FOR VALUES FROM ('{start}') TO ('{end}');".format(
+            name=_p_name, start=_p_start, end=_p_end))
+    db_.session.commit()
     yield db_
     db_.session.remove()
     db_.drop_all()

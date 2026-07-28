@@ -793,3 +793,14 @@ WEKO_ACCESS_RIGHTS_CHOICES = [ "embargoed access", "metadata only access", "open
 
 WEKO_SEARCH_FIX_ACCESSRIGHTS = False
 """ If true, the value of accessrights will be modified. """
+
+WEKO_SEARCH_DETAIL_KEYWORD_CACHE_TTL = 300
+"""Cache lifetime (seconds) for get_search_detail_keyword() results.
+
+The detail-search conditions depend on the current language, the user's index
+visibility (admin flag + role ids + group ids, since the index checkboxes are
+pruned per user) and the search-condition settings; all of these are part of
+the cache key, so users never share another user's index visibility and a
+settings change is reflected immediately. Item types / indexes change
+infrequently and are bounded by the TTL. Set to 0 to disable expiration or a
+small value to reduce staleness."""

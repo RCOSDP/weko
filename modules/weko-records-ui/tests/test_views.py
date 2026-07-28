@@ -724,6 +724,51 @@ def test_default_view_method(app, records, itemtypes, indexstyle, users, db):
                                         assert kwargs['index_link_list']
 
 
+def test_default_view_method_caches_oai_xml_and_index(
+        app, records, itemtypes, indexstyle, users, db):
+    """3-1: the JPCOAR OAI XML is cached (getrecord not re-run on the 2nd render,
+    and a revision bump changes the key). 3-2: Indexes.get_index is memoized so
+    it runs at most once per distinct navi path per request."""
+    from invenio_cache import current_cache
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
+    with app.test_request_context():
+        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True), \
+             patch("weko_records_ui.views.get_search_detail_keyword", return_value={}), \
+             patch("weko_records_ui.views.get_index_link_list", return_value=[]), \
+             patch("weko_records_ui.views.render_template", return_value=make_response()):
+            current_cache.clear()
+
+            # 3-1: getrecord is invoked only on the first (cache-miss) render.
+            with patch('weko_records_ui.views.getrecord') as m_getrec:
+                m_getrec.return_value = etree.Element('record')
+                default_view_method(recid, record, 'helloworld.pdf')
+                first = m_getrec.call_count
+                assert first >= 1
+                default_view_method(recid, record, 'helloworld.pdf')
+                assert m_getrec.call_count == first  # served from cache
+
+            # 3-2: within one render, Indexes.get_index runs at most once per
+            # distinct path (both navi loops reuse the memo).
+            index = MagicMock()
+            index.index_name = ""
+            index.index_name_english = "index"
+            index.id = 1
+            with patch('weko_records_ui.views.getrecord') as m_getrec2, \
+                 patch('weko_records_ui.views.Indexes.get_index', return_value=index) as m_idx, \
+                 patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id', return_value=None):
+                m_getrec2.return_value = etree.Element('record')
+                default_view_method(recid, record, 'helloworld.pdf')
+                paths = set()
+                for navi in record.navi:
+                    paths.update(navi.path.split('/'))
+                # <= distinct path count (would be ~2x that without the memo)
+                assert m_idx.call_count <= len(paths), \
+                    (m_idx.call_count, len(paths))
+
+
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.

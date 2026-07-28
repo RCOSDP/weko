@@ -4,6 +4,8 @@ from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
 
+from invenio_cache import current_cache
+
 from weko_admin.models import SearchManagement
 from weko_index_tree.models import Index
 from weko_search_ui.api import (
@@ -138,6 +140,7 @@ def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
     
     # not exist search_management
     with patch("weko_search_ui.api.Indexes.get_browsing_tree",return_value=index_tree):
+        current_cache.clear()
         res = get_search_detail_keyword("")
     assert type(res) == str
     res = json.loads(res)
@@ -159,6 +162,7 @@ def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
     db.session.add(search_management)
     db.session.commit()
     with patch("weko_search_ui.api.Indexes.get_browsing_tree",return_value=index_tree):
+        current_cache.clear()
         res = get_search_detail_keyword("")
     assert type(res) == str
     test = {"condition_setting":[
@@ -167,6 +171,92 @@ def test_get_search_detail_keyword(i18n_app, users, db,redis_connect):
         {"check_val":[{"checkStus":False,"contents":"test_itemtype01","id":"test_itemtype01"},{"checkStus":False,"contents":"test&#39;s itemtype02","id":"test&#39;s itemtype02"},{"checkStus":False,"contents":"","id":""}],"contents":"アイテムタイプ","contents_value":{"en":"Item Type","ja":"アイテムタイプ"},"id":"itemtype","inputType":"checkbox_list","inputVal":"","mapping":["itemtype"]}
     ]}
     assert json.loads(res) == test
+
+
+def test_get_search_detail_keyword_cache(i18n_app, users, db, redis_connect):
+    """Cache behaviour of get_search_detail_keyword (common-B).
+
+    Verifies: (1) a second call is served from cache without rebuilding,
+    (2) a SearchManagement change invalidates the cache without clear(), and
+    (3) different authenticated users do NOT share a cache entry (no index
+    visibility leak).
+    """
+    from mock import patch as _patch
+    index_tree = [
+        {"pid": 0, "cid": 1, "id": "1", "name": "idx1", "children": []},
+    ]
+    current_cache.clear()
+
+    # get_keywords_data_load is called on every (re)build regardless of auth, so
+    # use it as a "was it rebuilt?" sentinel. Patch both tree builders so the
+    # guest/auth paths don't touch ES/redis.
+    def _build_ctx():
+        return [
+            _patch("weko_search_ui.api.get_keywords_data_load", return_value=[]),
+            _patch("weko_search_ui.api.Indexes.get_browsing_tree", return_value=index_tree),
+            _patch("weko_search_ui.api.Indexes.get_browsing_reset_tree", return_value=index_tree),
+        ]
+
+    # (1) cache HIT: build once; the second call must not rebuild.
+    ctx = _build_ctx()
+    for c in ctx:
+        c.start()
+    from weko_search_ui import api as _api
+    r1 = get_search_detail_keyword("")
+    assert _api.get_keywords_data_load.call_count == 1
+    r2 = get_search_detail_keyword("")
+    assert _api.get_keywords_data_load.call_count == 1  # served from cache
+    for c in ctx:
+        c.stop()
+    assert r1 == r2
+
+    # (2) settings change invalidates without an explicit clear(): the key
+    # includes a signature of SearchManagement.search_conditions.
+    sm_row = SearchManagement(
+        search_conditions=[
+            {"id": "title", "mapping": ["title"], "contents": "",
+             "inputVal": "", "inputType": "text",
+             "contents_value": {"en": "Title", "ja": "タイトル"}},
+        ]
+    )
+    db.session.add(sm_row)
+    db.session.commit()
+    ctx2 = _build_ctx()
+    for c in ctx2:
+        c.start()
+    r3 = get_search_detail_keyword("")
+    # rebuilt (new key) because search_conditions changed
+    assert _api.get_keywords_data_load.call_count == 1
+    for c in ctx2:
+        c.stop()
+    assert any(c.get("id") == "title"
+               for c in json.loads(r3).get("condition_setting", []))
+
+    # (3) per-user isolation: two authenticated users with different roles/groups
+    # must use different cache keys (no cross-user index-visibility leak).
+    current_cache.clear()
+    keys_seen = []
+    real_get = current_cache.get
+
+    def _spy_get(key, *a, **k):
+        keys_seen.append(key)
+        return real_get(key, *a, **k)
+
+    with _patch("weko_search_ui.api.get_keywords_data_load", return_value=[]), \
+         _patch("weko_search_ui.api.Indexes.get_browsing_tree", return_value=index_tree), \
+         _patch("weko_search_ui.api.Indexes.get_browsing_reset_tree", return_value=index_tree), \
+         _patch("weko_search_ui.api.current_user") as m_user, \
+         _patch.object(current_cache, "get", side_effect=_spy_get):
+        m_user.is_authenticated = True
+        with _patch("weko_index_tree.utils.get_user_roles", return_value=(False, [1])), \
+             _patch("weko_index_tree.utils.get_user_groups", return_value=[10]):
+            get_search_detail_keyword("")
+        with _patch("weko_index_tree.utils.get_user_roles", return_value=(False, [2])), \
+             _patch("weko_index_tree.utils.get_user_groups", return_value=[20]):
+            get_search_detail_keyword("")
+    # the two users produced two distinct cache keys
+    assert len(set(keys_seen)) == 2, keys_seen
+
 
 # def get_search_detail_keyword(str):
 def test_get_search_detail_keyword_fix52136(i18n_app, users, db, redis_connect):

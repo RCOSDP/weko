@@ -106,28 +106,58 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in config.LOGO_ALLOWED_EXTENSIONS
 
 
+_SEARCH_SETTING_CACHE_KEY = 'weko_admin_search_setting'
+
+
+def _get_search_setting_cache():
+    """Return the shared cache if the cache extension is configured, else None."""
+    try:
+        if current_app.extensions.get('invenio-cache') is None:
+            return None
+        from invenio_cache import current_cache
+        return current_cache
+    except Exception:
+        return None
+
+
+def delete_search_setting_cache():
+    """Invalidate the cached get_search_setting() value (call on settings update)."""
+    cache = _get_search_setting_cache()
+    if cache is not None:
+        cache.delete(_SEARCH_SETTING_CACHE_KEY)
+
+
 def get_search_setting():
     """Get search setting from DB.
 
+    The search setting changes only when an admin saves it, so the computed
+    value is cached for a short TTL to avoid the SearchManagement DB lookup on
+    every page render. A copy is stored/returned so callers cannot corrupt the
+    shared cache; delete_search_setting_cache() invalidates it on update.
+
     :return: Setting data by Json
     """
+    cache = _get_search_setting_cache()
+    if cache is not None:
+        cached = cache.get(_SEARCH_SETTING_CACHE_KEY)
+        if cached is not None:
+            return copy.deepcopy(cached)
+
     res = SearchManagement.get()
 
     if res:
         db_obj = res.search_setting_all
         if not db_obj.get('init_disp_setting') and res.init_disp_setting:
             db_obj['init_disp_setting'] = res.init_disp_setting
-        # current_app.logger.debug(db_str)
-        # if 'False' in db_str:
-        #     db_str.replace('False','false')
-        # if 'True' in db_str:
-        #     db_str.replace('True', 'true')
-        # db_str = json.dumps(db_str)
-        # db_obj= json.loads(db_str)
-
-        return db_obj
+        result = db_obj
     else:
-        return config.WEKO_ADMIN_MANAGEMENT_OPTIONS
+        result = config.WEKO_ADMIN_MANAGEMENT_OPTIONS
+
+    if cache is not None:
+        cache.set(_SEARCH_SETTING_CACHE_KEY, copy.deepcopy(result),
+                  timeout=current_app.config.get(
+                      'WEKO_ADMIN_SETTINGS_CACHE_TTL', 300))
+    return result
 
 
 def get_admin_lang_setting():

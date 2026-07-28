@@ -1407,3 +1407,9 @@ WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True
 
 WEKO_ADMIN_CRIS_LINKAGE_SETTINGS_TEMPLATE = 'weko_admin/admin/cris_linkage_setting.html'
 """CRIS Linkage Settings template."""
+
+WEKO_ADMIN_SETTINGS_CACHE_TTL = 300
+"""Cache lifetime (seconds) for infrequently-changing admin settings
+(get_search_setting() and AdminSettings.get()). These are global (not
+per-user) and are invalidated on update, so a short TTL just bounds staleness
+for changes made outside this process. Set to 0 to disable expiration."""

@@ -24,15 +24,28 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities, re
         index_style = MagicMock()
         index_style.index_link_enabled = False
         with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
-            result = get_weko_contents('comm1')
+            result = get_weko_contents({'c': 'comm1'})
             assert result
             assert not result['index_link_list']
 
             index_style.index_link_enabled = True
             with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
-                result = get_weko_contents('comm1')
+                result = get_weko_contents({'c': 'comm1'})
                 assert result
                 assert result['index_link_list']
+
+
+def test_get_weko_contents_fetches_search_setting_once(
+        i18n_app, users, client_request_args, communities, redis_connect, db):
+    """common-A: get_weko_contents reads the search setting once per call
+    (display_control fetched once and reused for the 3 sub-settings)."""
+    import weko_theme.utils as theme_utils
+    real = theme_utils.get_search_setting()
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        with patch("weko_theme.utils.get_search_setting",
+                   return_value=real) as m_ss:
+            get_weko_contents({'c': 'comm1'})
+    assert m_ss.call_count == 1
 
 
 # def get_community_id(getargs):

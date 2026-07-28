@@ -1,0 +1,9 @@
+{
+  "name": "weko-perf-browser",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "dependencies": {
+    "playwright": "^1.61.1"
+  }
+}
