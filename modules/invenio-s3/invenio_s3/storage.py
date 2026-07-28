@@ -56,10 +56,10 @@ class S3FSFileStorage(PyFSFileStorage):
                 self.block_size = location.s3_default_block_size
         super(S3FSFileStorage, self).__init__(fileurl, size, modified, clean_dir, location)
 
-    def _get_fs(self, *args, **kwargs):
+    def _get_fs(self, mode='rb', *args, **kwargs):
         """Get PyFilesystem instance and S3 real path."""
         if self.location is None or self.location.type == None:
-            return super(S3FSFileStorage, self)._get_fs(*args, **kwargs)
+            return super(S3FSFileStorage, self)._get_fs(mode=mode, *args, **kwargs)
 
         url = self.fileurl
         if self.location.type == current_app.config.get('S3_LOCATION_TYPE_S3_VIRTUAL_HOST_VALUE'):
@@ -73,7 +73,7 @@ class S3FSFileStorage(PyFSFileStorage):
                 sub_parts = parts[2].split('.')
                 url = 's3://' + sub_parts[0] + '/' + '/'.join(parts[3:])
 
-        info = current_app.extensions['invenio-s3'].init_s3fs_info(location=self.location)
+        info = current_app.extensions['invenio-s3'].init_s3fs_info(location=self.location, mode=mode)
         fs = s3fs.S3FileSystem(default_block_size=self.block_size, **info)
 
         return (fs, url)
@@ -81,7 +81,7 @@ class S3FSFileStorage(PyFSFileStorage):
     @set_blocksize
     def initialize(self, size=0):
         """Initialize file on storage and truncate to given size."""
-        fs, path = self._get_fs()
+        fs, path = self._get_fs(mode='wb')
 
         self.remove(fs, path)
         fp = fs.open(path, mode='wb')
@@ -116,7 +116,7 @@ class S3FSFileStorage(PyFSFileStorage):
 
     def delete(self):
         """Delete a file."""
-        fs, path = self._get_fs()
+        fs, path = self._get_fs(mode='wb')
         self.remove(fs, path)
         return True
 
@@ -215,7 +215,7 @@ class S3FSFileStorage(PyFSFileStorage):
             )
 
         try:
-            fs, path = self._get_fs()
+            fs, path = self._get_fs(mode='rb')
             s3_url_builder = partial(
                 fs.url, path, expires=current_app.config['S3_URL_EXPIRATION']
             )
@@ -245,7 +245,7 @@ class S3FSFileStorage(PyFSFileStorage):
         """
         if self.location:
             if self.location.type != None:
-                fs, path = self._get_fs()
+                fs, path = self._get_fs(mode='wb')
                 fs.copy(src.fileurl, path)
             else:
             # local repository

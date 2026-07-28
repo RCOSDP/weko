@@ -6,12 +6,16 @@ function getElementByXpath(path) {
   return document.evaluate(path, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
 }
 
-window.onload = function(){
+function checkLocationType() {
   var typeSpan = getElementByXpath("//label[@for='type']/..//span[@class='select2-selection__rendered']")
   var accessKeyField = getElementByXpath("//label[@for='access_key']/..")
   var accessKeyInput = getElementByXpath("//label[@for='access_key']/..//input")
   var secretKeyField = getElementByXpath("//label[@for='secret_key']/..")
   var secretKeyInput = getElementByXpath("//label[@for='secret_key']/..//input")
+  var readonlyAccessKeyField = getElementByXpath("//label[@for='readonly_access_key']/..")
+  var readonlyAccessKeyInput = getElementByXpath("//label[@for='readonly_access_key']/..//input")
+  var readonlySecretKeyField = getElementByXpath("//label[@for='readonly_secret_key']/..")
+  var readonlySecretKeyInput = getElementByXpath("//label[@for='readonly_secret_key']/..//input")
   var s3EndpointUrlField = getElementByXpath("//label[@for='s3_endpoint_url']/..")
   var s3EndpointUrlInput = getElementByXpath("//label[@for='s3_endpoint_url']/..//input")
   var s3SendFileDirectlyField = getElementByXpath("//label[@for='s3_send_file_directly']/..")
@@ -26,77 +30,105 @@ window.onload = function(){
   var s3SignatureVersionInput = getElementByXpath("//label[@for='s3_signature_version']/..//input")
   var s3UrlExpiration = getElementByXpath("//label[@for='s3_url_expiration']/..")
   var s3UrlExpirationInput = getElementByXpath("//label[@for='s3_url_expiration']/..//input")
-
-  function checkLocationType() {
-    const labels = document.querySelectorAll('label');
-    let content = '';
-    content = s3MaximumNumberOfParts.textContent;
-    labels.forEach(label => {
-                const forId = label.getAttribute('for');
-                if (forId === "s3_maximum_number_of_parts") {
-                  content = label.textContent;
-                  if (content.length > 8) {
-                    content = content.slice(0, 8) + '\n' + content.slice(8);
-                    label.textContent = content;
-                  }
+  const labels = document.querySelectorAll('label');
+  let content = '';
+  content = s3MaximumNumberOfParts.textContent;
+  labels.forEach(label => {
+              const forId = label.getAttribute('for');
+              if (forId === "s3_maximum_number_of_parts") {
+                content = label.textContent;
+                if (content.length > 8) {
+                  content = content.slice(0, 8) + '\n' + content.slice(8);
+                  label.textContent = content;
                 }
-            });
-    if (typeSpan.getAttribute('title') == 'S3 Path') {
-      accessKeyField.style.display = ''
-      accessKeyInput.required = true
-      secretKeyField.style.display = ''
-      secretKeyInput.required = true
-      s3EndpointUrlField.style.display = ''
-      s3SendFileDirectlyField.style.display = ''
-      if (s3DefaultBlockSizeInput.value === ''){
-        s3DefaultBlockSizeInput.value = 5242880
-      }
-      if (s3MaximumNumberOfPartsInput.value === ''){
-        s3MaximumNumberOfPartsInput.value = 10000
-      }
-      if (s3UrlExpirationInput.value === ''){
-        s3UrlExpirationInput.value = 60
-      }
-      s3RegionNameInput.required = true
-    } else if (typeSpan.getAttribute('title') == 'S3 Virtural Host') {
-      accessKeyField.style.display = ''
-      accessKeyInput.required = true
-      secretKeyField.style.display = ''
-      secretKeyInput.required = true
-      s3EndpointUrlField.style.display = 'none'
-      s3SendFileDirectlyField.style.display = ''
-      if (s3DefaultBlockSizeInput.value === ''){
-        s3DefaultBlockSizeInput.value = 5242880
-      }
-      if (s3MaximumNumberOfPartsInput.value === ''){
-        s3MaximumNumberOfPartsInput.value = 10000
-      }
-      if (s3UrlExpirationInput.value === ''){
-        s3UrlExpirationInput.value = 60
-      }
-      s3RegionNameInput.required = true
-    } else {
-      accessKeyField.style.display = 'none'
-      secretKeyField.style.display = 'none'
-      s3EndpointUrlField.style.display = 'none'
-      s3SendFileDirectlyField.style.display = 'none'
-      s3DefaultBlockSize.style.display = 'none'
-      s3MaximumNumberOfParts.style.display = 'none'
-      s3RegionName.style.display = 'none'
-      s3SignatureVersion.style.display = 'none'
-      s3UrlExpiration.style.display = 'none'
-      accessKeyInput.value = null
-      accessKeyInput.required = false
-      secretKeyInput.value = null
-      secretKeyInput.required = false
-      s3EndpointUrlInput.value = null
-      s3DefaultBlockSizeInput.value = null
-      s3MaximumNumberOfPartsInput.value = null
-      s3RegionNameInput.value = null
-      s3RegionNameInput.required = false
-      s3UrlExpirationInput.value = null
+              }
+          });
+  if (typeSpan.getAttribute('title') == 'S3 Path') {
+    accessKeyField.style.display = ''
+    accessKeyInput.required = true
+    secretKeyField.style.display = ''
+    secretKeyInput.required = true
+    readonlyAccessKeyField.style.display = ''
+    readonlyAccessKeyInput.required = true
+    readonlySecretKeyField.style.display = ''
+    readonlySecretKeyInput.required = true
+    s3EndpointUrlField.style.display = ''
+    s3SendFileDirectlyField.style.display = ''
+    s3DefaultBlockSize.style.display = ''
+    if (s3DefaultBlockSizeInput.value === ''){
+      s3DefaultBlockSizeInput.value = 5242880
     }
+    s3MaximumNumberOfParts.style.display = ''
+    if (s3MaximumNumberOfPartsInput.value === ''){
+      s3MaximumNumberOfPartsInput.value = 10000
+    }
+    s3UrlExpiration.style.display = ''
+    if (s3UrlExpirationInput.value === ''){
+      s3UrlExpirationInput.value = 60
+    }
+    s3RegionName.style.display = ''
+    s3RegionNameInput.required = true
+    s3SignatureVersion.style.display = ''
+  } else if (typeSpan.getAttribute('title') == 'S3 Virtural Host') {
+    accessKeyField.style.display = ''
+    accessKeyInput.required = true
+    secretKeyField.style.display = ''
+    secretKeyInput.required = true
+    readonlyAccessKeyField.style.display = ''
+    readonlyAccessKeyInput.required = true
+    readonlySecretKeyField.style.display = ''
+    readonlySecretKeyInput.required = true
+    s3EndpointUrlField.style.display = 'none'
+    s3SendFileDirectlyField.style.display = ''
+    s3DefaultBlockSize.style.display = ''
+    if (s3DefaultBlockSizeInput.value === ''){
+      s3DefaultBlockSizeInput.value = 5242880
+    }
+    s3MaximumNumberOfParts.style.display = ''
+    if (s3MaximumNumberOfPartsInput.value === ''){
+      s3MaximumNumberOfPartsInput.value = 10000
+    }
+    s3UrlExpiration.style.display = ''
+    if (s3UrlExpirationInput.value === ''){
+      s3UrlExpirationInput.value = 60
+    }
+    s3RegionName.style.display = ''
+    s3RegionNameInput.required = true
+    s3SignatureVersion.style.display = ''
+  } else {
+    accessKeyField.style.display = 'none'
+    secretKeyField.style.display = 'none'
+    readonlyAccessKeyField.style.display = 'none'
+    readonlySecretKeyField.style.display = 'none'
+    s3EndpointUrlField.style.display = 'none'
+    s3SendFileDirectlyField.style.display = 'none'
+    s3DefaultBlockSize.style.display = 'none'
+    s3MaximumNumberOfParts.style.display = 'none'
+    s3RegionName.style.display = 'none'
+    s3SignatureVersion.style.display = 'none'
+    s3UrlExpiration.style.display = 'none'
+    accessKeyInput.value = null
+    accessKeyInput.required = false
+    secretKeyInput.value = null
+    secretKeyInput.required = false
+    readonlyAccessKeyInput.value = null
+    readonlyAccessKeyInput.required = false
+    readonlySecretKeyInput.value = null
+    readonlySecretKeyInput.required = false
+    s3EndpointUrlInput.value = null
+    s3DefaultBlockSizeInput.value = null
+    s3MaximumNumberOfPartsInput.value = null
+    s3RegionNameInput.value = null
+    s3RegionNameInput.required = false
+    s3UrlExpirationInput.value = null
   }
+}
+window.onload = function(){
+  document.querySelector("label[for='access_key']").innerHTML += '<strong style="color: red;">*</strong>';
+  document.querySelector("label[for='secret_key']").innerHTML += '<strong style="color: red;">*</strong>';
+  document.querySelector("label[for='readonly_access_key']").innerHTML += '<strong style="color: red;">*</strong>';
+  document.querySelector("label[for='readonly_secret_key']").innerHTML += '<strong style="color: red;">*</strong>';
+  document.querySelector("label[for='s3_region_name']").innerHTML += '<strong style="color: red;">*</strong>';
   checkLocationType()
 }
 </script>
