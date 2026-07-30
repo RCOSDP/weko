@@ -359,8 +359,7 @@ def get_user_roles_and_groups(roles):
         role-group IDs, respectively. Guest and authenticated
         user role IDs are treated as regular roles.
     """
-    role_without_map_role = Role.query.filter(
-        not_(map_role_condition())).all()
+    role_without_map_role = Role.query.filter(not_(map_role_condition())).all()
     role_groups = Role.query.filter(map_group_condition()).all()
 
     role_without_map_role = [str(role.id) for role in role_without_map_role]

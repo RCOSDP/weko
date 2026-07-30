@@ -597,12 +597,16 @@ class Community(db.Model, Timestamp):
             str: Display name of the community owner.
         """
         if self.owner and hasattr(self.owner, 'name'):
-            pattern = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]
-            prefix = pattern["prefix"]
-            role_key = pattern["role_keyword"]
-            role_mapping = pattern["role_mapping"]
-            fqdn = create_fqdn_from_entity_id()
             owner_name = self.owner.name
+            pattern = current_app.config.get(
+                'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+            idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+            if not bool(pattern and idp_entity_id):
+                return owner_name
+            prefix = pattern.get("prefix")
+            role_key = pattern.get("role_keyword")
+            role_mapping = pattern.get("role_mapping")
+            fqdn = create_fqdn_from_entity_id()
             if is_map_sysadm_role(owner_name):
                 return current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
             for suffix, display_name in role_mapping.items():
