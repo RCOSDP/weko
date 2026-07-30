@@ -43,6 +43,7 @@ from invenio_oauth2server.models import Client, Token
 from invenio_oauth2server.views import settings_blueprint as oauth2server_settings_blueprint
 from invenio_records_ui import InvenioRecordsUI
 from invenio_rest import InvenioREST
+from weko_accounts.config import WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
 from weko_deposit.api import WekoIndexer, WekoRecord
 from weko_deposit.api import WekoDeposit as WekoDepositAPI
 from weko_search_ui.config import WEKO_SYS_USER
@@ -235,10 +236,7 @@ def base_app(instance_path, search_class, cache_config):
         CACHE_REDIS_DB='0',
         CACHE_REDIS_HOST="redis",
         REDIS_PORT='6379',
-        WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT={
-            'role_keyword': 'roles',
-            'prefix': 'jc'
-        },
+        WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT,
         ACCOUNTS_SESSION_REDIS_DB_NO = 1,
         WEKO_RECORDS_UI_LICENSE_DICT=[
             {
@@ -1129,6 +1127,7 @@ def item_type_usage_report(db):
 
         db.session.add(item_type)
 
+    with db.session.begin_nested():
         item_type_mapping = ItemTypeMapping(
             id=31003,
             item_type_id=31003,
@@ -1349,6 +1348,8 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type_name_31001)
         db.session.add(item_type_31001)
+
+    with db.session.begin_nested():
         db.session.add(item_type_mapping_31001)
 
     item_types.append({"id": 31001, "obj": item_type_31001})

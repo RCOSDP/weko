@@ -18,7 +18,14 @@ from weko_accounts.api import (
     update_contribute_role,
     remove_contribute_role,
     bind_roles_to_indices,
-    create_fqdn_from_entity_id
+    create_fqdn_from_entity_id,
+    map_role_condition,
+    map_group_condition,
+    is_map_managed_name,
+    is_map_role,
+    is_map_group,
+    is_map_sysadm_role,
+    _is_gakunin_map_configured,
 )
 from invenio_db import db as db_
 from invenio_db import InvenioDB
@@ -1041,10 +1048,14 @@ def test_sync_shib_gakunin_map_groups_unexpected_error(app, client):
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_update_roles -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_update_roles(app, db, mocker):
     with app.app_context():
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
         mock_bind = mocker.patch('weko_accounts.api.bind_roles_to_indices')
         # テストデータの準備
+        map_group_name = 'jc_test_example_com_gr_4'
         map_group_list = ['group1', 'group2', 'group3','']
-        existing_role_names = {'group1', 'jc_group4'}
+        existing_role_names = {'group1', map_group_name}
 
         # 既存のロールを追加
         existing_roles = []
@@ -1063,11 +1074,11 @@ def test_update_roles(app, db, mocker):
         assert 'group1' in role_names
         assert 'group2' in role_names  # 新しいロールが追加されていることを確認
         assert 'group3' in role_names  # 新しいロールが追加されていることを確認
-        assert 'jc_group4' not in role_names  # 既存のロールが削除されていることを確認
+        assert map_group_name not in role_names  # 既存のロールが削除されていることを確認
         assert '' not in role_names  # 空のロールが追加されていないことを確認
 
         new_roles = [r for r in roles if r.name in ['group2', 'group3']]
-        remove_role_ids = [r.id for r in existing_roles if r.name == 'jc_group4']
+        remove_role_ids = [r.id for r in existing_roles if r.name == map_group_name]
         mock_bind.assert_called_once_with([], new_roles, remove_role_ids)
 
         existing_roles = Role.query.all()
@@ -1319,3 +1330,222 @@ def test_create_fqdn_from_entity_id(app):
         app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = None
         with pytest.raises(KeyError, match='WEKO_ACCOUNTS_IDP_ENTITY_ID is missing in config'):
             create_fqdn_from_entity_id()
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_map_role_condition -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_map_role_condition(app, db, map_role_names):
+    config = {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }
+
+    role_names = list(map_role_names.values())
+    expected_names = {
+        map_role_names["managed_role"],
+        map_role_names["sysadm_role"],
+        map_role_names["unknown_role_suffix"],
+    }
+
+    with app.app_context(), patch.dict(app.config, config):
+        db.session.add_all([Role(name=name) for name in role_names])
+        db.session.commit()
+        matched_names = {
+            role.name for role in Role.query.filter(
+                Role.name.in_(role_names), map_role_condition()).all()
+        }
+        assert matched_names == expected_names
+
+        non_map_role_names = {
+            role.name for role in Role.query.filter(
+                Role.name.in_(role_names), ~map_role_condition()).all()
+        }
+        assert non_map_role_names == set(role_names) - expected_names
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_map_role_condition_without_gakunin_map_config -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_map_role_condition_without_gakunin_map_config(
+        app, db, map_role_names):
+    config = {'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''}
+
+    role_names = list(map_role_names.values())
+
+    with app.app_context(), patch.dict(app.config, config):
+        db.session.add_all([Role(name=name) for name in role_names])
+        db.session.commit()
+        matched_roles = Role.query.filter(map_role_condition()).all()
+        assert matched_roles == []
+
+        non_map_role_names = {
+            role.name for role in Role.query.filter(
+                Role.name.in_(role_names), ~map_role_condition()).all()
+        }
+        assert non_map_role_names == set(role_names)
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_map_group_condition -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_map_group_condition(app, db, map_group_names):
+    config = {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }
+
+    role_names = list(map_group_names.values())
+    expected_names = {map_group_names["managed_group"]}
+
+    with app.app_context(), patch.dict(app.config, config):
+        db.session.add_all([Role(name=name) for name in role_names])
+        db.session.commit()
+        matched_names = {
+            role.name for role in Role.query.filter(
+                Role.name.in_(role_names), map_group_condition()).all()
+        }
+        assert matched_names == expected_names
+
+        non_map_group_names = {
+            role.name for role in Role.query.filter(
+                Role.name.in_(role_names), ~map_group_condition()).all()
+        }
+        assert non_map_group_names == set(role_names) - expected_names
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_map_group_condition_without_gakunin_map_config -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_map_group_condition_without_gakunin_map_config(
+        app, db, map_group_names):
+    config = {'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''}
+
+    role_names = list(map_group_names.values())
+
+    with app.app_context(), patch.dict(app.config, config):
+        db.session.add_all([Role(name=name) for name in role_names])
+        db.session.commit()
+        matched_roles = Role.query.filter(map_group_condition()).all()
+        assert matched_roles == []
+
+        non_map_group_names = {
+            role.name for role in Role.query.filter(
+                Role.name.in_(role_names), ~map_group_condition()).all()
+        }
+        assert non_map_group_names == set(role_names)
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_managed_name -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_managed_name(app, map_role_names, map_group_names):
+    config = {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }
+
+    with app.app_context(), patch.dict(app.config, config):
+        assert is_map_managed_name(map_role_names["managed_role"]) is True
+        assert is_map_managed_name(map_role_names["sysadm_role"]) is True
+        assert is_map_managed_name(
+            map_role_names["unknown_role_suffix"]) is True
+        assert is_map_managed_name(
+            map_role_names["group_format_with_role_suffix"]) is True
+        assert is_map_managed_name(
+            map_role_names["invalid_repository_id_role"]) is False
+        assert is_map_managed_name(
+            map_role_names["invalid_prefix_role"]) is False
+        assert is_map_managed_name(map_group_names["managed_group"]) is True
+        assert is_map_managed_name(
+            map_group_names["invalid_repository_id_group"]) is False
+        assert is_map_managed_name(
+            map_group_names["invalid_prefix_group"]) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_managed_name_no_repoid -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_managed_name_no_repoid(
+        app, map_role_names, map_group_names):
+    config = {'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''}
+    with app.app_context(), patch.dict(app.config, config):
+        roles = (list(map_role_names.values()) +
+                 list(map_group_names.values()))
+        map_roles = [role for role in roles if is_map_managed_name(role)]
+        assert map_roles == []
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_role -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_role(app, map_role_names):
+    config = {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }
+    with app.app_context(), patch.dict(app.config, config):
+        assert is_map_role(map_role_names["managed_role"]) is True
+        assert is_map_role(map_role_names["sysadm_role"]) is True
+        assert is_map_role(map_role_names["unknown_role_suffix"]) is True
+        assert is_map_role(
+            map_role_names["group_format_with_role_suffix"]) is False
+        assert is_map_role(
+            map_role_names["invalid_repository_id_role"]) is False
+        assert is_map_role(map_role_names["invalid_prefix_role"]) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_role_no_repoid -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_role_no_repoid(app, map_role_names):
+    config = {'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''}
+    with app.app_context(), patch.dict(app.config, config):
+        roles = list(map_role_names.values())
+        map_roles = [role for role in roles if is_map_role(role)]
+        assert map_roles == []
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_group -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_group(app, map_group_names):
+    config = {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }
+    with app.app_context(), patch.dict(app.config, config):
+        assert is_map_group(map_group_names["managed_group"]) is True
+        assert is_map_group(
+            map_group_names["invalid_repository_id_group"]) is False
+        assert is_map_group(map_group_names["invalid_prefix_group"]) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_group_no_repoid -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_group_no_repoid(app, map_group_names):
+    config = {'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''}
+    with app.app_context(), patch.dict(app.config, config):
+        roles = list(map_group_names.values())
+        map_groups = [role for role in roles if is_map_group(role)]
+        assert map_groups == []
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_sysadm_role -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_sysadm_role(app, map_role_names):
+    config = {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }
+    with app.app_context(), patch.dict(app.config, config):
+        assert is_map_sysadm_role(map_role_names["managed_role"]) is False
+        assert is_map_sysadm_role(map_role_names["sysadm_role"]) is True
+        assert is_map_sysadm_role(map_role_names["unknown_role_suffix"]) is False
+        assert is_map_sysadm_role(
+            map_role_names["group_format_with_role_suffix"]) is False
+        assert is_map_sysadm_role(
+            map_role_names["invalid_repository_id_role"]) is False
+        assert is_map_sysadm_role(map_role_names["invalid_prefix_role"]) is False
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_map_sysadm_role_no_repoid -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_is_map_sysadm_role_no_repoid(
+        app, map_role_names):
+    config = {'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''}
+    with app.app_context(), patch.dict(app.config, config):
+        roles = list(map_role_names.values())
+        sysadm_roles = [role for role in roles if is_map_sysadm_role(role)]
+        assert sysadm_roles == []
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::test_is_gakunin_map_configured -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+@pytest.mark.parametrize('config, expected', [
+    ({
+        'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {'prefix': 'jc'},
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib',
+    }, True),
+    ({}, False),
+    ({'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {'prefix': 'jc'}}, False),
+    ({'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'}, False),
+    ({
+        'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {'prefix': 'jc'},
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': '',}, False),
+])
+def test_is_gakunin_map_configured(app, config, expected):
+    with app.app_context(), patch.dict(app.config, config, clear=True):
+        assert _is_gakunin_map_configured() is expected

@@ -22,6 +22,25 @@ from . import config
 from .ext import WekoLoggingBase
 
 
+class ColorFormatter(logging.Formatter):
+    COLORS = {
+        'DEBUG': '\033[36m',    # シアン
+        'INFO': '\033[34m',     # 青
+        'WARNING': '\033[33m',  # 黄
+        'ERROR': '\033[31;1m',    # 赤
+        'BLACK': '\033[30;2m',    # 黒
+    }
+    RESET = '\033[0m'
+
+    def format(self, record):
+        if record.pathname.startswith("/code/"):
+            record.pathname = record.pathname[6:]
+        levelname = record.levelname
+        color = self.COLORS.get(levelname, self.RESET)
+        record.levelname = f"{color}{levelname}{self.RESET}"
+        return super().format(record)
+
+
 class WekoLoggingFS(WekoLoggingBase):
     """WEKO-Logging extension. Filesystem handler."""
 
@@ -36,6 +55,44 @@ class WekoLoggingFS(WekoLoggingBase):
             return
         self.install_handler(app)
         app.extensions["weko-logging-fs"] = self
+
+        self.init_logger(app)
+
+    def init_logger(self, app):
+        format = '[%(asctime)s,%(msecs)03d][%(levelname)s] \033[32mweko\033[0m - '\
+                '%(message)s [file %(pathname)s:%(lineno)d in %(funcName)s]'
+        datefmt = '%Y-%m-%d %H:%M:%S'
+        formatter = ColorFormatter(fmt=format, datefmt=datefmt)
+
+        app.logger.setLevel("INFO")
+        if app.logger.handlers:
+            # if app.logger has handlers, set level and formatter
+            for h in app.logger.handlers:
+                h.setLevel("INFO")
+                h.setFormatter(formatter)
+
+        # blueメソッドを追加
+        import inspect
+        def blue(self, msg, *args, **kwargs):
+            BLUE = ColorFormatter.COLORS['DEBUG']
+            RESET = ColorFormatter.RESET
+            frame = inspect.currentframe()
+            try:
+                outer = inspect.getouterframes(frame)
+                if len(outer) > 1:
+                    caller_frame = outer[1]
+                    filename = caller_frame.filename
+                    lineno = caller_frame.lineno
+                    funcname = caller_frame.function
+                    if filename.startswith("/code/"):
+                        filename = filename[6:]
+                    msg = f"{msg} [file {filename}:{lineno} in {funcname}]\n"
+            except IndexError:
+                print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            self.info(f"{BLUE}{msg}{RESET}", *args, **kwargs)
+
+        from types import MethodType
+        app.logger.blue = MethodType(blue, app.logger)
 
     def init_config(self, app):
         """

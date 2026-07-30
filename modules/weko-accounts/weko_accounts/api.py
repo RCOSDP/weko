@@ -711,7 +711,7 @@ def map_role_condition():
     pattern = current_app.config.get('WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
     sysadm_key = pattern.get("sysadm_group")
     prefix = pattern.get("prefix")
-    role_key = pattern["role_keyword"]
+    role_key = pattern.get("role_keyword")
     repo_id = create_fqdn_from_entity_id()
     role_pattern = f"{prefix}_{repo_id}_{role_key}_"
     return or_(
