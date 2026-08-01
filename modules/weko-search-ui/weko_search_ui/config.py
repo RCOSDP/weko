@@ -476,6 +476,15 @@ WEKO_SEARCH_MAX_FEEDBACK_MAIL = 10000
 """Maximum number of feedback mail could be send."""
 
 WEKO_SEARCH_TYPE_DICT = {"FULL_TEXT": "0", "KEYWORD": "1", "INDEX": "2"}
+
+WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS = {"type"}
+"""Search conditions honoured by a ``count_only=true`` request.
+
+A count only request is not restricted by the index browsing permission, so
+every other condition is dropped on purpose. Allowing the caller to narrow the
+count down would turn it into an oracle for the metadata of items that live in
+an index the caller is not allowed to browse.
+"""
 WEKO_SYS_USER = "System Administrator"
 
 WEKO_REPO_USER = "Repository Administrator"

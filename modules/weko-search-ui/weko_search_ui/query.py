@@ -53,12 +53,18 @@ def get_item_type_aggs(search_index):
     return facets.get(search_index).get("aggs", {})
 
 
-def get_permission_filter(index_id: str = None, is_community=False):
+def get_permission_filter(index_id: str = None, is_community=False,
+                          ignore_browsing_role=False):
     """Check permission.
 
     Args:
         index_id (str, optional): Index Identifier Number. Defaults to None.
         is_community (bool): Includes child indexes under the specified index. Defaults to False.
+        ignore_browsing_role (bool): Do not restrict the result by the index
+            browsing permission (the ``path`` filter). Intended only for
+            count-only requests that never return item metadata. The publish
+            status / publish date / latest version conditions are still
+            applied. Defaults to False.
 
     Returns:
         List: Query command.
@@ -105,6 +111,9 @@ def get_permission_filter(index_id: str = None, is_community=False):
     else:
         terms = Q("terms", path=is_perm_indexes)
 
+    # Count-only requests are not restricted by the index browsing permission.
+    terms_filter = [] if ignore_browsing_role else [terms]
+
     if is_admin:
         mst.append(status)
     else:
@@ -125,24 +134,32 @@ def get_permission_filter(index_id: str = None, is_community=False):
             shuld.append(Q("bool", must=[user_terms, creator_user_match]))
             shuld.append(Q("bool", must=[user_terms, shared_user_match]))
             shuld.append(Q("bool", must=mst))
-            mut.append(Q("bool", should=shuld, must=[terms]))
+            mut.append(Q("bool", should=shuld, must=terms_filter))
             mut.append(Q("bool", must=version))
     else:
         mut = mst
-        mut.append(terms)
+        mut.extend(terms_filter)
         base_mut = [status, version]
         mut.append(Q("bool", must=base_mut))
 
     return mut, is_perm_paths
 
 
-def default_search_factory(self, search, query_parser=None, search_type=None, additional_params=None):
+def default_search_factory(self, search, query_parser=None, search_type=None, additional_params=None,
+                           count_only=False):
     """Parse query using Weko-Query-Parser. MetaData Search.
 
     :param self: REST view.
     :param search: Elastic search DSL search instance.
     :param query_parser: Query parser. (Default: ``None``)
     :param search_type: Search type. (Default: ``None``)
+    :param count_only: Build a query for a count only request, which never
+        returns item metadata. The index browsing permission filter is not
+        applied, and in exchange the caller cannot narrow the result down:
+        the free text keyword and the facet filters are ignored, and only the
+        conditions listed in ``WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS`` are
+        honoured. Only takes effect for non community searches.
+        (Default: ``False``)
     :returns: Tuple with search instance and URL arguments.
     """
 
@@ -604,6 +621,17 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             return qry
 
         params = request.values.to_dict()
+        if count_only:
+            # A count only request is not restricted by the index browsing
+            # permission. Honouring the caller's conditions here would turn
+            # the count into an oracle for the metadata of items in an index
+            # the caller is not allowed to browse, so everything outside the
+            # allow list is dropped.
+            params = {
+                k: v
+                for k, v in params.items()
+                if k in config.WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS
+            }
         if additional_params:
             params.update(additional_params)
         kwd = current_app.config["WEKO_SEARCH_KEYWORDS_DICT"]
@@ -680,9 +708,11 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         :return: Query parser.
         """
         # add Permission filter by publish date and status
-        mst, _ = get_permission_filter()
+        mst, _ = get_permission_filter(ignore_browsing_role=count_only)
 
-        q = _get_search_qs_query(qs)
+        # the free text keyword is dropped for a count only request, see
+        # WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS
+        q = None if count_only else _get_search_qs_query(qs)
 
         if q:
             mst.append(q)
@@ -754,7 +784,7 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         :returns: Query parser.
         """
         # add  Permission filter by publish date and status
-        mst, _ = get_permission_filter()
+        mst, _ = get_permission_filter(ignore_browsing_role=count_only)
 
         # multi keywords search filter
         mkq = _get_detail_keywords_query()
@@ -763,7 +793,9 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
             # details search
             mst.extend(mkq)
 
-        if qstr:
+        # the free text keyword is dropped for a count only request, see
+        # WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS
+        if qstr and not count_only:
             q_s = _get_file_content_query(qstr)
             mst.append(q_s)
 
@@ -870,7 +902,13 @@ def default_search_factory(self, search, query_parser=None, search_type=None, ad
         raise InvalidQueryRESTError()
 
     search_index = search._index[0]
-    search, urlkwargs = default_facets_factory(search, search_index)
+    if count_only:
+        # The facet filters / post filters are driven by the request args and
+        # would let the caller narrow the count down, so they are not applied
+        # either. See WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS.
+        urlkwargs = MultiDict()
+    else:
+        search, urlkwargs = default_facets_factory(search, search_index)
     search, sortkwargs = default_sorter_factory(search, search_index)
 
     for key, value in sortkwargs.items():

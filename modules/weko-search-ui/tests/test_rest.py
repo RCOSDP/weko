@@ -420,17 +420,17 @@ def test_IndexSearchResourceAPI(client_rest, db_register2, db_rocrate_mapping):
             param = {'exact_title_match': 'true'}
             res = client_rest.get(url(target_url, param))
             assert res.status_code == 200
-            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': True})
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': True}, count_only=False)
 
             param = {'exact_title_match': 'false'}
             res = client_rest.get(url(target_url, param))
             assert res.status_code == 200
-            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False})
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False}, count_only=False)
 
             param = {'exact_title_match': None}
             res = client_rest.get(url(target_url, param))
             assert res.status_code == 200
-            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False})
+            mock_search_factory.assert_called_with(ANY, ANY, additional_params={'itemtype': 'test item type', 'exact_title_match': False}, count_only=False)
 
     # facet search query test
     with patch('weko_search_ui.rest.default_search_factory') as mock_search_factory:
@@ -468,6 +468,107 @@ def test_IndexSearchResourceAPI(client_rest, db_register2, db_rocrate_mapping):
     with patch('invenio_search.api.RecordsSearch.execute', return_value=DummySearchResult(modified_result)):
         res = client_rest.get(target_url)
         assert res.status_code == 200
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_count_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResourceAPI_count_only(client_rest, db_register2, db_rocrate_mapping):
+    """count_only returns the number of registered items and nothing else.
+
+    The count is not restricted by the index browsing permission, so the
+    response must never carry item metadata, and the caller must not be able
+    to narrow the count down. Otherwise the count would become an oracle for
+    the metadata of items in an index the caller is not allowed to browse.
+    """
+    with open('tests/data/rocrate/search_result.json', 'r') as f:
+        search_result = json.load(f)
+
+    target_url = url('/v1/records')
+    sent = {}
+
+    def _execute(self):
+        sent['body'] = self.to_dict()
+        return DummySearchResult(search_result)
+
+    with patch('invenio_search.api.RecordsSearch.execute', autospec=True, side_effect=_execute):
+        # no metadata can be pulled out: the size is forced to 0
+        for param in ({'count_only': 'true'},
+                      {'count_only': 'true', 'size': 20, 'page': 1},
+                      {'count_only': 'true', 'cursor': '1234567890123', 'size': 20}):
+            res = client_rest.get(url(target_url, param))
+            assert res.status_code == 200
+            assert sent['body']['size'] == 0
+
+        # no facet is computed, so nothing leaks through the facet buckets
+        res = client_rest.get(url(target_url, {'count_only': 'true'}))
+        assert res.status_code == 200
+        assert 'aggs' not in sent['body']
+
+        # the index browsing permission (path) filter is not applied
+        count_only_query = sent['body']['query']
+        assert '"path"' not in json.dumps(count_only_query)
+
+        # and no condition of the caller can narrow the count down
+        for param in ({'count_only': 'true', 'q': 'AAA'},
+                      {'count_only': 'true', 'title': 'AAA'},
+                      {'count_only': 'true', 'iid': '99'},
+                      {'count_only': 'true', 'creator': 'AAA'},
+                      {'count_only': 'true', 'subjectOf_filter': 'AAA'}):
+            res = client_rest.get(url(target_url, param))
+            assert res.status_code == 200
+            assert sent['body']['query'] == count_only_query
+
+        # the resource type is the one condition the statistics need
+        res = client_rest.get(url(target_url, {'count_only': 'true', 'type': 17}))
+        assert res.status_code == 200
+        assert sent['body']['query'] != count_only_query
+        assert 'dataset' in json.dumps(sent['body']['query'])
+
+        # the normal search keeps honouring the conditions
+        res = client_rest.get(url(target_url, {'q': 'AAA'}))
+        assert res.status_code == 200
+        assert '"path"' in json.dumps(sent['body']['query'])
+        assert 'AAA' in json.dumps(sent['body']['query'])
+
+    # the response carries the total only
+    count_only_result = copy.deepcopy(search_result)
+    count_only_result['hits']['hits'] = []
+    with patch('invenio_search.api.RecordsSearch.execute',
+               return_value=DummySearchResult(count_only_result)):
+        res = client_rest.get(url(target_url, {'count_only': 'true'}))
+        assert res.status_code == 200
+        data = json.loads(res.get_data())
+        assert data['total_results'] == search_result['hits']['total']
+        assert data['count_results'] == 0
+        assert data['search_results'] == []
+        # the search result still carries aggregations, they must not be exposed
+        assert count_only_result.get('aggregations')
+        assert data['aggregations'] == {}
+
+    # control: without count_only the facets are returned as before
+    with patch('invenio_search.api.RecordsSearch.execute',
+               return_value=DummySearchResult(search_result)):
+        res = client_rest.get(target_url)
+        assert res.status_code == 200
+        assert json.loads(res.get_data())['aggregations'] != {}
+
+        # the flag is handed over to the search factory
+        with patch('weko_search_ui.rest.default_search_factory',
+                   MagicMock(wraps=default_search_factory)) as mock_search_factory:
+            res = client_rest.get(url(target_url, {'count_only': 'true'}))
+            assert res.status_code == 200
+            mock_search_factory.assert_called_with(
+                ANY, ANY,
+                additional_params={'itemtype': 'test item type', 'exact_title_match': False},
+                count_only=True)
+
+            # any value other than 'true' keeps the normal behaviour
+            for param in ({'count_only': 'false'}, {'count_only': 'True'}, {}):
+                res = client_rest.get(url(target_url, param))
+                assert res.status_code == 200
+                mock_search_factory.assert_called_with(
+                    ANY, ANY,
+                    additional_params={'itemtype': 'test item type', 'exact_title_match': False},
+                    count_only=False)
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResourceAPI_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

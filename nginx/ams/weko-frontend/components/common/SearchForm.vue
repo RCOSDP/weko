@@ -598,7 +598,7 @@ try {
         'Accept-Language': localStorage.getItem('locale') ?? 'ja',
         Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
       },
-      params: { size: '0', type: '17' },
+      params: { size: '0', type: '17', count_only: 'true' },
       onResponse({ response }) {
         if (response.status === 200) {
           dataset.value = response._data.total_results;
@@ -616,7 +616,7 @@ try {
         'Accept-Language': localStorage.getItem('locale') ?? 'ja',
         Authorization: localStorage.getItem('token:type') + ' ' + localStorage.getItem('token:access')
       },
-      params: { size: '0', type: '4' },
+      params: { size: '0', type: '4', count_only: 'true' },
       onResponse({ response }) {
         if (response.status === 200) {
           journal.value = response._data.total_results;

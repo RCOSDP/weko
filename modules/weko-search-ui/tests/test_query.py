@@ -166,6 +166,40 @@ def test_get_permission_filter_fulltext(i18n_app, users, client_request_args_FUL
                         ['33','33/44', '66'])
 
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_get_permission_filter_ignore_browsing_role -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_permission_filter_ignore_browsing_role(i18n_app, users, client_request_args, indices):
+    """ignore_browsing_role drops the index browsing (path) filter only.
+
+    It is used by the count only requests, which never return item metadata.
+    The publish status / publish date / latest version conditions must still
+    be applied, otherwise the count would expose non public items.
+    """
+    # is_perm is False
+    with patch('weko_search_ui.query.search_permission.can', return_value=False):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            with i18n_app.test_request_context("/test?search_type=2"):
+                mut, _ = get_permission_filter()
+                assert "Terms(path=" in str(mut)
+
+                mut, _ = get_permission_filter(ignore_browsing_role=True)
+                assert "Terms(path=" not in str(mut)
+                assert "publish_status" in str(mut)
+                assert "relation_version_is_last" in str(mut)
+
+    # is_perm is True
+    with patch('weko_search_ui.query.search_permission.can', return_value=True):
+        with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+            with patch("weko_search_ui.query.check_permission_user", return_value=(users[3]["id"], True)):
+                with i18n_app.test_request_context("/test?search_type=2"):
+                    mut, _ = get_permission_filter()
+                    assert "Terms(path=" in str(mut)
+
+                    mut, _ = get_permission_filter(ignore_browsing_role=True)
+                    assert "Terms(path=" not in str(mut)
+                    assert "publish_status" in str(mut)
+                    assert "relation_version_is_last" in str(mut)
+
+
 # def default_search_factory(self, search, query_parser=None, search_type=None):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_default_search_factory -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_default_search_factory(app, users, communities):
@@ -185,7 +219,7 @@ def test_default_search_factory(app, users, communities):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
         search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(WEKO_SEARCH_KEYWORDS_DICT)
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
             app.extensions['invenio-oauth2server'] = 1
@@ -583,6 +617,66 @@ def test_default_search_factory(app, users, communities):
                     assert search_query.query().to_dict()['query']['bool']['filter'][0]['bool']['must'] == [EXPECT0, EXPECT1, expect]
 
 
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_default_search_factory_count_only -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_default_search_factory_count_only(app, users, communities):
+    """count_only ignores the browsing permission and the caller conditions.
+
+    A count only query is not restricted by the index browsing permission, so
+    the caller must not be able to narrow it down. Otherwise the count becomes
+    an oracle for the metadata of items in an index the caller cannot browse.
+    Only WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS is honoured.
+    """
+    app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(WEKO_SEARCH_KEYWORDS_DICT)
+    app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
+    with app.test_client() as client:
+        login_user_via_session(client, email=users[3]["email"])
+        app.extensions['invenio-oauth2server'] = 1
+        app.extensions['invenio-queues'] = 1
+        mock_searchperm = MagicMock(side_effect=MockSearchPerm)
+        with patch('weko_search_ui.query.search_permission', mock_searchperm):
+            with patch('invenio_records_rest.facets.default_facets_factory',
+                       side_effect=lambda x, y: (x, MultiDict([]))) as mock_facets:
+
+                def _query(_data, **kwargs):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')], data=_data):
+                        search_query, _ = default_search_factory(
+                            self=None, search=RecordsSearch(), **kwargs)
+                        return search_query.query().to_dict()['query']
+
+                # the index browsing (path) filter is dropped ...
+                assert '"path"' in json.dumps(_query({}))
+                assert '"path"' not in json.dumps(_query({}, count_only=True))
+                # ... but the publish conditions are kept, so a non public item
+                # is still never counted
+                base = _query({}, count_only=True)
+                assert '"publish_status"' in json.dumps(base)
+                assert '"relation_version_is_last"' in json.dumps(base)
+
+                # the caller cannot narrow the count down
+                for _data in ({'q': 'AAA'}, {'title': 'AAA'}, {'iid': '99'},
+                              {'creator': 'AAA'}, {'lang': 'en'},
+                              {'date_range1_from': '20221001', 'date_range1_to': '20221030'}):
+                    assert _query(_data, count_only=True) == base
+
+                # the resource type is the one condition the statistics need
+                type_query = _query({'type': '17'}, count_only=True)
+                assert type_query != base
+                assert 'dataset' in json.dumps(type_query)
+
+                # the facet filters are driven by the request args as well, so
+                # they are not applied either
+                mock_facets.reset_mock()
+                _query({}, count_only=True)
+                mock_facets.assert_not_called()
+                _query({})
+                mock_facets.assert_called()
+
+                # the normal search is unchanged
+                normal = _query({'q': 'AAA'})
+                assert '"path"' in json.dumps(normal)
+                assert 'AAA' in json.dumps(normal)
+
+
 # def default_search_factory(self, search, query_parser=None, search_type=None):
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_default_search_factory_no_queries -vv -s --cov-branch --cov-report=xml --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_default_search_factory_no_queries(app, users, communities):
@@ -590,7 +684,7 @@ def test_default_search_factory_no_queries(app, users, communities):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
         search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(WEKO_SEARCH_KEYWORDS_DICT)
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         mock_searchperm = MagicMock(side_effect=MockSearchPerm)
         with patch('weko_search_ui.query.search_permission', mock_searchperm):
@@ -791,7 +885,7 @@ def test_function_issue35902(app, users, communities, mocker):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
         search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(WEKO_SEARCH_KEYWORDS_DICT)
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
         mocker.patch("weko_search_ui.permissions.search_permission",side_effect=MockSearchPerm)
