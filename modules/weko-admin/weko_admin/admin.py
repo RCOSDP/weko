@@ -519,7 +519,7 @@ class ReportView(BaseView):
 
         try:
             AdminSettings.update('report_email_schedule_settings', schedule)
-            flash(_('Successfully Changed Schedule.'), 'error')
+            flash(_('Successfully Changed Schedule.'))
         except Exception:
             flash(_('Could Not Save Changes.'), 'error')
         return redirect(url_for('report.index'))

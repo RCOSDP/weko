@@ -64,7 +64,7 @@ WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.php'
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (False, 'shib_eppn'),
     # "SHIB_ATTR_LOGIN_ID": (False, 'shib_uid'),
-    # "SHIB_ATTR_HANDLE": (False, 'shib_handle'),
+    'SHIB_ATTR_HANDLE': (False, 'shib_handle'),
     'SHIB_ATTR_ROLE_AUTHORITY_NAME': (False, 'shib_role_authority_name'),
     'SHIB_ATTR_PAGE_NAME': (False, 'shib_page_name'),
     'SHIB_ATTR_ACTIVE_FLAG': (False, 'shib_active_flag'),

@@ -54,6 +54,7 @@ import math
 from flask_security import current_user
 from flask import session
 from invenio_accounts.models import User
+from invenio_records_rest.sorter import parse_sort_field
 from weko_redis.redis import RedisConnection
 
 from .config import RECORDS_REST_DEFAULT_TTL_VALUE
@@ -157,7 +158,7 @@ def create_blueprint(endpoints):
         __name__,
         url_prefix='',
     )
-    
+
     @blueprint.teardown_request
     def dbsession_clean(exception):
         current_app.logger.debug("invenio_records_rest dbsession_clean: {}".format(exception))
@@ -586,7 +587,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                                   type=int)
         size = RecordsListResource.adjust_list_view_num(size)
         formats = request.values.getlist('format')
-        if (not formats or 'html' in formats) and request.values.get('q') == None:
+        if (not formats or formats == [''] or 'html' in formats) and request.values.get('q') == None:
             return redirect_to_search(page, size)
 
         # if page * size >= self.max_result_window:
@@ -622,7 +623,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             # This exception is for when sort type "relevance" is used
             sort_element = "control_number"
             relevance_sort_is_used = True
-        
+
         if relevance_sort_is_used:
             sort_key = sort_element
             sort_key_arrangement = "desc"
@@ -639,7 +640,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
             cache_name = User.query.get(current_user.id).email
         else:
             cache_name = "anonymous_user"
-        
+
         # For saving a specific page for search_after use as cache key
         cache_key = str(page)
 
@@ -675,7 +676,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         RECORDS_REST_DEFAULT_TTL_VALUE
                     )
                 )
-        
+
         url_args_check()
 
         next_items_sort_value = ""
@@ -724,7 +725,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                     next_search_after_set._extra.update(search_after_size)
                     next_search_after_set._extra.update({"search_after": [orjson.loads(sessionstorage.get(cache_name)).get(cache_key).get("control_number")]})
                     next_items_sort_value = next_search_after_set.execute()["hits"]["hits"][-1]["_source"]["control_number"]
-                    
+
                 else:
                     page_list = []
                     cache_name_stored_data = orjson.loads(sessionstorage.get(cache_name))
@@ -746,7 +747,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
                         next_search_after_set = search
                         next_search_after_set._extra.update(search_after_size)
                         next_search_after_set._extra.update({"search_after": [orjson.loads(sessionstorage.get(cache_name)).get(str(sorted_page_list[-1])).get("control_number")]})
-                        
+
                         try:
                             if cache_data.get("control_number") is None:
                                 next_items_sort_value = last_sort_value
@@ -800,6 +801,25 @@ class RecordsListResource(ContentNegotiatedMethodView):
             # Search after trigger set to true
             use_search_after = True
 
+        idx = request.values.get("idx","")
+        idx = [int(i) for i in idx.split(",") if i and i.isdecimal()]
+        index_id = request.values.get("index_id")
+        if index_id and index_id.isdecimal():
+            target_index = set(idx + [int(index_id)])
+        else:
+            target_index = set(idx)
+        recursive = request.values.get("recursive", 0)
+        from weko_index_tree.api import Indexes
+        if recursive == "1":
+            for i in idx:
+                if Indexes.get_index(i):
+                    target_index.update(
+                        [int(cid) for cid in Indexes.get_child_list_recursive(str(i))]
+                    )
+        request_sort = request.values.get('sort','', str)
+        key, is_asc = parse_sort_field(request_sort)
+        is_custom_sort = key == "custom_sort" and target_index
+
         if use_search_after:
             search = search[0:size]
         else:
@@ -809,8 +829,30 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if query:
             urlkwargs['q'] = query
 
+        if is_custom_sort :
+            search = self._override_params_for_customsort(search, is_asc)
+
         # Execute search
         search_result = search.execute()
+        search_result_dict = search_result.to_dict()
+
+        if is_custom_sort:
+            if search_result.hits.total < self.max_result_window:
+                self._do_custom_sort(search_result_dict,target_index, is_asc, page, size)
+            else:
+                start = (page - 1) * size
+                end = page * size
+                search_result_dict["hits"]["hits"] = search_result_dict["hits"]["hits"][start:end]
+                # The order is reversed by the `prepend` method in
+                # `weko_records.serializers.feed:WekoFeedGenerator.add_entry`.
+                # As a temporary workaround,  set to “prepend,” reverse the order.
+                # When it changes to “append,” please remove the flag and the if statement.
+                flag = "prepend"
+                if (flag == "prepend"
+                    and any(i in formats for i in ("rss", "atom", "jpcoar"))
+                    and request.values.get('q') is None
+                ):
+                    search_result_dict["hits"]["hits"].reverse()
 
         if not sessionstorage.redis.exists(cache_name) and size * math.floor(self.max_result_window/size) <= self.max_result_window:
             json_data = orjson.dumps({cache_key: {"control_number": [next_items_sort_value]}})
@@ -839,7 +881,7 @@ class RecordsListResource(ContentNegotiatedMethodView):
 
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
-            search_result=search_result.to_dict(),
+            search_result=search_result_dict,
             links=links,
             item_links_factory=self.item_links_factory,
         )
@@ -864,6 +906,107 @@ class RecordsListResource(ContentNegotiatedMethodView):
 
         return 100
 
+    def _override_params_for_customsort(self, search, is_asc):
+        """ Set the sort clause for custom sort
+
+            Override the sort conditions of the search object for custom sorting.
+
+        Args:
+            search(invenio_search.api.RecordsSearch): search query
+            is_asc(boolean): Whether to sort in ascending or descending order.
+
+        Returns:
+            search(invenio_search.api.RecordsSearch): search query with added sort
+
+        """
+        search = search[0:self.max_result_window]
+        search._sort = []
+
+        if is_asc:
+            order = "asc"
+            mode = "min"
+        else:
+            order = "desc"
+            mode = "max"
+
+        path_sort = {"path": {"order": order, "mode": mode}}
+        default_sort = {"_created": {"order": order, "unmapped_type": "long"}}
+
+        search._sort.append(path_sort)
+        search._sort.append(default_sort)
+        return search
+
+    @classmethod
+    def _do_custom_sort(cls, search_result_dict, target_index, is_asc, page, size):
+        """ do custom_sort
+
+            For each hit, taking target_index into account,
+            generate a priority key and sort the results.
+
+        Args:
+            search_result_dict(dict): search result
+            is_asc(boolean): Whether to sort in ascending or descending order.
+            target_index(set): search index
+            page(int): page
+            size(int): size
+
+        """
+
+        custom_sort = {}
+
+        sorted_result = sorted(((
+            cls._customsort_priority(hit, target_index, is_asc, custom_sort), hit)
+                for hit in search_result_dict["hits"]["hits"]
+            ), reverse=not is_asc
+        )
+
+        formats = request.values.getlist('format')
+        # The order is reversed by the `prepend` method in
+        # `weko_records.serializers.feed:WekoFeedGenerator.add_entry`.
+        # As a temporary workaround,  set to “prepend,” reverse the order.
+        # When it changes to “append,” please remove the flag and the if statement.
+        flag = "prepend"
+        start, end = (page - 1) * size, page * size
+        sorted_hits = [hit for _, hit in sorted_result[start:end]]
+        if (flag == "prepend"
+            and any(i in formats for i in ("rss", "atom", "jpcoar"))
+            and request.values.get('q') is None
+        ):
+            sorted_hits.reverse()
+
+        search_result_dict["hits"]["hits"] = sorted_hits
+
+    @classmethod
+    def _customsort_priority(cls, hit, target_index, is_asc, custom_sort):
+        """ Generate a priority key for custom sorting for each hit in the search results.
+
+            From the index paths associated with `hit`, select a single path based on `target_index`,
+            and return a sort key that combines the custom sort definition for each index,
+            the creation date and time, and the `control_number`.
+
+        Args:
+            hit(dict): item in the search results that is subject to sorting
+            target_index(set): search index
+            is_asc(boolean): Whether to sort in ascending or descending order.
+            custom_sort(dict): cache that retains the custom sort settings for each index
+
+        """
+        from weko_index_tree.api import Indexes
+        paths = {int(p) for p in hit["_source"]["path"]}
+        paths = paths.intersection(target_index)
+        path = min(paths) if is_asc else max(paths)
+        if path not in custom_sort:
+            index_custom_sort = Indexes.get_item_sort(path)
+            if index_custom_sort:
+                custom_sort[path] = index_custom_sort
+
+        cn = hit["_source"]["control_number"]
+        v = custom_sort.get(path, {}).get(cn)
+        created = hit["_source"].get("_created")
+
+        priority = 0 if v is not None else 1
+        v = int(v) if v is not None else None
+        return (path, priority, v, created, int(cn))
 
     @need_record_permission('create_permission_factory')
     def post(self, **kwargs):

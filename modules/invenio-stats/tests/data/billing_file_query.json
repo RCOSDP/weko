@@ -1,6 +1,7 @@
 {
     "_source": {
         "includes": [
+            "path",
             "content.filename",
             "_item_metadata.owner",
             "_oai.id"
@@ -14,29 +15,7 @@
                         "must": [
                             {
                                 "bool": {
-                                    "must": [
-                                        {
-                                            "terms": {
-                                                "path": [
-                                                    "1",
-                                                    "2",
-                                                    "3",
-                                                    "4"
-                                                ]
-                                            }
-                                        }
-                                    ],
                                     "should": [
-                                        {
-                                            "match": {
-                                                "weko_creator_id": "3"
-                                            }
-                                        },
-                                        {
-                                            "match": {
-                                                "weko_shared_id": "3"
-                                            }
-                                        },
                                         {
                                             "bool": {
                                                 "must": [

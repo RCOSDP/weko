@@ -93,7 +93,7 @@ def get_list_username():
 
     Query database to get all available username
     return: list of username
-    TODO: 
+    TODO:
     """
     current_user_id = current_user.get_id()
     current_app.logger.debug("current_user:{}".format(current_user))
@@ -105,7 +105,7 @@ def get_list_username():
         username = user.get_username
         if username:
             result.append(username)
-    
+
     return result
 
 
@@ -357,7 +357,7 @@ def find_hidden_items(item_id_list, idx_paths=None, check_creator_permission=Fal
     no_permission_index = []
     hidden_list = []
     for record in WekoRecord.get_records(item_id_list):
-        
+
         if check_creator_permission:
             # Check if user is owner of the item
             if check_created_id(record):
@@ -437,7 +437,7 @@ def get_permission_record(rank_type, es_data, display_rank, has_permission_index
                         break
                 add_flag = is_public and has_index_permission
         except PIDDoesNotExistError:
-            # do not add deleted items into ranking list. 
+            # do not add deleted items into ranking list.
             add_flag = False
             current_app.logger.debug("PID {} does not exist.".format(pid_value))
 
@@ -574,7 +574,7 @@ def validate_form_input_data(
 
     :param result: result dictionary.
     :param item_id: item type identifier.
-    :param data: form input data 
+    :param data: form input data
     :param activity_id: activity id
     """
     # current_app.logger.error("result: {}".format(result))
@@ -1148,7 +1148,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
         role_names = [role.name for role in current_user.roles]
         super_user = any(role in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] for role in role_names)
         community_admin = any(role in current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY'] for role in role_names)
-    
+
     if community_admin:
         can_edit_indexes = []
         role_ids = [role.id for role in current_user.roles]
@@ -1289,7 +1289,7 @@ def make_stats_file(item_type_id, recids, list_item_role, export_path=""):
                 if not keys:
                     keys = [item_key]
                 if not labels:
-                    labels = [item.get('title')]                
+                    labels = [item.get('title')]
                 data = records.attr_data[item_key].get(recid) or {}
                 attr_val = data.get("attribute_value", "")
                 if isinstance(attr_val,str):
@@ -1409,7 +1409,7 @@ def write_bibtex_files(item_types_data, export_path):
     """
     # current_app.logger.error("item_types_data:{}".format(item_types_data))
     # current_app.logger.error("export_path:{}".format(export_path))
-    
+
     for item_type_id in item_types_data:
         item_type_data = item_types_data[item_type_id]
         output = make_bibtex_data(item_type_data['recids'])
@@ -1435,7 +1435,7 @@ def write_files(item_types_data, export_path, list_item_role):
     file_format = current_app.config.get('WEKO_ADMIN_OUTPUT_FORMAT', 'tsv').lower()
 
     for item_type_id in item_types_data:
-        
+
         current_app.logger.debug("item_type_id:{}".format(item_type_id))
         current_app.logger.debug("item_types_data[item_type_id]['recids']:{}".format(item_types_data[item_type_id]['recids']))
         headers, records = make_stats_file(
@@ -1777,7 +1777,7 @@ def to_files_js(record):
     Returns:
         _type_: _description_
     """
-    current_app.logger.debug("type: {}".format(type(record))) 
+    current_app.logger.debug("type: {}".format(type(record)))
     res = []
     files = record.files or []
     files_content_dict = {}
@@ -1790,7 +1790,7 @@ def to_files_js(record):
     # Get files form meta_data, so that you can append any extra info to files
     # (which not contained by file_bucket) such as license below
     files_from_meta = get_files_from_metadata(record)
-    
+
     # get file with order similar metadata
     files_content = []
     for _k, f in files_from_meta.items():
@@ -2092,11 +2092,18 @@ def set_multi_language_name(item, cur_lang):
     :param cur_lang: current language
     :return: The modified json object.
     """
-    if 'titleMap' in item:
-        for value in item['titleMap']:
-            if 'name_i18n' in value \
-                    and len(value['name_i18n'][cur_lang]) > 0:
-                value['name'] = value['name_i18n'][cur_lang]
+    try:
+        if 'titleMap' in item:
+            for value in item['titleMap']:
+                if 'name_i18n' in value \
+                        and len(value['name_i18n'][cur_lang]) > 0:
+                    value['name'] = value['name_i18n'][cur_lang]
+    except Exception as ex:
+        if 'titleMap' in item:
+            for value in item['titleMap']:
+                if 'name_i18n' in value \
+                        and len(value['name_i18n']['en']) > 0:
+                    value['name'] = value['name_i18n']['en']
 
     if 'items' in item:
         items2 = item['items']
@@ -2241,12 +2248,13 @@ def get_hide_list_by_schema_form(item_type_id=None, schemaform=None):
     if item_type_id and not schemaform:
         item_type = ItemTypes.get_by_id(item_type_id).render
         schemaform = item_type.get('table_row_map', {}).get('form', {})
-    for item in schemaform:
-        if not item.get('items'):
-            if item.get('isHide'):
-                ids.append(item.get('key'))
-        else:
-            ids += get_hide_list_by_schema_form(schemaform=item.get('items'))
+    if schemaform:
+        for item in schemaform:
+            if not item.get('items'):
+                if item.get('isHide'):
+                    ids.append(item.get('key'))
+            else:
+                ids += get_hide_list_by_schema_form(schemaform=item.get('items'))
     return ids
 
 
@@ -2318,9 +2326,11 @@ def get_options_and_order_list(item_type_id, item_type_mapping=None,
     :return: options dict and item type mapping
     """
     from weko_records.api import Mapping
-    meta_options = get_options_list(item_type_id, item_type_data)
-    if item_type_mapping is None:
-        item_type_mapping = Mapping.get_record(item_type_id)
+    meta_options = None
+    if item_type_id:
+        meta_options = get_options_list(item_type_id, item_type_data)
+        if item_type_mapping is None:
+            item_type_mapping = Mapping.get_record(item_type_id)
     return meta_options, item_type_mapping
 
 
@@ -2395,7 +2405,7 @@ def translate_validation_message(item_property, cur_lang):
     """
     # current_app.logger.error("item_property:{}".format(item_property))
     # current_app.logger.error("cur_lang:{}".format(cur_lang))
-    
+
     items_attr = 'items'
     properties_attr = 'properties'
     if isExistKeyInDict(items_attr, item_property):
@@ -2540,7 +2550,7 @@ def get_ranking(settings):
     :param settings: ranking setting.
     :return:
     """
-    
+
     def _get_index_info(index_json, index_info):
         for index in index_json:
             index_info[index["id"]] = {
@@ -2574,7 +2584,8 @@ def get_ranking(settings):
             event_type='record-view',
             group_field='pid_value',
             count_field='count',
-            ranking_type='most_view_ranking'
+            ranking_type='most_view_ranking',
+            must_not=json.dumps([{"wildcard": {"pid_value": "*.*"}}])
         )
         rankings['most_reviewed_items'] = get_permission_record('most_reviewed_items', result, settings.display_rank, has_permission_indexes)
 
@@ -2587,12 +2598,13 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             event_type='file-download',
             group_field='item_id',
-            count_field='count'
+            count_field='count',
+            must_not=json.dumps([{"wildcard": {"item_id": "*.*"}}])
         )
 
         current_app.logger.debug("finished getting most_downloaded_items data from ES")
         rankings['most_downloaded_items'] = get_permission_record('most_downloaded_items', result, settings.display_rank, has_permission_indexes)
-    
+
     # created_most_items_user
     current_app.logger.debug("get created_most_items_user start")
     if settings.rankings['created_most_items_user']:
@@ -2662,10 +2674,10 @@ def get_ranking(settings):
             agg_size=settings.display_rank + rank_buffer,
             must_not=orjson.dumps([{"wildcard": {"control_number": "*.*"}}]).decode()
         )
-        
+
         current_app.logger.debug("finished getting new_items data from ES")
         rankings['new_items'] = get_permission_record('new_items', result, settings.display_rank, has_permission_indexes)
-        
+
     return rankings
 
 
@@ -2691,7 +2703,7 @@ def sanitize_input_data(data):
 
     Args:
         data (dict or list): target dict or list
-    """    
+    """
     if isinstance(data, dict):
         for k, v in data.items():
             if isinstance(v, str):
@@ -2859,12 +2871,12 @@ def make_stats_file_with_permission(item_type_id, recids,
 
     Returns:
         _type_: _description_
-    """                                   
+    """
     """
 
     Arguments:
-        item_type_id    -- 
-        recids          -- 
+        item_type_id    --
+        recids          --
     Returns:
         ret             -- Key properties
         ret_label       -- Label properties
@@ -2927,7 +2939,7 @@ def make_stats_file_with_permission(item_type_id, recids,
 
                 if permissions['hide_meta_data_for_role'](record) and \
                         not current_app.config['EMAIL_DISPLAY_FLG']:
-                    record = hide_by_email(record)
+                    record = hide_by_email(record, True)
 
                     return True
 
@@ -3410,7 +3422,7 @@ def check_item_is_deleted(recid):
 
     Returns:
         bool: True: deleted, False: available
-    """    
+    """
     pid = PersistentIdentifier.query.filter_by(
         pid_type='recid', pid_value=recid).first()
     if not pid:
@@ -3429,7 +3441,7 @@ def permission_ranking(result, pid_value_permissions, display_rank, list_name,
         display_rank (_type_): _description_
         list_name (_type_): _description_
         pid_value (_type_): _description_
-    """                       
+    """
     list_result = list()
     for data in result.get(list_name, []):
         if data.get(pid_value, '') in pid_value_permissions:

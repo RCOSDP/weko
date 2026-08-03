@@ -35,6 +35,8 @@ class DcWekoBaseExtension(DcBaseExtension):
         """__init__."""
         self._dcelem_publisher = None
         self._dcelem_publisher_lang = None
+        self._dcelem_creator = None
+        self._dcelem_creator_lang = None
         super().__init__()
 
     def _extend_xml(self, xml_elem):
@@ -56,7 +58,7 @@ class DcWekoBaseExtension(DcBaseExtension):
                     node = etree.SubElement(xml_elem,
                                             '{%s}%s' % (DCELEMENTS_NS, elem))
                     node.text = val
-                    if elem == 'publisher':
+                    if elem == 'publisher' or elem == 'creator':
                         if hasattr(self, '_dcelem_%s_lang' % elem):
                             langs = getattr(
                                 self, '_dcelem_%s_lang' %
@@ -90,7 +92,34 @@ class DcWekoBaseExtension(DcBaseExtension):
             self._dcelem_publisher_lang += lang
 
         return self._dcelem_publisher
+    
+    def dc_creator(self, creator=None, lang=None, replace=False):
+        """Get or set the dc:creator.
 
+        Which is an entity responsible for
+        making the resource available.
+        For more information see:
+        http://dublincore.org/documents/dcmi-terms
+        :param creator: Creator or list of creators.
+        :param replace: Replace alredy set creators (deault: False).
+        :returns: List of creators.
+        """
+        if creator is not None:
+            if not isinstance(creator, list):
+                creator = [creator]
+            if replace or not self._dcelem_creator:
+                self._dcelem_creator = []
+            self._dcelem_creator += creator
+
+        if lang is not None:
+            if not isinstance(lang, list):
+                lang = [lang]
+            if replace or not self._dcelem_creator_lang:
+                self._dcelem_creator_lang = []
+            self._dcelem_creator_lang += lang
+
+        return self._dcelem_creator
+    
     def extend_jpcoar(self, jpcoar_feed):
         """Extend a JPCOAR feed with the set DC fields.
 

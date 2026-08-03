@@ -12,6 +12,7 @@ import copy
 import json
 import uuid
 
+from os.path import join, dirname
 from flask import url_for
 from invenio_db import db
 from invenio_pidstore import current_pidstore
@@ -82,3 +83,8 @@ def record_url(pid):
 def _mock_validate_fail(self):
     """Simulate a validation fail."""
     raise ValidationError("")
+
+
+def json_data(filename):
+    with open(join(dirname(__file__),filename), "r") as f:
+        return json.load(f)

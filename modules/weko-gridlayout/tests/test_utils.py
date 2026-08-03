@@ -14,7 +14,7 @@ from datetime import datetime
 
 from invenio_files_rest.errors import FileInstanceAlreadySetError, \
     FilesException, UnexpectedFileSizeError
-from sqlalchemy.orm.exc import MultipleResultsFound    
+from sqlalchemy.orm.exc import MultipleResultsFound
 
 from weko_gridlayout.utils import (
     get_widget_type_list,
@@ -111,7 +111,7 @@ def test_update_general_item(i18n_app):
         "settings": {},
         "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
     }
-    
+
     # Doesn't return any value
     with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
         with patch("weko_gridlayout.utils.update_access_counter_item", return_value=""):
@@ -207,7 +207,7 @@ def test_build_data_setting(i18n_app):
     WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE = 'Header'
     with patch("weko_gridlayout.utils.convert_popular_data", return_value=""):
         data = {
-            "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE, 
+            "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE,
             "settings": {
                 "menu_orientation": "test",
                 "menu_bg_color": "test",
@@ -230,11 +230,11 @@ def test_build_data_setting(i18n_app):
             data["widget_type"] = WEKO_GRIDLAYOUT_NOTICE_TYPE
             # Doesn't return any value
             assert not build_data_setting(data)
-        
+
         data["widget_type"] = WEKO_GRIDLAYOUT_MENU_WIDGET_TYPE
         assert build_data_setting(data)
 
-        with patch("weko_gridlayout.utils._build_header_setting_data", return_value=""):       
+        with patch("weko_gridlayout.utils._build_header_setting_data", return_value=""):
             data["widget_type"] = WEKO_GRIDLAYOUT_HEADER_WIDGET_TYPE
             # Doesn't return any value
             assert not build_data_setting(data)
@@ -293,7 +293,7 @@ def test_build_multi_lang_data(i18n_app):
     multi_lang_json = {
         "test": {"label": 1, "description": 2}
     }
-    
+
     assert build_multi_lang_data(widget_id, multi_lang_json)
 
     multi_lang_json = {}
@@ -571,7 +571,7 @@ def test_build_rss_xml(i18n_app, indices):
     assert build_rss_xml()
     with patch("weko_gridlayout.utils.find_rss_value", return_value=""):
         assert build_rss_xml(data=["test"])
-    
+
 
 # def find_rss_value(data, keyword):
 keywords = [
@@ -616,45 +616,158 @@ def test_find_rss_value(i18n_app, keyword, item_type):
     with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"):
         with patch("weko_records.api.Mapping.get_record", return_value="test"):
             with patch("weko_records.serializers.utils.get_mapping", return_value=return_data):
-                find_rss_value(data, keyword) 
-                                
-                
+                find_rss_value(data, keyword)
+
+
                 data2 = None
                 assert find_rss_value(data2, keyword) == None
 
                 if keyword == "creator":
-                    data3 = copy.deepcopy(data)
-                    data3["_source"]["creator"]["familyName"] = []
-                    assert find_rss_value(data3, keyword) == ""
+                    data2 = copy.deepcopy(data)
+                    data2["_source"]["creator"]["familyName"] = []
+                    assert find_rss_value(data2, keyword) == ""
 
-                    data4 = copy.deepcopy(data)
-                    del data4["_source"]["creator"]
-                    assert find_rss_value(data4, keyword) == ""
+                    data2 = copy.deepcopy(data)
+                    data2["_source"]["creator"]["familyName"] = ["test1", None, "test2"]
+                    data2["_source"]["creator"]["givenName"] = ["test1", None, None]
+                    assert find_rss_value(data2, keyword) == ['test1.test1', 'test2']
+
+                    data2 = copy.deepcopy(data)
+                    del data2["_source"]["creator"]
+                    assert find_rss_value(data2, keyword) == ""
 
                 if keyword == "issn":
-                    data5 = copy.deepcopy(data)
-                    data5["_source"]["sourceIdentifier"] = ["test"]
-                    assert find_rss_value(data5, keyword) != ""
-                
+                    data2 = copy.deepcopy(data)
+                    data2["_source"]["sourceIdentifier"] = ["test"]
+                    assert find_rss_value(data2, keyword) != ""
+
+                if keyword == "date":
+                    data2 = copy.deepcopy(data)
+                    data2["_source"]["date"] = ""
+                    assert find_rss_value(data2, keyword) == ""
+
                 if keyword == 'description':
                     item_map = {
                         "description.@attributes.descriptionType": "description.@attributes.descriptionType",
                         "description.@value": "description.@value"
                     }
-                    data6 = copy.deepcopy(data)
-                    data6["_source"]["description"] = ["test"]
-                    data6["_source"]["_item_metadata"]["description"] = {
+                    data2 = copy.deepcopy(data)
+                    data2["_source"]["description"] = ["test"]
+                    data2["_source"]["_item_metadata"]["description"] = {
                         "attribute_value_mlt": "attribute_value_mlt"
                     }
-                    with patch('weko_gridlayout.utils.Mapping.get_record', return_value=""):
-                        with patch('weko_gridlayout.utils.get_mapping', return_value=item_map):
-                            with patch('weko_gridlayout.utils.get_pair_value', return_value=[("Abstract", "Abstract")]):
-                                assert find_rss_value(data6, keyword) != ""
+                    with patch('weko_items_ui.utils.get_options_and_order_list', return_value=({}, None)), \
+                         patch('weko_gridlayout.utils.get_mapping', return_value=item_map), \
+                         patch('weko_gridlayout.utils.get_pair_value', return_value=[("Abstract", "Abstract")]):
+                        assert find_rss_value(data2, keyword) == "Abstract"
 
-
-
-                
-
+@pytest.mark.parametrize('data, item_map, hide_list, expected',[
+    ({
+        "_source": {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            },
+            "_item_metadata": {
+                "item_title": "item_title",
+                "control_number": "9999",
+                "description": {
+                        "attribute_value_mlt": "attribute_value_mlt"
+                    }
+            },
+            "description": ["test"],
+        }
+    },
+    {
+        "description.@attributes.descriptionType": "description.@attributes.descriptionType",
+        "description.@value": "description2.@value"
+    },
+    [],
+    ""),
+    ({
+        "_source": {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            },
+            "_item_metadata": {
+                "item_title": "item_title",
+                "control_number": "9999",
+                "description": {
+                        "attribute_value_mlt": ""
+                    }
+            },
+            "description": ["test"],
+        }
+    },
+    {
+        "description.@attributes.descriptionType": "description.@attributes.descriptionType",
+        "description.@value": "description.@value"
+    },
+    [],
+    ""),
+    ({
+        "_source": {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            },
+            "_item_metadata": {
+                "item_title": "item_title",
+                "control_number": "9999",
+                "description": {
+                        "attribute_value_mlt": "attribute_value_mlt"
+                    }
+            },
+            "description": ["test"],
+        }
+    },
+    {
+        "description.@attributes.descriptionType": "description.@attributes.descriptionType",
+        "description.@value": "description.@value"
+    },
+    ["id1.@value","description.@value"],
+    ""),
+    ({
+        "_source": {
+            "date": ["test"],
+            "creator": {
+                "familyName": ["test", "test"],
+                "givenName": ["test", "test"]
+            },
+            "_item_metadata": {
+                "item_title": "item_title",
+                "control_number": "9999",
+                "description": {
+                        "attribute_value_mlt": "attribute_value_mlt"
+                    }
+            },
+            "description": ["test"],
+        }
+    },
+    {
+        "description.@attributes.descriptionType": "description.@attributes.descriptionType",
+        "description.@value": "description.@value"
+    },
+    [],
+    "")
+])
+def test_find_rss_value_description(i18n_app, data, item_map, hide_list, expected):
+    return_data = {
+        "description.@attributes.descriptionType": "test",
+        "description.@value": "test",
+    }
+    with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"), \
+         patch("weko_records.api.Mapping.get_record", return_value="test"), \
+         patch("weko_records.serializers.utils.get_mapping", return_value=return_data), \
+         patch('weko_items_ui.utils.get_options_and_order_list', return_value=({}, None)), \
+         patch('weko_gridlayout.utils.get_mapping', return_value=item_map), \
+         patch('weko_gridlayout.utils.get_pair_value', return_value=[("Abstract", "notAbstract")]), \
+         patch('weko_items_ui.utils.get_hide_list_by_schema_form', return_value=hide_list):
+            assert find_rss_value(data, "description") == expected
 
 # def get_rss_data_source(source, keyword):
 def test_get_rss_data_source(i18n_app):
@@ -665,7 +778,7 @@ def test_get_rss_data_source(i18n_app):
     assert get_rss_data_source(source, keyword)
     source["test"] = None
     assert not get_rss_data_source(source, keyword)
-    
+
 
 # def get_elasticsearch_result_by_date(start_date, end_date):
 def test_get_elasticsearch_result_by_date(i18n_app):
@@ -682,7 +795,7 @@ def test_get_elasticsearch_result_by_date(i18n_app):
             get_elasticsearch_result_by_date(start_date, end_date)
         except:
             pass
-    
+
 
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
 def test_validate_main_widget_insertion(i18n_app, widget_item):
@@ -707,23 +820,23 @@ def test_validate_main_widget_insertion(i18n_app, widget_item):
                  assert validate_main_widget_insertion(repository_id, new_settings)
                  args, kwargs = magicmock.call_args
                  assert args[0] == ['test']
-    
+
 
 # def get_widget_design_page_with_main(repository_id):
 def test_get_widget_design_page_with_main(i18n_app):
     repository_id = 1
     mock_data = MagicMock()
     mock_data.settings = 9999
-    
+
     with patch("weko_gridlayout.utils.WidgetDesignPage.get_by_repository_id", return_value=[mock_data]):
         magicmock = MagicMock(return_value="test")
         with patch("weko_gridlayout.utils.has_main_contents_widget", magicmock):
             assert get_widget_design_page_with_main(repository_id) != None
             args, kwargs = magicmock.call_args
             assert args[0] == mock_data.settings
-    
+
     assert get_widget_design_page_with_main(repository_id=None) == None
-    
+
 
 # def main_design_has_main_widget(repository_id):
 def test_main_design_has_main_widget(db_register):
@@ -751,7 +864,7 @@ def test_get_widget_design_setting(i18n_app):
         i18n_app.config['WEKO_GRIDLAYOUT_WIDGET_PAGE_CACHE_KEY'] = "test"
         accept_encoding = MagicMock()
         accept_encoding.lower = lower_func
-        
+
         headers = {
             "Accept-Encoding": accept_encoding,
             'Content-Encoding': "json"
@@ -803,7 +916,7 @@ def test_delete_widget_cache(i18n_app):
 
 
 # def validate_upload_file(community_id: str): ~ ERROR
-def test_validate_upload_file(i18n_app): 
+def test_validate_upload_file(i18n_app):
     community_id = ""
     file_data = MagicMock()
     file_data.filename = "file"
@@ -818,7 +931,7 @@ def test_validate_upload_file(i18n_app):
 
     with patch("weko_gridlayout.utils.request", request):
         validate_upload_file(community_id=community_id)
-    
+
     file_data.filename = ""
     files = {
         "file": file_data
@@ -827,7 +940,7 @@ def test_validate_upload_file(i18n_app):
 
     with patch("weko_gridlayout.utils.request", request):
         validate_upload_file(community_id=community_id)
-    
+
     community_id = "0@9999"
     file_data.filename = "file"
     files = {
@@ -850,13 +963,13 @@ class TestWidgetBucket:
 
         def get_func(key):
             return "key"
-        
+
         def none_get_func(key):
             return None
 
         def get_default():
             return "get_default"
-        
+
         bucket = MagicMock()
         bucket.query = MagicMock()
         bucket.query.get = get_func
@@ -867,7 +980,7 @@ class TestWidgetBucket:
                 w.initialize_widget_bucket()
             except:
                 pass
-        
+
         bucket.query.get = none_get_func
         location = MagicMock()
         location.get_default = get_default
@@ -888,7 +1001,7 @@ class TestWidgetBucket:
 
         def tell():
             return 999
-        
+
         def tell2():
             return 1024 * 1024 * 16 + 99
 
@@ -897,7 +1010,7 @@ class TestWidgetBucket:
 
         def none_get_func(key, value):
             return None
-        
+
         def create_func(file_bucket, key, stream, size, mimetype):
             return None
 
@@ -944,7 +1057,7 @@ class TestWidgetBucket:
                                 ) != None
                             except:
                                 pass
-                
+
 
     # def get_file(self, file_name, community_id=0):
     # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_utils.py::TestWidgetBucket::test_get_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
@@ -957,7 +1070,7 @@ class TestWidgetBucket:
             ret = w.get_file("test.png")
             assert ret.status_code==200
             assert ret.headers['Content-length'] == str(obj.file.size)
-        
+
         def none_get_func(key, value):
             return None
 

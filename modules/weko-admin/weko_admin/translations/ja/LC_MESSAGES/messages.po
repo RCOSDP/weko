@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-admin 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2021-07-29 21:12+0900\n"
+"POT-Creation-Date: 2026-03-25 17:42+0900\n"
 "PO-Revision-Date: 2018-01-19 19:54+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -16,7 +16,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.9.1\n"
+"Generated-By: Babel 2.5.1\n"
 
 #: weko_admin/admin.py:105
 msgid "deny access"
@@ -267,23 +267,6 @@ msgstr "統計設定"
 msgid "Site License Usage Statistics Report"
 msgstr "サイトライセンス利用統計"
 
-#: weko_admin/config.py:129
-msgid "No. Of File Downloads"
-msgstr "ファイルダウンロード回数"
-
-#: weko_admin/config.py:130
-msgid "No. Of File Previews"
-msgstr "ファイルプレビュー数"
-
-#: weko_admin/config.py:131
-msgid "No. Of Paid File Downloads"
-msgstr "課金ファイルダウンロード回数"
-
-#: weko_admin/config.py:132
-#, fuzzy
-msgid "No. Of Paid File Previews"
-msgstr "ファイルプレビュー数"
-
 #: weko_admin/config.py:133
 msgid "Detail Views Per Index"
 msgstr "インデックス毎の詳細ビュー"
@@ -313,21 +296,33 @@ msgstr "ユーザー所属情報"
 msgid "Access Count By Site License"
 msgstr "サイトライセンス別アクセス数"
 
-#: weko_admin/config.py:144
-msgid "Open-Access No. Of File Downloads"
+#: weko_admin/config.py:159
+msgid "Number of File Downloads"
+msgstr "ファイルダウンロード回数"
+
+#: weko_admin/config.py:160
+msgid "Number of File Previews"
+msgstr "ファイルプレビュー数"
+
+#: weko_admin/config.py:161
+msgid "Number of Paid File Downloads"
+msgstr "課金ファイルダウンロード回数"
+
+#: weko_admin/config.py:173
+msgid "Number of Open-Access File Downloads"
 msgstr "オープンアクセスファイルダウンロード数"
 
-#: weko_admin/config.py:145
-msgid "Open-Access No. Of File Previews"
+#: weko_admin/config.py:174
+msgid "Number of Open-Access File Previews"
 msgstr "オープンアクセスファイルプレビュー数"
 
-#: weko_admin/config.py:158
-msgid "Open-Access No. Of Paid File Downloads"
-msgstr "オープンアクセス課金ファイルダウンロード数"
-
-#: weko_admin/config.py:146
+#: weko_admin/config.py:175
 msgid "Access Number Breakdown By Site License"
 msgstr "サイトライセンス別アクセス数内訳"
+
+#: weko_admin/config.py:176
+msgid "Number of Open-Access Paid File Downloads"
+msgstr "オープンアクセス課金ファイルダウンロード数"
 
 #: weko_admin/config.py:152 weko_admin/config.py:157
 msgid "File Name"
@@ -341,12 +336,12 @@ msgstr "登録インデックス名"
 msgid "No. Of Times Downloaded"
 msgstr "ファイルダウンロード回数"
 
-#: weko_admin/config.py:153 weko_admin/config.py:157
-msgid "Non-Logged In User"
+#: weko_admin/config.py:183 weko_admin/config.py:188
+msgid "Non-Logged in User"
 msgstr "未ログインユーザー"
 
-#: weko_admin/config.py:154 weko_admin/config.py:157
-msgid "Logged In User"
+#: weko_admin/config.py:184 weko_admin/config.py:189
+msgid "Logged in User"
 msgstr "ログインユーザー"
 
 #: weko_admin/config.py:154 weko_admin/config.py:159
@@ -538,11 +533,15 @@ msgstr "アカウント情報が無効です。再度確認してください"
 msgid "Registered Users"
 msgstr "登録ユーザー"
 
-#: weko_admin/utils.py:374
+#: weko_admin/utils.py:448
 msgid "Aggregation Month"
 msgstr "集計月"
 
-#: weko_admin/utils.py:388
+#: weko_admin/utils.py:448
+msgid "Aggregation Period"
+msgstr "集計期間"
+
+#: weko_admin/utils.py:477
 msgid "Total Detail Views"
 msgstr "詳細ビュー合計"
 
@@ -739,8 +738,7 @@ msgstr "作成"
 msgid "Edit"
 msgstr "編集"
 
-#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:64
-#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+#: weko_admin/templates/weko_admin/admin/facet_search_setting.html:71
 msgid "Details"
 msgstr "詳細"
 
@@ -1587,6 +1585,14 @@ msgstr "送信間隔"
 #: weko_admin/templates/weko_admin/partials/email_schedule.html:19
 msgid "Frequency"
 msgstr "頻度"
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:23
+msgid "Send Date"
+msgstr "送信日"
+
+#: weko_admin/templates/weko_admin/partials/email_schedule.html:58
+msgid "End of Month"
+msgstr "月末"
 
 #: weko_admin/templates/weko_admin/settings/lifetime.html:30
 msgid "Life Time"

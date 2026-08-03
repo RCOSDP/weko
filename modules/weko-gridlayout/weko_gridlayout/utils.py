@@ -673,14 +673,13 @@ def find_rss_value(data, keyword):
                 given_name = creator.get('givenName')
                 list_creator = list()
                 for i in range(0, len(family_name)):
-                    if family_name[i]:
-                        if given_name[i]:
-                            list_creator.append(
-                                family_name[i] + '.' + given_name[i])
-                        else:
-                            list_creator.append(family_name[i])
-                    else:
+                    if not family_name[i]:
                         continue
+                    if given_name[i]:
+                        list_creator.append(
+                            family_name[i] + '.' + given_name[i])
+                    else:
+                        list_creator.append(family_name[i])
                 return list_creator
         else:
             return ''
@@ -711,23 +710,38 @@ def find_rss_value(data, keyword):
             result = get_rss_data_source(source.get('date')[0], 'value')
         return result
     elif keyword == 'description':
+        res = ''
         if source.get('description') and source.get('description')[0]:
-            item_type_mapping = Mapping.get_record(source.get(
-                '_item_metadata').get('item_type_id'))
-            item_map = get_mapping(item_type_mapping, "jpcoar_mapping")
-            desc_typ = item_map.get('description.@attributes.descriptionType')
-            desc_val = item_map.get('description.@value')
-            desc_dat = source.get('_item_metadata').get(desc_typ.split('.')[0])
-            if desc_dat and desc_dat.get('attribute_value_mlt'):
-                list_des_data = get_pair_value(desc_val.split('.')[1:],
-                                               desc_typ.split('.')[1:],
-                                               desc_dat.get(
-                                                   'attribute_value_mlt'))
-                for des_text, des_type in list_des_data:
-                    if des_type == 'Abstract':
-                        return des_text
-        else:
-            return ''
+            from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
+
+            meta_option, item_type_mapping = get_options_and_order_list(
+                source.get('_item_metadata').get('item_type_id'))
+            hide_list = get_hide_list_by_schema_form(
+                source.get('_item_metadata').get('item_type_id'))
+            item_map = get_mapping(source.get('_item_metadata').get('item_type_id'), "jpcoar_mapping")
+            desc_typ_list = item_map.get('description.@attributes.descriptionType').split(',')
+            desc_val_list = item_map.get('description.@value').split(',')
+            for desc_val in desc_val_list:
+                skip_flag = False
+                val_key_list = desc_val.split('.')
+                for desc_typ in desc_typ_list:
+                    typ_key_list = desc_typ.split('.')
+                if val_key_list[0] == typ_key_list[0]:
+                    prop_hidden = meta_option.get(val_key_list[0], {}).get('option', {}).get('hidden', False)
+                    desc_dat = source.get('_item_metadata').get(typ_key_list[0])
+                    if desc_dat and desc_dat.get('attribute_value_mlt') and not prop_hidden:
+                        for h in hide_list:
+                            if h.startswith(val_key_list[0]) and h.endswith(val_key_list[-1]):
+                                skip_flag = True
+                                break
+                        if not skip_flag:
+                            list_des_data = get_pair_value(val_key_list[1:],
+                                                           typ_key_list[1:],
+                                                           desc_dat.get('attribute_value_mlt'))
+                            for des_text, des_type in list_des_data:
+                                if des_type == 'Abstract':
+                                    res = des_text
+        return res
     elif keyword == '_updated':
         return get_rss_data_source(source, '_updated')
     else:
@@ -851,7 +865,7 @@ def has_main_contents_widget(settings):
 
     Returns:
         _type_: _description_
-    """    
+    """
     if settings:
         for item in settings:
             if item.get('type') == config.WEKO_GRIDLAYOUT_MAIN_TYPE:

@@ -381,7 +381,7 @@ def _database_setup(app, request):
                 app.kvsession_store.redis.flushall()
 
     request.addfinalizer(teardown)
-    return a
+    return app
 
 @pytest.yield_fixture()
 def api(app):

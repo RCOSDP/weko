@@ -16,6 +16,8 @@ import os
 import shutil
 import sys
 import tempfile
+import random
+import copy
 from os.path import dirname, join
 
 import pytest
@@ -126,7 +128,7 @@ class MockEs():
             pass
         def delete_alias(self, index="", name="",ignore=""):
             pass
-        
+
         # def search(self,index="",doc_type="",body={},**kwargs):
         #     pass
     class MockCluster():
@@ -414,3 +416,81 @@ def i18n_app(app):
         app.extensions['invenio-i18n'] = MagicMock()
         app.extensions['invenio-i18n'].language = "ja"
         yield app
+
+@pytest.fixture()
+def prepare_search_result():
+    search_result_dict, target = make_search_result()
+
+    start_key = 2000001
+    return_value = {
+        str(start_key + i): i + 1
+        for i in range(100)
+    }
+
+    return search_result_dict, target, return_value
+
+@pytest.fixture()
+def prepare_search_result2():
+    search_result_dict, target = make_search_result()
+    start_key = 2000001
+    random.seed(0)
+    numbers = list(range(0, 100))
+    random.shuffle(numbers)
+
+    return_value = {
+        str(start_key + i): v
+        for i, v in zip(range(100), numbers)
+    }
+
+    return search_result_dict, target, return_value
+
+def make_search_result():
+    search_result_dict = {
+        "took": 1,
+        "timed_out": False,
+        "_shards": {
+            "total": 100,
+            "successful": 100,
+            "skipped": 0,
+            "failed": 0
+        },
+        "hits": {
+            "total": 100,
+            "max_score": None,
+            "hits": [
+                {
+                    "_index": "tenant1-weko-item-v1.0.0",
+                    "_type": "item-v1.0.0",
+                    "_id": "5b2393bf-e43e-4785-a32d-d1acfe300461",
+                    "_version": 4,
+                    "_score": None,
+                    "_source": {
+                        "control_number": "2000001",
+                        "item_title": "test",
+                        "publish_date": "2026-03-30",
+                        "publish_status": "0",
+                        "_created": "2026-03-30T04:08:30.080849+00:00",
+                        "_updated": "2026-03-30T04:09:21.867115+00:00",
+                        "type": ["journal article"],
+                        "path": ["1623632832836"]
+                    },
+                    "sort": ["1623632832836"]
+                }
+            ]
+        }
+    }
+
+    base_hit = search_result_dict["hits"]["hits"][0]
+    new_hits = []
+
+    start_key = 2000001
+    for i in range(100):
+        new_hit = copy.deepcopy(base_hit)
+        new_hit["_source"]["control_number"] = str(start_key + i)
+        new_hits.append(new_hit)
+
+    search_result_dict["hits"]["hits"] = new_hits
+
+    target = {1623632832836}
+
+    return search_result_dict, target

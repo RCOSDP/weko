@@ -24,7 +24,7 @@ import pickle
 from datetime import datetime
 
 import pytz
-from flask import request
+from flask import request, current_app
 from invenio_db import db
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
@@ -32,7 +32,7 @@ from invenio_records_rest.views import RecordsListResource
 from invenio_stats.views import QueryRecordViewCount, QueryFileStatsCount
 from weko_index_tree.api import Index
 
-from weko_records.api import Mapping
+from weko_records.api import Mapping, ItemTypes
 from weko_records.models import ItemType, ItemTypeName, ItemTypeProperty
 
 from .dc import DcWekoBaseExtension, DcWekoEntryExtension
@@ -42,11 +42,11 @@ from .prism import PrismEntryExtension, PrismExtension
 from .wekolog import WekologEntryExtension, WekologExtension
 
 
-def get_mapping(item_type_mapping, mapping_type):
+def get_mapping(item_type_id, mapping_type):
     """Format itemtype mapping data.
 
     [Key:Schema, Value:ItemId]
-    :param item_type_mapping:
+    :param item_type_id:
     :param mapping_type:
     :return:
     """
@@ -63,12 +63,18 @@ def get_mapping(item_type_mapping, mapping_type):
         return schema_json
 
     schema = {}
-    for item_id, maps in item_type_mapping.items():
-        if mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
-            item_schema = get_schema_key_info(maps[mapping_type], '', {})
-            for k, v in item_schema.items():
-                item_schema[k] = item_id + '.' + v if v else item_id
-            schema.update(item_schema)
+    item_type_mapping = Mapping.get_record(item_type_id)
+    item_type_list = ItemTypes.get_by_id(item_type_id).render.get('table_row')
+    for item_id in item_type_list:
+        if item_id in item_type_mapping:
+            maps = item_type_mapping.get(item_id)
+            if isinstance(maps,dict) and mapping_type in maps.keys() and isinstance(maps[mapping_type], dict):
+                item_schema = get_schema_key_info(maps[mapping_type], '', {})
+                for k, v in item_schema.items():
+                    if k in schema:
+                        schema[k] += ',' + item_id + '.' + v if v else ',' + item_id
+                    else:
+                        schema[k] = item_id + '.' + v if v else item_id
 
     return schema
 
@@ -94,6 +100,7 @@ def get_full_mapping(item_type_mapping, mapping_type):
         return schema_json
 
     schema = {}
+
     for item_id, maps in item_type_mapping.items():
         if mapping_type in maps.keys() \
                 and isinstance(maps[mapping_type], dict):
@@ -396,12 +403,11 @@ class OpenSearchDetailData:
             item_metadata = hit['_source']['_item_metadata']
 
             item_type_id = item_metadata['item_type_id']
-            type_mapping = Mapping.get_record(item_type_id)
 
             if item_type_id in jpcoar_map:
                 item_map = jpcoar_map[item_type_id]
             else:
-                item_map = get_mapping(type_mapping, 'jpcoar_mapping')
+                item_map = get_mapping(item_type_id, 'jpcoar_mapping')
                 jpcoar_map[item_type_id] = item_map
 
             fe = fg.add_entry()
@@ -790,99 +796,114 @@ class OpenSearchDetailData:
                                                publisher_lang)
 
     def _set_source_identifier(self, fe, item_map, item_metadata):
-        if self.output_type == self.OUTPUT_ATOM:
-            _source_identifier_value = 'sourceIdentifier.@value'
-            if _source_identifier_value in item_map:
-                source_identifier_key = item_map[_source_identifier_value]
-                item_id = source_identifier_key.split('.')[0]
+        """Retrieve the source identifier from
+           the item's metadata and set it in the feedentry.
 
-                # Get item data
-                if item_id in item_metadata:
-                    source_identifier_metadata = get_metadata_from_map(
-                        item_metadata[item_id], item_id)
+        Args:
+            fe(WekoFeedGenerator): feed entry
+            item_map(dict): itemtype mapping
+            item_metadata(dict): item metadata
+        """
+        _source_identifier_value = 'sourceIdentifier.@value'
+        _source_identifier_attr_type = \
+                            'sourceIdentifier.@attributes.identifierType'
+        try:
+            if _source_identifier_value in item_map \
+                and _source_identifier_attr_type in item_map:
+                source_identifier_value_keys = \
+                    item_map[_source_identifier_value].split(',')
+                source_identifier_attr_type_keys = \
+                    item_map[_source_identifier_attr_type].split(',')
+                for source_identifier_value_key, source_identifier_attr_type_key in zip(
+                        source_identifier_value_keys,
+                        source_identifier_attr_type_keys
+                    ):
+                    item_id = source_identifier_value_key.split('.')[0]
+                    # Get item data
+                    if item_id in item_metadata:
+                        source_identifier_metadata = get_metadata_from_map(
+                            item_metadata[item_id], item_id)
+                        if self.output_type == self.OUTPUT_ATOM:
+                            source_identifiers = source_identifier_metadata.get(
+                                source_identifier_value_key)
 
-                    if not isinstance(source_identifier_metadata, dict) \
-                            or source_identifier_metadata.get(
-                            source_identifier_key) is None:
-                        return
-                    source_identifiers = source_identifier_metadata.get(
-                        source_identifier_key)
-
-                    if source_identifiers:
-                        if isinstance(source_identifiers, list):
-                            for source_identifier in source_identifiers:
-                                fe.prism.issn(source_identifier)
+                            if source_identifiers:
+                                if isinstance(source_identifiers, list):
+                                    for source_identifier in source_identifiers:
+                                        fe.prism.issn(source_identifier)
+                                else:
+                                    fe.prism.issn(source_identifiers)
                         else:
-                            fe.prism.issn(source_identifiers)
-        else:
-            _source_identifier_attr_type = \
-                'sourceIdentifier.@attributes.identifierType'
-            _source_identifier_value = 'sourceIdentifier.@value'
-            if _source_identifier_value in item_map:
-                item_id = item_map[_source_identifier_value].split('.')[0]
-
-                # Get item data
-                if item_id in item_metadata:
-                    source_identifier_metadata = get_metadata_from_map(
-                        item_metadata[item_id], item_id)
-
-                    source_identifiers = source_identifier_metadata[
-                        item_map[_source_identifier_attr_type]]
-
-                    source_identifier_types = source_identifier_metadata[
-                        item_map[_source_identifier_value]]
-
-                    if source_identifiers:
-                        if isinstance(source_identifiers, list):
-                            for i in range(len(source_identifiers)):
-                                source_identifier_type = \
-                                    source_identifier_types[i]
-                                if source_identifier_type \
-                                        and source_identifier_type == 'ISSN':
-                                    fe.prism.issn(source_identifiers[i])
-
-                        elif source_identifier_types \
-                                and source_identifier_types == 'ISSN':
-                            fe.prism.issn(source_identifiers)
+                            attr = item_metadata.get(item_id).get("attribute_value_mlt")
+                            if not attr:
+                                continue
+                            type_key = source_identifier_attr_type_key.split('.')[1]
+                            value_key = source_identifier_value_key.split('.')[1]
+                            for a in attr:
+                                source_identifier_type = a.get(type_key)
+                                source_identifier_value = a.get(value_key)
+                                if source_identifier_type and source_identifier_value \
+                                    and source_identifier_type == 'ISSN':
+                                    fe.prism.issn(source_identifier_value)
+        except Exception as ex:
+            current_app.logger.error(ex)
 
     def _set_author_info(self, fe, item_map, item_metadata, request_lang):
+        from weko_records_ui.utils import get_pair_value
         _creator_name_value = 'creator.creatorName.@value'
         if _creator_name_value in item_map:
-            item_id = item_map[_creator_name_value].split('.')[0]
+            create_name_keys = item_map[_creator_name_value].split(',')
+            for create_name_key in create_name_keys:
+                item_id = create_name_key.split('.')[0]
+                if item_id not in item_metadata:
+                    continue
 
-            # Get item data
-            if item_id in item_metadata:
-                creator_metadata = get_metadata_from_map(
-                    item_metadata[item_id], item_id)
+                _creator_name_attr_lang = item_id + '.creatorNames.creatorNameLang'
 
-                create_name_key = item_map[_creator_name_value]
-                if not isinstance(creator_metadata, dict) \
-                        or creator_metadata.get(create_name_key) is None:
-                    return
+                # RSS dc:creator
+                if self.output_type == self.OUTPUT_RSS:
+                    dc_creator_data = get_pair_value(
+                        create_name_key.split('.')[1:],
+                        _creator_name_attr_lang.split('.')[1:],
+                        item_metadata[item_id]['attribute_value_mlt']
+                    )
 
-                creator_names = creator_metadata[create_name_key]
-
-                _creator_name_attr_lang = item_id + '.' + 'creatorNameLang'
-                creator_name_langs = creator_metadata[
-                    _creator_name_attr_lang] \
-                    if _creator_name_attr_lang in creator_metadata else None
-
-                if creator_name_langs:
-                    if isinstance(creator_name_langs, list):
-                        for i in range(len(creator_name_langs)):
-                            creator_name_lang = creator_name_langs[i]
+                    for dc_creator_name, dc_creator_name_lang in dc_creator_data:
+                        if dc_creator_name and dc_creator_name_lang:
                             if request_lang:
-                                if creator_name_lang == request_lang:
-                                    fe.author({'name': creator_names[i],
-                                               'lang': creator_name_lang})
+                                if dc_creator_name_lang == request_lang:
+                                    fe.dc.dc_creator(dc_creator_name, dc_creator_name_lang)
                             else:
-                                fe.author({'name': creator_names[i],
-                                           'lang': creator_name_lang})
-                    else:
-                        if request_lang:
-                            if creator_name_langs == request_lang:
-                                fe.author({'name': creator_names,
-                                           'lang': creator_name_langs})
+                                fe.dc.dc_creator(dc_creator_name, dc_creator_name_lang)
+                else:
+                    # Atom author
+                    creator_metadata = get_metadata_from_map(
+                        item_metadata[item_id], item_id)
+                    if not isinstance(creator_metadata, dict) \
+                            or creator_metadata.get(create_name_key) is None:
+                        continue
+
+                    creator_names = creator_metadata[create_name_key]
+                    creator_name_langs = creator_metadata[
+                        _creator_name_attr_lang] \
+                        if _creator_name_attr_lang in creator_metadata else None
+
+                    if creator_name_langs:
+                        if isinstance(creator_name_langs, list):
+                            for i in range(len(creator_name_langs)):
+                                creator_name_lang = creator_name_langs[i]
+                                if request_lang:
+                                    if creator_name_lang == request_lang:
+                                        fe.author({'name': creator_names[i],
+                                                'lang': creator_name_lang})
+                                else:
+                                    fe.author({'name': creator_names[i],
+                                            'lang': creator_name_lang})
                         else:
-                            fe.author({'name': creator_names,
-                                       'lang': creator_name_langs})
+                            if request_lang:
+                                if creator_name_langs == request_lang:
+                                    fe.author({'name': creator_names,
+                                            'lang': creator_name_langs})
+                            else:
+                                fe.author({'name': creator_names,
+                                        'lang': creator_name_langs})

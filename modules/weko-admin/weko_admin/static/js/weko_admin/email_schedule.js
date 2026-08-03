@@ -17,11 +17,13 @@ $(document).ready(function () {
     switch(frequency) {
       case 'monthly':
         $('#email_sched_details_weekly').addClass('hidden');
+        $('#sched_details_label').removeClass('hidden');
         $('.weekly-option').prop('selected', false);
         $('#email_sched_details_monthly').removeClass('hidden');
         break;
       case 'weekly':
         $('#email_sched_details_monthly').addClass('hidden');
+        $('#sched_details_label').removeClass('hidden');
         $('.monthly-option').prop('selected', false);
         $('#email_sched_details_weekly').removeClass('hidden');
         break;

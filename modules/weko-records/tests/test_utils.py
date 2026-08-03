@@ -443,8 +443,8 @@ def test_get_all_items(admin_settings,roles):
     # 55
     role_name = 'role_name'
     _nlst2 = [
-        {'billing': ['billing_file'], 
-        'priceinfo': [{'tax': 'include_tax', 'price': '110', 'billingrole': role_name, 'has_role': True}], 
+        {'billing': ['billing_file'],
+        'priceinfo': [{'tax': 'include_tax', 'price': '110', 'billingrole': role_name, 'has_role': True}],
         }
     ]
     _klst2 = [
@@ -458,8 +458,8 @@ def test_get_all_items(admin_settings,roles):
 
     role_name = '6'
     _nlst2 = [
-        {'billing': ['billing_file'], 
-        'priceinfo': [{'tax': 'include_tax', 'price': '110', 'billingrole': role_name, 'has_role': True}], 
+        {'billing': ['billing_file'],
+        'priceinfo': [{'tax': 'include_tax', 'price': '110', 'billingrole': role_name, 'has_role': True}],
         }
     ]
     res2 = get_all_items(_nlst2, _klst2)
@@ -684,7 +684,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
         mapping={}
     )
     settings = AdminSettings.get("items_display_settings")
-    
+
     data1 = {
         "key1.@attributes.xml:lang": "test",
     }
@@ -710,7 +710,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
             "meta_list_9999": "meta_list_9999",
         }
     }
-    
+
     with patch("weko_records.serializers.utils.get_mapping", return_value=data1):
         with patch("weko_search_ui.utils.get_data_by_property", return_value=("1", "2")):
             await sort_meta_data_by_options(record_hit,settings,item_type_mapping,item_type)
@@ -832,7 +832,7 @@ async def test_sort_meta_data_by_options_sample_1(i18n_app, db, admin_settings):
                 "meta_list": {
                     "meta_list_9999": "meta_list_9999",
                 }
-            } 
+            }
 
             await sort_meta_data_by_options(
                 record_hit=record_hit_2,
@@ -1147,17 +1147,45 @@ def test_selected_value_by_language(app, meta):
     _val_id = 'item_1551264308487.subitem_1551255647225'
     res = selected_value_by_language(['ja', 'en'], ['タイトル日本語', 'Title'], _lang_id, _val_id, 'en', meta[0])
     assert res=='Title'
+
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = False
     _lang_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255907416'
     _val_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255905565'
     res = selected_value_by_language(['ja'], ['作者'], _lang_id, _val_id, 'en', meta[0])
     assert res=='作者'
+
     app.config['WEKO_RECORDS_UI_LANG_DISP_FLG'] = True
     res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
     assert res=='Creator'
+    res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0],{},['item_1551264340087.subitem_1551255898956.subitem_1551255905565','dummy'])
+    assert res == None
+    res = selected_value_by_language([], ['Creator'], _lang_id, _val_id, 'ja', meta[0])
+    assert res == '作者'
+
     with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
         res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta[0])
         assert res=='en'
+    with patch("weko_records.utils.check_info_in_metadata", side_effect=[None, "expected"]):
+        res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+        assert res=="expected"
+    with patch("weko_records.utils.check_info_in_metadata", side_effect=[None, "expected"]):
+        res = selected_value_by_language(['ja-Latn'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+        assert res=="expected"
+    with patch("weko_records.utils.check_info_in_metadata", side_effect=[None, None, None, None, None]):
+        res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+        assert res==None
+    with patch("weko_records.utils.check_info_in_metadata", side_effect=[None, None]):
+        res = selected_value_by_language(['ja'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+        assert res==None
+    with patch("weko_records.utils.check_info_in_metadata", side_effect=[None, None]):
+        res = selected_value_by_language([''], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+        assert res==None
+
+    _lang_id = 'item_1551264308487.subitem_1551255648112'
+    _val_id = 'item_1551264340087.subitem_1551255898956.subitem_1551255905565'
+    res = selected_value_by_language(['en'], ['Creator'], _lang_id, _val_id, 'en', meta[0])
+    assert res == '作者'
+
 
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_selected_value_by_language_2 -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_selected_value_by_language_2(app, meta):
@@ -1176,18 +1204,9 @@ def test_selected_value_by_language_3(app):
     res = selected_value_by_language(["en"], ['title_with_nolang','title_en'], _lang_id, _val_id, 'ja', meta)
     assert res!='title_en'
     assert res=='title_with_nolang'
-    
 
     with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
         res = selected_value_by_language(["ja-Latn"], ['ja-Latn'], _lang_id, _val_id, 'en', meta)
-        assert res=='en'
-
-def test_selected_value_by_language_2(app, meta):
-    _lang_id = 'item_1551264308487.subitem_15512556481122'
-    _val_id = 'item_1551264308487.subitem_15512556472252'
-
-    with patch("weko_records.utils.check_info_in_metadata", return_value="en"):
-        res = selected_value_by_language(["en"], ['ja'], _lang_id, _val_id, 'ja', meta[0])
         assert res=='en'
 
 # def check_info_in_metadata(str_key_lang, str_key_val, str_lang, metadata):
@@ -1206,6 +1225,23 @@ def test_check_info_in_metadata(app, meta):
     _str_key_val = 'item_1551264418667.subitem_1551257245638.subitem_1551257276108'
     res = check_info_in_metadata(_str_key_lang, _str_key_val, 'en', meta[0])
     assert res=='Contributor'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': {'subitem_title': 'title', 'subitem_title_language': 'ja'}, 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res is not None
+    assert res=='title'
+    _str_key_lang = 'item_30002_title0.subitem_title_language'
+    _str_key_val = 'item_30002_title0.subitem_title'
+    _lang = 'ja'
+    _meta = {'path': ['1623632832836'], 'pubdate': '2024-12-26', 'item_30002_title0': [{'subitem_title': 'title', 'subitem_title_language': 'ja'}], 'item_30002_resource_type13': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'item_30002_file35': [{'filename': '日本語.png'}], 'item_1735223788720': {'subitem_thumbnail': [{'thumbnail_label': 'jdcat.jsps.go.jp_about.png', 'thumbnail_url': '/api/files/d88a107f-c3a7-4ad6-81ca-4c34691682d1/jdcat.jsps.go.jp_about.png?versionId=37ad1676-9099-4f82-ba7a-35ef4f325b39'}]}}
+    res = check_info_in_metadata(_str_key_lang, _str_key_val, _lang, _meta)
+    assert res=='title'
+
+
+
+
 
 # def get_value_and_lang_by_key(key, data_json, data_result, stt_key):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_value_and_lang_by_key -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1299,7 +1335,7 @@ def test_get_value_by_selected_lang(app):
     res = get_value_by_selected_lang(_source_title3, 'en')
     assert res=='no_lang_test'
 
-    
+
 
 # def get_show_list_author(solst_dict_array, hide_email_flag, author_key, creates):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_get_show_list_author -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -1443,7 +1479,7 @@ def test_format_creates(i18n_app):
         }]
     }]
     _hide_creator_keys = ['familyNames']
-    
+
     res = format_creates(_creates, _hide_creator_keys)
     assert res==[{'creatorName': ['en_name'], 'affiliationName': ['en_af'], 'creatorAlternative': ['en_al']}]
 
@@ -1566,13 +1602,13 @@ def test_get_author_has_language(app):
     ]
     res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang'])
     assert res=={'affiliationName': ['en_af']}
-    
+
     res = get_author_has_language(_create, {}, 'fr', ['affiliationName', 'af_lang'])
     assert res=={'affiliationName': ['en_af']}
-    
+
     res = get_author_has_language(_create, {}, 'en', ['affiliationName', 'af_lang2'])
     assert res=={'affiliationName': ['en_af']}
-    
+
     res = get_author_has_language(_create, {}, 'en', ['affiliationName2', 'af_lang2'])
     assert res=={}
 
@@ -1586,7 +1622,7 @@ def test_add_author(app):
     _data = {'creatorName': 'test1'}
     _s1 = {'key': 'item_1.names[].creatorName'}
     _s2 = {'key': 'item_1.ids[].nameIdentifier'}
-    
+
     stt_key, data_result, newline_array = add_author(_data, [], [], _s1, 'value1', {}, False, False, True)
     assert stt_key==['creatorName']
     assert data_result=={'creatorName': {'creatorName': {'value': 'test1'}}}
@@ -1635,7 +1671,7 @@ def test_convert_bibliographic():
     assert res2=='key name1, key name2, key name3'
 
 
-# def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key, data_result, 
+# def add_biographic(sys_bibliographic, bibliographic_key, s, stt_key, data_result,
 def test_add_biographic(app):
     def get_bibliographic_list(x):
         return x
@@ -1704,7 +1740,7 @@ def test_replace_fqdn_of_file_metadata(app):
             'version_id': '1'
         }
     ]
-    
+
     _file_url = []
     replace_fqdn_of_file_metadata(_file_metadata_list1)
     assert _file_metadata_list1==[{'url': {'url': 'http://test/a'}}, {'url': {'url': 'http://test/b'}}]
@@ -1712,4 +1748,3 @@ def test_replace_fqdn_of_file_metadata(app):
     assert _file_url==['http://test/a', 'http://test/b']
     replace_fqdn_of_file_metadata(_file_metadata_list2)
     assert _file_metadata_list2==[{'url': {'url': 'https://localhost/a'}, 'version_id': '1'}, {'url': {'url': 'https://localhost/b'}, 'version_id': '1'}]
-    

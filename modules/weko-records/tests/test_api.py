@@ -76,14 +76,14 @@ def test_recordbase(app, db):
     assert result["created"] == "yesterday"
     assert result["updated"] == "now"
     assert record.validate(validator=Draft4Validator)==None
-    
+
     schema = {
     'type': 'object',
     'properties': {
     'id': { 'type': 'integer' },
     'version_id': { 'type': 'integer' },
     'created': {'type': 'string' },
-    'updated': { 'type': 'string' },    
+    'updated': { 'type': 'string' },
     },
     'required': ['id']
     }
@@ -98,7 +98,7 @@ def test_recordbase(app, db):
     test_model.__getitem__.side_effect = data.__getitem__
     record = RecordBase(data)
     record.model = test_model
-    assert record.validate(validator=Draft4Validator) == None    
+    assert record.validate(validator=Draft4Validator) == None
     assert record.replace_refs()=={'id': 1, 'version_id': 10, 'created': 'yesterday', 'updated': 'now', '$schema': {'type': 'object', 'properties': {'id': {'type': 'integer'}, 'version_id': {'type': 'integer'}, 'created': {'type': 'string'}, 'updated': {'type': 'string'}}, 'required': ['id']}}
 
 # class ItemTypeNames(RecordBase):
@@ -362,7 +362,7 @@ def test_itemtypes_update_item_type(app, db, location):
         filter_magicmock.all = all
 
         return filter_magicmock
-    
+
     def myfilter_2(item):
         def all_2():
             all2_magicmock = MagicMock()
@@ -401,7 +401,7 @@ def test_itemtypes_update_item_type(app, db, location):
                         result=item_type,
                         schema=_schema
                     ) != None
-                
+
             with patch("weko_records.api.db.session.query", return_value=data1):
                 assert test.update_item_type(
                     form=_form,
@@ -851,7 +851,7 @@ def test_itemtypes_restore(app, db):
 #     def revisions(self):
 def test_revision_ItemTypes(app):
     test = ItemTypes(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -859,7 +859,7 @@ def test_revision_ItemTypes(app):
         pass
 
     test.model = True
-    
+
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
@@ -1275,7 +1275,7 @@ def test_get_registered_item_metadata_ItemsMetadata(app):
         all_magicmock = MagicMock()
         all_magicmock.id = 1
         return [all_magicmock]
-    
+
     data1.query = MagicMock()
     data1.query.filter_by = MagicMock()
     data1.query.filter_by.all = all_func
@@ -1391,7 +1391,7 @@ def test_item_metadata_revert(app, db):
 #     def revisions(self):
 def test_revision_ItemsMetadata(app):
     test = ItemsMetadata(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -1427,7 +1427,7 @@ def test_files_metadata_create(app, db):
 def test_files_metadata_get_record(app, db):
     FilesMetadata.create(data={'data': 'test'}, pid=1, con=bytes('test content', 'utf-8'))
     FilesMetadata.create(data={})
-    
+
     record = FilesMetadata.get_record(1)
     assert record.id==1
     assert record.model.pid==1
@@ -1469,7 +1469,7 @@ def test_files_metadata_get_records(app, db):
 #     def patch(self, patch):
 def test_patch_FilesMetadata(app):
     test = FilesMetadata(data={})
-    
+
     with patch("weko_records.api.apply_patch", return_value=""):
         test.patch(patch="test")
 
@@ -1555,7 +1555,7 @@ def test_files_metadata_revert(app, db):
 #     def revisions(self):
 def test_revision_FilesMetadata(app):
     test = FilesMetadata(data={})
-    
+
     # Exception coverage
     try:
         test.revisions()
@@ -1563,7 +1563,7 @@ def test_revision_FilesMetadata(app):
         pass
 
     test.model = True
-    
+
     with patch('weko_records.api.RevisionsIterator', return_value=MagicMock()):
         assert test.revisions() != None
 
@@ -1668,7 +1668,7 @@ def test_pid_WekoRecord(app):
 #     def depid(self):
 def test_depid_WekoRecord(app):
     test = WekoRecord(data={})
-    
+
     with patch('weko_records.api.PersistentIdentifier', return_value=True):
         assert test.depid() != None
 

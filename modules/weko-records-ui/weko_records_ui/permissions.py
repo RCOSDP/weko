@@ -715,7 +715,7 @@ def check_charge(user_id, item_id):
     return 'not_billed'
 
 
-def create_charge(user_id, item_id, price, title, file_url):
+def create_charge(user_id, item_id, price, title, file_url, ret_url):
     """課金予約を行う
 
     Args:
@@ -724,6 +724,7 @@ def create_charge(user_id, item_id, price, title, file_url):
         price     : File price
         title     : Item title
         file_url  : File download url
+        ret_url   : Return URL
 
     Returns:
         str:
@@ -731,7 +732,7 @@ def create_charge(user_id, item_id, price, title, file_url):
             credit_error     : クレジットカード情報エラー(カード番号が未登録か無効)
             connection_error : 通信エラー
             api_error        : APIエラー
-            上記以外         : 明細番号
+            上記以外         : 3DセキュアリダイレクトURL
     """
 
     repository_charge_settings = AdminSettings.get('repository_charge_settings')
@@ -759,6 +760,7 @@ def create_charge(user_id, item_id, price, title, file_url):
         'title': title,                             # 課金対象コンテンツのタイトル(明細に表示される)
         'uri': file_url,                            # コンテンツ再表示用URL
         'memo': indexes,                            #  請求書の明細の補足欄に表示されるインデックス階層
+        'ret_url': ret_url,                         # 3Dセキュア認証完了後のリダイレクトURL
     }
 
     # プロキシ設定
@@ -789,12 +791,12 @@ def create_charge(user_id, item_id, price, title, file_url):
         current_app.logger.error(f'no json error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'api_error'
 
-    if res.headers.get('WEKO_CHARGE_STATUS') == -128:
+    if res.headers.get('WEKO_CHARGE_STATUS') == '-128':
         # クレジットカード情報エラー(カード番号が未登録か無効)
         current_app.logger.error(f'credit_error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'credit_error'
 
-    if res.headers.get('WEKO_CHARGE_STATUS') == -64:
+    if res.headers.get('WEKO_CHARGE_STATUS') == '-64':
         # GMO通信エラー
         current_app.logger.error(f'connection_error in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'connection_error'
@@ -805,11 +807,80 @@ def create_charge(user_id, item_id, price, title, file_url):
             return 'already'
 
         # 課金予約成功
-        return str(res_json.get('trade_id'))
+        return str(res_json.get('redirect_url')) if res_json.get('redirect_url') else None
 
     current_app.logger.error(f'invalid response by charge API in create_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
     return 'api_error'
 
+
+def secure_charge(user_id, access_id):
+    """3DS2.0認証後決済を行う
+    
+    Args:
+        user_id   : User ID
+        access_id : Access ID
+        
+    Returns:
+        str:
+            connection_error : 通信エラー
+            api_error        : APIエラー
+            trade_id         : 明細番号
+    """
+    repository_charge_settings = AdminSettings.get('repository_charge_settings')
+    charge_protocol = repository_charge_settings.protocol
+    charge_fqdn = repository_charge_settings.fqdn
+    charge_user = repository_charge_settings.user
+    charge_pass = repository_charge_settings.password
+    sys_id = repository_charge_settings.sys_id
+
+    url = f'{charge_protocol}://{charge_user}:{charge_pass}@{charge_fqdn}/charge/secure_tran'
+    params = {
+        'sys_id': sys_id,                           # 機関ID
+        'user_id': _get_shib_user_name(user_id),    # 課金対象ログインユーザーのハッシュ化されたID
+        'access_id': access_id,                     # 課金予約時に取得したアクセスID
+    }
+
+    # プロキシ設定
+    proxy_settings = AdminSettings.get('proxy_settings')
+    proxy_host = proxy_settings.host
+    proxy_port = proxy_settings.port
+    proxy_user = proxy_settings.user
+    proxy_pass = proxy_settings.password
+    proxy_mode = proxy_settings.use_proxy
+    proxies = {
+        'http': f'http://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+        'https': f'https://{proxy_user}:{proxy_pass}@{proxy_host}:{proxy_port}',
+    }
+
+    # HTTPリクエスト実行
+    try:
+        if proxy_mode:
+            res = requests.get(url, params=params, timeout=10, proxies=proxies)
+        else:
+            res = requests.get(url, params=params, timeout=10)
+    except Exception as e:
+        current_app.logger.error(f'requests error in secure_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        current_app.logger.error(e)
+        return 'api_error'
+
+    res_json = res.json()
+    if not res_json:
+        current_app.logger.error(f'no json error in secure_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        return 'api_error'
+
+    if res.headers.get('WEKO_CHARGE_STATUS') == '-64':
+        # GMO通信エラー
+        current_app.logger.error(f'connection_error in secure_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
+        return 'connection_error'
+    
+    if isinstance(res_json, dict):
+        if str(res_json.get('charge_status')) == '4':
+            # 3DS2.0認証後決済成功
+            return str(res_json.get('trade_id'))
+    
+    current_app.logger.error(f'invalid response by charge API in secure_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
+    return 'api_error'
+    
 
 def close_charge(user_id, trade_id):
     """課金確定を行う
