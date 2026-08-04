@@ -19,6 +19,7 @@
 # MA 02111-1307, USA.
 
 """Utilities for convert response json."""
+import copy
 import csv
 import json
 import math
