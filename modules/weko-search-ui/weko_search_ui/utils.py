@@ -3478,9 +3478,22 @@ def register_item_ark(item):
     """
     current_app.logger.debug("start register_item_ark(item)")
     item_id = str(item.get("id"))
-    record = WekoRecord.get_record_by_pid(item_id)
-    pid = record.pid_recid
-    pid_ark = record.pid_ark
+    try:
+        record = WekoRecord.get_record_by_pid(item_id)
+        pid = record.pid_recid
+        pid_ark = record.pid_ark
+    except Exception as ex:
+        current_app.logger.error(
+            "register_item_ark: can not get the record of {0}: {1}".format(
+                item_id, ex
+            )
+        )
+        return
+    if pid is None:
+        current_app.logger.error(
+            "register_item_ark: can not get the recid of {0}".format(item_id)
+        )
+        return
     ark = item.get("ark")
     status = item.get("status")
     uri = item.get("uri")
@@ -3492,7 +3505,10 @@ def register_item_ark(item):
 
     if item.get("is_change_identifier"):
         # TODO: implement manual register ark
-        current_app.logger.debug("TODO:manual register ark")
+        current_app.logger.warning(
+            "Manual ARK registration is not implemented: "
+            "the ARK specified for item {0} is ignored.".format(item_id)
+        )
     else:
         if item.get("status") == "new":
             register_ark_by_item_id(item_id, pid.object_uuid, get_url_root())

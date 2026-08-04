@@ -34,6 +34,7 @@ import traceback
 from urllib.parse import urljoin
 
 import pytz
+import requests
 from celery.task.control import inspect
 from flask import Flask, current_app, request, session, url_for
 from flask_babelex import gettext as _
@@ -334,103 +335,197 @@ def register_hdl_by_handle(hdl, item_uuid, item_uri):
     current_app.logger.debug("end register_hdl_by_handle(handle, item_uuid):")
 
 
+def is_ark_registration_allowed():
+    """Check whether ARK registration is enabled and configured.
+
+    Every caller of the ARK registration must pass this check first, so that
+    a missing setting can never be mistaken for "ARK is turned off".
+
+    Returns:
+        bool -- True if an ARK can be minted.
+
+    """
+    if not current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_ARK'):
+        return False
+
+    required_settings = (
+        'WEKO_HANDLE_ARK_LOGIN_URL',
+        'WEKO_HANDLE_ARK_LOGIN_USER',
+        'WEKO_HANDLE_ARK_LOGIN_PASSWD',
+        'WEKO_HANDLE_ARK_MINT_URL',
+        'WEKO_HANDLE_ARK_NAAN',
+        'WEKO_HANDLE_ARK_SHOULDER',
+    )
+    missing = [key for key in required_settings
+               if not current_app.config.get(key)]
+    if missing:
+        current_app.logger.error(
+            'ARK registration is enabled but not configured: {0}'.format(
+                ', '.join(missing)))
+        return False
+    return True
+
+
+def mint_ark(record_url):
+    """Mint an ARK for the given record URL on the ARK server.
+
+    Any failure is logged and reported as None, so that a broken ARK server
+    can never abort the item registration itself.
+
+    :param record_url: URL the minted ARK has to resolve to
+    :return ark: minted ARK value, or None when it could not be minted
+    """
+    login_url = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_URL')
+    mint_url = current_app.config.get('WEKO_HANDLE_ARK_MINT_URL')
+    timeout = current_app.config.get('WEKO_HANDLE_ARK_TIMEOUT')
+
+    try:
+        res = requests.post(
+            login_url,
+            headers={'Content-Type': 'application/json',
+                     'accept': 'application/json'},
+            json={
+                'query': current_app.config.get('WEKO_HANDLE_ARK_LOGIN_USER'),
+                'password': current_app.config.get(
+                    'WEKO_HANDLE_ARK_LOGIN_PASSWD'),
+            },
+            timeout=timeout)
+        if not res:
+            current_app.logger.error(
+                'ARK login failed: {0} {1}'.format(res.status_code, res.text))
+            return None
+
+        token = res.json().get('token')
+        if not token:
+            current_app.logger.error('ARK login response has no token.')
+            return None
+
+        res = requests.post(
+            mint_url,
+            headers={'Authorization': 'Bearer {}'.format(token)},
+            json={
+                'naan': current_app.config.get('WEKO_HANDLE_ARK_NAAN'),
+                'shoulder': current_app.config.get(
+                    'WEKO_HANDLE_ARK_SHOULDER'),
+                'url': record_url,
+            },
+            timeout=timeout)
+        if not res:
+            current_app.logger.error(
+                'ARK mint failed: {0} {1}'.format(res.status_code, res.text))
+            return None
+
+        ark = res.json().get('data', {}).get('ark')
+        if not ark:
+            current_app.logger.error('ARK mint response has no ark value.')
+            return None
+    except Exception as ex:
+        current_app.logger.error(
+            'Failed to mint ARK for {0}: {1}'.format(record_url, ex))
+        return None
+
+    return ark
+
+
+def _register_ark_pidstore(item_uuid, ark):
+    """Store a minted ARK as a Persistent Identifier.
+
+    :param item_uuid: Item uuid the ARK is assigned to
+    :param ark: minted ARK value
+    :return: True if the ARK was stored
+    """
+    try:
+        if IdentifierHandle(item_uuid).register_pidstore('ark', ark):
+            current_app.logger.info(
+                'ARK {0} registered for {1}.'.format(ark, item_uuid))
+            return True
+        current_app.logger.error(
+            'ARK {0} could not be registered for {1}.'.format(ark, item_uuid))
+    except Exception as ex:
+        current_app.logger.error(
+            'Failed to register ARK {0} for {1}: {2}'.format(
+                ark, item_uuid, ex))
+    return False
+
+
 def register_ark(activity_id):
     """
-    Register HDL into Persistent Identifiers.
+    Register ARK into Persistent Identifiers.
 
     :param activity_id: Workflow Activity Identifier
-    :return cnri_pidstore: HDL pidstore object or None
+    :return: None
     """
+    current_app.logger.debug("start register_ark(activity_id):")
+    if not is_ark_registration_allowed():
+        return
+
     activity = WorkActivity().get_activity_detail(activity_id)
-    current_pid = PersistentIdentifier.get_by_object(pid_type='recid',
-                                                 object_type='rec',
-                                                 object_uuid=activity.item_id)
-    pid_without_ver = get_record_without_version(current_pid)
-    item_uuid  = pid_without_ver.object_uuid
-    # item_uuid = activity.item_id
+    if activity is None or not activity.item_id:
+        current_app.logger.error(
+            'register_ark: can not get the item of activity {0}'.format(
+                activity_id))
+        return
+
+    try:
+        current_pid = PersistentIdentifier.get_by_object(
+            pid_type='recid', object_type='rec', object_uuid=activity.item_id)
+        pid_without_ver = get_record_without_version(current_pid)
+        item_uuid = pid_without_ver.object_uuid
+        record = WekoRecord.get_record(item_uuid)
+    except Exception as ex:
+        current_app.logger.error(
+            'register_ark: can not get the record of activity {0}: {1}'.format(
+                activity_id, ex))
+        return
+
     current_app.logger.debug(
-        "register_hdl: {0} {1}".format(activity_id, item_uuid))
-    record = WekoRecord.get_record(item_uuid)
-    
+        "register_ark: {0} {1}".format(activity_id, item_uuid))
+
     if record.pid_ark:
         current_app.logger.info('This record was registered Ark!')
         return
-    else:
-        deposit_id = record.pid_parent.pid_value.split('parent:')[1]
+
+    if not record.pid_parent:
+        current_app.logger.error(
+            'register_ark: can not get the parent pid of {0}'.format(
+                item_uuid))
+        return
+    deposit_id = record.pid_parent.pid_value.split('parent:')[1]
 
     record_url = request.url.split('/workflow/')[0] \
         + '/records/' + str(deposit_id)
 
-    import requests
-    import pprint
-    headers = {}
-    headers["Content-Type"]= 'application/json'
-    headers["accept"]='application/json'
-    login_url = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_URL',None)
-    user = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_USER',None)
-    passwd = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_PASSWD',None)
-    mint_url = current_app.config.get('WEKO_HANDLE_ARK_MINT_URL',None)
-    naan = current_app.config.get('WEKO_HANDLE_ARK_NAAN',None)
-    shoulder = current_app.config.get('WEKO_HANDLE_ARK_SHOULDER',None)
+    ark = mint_ark(record_url)
+    if ark:
+        _register_ark_pidstore(item_uuid, ark)
+    current_app.logger.debug("end register_ark(activity_id):")
 
-    if login_url and user and passwd and mint_url and naan and shoulder:
-        body = {"query": user,"password": passwd}
-        res = requests.post(login_url, headers=headers, json=body)
-        if res:
-            data = res.json()
-            if 'token' in data:
-                headers = {'Authorization': 'Bearer {}'.format(res.json()["token"])}
-                body2 = {"naan": naan,"shoulder": shoulder,"url": record_url}
-                res2 = requests.post(mint_url, headers=headers, json=body2)
-                identifier = IdentifierHandle(item_uuid)
-                if res2:
-                    data2 = res2.json()
-                    if 'data' in data2 and "ark" in data2["data"]:
-                        identifier.register_pidstore('ark', data2["data"]["ark"])
 
 def register_ark_by_item_id(deposit_id, item_uuid, url_root):
     """
-    Register HDL into Persistent Identifiers.
+    Register ARK into Persistent Identifiers.
 
     :param deposit_id: id
     :param item_uuid: Item uuid
     :param url_root: url_root
-    :return handle: HDL handle
+    :return ark: minted ARK value, or empty string
     """
     current_app.logger.debug(
         "start register_ark_by_item_id(deposit_id, item_uuid, url_root):")
+    if not is_ark_registration_allowed():
+        return ''
+
     record_url = url_root \
         + 'records/' + str(deposit_id)
 
-    import requests
-    import pprint
-    headers = {}
-    headers["Content-Type"]= 'application/json'
-    headers["accept"]='application/json'
-    login_url = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_URL',None)
-    user = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_USER',None)
-    passwd = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_PASSWD',None)
-    mint_url = current_app.config.get('WEKO_HANDLE_ARK_MINT_URL',None)
-    naan = current_app.config.get('WEKO_HANDLE_ARK_NAAN',None)
-    shoulder = current_app.config.get('WEKO_HANDLE_ARK_SHOULDER',None)
+    ark = mint_ark(record_url)
+    if not ark:
+        return ''
 
-    ark = ''
-    if login_url and user and passwd and mint_url and naan and shoulder:
-        body = {"query": user,"password": passwd}
-        res = requests.post(login_url, headers=headers, json=body)
-        if res:
-            data = res.json()
-            if 'token' in data:
-                headers = {'Authorization': 'Bearer {}'.format(res.json()["token"])}
-                body2 = {"naan": naan,"shoulder": shoulder,"url": record_url}
-                res2 = requests.post(mint_url, headers=headers, json=body2)
-                identifier = IdentifierHandle(item_uuid)
-                if res2:
-                    data2 = res2.json()
-                    if 'data' in data2 and "ark" in data2["data"]:
-                        ark = data2["data"]["ark"]
-                        identifier.register_pidstore('ark', ark)
-    
+    _register_ark_pidstore(item_uuid, ark)
+    current_app.logger.debug(
+        "end register_ark_by_item_id(deposit_id, item_uuid, url_root):")
+
     return ark
 
 def item_metadata_validation(item_id, identifier_type, record=None,

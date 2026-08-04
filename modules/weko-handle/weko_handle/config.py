@@ -39,5 +39,8 @@ WEKO_HANDLE_ARK_NAAN = None
 WEKO_HANDLE_ARK_SHOULDER = None
 """ Shoulder of Ark """
 
+WEKO_HANDLE_ARK_TIMEOUT = 30
+""" Timeout in seconds for each request to the ARK server."""
+
 
 
