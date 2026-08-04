@@ -784,11 +784,25 @@ API 登録を有効にした場合、**DOI 付与時点でのバリデーショ�
 API 登録を有効化する以前に付与済みの Crossref DOI について、
 遡って一括登録するバッチ（CLI コマンド）が必要かを確認する。
 
-### 9-7. JaLC / DataCite への展開
+### 9-7. JaLC / DataCite への展開 → **解決済み: 共通基盤として設計**
 
-今回は Crossref のみを対象とするが、`CrossrefDepositClient` の抽象化次第で
-JaLC（`api.japanlinkcenter.org`）や DataCite（`mds.datacite.org`）にも展開できる。
-将来を見越すなら `DoiRegistrationAgency` のような共通インターフェースを切っておく。
+本書の作成時点では「将来を見越すなら `DoiRegistrationAgency` のような共通インターフェースを
+切っておく」という指摘にとどめていたが、DataCite への対応が具体化したため、
+**共通基盤を独立した設計仕様として起こした。**
+
+- [`WACREN_datacite.md`](./WACREN_datacite.md) — DataCite 固有仕様
+- **[`WACREN_doi_registration.md`](./WACREN_doi_registration.md) — DOI 登録共通基盤の設計仕様**
+
+共通基盤側で扱う事項（本書 §4 の内容は共通基盤側に移る）:
+
+- `DoiRegistrationAgency` 抽象と同期／非同期の吸収
+- `doi_deposit_log`（エージェンシー共通の単一テーブル）
+- オーケストレータと Celery タスク、リトライ
+- `saving_doi_pidstore()` へのフックとコミット競合対策
+- 設定の階層構造、エラー分類、管理 UI
+
+**実装順序は DataCite → Crossref を推奨**（共通基盤の検証を安価に済ませるため）。
+詳細は [`WACREN_doi_registration.md` §15](./WACREN_doi_registration.md) を参照。
 
 ---
 
