@@ -110,26 +110,26 @@ def test_redirect_method(app,mocker):
         ams_error = 'Login is blocked.'
         _redirect_method(True, ams_error)
         mock_render.assert_called_with(\
-            'http://TEST_SERVER.localdomain/ams/login?error=Login+is+blocked.')
+            'http://test_server.localdomain/ams/login?error=Login+is+blocked.')
         # There is no user information.
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'There is no user information.'
         _redirect_method(True, ams_error)
         mock_render.assert_called_with(
-            'http://TEST_SERVER.localdomain/ams/login?error=There+is+no+user+information.')
+            'http://test_server.localdomain/ams/login?error=There+is+no+user+information.')
         # server error
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'Server error has occurred. Please contact server administrator.'
         _redirect_method(True, ams_error)
         mock_render.assert_called_with(\
-            'http://TEST_SERVER.localdomain/ams/login?'\
+            'http://test_server.localdomain/ams/login?'\
             'error=Server+error+has+occurred.+Please+contact+server+administrator.')
         # other error
         mock_render = mocker.patch('weko_accounts.views.redirect',return_value=make_response())
         ams_error = 'Error Message'
         _redirect_method(True, ams_error)
         mock_render.assert_called_with(\
-            'http://TEST_SERVER.localdomain/ams/login?error=Error+Message')
+            'http://test_server.localdomain/ams/login?error=Error+Message')
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_generate_ams_login_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_generate_ams_login_url(app):
