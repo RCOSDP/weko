@@ -136,14 +136,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
 
         return cur_pid
 
-    def get_current_activity_id(pid_object):
-        activity = WorkActivity()
-        latest_workflow = activity.get_workflow_activity_by_item_id(
-            pid_object.object_uuid)
-        activity_id = latest_workflow.activity_id if latest_workflow else ''
-
-        return activity_id
-
     def get_url(pid_value):
         wr = WekoRecord.get_record_by_pid(pid_value)
         model = wr.model
@@ -162,12 +154,6 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
             url = permalink
 
         return url
-
-    def get_oa_policy(activity_id):
-        waj = get_workflow_journal(activity_id)
-        oa_policy = waj.get('keywords', '')
-
-        return oa_policy
     
     from weko_search_ui.utils import get_data_by_property
     from weko_items_ui.utils import get_options_and_order_list, get_hide_list_by_schema_form
@@ -343,11 +329,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         item_metadata_json['lang'] = language
     except BaseException:
         item_metadata_json['lang'] = [item_metadata_json['lang']] if 'lang' in item_metadata_json else []
-
-    try:
-        lang = item_metadata_json.get('lang')
-    except (KeyError, IndexError):
-        lang = []
+    lang = item_metadata_json.get('lang', [])
 
     # get publisher info
     publisher_attr_lang = 'publisher.@attributes.xml:lang'
@@ -384,10 +366,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
         publisher = []
 
     # get pub date info
-    try:
-        pubdate = item_metadata_json.get('pubdate')
-    except (KeyError, IndexError):
-        pubdate = None
+    pubdate = item_metadata_json.get('pubdate')
 
     # get keyword info
     keyword_attr_lang = 'subject.@attributes.xml:lang'
@@ -587,10 +566,7 @@ def make_combined_pdf(pid, fileobj, obj, lang_user):
     pdf.set_font('IPAexm', '', 10)
     pdf.set_x(108)
 
-    try:
-        license = item_metadata_json[_file_item_id][0].get('licensetype')
-    except (KeyError, IndexError, TypeError):
-        license = None
+    license = fileobj.get('licensetype')
 
     list_license_dict = current_app.config['WEKO_RECORDS_UI_LICENSE_DICT']
 

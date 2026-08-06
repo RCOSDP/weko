@@ -461,7 +461,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by.png',
         'href_pdf': 'http://creativecommons.org/licenses/by/3.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               ' 3.0 International License.'
+               ' 3.0 Unported License.'
     },
     {
         'name': _(
@@ -475,7 +475,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by-sa.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-sa/3.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               '-ShareAlike 3.0 International License.'
+               '-ShareAlike 3.0 Unported License.'
     },
     {
         'name': _(
@@ -488,7 +488,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by-nd.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nd/3.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               '-NoDerivatives 3.0 International License.'
+               '-NoDerivs 3.0 Unported License.'
 
     },
     {
@@ -503,7 +503,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by-nc.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc/3.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               '-NonCommercial 3.0 International License.'
+               '-NonCommercial 3.0 Unported License.'
     },
     {
         'name': _(
@@ -517,7 +517,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by-nc-sa.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc-sa/3.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               '-NonCommercial-ShareAlike 3.0 International License.'
+               '-NonCommercial-ShareAlike 3.0 Unported License.'
     },
     {
         'name': _(
@@ -531,7 +531,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by-nc-nd.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/3.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               '-NonCommercial-ShareAlike 3.0 International License.'
+               '-NonCommercial-NoDerivs 3.0 Unported License.'
     },
     # version 4.0
     {
@@ -614,7 +614,7 @@ WEKO_RECORDS_UI_LICENSE_DICT = [
         'src_pdf': 'by-nc-nd.png',
         'href_pdf': 'http://creativecommons.org/licenses/by-nc-nd/4.0/',
         'txt': 'This work is licensed under a Creative Commons Attribution'
-               '-NonCommercial-ShareAlike 4.0 International License.'
+               '-NonCommercial-NoDerivatives 4.0 International License.'
     },
 ]
 """Define of list license will be used."""

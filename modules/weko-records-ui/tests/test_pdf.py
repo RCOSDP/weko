@@ -2,6 +2,7 @@ import pytest
 import uuid
 import copy
 import json
+import errno
 from mock import MagicMock, patch
 from six import BytesIO
 
@@ -26,13 +27,13 @@ def test_get_east_asian_width_count():
     assert get_east_asian_width_count("english")==7
     
 
-def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_langs, is_license=False):
+def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_langs, license_type="", add_doi=False, del_publish_data=False):
     filepath = "tests/data/helloworld.pdf"
     filename = "helloworld.pdf"
     mimetype = "application/pdf"
     file_head=True
-    licensetype = "licensefree" if is_license else ""
-    licensefree = "test_license" if is_license else ""
+    licensetype = license_type if license_type else ""
+    licensefree = "test_license" if license_type else ""
     record_data = {
         "_oai":{"id":"oai:weko3.example.org:000000{}".format(id),"sets":["1710997084761"]},
         "path": ["1710997084761"],
@@ -76,7 +77,7 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
                 }
             ]
         },
-        "item_1617605131499":{
+        "item_1711083273218":{
             "attribute_name":"File","attribute_type":"file",
             "attribute_value_mlt":[
                 {
@@ -110,7 +111,7 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
                 "creatorAffiliations":[{"affiliationNames":[{"affiliationName":affiliation["val"],"affiliationNameLang":affiliation["lang"]}]}]
             }
         ],
-        "item_1617605131499":[
+        "item_1711083273218":[
             {
                 "url": {"url": "https://weko3.example.org/record/{}/files/{}".format(id,filename)},
                 "date":[{"dateType":"Available","dateValue":"2024-03-21"}],
@@ -120,7 +121,33 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
             }
         ]
     }
-    
+
+    if license_type == "nolicense":
+        record_data["item_1711083273218"]["attribute_value_mlt"][0].pop("licensetype", None)
+        record_data["item_1711083273218"]["attribute_value_mlt"][0].pop("licensefree", None)
+        item_data["item_1711083273218"][0].pop("licensetype", None)
+        item_data["item_1711083273218"][0].pop("licensefree", None)
+
+    if add_doi:
+        record_data["system_identifier_doi"] = {
+            "attribute_name": "Persistent Identifier(DOI)",
+            "attribute_value_mlt": [
+                {
+                    "subitem_systemidt_identifier": "https://doi.org/10.xyz/{}".format((str(id)).zfill(10)),
+                    "subitem_systemidt_identifier_type": "DOI"
+                }
+            ]
+        }
+        item_data["system_identifier_doi"] = [
+            {
+                "subitem_systemidt_identifier": "https://doi.org/10.xyz/{}".format((str(id)).zfill(10)),
+                "subitem_systemidt_identifier_type": "DOI"
+            }
+        ]
+
+    if del_publish_data:
+        record_data.pop("pubdate", None)
+        item_data.pop("pubdate", None)
     
     rec_uuid = uuid.uuid4()
 
@@ -198,7 +225,7 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
     with open(filepath, "rb") as f:
         stream = BytesIO(f.read())
         record.files[filename] = stream
-        record["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+        record["item_1711083273218"]["attribute_value_mlt"][0]["file"] = (
             base64.b64encode(stream.getvalue())
         ).decode("utf-8")
     with open(filepath, "rb") as f:
@@ -206,7 +233,7 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
         obj.is_head = file_head
     deposit = aWekoDeposit(record, record.model)
     deposit.commit()
-    record["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
+    record["item_1711083273218"]["attribute_value_mlt"][0]["version_id"] = str(
         obj.version_id
     )
 
@@ -238,12 +265,12 @@ def make_record(indexer, id, publisher, subjects, creator,affiliation, lang_lang
     record_v1.files[filename] = stream
     obj_v1 = ObjectVersion.create(bucket=bucket_v1.id, key=filename, stream=stream)
     obj_v1.is_head = False
-    record_v1["item_1617605131499"]["attribute_value_mlt"][0]["file"] = (
+    record_v1["item_1711083273218"]["attribute_value_mlt"][0]["file"] = (
         base64.b64encode(stream.getvalue())
     ).decode("utf-8")
     deposit_v1 = aWekoDeposit(record_v1, record_v1.model)
     deposit_v1.commit()
-    record_v1["item_1617605131499"]["attribute_value_mlt"][0]["version_id"] = str(
+    record_v1["item_1711083273218"]["attribute_value_mlt"][0]["version_id"] = str(
         obj_v1.version_id
     )
 
@@ -306,15 +333,16 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        db.session.flush()
         db.session.add(itemtype_mapping)
     db.session.commit()
     indexer = WekoIndexer()
     indexer.get_es_index()
     records = []
     records.append(make_record(indexer, 1, {"val": "test_publisher", "lang": "en"}, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": "test, taro", "lang": "en"}, {"val": "test_affiliation", "lang": "en"}, ["eng"]))
-    records.append(make_record(indexer, 2, {"val": "test_publisher", "lang": ""  }, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": "test, taro", "lang": ""  }, {"val": "test_affiliation", "lang": ""  }, ["jpn", "eng"]))
-    records.append(make_record(indexer, 3, {"val": ""              , "lang": "en"}, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": ""          , "lang": "en"}, {"val": ""                , "lang": "en"}, ["fra", "jpn"],True))
-    records.append(make_record(indexer, 4, {"val": "test_publisher", "lang": "en"}, [{"val": "", "lang": ""}], {"val": "test, taro", "lang": "en"}, {"val": "test_affiliation", "lang": "en"}, ["eng"]))
+    records.append(make_record(indexer, 2, {"val": "test_publisher", "lang": ""  }, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": "test, taro", "lang": ""  }, {"val": "test_affiliation", "lang": ""  }, ["jpn", "eng"], add_doi=True))
+    records.append(make_record(indexer, 3, {"val": ""              , "lang": "en"}, [{"val": "test_subject", "lang": "en"}, {"val": "テスト主題", "lang": "ja"}], {"val": ""          , "lang": "en"}, {"val": ""                , "lang": "en"}, ["fra", "jpn"], license_type="licensefree"))
+    records.append(make_record(indexer, 4, {"val": "test_publisher", "lang": "en"}, [{"val": "", "lang": ""}], {"val": "test, taro", "lang": "en"}, {"val": "test_affiliation", "lang": "en"}, ["eng"], license_type="nolicense", del_publish_data=True))
     db.session.commit()
     
     tests = [
@@ -322,24 +350,44 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: test, taro\nE-mail: \nAffiliation: test_affiliation",
             "言語: English\n出版者: test_publisher\n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: test, taro\nメールアドレス: \n所属: test_affiliation",
             "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: test, taro\nE-mail: test.taro@test.org\nAffiliation: test_affiliation",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: ja\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: \nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: ",
             "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         ),
         (
-            "Language: Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
-            "言語: Japanese\n出版者: \n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: \nメールアドレス: \n所属: ",
-            "Language: Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: test.taro@test.org\nAffiliation: ",
-            "Language: Japanese, English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
+            "Language: Japanese\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
+            "言語: Japanese\n出版者: test_publisher\n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: \nメールアドレス: \n所属: ",
+            "Language: Japanese\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: test.taro@test.org\nAffiliation: ",
+            "Language: Japanese, English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: ja\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: \nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: Japanese, English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         ),
         (
             "Language: fra\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
             "言語: fra\n出版者: \n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: \nメールアドレス: \n所属: ",
             "Language: fra\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: test.taro@test.org\nAffiliation: ",
-            "Language: fra, Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
+            "Language: fra, Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: ja\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: \nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: fra, Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         ),
         (
-            "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: test_affiliation",
-            "言語: English\n出版者: test_publisher\n公開日: 2024-03-21\nキーワード: \n作成者: test, taro\nメールアドレス: \n所属: test_affiliation",
-            "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: test.taro@test.org\nAffiliation: test_affiliation",
+            "Language: English\nPublisher: test_publisher\nDate of Publication: \nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: test_affiliation",
+            "言語: English\n出版者: test_publisher\n公開日: \nキーワード: \n作成者: test, taro\nメールアドレス: \n所属: test_affiliation",
+            "Language: English\nPublisher: test_publisher\nDate of Publication: \nKeywords: \nAuthor: test, taro\nE-mail: test.taro@test.org\nAffiliation: test_affiliation",
+            "Language: English\nPublisher: \nDate of Publication: \nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: ja\nPublisher: \nDate of Publication: \nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: \nPublisher: \nDate of Publication: \nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: test_publisher\nDate of Publication: \nKeywords: \nAuthor: \nE-mail: \nAffiliation: ",
+            "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: test, taro\nE-mail: \nAffiliation: ",
             "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         )
     ]
@@ -349,10 +397,42 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
     mock_page_setting.header_output_string = "Weko Univ"
     from fpdf import FPDF
     mock_multi_cell = mocker.spy(FPDF, "multi_cell")
+    url_oa_policy_height = app.config["URL_OA_POLICY_HEIGHT"]
+    metadata_height = app.config["METADATA_HEIGHT"]
     with patch("weko_records_ui.pdf.PDFCoverPageSettings.find", return_value=mock_page_setting):
         for i, record in enumerate(records):
+            app.config["URL_OA_POLICY_HEIGHT"] = url_oa_policy_height
+            app.config["METADATA_HEIGHT"] = metadata_height
             fileobj = record.files[filename]
             obj = fileobj.obj
+            # item_type is not exist
+            mock_page_setting.header_output_image = "tests/data/image01.jpg"
+            mock_page_setting.header_display_position = "left"
+            mock_page_setting.header_display_type = "string"
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                with patch("weko_records_ui.pdf.ItemTypes.get_by_id", return_value=None):
+                    with pytest.raises(AttributeError):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
+
+            # header_display_position=Left, header_desplay_type=, 
+            mock_page_setting.header_output_image = "tests/data/image01.jpg"
+            mock_page_setting.header_display_position = "Left"
+            mock_page_setting.header_display_type = ""
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                with pytest.raises(KeyError):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+
+            # title are not exist
+            mock_page_setting.header_output_image = "tests/data/image01.jpg"
+            mock_page_setting.header_display_position = "left"
+            mock_page_setting.header_display_type = "string"
+            item_map = {}
+            with patch("weko_records_ui.pdf.get_mapping",return_value=item_map):
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    with pytest.raises(AttributeError):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
+            mock_multi_cell.call_args_list.clear()
+
             # header_display_position=left, header_desplay_type=string, 
             mock_page_setting.header_output_image = "tests/data/image01.jpg"
             mock_page_setting.header_display_position = "left"
@@ -387,7 +467,8 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_display_position = "right"
             mock_page_setting.header_output_image = "tests/data/image01.jpg"
             mock_page_setting.header_display_type = "string"
-            res = make_combined_pdf(record.pid, fileobj, obj, None)
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == tests[i][0]
             mock_multi_cell.call_args_list.clear()
@@ -396,7 +477,8 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_display_position = "right"
             mock_page_setting.header_output_image = ""
             mock_page_setting.header_display_type = "string"
-            res = make_combined_pdf(record.pid, fileobj, obj, None)
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == tests[i][0]
             mock_multi_cell.call_args_list.clear()
@@ -407,10 +489,88 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_output_image = ""
             mock_page_setting.header_display_type = "string"
             with patch("weko_records_ui.pdf.item_setting_show_email", return_value=True):
-                res = make_combined_pdf(record.pid, fileobj, obj, None)
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    fileobj["licensetype"] = "license_free"
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
                 args_list = mock_multi_cell.call_args_list
                 assert args_list[2][0][3] == tests[i][2]
                 mock_multi_cell.call_args_list.clear()
+                fileobj["licensetype"] = None
+
+            # type of creator is dict
+            item_metadata_json = {
+                'id': 1, 
+                'pid': {'type': 'depid', 'value': 1, 'revision_id': 0}, 
+                'lang': 'ja', 
+                'owner': '1', 
+                'title': 'title1', 
+                'owners': [1], 
+                'status': 'published', 
+                '$schema': '/items/jsonschema/xxxxx', 
+                'pubdate': '2024-03-21', 
+                'created_by': 1, 
+                'shared_user_id': -1, 
+                'item_1711081249402': [{'subitem_title': 'title1', 'subitem_title_language': 'ja'}], 
+                'item_1711081258940': {'subitem_language': 'eng'}, 
+                'item_1711081408726': {
+                    'creatorMails': [{'creatorMail': 'test.taro@test.org'}], 
+                    'creatorNames': [{'creatorName': 'test, taro', 'creatorNameLang': 'en'}], 
+                    'nameIdentifiers': [{'nameIdentifier': '1', 'nameIdentifierScheme': 'WEKO'}], 
+                    'creatorAffiliations': [{'affiliationNames': [{'affiliationName': '', 'affiliationNameLang': ''}]}]
+                }, 
+                'item_1711083273218': [{
+                    'url': {'url': 'https://localhost/record/1/files/helloworld.pdf'}, 
+                    'date': [{'dateType': 'Available', 'dateValue': '2024-03-21'}], 
+                    'format': 'application/pdf', 
+                    'filename': 'helloworld.pdf', 
+                    'filesize': [{'value': '10 KB'}], 
+                    'accessrole': 'open_access', 
+                    'version_id': '94b16710-d2a5-4fbb-8915-9b63f3eaf21e', 
+                    'licensefree': '', 
+                    'licensetype': ''
+                }]
+            }
+            with patch("weko_records.api.ItemsMetadata.get_record", return_value=item_metadata_json):
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+            args_list = mock_multi_cell.call_args_list
+            assert args_list[2][0][3] == tests[i][7]
+            mock_multi_cell.call_args_list.clear()
+
+            # creator is None
+            item_metadata_json = {
+                'id': 1, 
+                'pid': {'type': 'depid', 'value': 1, 'revision_id': 0}, 
+                'lang': 'ja', 
+                'owner': '1', 
+                'title': 'title1', 
+                'owners': [1], 
+                'status': 'published', 
+                '$schema': '/items/jsonschema/xxxxx', 
+                'pubdate': '2024-03-21', 
+                'created_by': 1, 
+                'shared_user_id': -1, 
+                'item_1711081249402': [{'subitem_title': 'title1', 'subitem_title_language': 'ja'}], 
+                'item_1711081258940': {'subitem_language': 'eng'}, 
+                'item_1711081408726': None, 
+                'item_1711083273218': [{
+                    'url': {'url': 'https://localhost/record/1/files/helloworld.pdf'}, 
+                    'date': [{'dateType': 'Available', 'dateValue': '2024-03-21'}], 
+                    'format': 'application/pdf', 
+                    'filename': 'helloworld.pdf', 
+                    'filesize': [{'value': '10 KB'}], 
+                    'accessrole': 'open_access', 
+                    'version_id': '94b16710-d2a5-4fbb-8915-9b63f3eaf21e', 
+                    'licensefree': '', 
+                    'licensetype': ''
+                }]
+            }
+            with patch("weko_records.api.ItemsMetadata.get_record", return_value=item_metadata_json):
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+            args_list = mock_multi_cell.call_args_list
+            assert args_list[2][0][3] == tests[i][8]
+            mock_multi_cell.call_args_list.clear()
             
             # publisher, subject, creatorMail, creatorName, affiliationName are hide,
             # language is list
@@ -453,9 +613,99 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             }
             with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
                 with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
-                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == tests[i][3]
+            mock_multi_cell.call_args_list.clear()
+
+            # creator is hide
+            meta_options = {
+                'pubdate': {
+                    'title': 'PubDate', 
+                    'option': {'crtf': False, 'hidden': False, 'multiple': False, 'required': True, 'showlist': False}, 
+                    'input_type': 'datetime', 
+                    'title_i18n': {'en': 'PubDate', 'ja': '公開日'}, 
+                    'input_value': ''
+                }, 
+                'item_1711081249402': {
+                    'title': 'Title', 
+                    'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1001', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711081258940': {
+                    'title': 'language01', 
+                    'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1003', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711081274859': {
+                    'title': 'publisher01', 
+                    'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1011', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711081333893': {
+                    'title': 'subject01', 
+                    'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1009', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711081408726': {
+                    'title': 'creator01', 
+                    'option': {'crtf': False, 'hidden': True, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1038', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711083182141': {
+                    'title': '資源タイプ', 
+                    'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': False, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1014', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711083273218': {
+                    'title': 'File', 'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_65', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }, 
+                'item_1711083729173': {
+                    'title': 'language02', 
+                    'option': {'crtf': False, 'hidden': False, 'oneline': False, 'multiple': True, 'required': False, 'showlist': False}, 
+                    'input_type': 'cus_1003', 
+                    'title_i18n': {'en': '', 'ja': ''}, 
+                    'input_value': '', 
+                    'input_maxItems': '9999', 
+                    'input_minItems': '1'
+                }
+            }
+            with patch("weko_items_ui.utils.get_options_and_order_list", return_value=meta_options):
+                with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
+            args_list = mock_multi_cell.call_args_list
+            assert args_list[2][0][3] == tests[i][6]
             mock_multi_cell.call_args_list.clear()
             
             # publisher, subject, creator are not exist
@@ -464,9 +714,94 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
                 "title.@attributes.xml:lang": "item_1711081249402.subitem_title_language"
             }
             with patch("weko_records_ui.pdf.get_mapping",return_value=item_map):
-                res = make_combined_pdf(record.pid, fileobj, obj, None)
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
-            assert args_list[2][0][3] == "Language: ja\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
+            assert args_list[2][0][3] == tests[i][4]
             mock_multi_cell.call_args_list.clear()
+
+            # item type mapping issue
+            item_map = {
+                "title.@value": "item_1711081249402.subitem_title",
+                "title.@attributes.xml:lang": "item_1711081249402.subitem_title_language",
+                "publisher.@value": "item_1711081274859.subitem_publisher",
+                "publisher.@attributes.xml:lang": "item_1711081274860.subitem_publisher_language",
+                "subject.@value": "item_1711081333893.subitem_subject",
+                "subject.@attributes.xml:lang": "item_1711081333894.subitem_subject_language",
+                "language.@value": "lang"
+            }
+            app.config["URL_OA_POLICY_HEIGHT"] = 0
+            app.config["METADATA_HEIGHT"] = 0
+            with patch("weko_records_ui.pdf.get_mapping",return_value=item_map):
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+            args_list = mock_multi_cell.call_args_list
+            assert args_list[2][0][3] == tests[i][5]
+            mock_multi_cell.call_args_list.clear()
+
+            # exception
+            with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
+                with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        with patch('weko_records_ui.pdf.PdfWriter.write', side_effect=FileNotFoundError):
+                            res = make_combined_pdf(record.pid, fileobj, obj, None)
+                            assert res.status_code == 302
+            mock_multi_cell.call_args_list.clear()
+
+            with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
+                with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        with patch('weko_records_ui.pdf.PdfWriter.write', side_effect=PermissionError):
+                            res = make_combined_pdf(record.pid, fileobj, obj, None)
+                            assert res.status_code == 302
+            mock_multi_cell.call_args_list.clear()
+
+            with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
+                with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        with patch('weko_records_ui.pdf.PdfWriter.write', side_effect=OSError(errno.ENOSPC, "No space left on device")):
+                            res = make_combined_pdf(record.pid, fileobj, obj, None)
+                            assert res.status_code == 302
+            mock_multi_cell.call_args_list.clear()
+
+            with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
+                with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        with patch('weko_records_ui.pdf.PdfWriter.write', side_effect=OSError()):
+                            res = make_combined_pdf(record.pid, fileobj, obj, None)
+                            assert res.status_code == 200
+            mock_multi_cell.call_args_list.clear()
+
+            with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
+                with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        with patch('weko_records_ui.pdf.PdfWriter.write', side_effect=Exception):
+                            res = make_combined_pdf(record.pid, fileobj, obj, None)
+                            assert res.status_code == 302
+            mock_multi_cell.call_args_list.clear()
+
+            # encrypted pdf
+            cover_reader = MagicMock()
+            existing_reader = MagicMock()
+            existing_reader.is_encrypted = True
+            existing_reader.decrypt.side_effect = NotImplementedError()
+            with patch('weko_records_ui.pdf.PdfReader', side_effect=[cover_reader, existing_reader]):
+                with patch('weko_records_ui.pdf.ObjectResource.send_object', return_value="send_object") as mock_send_object:
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
+                        mock_send_object.assert_called_once()
+                        assert res == "send_object"
+
+            cover_reader = MagicMock()
+            existing_reader = MagicMock()
+            existing_reader.is_encrypted = True
+            existing_reader.decrypt.return_value = 1
+            with patch('weko_records_ui.pdf.PdfReader', side_effect=[cover_reader, existing_reader]):
+                with patch('weko_records_ui.pdf.ObjectResource.send_object', return_value="send_object") as mock_send_object:
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
+                        existing_reader.decrypt.assert_called_once_with("")
+                        mock_send_object.assert_called_once()
+                        assert res == "send_object"
     if os.path.isdir(temp_path+"/comb_pdfs"):
         shutil.rmtree(temp_path+"/comb_pdfs")
