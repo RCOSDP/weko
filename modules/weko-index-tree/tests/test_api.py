@@ -1291,6 +1291,44 @@ def test_indexes_get_handle_index_url(app, db, users, test_indices, mocker):
         assert index_url == "http://TEST_SERVER/search?search_type=2&q=1"
         assert handle == "https://test/handle/1"
 
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_bind_roles_including_permission -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_bind_roles_including_permission(app, mocker):
+    with app.test_request_context():
+        prefix = 'jc'
+        sysadm_role = "jc_roles_sysadm"
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': prefix,
+                "sysadm_group": sysadm_role
+            },
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+        fqdn = create_fqdn_from_entity_id()
+        roles = [
+            {"id": 1, "name": sysadm_role},
+            {"id": 2, "name": f"{prefix}_{fqdn}_ro_radm"},
+            {"id": 3, "name": f"{prefix}_{fqdn}_gr_xxxx"},
+            {"id": 4, "name": f"{prefix}_test!example!com_ro_radm"},
+            {"id": 5, "name": f"ng_{fqdn}_ro_radm"},
+            {"id": 6, "name": "System Administrator"},
+            {"id": 7, "name": "Repository Administrator"}
+        ]
+        roles_true = Indexes.bind_roles_including_permission(roles, True)
+        assert roles_true == roles
+        roles_false = Indexes.bind_roles_including_permission(roles, False)
+        assert roles_false == [
+            {"id": 4, "name": f"{prefix}_test!example!com_ro_radm"},
+            {"id": 5, "name": f"ng_{fqdn}_ro_radm"},
+            {"id": 6, "name": "System Administrator"},
+            {"id": 7, "name": "Repository Administrator"}
+        ]
+        roles_empty_true = Indexes.bind_roles_including_permission([], True)
+        assert roles_empty_true == []
+        roles_empty_false = Indexes.bind_roles_including_permission([], False)
+        assert roles_empty_false == []
+
+
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_get_allow_deny -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_allow_deny(app, db, mocker):
     with app.app_context():
