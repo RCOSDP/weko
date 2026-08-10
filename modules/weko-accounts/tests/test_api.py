@@ -575,6 +575,51 @@ class TestShibUserExtra:
             shibuser.user.roles.clear.reset_mock()
             mocker.resetall()
 
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_check_in_role_manual_assign -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+    def test_check_in_role_manual_assign(self, extra_app, db, user, roles, mocker):
+        """Roles set from the admin screen survive a Shibboleth login.
+
+        With WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN enabled, check_in must not
+        touch the roles even when the IdP sends no isMemberOf and no
+        WEKO_ACCOUNTS_IDP_ENTITY_ID is configured.
+        """
+        with extra_app.app_context():
+            extra_app.config['WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN'] = True
+            extra_app.config['WEKO_ACCOUNTS_IDP_ENTITY_ID'] = ''
+
+            mock_assign_user_role = mocker.patch('weko_accounts.api.ShibUser.assign_user_role')
+            mock_get_roles_to_add = mocker.patch('weko_accounts.api.ShibUser._get_roles_to_add')
+            mock_find_organization_name = mocker.patch('weko_accounts.api.ShibUser._find_organization_name')
+            mock_assign_roles_to_user = mocker.patch('weko_accounts.api.ShibUser._assign_roles_to_user')
+
+            # a role assigned by an administrator beforehand
+            user.roles.append(roles[0])
+            db.session.commit()
+
+            # no isMemberOf, but shib_role_authority_name is sent
+            shibuser = ShibUser({'shib_role_authority_name': '管理者'})
+            shibuser.user = user
+            shibuser.shib_user = MagicMock(spec=ShibbolethUser)
+
+            assert shibuser.check_in() is None
+            assert [role.name for role in user.roles] == ['Role_Administrator']
+            mock_assign_user_role.assert_not_called()
+            mock_get_roles_to_add.assert_not_called()
+            mock_find_organization_name.assert_not_called()
+            mock_assign_roles_to_user.assert_not_called()
+            mocker.resetall()
+
+            # flag off: the existing behavior is kept (roles are recalculated)
+            extra_app.config['WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN'] = False
+            mock_assign_user_role.return_value = (True, "")
+            mock_get_roles_to_add.return_value = []
+            mock_find_organization_name.return_value = True
+
+            assert shibuser.check_in() is None
+            assert list(user.roles) == []
+            mock_assign_user_role.assert_called_once()
+            mock_get_roles_to_add.assert_called_once()
+
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_api.py::TestShibUserExtra::test_get_roles_to_add -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
     def test_get_roles_to_add(self, extra_app):
         shibuser = ShibUser({

@@ -313,6 +313,11 @@ class ShibUser(object):
         :return:
 
         """
+        # ロールを管理画面から手動で設定する運用の場合、
+        # Shibboleth属性によるロールの再計算は行わない
+        if current_app.config['WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN']:
+            return None
+
         #ログインユーザーのロールをクリアする
         self.user.roles.clear()
         check_role, error = self.assign_user_role()

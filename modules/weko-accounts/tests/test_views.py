@@ -174,6 +174,44 @@ def test_shib_auto_login(client,redis_connect,mocker):
     with patch("weko_accounts.views.RedisConnection",side_effect=BaseException("test_error")):
         res = client.get(url+"?Shib-Session-ID=1111")
         assert res.status_code == 400
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_auto_login_role_manual_assign -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_shib_auto_login_role_manual_assign(app,client,redis_connect,mocker):
+    """Login succeeds without isMemberOf when roles are managed manually."""
+    url = url_for("weko_accounts.shib_auto_login")
+    mocker.patch("weko_accounts.views.RedisConnection.connection",return_value=redis_connect)
+    mocker.patch("weko_accounts.views.ShibUser.new_relation_info")
+    mock_shib_login = mocker.patch("weko_accounts.views.ShibUser.shib_user_login")
+
+    # the IdP sends no isMemberOf and no entity id is configured
+    app.config["WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS"] = True
+    app.config["WEKO_ACCOUNTS_IDP_ENTITY_ID"] = ""
+    app.config["WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN"] = True
+
+    shibuser = ShibUser({})
+    shibuser.shib_user = MagicMock()
+    shibuser.user = User(id=1)
+
+    redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+    set_session(client,{"shib_session_id":"1111","next":"/next_page"})
+    mock_redirect_method = mocker.patch("weko_accounts.views._redirect_method",return_value=make_response())
+    with patch("weko_accounts.views.ShibUser",return_value=shibuser):
+        mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
+        client.get(url+"?next=/next_page")
+        mock_redirect.assert_called_with("/next_page")
+        mock_shib_login.assert_called_once()
+        mock_redirect_method.assert_not_called()
+
+    # flag off: _get_roles_to_add raises and the login is refused as before
+    app.config["WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN"] = False
+    mock_shib_login.reset_mock()
+    redis_connect.put("Shib-Session-1111",bytes('{"shib_eppn":"test_eppn"}',"utf-8"))
+    set_session(client,{"shib_session_id":"1111","next":"/next_page"})
+    mocker.patch("weko_accounts.views.flash")
+    with patch("weko_accounts.views.ShibUser",return_value=shibuser):
+        client.get(url+"?next=/next_page")
+        mock_redirect_method.assert_called_once()
+        mock_shib_login.assert_not_called()
+
 #def confirm_user():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_confirm_user -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_confirm_user(client,redis_connect,mocker):
