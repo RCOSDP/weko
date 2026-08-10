@@ -221,6 +221,15 @@ WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING = {}
 WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS = False
 """Bind Gakunin mAP groups to WEKO groups."""
 
+WEKO_ACCOUNTS_SHIB_ROLE_MANUAL_ASSIGN = False
+"""Manage roles of Shibboleth users manually from the admin screen.
+
+If True, no role is assigned nor cleared on Shibboleth login. Use this
+when the IdP does not provide the isMemberOf attribute. If False, the
+existing behavior (shib_role_authority_name / isMemberOf /
+organizationName) is kept.
+"""
+
 WEKO_ACCOUNTS_GAKUNIN_GROUP_SUFFIX = "_gakunin_groups"
 """Suffix for Gakunin group names."""
 
