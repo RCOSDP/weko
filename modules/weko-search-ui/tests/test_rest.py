@@ -133,6 +133,14 @@ def test_IndexSearchResource_get_Exception(i18n_app, client_rest, db, users, ite
     with patch("weko_admin.utils.get_facet_search_query", return_value=facet):
         with patch("weko_search_ui.rest.Indexes.get_self_list",side_effect=mock_path(**path1)):
             with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response("data/search/execute_result01_02_03.json")):
+
+                error_result = json_data("data/search/execute_result01_02_03.json")
+                error_result["hits"]["hits"][0]["_source"]["title"] = []
+                with patch("invenio_search.api.RecordsSearch.execute", return_value=dummy_response(error_result)):
+                    res = client_rest.get(url("/index/",{"self":"?page=1&size=20"}))
+                    result = json.loads(res.get_data(as_text=True))
+                    assert res.status_code == 200
+
                 with patch("weko_search_ui.rest.get_heading_info", side_effect=Exception):
                     res = client_rest.get(url("/index/",{"self":"?page=1&size=20"}))
                     result = json.loads(res.get_data(as_text=True))
@@ -189,6 +197,524 @@ def test_IndexSearchResource_get2(app,i18n_app, users, client_request_args):
     total_hit_count = 30
     top_page = "http://test_server/index/?page=1&size=20"
     next_page = "http://test_server/index/?page=2&size=20"
+
+    return_data_1 = MagicMock()
+    return_data_1.path = ""
+    return_data_1.name = "test"
+
+    return_data_2 = MagicMock()
+    return_data_2.path = "q"
+    return_data_2.name = "test"
+
+    return_data_3 = MagicMock()
+    return_data_3.path = "q/child"
+    return_data_3.name = "child"
+    return_data_3.name_en = "child"
+    return_data_3.comment = "child comment"
+
+    with patch("invenio_pidstore.current_pidstore.fetchers", return_value=1):
+
+        def search_class():
+            search_class_data = MagicMock()
+
+            return search_class_data
+
+        def search_factory(x, y):
+            def execute():
+                def to_dict():
+                    dict_1 = {
+                        "hits": {
+                            "total": total_hit_count,
+                            "hits": [{
+                                "_source": {
+                                    "title": [1],
+                                    "_comment": "test",
+                                    "control_number": 1,
+                                    "custom_sort": "custom_sort",
+                                    "_item_metadata": {"item_type_id": 1}
+                                }
+                            }]
+                        },
+                        "aggregations": {
+                            "path": {
+                                "buckets": [{
+                                    "key": "",
+                                    "doc_count": 1,
+                                    "no_available": {
+                                        "doc_count": 1
+                                    },
+                                    "date_range": {
+                                        "available": {
+                                            "buckets": [{}]
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+
+                    return dict_1
+
+                data_3 = MagicMock()
+                data_3.hits = MagicMock()
+                data_3.hits.total = 30
+                data_3.to_dict = to_dict
+
+                return data_3
+
+            data_1 = MagicMock()
+            data_1.execute = execute
+
+            data_2 = MagicMock()
+
+            return (data_1, data_2)
+
+        def search_factory2(x, y):
+            data_1, _ = search_factory(x, y)
+            original_execute = data_1.execute
+
+            def execute():
+                result = original_execute()
+                result_dict = result.to_dict()
+                result_dict["aggregations"]["path"]["buckets"] = [
+                    result_dict["aggregations"]["path"]["buckets"][0],
+                    {
+                        "key": "child",
+                        "doc_count": 1,
+                        "no_available": {"doc_count": 0},
+                        "date_range": {"available": {"buckets": [{}]}},
+                    },
+                ]
+                result.to_dict = lambda: result_dict
+                return result
+
+            data_1.execute = execute
+            data_2 = MagicMock()
+            data_2.is_perm_paths = ["q/child"]
+            data_2.get.return_value = data_2.is_perm_paths
+            return (data_1, data_2)
+
+        def search_factory3(x, y):
+            data_1, data_2 = search_factory2(x, y)
+            data_2.is_perm_paths = ["q/other"]
+            data_2.get.return_value = data_2.is_perm_paths
+            return (data_1, data_2)
+
+        def search_factory4(x, y):
+            data_1, data_2 = search_factory2(x, y)
+            original_execute = data_1.execute
+
+            def execute():
+                result = original_execute()
+                result_dict = result.to_dict()
+                result_dict["aggregations"]["path"]["buckets"][0]["key"] = "q"
+                result.to_dict = lambda: result_dict
+                return result
+
+            data_1.execute = execute
+            data_2.is_perm_paths = ["other"]
+            data_2.get.return_value = data_2.is_perm_paths
+            return (data_1, data_2)
+
+        def make_response(pid_fetcher, search_result, links, item_links_factory):
+            return (pid_fetcher, search_result, links, item_links_factory)
+
+
+        ctx = {
+            "pid_fetcher": "",
+            "max_result_window": 10000,
+            "search_class": search_class,
+            "search_factory": search_factory,
+            "links_factory": "test",
+            "make_response": make_response
+        }
+
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_1]):
+                assert isinstance(test.get(), tuple)
+                assert isinstance(test.get()[1], dict)
+                assert test.get()[1]["hits"]["total"] == total_hit_count
+                assert test.get()[2]["self"] == top_page
+                assert test.get()[2]["next"] == next_page
+
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_2]):
+                assert isinstance(test.get(), tuple)
+                assert isinstance(test.get()[1], dict)
+                assert test.get()[1]["hits"]["total"] == total_hit_count
+                assert test.get()[2]["self"] == top_page
+                assert test.get()[2]["next"] == next_page
+
+        ctx["search_factory"] = search_factory2
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        with app.test_request_context(
+            "/index/", query_string={"q": "q", "is_search": 1}
+        ):
+            with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+                with patch(
+                    "weko_index_tree.api.Indexes.get_self_list",
+                    return_value=[return_data_2, return_data_3],
+                ):
+                    response = test.get()
+                    rd = response[1]
+                    index_data = rd["aggregations"]["path"]["buckets"][0][0]
+                    assert index_data["date_range"]["pub_cnt"] == 0
+                    assert index_data["date_range"]["un_pub_cnt"] == 1
+
+        ctx["search_factory"] = search_factory3
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        with app.test_request_context(
+            "/index/", query_string={"q": "q", "is_search": 1}
+        ):
+            with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+                with patch(
+                    "weko_index_tree.api.Indexes.get_self_list",
+                    return_value=[return_data_2, return_data_3],
+                ):
+                    response = test.get()
+                    rd = response[1]
+                    child_indexes = rd["aggregations"]["path"]["buckets"][0]
+                    assert all(index["key"] != "q/child" for index in child_indexes)
+
+        ctx["search_factory"] = search_factory4
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        with app.test_request_context(
+            "/index/", query_string={"q": "q", "is_search": 1}
+        ):
+            with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+                with patch(
+                    "weko_index_tree.api.Indexes.get_self_list",
+                    return_value=[return_data_2],
+                ):
+                    response = test.get()
+                    rd = response[1]
+                    index_data = rd["aggregations"]["path"]["buckets"][0][0]
+                    assert index_data["key"] == "q"
+                    assert index_data["date_range"]["pub_cnt"] == 0
+                    assert index_data["date_range"]["un_pub_cnt"] == 0
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_is_search_1_with_q -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_get_is_search_1_with_q(app,i18n_app, users, client_request_args2):
+    total_hit_count = 30
+
+    return_data_1 = MagicMock()
+    return_data_1.path = "q"
+    return_data_1.name = "test"
+    return_data_1.comment = "aaaaa"
+
+    return_data_2 = MagicMock()
+    return_data_2.path = "q"
+    return_data_2.name = "test"
+    return_data_2.comment = "<a href=\"https://www.google.co.jp\">google</a>"
+
+    return_data_3 = MagicMock()
+    return_data_3.path = "q2"
+    return_data_3.name = "test"
+
+    with patch("invenio_pidstore.current_pidstore.fetchers", return_value=1):
+
+        def search_class():
+            search_class_data = MagicMock()
+
+            return search_class_data
+
+        def search_factory(x, y):
+            def execute():
+                def to_dict():
+                    dict_1 = {
+                        "hits": {
+                            "total": total_hit_count,
+                            "hits": [{
+                                "_source": {
+                                    "title": [1],
+                                    "_comment": "test",
+                                    "control_number": 1,
+                                    "custom_sort": "custom_sort",
+                                    "_item_metadata": {"item_type_id": 1}
+                                }
+                            }]
+                        },
+                        "aggregations": {
+                            "path": {
+                                "buckets": [{
+                                    "key": "q",
+                                    "doc_count": 1,
+                                    "no_available": {
+                                        "doc_count": 1
+                                    },
+                                    "date_range": {
+                                        "available": {
+                                            "buckets": [{}]
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+
+                    return dict_1
+
+                data_3 = MagicMock()
+                data_3.hits = MagicMock()
+                data_3.hits.total = 30
+                data_3.to_dict = to_dict
+
+                return data_3
+
+            data_1 = MagicMock()
+            data_1.execute = execute
+
+            data_2 = MagicMock()
+            data_2.is_perm_paths = ["q"]
+            data_2.get.return_value = data_2.is_perm_paths
+            
+
+            return (data_1, data_2)        
+
+        def make_response(pid_fetcher, search_result, links, item_links_factory):
+            return (pid_fetcher, search_result, links, item_links_factory)
+        
+        ctx = {
+            "pid_fetcher": "",
+            "max_result_window": 10000,
+            "search_class": search_class,
+            "search_factory": search_factory,
+            "links_factory": "test",
+            "make_response": make_response
+        }
+
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        dummy_index = MagicMock()
+        dummy_index.image_name = "test_image"
+
+        with patch("weko_index_tree.api.Indexes.get_index", return_value=dummy_index):
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_1]):
+                response = test.get()
+                rd = response[1]
+                assert rd["aggregations"]["path"]["buckets"][0][0]["comment"] == "aaaaa"
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_2]):
+                response = test.get()
+                rd = response[1]
+                assert rd["aggregations"]["path"]["buckets"][0][0]["comment"] == "google"
+
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_1]):
+                response = test.get()
+                rd = response[1]
+                assert rd["aggregations"]["path"]["buckets"][0][0]["img"] == "test_image"
+
+# class IndexSearchResource(ContentNegotiatedMethodView):
+# def __init__
+# def get(self, **kwargs):
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_is_search_not1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_get_is_search_not1(app,i18n_app, users, client_request_args3):
+    total_hit_count = 30
+    top_page = "http://test_server/index/?page=1&size=20"
+    next_page = "http://test_server/index/?page=2&size=20"
+
+    return_data_1 = MagicMock()
+    return_data_1.path = ""
+    return_data_1.name = "test"
+
+    return_data_2 = MagicMock()
+    return_data_2.path = "q"
+    return_data_2.name = "test"
+
+    return_data_3 = MagicMock()
+    return_data_3.path = "q"
+    return_data_3.name = "test"
+    return_data_3.comment = "aaaaa"
+
+    return_data_4 = MagicMock()
+    return_data_4.path = "q"
+    return_data_4.name = "test"
+    return_data_4.comment = "<a href=\"https://www.google.co.jp\">google</a>"
+
+    return_data_5 = MagicMock()
+    return_data_5.path = "q/child"
+    return_data_5.name = "child"
+    return_data_5.name_en = "child"
+    return_data_5.comment = "child comment"
+
+    with patch("invenio_pidstore.current_pidstore.fetchers", return_value=1):
+
+        def search_class():
+            search_class_data = MagicMock()
+
+            return search_class_data
+
+        def search_factory(x, y):
+            def execute():
+                def to_dict():
+                    dict_1 = {
+                        "hits": {
+                            "total": total_hit_count,
+                            "hits": [{
+                                "_source": {
+                                    "title": [1],
+                                    "_comment": "test",
+                                    "control_number": 1,
+                                    "custom_sort": "custom_sort",
+                                    "_item_metadata": {"item_type_id": 1}
+                                }
+                            }]
+                        },
+                        "aggregations": {
+                            "path": {
+                                "buckets": [{
+                                    "key": "",
+                                    "doc_count": 1,
+                                    "no_available": {
+                                        "doc_count": 1
+                                    },
+                                    "date_range": {
+                                        "available": {
+                                            "buckets": [{}]
+                                        }
+                                    }
+                                }]
+                            }
+                        }
+                    }
+
+                    return dict_1
+
+                data_3 = MagicMock()
+                data_3.hits = MagicMock()
+                data_3.hits.total = 30
+                data_3.to_dict = to_dict
+
+                return data_3
+
+            data_1 = MagicMock()
+            data_1.execute = execute
+
+            data_2 = {
+                "is_perm_paths": ["q"],
+            }
+
+            return (data_1, data_2)
+
+        def search_factory2(x, y):
+            data_1, _ = search_factory(x, y)
+            original_execute = data_1.execute
+
+            def execute():
+                result = original_execute()
+                result_dict = result.to_dict()
+                result_dict["aggregations"]["path"]["buckets"].append({
+                    "key": "child",
+                    "doc_count": 0,
+                    "no_available": {"doc_count": 0},
+                    "date_range": {"available": {"buckets": [{}]}},
+                })
+                result.to_dict = lambda: result_dict
+                return result
+
+            data_1.execute = execute
+            data_2 = {
+                "is_perm_paths": ["q/child"],
+            }
+            return (data_1, data_2)
+
+        def make_response(pid_fetcher, search_result, links, item_links_factory):
+            return (pid_fetcher, search_result, links, item_links_factory)
+
+
+        ctx = {
+            "pid_fetcher": "",
+            "max_result_window": 10000,
+            "search_class": search_class,
+            "search_factory": search_factory,
+            "links_factory": "test",
+            "make_response": make_response
+        }
+
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_1]):
+                assert isinstance(test.get(), tuple)
+                assert isinstance(test.get()[1], dict)
+                assert test.get()[1]["hits"]["total"] == total_hit_count
+                assert test.get()[2]["self"] == top_page
+                assert test.get()[2]["next"] == next_page
+
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_2]):
+                assert isinstance(test.get(), tuple)
+                assert isinstance(test.get()[1], dict)
+                assert test.get()[1]["hits"]["total"] == total_hit_count
+                assert test.get()[2]["self"] == top_page
+                assert test.get()[2]["next"] == next_page
+
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_3]):
+                response = test.get()
+                rd = response[1]
+                assert rd["aggregations"]["path"]["buckets"][0][0]["comment"] == "aaaaa"
+            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_4]):
+                response = test.get()
+                rd = response[1]
+                assert rd["aggregations"]["path"]["buckets"][0][0]["comment"] == "google"
+
+        ctx["search_factory"] = search_factory2
+        test = IndexSearchResource(
+            ctx=ctx,
+            search_serializers=None,
+            record_serializers=None,
+            default_media_type=None
+        )
+
+        with patch("weko_index_tree.api.Indexes.get_index", return_value=MagicMock()):
+            with patch(
+                "weko_search_ui.rest.Indexes.get_self_list",
+                return_value=[return_data_5],
+            ):
+                response = test.get()
+                rd = response[1]
+                index_data = rd["aggregations"]["path"]["buckets"][0][0]
+                assert index_data["key"] == "q/child"
+                assert index_data["date_range"]["pub_cnt"] == 0
+                assert index_data["date_range"]["un_pub_cnt"] == 0
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_page_2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_IndexSearchResource_page_2(app,i18n_app, users, client_request_args4):
+    total_hit_count = 30
+    top_page = "http://test_server/index/?page=2&size=20"
+    prev_page = "http://test_server/index/?page=1&size=20"
 
     return_data_1 = MagicMock()
     return_data_1.path = ""
@@ -281,14 +807,7 @@ def test_IndexSearchResource_get2(app,i18n_app, users, client_request_args):
                 assert isinstance(test.get()[1], dict)
                 assert test.get()[1]["hits"]["total"] == total_hit_count
                 assert test.get()[2]["self"] == top_page
-                assert test.get()[2]["next"] == next_page
-
-            with patch("weko_index_tree.api.Indexes.get_self_list", return_value=[return_data_2]):
-                assert isinstance(test.get(), tuple)
-                assert isinstance(test.get()[1], dict)
-                assert test.get()[1]["hits"]["total"] == total_hit_count
-                assert test.get()[2]["self"] == top_page
-                assert test.get()[2]["next"] == next_page
+                assert test.get()[2]["prev"] == prev_page
 
 # def get_heading_info(data, lang, item_type):
 def test_get_heading_info(i18n_app):
