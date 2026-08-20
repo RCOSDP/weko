@@ -49,6 +49,7 @@ from weko_index_tree.utils import (
     get_descendant_index_names,
     get_item_ids_in_index,
     get_all_records_in_index,
+    get_user_roles_and_groups
 )
 
 from invenio_accounts.testutils import login_user_via_session, client_authenticated
@@ -70,6 +71,7 @@ from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user, login_user, LoginManager
+from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_communities.models import Community
 from invenio_i18n.ext import current_i18n
@@ -216,29 +218,24 @@ def test_get_user_groups(i18n_app, client_rest, users, db):
     assert len(get_user_groups()) == 0
 
 
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_index_permission_by_role_and_group -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 # def check_index_permission_by_role_and_group(user_role, roles, user_group, groups):
-def test_check_index_permission_by_role_and_group(app, mocker):
-    mock_role1 = mocker.Mock()
-    mock_role1.id = 1
-    mock_role1.name = "role1"
-    mock_role2 = mocker.Mock()
-    mock_role2.id = 2
-    mock_role2.name = "jc_groups_xxx" # role_group
-    mock_roles = [mock_role1, mock_role2]
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_index_permission_by_role_and_group -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_check_index_permission_by_role_and_group(app, db, mocker):
+    mocker.patch.dict(current_app.config, {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+    })
 
-    mock_filter = mocker.Mock()
-    mock_filter.all.return_value = mock_roles
-    mock_query = mocker.Mock()
-    mock_query.filter.return_value = mock_filter
-    mocker.patch("weko_index_tree.utils.Role.query", mock_query)
+    role1 = Role(name="role1")
+    role2 = Role(name="jc_test_example_com_gr_xxx")
+    db.session.add_all([role1, role2])
+    db.session.commit()
 
     # Admin User
     assert check_index_permission_by_role_and_group((True, []), '', [], '') is True
 
     mock_check_roles = mocker.patch("weko_index_tree.utils.check_roles")
     mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups")
-    # mock query returns [1,2] → role id:3 is removed
+    # query returns [1,2] → role id:3 is removed
     # role id:2 is role_group → called in check_groups
     check_index_permission_by_role_and_group((False, [1,2,3]), '1,2,3', [5,6], '5,6')
     mock_check_roles.assert_called_with(['1'], ['1'])
@@ -260,8 +257,66 @@ def test_check_index_permission_by_role_and_group(app, mocker):
     mock_check_groups = mocker.patch("weko_index_tree.utils.check_groups", return_value=False)
     assert check_index_permission_by_role_and_group((False, []), '', [], '') is False
 
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_get_user_roles_and_groups -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_get_user_roles_and_groups(app, db, mocker):
+    mocker.patch.dict(current_app.config, {
+        'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+    })
+
+    with app.app_context():
+        pattern = current_app.config.get(
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+        prefix = pattern.get("prefix")
+        role_key = pattern.get("role_keyword")
+        group_key = pattern.get("group_keyword")
+        repoid = "test_example_com"
+
+        roles = [
+            Role(id=1, name=f"{prefix}_{repoid}_{role_key}_radm"), # map role
+            Role(id=2, name=pattern.get("sysadm_group")), # map role
+            Role(id=3, name=f"{prefix}_{repoid}_{role_key}_unkwown"), # map role
+            Role(id=4, name=f"{prefix}_{repoid}_{group_key}_radm"), # role-group
+            Role(id=5, name=f"{prefix}_test!example!com_{role_key}_radm"), # normal role
+            Role(id=6, name=f"ng_{repoid}_{role_key}_radm"), # normal role
+
+            Role(id=7, name=f"{prefix}_{repoid}_{group_key}_library"), # role-group
+            Role(id=8, name=f"{prefix}_test!example!com_{group_key}_library"), # normal role
+            Role(id=9, name=f"ng_{repoid}_{group_key}_library") # normal role
+        ]
+
+        role_ids = [str(role.id)for role in roles]
+        role_ids.extend(['-98', '-99'])
+
+        role_without_map_roles, role_groups = get_user_roles_and_groups(role_ids)
+        get_role_ids = [role for role in role_without_map_roles]
+
+        assert len(get_role_ids) == 2
+        assert '-98' in get_role_ids
+        assert '-99' in role_ids
+        role_group_ids = role_groups
+        assert len(role_group_ids) == 0
+
+        db.session.add_all(roles)
+        db.session.commit()
+
+        role_without_map_roles, role_groups = get_user_roles_and_groups(role_ids)
+        get_role_ids = [role for role in role_without_map_roles] # normal role ids
+        assert len(get_role_ids) == 6
+        assert '5' in get_role_ids
+        assert '6' in get_role_ids
+        assert '8' in get_role_ids
+        assert '9' in get_role_ids
+        assert '-98' in get_role_ids
+        assert '-99' in get_role_ids
+        role_group_ids = role_groups # role-group ids
+        assert len(role_group_ids) == 2
+        assert '4' in role_group_ids
+        assert '7' in role_group_ids
+
+
 # def check_roles(user_role_list, index_role_list):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_roles -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_check_roles(app, mocker):
     mock_user = mocker.Mock()
     mock_user.is_authenticated = True
@@ -278,8 +333,8 @@ def test_check_roles(app, mocker):
     assert check_roles([], ['-99']) is True
 
 
-# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_groups -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 # def check_groups(user_group, index_group_list, user_role_group, index_role_group):
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_utils.py::test_check_groups -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_check_groups(app, mocker):
     mock_user = mocker.Mock()
 

@@ -264,15 +264,18 @@ def test_userview_get_count_query(app, users):
                     assert query.scalar() == 0
 
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_userview_on_form_prefill -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
-def test_userview_on_form_prefill(app, users):
+def test_userview_on_form_prefill(app, users, mocker):
     """Test on_form_prefill for super role user."""
     with app.app_context():
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
         view = UserView(User, db.session)
         form = view.create_form()
         user = User.query.filter_by(email=users[2]['email']).first()
         ds = app.extensions["invenio-accounts"].datastore
         ds.add_role_to_user(user, Role(name='role1'))
-        ds.add_role_to_user(user, Role(name='role2_groups_1'))
+        ds.add_role_to_user(user, Role(name='jc_test_example_com_gr_1'))
         db.session.commit()
 
         view.get_one = MagicMock(return_value=user)
@@ -289,16 +292,36 @@ def test_userview_edit_form(app, users):
     assert form.data['active'] is False
 
 # .tox/c1/bin/pytest --cov=invenio_accounts tests/test_admin.py::test_scaffold_form -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-accounts/.tox/c1/tmp
-def test_scaffold_form(app):
+def test_scaffold_form(app, mocker):
     """Test scaffold_form method of UserView."""
     with app.app_context():
-        current_app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'] = {
-            'role_keyword': 'roles',
-            'prefix': 'jc'
-        }
-        db.session.add(Role(id=1, name='Contributor', description=None))
-        db.session.add(Role(id=2, name='jc_xxx_roles_contributor', description=None))
-        db.session.add(Role(id=3, name='jc_xxx_groups_yyy', description=None))
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+
+        pattern = current_app.config.get(
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+        prefix = pattern.get("prefix")
+        role_key = pattern.get("role_keyword")
+        repoid = "test_example_com"
+
+        role_name1 = f"{prefix}_{repoid}_{role_key}_radm"
+        role_name2 = pattern.get("sysadm_group")
+        role_name3 = f"{prefix}_{repoid}_{role_key}_unkwown"
+        role_name4 = f"{prefix}_{repoid}_gr_radm"
+        role_name5 = f"{prefix}_test!example!com_{role_key}_radm"
+        role_name6 = f"ng_{repoid}_{role_key}_radm"
+        role_name7 = 'Contributor'
+
+        db.session.add_all([
+            Role(id=1, name=role_name1),
+            Role(id=2, name=role_name2),
+            Role(id=3, name=role_name3),
+            Role(id=4, name=role_name4),
+            Role(id=5, name=role_name5),
+            Role(id=6, name=role_name6),
+            Role(id=7, name=role_name7)
+        ])
         db.session.commit()
 
         view = UserView(User, db.session)
@@ -310,12 +333,10 @@ def test_scaffold_form(app):
         role_names = [r.name for r in roles]
         group_names = [g.name for g in groups]
         # Check included roles
-        assert 'Contributor' in role_names
+        assert len(role_names) == 3
+        assert role_name5 in role_names
+        assert role_name6 in role_names
+        assert role_name7 in role_names
         # Check included groups
-        assert 'jc_xxx_groups_yyy' in group_names
-        # Check excluded roles
-        assert 'jc_xxx_roles_contributor' not in role_names
-        assert 'jc_xxx_groups_yyy' not in role_names
-        # Check excluded groups
-        assert 'Contributor' not in group_names
-        assert 'jc_xxx_roles_contributor' not in group_names
+        assert len(group_names) == 1
+        assert role_name4 in group_names

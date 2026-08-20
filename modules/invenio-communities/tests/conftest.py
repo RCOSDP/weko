@@ -66,6 +66,7 @@ import copy
 import uuid
 from invenio_pidstore.models import PersistentIdentifier,PIDStatus,RecordIdentifier
 from invenio_pidrelations.models import PIDRelation
+from weko_accounts.config import WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
 from weko_records.api import ItemsMetadata
 
 from invenio_communities import InvenioCommunities
@@ -111,6 +112,8 @@ def base_app(instance_path, request):
         INDEXER_DEFAULT_DOCTYPE='item-v1.0.0',
         INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
         SEARCH_UI_SEARCH_INDEX="{}-weko".format("test"),
+        WEKO_ADMIN_PERMISSION_ROLE_SYSTEM = "System Administrator",
+        WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT,
     )
     FlaskCeleryExt(app_)
     Menu(app_)

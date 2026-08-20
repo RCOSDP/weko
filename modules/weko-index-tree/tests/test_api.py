@@ -37,6 +37,7 @@ from invenio_accounts.testutils import login_user_via_view, login_user_via_sessi
 from invenio_i18n.ext import current_i18n
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from flask import current_app
+from weko_accounts.api import create_fqdn_from_entity_id
 from weko_deposit.api import WekoDeposit
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
@@ -621,26 +622,35 @@ def test_update_set_info(i18n_app, db, users, test_indices):
 def test_filter_roles(app, mocker):
     with app.app_context():
         # モックデータの準備
+        prefix = 'group'
+        role_key = 'key'
         roles = [
             {"id": 1, "name": "Contributor"},
             {"id": 2, "name": "Community Administrator"},
             {"id": 3, "name": "Repository Administrator"},
             {"id": 4, "name": "System Administrator"},
-            {"id": 5, "name": "group_key_test_role"},
-            {"id": 6, "name": "key_value_role"},
+            {"id": 5, "name": f"{prefix}_{role_key}_test_role"},
+            {"id": 6, "name": f"{role_key}_value_role"},
             {"id": 7, "name": "Authenticated User"},
             {"id": 8, "name": "Guest"},
             {"id": 9, "name": "General"},
-            {"id": 10, "name": "group_value_role"},
+            {"id": 10, "name": f"{prefix}_test_example_com_gr_xxx"},
         ]
 
         # 設定をモック
         mocker.patch.dict(current_app.config, {
             'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
-                'prefix': 'group',
-                'role_keyword': 'key'
+                'prefix': prefix,
+                'role_keyword': role_key,
+                'group_keyword': 'gr',
+                "role_mapping":{
+                    "radm": "Repository Administrator",
+                    "cadm": "Community Administrator",
+                    "cont": "Contributor"
+                }
             },
-            'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User']
+            'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User'],
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
         })
 
         # メソッドの呼び出し
@@ -648,17 +658,18 @@ def test_filter_roles(app, mocker):
 
         # 結果の検証
         assert len(filtered_roles) == 1
-        assert filtered_roles[0]["name"] == "group_value_role"
+        assert filtered_roles[0]["name"] == f"{prefix}_test_example_com_gr_xxx"
         assert len(excluded_roles) == 9
-        assert excluded_roles[0]["name"] == "Contributor"
-        assert excluded_roles[1]["name"] == "Community Administrator"
-        assert excluded_roles[2]["name"] == "Repository Administrator"
-        assert excluded_roles[3]["name"] == "System Administrator"
-        assert excluded_roles[4]["name"] == "key_value_role"
-        assert excluded_roles[5]["name"] == "Authenticated User"
-        assert excluded_roles[6]["name"] == "Guest"
-        assert excluded_roles[7]["name"] == "General"
-        assert excluded_roles[8]["name"] == "group_key_test_role"
+        excluded_role_names = [role["name"] for role in excluded_roles]
+        assert "Contributor" in excluded_role_names
+        assert "Community Administrator" in excluded_role_names
+        assert "Repository Administrator" in excluded_role_names
+        assert "System Administrator" in excluded_role_names
+        assert f"{role_key}_value_role" in excluded_role_names
+        assert "Authenticated User" in excluded_role_names
+        assert "Guest" in excluded_role_names
+        assert "General" in excluded_role_names
+        assert f"{prefix}_{role_key}_test_role" in excluded_role_names
 
         # リスト以外の値を渡すテストケース
         non_list_value = "not_a_list"
@@ -674,6 +685,48 @@ def test_filter_roles(app, mocker):
         dict_value = {"id": 1, "name": "role_name"}
         with pytest.raises(TypeError, match="roles must be a list"):
             Indexes.filter_roles(dict_value)
+
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_filter_roles_map -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_filter_roles_map(app, mocker):
+    with app.app_context():
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+        pattern = current_app.config.get(
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+        prefix = pattern.get("prefix")
+        role_key = pattern.get("role_keyword")
+        repoid = "test_example_com"
+
+        role_name1 = f"{prefix}_{repoid}_{role_key}_radm"
+        role_name2 = pattern.get("sysadm_group")
+        role_name3 = f"{prefix}_{repoid}_{role_key}_unkwown"
+        role_name4 = f"{prefix}_{repoid}_gr_radm"
+        role_name5 = f"{prefix}_test!example!com_{role_key}_radm"
+        role_name6 = f"ng_{repoid}_{role_key}_radm"
+
+        roles = [
+            {"id": 1, "name": role_name1},
+            {"id": 2, "name": role_name2},
+            {"id": 3, "name": role_name3},
+            {"id": 4, "name": role_name4},
+            {"id": 5, "name": role_name5},
+            {"id": 6, "name": role_name6}
+        ]
+        filtered_roles, excluded_roles = Indexes.filter_roles(roles)
+
+        assert len(filtered_roles) == 1
+        assert filtered_roles[0]["name"] == role_name4
+
+        assert len(excluded_roles) == 5
+        excluded_role_names = [role["name"] for role in excluded_roles]
+        assert role_name1 in excluded_role_names
+        assert role_name2 in excluded_role_names
+        assert role_name3 in excluded_role_names
+        assert role_name5 in excluded_role_names
+        assert role_name6 in excluded_role_names
+
 
 #     def delete_set_info(cls, action, index_id, id_list):
 #     def get_public_indexes_list(cls):
@@ -1178,13 +1231,16 @@ def test_get_child_list_recursive(i18n_app, db, redis_connect, users, db_records
 def test_get_index_with_role_group(app, db, mocker):
     with app.app_context():
         # 必要な設定を追加
+        prefix = 'group'
+        role_key = 'key'
         mocker.patch.dict(current_app.config, {
             'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
-                'prefix': 'group',
-                'role_keyword': 'key'
+                'prefix': prefix,
+                'role_keyword': role_key
             },
             'WEKO_PERMISSION_ROLE_USER': ['Contributor', 'Community Administrator', 'Repository Administrator', 'System Administrator', 'General', 'Guest', 'Authenticated User'],
-            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator']
+            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator'],
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
         })
 
         # モックデータの準備
@@ -1198,16 +1254,18 @@ def test_get_index_with_role_group(app, db, mocker):
         }
         mocker.patch.object(Indexes, 'get_index', return_value=index_data)
 
+        fqdn = create_fqdn_from_entity_id()
+
         roles = [
             {"id": 3, "name": "Contributor"},
             {"id": 4, "name": "Community Administrator"},
             {"id": -98, "name": "Authenticated User"},
             {"id": -99, "name": "Guest"},
             {"id": 5, "name": "General"},
-            {"id": 6, "name": "group_key_test_role"},
-            {"id": 7, "name": "key_value_role"},
-            {"id": 8, "name": "group_value_role"},
-            {"id": 9, "name": "group_xxx_key_user1"},
+            {"id": 6, "name": f"{prefix}_{role_key}_test_role"},
+            {"id": 7, "name": f"{role_key}_value_role"},
+            {"id": 8, "name": f"{prefix}_{fqdn}_value_role"},
+            {"id": 9, "name": f"{prefix}_test_example_com_{role_key}_user1"},
             {"id": 10, "name": "System Administrator"},
         ]
         mocker.patch.object(Indexes, 'get_account_role', return_value=roles)
@@ -1224,9 +1282,9 @@ def test_get_index_with_role_group(app, db, mocker):
 
         # 結果の検証
         assert result['browsing_group']['allow'] ==  []
-        assert result['browsing_group']['deny'] == [{'id': '-89', 'name': 'No Group'}, {'id': '8gr', 'name': 'group_value_role'}]
+        assert result['browsing_group']['deny'] == [{'id': '-89', 'name': 'No Group'}, {'id': '8gr', 'name': f'{prefix}_{fqdn}_value_role'}]
         assert result['contribute_group']['allow'] ==  []
-        assert result['contribute_group']['deny'] == [{'id': '-89', 'name': 'No Group'}, {'id': '8gr', 'name': 'group_value_role'}]
+        assert result['contribute_group']['deny'] == [{'id': '-89', 'name': 'No Group'}, {'id': '8gr', 'name': f'{prefix}_{fqdn}_value_role'}]
 
         # 結果が空の場合のテストケース
         mocker.patch.object(Indexes, 'get_account_role', return_value=[])
@@ -1248,25 +1306,67 @@ def test_indexes_get_handle_index_url(app, db, users, test_indices, mocker):
         assert index_url == "http://TEST_SERVER/search?search_type=2&q=1"
         assert handle == "https://test/handle/1"
 
+
+# .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_bind_roles_including_permission -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
+def test_bind_roles_including_permission(app, mocker):
+    with app.test_request_context():
+        prefix = 'jc'
+        sysadm_role = "jc_roles_sysadm"
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
+                'prefix': prefix,
+                "sysadm_group": sysadm_role
+            },
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+        fqdn = create_fqdn_from_entity_id()
+        roles = [
+            {"id": 1, "name": sysadm_role},
+            {"id": 2, "name": f"{prefix}_{fqdn}_ro_radm"},
+            {"id": 3, "name": f"{prefix}_{fqdn}_gr_xxxx"},
+            {"id": 4, "name": f"{prefix}_test!example!com_ro_radm"},
+            {"id": 5, "name": f"ng_{fqdn}_ro_radm"},
+            {"id": 6, "name": "System Administrator"},
+            {"id": 7, "name": "Repository Administrator"}
+        ]
+        roles_true = Indexes.bind_roles_including_permission(roles, True)
+        assert roles_true == roles
+        roles_false = Indexes.bind_roles_including_permission(roles, False)
+        assert roles_false == [
+            {"id": 4, "name": f"{prefix}_test!example!com_ro_radm"},
+            {"id": 5, "name": f"ng_{fqdn}_ro_radm"},
+            {"id": 6, "name": "System Administrator"},
+            {"id": 7, "name": "Repository Administrator"}
+        ]
+        roles_empty_true = Indexes.bind_roles_including_permission([], True)
+        assert roles_empty_true == []
+        roles_empty_false = Indexes.bind_roles_including_permission([], False)
+        assert roles_empty_false == []
+
+
 # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_api.py::test_get_allow_deny -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-index-tree/.tox/c1/tmp
 def test_get_allow_deny(app, db, mocker):
     with app.app_context():
+        prefix = 'jc'
+        role_key = 'ro'
         mocker.patch.dict(current_app.config, {
             'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT': {
-                'prefix': 'jc',
-                'role_keyword': 'roles'
+                'prefix': prefix,
+                'role_keyword': role_key
             },
-            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator']
+            'WEKO_PERMISSION_SUPER_ROLE_USER': ['System Administrator', 'Repository Administrator'],
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
         })
 
-    # Patterns for super role, role_keyword, prefix, allow/deny
+        fqdn = create_fqdn_from_entity_id()
+        # Patterns for super role, role_keyword, prefix, allow/deny
         roles = [
             {"id": 1, "name": "NormalRole"},              # subject to allow/deny
             {"id": 2, "name": "roles_test"},              # subject to allow/deny
-            {"id": 3, "name": "jcAdmin"},                 # starts with 'jc' and does not contain 'roles' → excluded by filter_roles
+            {"id": 3, "name": f"{prefix}_{fqdn}_Admin"},                 # starts with 'jc' and does not contain 'roles' → excluded by filter_roles
             {"id": 4, "name": "System Administrator"},    # super role → skip
             {"id": 5, "name": "OtherRole"},               # subject to allow/deny
-            {"id": 6, "name": "jc_test_roles"},           # contains prefix and role_keyword → skip
+            {"id": 6, "name": f"{prefix}_test_example_com_{role_key}"},           # contains prefix and role_keyword → skip
         ]
         index_data = {
             'id': 1,

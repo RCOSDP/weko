@@ -8,8 +8,9 @@ import base64
 from io import BytesIO
 from mock import patch
 from invenio_accounts.testutils import login_user_via_session, create_test_user
-from invenio_access.models import ActionUsers
+from invenio_accounts.models import Role
 from invenio_communities.models import Community
+from weko_accounts.api import create_fqdn_from_entity_id
 from weko_records.models import ItemTypeProperty
 from weko_index_tree.models import IndexStyle,Index
 from invenio_accounts.testutils import login_user_via_session
@@ -80,17 +81,17 @@ def setup_view_community(app,db,users):
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestInclusionRequestModelView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 class TestCommunityModelView():
     # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestCommunityModelView::test_owner_query_factory_exclude_roles -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
-    def test_owner_query_factory_exclude_roles(self, app, db):
-        app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'] = {
-            'role_keyword': 'roles',
-            'prefix': 'jc'
-        }
-        from invenio_accounts.models import Role
+    def test_owner_query_factory_exclude_roles(self, app, db, mocker):
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+        pattern = app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT']
+        prefix = pattern.get('prefix', '')
+        role_key = pattern.get('role_keyword', '')
+        fqdn = create_fqdn_from_entity_id()
 
-        role_key = app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('role_keyword', '')
-        prefix = app.config['WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT'].get('prefix', '')
-
-        role_both = Role(name=f"{prefix}abc{role_key}")  # Contains both → should be excluded
+        role_all = Role(name=f"{prefix}_{fqdn}_{role_key}_radm")  # Contains all → should be excluded
+        role_both = Role(name=f"{prefix}abc{role_key}")  # Contains key, prefix → should be included
         role_only_key = Role(name=f"abc{role_key}")      # Contains only one → should be included
         role_only_prefix = Role(name=f"{prefix}abc")     # Contains only one → should be included
         role_none = Role(name="abc")                     # Contains neither → should be included
@@ -103,8 +104,9 @@ class TestCommunityModelView():
         owner_names = [r.name for r in view.form_args['owner']['query_factory']()]
 
         # Exclude roles that contain both
-        assert role_both.name not in owner_names
+        assert role_all.name not in owner_names
         # Include roles that contain only one or neither
+        assert role_both.name in owner_names
         assert role_only_key.name in owner_names
         assert role_only_prefix.name in owner_names
         assert role_none.name in owner_names

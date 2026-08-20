@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 
+from weko_accounts.api import is_map_managed_name, is_map_role
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from weko_handle.api import Handle
@@ -854,18 +855,10 @@ class Indexes(object):
         gakunin_map_general_groups = []
         other_roles = []
 
-        gakunin_map_pattern = current_app.config.get(
-            "WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT", {}
-        )
-
-        gakunin_map_prefix = gakunin_map_pattern.get("prefix", "jc")
-        role_keyword = gakunin_map_pattern.get("role_keyword", "ro")
-
         for role in roles:
             role_name = role.get("name", "")
-            role_info = {"id": role.get("id"), "name": role_name}
-            if role_name.startswith(gakunin_map_prefix):
-                if f"_{role_keyword}_" in role_name:
+            if is_map_managed_name(role_name):
+                if is_map_role(role_name):
                     # gakunin_map group role
                     gakunin_map_role_groups.append(role)
                 else:
@@ -886,9 +879,7 @@ class Indexes(object):
                 while role:
                     tmp = role.pop(0)
                     if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
-                        role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
-                        prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
-                        if role_key not in tmp["name"] or not (tmp["name"].startswith(prefix)):
+                        if not is_map_role(tmp["name"]):
                             if str(tmp["id"]) in allow:
                                 alw.append(tmp)
                             else:
@@ -2228,7 +2219,7 @@ class Indexes(object):
         """
         bind_roles = []
         for role in roles:
-            if role.get('name').startswith('jc_') and not permission:
+            if is_map_managed_name(role.get('name')) and not permission:
                 continue
             bind_roles.append(role)
         return bind_roles

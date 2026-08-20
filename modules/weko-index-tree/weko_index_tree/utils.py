@@ -33,7 +33,7 @@ from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
-from sqlalchemy import and_
+from sqlalchemy import not_
 from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_communities.models import Community
@@ -42,6 +42,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.api import map_role_condition, map_group_condition
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_logging.activity_logger import UserActivityLogger
@@ -334,36 +335,45 @@ def check_index_permission_by_role_and_group(user_role, roles, user_group, group
     user_roles = [str(r) for r in user_role[1]] if user_role[1] else []
     user_group_list = [str(g) for g in user_group]
 
-    role_key = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["role_keyword"]
-    prefix = current_app.config["WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT"]["prefix"]
-    without_map_role = Role.query.filter(
-        ~and_(Role.name.like(f"%{role_key}%"), Role.name.startswith(prefix))
-    ).all()
-
-    role_groups = [str(lst.id) for lst in without_map_role
-                   if "_groups_" in lst.name]
-    without_map_role = [str(r.id) for r in without_map_role]
-    # Guest, Authenticated User
-    without_map_role.extend(['-98', '-99'])
-
-    user_role_list = [r for r in user_roles
-                      if r in without_map_role and r not in role_groups]
-    user_role_group = [r for r in user_roles
-                       if r in without_map_role and r in role_groups]
-
     role_list = sorted(roles if isinstance(roles, list)
                        else (roles.split(',') if roles else []))
     index_group_list = sorted(groups if isinstance(groups, list)
                        else (groups.split(',') if groups else []))
 
-    index_role_list = [r for r in role_list
-                       if r in without_map_role and r not in role_groups]
-    index_role_group = [r for r in role_list
-                        if r in without_map_role and r in role_groups]
+    user_role_list, user_role_group = get_user_roles_and_groups(user_roles)
+    index_role_list, index_role_group = get_user_roles_and_groups(role_list)
 
     return check_roles(user_role_list, index_role_list) and \
         check_groups(user_group_list, index_group_list,
                      user_role_group, index_role_group)
+
+
+def get_user_roles_and_groups(roles):
+    """Split role IDs into regular roles and role-groups.
+
+    Args:
+        roles (list[str]): Role IDs to classify.
+
+    Returns:
+        tuple[list[str], list[str]]: A pair containing regular role IDs and
+        role-group IDs, respectively. Guest and authenticated
+        user role IDs are treated as regular roles.
+    """
+    role_without_map_role = Role.query.filter(not_(map_role_condition())).all()
+    role_groups = Role.query.filter(map_group_condition()).all()
+
+    role_without_map_role = [str(role.id) for role in role_without_map_role]
+    # Guest, Authenticated User
+    role_without_map_role.extend(['-98', '-99'])
+    role_groups = [str(role.id) for role in role_groups]
+    role_list = []
+    group_list = []
+    for role in roles:
+        if role in role_without_map_role and role not in role_groups:
+            role_list.append(role)
+        if role in role_without_map_role and role in role_groups:
+            group_list.append(role)
+    return role_list, group_list
 
 
 def check_roles(user_role_list, index_role_list):
