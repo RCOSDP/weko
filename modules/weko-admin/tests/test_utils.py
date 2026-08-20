@@ -60,7 +60,8 @@ from weko_admin.utils import (
     get_title_facets,
     is_exits_facet,
     overwrite_the_memory_config_with_db,
-    get_detail_search_list
+    get_detail_search_list,
+    sanitize_html_string
 )
 
 from tests.helpers import json_data
@@ -2616,3 +2617,22 @@ def test_get_detail_search_list(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         result =  get_detail_search_list()
         assert result
+
+# def sanitize_html_string(html_string, allow_tags=[], allow_attributes={}, strip=True):
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_sanitize_html_string -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_sanitize_html_string():
+    test_str = "<div title=\"test\" onclick=\"alert(0)\">a<script>alert(1)</script>b</div>"
+    result = sanitize_html_string(test_str)
+    assert result == "aalert(1)b"
+
+    result = sanitize_html_string(test_str, allow_tags=["div"])
+    assert result == "<div>aalert(1)b</div>"
+
+    result = sanitize_html_string(test_str, allow_tags=["div"], allow_attributes={"div": ["onclick"]})
+    assert result == "<div onclick=\"alert(0)\">aalert(1)b</div>"
+
+    result = sanitize_html_string(test_str, allow_tags=["div"], allow_attributes={"div": ["onclick"]}, strip=True)
+    assert result == "<div onclick=\"alert(0)\">aalert(1)b</div>"
+
+    result = sanitize_html_string(12345)
+    assert result == 12345
