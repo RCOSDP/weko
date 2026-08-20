@@ -59,8 +59,11 @@ class WekoWorkflow(object):
                 'WEKO_WORKFLOW_BASE_TEMPLATE',
                 app.config['BASE_PAGE_TEMPLATE'],
             )
+        # WEKO_DOI_ and WEKO_CROSSREF_ configure the DOI registration the
+        # workflow triggers; they live here because saving_doi_pidstore does.
+        prefixes = ('WEKO_WORKFLOW_', 'WEKO_DOI_', 'WEKO_CROSSREF_')
         for k in dir(config):
-            if k.startswith('WEKO_WORKFLOW_'):
+            if k.startswith(prefixes):
                 app.config.setdefault(k, getattr(config, k))
 
 
@@ -96,8 +99,9 @@ class WekoWorkflowREST(object):
 
         :param app: An instance of :class:`flask.Flask`.
         """
+        prefixes = ('WEKO_WORKFLOW_', 'WEKO_DOI_', 'WEKO_CROSSREF_')
         for k in dir(config):
-            if k.startswith('WEKO_WORKFLOW_'):
+            if k.startswith(prefixes):
                 app.config.setdefault(k, getattr(config, k))
             if k == 'WEKO_ITEMS_UI_MULTIPLE_APPROVALS':
                 app.config.setdefault(k, getattr(config, k))

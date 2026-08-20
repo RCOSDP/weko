@@ -18,17 +18,27 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Task for workflow module."""
+"""DOI registration against the agencies' APIs.
 
-from celery import shared_task
-from flask import current_app
+WEKO grants a DOI by writing it into the metadata and the PID store; this
+package is what actually registers it with Crossref, and is built so that the
+other agencies plug into the same orchestration.
+"""
 
-from .doi.tasks import deposit_doi, poll_doi_deposit, resend_doi_deposit  # noqa
-from .utils import cancel_expired_usage_reports
+from .base import AgencyCapabilities, DepositRequest, DepositResult, \
+    DepositStatus, DoiRegistrationAgency
+from .metadata import DoiMetadataSource
+from .orchestrator import request_doi_deposit
+from .registry import get_agency, is_supported
 
-
-@shared_task(ignore_results=True)
-def cancel_expired_usage_report_activities():
-    """Cancel usage report activities are expired."""
-    with current_app.app_context():
-        cancel_expired_usage_reports()
+__all__ = (
+    'AgencyCapabilities',
+    'DepositRequest',
+    'DepositResult',
+    'DepositStatus',
+    'DoiMetadataSource',
+    'DoiRegistrationAgency',
+    'get_agency',
+    'is_supported',
+    'request_doi_deposit',
+)

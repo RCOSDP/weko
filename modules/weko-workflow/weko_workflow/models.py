@@ -1326,3 +1326,66 @@ class ActivityCount(db.Model, TimestampMixin):
         db.Integer(), default=1,
         nullable=False, unique=False)
     """today count"""
+
+
+class DoiDepositLog(db.Model, TimestampMixin):
+    """Track one DOI registration against a registration agency.
+
+    One row per deposit attempt of one item: it holds what was sent, what
+    came back, and where the deposit stands, so that a failed registration
+    can be diagnosed and sent again without replaying the workflow.
+    """
+
+    __tablename__ = 'doi_deposit_log'
+
+    id = db.Column(db.BigInteger(), nullable=False,
+                   primary_key=True, autoincrement=True)
+    """Log identifier."""
+
+    item_uuid = db.Column(db.String(36), nullable=False, index=True)
+    """Uuid of the item the DOI belongs to."""
+
+    agency = db.Column(db.String(32), nullable=False, index=True)
+    """Registration agency, e.g. Crossref."""
+
+    doi_select = db.Column(db.String(2), nullable=True)
+    """Identifier grant the DOI was granted with, 1 to 4."""
+
+    doi = db.Column(db.String(255), nullable=False, index=True)
+    """DOI being registered."""
+
+    resource_url = db.Column(db.Text, nullable=True)
+    """URL the DOI has to resolve to."""
+
+    record_type = db.Column(db.String(50), nullable=True)
+    """Agency specific record type, e.g. posted_content."""
+
+    tracking_id = db.Column(db.String(255), nullable=True, index=True)
+    """Id the agency talks about this submission with."""
+
+    deposit_status = db.Column(db.String(16), nullable=False,
+                               default='pending', index=True)
+    """pending, submitted, success, failure or unknown."""
+
+    attempt = db.Column(db.Integer(), nullable=False, default=0)
+    """Number of times the deposit was sent."""
+
+    poll_attempt = db.Column(db.Integer(), nullable=False, default=0)
+    """Number of times the submission log was fetched."""
+
+    http_status = db.Column(db.SmallInteger(), nullable=True)
+    """Last HTTP status the agency answered with."""
+
+    payload = db.Column(db.Text, nullable=True)
+    """Body that was sent, kept for auditing and resending."""
+
+    response = db.Column(db.Text, nullable=True)
+    """Body that came back, kept for auditing."""
+
+    error_message = db.Column(db.Text, nullable=True)
+    """Reason of the last failure, shown to the administrators."""
+
+    def __repr__(self):
+        """Return a debug friendly representation."""
+        return '<DoiDepositLog {0} {1} {2} {3}>'.format(
+            self.id, self.agency, self.doi, self.deposit_status)

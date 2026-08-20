@@ -232,6 +232,11 @@ def saving_doi_pidstore(item_id,
                         doi_register_val,
                         doi_register_typ)
                 current_app.logger.info(_('DOI successfully registered!'))
+                # Every caller granting a DOI passes here, so this is the
+                # single place where the registration agency is called.
+                from .doi import request_doi_deposit
+                request_doi_deposit(record_without_version, doi_select,
+                                    doi_register_val)
         return True
     except Exception as ex:
         current_app.logger.exception(str(ex))

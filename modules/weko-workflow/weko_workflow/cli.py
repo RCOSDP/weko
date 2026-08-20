@@ -356,3 +356,42 @@ def init_workflow_tables(tables):
             db.session.rollback()
             click.secho(str(ex), fg='blue')
             click.secho('workflow db init failed.', err=ex, fg='red')
+
+
+@workflow.group('doi')
+def doi_deposit():
+    """DOI registration commands."""
+
+
+@doi_deposit.command('list')
+@click.option('--status', 'deposit_status', default=None,
+              help='Only show the deposits in this status.')
+@click.option('--limit', default=50, help='How many deposits to show.')
+@with_appcontext
+def list_doi_deposits(deposit_status, limit):
+    """Show the latest DOI deposits and where they stand."""
+    from .models import DoiDepositLog
+
+    query = DoiDepositLog.query
+    if deposit_status:
+        query = query.filter_by(deposit_status=deposit_status)
+    logs = query.order_by(DoiDepositLog.id.desc()).limit(limit).all()
+
+    if not logs:
+        click.echo('No DOI deposit matches.')
+        return
+    for log in logs:
+        click.echo('{0:>6}  {1:<10} {2:<10} {3:<40} {4}'.format(
+            log.id, log.agency, log.deposit_status, log.doi,
+            log.error_message or ''))
+
+
+@doi_deposit.command('resend')
+@click.argument('log_id', type=int)
+@with_appcontext
+def resend_doi_deposit(log_id):
+    """Send a failed DOI deposit again, once the metadata is fixed."""
+    from .doi.tasks import resend_doi_deposit as resend
+
+    resend.delay(log_id)
+    click.echo('DOI deposit {0} queued again.'.format(log_id))

@@ -595,3 +595,78 @@ WEKO_WORKFLOW_DELETION_FLOW_TYPE = 2
 
 WEKO_WORKFLOW_MAIL_DEFAULT_LANGUAGE = 'en'
 """Default language for mail template"""
+
+
+# ---------------------------------------------------------------------------
+# DOI registration against the agencies' APIs
+# ---------------------------------------------------------------------------
+
+WEKO_DOI_AGENCIES = {
+    '2': 'weko_workflow.doi.agencies.crossref.CrossrefAgency',
+}
+"""Registration agency per identifier grant (see IDENTIFIER_GRANT_LIST).
+
+JaLC (1), DataCite (3) and NDL JaLC (4) are not implemented yet; a DOI
+granted with those is written to the metadata as before and nothing is sent.
+"""
+
+WEKO_DOI_SUBMIT_COUNTDOWN = 10
+"""Seconds to wait before the deposit task runs.
+
+saving_doi_pidstore() runs before its caller commits, so the task has to
+start late enough for the log row to be visible.
+"""
+
+WEKO_DOI_MAX_RETRY = 3
+"""How many times a temporary failure is retried."""
+
+WEKO_DOI_RETRY_COUNTDOWN = 60
+"""Base of the exponential backoff between retries, in seconds."""
+
+WEKO_DOI_FIRST_POLL_DELAY = 60
+"""Seconds to wait before asking an agency for the first outcome."""
+
+WEKO_DOI_POLL_INTERVAL = 300
+"""Seconds between two polls of the same submission."""
+
+WEKO_DOI_MAX_POLL_ATTEMPTS = 20
+"""Polls after which a submission is left in 'unknown' for an operator."""
+
+WEKO_DOI_NOTIFY_EMAIL = None
+"""Address notified when a DOI cannot be registered."""
+
+WEKO_CROSSREF_ALLOW_REGISTER_DOI = False
+"""Master switch of the Crossref deposits.
+
+While False, a Crossref DOI is written to the metadata as before and
+nothing is sent to Crossref.
+"""
+
+WEKO_CROSSREF_DEPOSIT_URL = 'https://test.crossref.org/servlet/deposit'
+"""Where the deposits are posted. Defaults to the test system on purpose."""
+
+WEKO_CROSSREF_SUBMISSION_LOG_URL = \
+    'https://test.crossref.org/servlet/submissionDownload'
+"""Where the outcome of a deposit is fetched from."""
+
+WEKO_CROSSREF_LOGIN_ID = None
+"""Crossref login, 'user@example.org/role' when the account has roles."""
+
+WEKO_CROSSREF_LOGIN_PASSWD = None
+"""Crossref password."""
+
+WEKO_CROSSREF_DEPOSITOR_NAME = None
+"""Value of head/depositor/depositor_name."""
+
+WEKO_CROSSREF_DEPOSITOR_EMAIL = None
+"""Value of head/depositor/email_address; Crossref mails the outcome here."""
+
+WEKO_CROSSREF_REGISTRANT = None
+"""Value of head/registrant."""
+
+WEKO_CROSSREF_RECORD_TYPE_POLICY = 'posted_content'
+"""'posted_content' deposits everything as posted content, 'auto' follows
+the resource type and uses journal_article where the metadata allows it."""
+
+WEKO_CROSSREF_TIMEOUT = 30
+"""HTTP timeout of the Crossref calls, in seconds."""

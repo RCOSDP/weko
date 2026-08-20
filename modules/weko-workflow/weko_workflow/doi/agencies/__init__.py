@@ -18,17 +18,4 @@
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
 
-"""Task for workflow module."""
-
-from celery import shared_task
-from flask import current_app
-
-from .doi.tasks import deposit_doi, poll_doi_deposit, resend_doi_deposit  # noqa
-from .utils import cancel_expired_usage_reports
-
-
-@shared_task(ignore_results=True)
-def cancel_expired_usage_report_activities():
-    """Cancel usage report activities are expired."""
-    with current_app.app_context():
-        cancel_expired_usage_reports()
+"""DOI registration agencies."""
