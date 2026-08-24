@@ -57,26 +57,68 @@ python3 tools/api-inventory/scripts/prioritize.py       # 優先度・整理対�
 python3 tools/api-inventory/scripts/build_checklist.py  # 24列版を再生成
 ```
 
-## ケース2: 台帳に行を追加・修正する
+## ケース2: 台帳に行を追加する
 
-`reconcile.py` が「A. インベントリ未収載」を出したときなど。
+`reconcile.py` が「A. インベントリ未収載」を出したとき。57列を手で並べる必要はない。
 
 ```bash
-# 1) full.tsv を直接編集(65列。列数を合わせること)
+# 1) 何が未収載かを確認する
+python3 tools/api-inventory/scripts/reconcile.py
+#    → A. インベントリ未収載 に endpoint 名が出る
+
+# 2) 雛形を確認する(まだ書き込まない)
+python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo
+#    URI の一部でも探せる: --uri /api/items/import-task
+
+# 3) 追記する
+python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo --append
+
+# 4) TODO の列を埋める(下記)
 vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
-# 2) 列数の検算
+# 5) 列数の検算
 awk -F'\t' 'NR>1 && NF!=65{print "行"NR" 列数="NF}' \
   "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
-# 3) 派生列を再計算 → 24列版を再生成
+# 6) 派生列を再計算 → 24列版を再生成 → 突き合わせ
 python3 tools/api-inventory/scripts/test_coverage.py
 python3 tools/api-inventory/scripts/prioritize.py
 python3 tools/api-inventory/scripts/build_checklist.py
-
-# 4) 実機と一致するか確認(差分0になること)
-python3 tools/api-inventory/scripts/reconcile.py --gate
+python3 tools/api-inventory/scripts/reconcile.py --gate   # 差分0になること
 ```
+
+### add_row.py が埋める列 / 埋めない列
+
+`api_snapshot.json`(実機 url_map)と git から**機械的に決まる27列**を埋め、
+調査が要る31列に `TODO` を入れる。
+
+| 自動(27列) | no / module / api_type / app / method / uri / path_params / blueprint / endpoint / impl_func / impl_file / impl_line / auth_required / auth_method / auth_mechanism / api_version / last_commit系4列 ほか |
+|---|---|
+| **`TODO`(31列)** | **summary / response / status_codes / exceptions / roles / auth_response_variance / restricted_content / data_op / data_target / data_store / side_effects / config_deps / test_file / category_tags / notes / sec_* / dynamic_verified / csrf_protection / input_validation / audit_logged / triggers_task / resource_limit / redirect_target / ssrf_surface / idempotency / data_op_detail / bola_risk** |
+
+`TODO` は **ソースを読まないと書けない列**。Phase 2(静的解析)と Phase 3(実機実測)で
+やっていることを、その1行について行う。埋め方は列定義 README(秘密側の
+`weko3_api_list_full_README.md`)の各列の説明に従う。
+
+派生列(`priority` / `test_*` / `cleanup`)は空のままでよい。手順6で自動的に付く。
+
+**`TODO` を残したままにしない。** 残っていると優先度判定の入力が欠けるため、
+`prioritize.py` が誤った区分を付ける(例: `data_op` が `TODO` だと破壊系の判定に入らない)。
+調査が終わるまでは、少なくとも `data_op` / `auth_required` / `dynamic_verified` を
+埋めること。
+
+## ケース2b: 既存行を修正する
+
+```bash
+vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"   # 本体列(1-57)だけを直す
+python3 tools/api-inventory/scripts/test_coverage.py
+python3 tools/api-inventory/scripts/prioritize.py
+python3 tools/api-inventory/scripts/build_checklist.py
+```
+
+派生列(58-65)は手で直しても次の実行で消える。優先度を変えたいときは、
+判定の入力側(`security_finding` / `dynamic_verified` / `data_op` / `deprecated`)を
+直すか、`prioritize.py` のルールを変える。
 
 ## ケース3: WEKO3 のバージョンアップに伴う全面更新
 
@@ -113,6 +155,7 @@ git push origin main --follow-tags
 | `test_coverage.py` | full.tsv + テストコード | full.tsv の 60-64列 |
 | `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
+| `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
 (冪等)。24列版は full.tsv から完全に再現できることを確認済み。
