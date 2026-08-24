@@ -1,0 +1,14 @@
+# このリポジトリは public。台帳・スナップショット・実測結果は一切置かない。
+# データは $WEKO_API_INVENTORY_DIR(秘密の場所)で管理する。
+weko3_api_list*.tsv
+weko3_api_list*_README.md
+weko3_api_auth_findings.md
+api_snapshot*.json
+reconcile_allow.json
+reconcile_report.md
+probe*.json
+drift*.md
+# fixtures.py が生成する。OAuthアクセストークンと平文パスワードを含む。
+fixtures.json
+__pycache__/
+*.pyc
