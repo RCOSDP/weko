@@ -25,6 +25,100 @@
 `weko3_api_list.tsv`(24列・チェックリスト版)と `weko3_api_list_full.tsv`(57列・詳細版)を
 **バージョンアップのたびに再生成**するための手順とスクリプト一式。
 
+# 台帳の更新手順(まずここを読む)
+
+Phase 1-9 は「どう作るか」。日々の更新はこの節だけで足りる。
+
+## 前提
+
+```bash
+git clone https://github.com/RCOSDP/weko-secret.git
+export WEKO_API_INVENTORY_DIR=$PWD/weko-secret
+cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
+```
+
+## 大原則
+
+- **`weko3_api_list.tsv`(24列版)は直接編集しない。** `weko3_api_list_full.tsv` から
+  `build_checklist.py` が丸ごと生成する派生物で、手を入れても次の生成で消える。
+- **派生列も手編集しない。** `priority` / `priority_reason` / `test_normal`〜`test_gap` /
+  `cleanup` はスクリプトが毎回上書きする。直したいときは判定の入力側
+  (`security_finding` / `dynamic_verified` / `data_op` / `deprecated` 等)を直すか、
+  `prioritize.py` のルールを変える。
+- **実行順がある。** `prioritize.py` は `test_gap` を参照するので `test_coverage.py` が先。
+
+## ケース1: 派生列を再計算するだけ(最も多い)
+
+判定ルールを変えた、テストを追加した、といったとき。
+
+```bash
+python3 tools/api-inventory/scripts/test_coverage.py    # テスト4観点を判定
+python3 tools/api-inventory/scripts/prioritize.py       # 優先度・整理対象を付与
+python3 tools/api-inventory/scripts/build_checklist.py  # 24列版を再生成
+```
+
+## ケース2: 台帳に行を追加・修正する
+
+`reconcile.py` が「A. インベントリ未収載」を出したときなど。
+
+```bash
+# 1) full.tsv を直接編集(65列。列数を合わせること)
+vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
+
+# 2) 列数の検算
+awk -F'\t' 'NR>1 && NF!=65{print "行"NR" 列数="NF}' \
+  "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
+
+# 3) 派生列を再計算 → 24列版を再生成
+python3 tools/api-inventory/scripts/test_coverage.py
+python3 tools/api-inventory/scripts/prioritize.py
+python3 tools/api-inventory/scripts/build_checklist.py
+
+# 4) 実機と一致するか確認(差分0になること)
+python3 tools/api-inventory/scripts/reconcile.py --gate
+```
+
+## ケース3: WEKO3 のバージョンアップに伴う全面更新
+
+```bash
+./install.sh                                            # CI と同じ環境で作り直す
+python3 tools/api-inventory/scripts/snapshot.py \
+  --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"     # ベースライン再生成
+
+python3 tools/api-inventory/scripts/reconcile.py --gate # 差分を0にする(台帳の追加・削除)
+python3 tools/api-inventory/scripts/changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
+# → 出た no を Phase 2-3 で再確認し full.tsv を更新
+
+python3 tools/api-inventory/scripts/test_coverage.py
+python3 tools/api-inventory/scripts/prioritize.py
+python3 tools/api-inventory/scripts/build_checklist.py
+```
+
+最後に **WEKO3 と同名のタグ**を打つ(理由は `../ci/README.md` 3c)。
+
+```bash
+cd "$WEKO_API_INVENTORY_DIR"
+git add -A && git commit -m "..."
+git tag -a v2.0.4 -m "WEKO3 v2.0.4 (RCOSDP/weko <sha>) 時点の API インベントリ"
+git push origin main --follow-tags
+```
+
+## 各スクリプトが何を読み書きするか
+
+| スクリプト | 読む | 書く |
+|---|---|---|
+| `snapshot.py` | 実機 url_map + ソース | `api_snapshot.json` |
+| `reconcile.py` | snapshot + full.tsv | 何も書かない(差分を報告するだけ) |
+| `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 |
+| `test_coverage.py` | full.tsv + テストコード | full.tsv の 60-64列 |
+| `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
+| `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
+
+`test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
+(冪等)。24列版は full.tsv から完全に再現できることを確認済み。
+
+---
+
 ## 全体の考え方
 
 3層で構築する:
