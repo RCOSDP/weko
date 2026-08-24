@@ -119,14 +119,14 @@ def classify(c, H):
     uri = field(c, H, 'uri')
     auth = field(c, H, 'auth') or (field(c, H, 'auth_required') + ' | ' +
                                    field(c, H, 'auth_method'))
-    data_op = field(c, H, 'data_op') or field(c, H, 'data_op_detail')
+    data_op = field(c, H, 'data_op')
     finding = field(c, H, 'security_finding') or field(c, H, 'sec_pattern')
     dyn = field(c, H, 'dynamic_verified')
     cfg = field(c, H, 'config_deps')
     # full.tsv は data_target(操作対象) と data_store(保存先) が別列、
     # 24列版は両者を結合した data_store 1列。どちらでも拾えるよう連結する。
-    store = ' '.join(x for x in (field(c, H, 'data_target'),
-                                 field(c, H, 'data_store')) if x)
+    # data_target と data_store は access_variance と同様に1列へ統合済み
+    store = field(c, H, 'data_store')
 
     gap = field(c, H, 'test_gap')
     dep = field(c, H, 'deprecated')

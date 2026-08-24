@@ -27,9 +27,9 @@ for c in data:
     # auth: 要否+方式+仕組み
     auth = j([g(c,"auth_required"), g(c,"auth_method"), "["+g(c,"auth_mechanism").split("(")[0]+"]" if g(c,"auth_mechanism") else ""])
     roles_scope = j([g(c,"roles"), ("scope:"+g(c,"oauth_scope")) if g(c,"oauth_scope") else ""])
-    access_var = j([g(c,"auth_response_variance"), g(c,"restricted_content")], " / ")
-    data_op = g(c,"data_op_detail") or g(c,"data_op")
-    data_store = j([g(c,"data_target"), g(c,"data_store")], " → ")
+    access_var = g(c,"access_variance")
+    data_op = g(c,"data_op")
+    data_store = g(c,"data_store")
     side = j([g(c,"side_effects"), ("task:"+g(c,"triggers_task")) if g(c,"triggers_task") else ""])
     # security_finding: sec_pattern中心にexposed/detail/evidenceを要約
     sf_parts=[g(c,"sec_pattern")]

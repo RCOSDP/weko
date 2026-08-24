@@ -15,7 +15,7 @@ def _write(path, hd, data, newcols):
     """既存の同名列は **その位置のまま値を差し替える**。無い列だけ末尾に足す。
 
     末尾に付け直すと列順が変わり、README の awk 例や他スクリプトの
-    列位置前提(c[13]=impl_file 等)が壊れる。
+    列位置前提(_col(c,"impl_file")=impl_file 等)が壊れる。
     """
     pos = {n: i for i, n in enumerate(hd)}
     add_cols = [n for n in newcols if n not in pos]
@@ -47,6 +47,14 @@ def _write(path, hd, data, newcols):
 R = _os.environ.get("WEKO_ROOT", "/home/mhaya/wekov2") + "/"
 def load(p): return [l.rstrip("\n").split("\t") for l in open(p,encoding="utf-8") if l.rstrip("\n")]
 rows=load(TSV); hd=rows[0]; data=rows[1:]
+
+def _col(c, name, _cache={}):
+    """列名で引く。列の統合・追加で位置がずれても壊れないようにするため。"""
+    if not _cache:
+        _cache.update({n: i for i, n in enumerate(hd)})
+    i = _cache.get(name)
+    return c[i] if i is not None and len(c) > i else ""
+
 
 srccache={}
 def get_src(fp,ln):
@@ -88,7 +96,7 @@ def col_ssrf(seg):
 newcols=["redirect_target","ssrf_surface"]
 nr=ns=0
 for c in data:
-    seg=get_src(c[13],c[14]) if (len(c)>14 and str(c[14]).isdigit() and c[14]!="0") else ""
+    seg=get_src(_col(c,"impl_file"),_col(c,"impl_line")) if (str(_col(c,"impl_line")).isdigit() and _col(c,"impl_line")!="0") else ""
     r=col_redirect(seg); s=col_ssrf(seg)
     if "★" in r: nr+=1
     if "★" in s: ns+=1

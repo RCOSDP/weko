@@ -13,7 +13,7 @@
               auth_required / auth_method / auth_mechanism / api_version /
               last_commit系4列
 `TODO` のまま残る: summary / response / status_codes / roles / data_op /
-              data_target / data_store / side_effects / config_deps /
+              data_store / side_effects / config_deps /
               test_file / notes / sec_* / dynamic_verified など、
               **ソースを読まないと書けない列**。
 
