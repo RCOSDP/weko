@@ -33,6 +33,7 @@ P2 に落とすと、実際に見るべき行が埋もれるため。ただし *
 除外してしまうため)。
 """
 import argparse
+import json
 import os
 import re
 import sys
@@ -66,6 +67,29 @@ PUBLIC_BY_DESIGN = [
     (r'^/api/csl/styles$', 'CSLスタイル一覧'),
     (r'^/$', 'トップページ'),
 ]
+
+def load_allow():
+    """reconcile_allow.json を「実機に無い」ことの一次情報として読む。
+
+    実測欄(dynamic_verified)の粒度はばらついており、同じ機能群でも
+    「経路なし」と書かれた行と空欄の行が混在する。それを判定に使うと
+    同一グループが 整理対象 と 対象外 に割れる。突き合わせで確認済みの
+    allow リストを正とする。
+    """
+    p = data_path('reconcile_allow.json', required=False)
+    if not p or not os.path.isfile(p):
+        return set(), set()
+    try:
+        a = json.load(open(p, encoding='utf-8'))
+    except Exception:
+        return set(), set()
+    return set(a.get('not_registered', {})), set(a.get('not_a_route', []))
+
+
+def norm_uri(u):
+    u = u.strip()
+    return u[:-1] if len(u) > 1 and u.endswith('/') else u
+
 
 # 「非利用」とみなす根拠。deprecated 列の記述と、実機 url_map に無いこと。
 UNUSED_WORDS = ('未使用', '非推奨', '実質未使用', '呼出元なし', '経路なし')
@@ -227,9 +251,22 @@ def classify(c, H):
     return 'P2(中)', '分類条件に合致せず。手動確認が必要'
 
 
-def decide(c, H):
-    """classify の結果に非利用の判定を重ねる。"""
+def decide(c, H, allow=(frozenset(), frozenset())):
+    """classify の結果に「実機に無い」「非利用」の判定を重ねる。"""
     pri, why = classify(c, H)
+    not_registered, not_a_route = allow
+
+    # --- 実機に無い(環境依存で無効) ---
+    # 削除候補ではない。別の設定・別サイトでは有効になるため台帳に残す。
+    uris = [norm_uri(x) for x in field(c, H, 'uri').split(';') if norm_uri(x)]
+    hit = [u for u in uris if u in not_registered]
+    if hit or field(c, H, 'no') in not_a_route:
+        src = ('起動後に動的登録されるためURIが静的に定まらない'
+               if not hit else 'この環境では未登録(プラグイン未導入・config で無効等)')
+        if pri in ('P0(至急)', 'P0(最優先)', 'P1(高)'):
+            return pri, f'{why} / 実機に無い({src})が、有効な環境では成立しうる', '-'
+        return '環境依存', f'実機に無い: {src} / 認可上の判定は {pri}', '-'
+
     dep = field(c, H, 'deprecated')
     dyn = field(c, H, 'dynamic_verified')
     src = ''
@@ -259,12 +296,13 @@ def apply_to(path, out=None):
     base_idx = [i for i, n in enumerate(hdr) if n not in ('priority', 'priority_reason', 'cleanup')]
     base_hdr = [hdr[i] for i in base_idx]
 
+    allow = load_allow()
     out_rows = []
     counts = {}
     cleanup_n = 0
     for c in rows:
         c = c + [''] * (len(hdr) - len(c))
-        pri, why, cl = decide(c, H0)
+        pri, why, cl = decide(c, H0, allow)
         counts[pri] = counts.get(pri, 0) + 1
         if cl != '-':
             cleanup_n += 1
@@ -294,7 +332,7 @@ def apply_to(path, out=None):
 
 
 ORDER = ['P0(至急)', 'P0(最優先)', 'P1(高)', 'P2(中)', 'P3(低)',
-         'P4(低・実装済)', '整理対象', '対象外']
+         'P4(低・実装済)', '整理対象', '環境依存', '対象外']
 
 
 def main():
