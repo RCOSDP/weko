@@ -42,6 +42,17 @@ from paths import data_path  # noqa: E402
 
 WRITE_METHODS = {'POST', 'PUT', 'DELETE', 'PATCH'}
 
+# 露出内容が「認証情報」とみなせる語
+CREDENTIAL_WORDS = (
+    '露出:秘密情報', '秘密:', 'client_secret', 'access_token', 'refresh_token',
+    'password', 'cert_data', '資格情報', '外部トークン', 'APIキー', 'api_key',
+)
+# 露出内容が「非公開データの実体」とみなせる語
+NONPUBLIC_BODY_WORDS = (
+    '非公開業務データ', '非公開アイテム', 'ファイル実体', '非公開含む',
+    '全レコードJSON', '本文取得',
+)
+
 # 意図的な公開設計とみなす URI パターン
 PUBLIC_BY_DESIGN = [
     (r'^/(api/)?ping$', 'ヘルスチェック'),
@@ -147,6 +158,27 @@ def classify(c, H):
         return 'P1(高)', f'状態変更系({method}): {why}'
     if is_write_method and unknown:
         return 'P1(高)', f'状態変更系({method})だが到達可否が未測定(不明)'
+
+    # --- 露出内容による引き上げ(参照系でも P1) ---
+    # 「読み取り系だから情報漏洩リスクは限定的」は、露出するものが認証情報や
+    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って P1 に上げる。
+    # 「管理者に集約」のように適切に保護されている行は対象にしない。
+    # restricted_content / access_variance は「何が制限されているか」の説明であり、
+    # 適切に絞られている旨の記述にも「非公開」が出てくる。露出の根拠には使わない
+    # (例: no.575 GET / は「ブラウジング権限のあるインデックスのみ」と書かれており
+    #  指摘も無いのに、これを拾うと P1 に誤って上がる)。
+    exposure = ' '.join((finding, field(c, H, 'sec_exposed'),
+                         field(c, H, 'sec_detail')))
+    # 指摘または★実証がある行に限る。露出の記述があるだけでは上げない。
+    weak_access = (no_auth or unauth_reach or login_only or scope_missing) \
+        and (has_finding or proven)
+    if (not is_write_method) and weak_access:
+        cred = [w for w in CREDENTIAL_WORDS if w in exposure]
+        body = [w for w in NONPUBLIC_BODY_WORDS if w in exposure or w in store]
+        if cred:
+            return 'P1(高)', f'参照系だが露出内容が認証情報({cred[0]})で、認可が緩い'
+        if body:
+            return 'P1(高)', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
 
     # --- 対象外: admin-access 相当で保護され、指摘も実証も無い ---
     if (not has_finding) and (not proven) and (
