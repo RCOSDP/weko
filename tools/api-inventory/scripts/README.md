@@ -87,6 +87,26 @@ python3 tools/api-inventory/scripts/build_checklist.py
 python3 tools/api-inventory/scripts/reconcile.py --gate   # 差分0になること
 ```
 
+### 機械付与スクリプトで TODO を減らす
+
+`add_row.py --append` の直後に、Phase 2 の機械付与スクリプトを流すと `TODO` が減る。
+
+```bash
+export WEKO_ROOT=/path/to/weko            # 解析対象のソース
+python3 tools/api-inventory/scripts/add_cols.py          # csrf_protection / input_validation /
+                                                          # audit_logged / triggers_task / resource_limit
+python3 tools/api-inventory/scripts/add_ssrf_redirect.py # redirect_target / ssrf_surface
+python3 tools/api-inventory/scripts/add_idempotency.py   # idempotency
+python3 tools/api-inventory/scripts/add_dataop4.py       # data_op_detail
+python3 tools/api-inventory/scripts/add_authmech.py      # auth_mechanism / bola_risk
+```
+
+**これらは空欄/`TODO` のセルだけを埋める。既存値は上書きしない。**
+台帳の既存値は機械出力そのままではなく後から精査されており、一括再生成すると劣化する
+(実測: `bola_risk` の判定が逆転、`data_op_detail` の論理削除/物理削除の区別が失われる、
+`csrf_protection` の指摘が消える)。意図して作り直すときだけ
+`WEKO_INVENTORY_OVERWRITE=1` を付ける。
+
 ### add_row.py が埋める列 / 埋めない列
 
 `api_snapshot.json`(実機 url_map)と git から**機械的に決まる27列**を埋め、
@@ -156,6 +176,7 @@ git push origin main --follow-tags
 | `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
+| `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
 (冪等)。24列版は full.tsv から完全に再現できることを確認済み。
