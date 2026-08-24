@@ -1,0 +1,82 @@
+# 一時的な配線確認用。Secret 判定 → deploy key での private checkout →
+# 保存済みスナップショットと台帳の突き合わせ、までを Docker なしで検証する。
+# 確認後に削除する。
+name: API Inventory Plumbing Check
+
+on:
+  push:
+    branches: ['chore/api-inventory-drift']
+  workflow_dispatch:
+
+jobs:
+  plumbing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check secrets
+        id: cfg
+        env:
+          REPO: ${{ secrets.API_INVENTORY_REPO }}
+          KEY: ${{ secrets.API_INVENTORY_SSH_KEY }}
+        run: |
+          if [ -n "$REPO" ] && [ -n "$KEY" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+            echo "secrets: OK"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "secrets: NG (REPO set=$([ -n "$REPO" ] && echo yes || echo no), KEY set=$([ -n "$KEY" ] && echo yes || echo no))"
+          fi
+
+      - name: Checkout inventory data (private)
+        if: steps.cfg.outputs.enabled == 'true'
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.API_INVENTORY_REPO }}
+          ssh-key: ${{ secrets.API_INVENTORY_SSH_KEY }}
+          path: .api-inventory-data
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        if: steps.cfg.outputs.enabled == 'true'
+        with:
+          python-version: '3.11'
+
+      - name: Verify data is reachable
+        if: steps.cfg.outputs.enabled == 'true'
+        env:
+          WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+        run: |
+          echo "--- 秘密リポジトリから取得したファイル(名前とサイズのみ) ---"
+          ls -l "$WEKO_API_INVENTORY_DIR" | awk '{print "  " $5, $9}'
+          echo "--- 未設定時に中断することの確認 ---"
+          if env -u WEKO_API_INVENTORY_DIR python3 tools/api-inventory/scripts/reconcile.py >/dev/null 2>&1; then
+            echo "  NG: 未設定でも動いてしまった"; exit 1
+          else
+            echo "  OK: 未設定なら中断する"
+          fi
+
+      # 保存済みスナップショット同士の突き合わせ。Docker 不要。
+      - name: Reconcile (summary only)
+        if: steps.cfg.outputs.enabled == 'true'
+        env:
+          WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+        run: |
+          python3 tools/api-inventory/scripts/reconcile.py \
+            --summary-only --gate --out /tmp/reconcile.md
+          echo "--- 出力(公開されても安全な内容か目視確認) ---"
+          cat /tmp/reconcile.md
+          {
+            echo "### API インベントリ配線確認";
+            cat /tmp/reconcile.md;
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Assert no secrets leaked into output
+        if: steps.cfg.outputs.enabled == 'true'
+        run: |
+          # URI や endpoint 名が出力に混じっていないこと
+          if grep -qE '/api/|/admin/|endpoint' /tmp/reconcile.md; then
+            echo "NG: 明細が出力に含まれている"; cat /tmp/reconcile.md; exit 1
+          fi
+          echo "OK: 件数のみ"
