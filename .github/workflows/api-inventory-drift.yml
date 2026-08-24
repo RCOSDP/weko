@@ -22,13 +22,16 @@ on:
   pull_request:
     branches: ['**']
   workflow_dispatch:
+  # TODO(一時): 動作確認用。確認後に削除する。
+  push:
+    branches: ['chore/api-inventory-drift']
 
 jobs:
   drift:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     # fork からの PR には Secret が渡らない。無駄に起動しない。
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v4
         with:
@@ -112,7 +115,7 @@ jobs:
           T=tools/api-inventory/scripts
           # 変更が触れた台帳行を割り出す(no のみを出力。URIは出さない)
           python3 $T/changed_rows.py \
-            "${{ github.event.pull_request.base.sha }}" "${{ github.sha }}" \
+            "${{ github.event.pull_request.base.sha || github.event.before }}" "${{ github.sha }}" \
             --out /tmp/rerun_nos.txt > /dev/null
 
           # install.sh はレコードを作らないので最小コーパスを投入してから測る
