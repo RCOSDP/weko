@@ -17,7 +17,8 @@ NEW=["no","module","api_type","method","uri","impl","summary",
      "security_finding","security_flags","dynamic_verified",
      "api_version","deprecated","test_file","last_change","tags","notes","config_deps","response",
      # 末尾に追加する。既存列の位置を動かすと README の awk 例が全て壊れるため。
-     "priority","priority_reason"]
+     "priority","priority_reason",
+     "test_normal","test_abnormal","test_boundary","test_exception","test_gap"]
 
 out=[NEW]
 for c in data:
@@ -54,7 +55,10 @@ for c in data:
         security_finding or "-", security_flags or "-", g(c,"dynamic_verified") or "-",
         g(c,"api_version") or "-", g(c,"deprecated") or "-", g(c,"test_file") or "-", last_change or "-",
         g(c,"category_tags") or "-", notes or "-", g(c,"config_deps") or "-", resp or "-",
-        g(c,"priority") or "-", g(c,"priority_reason") or "-"
+        g(c,"priority") or "-", g(c,"priority_reason") or "-",
+        g(c,"test_normal") or "-", g(c,"test_abnormal") or "-",
+        g(c,"test_boundary") or "-", g(c,"test_exception") or "-",
+        g(c,"test_gap") or "-"
     ])
 with open(DST,"w",encoding="utf-8") as f:
     for r in out: f.write("\t".join(str(x).replace("\t"," ").replace("\n"," ") for x in r)+"\n")

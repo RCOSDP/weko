@@ -547,19 +547,38 @@ CI では `changed_rows.py` が出す `rerun_nos.txt`(変更が触れた行)だ�
 
 ---
 
-# Phase 8: 対応優先度の付与
+# Phase 8: テスト観点の解析と対応優先度の付与
 
 ```bash
-python3 scripts/prioritize.py          # 台帳に priority / priority_reason を付与
-python3 scripts/build_checklist.py     # 24列版(=26列)へ引き継ぐ
+python3 scripts/test_coverage.py       # 4観点(正常値/異常値/境界値/例外処理)を判定
+python3 scripts/prioritize.py          # 優先度を付与(テスト観点を参照するので後に実行)
+python3 scripts/build_checklist.py     # 24列版(=31列)へ引き継ぐ
 ```
 
-`security_finding` / `security_flags` / `dynamic_verified` / `data_op` / `method` /
-`auth` から、対応優先度を機械判定して台帳に書き戻す。判定基準・凡例・限界は
-秘密側の `weko3_api_list_README.md`「priority の凡例」に記載。
+**実行順が重要**: `prioritize.py` は `test_gap` を参照して「テスト観点が確認できない行」を
+P2 まで引き上げるため、`test_coverage.py` を先に回すこと。
+
+## test_coverage.py
+
+`test_file`(対応テスト) と `impl_func` を突き合わせ、そのエンドポイントに関係する
+テスト関数を特定してから観点を判定する。ファイル単位で見ると、同じファイル内の
+別APIのテストを自分のものとして数えてしまうため。
+
+対応するテスト関数を同定できなかった行は `特定不能` として区別する。
+**「テストが無い」と断定はできない**ので、4観点すべて欠落と同じ表記にはしない。
+
+## prioritize.py
+
+`security_finding` / `security_flags` / `dynamic_verified` / `data_op` / `data_target` /
+`method` / `auth` / `test_gap` から、対応優先度を機械判定して台帳に書き戻す。
+判定基準・凡例・限界は秘密側の `weko3_api_list_README.md`「priority の凡例」に記載。
+
+「データ破壊」は **既存の実データを不可逆に壊すこと** と定義している。メタデータの
+更新や新規作成は含めない。新規作成しかせず既存データを壊さないものは、認証が
+無くても P0 ではなく P1 に置く。
 
 **この判定は着手順を決めるための粗い仕分けであって、リスク評価の代替ではない。**
-`method` ベースで判定するため副作用のある GET を落とすこと、`data_op` の文字列で
-「データ破壊」を判定するため設計上の自己クリーンアップも拾うこと、読み取り系は
-露出内容の重大さ(認証情報か公開情報か)を見ていないこと──いずれも目視補正が要る。
+`method` ベースで判定するため副作用のある GET を落とすこと、読み取り系は露出内容の
+重大さ(認証情報か公開情報か)を見ていないこと、テスト観点は静的なキーワード判定で
+あって内容の妥当性を見ていないこと──いずれも目視補正が要る。
 
