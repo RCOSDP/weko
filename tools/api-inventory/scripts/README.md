@@ -544,3 +544,22 @@ python3 scripts/probe_ci.py --only rerun_nos.txt --allow-writes --gate --out pro
 
 CI では `changed_rows.py` が出す `rerun_nos.txt`(変更が触れた行)だけを測る。
 全件測定はリリース前の棚卸しで行う。
+
+---
+
+# Phase 8: 対応優先度の付与
+
+```bash
+python3 scripts/prioritize.py          # 台帳に priority / priority_reason を付与
+python3 scripts/build_checklist.py     # 24列版(=26列)へ引き継ぐ
+```
+
+`security_finding` / `security_flags` / `dynamic_verified` / `data_op` / `method` /
+`auth` から、対応優先度を機械判定して台帳に書き戻す。判定基準・凡例・限界は
+秘密側の `weko3_api_list_README.md`「priority の凡例」に記載。
+
+**この判定は着手順を決めるための粗い仕分けであって、リスク評価の代替ではない。**
+`method` ベースで判定するため副作用のある GET を落とすこと、`data_op` の文字列で
+「データ破壊」を判定するため設計上の自己クリーンアップも拾うこと、読み取り系は
+露出内容の重大さ(認証情報か公開情報か)を見ていないこと──いずれも目視補正が要る。
+

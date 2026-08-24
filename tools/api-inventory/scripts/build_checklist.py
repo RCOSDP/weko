@@ -15,7 +15,9 @@ def g(c,name):
 NEW=["no","module","api_type","method","uri","impl","summary",
      "auth","roles_scope","access_variance","data_op","data_store","side_effects",
      "security_finding","security_flags","dynamic_verified",
-     "api_version","deprecated","test_file","last_change","tags","notes","config_deps","response"]
+     "api_version","deprecated","test_file","last_change","tags","notes","config_deps","response",
+     # 末尾に追加する。既存列の位置を動かすと README の awk 例が全て壊れるため。
+     "priority","priority_reason"]
 
 out=[NEW]
 for c in data:
@@ -51,7 +53,8 @@ for c in data:
         auth or "-", roles_scope or "-", access_var or "-", data_op or "-", data_store or "-", side or "-",
         security_finding or "-", security_flags or "-", g(c,"dynamic_verified") or "-",
         g(c,"api_version") or "-", g(c,"deprecated") or "-", g(c,"test_file") or "-", last_change or "-",
-        g(c,"category_tags") or "-", notes or "-", g(c,"config_deps") or "-", resp or "-"
+        g(c,"category_tags") or "-", notes or "-", g(c,"config_deps") or "-", resp or "-",
+        g(c,"priority") or "-", g(c,"priority_reason") or "-"
     ])
 with open(DST,"w",encoding="utf-8") as f:
     for r in out: f.write("\t".join(str(x).replace("\t"," ").replace("\n"," ") for x in r)+"\n")
