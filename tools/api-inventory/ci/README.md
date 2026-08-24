@@ -145,6 +145,29 @@ CI の役割は「ベースラインを更新せずに API を変えること」
 
 ---
 
+## 3b. ベースラインは CI と同じ環境で作る
+
+`api_snapshot.json` は `meta.packages` にインストール済みパッケージの版を持ち、
+`diff_snapshot.py` の W6 がその差を検知する。**ベースラインを CI と違う環境で作ると、
+毎回 W6 が出続けて警告が形骸化する。**
+
+実測: 手元の docker 環境で作ったベースライン(302パッケージ)を、CI の
+`install.sh --no-cache` で作った環境(301パッケージ)と比べると W6 が2件出た。
+経路(endpoints=860 / AST結合=495 / 属性不明=365)は完全に一致していたので、
+差は依存の版だけ。
+
+対処: **ベースラインは `install.sh` で作った環境から生成する**。
+
+```bash
+./install.sh          # CI と同じ手順で作り直す
+python3 tools/api-inventory/scripts/snapshot.py \
+  --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
+```
+
+W6 は WARN なのでゲートは通るが、放置すると本当の依存更新に気づけなくなる。
+
+---
+
 ## 4. ゲートが FAIL したときの対処
 
 | ゲート | 意味 | 対処 |

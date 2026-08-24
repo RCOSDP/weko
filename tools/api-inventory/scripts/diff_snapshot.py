@@ -274,7 +274,15 @@ def render(old, new, res, mv, conf_changed, commented_new, pkg_changed, gate_lis
         L.append(f"## [{level}] {gid} {desc} — {len(items)}件")
         L.append('')
         if summary_only:
-            L.append('> 件数のみ。該当の経路名は秘密側の完全版レポートを参照。')
+            # 依存パッケージの版は公開情報なので名前を出してよい。
+            # 原因追跡に必要で、経路や所見は一切含まない。
+            if gid == 'W6':
+                for x in items[:40]:
+                    L.append(f'- {one_line(x)}')
+                if len(items) > 40:
+                    L.append(f'- … ほか {len(items) - 40} 件')
+            else:
+                L.append('> 件数のみ。該当の経路名は秘密側の完全版レポートを参照。')
             L.append('')
             continue
         for x in items[:40]:
