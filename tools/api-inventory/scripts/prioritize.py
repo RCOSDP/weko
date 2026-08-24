@@ -67,6 +67,9 @@ PUBLIC_BY_DESIGN = [
     (r'^/$', 'トップページ'),
 ]
 
+# 「非利用」とみなす根拠。deprecated 列の記述と、実機 url_map に無いこと。
+UNUSED_WORDS = ('未使用', '非推奨', '実質未使用', '呼出元なし', '経路なし')
+
 # 具体的な権限/所有者チェック機構(P4 の根拠)
 CONCRETE_AUTHZ = [
     'page_permission_factory', 'check_created_id', 'roles_required',
@@ -82,7 +85,12 @@ def field(cols, H, name):
 
 
 def classify(c, H):
-    """(priority, reason) を返す。"""
+    """(priority, reason, cleanup) を返す。
+
+    cleanup は「非利用につき整理対象」の根拠。非利用の行は、認可上の問題が
+    P2 以下なら **削除すれば済む** ので `整理対象` に置き換える。P0/P1 の行は
+    優先度を落とさず、理由に「削除が最短の対応」であることを添える。
+    """
     method = field(c, H, 'method').upper()
     uri = field(c, H, 'uri')
     auth = field(c, H, 'auth') or (field(c, H, 'auth_required') + ' | ' +
@@ -97,6 +105,12 @@ def classify(c, H):
                                  field(c, H, 'data_store')) if x)
 
     gap = field(c, H, 'test_gap')
+    dep = field(c, H, 'deprecated')
+    unused_src = ''
+    if dep and dep != '-' and any(w in dep for w in UNUSED_WORDS):
+        unused_src = dep
+    elif '経路なし' in dyn:
+        unused_src = '経路なし(実機 url_map に未登録)'
 
     def bump(pri, why):
         """テスト観点が確認できない行を P2 まで引き上げる。
@@ -213,33 +227,74 @@ def classify(c, H):
     return 'P2(中)', '分類条件に合致せず。手動確認が必要'
 
 
+def decide(c, H):
+    """classify の結果に非利用の判定を重ねる。"""
+    pri, why = classify(c, H)
+    dep = field(c, H, 'deprecated')
+    dyn = field(c, H, 'dynamic_verified')
+    src = ''
+    if dep and dep != '-' and any(w in dep for w in UNUSED_WORDS):
+        src = dep
+    elif '経路なし' in dyn:
+        src = '経路なし(実機 url_map に未登録)'
+    if not src:
+        return pri, why, '-'
+    if pri in ('P0(至急)', 'P0(最優先)', 'P1(高)'):
+        return pri, f'{why} / 非利用({src[:40]})のため削除が最短の対応', src
+    return '整理対象', f'非利用({src[:60]}) / 認可上の判定は {pri}', src
+
+
+TAIL = ['priority', 'priority_reason', 'test_normal', 'test_abnormal',
+        'test_boundary', 'test_exception', 'test_gap', 'cleanup']
+
+
 def apply_to(path, out=None):
     with open(path, encoding='utf-8') as f:
         lines = f.read().rstrip('\n').split('\n')
     hdr = lines[0].split('\t')
-    H = {n: i for i, n in enumerate(hdr)}
-    if 'priority' in H:                      # 再実行時は既存列を作り直す
-        keep = [i for i, n in enumerate(hdr) if n not in ('priority', 'priority_reason')]
-        hdr = [hdr[i] for i in keep]
-        lines = [ '\t'.join(hdr) ] + [
-            '\t'.join([(r.split('\t') + [''] * len(H))[i] for i in keep])
-            for r in lines[1:]]
-        H = {n: i for i, n in enumerate(hdr)}
+    H0 = {n: i for i, n in enumerate(hdr)}
+    rows = [r.split('\t') for r in lines[1:]]
 
-    out_lines = ['\t'.join(hdr + ['priority', 'priority_reason'])]
+    # 既存の派生列を一旦外し、本体列だけにする
+    base_idx = [i for i, n in enumerate(hdr) if n not in ('priority', 'priority_reason', 'cleanup')]
+    base_hdr = [hdr[i] for i in base_idx]
+
+    out_rows = []
     counts = {}
-    for raw in lines[1:]:
-        c = raw.split('\t')
-        p, why = classify(c, H)
-        counts[p] = counts.get(p, 0) + 1
-        out_lines.append('\t'.join(c + [p, why.replace('\t', ' ')]))
+    cleanup_n = 0
+    for c in rows:
+        c = c + [''] * (len(hdr) - len(c))
+        pri, why, cl = decide(c, H0)
+        counts[pri] = counts.get(pri, 0) + 1
+        if cl != '-':
+            cleanup_n += 1
+        base = [c[i] for i in base_idx]
+        out_rows.append((base, pri, why.replace('\t', ' '), cl.replace('\t', ' ')))
+
+    # 末尾の並びを実行順に依存させない(canonical order に揃える)
+    tail_present = [n for n in TAIL if n in base_hdr or n in ('priority', 'priority_reason', 'cleanup')]
+    body_hdr = [n for n in base_hdr if n not in TAIL]
+    tail_hdr = ['priority', 'priority_reason'] + \
+               [n for n in ('test_normal', 'test_abnormal', 'test_boundary',
+                            'test_exception', 'test_gap') if n in base_hdr] + ['cleanup']
+    bi = {n: i for i, n in enumerate(base_hdr)}
+    final = ['\t'.join(body_hdr + tail_hdr)]
+    for base, pri, why, cl in out_rows:
+        vals = {**{n: base[bi[n]] for n in body_hdr},
+                'priority': pri, 'priority_reason': why, 'cleanup': cl}
+        for n in ('test_normal', 'test_abnormal', 'test_boundary',
+                  'test_exception', 'test_gap'):
+            if n in bi:
+                vals[n] = base[bi[n]]
+        final.append('\t'.join(vals[n] for n in body_hdr + tail_hdr))
     with open(out or path, 'w', encoding='utf-8') as f:
-        f.write('\n'.join(out_lines) + '\n')
+        f.write('\n'.join(final) + '\n')
+    counts['__cleanup__'] = cleanup_n
     return counts
 
 
 ORDER = ['P0(至急)', 'P0(最優先)', 'P1(高)', 'P2(中)', 'P3(低)',
-         'P4(低・実装済)', '対象外']
+         'P4(低・実装済)', '整理対象', '対象外']
 
 
 def main():
@@ -252,6 +307,7 @@ def main():
     import tempfile
     tmp = tempfile.mktemp(suffix='.tsv') if a.dry_run else None
     counts = apply_to(full, out=tmp)
+    cleanup_n = counts.pop('__cleanup__', 0)
     total = sum(counts.values())
     print(f'{"(dry-run) " if a.dry_run else ""}{full}: {total} 行に priority を付与')
     for k in ORDER:
@@ -259,6 +315,7 @@ def main():
             print(f'  {k:<14} {counts[k]:>4}')
     for k in sorted(set(counts) - set(ORDER)):
         print(f'  {k:<14} {counts[k]:>4}  ← 未定義の区分')
+    print(f'  (うち非利用と判定: {cleanup_n} 行)')
     if tmp:
         os.unlink(tmp)
 
