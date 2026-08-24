@@ -1,24 +1,28 @@
 # -*- coding: utf-8 -*-
 #
-# ユニットテスト(CI)専用の compose オーバレイ。
+# CI 専用の compose オーバレイ。docker-compose2.yml に重ねて使う。
 #
-# docker-compose2.yml に重ねて使う。やっていることは2つだけ:
+# やっているのは1つだけ: web / worker / elasticsearch / nginx を
+# 「ビルド済みイメージの参照」に差し替える。image: が指すイメージが手元に
+# あれば docker compose はビルドしないので、CI では pull したイメージが
+# そのまま使われる。
 #
-#  1. web / worker / elasticsearch を「ビルド済みイメージの参照」に差し替える。
-#     image: が指すイメージが手元にあれば docker compose はビルドしないので、
-#     CI では pull したイメージがそのまま使われる。
-#     モジュールは requirements-weko-modules.txt により -e (editable) で
-#     入っていて、docker-compose2.yml が . を /code に bind mount するため、
-#     ソースを変更してもイメージの作り直しは不要。
+# モジュールは requirements-weko-modules.txt により -e (editable) で入っていて、
+# docker-compose2.yml が . を /code に bind mount するため、ソースを変更しても
+# イメージの作り直しは不要。
 #
-#  2. restart ポリシーを外す。CI で勝手に復帰されると失敗が見えにくい。
+# inbox は移動するブランチ (coar-notify-inbox の nii_main) を clone するため、
+# 意図的に事前ビルドの対象にしていない。compose が up のときにビルドする。
 #
-# 使い方:
+# 使い方(ユニットテスト):
 #   export COMPOSE_FILE=docker-compose2.yml:docker-compose.ci.yml
 #   export WEKO_IMAGE=... WEKO_ES_IMAGE=...
 #   docker compose up -d postgresql elasticsearch redis rabbitmq
 #   bash scripts/ci/wait-for-services.sh
-#   docker compose run --rm --no-deps -T web bash -c "cd modules/weko-records && tox"
+#   docker compose run --rm --no-deps -T web bash /code/scripts/ci/run-module-tests.sh weko-records
+#
+# 使い方(UIテスト): 上記の環境変数に加えて WEKO_NGINX_IMAGE を設定し、
+#   WEKO_SKIP_BUILD=1 ./install.sh
 #
 # ユニットテストは conftest.py が自前で wekotest DB を作り、instance_path も
 # tempfile.mkdtemp() を使う。したがって install.sh がやっている
@@ -28,21 +32,12 @@
 services:
   web:
     image: ${WEKO_IMAGE:-weko-ci-web:local}
-    restart: "no"
 
   worker:
     image: ${WEKO_IMAGE:-weko-ci-web:local}
-    restart: "no"
 
   elasticsearch:
     image: ${WEKO_ES_IMAGE:-weko-ci-es:local}
-    restart: "no"
 
-  postgresql:
-    restart: "no"
-
-  redis:
-    restart: "no"
-
-  rabbitmq:
-    restart: "no"
+  nginx:
+    image: ${WEKO_NGINX_IMAGE:-weko-ci-nginx:local}

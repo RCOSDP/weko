@@ -165,3 +165,15 @@ $ docker compose down -v
 Omit `WEKO_IMAGE` / `WEKO_ES_IMAGE` to build locally instead (the overlay then
 falls back to `weko-ci-web:local` / `weko-ci-es:local`, which you can build with
 `docker compose build web elasticsearch`).
+
+`ui-tests.yml` uses the same images (plus `WEKO_NGINX_IMAGE`) but still needs the
+full instance, so it runs `install.sh` with the build step skipped:
+
+```console
+$ export COMPOSE_FILE=docker-compose2.yml:docker-compose.ci.yml
+$ export WEKO_IMAGE=... WEKO_ES_IMAGE=... WEKO_NGINX_IMAGE=...
+$ WEKO_SKIP_BUILD=1 ./install.sh
+```
+
+The images themselves are prepared by `.github/workflows/ci-images.yml`; see the
+comment at the top of that file for how to replace them.
