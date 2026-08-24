@@ -137,3 +137,31 @@ INTERNALERROR> sqlite3.OperationalError: unable to open database file
 
 It means that you don't have write access inside the docker container.
 Follow the steps written at the beginning of this manual.
+
+## Reproducing the CI unit-test environment
+
+`.github/workflows/unit-tests.yml` does not use `install.sh`. Unit tests create
+their own `wekotest` database and use a temporary `instance_path`, so the demo
+SQL, `invenio assets build` / `invenio collect` and the nginx/pgpool/worker/
+inbox/mongo/flower containers are not needed.
+
+The image itself is built once per dependency change and reused: modules are
+installed with `-e` (see `requirements-weko-modules.txt`) and `.` is bind
+mounted to `/code`, so a source change never requires a rebuild.
+
+To run the same thing locally:
+
+```console
+$ export COMPOSE_FILE=docker-compose2.yml:docker-compose.ci.yml
+$ export WEKO_IMAGE=<prebuilt image>       # e.g. ghcr.io/rcosdp/weko-ci-web:<hash>
+$ export WEKO_ES_IMAGE=<prebuilt es image>
+$ docker compose up -d postgresql elasticsearch redis rabbitmq
+$ bash scripts/ci/wait-for-services.sh
+$ docker compose run --rm --no-deps -T web \
+    bash /code/scripts/ci/run-module-tests.sh weko-records
+$ docker compose down -v
+```
+
+Omit `WEKO_IMAGE` / `WEKO_ES_IMAGE` to build locally instead (the overlay then
+falls back to `weko-ci-web:local` / `weko-ci-es:local`, which you can build with
+`docker compose build web elasticsearch`).

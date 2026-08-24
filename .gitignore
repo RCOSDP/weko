@@ -105,3 +105,6 @@ test/dummyfile/data
 inbox/
 ui-tests/test-results/
 /.api-inventory-data/
+
+# CI 用キャッシュ (.github/workflows/unit-tests.yml)
+.ci-cache/
