@@ -4,7 +4,7 @@
     python3 snapshot.py --out api_snapshot.json
 
 なぜ実機 url_map が正か:
-  AST で `@bp.route` / `add_url_rule` を全部拾っても 357件。実機は 903ルート(static除く)。
+  AST で `@bp.route` / `add_url_rule` を全部拾っても 357件。実機は 903ルート。static 配信ルートも収録する(is_static で識別)。
   差の 52% は Flask-Admin の自動生成(223) / `@expose`(約100) / config駆動 REST(約30) /
   modules配下に無い pip パッケージ / route が式の add_url_rule / framework 由来。
 
@@ -420,12 +420,15 @@ def build(args):
     # 後者はルールごとにメソッドが異なるため、メソッドを endpoint 単位で union しては
     # ならない(例: weko_index_tree_rest.ima は create=POST / update=PUT / delete=DELETE を
     # それぞれ別ルールで持つ)。ルール単位で保持する。
+    # static 配信ルート(`*.static` / send_static_file)も**台帳の対象に含める**。
+    # 以前は除外していたが、外部調査との突合で「経路として存在するのに台帳に無い」
+    # 状態になり比較のたびに説明が要ったため、is_static を立てて収録する方針に変えた。
     grouped = {}
     for r in dump['rules']:
-        if r['func'] == 'send_static_file' or r['endpoint'].endswith('.static'):
-            continue
         g = grouped.setdefault(f"{r['app']}:{r['endpoint']}", dict(r, routes={}))
         g['routes'].setdefault(r['rule'], set()).update(r['methods'])
+        if r['func'] == 'send_static_file' or r['endpoint'].endswith('.static'):
+            g['is_static'] = True
 
     endpoints = {}
     unknown = 0
@@ -440,6 +443,8 @@ def build(args):
             'methods': sorted({m for x in routes for m in x['methods']}),   # 概観用
             'view': f"{r['module']}.{r['func']}" if r['module'] else r['func'],
         }
+        if r.get('is_static'):
+            e['is_static'] = True
         top = (r['module'] or '').split('.')[0]
         dist = modmap.get(top)
         if dist and dist not in local_dists:

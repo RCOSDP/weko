@@ -289,14 +289,19 @@ python3 .../apply_probe_results.py --probe /tmp/probe.json
 
 | 症状 | 実態 | 対処 |
 |---|---|---|
-| `/api/*` の `anon=500` → `到達` | `BuildError('security.login')` で**実態は遮断** | `docker logs --tail 40 weko-web-1 \| grep BuildError` で確認 |
+| `/api/*` の `anon=500` → `到達` | `BuildError('security.login')` で**実態は遮断** | **修正済み**: `--web-container weko-web-1` を渡すと `docker logs --since` を見て切り分ける |
 | `502` → `判定不能` | nginx の一過性エラー。叩き直すと `403` だった | 手で2回叩いて確定させる |
 | `308` → `到達` | werkzeug の末尾スラッシュ正規化。その先にログイン転送が隠れる | **修正済み**: 転送を最大6段たどり最終ステータスで判定する |
 | 途中から全部 `遮断` になる | `--allow-writes` で `/logout` や `POST /accounts/settings/session` を叩き、**自分のセッションを消していた** | **修正済み**: ログイン転送を検出したら張り直して測り直す |
 | 転送を追った先が `200` → `到達` | 「拒否して一覧へ戻す」転送だった | **修正済み**: `到達(転送)` として区別し転送先URLを併記。人が判断する |
 
-1行目は `weko3_api_unauthorized_handler_proposal.md` の恒久対策が入るまで残る。
-レスポンス本文が汎用メッセージなので、本文からは判別できない。
+1行目はレスポンス本文が汎用メッセージなので本文からは判別できない。
+`--web-container`(既定は `$WEKO_WEB_CONTAINER`)を渡すと、500 のときだけ
+`docker logs --since` を引いて `BuildError` / `security.login` を探す。
+渡さないと従来どおり「到達」と誤判定するので、`/api/*` を測るときは必ず指定すること。
+なお 500 を返すこと自体は
+`weko3_api_unauthorized_handler_proposal.md` の恒久対策が入るまで残る問題で、
+v2.1.0 では API 側 35 行に `応答不整合:401の代わりに500` として記録した。
 
 下2つは v2.1.0 の一括再測で顕在化した。特に最後のものは**静かに壊れる**のが厄介で、
 「88%の行が全識別子で遮断・sysadmin の到達がわずか9%」という
@@ -416,6 +421,33 @@ git push origin main --follow-tags
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
 (冪等)。24列版は full.tsv から完全に再現できることを確認済み。
+
+---
+
+## 収録範囲(v2.1.0 で変更)
+
+**static 配信ルートも収録する。**
+以前は `*.static` / `send_static_file` を除外していたが、外部調査と突き合わせるたびに
+「経路として存在するのに台帳に無い」ものを毎回説明する羽目になったため方針を変えた。
+snapshot は `is_static: true` を立てて収録する(v2.1.0 で endpoints 865 → 933、+68)。
+
+同じ URI に複数の Blueprint が static を登録することがある
+(`/static/<path:filename>` に 23、`/api/static/<path:filename>` に 7)。
+url_map 上は先に登録されたものだけが応答するので、**台帳は URI 単位で1行**とし、
+寄与している Blueprint を `notes` に列挙する(68 endpoint → 38 行)。
+
+**UI アプリと API アプリ(/api)は別行にする。**
+以前は同じ view が両方にマウントされている場合 `app=両方` の1行に集約していたが、
+**同じ view でも未認証時の挙動が違う**。
+
+| | UI 側 | API 側 |
+|---|---|---|
+| `/workflow/activity/list` | `302` → `/login/` | `500`(`BuildError('security.login')`) |
+| `/workflow/iframe/success` | `200`(到達) | `500`(遮断) |
+
+1行に集約していると、実測値も所見も片側でしか成り立たないものを書き分けられない。
+v2.1.0 で 46 行を分割した(931 → 1015 行)。`reconcile.py` は旧表現(`app=両方`)も
+引き続き受け付けるので、過去の台帳もそのまま突き合わせられる。
 
 ---
 

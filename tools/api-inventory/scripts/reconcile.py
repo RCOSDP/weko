@@ -72,6 +72,8 @@ def load_inventory(path):
             uris = [norm(u) for u in c[i_u].split(';') if norm(u)]
             expanded = list(uris)
             if c[i_app] == '両方':
+                # 旧表現(1行にUI/APIを集約)。v2.1.0 以降は別行に分けるが、
+                # 過去の台帳もそのまま突き合わせられるように残す。
                 expanded += [norm('/api' + u) for u in uris]
             for u in expanded:
                 e = out.setdefault(u, {'methods': set(), 'nos': [], 'app_col': set()})
@@ -149,12 +151,22 @@ def main():
             if no in seen_no:
                 continue
             got = rows[no][3]
-            # 「両方」行は /api 側 URI でも一致するので、片側だけ見て誤判定しないようにする
-            live_apps = set()
-            for uu in [norm(x) for x in rows[no][5].split(';') if norm(x)]:
-                for cand in (uu, norm('/api' + uu)):
-                    if cand in S:
-                        live_apps |= S[cand]['apps']
+            uris_of_row = [norm(x) for x in rows[no][5].split(';') if norm(x)]
+            if got == '両方':
+                # 旧表現。UI 側 URI と /api 側 URI の両方が実機にあれば正。
+                live_apps = set()
+                for uu in uris_of_row:
+                    for cand in (uu, norm('/api' + uu)):
+                        if cand in S:
+                            live_apps |= S[cand]['apps']
+            else:
+                # v2.1.0 以降の表現。行の URI が実機のどちらに登録されているかだけを見る。
+                # 同じ view が UI と /api の双方にマウントされていても、行が担当するのは
+                # 自分の URI 側だけなので、対の行の分まで期待値に含めてはならない。
+                live_apps = set()
+                for uu in uris_of_row:
+                    if uu in S:
+                        live_apps |= S[uu]['apps']
             if not live_apps:
                 continue
             exp = app_expected(live_apps)

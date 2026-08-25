@@ -18,6 +18,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import data_path  # noqa: E402
@@ -129,7 +130,7 @@ class Session:
         return redirect + ' [DEEP]', code
 
 
-def classify(code, body_path, redirect=''):
+def classify(code, body_path, redirect='', log=''):
     """到達(認可を通過してハンドラに入った) / 遮断 / 判定不能 を分ける。
 
     500 は原則「認可通過後のクラッシュ=到達」だが、APIアプリの login_required は
@@ -157,7 +158,11 @@ def classify(code, body_path, redirect=''):
             return '遮断'
         return '到達'
     if code == '500':
-        return '遮断' if ('security.login' in body or 'BuildError' in body) else '到達'
+        # /api/* の login_required は url_for('security.login') の BuildError で 500 になる。
+        # 応答本文は汎用メッセージなので本文からは判別できない。web コンテナのログを
+        # 見られる場合(--web-container)は log 引数に該当ログが渡ってくる。
+        hay = body + (log or '')
+        return '遮断' if ('security.login' in hay or 'BuildError' in hay) else '到達'
     if code == '404':
         return '判定不能'          # hidden=True の権限NG か、対象が無いだけか区別できない
     if code == '000':
@@ -165,6 +170,18 @@ def classify(code, body_path, redirect=''):
     if code.startswith('2') or code in ('400', '405', '415'):
         return '到達'
     return '判定不能'
+
+
+def web_log_since(container, since):
+    """web コンテナの直近ログを返す。取れなければ空文字。"""
+    if not container:
+        return ''
+    try:
+        r = subprocess.run(['docker', 'logs', '--since', str(since), container],
+                           capture_output=True, text=True, timeout=20)
+        return (r.stdout or '') + (r.stderr or '')
+    except Exception:
+        return ''
 
 
 def build_resolver(fx):
@@ -325,6 +342,9 @@ def main():
     p.add_argument('--allow-writes', action='store_true',
                    help='GET/HEAD 以外も測る(使い捨て環境でのみ指定すること)')
     p.add_argument('--out', default='probe.json')
+    p.add_argument('--web-container', default=os.environ.get('WEKO_WEB_CONTAINER'),
+                   help='500 を返したとき docker logs を見て BuildError(security.login) '
+                        'による遮断かどうかを切り分ける。既定は $WEKO_WEB_CONTAINER')
     p.add_argument('--gate', action='store_true', help='G8/G9 に該当があれば exit 1')
     p.add_argument('--summary-only', action='store_true',
                    help='件数のみ出力する。public リポジトリの CI ログ/artifact/PRコメントは'
@@ -377,8 +397,11 @@ def main():
                     if sess.email and not sess.ok:
                         continue
                     bf = os.path.join(work, 'body')
+                    since = int(time.time())
                     code, redirect, orig = sess.request(method, path, bf)
-                    v = classify(code, bf, redirect)
+                    log = (web_log_since(a.web_container, since)
+                           if code == '500' else '')
+                    v = classify(code, bf, redirect, log)
                     if orig in REDIRECT_CODES and v == '到達':
                         # 転送を追った先が 200 でも、「拒否して一覧へ戻す」転送の
                         # ことがある(実測: 非所有者のグループ削除)。到達とは
