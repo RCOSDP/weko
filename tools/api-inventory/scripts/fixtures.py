@@ -38,7 +38,7 @@ from invenio_db import db
 PASSWORD = "%(password)s"
 OUT = {"password": PASSWORD, "users": {}, "records": {}, "file": {},
        "index": None, "token": None, "community": None, "group": None,
-       "errors": []}
+       "activity": None, "activity_other": None, "errors": []}
 
 # 1x1 透明PNG(75B)。ファイル露出検証はバイト列が取れれば十分
 PNG = base64.b64decode(
@@ -279,6 +279,46 @@ def _group():
     OUT["group"] = {"id": g.id, "name": name}
 
 
+# ---------------------------------------------------------------- ワークフロー
+@step("activity")
+def _activity():
+    """ワークフローの activity を2件作る。
+
+    no.601-636 のワークフロー系は `<activity_id>` を要求するため、これが無いと
+    probe が「未解決プレースホルダ」で skip する。所有者チェック欠落の検証には
+    **他人所有の activity** が要るので2件作る。
+    """
+    from weko_workflow.api import WorkActivity
+    from weko_workflow.models import Activity as _Act, WorkFlow
+
+    wf = WorkFlow.query.first()
+    if wf is None:
+        raise RuntimeError("ワークフロー定義が無い(install.sh の defaultworkflow.sql 未投入)")
+
+    def ensure(title, uid, key):
+        act = _Act.query.filter_by(title=title).first()
+        if act is None:
+            act = WorkActivity().init_activity({
+                "workflow_id": wf.id,
+                "flow_id": wf.flow_id,
+                "itemtype_id": wf.itemtype_id,
+                "activity_login_user": uid,
+                "activity_update_user": uid,
+                "title": title,
+            })
+            db.session.flush()
+        OUT[key] = {"activity_id": act.activity_id,
+                    "owner": uid,
+                    "action_id": act.action_id,
+                    "workflow_id": wf.id,
+                    "flow_id": str(wf.flow_id)}
+
+    own = OUT["users"].get("contributor@example.org", {}).get("id", 3)
+    other = OUT["users"].get("user@example.org", {}).get("id", 4)
+    ensure("APIInventory 検証用(自分)", own, "activity")
+    ensure("APIInventory 検証用(他人所有)", other, "activity_other")
+
+
 # ---------------------------------------------------------------- ES反映
 @step("reindex")
 def _reindex():
@@ -342,6 +382,7 @@ def main():
           f"token={'あり' if data['token'] else 'なし'} "
           f"community={'あり' if data['community'] else 'なし'} "
           f"group={'あり' if data['group'] else 'なし'} "
+          f"activity={'あり' if data.get('activity') else 'なし'} "
           f"errors={len(data['errors'])}")
     if data['errors']:
         print('  ※ 失敗した投入があります。probe の測定範囲が狭まります。')

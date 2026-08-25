@@ -116,18 +116,23 @@ def build_resolver(fx):
         (r'<[^>]*group_id[^>]*>', str((fx.get('group') or {}).get('id', ''))),
         (r'<[^>]*user_id[^>]*>', str(other.get('owner', ''))),
         (r'<[^>]*api_code[^>]*>', 'crf'),
+        # ワークフロー(no.601-636)。fixtures.py が作った activity を使う
+        (r'<[^>]*activity_id[^>]*>', (fx.get('activity') or {}).get('activity_id', '')),
+        (r'<[^>]*action_id[^>]*>', str((fx.get('activity') or {}).get('action_id', ''))),
+        (r'<[^>]*workflow_id[^>]*>', str((fx.get('activity') or {}).get('workflow_id', ''))),
+        (r'<[^>]*flow_id[^>]*>', str((fx.get('activity') or {}).get('flow_id', ''))),
         # IIIF Image API のパラメータ(no.34)
         (r'<[^>]*region[^>]*>', 'full'),
         (r'<[^>]*size[^>]*>', 'full'),
         (r'<[^>]*rotation[^>]*>', '0'),
         (r'<[^>]*quality[^>]*>', 'default'),
         (r'<[^>]*image_format[^>]*>', 'png'),
-        # ワークフロー(activity)はフィクスチャに無いので解決しない → skip 扱い
     ]
     return table
 
 
 PID_PAT = r'<[^>]*(pid_value|recid|pid\()[^>]*>'
+ACT_PAT = r'<[^>]*activity_id[^>]*>'
 
 
 def resolve_variants(uri, table, fx):
@@ -147,6 +152,24 @@ def resolve_variants(uri, table, fx):
         if not val:
             continue
         base = re.sub(pat, val, base)
+
+    # activity は「自分所有」と「他人所有」の両方で測る(所有者チェックの検証)
+    if re.search(ACT_PAT, uri):
+        out = []
+        for label, key in (('own', 'activity'), ('other', 'activity_other')):
+            a = fx.get(key) or {}
+            if not a.get('activity_id'):
+                continue
+            u = re.sub(ACT_PAT, a['activity_id'], uri)
+            for pat, val in table:
+                if val == '__VERSION__':
+                    val = ver
+                if not val or pat == ACT_PAT:
+                    continue
+                u = re.sub(pat, val, u)
+            out.append((f'activity:{label}', u))
+        if out:
+            return out
 
     if not re.search(PID_PAT, uri):
         return [('-', base)]
