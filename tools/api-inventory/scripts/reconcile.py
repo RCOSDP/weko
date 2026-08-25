@@ -8,6 +8,8 @@
   B. 実機に無いインベントリ行   … 台帳にあるが実機url_mapに無い(未登録/条件付き)
   C. メソッド不一致             … 同一URIでHTTPメソッドが食い違う
   D. app列の不一致              … UI/API どちらに登録されているかの記載誤り
+  E. endpoint 未収載            … 同じ URI に複数の Blueprint/設定が登録されている
+                                   ケースの取りこぼし(URI 単位の A では拾えない)
 
 B は「プラグイン未登録」「config で無効」等の正当な理由があるものを
 `reconcile_allow.json` に登録して既知として扱う(理由を必ず書く)。
@@ -174,6 +176,39 @@ def main():
                 app_diff.append({'no': no, 'uri': rows[no][5], 'inventory': got, 'live': exp})
             seen_no.add(no)
 
+    # E. endpoint 単位の突き合わせ
+    #    URI 単位の A/B/C だけでは、同じ URI に複数の Blueprint/設定が登録している
+    #    ケース(static の /static/<path:filename> に 23件、RECORDS_REST_ENDPOINTS の
+    #    item_route 重複など)の取りこぼしを検出できない。台帳は endpoint 単位で
+    #    行を持つ方針なので、endpoint 集合でも突き合わせる。
+    APP_TO_KEY = {'UIアプリ': 'ui', 'APIアプリ(/api)': 'api'}
+    live_eps = {(e['app'], e['endpoint']) for e in snap['endpoints'].values()}
+    inv_eps = {}
+    i_ep = _hdr.index("endpoint") if "endpoint" in _hdr else None
+    if i_ep is not None:
+        for no, c in rows.items():
+            if len(c) <= i_ep:
+                continue
+            ep = c[i_ep].strip()
+            if not ep or ep in ('-', 'TODO', '(未登録)'):
+                continue
+            akey = APP_TO_KEY.get(c[3])
+            for a_ in ([akey] if akey else ['ui', 'api']):
+                inv_eps.setdefault((a_, ep), []).append(no)
+    ep_missing = sorted(live_eps - set(inv_eps))
+    ep_phantom = sorted(set(inv_eps) - live_eps)
+    # 実機に無い endpoint は、その行の URI が既知許容(B')なら黙認する
+    def row_allowed(no):
+        c = rows.get(no)
+        if not c:
+            return False
+        for u in c[5].split(';'):
+            if norm(u) in allow_uris or norm(u) in allow_notreal:
+                return True
+        return False
+    ep_phantom = [x for x in ep_phantom
+                  if not all(row_allowed(no) for no in inv_eps[x])]
+
     summary_only = a.summary_only
     L = ['# スナップショット ↔ インベントリ 突き合わせ', '']
     L.append(f"- リビジョン: `{snap['meta'].get('revision')}` {snap['meta'].get('tag')} "
@@ -183,7 +218,8 @@ def main():
         L.append('')
         L.append('> 件数のみ。詳細は秘密側の完全版レポートを参照。')
     L.append('')
-    unexplained = len(missing) + len(phantom) + len(method_diff) + len(app_diff)
+    unexplained = (len(missing) + len(phantom) + len(method_diff)
+                   + len(app_diff) + len(ep_missing))
     L.append(f"## 判定: {'❌ 未説明の差分あり' if unexplained else '✅ 一致'} ({unexplained}件)")
     L.append('')
     L.append('| 検出 | 件数 |')
@@ -193,6 +229,8 @@ def main():
     L.append(f'| B\'. 実機に無い(既知・許容) | {len(phantom_known)} |')
     L.append(f'| C. メソッド不一致 | {len(method_diff)} |')
     L.append(f'| D. app列の不一致 | {len(app_diff)} |')
+    L.append(f'| E. endpoint 未収載 | {len(ep_missing)} |')
+    L.append(f"| E'. endpoint が実機に無い(参考) | {len(ep_phantom)} |")
     L.append('')
 
     if missing and not summary_only:
@@ -212,6 +250,17 @@ def main():
             L.append(f"- no={','.join(x['nos'])} `{x['uri']}` — 実機={x['snapshot']} / "
                      f"台帳={x['inventory']}（実機のみ {x['only_live']} / 台帳のみ {x['only_inv']}）")
         L.append('')
+    if ep_missing and not summary_only:
+        L += ['## E. endpoint 未収載 — 台帳に行の追加が必要', '']
+        L += [f'- `{a_}` `{ep}`' for a_, ep in ep_missing]
+        L += ['',
+              '> 同じ URI に複数の Blueprint / 設定が登録されている場合、URI 単位の A では',
+              '> 検出できない。台帳は endpoint 単位で行を持つ方針なので、こちらで拾う。', '']
+    if ep_phantom and not summary_only:
+        L += ["## E'. endpoint が実機に無い(参考)", '']
+        L += [f'- `{a_}` `{ep}` — no.{",".join(inv_eps[(a_, ep)])}'
+              for a_, ep in ep_phantom]
+        L += ['']
     if app_diff and not summary_only:
         L += ['## D. app列の不一致', '']
         for x in app_diff:

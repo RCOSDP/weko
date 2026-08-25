@@ -433,8 +433,25 @@ snapshot は `is_static: true` を立てて収録する(v2.1.0 で endpoints 865
 
 同じ URI に複数の Blueprint が static を登録することがある
 (`/static/<path:filename>` に 23、`/api/static/<path:filename>` に 7)。
-url_map 上は先に登録されたものだけが応答するので、**台帳は URI 単位で1行**とし、
-寄与している Blueprint を `notes` に列挙する(68 endpoint → 38 行)。
+**台帳は endpoint 単位で1行**を持つ(68 行)。
+
+url_map 上は先に登録されたものだけが応答する。どれが応答するかは
+`url_map.bind(host).match(path)` で確定できるので、それで確かめて
+実際に応答する行と、隠れて到達不能な行を書き分ける。
+到達不能な側は `category_tags` に `shadowed` を付け、実測は行わない。
+
+| URI | 登録数 | 実際に応答する endpoint |
+|---|---:|---|
+| `/static/<path:filename>` (ui) | 23 | `static`(アプリ本体) |
+| `/api/static/<path:filename>` | 7 | `invenio_files_rest_admin.static` |
+| `/api/admin/static/<path:filename>` | 2 | `weko_admin.static` |
+| `/oauth/static/<path:filename>` (ui) | 2 | `invenio_oauthclient.static` |
+
+同じことが static 以外でも起きる。`RECORDS_REST_ENDPOINTS` は
+`/records/<pid(recid):pid_value>` を **recid / opensearch / worksapce の3組**で
+重複登録しており、応答するのは `recid_item` だけ。残り2組に設定した
+`permission_factory` は一切効かない。**「設定したつもりの認可が適用されていない」**
+状態なので、`設定不整合:到達不能な重複登録` として台帳に記録している。
 
 **UI アプリと API アプリ(/api)は別行にする。**
 以前は同じ view が両方にマウントされている場合 `app=両方` の1行に集約していたが、
