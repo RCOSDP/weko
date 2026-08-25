@@ -102,9 +102,16 @@ CONCRETE_AUTHZ = [
 ]
 
 
+HISTORY_SEP = ' \u2016 \u65e7: '   # apply_probe_results.py --keep-history が付ける区切り
+
+
 def field(cols, H, name):
     i = H.get(name)
-    return cols[i] if i is not None and len(cols) > i else ''
+    v = cols[i] if i is not None and len(cols) > i else ''
+    if name == 'dynamic_verified' and HISTORY_SEP in v:
+        # 旧測定の記述(★実証 など)を現在値として読まないよう切り落とす
+        v = v.split(HISTORY_SEP)[0]
+    return v
 
 
 def classify(c, H):

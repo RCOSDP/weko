@@ -73,6 +73,8 @@ def main():
     p.add_argument('--date', default=None, help='既定: probe.json の更新日')
     p.add_argument('--overwrite', action='store_true',
                    help='既存の dynamic_verified も差し替える(既定は空欄のみ)')
+    p.add_argument('--keep-history', action='store_true',
+                   help='--overwrite 時、旧値を " ‖ 旧: ..." として末尾に残す')
     p.add_argument('--dry-run', action='store_true')
     a = p.parse_args()
     full = a.full or data_path('weko3_api_list_full.tsv')
@@ -93,7 +95,14 @@ def main():
         v = rendered.get(c[i_no])
         if v:
             if c[i_dyn] in ('', '-') or a.overwrite:
-                c[i_dyn] = v.replace('\t', ' ')
+                prev = c[i_dyn]
+                new = v.replace('\t', ' ')
+                if a.keep_history and prev not in ('', '-'):
+                    # 旧値には ★実証など人手の所見が含まれる。測り直しで判定が
+                    # 変わっても、以前どう見えていたかを追えるように残す。
+                    prev = prev.split(' \u2016 \u65e7: ')[0]
+                    new = f'{new} \u2016 \u65e7: {prev}'
+                c[i_dyn] = new
                 filled += 1
             else:
                 kept += 1

@@ -285,26 +285,67 @@ python3 .../apply_probe_results.py --probe /tmp/probe.json
 > 到達可否の測定には影響しない。5件中4件を測定、`<task_id>` を持つ 1件は
 > フィクスチャが無く未解決でスキップされたため手で叩いた。
 
-**分類器の穴が2つある。measured の結果をそのまま信じない。**
+**分類器の穴に注意する。measured の結果をそのまま信じない。**
 
-| 症状 | 実態 | 確認方法 |
+| 症状 | 実態 | 対処 |
 |---|---|---|
-| `502` → `判定不能` | nginx の一過性エラー。叩き直すと `403` だった | 手で 2回叩いて確定させる |
-| `/api/*` の `anon=500` → `到達` | `BuildError('security.login')` で**実態は遮断** | `docker logs --tail 40 weko-web-1 \| grep BuildError` |
+| `/api/*` の `anon=500` → `到達` | `BuildError('security.login')` で**実態は遮断** | `docker logs --tail 40 weko-web-1 \| grep BuildError` で確認 |
+| `502` → `判定不能` | nginx の一過性エラー。叩き直すと `403` だった | 手で2回叩いて確定させる |
+| `308` → `到達` | werkzeug の末尾スラッシュ正規化。その先にログイン転送が隠れる | **修正済み**: 転送を最大6段たどり最終ステータスで判定する |
+| 途中から全部 `遮断` になる | `--allow-writes` で `/logout` や `POST /accounts/settings/session` を叩き、**自分のセッションを消していた** | **修正済み**: ログイン転送を検出したら張り直して測り直す |
 
-後者は `weko3_api_unauthorized_handler_proposal.md` の恒久対策が入るまで残る既知の穴。
+1行目は `weko3_api_unauthorized_handler_proposal.md` の恒久対策が入るまで残る。
 レスポンス本文が汎用メッセージなので、本文からは判別できない。
+
+下2つは v2.1.0 の一括再測で顕在化した。特に最後のものは**静かに壊れる**のが厄介で、
+「88%の行が全識別子で遮断・sysadmin の到達がわずか9%」という
+明らかにおかしい分布で気付いた。一括測定のあとは必ずこの2つを確認すること:
+
+- 全識別子が遮断の行の割合(管理系が多い母集団で 8割を超えたらセッション切れを疑う)
+- `sysadmin` の到達率(管理系エンドポイントなら高いはず)
+
+**転送先がログイン画面でも「遮断」とは限らない。**
+ハンドラが副作用を起こしてからログインへ転送する可能性は転送先からは判別できない。
+書き込み系で判定が重要な行は、DB を直接見て副作用の有無を確かめること。
+
+> 実績: `no.480 POST /record/<pid>/publish` は長らく「302 は publish 成功リダイレクトの可能性」と
+> 保留されていた(コード中のコメントは「実証済み」と書いていた)。
+> 非公開レコードに未認証 POST して `publish_status` を前後で比較したところ **変化しなかった**。
+> 真に遮断であると確定し、コメントの記述を訂正した。
 
 ### 6. 既存行への影響を洗う
 
+**先に `refresh_impl.py` を流すこと。**
+台帳の `impl_line` はバージョンアップで関数がずれても更新されない。
+`changed_rows.py` は「git diff のハンク行番号」と「台帳の `impl_line`」を突き合わせるので、
+**ずれたまま流すと対象行を取り違える**。
+
 ```bash
+python3 .../refresh_impl.py                 # まず差分だけ見る
+python3 .../refresh_impl.py --write         # 納得したら書き戻す
 python3 .../changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
 ```
 
-> 実績: modules 配下 150ファイルが変更され、うち台帳に載る実装ファイルが 21、
-> **再レビュー対象は 926行中 41行**。ここは機械化できず実装読解が要る。
-> 時間が取れないときは「構造(0差分)と新規行の実測だけ先に確定し、
-> 41行は次サイクルへ回す」と割り切ってよい。その場合は**保留した旨を必ず記録する**。
+> 実績(v2.1.0): 一致 390 / **ずれ 254** / 解決不能 2 / 委譲 12 / impl_file が実ファイルでない 273。
+> 直さずに流したときの対象は 41行、直してから流すと **31行**。
+> 差の内訳は、実際には変わっていないのに拾われていた 12行と、
+> 変わったのに漏れていた 2行(`no.53 /oauth/errors`、`no.919 /api/deposits/items`)。
+> 例: `invenio-oauth2server/views/server.py` は台帳が `errors=L121` のところ実際は `L127` で、
+> 変わっていない `no.52/54/55` を拾い、変わった `no.53` を落としていた。
+
+**`changed_rows.py` はエンドポイント関数の行範囲しか見ない。**
+エンドポイントが呼ぶ**ヘルパの変更は自動では台帳行に結び付かない**ので、
+出力末尾の「台帳のエンドポイントではないが変更されたヘルパ関数」を必ず読み、
+`grep` で呼び出し元を辿ること。
+
+> 実績(v2.1.0): ヘルパ18件が報告され、うち3件が実質的な指摘だった。
+> `_get_status_document` / `_get_file_info` の変更で
+> `no.573 GET /sword/deposit/<recid>` の応答にファイルURLが増えていたが、
+> `no.573` 自体は(行番号を直した後も)対象一覧に出ていなかった。
+
+再レビュー自体は機械化できず実装読解が要る。時間が取れないときは
+「構造(0差分)と新規行の実測だけ先に確定し、既存行は次サイクルへ回す」と割り切ってよい。
+その場合は**保留した旨を必ず記録する**。
 
 ### 7. 再計算してゲートを通す
 
@@ -349,12 +390,13 @@ git push origin main --follow-tags
 |---|---|---|
 | `snapshot.py` | 実機 url_map + ソース | `api_snapshot.json` |
 | `reconcile.py` | snapshot + full.tsv | 何も書かない(差分を報告するだけ) |
-| `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 |
+| `refresh_impl.py` | full.tsv + 実装ソース(AST) | full.tsv の `impl_line`(`--write` 時のみ) |
+| `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 + 変更ヘルパ関数の報告 |
 | `test_coverage.py` | full.tsv + テストコード | full.tsv の 60-64列 |
 | `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
-| `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ) |
+| `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ / `--overwrite` で差し替え、`--keep-history` で旧値を ` ‖ 旧: ` として残す) |
 | `remeasure.sh` | — | 上記を通しで実行するドライバ |
 | `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
 

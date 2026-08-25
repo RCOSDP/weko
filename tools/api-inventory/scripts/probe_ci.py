@@ -33,6 +33,7 @@ IDENTITIES = [
 ]
 
 SAFE_METHODS = ('GET', 'HEAD')
+REDIRECT_CODES = ('301', '302', '303', '307', '308')
 
 
 def curl(args):
@@ -46,16 +47,40 @@ class Session:
     def __init__(self, base, host, email, password, workdir):
         self.base, self.host, self.email = base, host, email
         self.jar = os.path.join(workdir, f'ck_{email or "anon"}')
+        self.password = password
+        self.relogins = 0
         self.ok = True
         if email:
-            r = curl(['-c', self.jar, '-o', '/dev/null', '-w', '%{http_code}',
-                      '-H', f'Host: {host}', '-X', 'POST',
-                      '-H', 'Content-Type: application/json',
-                      '-d', json.dumps({'email': email, 'password': password}),
-                      f'{base}/api/v1/login'])
-            self.ok = r.stdout.strip() == '200'
+            self.ok = self.login()
 
-    def request(self, method, path, body_file):
+    def login(self):
+        """ログインし直して Cookie を取り直す。"""
+        if not self.email:
+            return True
+        r = curl(['-c', self.jar, '-o', '/dev/null', '-w', '%{http_code}',
+                  '-H', f'Host: {self.host}', '-X', 'POST',
+                  '-H', 'Content-Type: application/json',
+                  '-d', json.dumps({'email': self.email,
+                                    'password': self.password}),
+                  f'{self.base}/api/v1/login'])
+        return r.stdout.strip() == '200'
+
+    def request(self, method, path, body_file, _retry=True):
+        """1回測る。認証済みのはずがログイン画面へ飛ばされたら張り直して測り直す。
+
+        --allow-writes を付けると /logout や /accounts/settings/session(POST) など
+        「自分のセッションを消す」エンドポイントも叩くため、そこを通過した時点で
+        以降の測定が全部「遮断」に見えてしまう(v2.1.0 の一括再測で実際に起きた)。
+        """
+        code, redirect = self._request_once(method, path, body_file)
+        if (_retry and self.email and self.ok
+                and 'login' in (redirect or '').lower()):
+            if self.login():
+                self.relogins += 1
+                return self.request(method, path, body_file, _retry=False)
+        return code, redirect
+
+    def _request_once(self, method, path, body_file):
         args = ['-o', body_file, '-w', '%{http_code}\t%{redirect_url}',
                 '-H', f'Host: {self.host}', '-X', method]
         if self.email:
@@ -64,7 +89,45 @@ class Session:
             args += ['-H', 'Content-Type: application/json', '-d', '{}']
         args.append(f'{self.base}{path}')
         out = curl(args).stdout.strip().split('\t')
-        return out[0], (out[1] if len(out) > 1 else '')
+        code = out[0]
+        redirect = out[1] if len(out) > 1 else ''
+        if code in REDIRECT_CODES:
+            redirect, code = self.follow(method, redirect, code, body_file)
+        return code, redirect
+
+    def follow(self, method, redirect, code, body_file=None, limit=6):
+        """転送を最大 limit 段たどり、(最終URL, 最終ステータス) を返す。
+
+        1段目だけを見ると判定を2通り取りこぼす(v2.1.0 の実測で判明):
+          - werkzeug の strict_slashes は末尾スラッシュを 308 で正規化するため、
+            その先のログイン転送が見えない。
+          - 転送先が 403 を返しても、308 のまま「到達」と誤判定してしまう。
+        302/303 はブラウザ同様 GET に切り替える(書き込みの二重実行を避ける)。
+        転送ループは末尾に ' [LOOP]' を付けて返す。
+        """
+        seen = set()
+        for _ in range(limit):
+            if not redirect:
+                return redirect, code
+            if 'login' in redirect.lower():
+                return redirect, code       # ログイン画面に着いた時点で遮断確定
+            if redirect in seen:
+                return redirect + ' [LOOP]', code
+            seen.add(redirect)
+            nxt_method = method if code in ('307', '308') else 'GET'
+            args = ['-o', body_file or os.devnull,
+                    '-w', '%{http_code}\t%{redirect_url}',
+                    '-H', f'Host: {self.host}', '-X', nxt_method]
+            if self.email:
+                args += ['-b', self.jar]
+            args.append(redirect.replace(f'https://{self.host}', self.base, 1))
+            out = curl(args).stdout.strip().split('\t')
+            nxt_code = out[0]
+            nxt = out[1] if len(out) > 1 else ''
+            if nxt_code not in REDIRECT_CODES:
+                return redirect, nxt_code    # ← 最終ステータスで判定させる
+            redirect, code, method = nxt, nxt_code, nxt_method
+        return redirect + ' [DEEP]', code
 
 
 def classify(code, body_path, redirect=''):
@@ -79,11 +142,18 @@ def classify(code, body_path, redirect=''):
         body = ''
     if code in ('401', '403'):
         return '遮断'
-    if code in ('301', '302', '303', '307', '308'):
+    if code in REDIRECT_CODES:
         # ログイン画面への転送は遮断。それ以外は処理が完了した転送(到達)。
-        # no.480 /record/<pid>/publish は未認証 302 で publish_status が実際に
-        # 書き換わることを実証済みで、302 を一律「遮断」とすると取りこぼす。
+        # code / redirect は Session.follow() が転送を追いきった最終地点であること。
+        # 308(末尾スラッシュ正規化)の先にログイン転送が隠れるため、1段目だけでは
+        # 判定できない(v2.1.0 実測で判明)。
+        # 注意: 転送先がログインでも「ハンドラが副作用を起こしてからログインへ
+        # 転送した」可能性は排除できない。副作用の有無は DB を直接見て確かめること
+        # (no.480 /record/<pid>/publish は実際に確かめ、publish_status は
+        #  変化しない=真に遮断、と確定した)。
         low = (redirect or '').lower()
+        if '[loop]' in low or '[deep]' in low:
+            return '判定不能'      # 転送ループ / 追いきれず
         if 'login' in low or 'signin' in low or 'sso' in low:
             return '遮断'
         return '到達'

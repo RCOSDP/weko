@@ -70,6 +70,38 @@ def def_ranges(root, rel):
     return tuple(out)
 
 
+@functools.lru_cache(maxsize=None)
+def named_defs(root, rel):
+    """(start, end, 表示名) の一覧。ClassDef 配下のメソッドは Class.method で返す。"""
+    fp = os.path.join(root, rel)
+    if not os.path.isfile(fp):
+        return ()
+    try:
+        tree = ast.parse(open(fp, encoding='utf-8', errors='replace').read())
+    except Exception:
+        return ()
+    out = []
+
+    def walk(node, prefix=''):
+        for n in ast.iter_child_nodes(node):
+            if isinstance(n, ast.ClassDef):
+                walk(n, n.name + '.')
+            elif isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                start = min([n.lineno] + [d.lineno for d in n.decorator_list])
+                out.append((start, getattr(n, 'end_lineno', n.lineno), prefix + n.name))
+    walk(tree)
+    return tuple(out)
+
+
+def changed_func_names(root, rel, ranges):
+    """変更行を含む関数の表示名(重複なし)。"""
+    names = []
+    for s_, e_, name in named_defs(root, rel):
+        if any(not (e_ < rs or re_ < s_) for rs, re_ in ranges):
+            names.append(name)
+    return names
+
+
 def enclosing(root, rel, line):
     """line を含む最小の def/class 範囲。無ければ (line, line)。"""
     best = None
@@ -161,6 +193,38 @@ def main():
             f.write('\n'.join(h[0] for h in hits) + '\n')
         print(f'\n{a.out} に no 一覧を出力しました'
               f'(probe.py の --only に渡せます)')
+
+    # 台帳に載るファイル内で変わったが、どの台帳行の impl_func でもない関数
+    # = エンドポイントから呼ばれるヘルパ。呼び出し元の行は自動では拾えない。
+    # (v2.1.0 では _get_status_document/_get_file_info の変更がこれに当たり、
+    #  no.573 GET /sword/deposit/<recid> の応答内容が変わっていた)
+    ledger_funcs = collections.defaultdict(set)
+    with open(a.tsv, encoding='utf-8') as f:
+        h2 = f.readline().rstrip('\n').split('\t')
+        j_file, j_func = h2.index('impl_file'), h2.index('impl_func')
+        for raw in f:
+            c = raw.rstrip('\n').split('\t')
+            if len(c) > max(j_file, j_func):
+                # impl_func は `Class.method`/`a/b`/`名前(注釈)` の表記ゆれがある
+                for part in c[j_func].split('(')[0].strip().split('/'):
+                    part = part.strip()
+                    if part:
+                        ledger_funcs[c[j_file].strip()].add(part.split('.')[-1])
+    helpers = []
+    for rel in sorted(files_changed):
+        for name in changed_func_names(root, rel, ranges.get(rel, [])):
+            if name.split('.')[-1] not in ledger_funcs.get(rel, ()):
+                helpers.append((rel, name))
+    if helpers:
+        print()
+        print('  ⚠ 台帳のエンドポイントではないが変更されたヘルパ関数'
+              f'({len(helpers)}件):')
+        for rel, name in helpers[:40]:
+            print(f'      {rel}  {name}')
+        if len(helpers) > 40:
+            print(f'      ... 他 {len(helpers) - 40} 件')
+        print('    → 呼び出し元のエンドポイントは自動では拾えない。'
+              'grep で呼び出し元を辿り、該当する台帳行も再レビューすること。')
 
     # 変更はあるがインベントリに載っていない実装ファイル = 新規APIの可能性
     unmapped = sorted(set(r for r in ranges if r.endswith('.py')) - files_changed)
