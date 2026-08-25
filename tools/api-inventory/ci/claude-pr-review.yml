@@ -25,9 +25,10 @@ on:
       pr_number:
         description: 'レビュー対象の PR 番号'
         required: true
-  # TODO(試行中): 動作確認のため有効化。確認後は workflow_dispatch のみに戻す。
-  pull_request:
-    branches: ['**']
+  # 自動実行にする場合は下を有効にする。試行では 682 行の差分で
+  # 137〜160秒 / $0.35〜0.47 だった。PR ごとに回すなら利用枠の見積もりが要る。
+  # pull_request:
+  #   branches: ['**']
 
 env:
   POST_TO_PR: 'false'
