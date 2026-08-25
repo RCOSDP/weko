@@ -10,8 +10,10 @@
 # 【このリポジトリは public】
 #   Secret 名は CLAUDE_CODE_AUTH_TOKEN、CLI が読む環境変数は CLAUDE_CODE_OAUTH_TOKEN。
 #   - Secret は fork からの PR には渡らない。下の if で同一リポジトリに限定する。
-#   - レビュー結果を PR に投稿すると誰でも読める。既定では投稿せず artifact 止まり。
-#     POST_TO_PR を true にすると投稿する。
+#   - **レビュー結果を PR に投稿する設定にしている(POST_TO_PR=true)。このリポジトリは
+#     public なので投稿内容は誰でも読める。** 認可の欠落など機微な指摘が出る可能性が
+#     あるため、公開して差し支えない内容かを運用で見ておくこと。
+#     投稿を止めるには POST_TO_PR を false にする(artifact には残る)。
 #
 # 注: cloud-hosted の `claude ultrareview` は 2026-08 時点でこのアカウントでは
 #     利用できなかった("Ultrareview is currently unavailable")。ここでは
@@ -25,12 +27,12 @@ on:
       pr_number:
         description: 'レビュー対象の PR 番号'
         required: true
-  # TODO(試行中): 動作確認のため有効化。確認後は workflow_dispatch のみに戻す。
   pull_request:
     branches: ['**']
+    types: [opened, synchronize, reopened, ready_for_review]
 
 env:
-  POST_TO_PR: 'false'
+  POST_TO_PR: 'true'
   MODEL: 'sonnet'
   MAX_DIFF_BYTES: '200000'     # これを超える差分はレビューしない(分割が必要)
 
@@ -39,7 +41,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     if: github.event_name == 'workflow_dispatch' ||
-        github.event.pull_request.head.repo.full_name == github.repository
+        (github.event.pull_request.head.repo.full_name == github.repository &&
+         github.event.pull_request.draft == false)
     permissions:
       contents: read
       pull-requests: write
@@ -185,9 +188,26 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+            const MARK = '<!-- claude-pr-review -->';
             let body = '(レビュー結果を生成できませんでした)';
             try { body = fs.readFileSync('review.md', 'utf8'); } catch (e) {}
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number, owner: context.repo.owner,
-              repo: context.repo.repo, body: body.slice(0, 60000),
+            body = MARK + '\n' + body.slice(0, 60000)
+                 + '\n\n<sub>差分のみを対象にした自動レビューです。'
+                 + '誤りが含まれることがあります。</sub>';
+            // 同じ PR に push するたびコメントが増えないよう、既存の1件を更新する
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner, repo: context.repo.repo, per_page: 100,
             });
+            const mine = comments.find(c => c.body && c.body.includes(MARK));
+            if (mine) {
+              await github.rest.issues.updateComment({
+                comment_id: mine.id, owner: context.repo.owner,
+                repo: context.repo.repo, body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number, owner: context.repo.owner,
+                repo: context.repo.repo, body,
+              });
+            }

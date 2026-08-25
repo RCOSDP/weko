@@ -148,15 +148,15 @@ python3 tools/api-inventory/scripts/build_checklist.py
 export WEKO_API_INVENTORY_DIR=/path/to/weko-secret
 ./install.sh                                   # スタックを起動しておく
 
-tools/api-inventory/scripts/remeasure.sh                    # 未測定の P0/P1 を測る
+tools/api-inventory/scripts/remeasure.sh                    # 未測定の P1/P2 を測る
 tools/api-inventory/scripts/remeasure.sh --all-unmeasured   # 未測定を全件
 tools/api-inventory/scripts/remeasure.sh --nos 607,618      # no を直接指定
-tools/api-inventory/scripts/remeasure.sh --read-only        # GET/HEAD のみ(データを変えない)
+tools/api-inventory/scripts/remeasure.sh --allow-writes     # 書き込み系も測る(データが変わる)
 ```
 
-**既定では書き込み系も実測するため実機のデータが変わる。** 著者DB・サイト情報・
-ワークフローの状態などが書き換わるので、使い捨て環境で回すか、終了後に
-`./install.sh` で作り直すこと。`--read-only` なら副作用はない。
+**既定は読み取り専用(GET/HEAD のみ)で副作用がない。** 書き込み系まで測るには
+`--allow-writes` を明示する。実機のデータ(著者DB・サイト情報・ワークフローの状態)が
+書き換わるため、使い捨て環境で回すか、終了後に `./install.sh` で作り直すこと。
 
 反映は `apply_probe_results.py` が行い、**`dynamic_verified` が空の行だけ**を埋める。
 既存の実測値(★実証など人手で精査した記述を含む)は残す。差し替えるときは
