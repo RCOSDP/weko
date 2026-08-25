@@ -140,6 +140,49 @@ python3 tools/api-inventory/scripts/build_checklist.py
 判定の入力側(`security_finding` / `dynamic_verified` / `data_op` / `deprecated`)を
 直すか、`prioritize.py` のルールを変える。
 
+## ケース2c: 実測(dynamic_verified)を測り直す
+
+`remeasure.sh` が「フィクスチャ投入 → 実測 → 台帳反映 → 再計算」を通しで行う。
+
+```bash
+export WEKO_API_INVENTORY_DIR=/path/to/weko-secret
+./install.sh                                   # スタックを起動しておく
+
+tools/api-inventory/scripts/remeasure.sh                    # 未測定の P0/P1 を測る
+tools/api-inventory/scripts/remeasure.sh --all-unmeasured   # 未測定を全件
+tools/api-inventory/scripts/remeasure.sh --nos 607,618      # no を直接指定
+tools/api-inventory/scripts/remeasure.sh --read-only        # GET/HEAD のみ(データを変えない)
+```
+
+**既定では書き込み系も実測するため実機のデータが変わる。** 著者DB・サイト情報・
+ワークフローの状態などが書き換わるので、使い捨て環境で回すか、終了後に
+`./install.sh` で作り直すこと。`--read-only` なら副作用はない。
+
+反映は `apply_probe_results.py` が行い、**`dynamic_verified` が空の行だけ**を埋める。
+既存の実測値(★実証など人手で精査した記述を含む)は残す。差し替えるときは
+`--overwrite` を明示する。
+
+### 測定できる範囲
+
+`fixtures.py` が作る対象で決まる。
+
+| プレースホルダ | 解決先 | 出所 |
+|---|---|---|
+| `<pid_value>` `<recid>` | 公開アイテム / 非公開アイテムの**両方**で測る | 作成 |
+| `<bucket_id>` `<key>` `<uuid>` | 非公開アイテムに添付したファイル(IIIF の三つ組も) | 作成 |
+| `<activity_id>` `<action_id>` | ワークフロー activity を**自分所有/他人所有の両方**で測る | 作成 |
+| `<index_id>` `<community_id>` `<group_id>` | フィクスチャで作成したもの | 作成 |
+| `<identifier>` | 著者(authors は初期状態で0件のため作成) | 作成 |
+| `<item_type_id>` `<property_id>` `<mail_id>` `<client_id>` `<token_id>` | `install.sh` が投入する初期データの先頭ID | **参照** |
+| `<lang_code>` `<current_language>` `<req>` | 定数(`ja` / `1`) | 定数 |
+
+**既存の初期データは作らずに参照する。** アイテムタイプ・プロパティ・メール
+テンプレート・著者プレフィクス/所属・ファセット検索・OAuthクライアントは
+`install.sh` が入れるので、フィクスチャで作ると二重になる。
+
+解決できないプレースホルダ(`<mail_id>` など)を含む行は `未解決プレースホルダ` として
+skip し、台帳には反映しない。**「測っていない」ことが分かる状態を保つ**ため。
+
 ## ケース3: WEKO3 のバージョンアップに伴う全面更新
 
 ```bash
@@ -176,6 +219,8 @@ git push origin main --follow-tags
 | `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
+| `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ) |
+| `remeasure.sh` | — | 上記を通しで実行するドライバ |
 | `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**

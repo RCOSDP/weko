@@ -38,7 +38,7 @@ from invenio_db import db
 PASSWORD = "%(password)s"
 OUT = {"password": PASSWORD, "users": {}, "records": {}, "file": {},
        "index": None, "token": None, "community": None, "group": None,
-       "errors": []}
+       "activity": None, "activity_other": None, "ids": {}, "errors": []}
 
 # 1x1 透明PNG(75B)。ファイル露出検証はバイト列が取れれば十分
 PNG = base64.b64decode(
@@ -279,6 +279,88 @@ def _group():
     OUT["group"] = {"id": g.id, "name": name}
 
 
+# ---------------------------------------------------------------- ワークフロー
+@step("activity")
+def _activity():
+    """ワークフローの activity を2件作る。
+
+    no.601-636 のワークフロー系は `<activity_id>` を要求するため、これが無いと
+    probe が「未解決プレースホルダ」で skip する。所有者チェック欠落の検証には
+    **他人所有の activity** が要るので2件作る。
+    """
+    from weko_workflow.api import WorkActivity
+    from weko_workflow.models import Activity as _Act, WorkFlow
+
+    wf = WorkFlow.query.first()
+    if wf is None:
+        raise RuntimeError("ワークフロー定義が無い(install.sh の defaultworkflow.sql 未投入)")
+
+    def ensure(title, uid, key):
+        act = _Act.query.filter_by(title=title).first()
+        if act is None:
+            act = WorkActivity().init_activity({
+                "workflow_id": wf.id,
+                "flow_id": wf.flow_id,
+                "itemtype_id": wf.itemtype_id,
+                "activity_login_user": uid,
+                "activity_update_user": uid,
+                "title": title,
+            })
+            db.session.flush()
+        OUT[key] = {"activity_id": act.activity_id,
+                    "owner": uid,
+                    "action_id": act.action_id,
+                    "workflow_id": wf.id,
+                    "flow_id": str(wf.flow_id)}
+
+    own = OUT["users"].get("contributor@example.org", {}).get("id", 3)
+    other = OUT["users"].get("user@example.org", {}).get("id", 4)
+    ensure("APIInventory 検証用(自分)", own, "activity")
+    ensure("APIInventory 検証用(他人所有)", other, "activity_other")
+
+
+# ---------------------------------------------------------------- 著者
+@step("author")
+def _author():
+    """著者を1件作る(no.243-267 の <identifier> 用)。authors は初期状態で0件。"""
+    from weko_authors.models import Authors
+    a = Authors.query.filter_by(gather_flg=0).first()
+    if a is None:
+        a = Authors(gather_flg=0, is_deleted=False)
+        db.session.add(a)
+        db.session.flush()
+    OUT["ids"]["author_id"] = int(a.id)
+
+
+# ------------------------------------------------- 既存データのID参照(作成しない)
+@step("lookups")
+def _lookups():
+    """probe のプレースホルダ解決に使う既存レコードのIDを拾う。
+
+    install.sh が投入する初期データ(アイテムタイプ・プロパティ・メールテンプレート・
+    著者プレフィクス/所属・ファセット検索・OAuthクライアント)は作らずに参照する。
+    作ってしまうと実環境の初期データと二重になるため。
+    """
+    from sqlalchemy import text
+    q = lambda sql: db.session.execute(text(sql)).first()   # noqa: E731
+    for key, sql in (
+        ("item_type_id",     "SELECT id FROM item_type WHERE is_deleted=false ORDER BY id LIMIT 1"),
+        ("property_id",      "SELECT id FROM item_type_property ORDER BY id LIMIT 1"),
+        ("prefix_id",        "SELECT id FROM authors_prefix_settings ORDER BY id LIMIT 1"),
+        ("affiliation_id",   "SELECT id FROM authors_affiliation_settings ORDER BY id LIMIT 1"),
+        ("mail_template_id", "SELECT id FROM mail_templates ORDER BY id LIMIT 1"),
+        ("facet_search_id",  "SELECT id FROM facet_search_setting ORDER BY id LIMIT 1"),
+        ("oauth_client_id",  "SELECT client_id FROM oauth2server_client LIMIT 1"),
+        ("oauth_token_id",   "SELECT id FROM oauth2server_token LIMIT 1"),
+    ):
+        try:
+            r = q(sql)
+            if r is not None and r[0] is not None:
+                OUT["ids"][key] = str(r[0])
+        except Exception as exc:
+            OUT["errors"].append("lookup %%s: %%s" %% (key, exc))
+
+
 # ---------------------------------------------------------------- ES反映
 @step("reindex")
 def _reindex():
@@ -342,6 +424,8 @@ def main():
           f"token={'あり' if data['token'] else 'なし'} "
           f"community={'あり' if data['community'] else 'なし'} "
           f"group={'あり' if data['group'] else 'なし'} "
+          f"activity={'あり' if data.get('activity') else 'なし'} "
+          f"ids={len(data.get('ids') or {})} "
           f"errors={len(data['errors'])}")
     if data['errors']:
         print('  ※ 失敗した投入があります。probe の測定範囲が狭まります。')

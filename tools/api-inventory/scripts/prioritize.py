@@ -5,26 +5,25 @@
 
 判定基準(上から順に評価し、最初に合致したものを採用する):
 
-  P0(至急)      無認証で **既存のファイル実体** を上書き/削除できる
-                (「データ破壊」を「既存の実データを不可逆に壊すこと」と定義する。
-                 メタデータの更新や新規作成は破壊に含めない)
-  P0(最優先)    状態変更系(POST/PUT/DELETE/PATCH)なのに認証・権限チェックが一切ない、
+  P1            無認証で既存のファイル実体を上書き/削除できる(データ破壊)、または
+                状態変更系(POST/PUT/DELETE/PATCH)なのに認証・権限チェックが一切ない、
                 または権限チェック機構はあるように見えるが実装上機能していない
-  P1(高)        ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
+  P2            ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
                 ゲストトークン等のバイパス、ロールチェックが実質不問、または「不明」。
-                加えて、認証が無い状態変更系でも **新規作成のみで既存データを
-                壊さない** ものはここに下げる
-  対象外        認証必須かつ admin-access 相当の権限チェックがあり、指摘が無いもの
-  P3(低)        意図的な公開設計(static配信・ヘルスチェック・robots.txt・OAI-PMH等)、
-                または deny_all 常時拒否
-  P2(中)        読み取り系(GET/HEAD)で認証・権限チェックが無い、または
+                認証が無い状態変更系でも新規作成のみで既存データを壊さないもの。
+                参照系でも露出内容が認証情報または非公開データの実体であるもの
+  P3            読み取り系(GET/HEAD)で認証・権限チェックが無い、または
                 ログイン必須のみでロール/所有者スコープなし
-  P4(低・実装済) 具体的な権限/所有者チェック機構が明記されており破綻が見えない
+  P4            意図的な公開設計(static配信・ヘルスチェック・robots.txt・OAI-PMH等)、
+                または deny_all 常時拒否
+  P5            具体的な権限/所有者チェック機構が明記されており破綻が見えない
+  整理対象      非利用(未使用/非推奨/呼出元なし)で、認可上の判定が P3 以下
+  環境依存      実機の url_map に存在しない(プラグイン未導入・config で無効・動的登録)
+  対象外        認証必須かつ admin-access 相当の権限チェックがあり、指摘も★実証も無い
 
-テスト観点による引き上げ(上限 P2):
+テスト観点による引き上げ(上限 P3):
   正常値/異常値/境界値/例外処理 のチェックが確認できない行は、認可上の問題が
-  無くても確認対象に上げる。ただし **引き上げは P2 まで** とする(認可の欠陥と
-  同列には扱わない)。既に P0/P1/P2 の行は変更しない。
+  無くても確認対象に上げる。ただし引き上げは P3 まで。
 
 評価順について: 「対象外」と P3 は P2 より先に評価する。admin-access で保護された
 管理画面や、意図的に公開している OAI-PMH を「認証なしの読み取り系」として
@@ -145,9 +144,9 @@ def classify(c, H):
         if not gap or gap == '-':
             return pri, why
         if gap == '特定不能':
-            return 'P2(中)', f'{why} / 対応するテスト関数を特定できずテスト観点を確認できない'
+            return 'P3', f'{why} / 対応するテスト関数を特定できずテスト観点を確認できない'
         if gap.count(',') == 3:
-            return 'P2(中)', f'{why} / テストの4観点(正常値・異常値・境界値・例外処理)が全て確認できない'
+            return 'P3', f'{why} / テストの4観点(正常値・異常値・境界値・例外処理)が全て確認できない'
         return pri, f'{why} / テスト観点の欠落: {gap}'
 
     methods = {m.strip() for m in method.split(',') if m.strip()}
@@ -167,35 +166,35 @@ def classify(c, H):
     unknown = (dyn.strip() in ('', '-'))
     has_finding = finding.strip() not in ('', '-')
 
-    # --- P0(至急) 無認証で既存のファイル実体を壊せる ---
+    # --- P1: 無認証で既存のファイル実体を壊せる(データ破壊) ---
     # 「データ破壊」= 既存の実データを不可逆に壊すこと。メタデータの更新や
     # 新規作成は含めない。この定義で 926 行中 no.503(POST /records/replace_file)
     # だけが該当する。
     destroys_real_data = ('ファイル実体' in store) and ('更新' in data_op or '削除' in data_op)
     if (no_auth or unauth_reach) and destroys_real_data:
-        return 'P0(至急)', f'無認証で既存のファイル実体を上書き/削除できる (data_op={data_op})'
+        return 'P1', f'無認証で既存のファイル実体を上書き/削除できる (data_op={data_op})'
 
-    # --- P0(最優先) 状態変更系で認証・権限が無い/機能していない ---
+    # --- P1: 状態変更系で認証・権限が無い/機能していない ---
     # ただし新規作成しかせず既存データを壊さないものは P1 に下げる(下の P1 で拾う)。
     creates_only = ('作成' in data_op) and not ('更新' in data_op or '削除' in data_op)
     if is_write_method and (no_auth or unauth_reach) and not creates_only:
         why = '認証チェックが無い' if no_auth else '認証はあるが未認証で到達(実測)'
-        return 'P0(最優先)', f'状態変更系({method})で{why}'
+        return 'P1', f'状態変更系({method})で{why}'
     if is_write_method and broken_authz and not creates_only:
-        return 'P0(最優先)', f'状態変更系({method})だが権限チェックが実装上機能していない'
+        return 'P1', f'状態変更系({method})だが権限チェックが実装上機能していない'
 
-    # --- P1(高) ---
+    # --- P2 ---
     # 認証が無い状態変更系でも、新規作成のみで既存データを壊さないものはここ。
     if is_write_method and (no_auth or unauth_reach or broken_authz) and creates_only:
-        return 'P1(高)', f'状態変更系({method})で認証チェックが無いが、新規作成のみで既存データは壊さない'
+        return 'P2', f'状態変更系({method})で認証チェックが無いが、新規作成のみで既存データは壊さない'
     if is_write_method and guest_bypass:
-        return 'P1(高)', f'状態変更系({method})にゲストトークンのバイパス経路がある'
+        return 'P2', f'状態変更系({method})にゲストトークンのバイパス経路がある'
     if is_write_method and (login_only or scope_missing):
         why = 'ログイン必須のみで所有者/ロール限定なし(IDOR疑い)' if login_only \
             else finding.split(';')[0].strip()[:60]
-        return 'P1(高)', f'状態変更系({method}): {why}'
+        return 'P2', f'状態変更系({method}): {why}'
     if is_write_method and unknown:
-        return 'P1(高)', f'状態変更系({method})だが到達可否が未測定(不明)'
+        return 'P2', f'状態変更系({method})だが到達可否が未測定(不明)'
 
     # --- 露出内容による引き上げ(参照系でも P1) ---
     # 「読み取り系だから情報漏洩リスクは限定的」は、露出するものが認証情報や
@@ -214,9 +213,9 @@ def classify(c, H):
         cred = [w for w in CREDENTIAL_WORDS if w in exposure]
         body = [w for w in NONPUBLIC_BODY_WORDS if w in exposure or w in store]
         if cred:
-            return 'P1(高)', f'参照系だが露出内容が認証情報({cred[0]})で、認可が緩い'
+            return 'P2', f'参照系だが露出内容が認証情報({cred[0]})で、認可が緩い'
         if body:
-            return 'P1(高)', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
+            return 'P2', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
 
     # --- 対象外: admin-access 相当で保護され、指摘も実証も無い ---
     if (not has_finding) and (not proven) and (
@@ -224,31 +223,31 @@ def classify(c, H):
             or auth_req == '要(管理)'):
         return bump('対象外', '認証必須+admin-access 相当の権限チェックあり、指摘なし')
 
-    # --- P3(低) 意図的な公開設計 / deny_all ---
+    # --- P4: 意図的な公開設計 / deny_all ---
     for pat, label in PUBLIC_BY_DESIGN:
         if re.search(pat, uri):
-            return bump('P3(低)', f'意図的な公開設計({label})')
+            return bump('P4', f'意図的な公開設計({label})')
     if 'deny_all' in auth or 'deny_all' in cfg:
-        return bump('P3(低)', 'deny_all で常時拒否(逆方向の問題)')
+        return bump('P4', 'deny_all で常時拒否(逆方向の問題)')
 
-    # --- P2(中) 読み取り系 ---
+    # --- P3: 読み取り系 ---
     if not is_write_method:
         if no_auth or unauth_reach:
-            return 'P2(中)', f'読み取り系({method})で認証・権限チェックが無い'
+            return 'P3', f'読み取り系({method})で認証・権限チェックが無い'
         if login_only or scope_missing:
             why = 'ログイン必須のみでロール/所有者スコープなし' if login_only \
                 else finding.split(';')[0].strip()[:60]
-            return 'P2(中)', f'読み取り系({method}): {why}'
+            return 'P3', f'読み取り系({method}): {why}'
         if unknown and has_finding:
-            return 'P2(中)', f'読み取り系({method})に指摘があるが到達可否は未測定'
+            return 'P3', f'読み取り系({method})に指摘があるが到達可否は未測定'
 
-    # --- P4(低・実装済) ---
+    # --- P5 ---
     hit = [k for k in CONCRETE_AUTHZ if k in auth]
     if hit:
-        return bump('P4(低・実装済)', f'具体的な権限チェック機構あり({", ".join(hit[:3])})')
+        return bump('P5', f'具体的な権限チェック機構あり({", ".join(hit[:3])})')
     if auth_req.startswith('要'):
-        return bump('P4(低・実装済)', f'認証必須({auth_req})で破綻は見えない')
-    return 'P2(中)', '分類条件に合致せず。手動確認が必要'
+        return bump('P5', f'認証必須({auth_req})で破綻は見えない')
+    return 'P3', '分類条件に合致せず。手動確認が必要'
 
 
 def decide(c, H, allow=(frozenset(), frozenset())):
@@ -263,7 +262,7 @@ def decide(c, H, allow=(frozenset(), frozenset())):
     if hit or field(c, H, 'no') in not_a_route:
         src = ('起動後に動的登録されるためURIが静的に定まらない'
                if not hit else 'この環境では未登録(プラグイン未導入・config で無効等)')
-        if pri in ('P0(至急)', 'P0(最優先)', 'P1(高)'):
+        if pri in ('P1', 'P1', 'P2'):
             return pri, f'{why} / 実機に無い({src})が、有効な環境では成立しうる', '-'
         return '環境依存', f'実機に無い: {src} / 認可上の判定は {pri}', '-'
 
@@ -276,7 +275,7 @@ def decide(c, H, allow=(frozenset(), frozenset())):
         src = '経路なし(実機 url_map に未登録)'
     if not src:
         return pri, why, '-'
-    if pri in ('P0(至急)', 'P0(最優先)', 'P1(高)'):
+    if pri in ('P1', 'P1', 'P2'):
         return pri, f'{why} / 非利用({src[:40]})のため削除が最短の対応', src
     return '整理対象', f'非利用({src[:60]}) / 認可上の判定は {pri}', src
 
@@ -331,8 +330,7 @@ def apply_to(path, out=None):
     return counts
 
 
-ORDER = ['P0(至急)', 'P0(最優先)', 'P1(高)', 'P2(中)', 'P3(低)',
-         'P4(低・実装済)', '整理対象', '環境依存', '対象外']
+ORDER = ['P1', 'P2', 'P3', 'P4', 'P5', '整理対象', '環境依存', '対象外']
 
 
 def main():
