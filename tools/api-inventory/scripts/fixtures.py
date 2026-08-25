@@ -332,6 +332,44 @@ def _author():
     OUT["ids"]["author_id"] = int(a.id)
 
 
+# ---------------------------------------------- ウィジェット/ページ/ジャーナル
+@step("gridlayout")
+def _gridlayout():
+    """widget_items / widget_design_page / journal を1件ずつ作る。
+
+    install.sh はこれらを投入しないため空で、<widget_id> / <page_id> /
+    <journal_id> を含む行(no.281/282/295/297/298/359)が測れなかった。
+    repository_id は Root Index を使う(WEKO ではリポジトリ識別子に
+    インデックスIDを充てている)。
+    """
+    from sqlalchemy import text
+    ins = lambda sql, **kw: db.session.execute(text(sql), kw)   # noqa: E731
+    repo = "Root Index"
+
+    if db.session.execute(text("SELECT count(*) FROM widget_items")).scalar() == 0:
+        wtype = db.session.execute(
+            text("SELECT type_id FROM widget_type LIMIT 1")).scalar() or "Free description"
+        ins("""INSERT INTO widget_items
+               (created, updated, widget_id, repository_id, widget_type,
+                settings, is_enabled, is_deleted, locked)
+               VALUES (now(), now(), 900001, :r, :t, '{}', true, false, false)""",
+            r=repo, t=wtype)
+
+    if db.session.execute(text("SELECT count(*) FROM widget_design_page")).scalar() == 0:
+        ins("""INSERT INTO widget_design_page
+               (id, title, repository_id, url, template_name, settings, is_main_layout)
+               VALUES (900001, 'APIInventory 検証用', :r, '/apiinv', NULL, '{}', false)""",
+            r=repo)
+
+    if db.session.execute(text("SELECT count(*) FROM journal")).scalar() == 0:
+        idx = OUT.get("index") or db.session.execute(
+            text("SELECT id FROM index LIMIT 1")).scalar()
+        ins("""INSERT INTO journal
+               (created, updated, id, index_id, publication_title, is_output)
+               VALUES (now(), now(), 900001, :i, 'APIInventory 検証用ジャーナル', true)""",
+            i=idx)
+
+
 # ------------------------------------------------- 既存データのID参照(作成しない)
 @step("lookups")
 def _lookups():
@@ -352,6 +390,10 @@ def _lookups():
         ("facet_search_id",  "SELECT id FROM facet_search_setting ORDER BY id LIMIT 1"),
         ("oauth_client_id",  "SELECT client_id FROM oauth2server_client LIMIT 1"),
         ("oauth_token_id",   "SELECT id FROM oauth2server_token LIMIT 1"),
+        ("schema_name",      "SELECT schema_name FROM oaiserver_schema ORDER BY schema_name LIMIT 1"),
+        ("widget_id",        "SELECT widget_id FROM widget_items ORDER BY widget_id LIMIT 1"),
+        ("widget_page_id",   "SELECT id FROM widget_design_page ORDER BY id LIMIT 1"),
+        ("journal_id",       "SELECT id FROM journal ORDER BY id LIMIT 1"),
     ):
         try:
             r = q(sql)

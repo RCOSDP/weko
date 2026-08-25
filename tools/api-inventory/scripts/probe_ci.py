@@ -123,15 +123,36 @@ def build_resolver(fx):
         (r'<[^>]*workflow_id[^>]*>', str((fx.get('activity') or {}).get('workflow_id', ''))),
         (r'<[^>]*flow_id[^>]*>', str((fx.get('activity') or {}).get('flow_id', ''))),
         # fixtures.py が拾った既存レコードのID
-        (r'<[^>]*item_type_id[^>]*>', ids.get('item_type_id', '')),
+        # 台帳には <int:item_type_id> と <int:ItemTypeID> の両方が現れる。
+        # 大小文字は無視して照合するがアンダースコアの有無は吸収できないので両方書く。
+        (r'<[^>]*item_?type_?id[^>]*>', ids.get('item_type_id', '')),
         (r'<[^>]*property_id[^>]*>', ids.get('property_id', '')),
         (r'<[^>]*client_id[^>]*>', ids.get('oauth_client_id', '')),
         (r'<[^>]*token_id[^>]*>', ids.get('oauth_token_id', '')),
         (r'<[^>]*mail_id[^>]*>', ids.get('mail_template_id', '')),
         (r'<[^>]*identifier[^>]*>', str(ids.get('author_id', ''))),
-        # 定数で決まるもの
+        # 定数で決まるもの(値域が有限で、コード/設定から特定できるもの)
         (r'<[^>]*(lang_code|current_language|lang)[^>]*>', 'ja'),
         (r'<int:req>', '1'),
+        (r'<[^>]*schema_?name[^>]*>', ids.get('schema_name', 'ddi_mapping')),
+        (r'<[^>]*data_type[^>]*>', 'username'),          # views.py:819 username|email
+        (r'<[^>]*format[^>]*>', 'bibtex'),               # weko-records-ui/config.py:292
+        (r'<[^>]*target_report[^>]*>', '1'),             # invenio-stats TARGET_REPORTS
+        (r'<[^>]*ranking_type[^>]*>', 'most_downloaded_items'),  # ranking_settings
+        (r'<[^>]*selection[^>]*>', 'target'),
+        (r'<int:year>', '2026'), (r'<int:month>', '8'),
+        (r'<[^>]*start_date[^>]*>', '2026-01-01'),
+        (r'<[^>]*end_date[^>]*>', '2026-12-31'),
+        (r'<[^>]*unit[^>]*>', 'Day'),
+        (r'<[^>]*event[^>]*>', 'file_download'),
+        (r'<[^>]*task_name[^>]*>', 'aggregate'),
+        (r'<[^>]*repository_id[^>]*>', str(fx.get('index', ''))),
+        (r'<[^>]*record_id[^>]*>', str(priv.get('recid', ''))),
+        (r'<string:method>', 'get'),
+        (r'<string:value>', ids.get('journal_id', '900001')),
+        (r'<[^>]*widget_id[^>]*>', ids.get('widget_id', '')),
+        (r'<[^>]*page_id[^>]*>', ids.get('widget_page_id', '')),
+        (r'<[^>]*journal_id[^>]*>', ids.get('journal_id', '')),
         # 上記で解決しない汎用ID(facet-search の <int:id> 等)は最後に当てる
         (r'<(int|string):id>', ids.get('facet_search_id', '1')),
         (r'<id>', ids.get('prefix_id', '1')),
@@ -165,7 +186,9 @@ def resolve_variants(uri, table, fx):
             val = ver
         if not val:
             continue
-        base = re.sub(pat, val, base)
+        # 台帳には <int:item_type_id> と <int:ItemTypeID> の両方が現れるため
+        # 大小文字を無視して照合する
+        base = re.sub(pat, val, base, flags=re.I)
 
     # activity は「自分所有」と「他人所有」の両方で測る(所有者チェックの検証)
     if re.search(ACT_PAT, uri):
@@ -180,7 +203,7 @@ def resolve_variants(uri, table, fx):
                     val = ver
                 if not val or pat == ACT_PAT:
                     continue
-                u = re.sub(pat, val, u)
+                u = re.sub(pat, val, u, flags=re.I)
             out.append((f'activity:{label}', u))
         if out:
             return out
@@ -203,7 +226,7 @@ def resolve_variants(uri, table, fx):
                 val = ver
             if not val or pat == PID_PAT:
                 continue
-            u = re.sub(pat, val, u)
+            u = re.sub(pat, val, u, flags=re.I)
         fixed.append((label, u))
     return fixed or [('-', base)]
 
