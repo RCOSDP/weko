@@ -185,28 +185,163 @@ skip し、台帳には反映しない。**「測っていない」ことが分�
 
 ## ケース3: WEKO3 のバージョンアップに伴う全面更新
 
+v2.0.3 → v2.1.0 (478コミット) で実際に通した手順。所要は**実測で約1.5時間**
+(既存行の再レビューを除く)。工程ごとに、そのとき何が起きたかを併記する。
+
+### 0. 先にツールを対象ブランチへ持ち込む(★最初にここで詰まる)
+
+`tools/api-inventory/` は **ツールを入れたブランチにしか存在しない**。
+対象ブランチへ切り替えるとスクリプトごと消えるので、切替の前に決着させる。
+
 ```bash
-./install.sh                                            # CI と同じ環境で作り直す
-python3 tools/api-inventory/scripts/snapshot.py \
-  --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"     # ベースライン再生成
+# 方法A(推奨): 対象ブランチへツールを取り込む
+git checkout develop_v2.1.0
+git checkout develop_v2.0.4 -- tools/api-inventory .github/workflows/api-inventory-drift.yml
 
-python3 tools/api-inventory/scripts/reconcile.py --gate # 差分を0にする(台帳の追加・削除)
-python3 tools/api-inventory/scripts/changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
-# → 出た no を Phase 2-3 で再確認し full.tsv を更新
-
-python3 tools/api-inventory/scripts/test_coverage.py
-python3 tools/api-inventory/scripts/prioritize.py
-python3 tools/api-inventory/scripts/build_checklist.py
+# 方法B: 別ディレクトリへ取り出して WEKO_ROOT を指定して回す(今回はこちら)
+mkdir -p /tmp/inv && git archive develop_v2.0.4 tools/api-inventory | tar -x -C /tmp/inv
 ```
+
+### 1. url_map を取る — `install.sh` は要らない
+
+Docker がホストのリポジトリを `/code` にマウントしている構成なら、
+**ブランチを切り替えるだけでコンテナ側のコードも入れ替わる**。
+再構築せずに `snapshot.py` が通る。
+
+```bash
+git checkout develop_v2.1.0          # 2秒
+python3 .../snapshot.py --out /tmp/snap_new.json   # 12秒
+```
+
+> 実績: 再起動なしで `endpoints=865` を取得できた(v2.0.3 は 860)。
+> `install.sh` を回すと数十分かかるが、**url_map の取得だけなら不要**。
+
+**ただし egg-info は別**。ルートは entry_points 経由で登録されるため、
+**新規モジュールが増えた/entry_points が変わった**バージョンでは再生成がいる。
+
+```bash
+docker compose exec web bash -c 'cd /code && for d in modules/*/; do (cd $d && python setup.py -q egg_info); done'
+```
+
+> 実績: 再生成に約4分。今回は entry_points に変更が無く `endpoints=865` のまま
+> だったが、**再生成前後で数が変わらないことを確認するまで確定させない**。
+
+### 2. Alembic マイグレーションを確認する(★実測の前に必須)
+
+```bash
+docker compose exec web invenio alembic current | tail -5
+git log --oneline <前回タグ>..HEAD -- '*/alembic/*'   # 追加リビジョンを洗う
+```
+
+> url_map の取得は DB スキーマに依存しないが、**`fixtures.py` / `probe_ci.py` は依存する**。
+> スキーマが古いと probe が 500 を返し、分類器がそれを「到達」と誤判定して
+> 認可の穴と区別がつかなくなる。
+> 実績: 追加リビジョンは 2件(`33c2a0cb8f5f`, `e0dd9fb514cf`)で、いずれも適用済み。
+> 制約(`fk/uq_item_type_mapping_item_type_id`)が実DBにあることまで確認した。
+
+### 3. 差分を確定し、台帳を 0 差分にする
+
+```bash
+python3 .../diff_snapshot.py "$WEKO_API_INVENTORY_DIR/api_snapshot.json" /tmp/snap_new.json
+cp /tmp/snap_new.json "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
+python3 .../reconcile.py            # A(未収載) を洗い出す
+python3 .../add_row.py --append --no <新規のendpoint>   # 自動27列だけ埋まる
+python3 .../reconcile.py --gate     # 0件になるまで繰り返す
+```
+
+> 実績: ADDED=5 / REMOVED=0。`reconcile.py` は A=5 B=0 C=0 D=0 を報告し、
+> 5行追加後に **✅ 一致(0件)** となった。
+
+**外部調査との突き合わせで数が合わないときは、まず相手の環境を疑う。**
+今回ベンダ資料は新規23件としていたが、`develop_v2.1.0` のソースに存在するのは 5件だけで、
+残り18件(`invenio_accounts_rest_auth.*` 7 / `invenio_oauthclient.rest_*` 6 /
+`reindex_search.*` 3 ほか)は grep しても 1件もヒットしなかった。
+`modules/` 配下でなく site-packages 側の pip パッケージのバージョン差が原因。
+
+### 4. 新規行を埋める
+
+機械付与 → 実装読解、の順。機械付与は**空欄/TODOセルのみ**を触るので既存値を壊さない。
+
+```bash
+for s in add_cols add_ssrf_redirect add_idempotency add_dataop4 add_authmech add_reqinfo; do
+  python3 .../$s.py
+done
+```
+
+> 実績: 5行に対し機械付与で 112セル(約3分)。残る 18列は実装を読んで手で埋めた(約20分)。
+> 人手が要るのは `summary` / `response*` / `status_codes` / `exceptions` / `roles` /
+> `access_variance` / `data_store` / `side_effects` / `config_deps` / `category_tags` /
+> `notes` / `sec_*` 5列 / `dynamic_verified`。
+
+### 5. 実測する
+
+```bash
+python3 .../fixtures.py --out "$WEKO_API_INVENTORY_DIR/fixtures.json"
+python3 .../probe_ci.py --nos 927,928,929,930,931 --allow-writes --out /tmp/probe.json
+python3 .../apply_probe_results.py --probe /tmp/probe.json
+```
+
+> 実績: `fixtures.py` は `errors=3` を返したが中身は ES への reindex 失敗で、
+> 到達可否の測定には影響しない。5件中4件を測定、`<task_id>` を持つ 1件は
+> フィクスチャが無く未解決でスキップされたため手で叩いた。
+
+**分類器の穴が2つある。measured の結果をそのまま信じない。**
+
+| 症状 | 実態 | 確認方法 |
+|---|---|---|
+| `502` → `判定不能` | nginx の一過性エラー。叩き直すと `403` だった | 手で 2回叩いて確定させる |
+| `/api/*` の `anon=500` → `到達` | `BuildError('security.login')` で**実態は遮断** | `docker logs --tail 40 weko-web-1 \| grep BuildError` |
+
+後者は `weko3_api_unauthorized_handler_proposal.md` の恒久対策が入るまで残る既知の穴。
+レスポンス本文が汎用メッセージなので、本文からは判別できない。
+
+### 6. 既存行への影響を洗う
+
+```bash
+python3 .../changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
+```
+
+> 実績: modules 配下 150ファイルが変更され、うち台帳に載る実装ファイルが 21、
+> **再レビュー対象は 926行中 41行**。ここは機械化できず実装読解が要る。
+> 時間が取れないときは「構造(0差分)と新規行の実測だけ先に確定し、
+> 41行は次サイクルへ回す」と割り切ってよい。その場合は**保留した旨を必ず記録する**。
+
+### 7. 再計算してゲートを通す
+
+```bash
+python3 .../test_coverage.py
+python3 .../prioritize.py
+python3 .../build_checklist.py
+python3 .../reconcile.py --gate     # exit 0 を確認
+```
+
+> 実績(v2.1.0 / 931行): 特定617 特定不能314 /
+> P1=82 P2=150 P3=450 P4=4 P5=64 整理対象=20 環境依存=11 対象外=150 / reconcile ✅ 0件。
+
+### 8. タグを打つ
 
 最後に **WEKO3 と同名のタグ**を打つ(理由は `../ci/README.md` 3c)。
 
 ```bash
 cd "$WEKO_API_INVENTORY_DIR"
 git add -A && git commit -m "..."
-git tag -a v2.0.4 -m "WEKO3 v2.0.4 (RCOSDP/weko <sha>) 時点の API インベントリ"
+git tag -a v2.1.0 -m "WEKO3 v2.1.0 (RCOSDP/weko <sha>) 時点の API インベントリ"
 git push origin main --follow-tags
 ```
+
+### 所要時間の実績(v2.0.3 → v2.1.0)
+
+| 工程 | 実績 |
+|---|---|
+| 0. ツール持ち込み | 5分 |
+| 1. snapshot(再起動なし) | 12秒 / egg-info 再生成込みで 5分 |
+| 2. Alembic 確認 | 5分 |
+| 3. 差分確定・0差分化 | 15分(外部資料との突き合わせ含む) |
+| 4. 新規5行を埋める | 25分 |
+| 5. 実測 | 15分 |
+| 7. 再計算・ゲート | 5分 |
+| **小計** | **約1.5時間** |
+| 6. 既存41行の再レビュー | 別途(今回は保留) |
 
 ## 各スクリプトが何を読み書きするか
 
@@ -381,6 +516,13 @@ security_flags(CSRF/BOLA/SSRF等8観点を該当のみ), last_change(commit系4�
 - SSRF検出は関数本体＋1段ヘルパまで。route→Celery→utils の間接SSRFは triggers_task で追跡。
 - ModelView 253件は代表実測。全個別測定ではない。
 - 動的検証はテストデータ依存。完全な end-to-end(ワークフロー経由の正規deposit)は一部のみ。
+- `probe_ci.py` の判定には既知の穴が2つある(v2.1.0 実測で確認)。
+  - `/api/*` への未認証アクセスが返す `500` は、実態は `BuildError('security.login')`
+    による**遮断**だが、本文が汎用メッセージのため「到達」と誤判定される。
+    `docker logs weko-web-1 | grep BuildError` で切り分けること。
+  - nginx の一過性 `502` を `判定不能` として記録してしまう。手で叩き直して確定させる。
+- `<task_id>` のようにフィクスチャで作れないパスパラメータは probe がスキップする。
+  該当行は手で叩いて `dynamic_verified` に測定条件(ダミー値を使った旨)まで書く。
 
 ---
 
