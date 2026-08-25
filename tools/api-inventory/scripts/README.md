@@ -362,6 +362,18 @@ python3 .../changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
 > `no.573 GET /sword/deposit/<recid>` の応答にファイルURLが増えていたが、
 > `no.573` 自体は(行番号を直した後も)対象一覧に出ていなかった。
 
+**台帳に1行も無いファイルの認可ヘルパも見る。**
+`permissions.py` / `utils.py` / `api.py` / `ext.py` / `decorators.py` のうち、
+関数名に `permission` `role` `group` `auth` `can_` `check_` などを含むものの変更は
+別枠で報告する。`permission_factory` 経由で間接的に呼ばれ、エンドポイントの
+可否をそのまま動かすため。
+
+> 実績(v2.1.0): 28件。うち `weko_index_tree/utils.py` の
+> `check_index_permission_by_role_and_group` は、索引の閲覧判定を
+> `check_roles OR check_groups` から **AND** に変えていた。
+> `/item/edit/<pid>` の可否まで動く変更だが、このファイルには台帳行が無いため
+> 上の(台帳行があるファイル限定の)ヘルパ報告には出ていなかった。
+
 再レビュー自体は機械化できず実装読解が要る。時間が取れないときは
 「構造(0差分)と新規行の実測だけ先に確定し、既存行は次サイクルへ回す」と割り切ってよい。
 その場合は**保留した旨を必ず記録する**。

@@ -215,6 +215,25 @@ def main():
         for name in changed_func_names(root, rel, ranges.get(rel, [])):
             if name.split('.')[-1] not in ledger_funcs.get(rel, ()):
                 helpers.append((rel, name))
+
+    # 台帳に1行も無いファイルでも、認可判定を担うものは見逃せない。
+    # v2.1.0 では weko-index-tree/utils.py の
+    # check_index_permission_by_role_and_group が OR から AND に変わり、
+    # page_permission_factory 経由で /item/edit/<pid> の可否まで動いていたのに、
+    # このファイルに台帳行が無いため何も報告されなかった。
+    AUTH_FILES = ('permissions.py', 'utils.py', 'api.py', 'ext.py', 'decorators.py')
+    AUTH_HINTS = ('permission', 'role', 'group', 'auth', 'can_', 'check_',
+                  'is_owner', 'scope', 'token')
+    auth_helpers = []
+    for rel in sorted(r for r in ranges if r.endswith('.py')):
+        if rel in files_changed:
+            continue
+        if os.path.basename(rel) not in AUTH_FILES:
+            continue
+        for name in changed_func_names(root, rel, ranges.get(rel, [])):
+            low = name.lower()
+            if any(h in low for h in AUTH_HINTS):
+                auth_helpers.append((rel, name))
     if helpers:
         print()
         print('  ⚠ 台帳のエンドポイントではないが変更されたヘルパ関数'
@@ -225,6 +244,17 @@ def main():
             print(f'      ... 他 {len(helpers) - 40} 件')
         print('    → 呼び出し元のエンドポイントは自動では拾えない。'
               'grep で呼び出し元を辿り、該当する台帳行も再レビューすること。')
+
+    if auth_helpers:
+        print()
+        print('  ⚠ 台帳に行が無いファイルの、認可判定に関わる変更関数'
+              f'({len(auth_helpers)}件):')
+        for rel, name in auth_helpers[:40]:
+            print(f'      {rel}  {name}')
+        if len(auth_helpers) > 40:
+            print(f'      ... 他 {len(auth_helpers) - 40} 件')
+        print('    → permission_factory / *_permission から間接的に呼ばれることが多く、'
+              'エンドポイントの可否が変わる。呼び出し元を辿ること。')
 
     # 変更はあるがインベントリに載っていない実装ファイル = 新規APIの可能性
     unmapped = sorted(set(r for r in ranges if r.endswith('.py')) - files_changed)
