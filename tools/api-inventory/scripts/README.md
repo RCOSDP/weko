@@ -202,11 +202,11 @@ git checkout develop_v2.0.4 -- tools/api-inventory .github/workflows/api-invento
 mkdir -p /tmp/inv && git archive develop_v2.0.4 tools/api-inventory | tar -x -C /tmp/inv
 ```
 
-### 1. url_map を取る — `install.sh` は要らない
+### 1. url_map を取る — `snapshot.py` だけなら `install.sh` は要らない
 
 Docker がホストのリポジトリを `/code` にマウントしている構成なら、
 **ブランチを切り替えるだけでコンテナ側のコードも入れ替わる**。
-再構築せずに `snapshot.py` が通る。
+`snapshot.py` は `invenio shell`(毎回新しいプロセス)で動くので、再構築せずに通る。
 
 ```bash
 git checkout develop_v2.1.0          # 2秒
@@ -216,15 +216,39 @@ python3 .../snapshot.py --out /tmp/snap_new.json   # 12秒
 > 実績: 再起動なしで `endpoints=865` を取得できた(v2.0.3 は 860)。
 > `install.sh` を回すと数十分かかるが、**url_map の取得だけなら不要**。
 
-**ただし egg-info は別**。ルートは entry_points 経由で登録されるため、
-**新規モジュールが増えた/entry_points が変わった**バージョンでは再生成がいる。
+**egg-info の再生成は必須**。ルートは entry_points 経由で登録されるので、
+モジュール構成や entry_points が変わったバージョンでは、
+古い egg-info が存在しない属性を指してアプリが起動しなくなる。
 
 ```bash
-docker compose exec web bash -c 'cd /code && for d in modules/*/; do (cd $d && python setup.py -q egg_info); done'
+docker exec weko-web-1 bash -lc 'cd /code && for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
+docker restart weko-web-1
 ```
 
-> 実績: 再生成に約4分。今回は entry_points に変更が無く `endpoints=865` のまま
-> だったが、**再生成前後で数が変わらないことを確認するまで確定させない**。
+> 実績(v2.0.3 へ戻したとき): 再生成せずに再起動したら
+> `AttributeError: module 'weko_theme.bundles' has no attribute 'js_preview_widget'` で
+> `invenio_assets` の entry point が解決できず、**アプリが一切起動しなくなった**
+> (`no python application found`)。再生成して再起動したら復旧した。所要は約4分。
+> v2.0.3 → v2.1.0 の向きでは entry_points に変更が無く数も変わらなかったが、
+> **再生成前後で数が変わらないことを確認するまで確定させない**。
+
+### 1-b. 実測するなら uwsgi のリロードを確認する(★見落としやすい)
+
+`snapshot.py` は毎回新しいプロセスなので即座に新しいコードを見るが、
+**`probe_ci.py` は稼働中の uwsgi ワーカーを叩く**。こちらは自動リロードが
+効かないと古いコードのままで、**測っているつもりのバージョンと違うものを測る**。
+
+切り替えたら、そのバージョンにしか無い/無くなったエンドポイントを1つ叩いて確かめる。
+
+```bash
+# v2.0.3 に戻したなら、v2.1.0 で追加された経路が 404 になるはず
+curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
+  https://localhost:8443/api/admin/get_widget_item_list
+```
+
+> 実績: v2.0.3 に切り替えた直後は `500`(=v2.1.0 の経路がまだ生きている)だった。
+> egg-info を再生成して `docker restart weko-web-1` した後に `404` になり、
+> ここで初めて v2.0.3 を測れる状態になった。
 
 ### 2. Alembic マイグレーションを確認する(★実測の前に必須)
 
