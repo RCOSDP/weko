@@ -83,9 +83,10 @@ jobs:
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
         run: |
-          set -o pipefail
-          # ツールを一切許可せず、渡した差分だけを読んで指摘を返させる。
-          # リポジトリを読ませたい場合は --allowed-tools "Read,Grep,Glob" を足す。
+          # 診断のため stdout/stderr を両方残す。--allowed-tools は可変長引数で
+          # 空文字を渡すと解釈が不安定なため指定しない(--permission-mode plan で
+          # 変更系は行われない)。
+          set +e
           claude -p "$(cat <<'PROMPT'
           添付の差分をレビューしてください。返答は次のJSONのみとし、前後に文章を付けないこと。
 
@@ -104,9 +105,17 @@ jobs:
             - 根拠(evidence)には該当行の抜粋を入れる。
             - 指摘が無ければ {"findings":[]} を返す。
           PROMPT
-          )" --output-format json --model "$MODEL" \
-             --allowed-tools "" --permission-mode plan \
-             < diff.patch > raw.json
+          )" --output-format json --model "$MODEL" --permission-mode plan \
+             < diff.patch > raw.json 2> claude.err
+          rc=$?
+          set -e
+          echo "claude exit=$rc"
+          echo "----- stderr -----"; head -c 3000 claude.err || true
+          echo "----- stdout(先頭) -----"; head -c 1500 raw.json || true
+          if [ $rc -ne 0 ]; then
+            echo "::warning::claude の実行に失敗しました(exit=$rc)。診断のためジョブは継続します"
+            exit 0
+          fi
           python3 - <<'PY' > review.md
           import json, re
           raw = json.load(open('raw.json'))
@@ -135,6 +144,8 @@ jobs:
           path: |
             review.md
             findings.json
+            raw.json
+            claude.err
 
       - name: Comment on PR
         if: steps.cfg.outputs.enabled == 'true' && env.POST_TO_PR == 'true' &&
