@@ -125,6 +125,10 @@ def _make_record(recid, owner_id, publish_status, title, with_file):
         js["publish_status"] = publish_status
         js.setdefault("pubdate", {"attribute_name": "PubDate",
                                   "attribute_value": "2026-01-01"})
+        # weko_shared_ids が無いと weko_records_ui.permissions.check_created_id が
+        # len(None) で TypeError になり、詳細画面が 500 になる(v2.0.3/v2.1.0 とも)。
+        # 新規作成側では入れているが、この自己修復パスで入れ忘れていた。
+        js.setdefault("weko_shared_ids", [])
         rm.json = js
         flag_modified(rm, "json")
         db.session.add(rm)

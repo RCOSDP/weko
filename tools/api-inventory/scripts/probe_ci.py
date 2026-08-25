@@ -342,6 +342,10 @@ def main():
     p.add_argument('--allow-writes', action='store_true',
                    help='GET/HEAD 以外も測る(使い捨て環境でのみ指定すること)')
     p.add_argument('--out', default='probe.json')
+    p.add_argument('--refresh-fixtures', type=int, default=0, metavar='N',
+                   help='--allow-writes 時、N 行ごとに fixtures.py を流し直す。'
+                        '書き込み系を叩くとフィクスチャ自身が壊れ、以降の測定が '
+                        '404 に化けるため(v2.0.3 の全行測定で実際に起きた)')
     p.add_argument('--web-container', default=os.environ.get('WEKO_WEB_CONTAINER'),
                    help='500 を返したとき docker logs を見て BuildError(security.login) '
                         'による遮断かどうかを切り分ける。既定は $WEKO_WEB_CONTAINER')
@@ -377,7 +381,27 @@ def main():
 
     table = build_resolver(fx)
     results = []
-    for no in targets:
+    state = {'fx': fx, 'table': table}
+    fixture_script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  'fixtures.py')
+
+    def refresh_fixtures():
+        """fixtures.py を流し直す。冪等なので壊れた値は上書きで直る。"""
+        subprocess.run([sys.executable, fixture_script, '--out', a.fixtures],
+                       capture_output=True, text=True, timeout=900)
+        try:
+            state['fx'] = json.load(open(a.fixtures, encoding='utf-8'))
+            state['table'] = build_resolver(state['fx'])
+        except Exception:
+            pass
+
+    for idx, no in enumerate(targets):
+        if (a.refresh_fixtures and a.allow_writes and idx
+                and idx % a.refresh_fixtures == 0):
+            refresh_fixtures()
+            print(f'  [{idx}/{len(targets)}] フィクスチャを再投入した', flush=True)
+        fx, table = state['fx'], state['table']
+        row_retried = [False]
         c = rows[no]
         uri, methods = c[H['uri']], c[H['method']]
         for label, path in resolve_variants(uri.split(';')[0], table, fx):
@@ -391,25 +415,42 @@ def main():
                                     'status': 'skip',
                                     'reason': '書き込み系(--allow-writes 未指定)'})
                     continue
-                obs = {}
-                for name, _ in IDENTITIES:
-                    sess = sessions[name]
-                    if sess.email and not sess.ok:
-                        continue
-                    bf = os.path.join(work, 'body')
-                    since = int(time.time())
-                    code, redirect, orig = sess.request(method, path, bf)
-                    log = (web_log_since(a.web_container, since)
-                           if code == '500' else '')
-                    v = classify(code, bf, redirect, log)
-                    if orig in REDIRECT_CODES and v == '到達':
-                        # 転送を追った先が 200 でも、「拒否して一覧へ戻す」転送の
-                        # ことがある(実測: 非所有者のグループ削除)。到達とは
-                        # 断定できないので、行き先を添えて人が判断できるようにする。
-                        v = '到達(転送)'
-                    obs[name] = {'code': code, 'via': orig if orig != code else None,
-                                 'verdict': v,
-                                 'redirect': redirect or None}
+                def measure_all():
+                    o = {}
+                    for name, _ in IDENTITIES:
+                        sess = sessions[name]
+                        if sess.email and not sess.ok:
+                            continue
+                        bf = os.path.join(work, 'body')
+                        since = int(time.time())
+                        code, redirect, orig = sess.request(method, path, bf)
+                        log = (web_log_since(a.web_container, since)
+                               if code == '500' else '')
+                        v = classify(code, bf, redirect, log)
+                        if orig in REDIRECT_CODES and v == '到達':
+                            # 転送を追った先が 200 でも、「拒否して一覧へ戻す」
+                            # 転送のことがある(実測: 非所有者のグループ削除)。
+                            # 到達とは断定できないので、行き先を添えて人が判断できる
+                            # ようにする。
+                            v = '到達(転送)'
+                        o[name] = {'code': code,
+                                   'via': orig if orig != code else None,
+                                   'verdict': v, 'redirect': redirect or None}
+                    return o
+
+                obs = measure_all()
+                # フィクスチャ由来の値を使う行(label != '-')で 404 と非404 が
+                # 混ざるのは、同じ run 内の書き込みでフィクスチャが壊れた印。
+                # v2.0.3 の全行測定で実際に起きた(records の publish_status が
+                # None になり、以降の測定が 404 に化けた)。一度だけ張り直して測り直す。
+                codes = {v['code'] for v in obs.values()}
+                if (a.allow_writes and label != '-' and not row_retried[0]
+                        and '404' in codes and codes - {'404'}):
+                    refresh_fixtures()
+                    print(f'  no={no} 404 が混在 → フィクスチャを張り直して再測',
+                          flush=True)
+                    row_retried[0] = True
+                    obs = measure_all()
                 results.append({'no': no, 'uri': uri, 'method': method,
                                 'target': label, 'resolved': path,
                                 'status': 'measured',
