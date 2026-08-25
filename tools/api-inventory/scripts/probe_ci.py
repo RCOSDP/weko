@@ -100,6 +100,7 @@ def classify(code, body_path, redirect=''):
 
 def build_resolver(fx):
     """URI のプレースホルダをフィクスチャの実値に置き換える表を作る。"""
+    ids = fx.get('ids') or {}
     priv = fx['records'].get('private', {})
     other = fx['records'].get('other_owner', {})
     f = fx.get('file') or {}
@@ -121,6 +122,19 @@ def build_resolver(fx):
         (r'<[^>]*action_id[^>]*>', str((fx.get('activity') or {}).get('action_id', ''))),
         (r'<[^>]*workflow_id[^>]*>', str((fx.get('activity') or {}).get('workflow_id', ''))),
         (r'<[^>]*flow_id[^>]*>', str((fx.get('activity') or {}).get('flow_id', ''))),
+        # fixtures.py が拾った既存レコードのID
+        (r'<[^>]*item_type_id[^>]*>', ids.get('item_type_id', '')),
+        (r'<[^>]*property_id[^>]*>', ids.get('property_id', '')),
+        (r'<[^>]*client_id[^>]*>', ids.get('oauth_client_id', '')),
+        (r'<[^>]*token_id[^>]*>', ids.get('oauth_token_id', '')),
+        (r'<[^>]*mail_id[^>]*>', ids.get('mail_template_id', '')),
+        (r'<[^>]*identifier[^>]*>', str(ids.get('author_id', ''))),
+        # 定数で決まるもの
+        (r'<[^>]*(lang_code|current_language|lang)[^>]*>', 'ja'),
+        (r'<int:req>', '1'),
+        # 上記で解決しない汎用ID(facet-search の <int:id> 等)は最後に当てる
+        (r'<(int|string):id>', ids.get('facet_search_id', '1')),
+        (r'<id>', ids.get('prefix_id', '1')),
         # IIIF Image API のパラメータ(no.34)
         (r'<[^>]*region[^>]*>', 'full'),
         (r'<[^>]*size[^>]*>', 'full'),

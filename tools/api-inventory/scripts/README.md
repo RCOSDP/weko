@@ -166,12 +166,19 @@ tools/api-inventory/scripts/remeasure.sh --read-only        # GET/HEAD のみ(�
 
 `fixtures.py` が作る対象で決まる。
 
-| プレースホルダ | 解決先 |
-|---|---|
-| `<pid_value>` `<recid>` | 公開アイテム / 非公開アイテムの**両方**で測る |
-| `<bucket_id>` `<key>` `<uuid>` | 非公開アイテムに添付したファイル(IIIF の三つ組も) |
-| `<activity_id>` `<action_id>` | ワークフロー activity を**自分所有/他人所有の両方**で測る |
-| `<index_id>` `<community_id>` `<group_id>` | フィクスチャで作成したもの |
+| プレースホルダ | 解決先 | 出所 |
+|---|---|---|
+| `<pid_value>` `<recid>` | 公開アイテム / 非公開アイテムの**両方**で測る | 作成 |
+| `<bucket_id>` `<key>` `<uuid>` | 非公開アイテムに添付したファイル(IIIF の三つ組も) | 作成 |
+| `<activity_id>` `<action_id>` | ワークフロー activity を**自分所有/他人所有の両方**で測る | 作成 |
+| `<index_id>` `<community_id>` `<group_id>` | フィクスチャで作成したもの | 作成 |
+| `<identifier>` | 著者(authors は初期状態で0件のため作成) | 作成 |
+| `<item_type_id>` `<property_id>` `<mail_id>` `<client_id>` `<token_id>` | `install.sh` が投入する初期データの先頭ID | **参照** |
+| `<lang_code>` `<current_language>` `<req>` | 定数(`ja` / `1`) | 定数 |
+
+**既存の初期データは作らずに参照する。** アイテムタイプ・プロパティ・メール
+テンプレート・著者プレフィクス/所属・ファセット検索・OAuthクライアントは
+`install.sh` が入れるので、フィクスチャで作ると二重になる。
 
 解決できないプレースホルダ(`<mail_id>` など)を含む行は `未解決プレースホルダ` として
 skip し、台帳には反映しない。**「測っていない」ことが分かる状態を保つ**ため。
