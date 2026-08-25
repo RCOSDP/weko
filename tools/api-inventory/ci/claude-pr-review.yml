@@ -1,0 +1,151 @@
+# Claude によるPRレビュー(Anthropic API キーを使わない構成)
+#
+# 認証は **Claude サブスクリプションの長期トークン**。従量課金の API キーは使わない。
+#   ローカルで:  claude setup-token          # 1年有効・scope=user:inference
+#   登録:        gh secret set CLAUDE_CODE_AUTH_TOKEN --repo RCOSDP/weko
+#
+# 通信はすべてアウトバウンド(ランナー → Anthropic / GitHub)。
+# 公開エンドポイント・固定IP・ポート開放・常駐プロセスは不要。
+#
+# 【このリポジトリは public】
+#   Secret 名は CLAUDE_CODE_AUTH_TOKEN、CLI が読む環境変数は CLAUDE_CODE_OAUTH_TOKEN。
+#   - Secret は fork からの PR には渡らない。下の if で同一リポジトリに限定する。
+#   - レビュー結果を PR に投稿すると誰でも読める。既定では投稿せず artifact 止まり。
+#     POST_TO_PR を true にすると投稿する。
+#
+# 注: cloud-hosted の `claude ultrareview` は 2026-08 時点でこのアカウントでは
+#     利用できなかった("Ultrareview is currently unavailable")。ここでは
+#     ヘッドレス実行(`claude -p`)を使う。動作は確認済み。
+
+name: Claude PR Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'レビュー対象の PR 番号'
+        required: true
+  # TODO(試行中): 動作確認のため有効化。確認後は workflow_dispatch のみに戻す。
+  pull_request:
+    branches: ['**']
+
+env:
+  POST_TO_PR: 'false'
+  MODEL: 'sonnet'
+  MAX_DIFF_BYTES: '200000'     # これを超える差分はレビューしない(分割が必要)
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'workflow_dispatch' ||
+        github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check token
+        id: cfg
+        env:
+          TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
+        run: |
+          if [ -n "$TOKEN" ]; then echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else echo "enabled=false" >> "$GITHUB_OUTPUT"
+               echo "::notice::CLAUDE_CODE_AUTH_TOKEN が未設定のためスキップします"; fi
+
+      - name: Install Claude Code
+        if: steps.cfg.outputs.enabled == 'true'
+        run: |
+          curl -fsSL https://claude.ai/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Collect diff
+        if: steps.cfg.outputs.enabled == 'true'
+        id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.inputs.pr_number || github.event.pull_request.number }}
+        run: |
+          gh pr diff "$PR" > diff.patch
+          size=$(stat -c%s diff.patch)
+          echo "差分: ${size} bytes"
+          if [ "$size" -gt "${MAX_DIFF_BYTES}" ]; then
+            echo "::warning::差分が大きすぎます(${size} > ${MAX_DIFF_BYTES})。スキップします"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Review
+        if: steps.cfg.outputs.enabled == 'true' && steps.diff.outputs.skip != 'true'
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
+        run: |
+          set -o pipefail
+          # ツールを一切許可せず、渡した差分だけを読んで指摘を返させる。
+          # リポジトリを読ませたい場合は --allowed-tools "Read,Grep,Glob" を足す。
+          claude -p "$(cat <<'PROMPT'
+          添付の差分をレビューしてください。返答は次のJSONのみとし、前後に文章を付けないこと。
+
+          {"findings":[{"file":"","line":0,"severity":"high|medium|low",
+                        "title":"","detail":"","evidence":""}]}
+
+          観点(この順で重視):
+            1. 認可の欠落・後退(デコレータの削除、permission factory の無効化、
+               所有者チェックの欠落)
+            2. 破壊的操作(削除・上書き)の追加や条件緩和
+            3. 入力検証の不足
+            4. 既存挙動を変える変更で、呼び出し側への影響が考慮されていないもの
+
+          規則:
+            - 差分から読み取れる事実のみを書く。推測は書かない。
+            - 根拠(evidence)には該当行の抜粋を入れる。
+            - 指摘が無ければ {"findings":[]} を返す。
+          PROMPT
+          )" --output-format json --model "$MODEL" \
+             --allowed-tools "" --permission-mode plan \
+             < diff.patch > raw.json
+          python3 - <<'PY' > review.md
+          import json, re
+          raw = json.load(open('raw.json'))
+          text = raw.get('result') or raw.get('text') or ''
+          m = re.search(r'\{.*\}', text, re.S)
+          data = json.loads(m.group(0)) if m else {'findings': []}
+          f = data.get('findings', [])
+          json.dump(data, open('findings.json', 'w'), ensure_ascii=False, indent=1)
+          order = {'high': 0, 'medium': 1, 'low': 2}
+          f.sort(key=lambda x: order.get(x.get('severity'), 9))
+          print(f"## Claude によるレビュー\n\n指摘 {len(f)} 件"
+                f"（コスト ${raw.get('total_cost_usd', 0):.4f}）\n")
+          for x in f:
+              loc = f"`{x.get('file','')}:{x.get('line','')}`"
+              print(f"- **[{x.get('severity','?')}] {x.get('title','')}** {loc}")
+              if x.get('detail'):
+                  print(f"  - {x['detail']}")
+          PY
+          cat review.md
+
+      - name: Upload result
+        if: always() && steps.cfg.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: claude-review
+          path: |
+            review.md
+            findings.json
+
+      - name: Comment on PR
+        if: steps.cfg.outputs.enabled == 'true' && env.POST_TO_PR == 'true' &&
+            github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let body = '(レビュー結果を生成できませんでした)';
+            try { body = fs.readFileSync('review.md', 'utf8'); } catch (e) {}
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number, owner: context.repo.owner,
+              repo: context.repo.repo, body: body.slice(0, 60000),
+            });
