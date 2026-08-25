@@ -15,7 +15,7 @@ def _write(path, hd, data, newcols):
     """既存の同名列は **その位置のまま値を差し替える**。無い列だけ末尾に足す。
 
     末尾に付け直すと列順が変わり、README の awk 例や他スクリプトの
-    列位置前提(c[13]=impl_file 等)が壊れる。
+    列位置前提(_col(c,"impl_file")=impl_file 等)が壊れる。
     """
     pos = {n: i for i, n in enumerate(hd)}
     add_cols = [n for n in newcols if n not in pos]
@@ -48,6 +48,14 @@ R = _os.environ.get("WEKO_ROOT", "/home/mhaya/wekov2") + "/"
 def load(p): return [l.rstrip("\n").split("\t") for l in open(p,encoding="utf-8") if l.rstrip("\n")]
 rows=load(TSV); hd=rows[0]; data=rows[1:]
 
+def _col(c, name, _cache={}):
+    """列名で引く。列の統合・追加で位置がずれても壊れないようにするため。"""
+    if not _cache:
+        _cache.update({n: i for i, n in enumerate(hd)})
+    i = _cache.get(name)
+    return c[i] if i is not None and len(c) > i else ""
+
+
 # 実装関数のソース断片をキャッシュ
 srccache={}
 def get_src(fp,ln):
@@ -70,12 +78,12 @@ def get_src(fp,ln):
     srccache[key]=seg; return seg
 
 def col_csrf(c,seg):
-    m=c[4]; 
+    m=_col(c,"method"); 
     if not re.search(r"POST|PUT|DELETE|PATCH",m): return "N/A(参照系)"
     if "csrf_random" in seg or "validate_csrf" in seg: return "手動csrf照合あり"
     # このアプリはCSRFProtect未初期化 → session認証の状態変更は無防備
-    if c[21] in("session","session+guest") or "session" in c[21] or c[20]=="要":
-        if "oauth" in c[21] or "Bearer" in seg or "require_api_auth" in seg: return "OAuth(CSRF非該当)"
+    if _col(c,"auth_method") in("session","session+guest") or "session" in _col(c,"auth_method") or _col(c,"auth_required")=="要":
+        if "oauth" in _col(c,"auth_method") or "Bearer" in seg or "require_api_auth" in seg: return "OAuth(CSRF非該当)"
         return "★CSRF保護なし(CSRFProtect未初期化・状態変更)"
     return "CSRF該当外(未認証public)"
 
@@ -109,7 +117,7 @@ def col_reslimit(seg):
 
 newcols=["csrf_protection","input_validation","audit_logged","triggers_task","resource_limit"]
 for c in data:
-    seg=get_src(c[13],c[14]) if c[14].isdigit() else ""
+    seg=get_src(_col(c,"impl_file"),_col(c,"impl_line")) if _col(c,"impl_line").isdigit() else ""
     c += [col_csrf(c,seg), col_input(seg), col_audit(seg), col_task(seg), col_reslimit(seg)]
 _write(TSV, hd, data, ['csrf_protection', 'input_validation', 'audit_logged', 'triggers_task', 'resource_limit'])
 # サマリ

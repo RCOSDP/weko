@@ -13,7 +13,7 @@ def _write(path, hd, data, newcols):
     """既存の同名列は **その位置のまま値を差し替える**。無い列だけ末尾に足す。
 
     末尾に付け直すと列順が変わり、README の awk 例や他スクリプトの
-    列位置前提(c[13]=impl_file 等)が壊れる。
+    列位置前提(_col(c,"impl_file")=impl_file 等)が壊れる。
     """
     pos = {n: i for i, n in enumerate(hd)}
     add_cols = [n for n in newcols if n not in pos]
@@ -45,6 +45,14 @@ def _write(path, hd, data, newcols):
 R = _os.environ.get("WEKO_ROOT", "/home/mhaya/wekov2") + "/"
 def load(p): return [l.rstrip("\n").split("\t") for l in open(p,encoding="utf-8") if l.rstrip("\n")]
 rows=load(TSV); hd=rows[0]; data=rows[1:]
+
+def _col(c, name, _cache={}):
+    """列名で引く。列の統合・追加で位置がずれても壊れないようにするため。"""
+    if not _cache:
+        _cache.update({n: i for i, n in enumerate(hd)})
+    i = _cache.get(name)
+    return c[i] if i is not None and len(c) > i else ""
+
 srccache={}
 def get_src(fp,ln):
     key=(fp,ln)
@@ -61,7 +69,7 @@ def get_src(fp,ln):
             if s<=int(ln)<=e and (best is None or (e-s)<(best[1]-best[0])): best=(s,e)
     seg="\n".join(lines[best[0]-1:best[1]]) if best else ""; srccache[key]=seg; return seg
 def col_idem(c,seg):
-    m=c[4].split(",")[0]
+    m=_col(c,"method").split(",")[0]
     if m in("GET","HEAD"): return "N/A(参照系)"
     if m in("PUT","DELETE"):
         # 状態チェックあれば冪等
@@ -74,7 +82,7 @@ def col_idem(c,seg):
     return "-"
 nc=0
 for c in data:
-    seg=get_src(c[13],c[14]) if (len(c)>14) else ""
+    seg=get_src(_col(c,"impl_file"),_col(c,"impl_line")) if (len(c)>14) else ""
     v=col_idem(c,seg); c.append(v)
     if "★" in v: nc+=1
 _write(TSV, hd, data, ['idempotency'])

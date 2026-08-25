@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
-"""data_op_detail列: 取得/作成/更新/物理削除/論理削除 を実装から4区分評価"""
+"""data_op列: 取得/作成/更新/物理削除/論理削除 を実装から4区分評価
+
+(旧 data_op_detail。data_op と統合したため書き込み先を data_op に変更)"""
 import ast,re,os
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
@@ -15,7 +17,7 @@ def _write(path, hd, data, newcols):
     """既存の同名列は **その位置のまま値を差し替える**。無い列だけ末尾に足す。
 
     末尾に付け直すと列順が変わり、README の awk 例や他スクリプトの
-    列位置前提(c[13]=impl_file 等)が壊れる。
+    列位置前提(_col(c,"impl_file")=impl_file 等)が壊れる。
     """
     pos = {n: i for i, n in enumerate(hd)}
     add_cols = [n for n in newcols if n not in pos]
@@ -47,6 +49,14 @@ def _write(path, hd, data, newcols):
 R = _os.environ.get("WEKO_ROOT", "/home/mhaya/wekov2") + "/"
 def load(p): return [l.rstrip("\n").split("\t") for l in open(p,encoding="utf-8") if l.rstrip("\n")]
 rows=load(TSV); hd=rows[0]; data=rows[1:]
+
+def _col(c, name, _cache={}):
+    """列名で引く。列の統合・追加で位置がずれても壊れないようにするため。"""
+    if not _cache:
+        _cache.update({n: i for i, n in enumerate(hd)})
+    i = _cache.get(name)
+    return c[i] if i is not None and len(c) > i else ""
+
 
 # ファイル全体をキャッシュし、関数本体＋同ファイル内で呼ぶヘルパも1段追う
 filecache={}
@@ -102,11 +112,11 @@ def eval4(c,seg,method):
 
 nc=0
 for c in data:
-    method=(c[4] or "GET").split(",")[0]
-    fp=c[13] if (len(c)>13) else ""; ln=c[14] if len(c)>14 else "0"
+    method=(_col(c,"method") or "GET").split(",")[0]
+    fp=_col(c,"impl_file") if (len(c)>13) else ""; ln=_col(c,"impl_line") if len(c)>14 else "0"
     # ModelView/frameworkは実パス無し→methodベース
-    if "ModelView" in c[2] or c[2]=="フレームワーク" or not str(ln).isdigit() or ln=="0":
-        act=c[11].split(".")[-1] if len(c)>11 else ""
+    if "ModelView" in _col(c,"api_type") or _col(c,"api_type")=="フレームワーク" or not str(ln).isdigit() or ln=="0":
+        act=_col(c,"endpoint").split(".")[-1] if len(c)>11 else ""
         if act=="delete_view": v="物理削除(Flask-Admin ModelView.delete_model=db.session.delete)"
         elif act=="create_view": v="作成"
         elif act=="edit_view": v="更新"
@@ -118,5 +128,5 @@ for c in data:
         v=eval4(c,seg,method)
     c.append(v)
     if "論理削除" in v or "物理削除" in v: nc+=1
-_write(TSV, hd, data, ['data_op_detail'])
-print("data_op_detail付与。削除系(論理/物理):",nc,"列数:",len(hd)+1)
+_write(TSV, hd, data, ['data_op'])
+print("data_op付与。削除系(論理/物理):",nc,"列数:",len(hd))
