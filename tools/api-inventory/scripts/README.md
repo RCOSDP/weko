@@ -140,6 +140,66 @@ python3 tools/api-inventory/scripts/build_checklist.py
 判定の入力側(`security_finding` / `dynamic_verified` / `data_op` / `deprecated`)を
 直すか、`prioritize.py` のルールを変える。
 
+## 実測はいつも `measure.sh` 1本(★これだけ覚えればよい)
+
+```bash
+export WEKO_API_INVENTORY_DIR=/path/to/weko-secret
+cd tools/api-inventory/scripts
+./measure.sh                # 全行
+./measure.sh --nos 1,2,3    # 一部だけ
+```
+
+**バージョンが増えてもこのスクリプトは増えないし、変えない。**
+
+- 対象リビジョンは `git describe` で自動判定する(引数で渡さない)
+- 測定条件は `$WEKO_API_INVENTORY_DIR/measure_profile.json`。無ければ既定値で作る。
+  条件を変えたいときは**コードではなくこの JSON を直す**
+- 出力は毎回 `$WEKO_API_INVENTORY_DIR/measure_report.md` に同じ書式で書く。
+  先頭にプロファイルの sha256 が載るので、**2回の測定が同一条件だったかを
+  後から確認できる**(ハッシュが同じなら同一条件)
+
+```json
+{
+  "allow_writes": true,          // 書き込み系も測るか
+  "refresh_fixtures": 40,        // 何行ごとにフィクスチャを流し直すか
+  "web_container": "weko-web-1", // 500 の切り分けに docker logs を見る先
+  "base_url": "https://localhost:8443",
+  "host_header": "weko3.example.org",
+  "skip_category_tags": ["shadowed"]   // 到達不能な重複登録は測らない
+}
+```
+
+`measure.sh` が内部で回す順番は固定で、個別スクリプトを直接叩かないこと
+(条件がずれて比較できなくなる):
+
+1. 稼働中の web が本当にそのリビジョンかを確認(トップページ 200)
+2. `snapshot.py` — 経路を取り直す
+3. `reconcile.py` — 台帳と突き合わせる
+4. `fixtures.py` — フィクスチャ投入
+5. `probe_ci.py` — 実測(フラグはプロファイルから決まる)
+6. `apply_probe_results.py --overwrite --keep-history` → `test_coverage.py`
+   → `prioritize.py` → `build_checklist.py`
+7. `reconcile.py --gate` とレポート出力
+
+`remeasure.sh` は `measure.sh` に統合した(実行すると案内だけ出る)。
+
+### バージョンを切り替えたら必ず
+
+`measure.sh` はトップページが 200 でなければ止まるが、**200 でも古いコードを
+測っている**ことがある。切り替え直後は必ず egg-info を作り直して再起動し、
+そのバージョンにしか無い/無くなった経路を1つ叩いて確かめること。
+
+```bash
+git checkout <対象>
+docker exec weko-web-1 bash -lc 'cd /code && for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
+docker restart weko-web-1
+# v2.0.3 に戻したなら v2.1.0 で足された経路が 404 になるはず
+curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
+  https://localhost:8443/api/admin/get_widget_item_list
+```
+
+---
+
 ## ケース2c: 実測(dynamic_verified)を測り直す
 
 `remeasure.sh` が「フィクスチャ投入 → 実測 → 台帳反映 → 再計算」を通しで行う。
@@ -474,7 +534,9 @@ git push origin main --follow-tags
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
 | `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ / `--overwrite` で差し替え、`--keep-history` で旧値を ` ‖ 旧: ` として残す) |
-| `remeasure.sh` | — | 上記を通しで実行するドライバ |
+| `measure.sh` | `measure_profile.json` | 実測の唯一の入口。上記を固定順で回し `measure_report.md` を書く |
+| `_ensure_profile.py` / `_read_profile.py` / `_targets.py` / `_report.py` | — | `measure.sh` の内部ヘルパ |
+| `remeasure.sh` | — | 非推奨。`measure.sh` に統合(案内のみ) |
 | `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
