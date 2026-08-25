@@ -73,12 +73,15 @@ class Session:
         以降の測定が全部「遮断」に見えてしまう(v2.1.0 の一括再測で実際に起きた)。
         """
         code, redirect = self._request_once(method, path, body_file)
+        orig = code
+        if code in REDIRECT_CODES:
+            redirect, code = self.follow(method, redirect, code, body_file)
         if (_retry and self.email and self.ok
                 and 'login' in (redirect or '').lower()):
             if self.login():
                 self.relogins += 1
                 return self.request(method, path, body_file, _retry=False)
-        return code, redirect
+        return code, redirect, orig
 
     def _request_once(self, method, path, body_file):
         args = ['-o', body_file, '-w', '%{http_code}\t%{redirect_url}',
@@ -89,11 +92,7 @@ class Session:
             args += ['-H', 'Content-Type: application/json', '-d', '{}']
         args.append(f'{self.base}{path}')
         out = curl(args).stdout.strip().split('\t')
-        code = out[0]
-        redirect = out[1] if len(out) > 1 else ''
-        if code in REDIRECT_CODES:
-            redirect, code = self.follow(method, redirect, code, body_file)
-        return code, redirect
+        return out[0], (out[1] if len(out) > 1 else '')
 
     def follow(self, method, redirect, code, body_file=None, limit=6):
         """転送を最大 limit 段たどり、(最終URL, 最終ステータス) を返す。
@@ -378,9 +377,15 @@ def main():
                     if sess.email and not sess.ok:
                         continue
                     bf = os.path.join(work, 'body')
-                    code, redirect = sess.request(method, path, bf)
-                    obs[name] = {'code': code,
-                                 'verdict': classify(code, bf, redirect),
+                    code, redirect, orig = sess.request(method, path, bf)
+                    v = classify(code, bf, redirect)
+                    if orig in REDIRECT_CODES and v == '到達':
+                        # 転送を追った先が 200 でも、「拒否して一覧へ戻す」転送の
+                        # ことがある(実測: 非所有者のグループ削除)。到達とは
+                        # 断定できないので、行き先を添えて人が判断できるようにする。
+                        v = '到達(転送)'
+                    obs[name] = {'code': code, 'via': orig if orig != code else None,
+                                 'verdict': v,
                                  'redirect': redirect or None}
                 results.append({'no': no, 'uri': uri, 'method': method,
                                 'target': label, 'resolved': path,

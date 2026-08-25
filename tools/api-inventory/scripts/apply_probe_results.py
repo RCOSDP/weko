@@ -26,19 +26,29 @@ IDENT = ['anon', 'general', 'contributor', 'comadmin', 'repoadmin', 'sysadmin']
 
 
 def summarize(obs):
-    """identity 別の判定から、台帳の見出し語を決める。"""
+    """identity 別の判定から、台帳の見出し語を決める。
+
+    '到達(転送)' は転送を追った先が 200 だっただけで、
+    「拒否して一覧へ戻す」転送のことがある。到達側に寄せつつ語尾で区別する。
+    """
     def v(k):
-        return (obs.get(k) or {}).get('verdict')
+        raw = (obs.get(k) or {}).get('verdict')
+        return '到達' if raw == '到達(転送)' else raw
+
+    def redirected(k):
+        return (obs.get(k) or {}).get('verdict') == '到達(転送)'
+    suffix = ('(転送先で判定・要確認)'
+              if any(redirected(k) for k in IDENT) else '')
     if v('anon') == '到達':
-        return '未認証で到達'
+        return '未認証で到達' + suffix
     if v('general') == '到達' or v('contributor') == '到達':
-        return 'ログインのみで到達'
+        return 'ログインのみで到達' + suffix
     if v('comadmin') == '到達' or v('repoadmin') == '到達':
-        return '管理者で到達'
+        return '管理者で到達' + suffix
     if v('sysadmin') == '到達':
-        return 'sysadminのみ到達'
+        return 'sysadminのみ到達' + suffix
     if any(v(k) == '到達' for k in IDENT):
-        return '一部で到達'
+        return '一部で到達' + suffix
     if all(v(k) in ('遮断', None) for k in IDENT):
         return '測定範囲では遮断'
     return '判定不能'
@@ -56,8 +66,14 @@ def render(results, date):
         parts = []
         for r in rs:
             obs = r['observed']
-            detail = '; '.join(f"{k}={obs[k]['code']}({obs[k]['verdict']})"
-                               for k in IDENT if k in obs)
+            def cell(k):
+                o = obs[k]
+                via = f"{o['via']}→" if o.get('via') else ''
+                dest = ''
+                if o.get('verdict') == '到達(転送)' and o.get('redirect'):
+                    dest = ' 転送先=' + o['redirect'].split('?')[0]
+                return f"{k}={via}{o['code']}({o['verdict']}){dest}"
+            detail = '; '.join(cell(k) for k in IDENT if k in obs)
             tgt = r.get('target', '-')
             label = summarize(obs)
             head = f"{label}" if tgt in ('-', None) else f"{label}[{tgt}]"
