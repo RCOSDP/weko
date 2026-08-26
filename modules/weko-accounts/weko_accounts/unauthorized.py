@@ -72,23 +72,31 @@ def wants_json():
     return accept['application/json'] > accept['text/html']
 
 
-def json_unauthorized():
-    """Build the 401 to raise.
-
-    Raised rather than returned: flask_login *returns* whatever the callback
-    gives back, and ContentNegotiatedMethodView (every invenio-records-rest
-    resource) passes a view's return value to ``make_response(*result)``,
-    where a response tuple is unpacked as ``(pid, record)`` and fails with a
-    500. Raising makes it travel as an exception, which both plain views and
-    the REST resources handle correctly.
-    """
+def json_unauthorized_response():
+    """Build the 401 JSON response."""
     response = jsonify(status=401, message='Authentication required.')
     response.status_code = 401
+    return response
+
+
+def json_unauthorized():
+    """Wrap the 401 JSON response in an exception, for the API app.
+
+    ContentNegotiatedMethodView (every invenio-records-rest resource) passes a
+    view's return value to ``make_response(*result)``, so a *returned*
+    response is unpacked as ``(pid, record)`` and fails with a 500. Raising
+    makes it travel as an exception instead, which both plain views and the
+    REST resources handle correctly.
+
+    On the UI app the response is returned rather than raised: invenio-theme
+    registers an error handler that renders an HTML page for HTTPException,
+    which would replace this body.
+    """
     # werkzeug 0.15's Unauthorized.__init__ takes (description,
     # www_authenticate) and does not accept ``response``, so attach it
     # afterwards; HTTPException.get_response() returns it when set.
     exception = Unauthorized()
-    exception.response = response
+    exception.response = json_unauthorized_response()
     return exception
 
 
@@ -114,8 +122,15 @@ def install(app, api_only=False):
         return
 
     def _unauthorized():
-        if api_only or wants_json():
+        if api_only:
+            # The API app has no login screen, and its REST resources need the
+            # 401 to arrive as an exception. See json_unauthorized().
             raise json_unauthorized()
+        if wants_json():
+            # Returned, not raised, so invenio-theme's HTML error page does
+            # not replace the body. A single Response is what flask_login
+            # returned here before, so nothing downstream sees a new shape.
+            return json_unauthorized_response()
         return redirect_to_login()
 
     def _install():
