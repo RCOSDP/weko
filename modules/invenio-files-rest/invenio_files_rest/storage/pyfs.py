@@ -18,6 +18,7 @@ import cchardet as chardet
 from flask import current_app
 from fs.opener import opener
 from fs.path import basename, dirname
+from sqlalchemy import String, func, literal
 
 from ..helpers import make_path
 from .base import FileStorage, StorageError
@@ -205,7 +206,6 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
     from ..models import Location
     assert fileinstance or (fileurl and size)
     location = None
-    locationList = Location.all()
 
     if fileinstance:
         # FIXME: Code here should be refactored since it assumes a lot on the
@@ -228,13 +228,20 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
                 current_app.config['FILES_REST_STORAGE_PATH_SPLIT_LENGTH'],
             )
 
-        location = next((loc for loc in locationList if str(loc.uri) == str(default_location)), None)
+        if default_location:
+            location = Location.query.filter(Location.uri == str(default_location)).first()
 
     if location is None:
-        location = next((loc for loc in locationList if str(loc.uri) in str(fileurl)), None)
-        if location is None:
-            # if not match fileurl with location, then get default location
-            location = next((loc for loc in locationList if loc.default == True), None)
+        location = Location.query.filter(
+            func.substr(literal(str(fileurl), String), 1, func.length(Location.uri)) == Location.uri
+        ).order_by(func.length(Location.uri).desc()).first()
+
+    if location is None:
+        # if not match fileurl with location, then get default location
+        location = Location.query.filter_by(default=True).first()
+
+    if location is None:
+        current_app.logger.warning('No location matched. fileurl={}'.format(fileurl))
 
     return filestorage_class(
         fileurl, size=size, modified=modified, clean_dir=clean_dir, location=location)
