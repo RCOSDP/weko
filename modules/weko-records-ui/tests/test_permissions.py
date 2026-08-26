@@ -810,6 +810,47 @@ def test_check_created_id_guest(app, users):
     record["item_type_id"] = "15"
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_shared_ids_variants -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("extra,expected", [
+    ({}, False),                              # どちらのキーも無い(旧々形式)
+    ({"weko_shared_ids": []}, False),         # 新形式・共有なし
+    ({"weko_shared_ids": None}, False),       # 新形式だが値が None
+    ({"weko_shared_id": -1}, False),          # 旧形式・共有なし
+    ({"weko_shared_id": -999}, False),        # 旧形式・別人と共有
+    ("SELF_LEGACY", True),                    # 旧形式・本人と共有
+    ("SELF_LIST", True),                      # 新形式・末尾が本人
+])
+def test_check_created_id_shared_ids_variants(app, users, extra, expected):
+    """weko_shared_ids が無い/None でも例外にせず判定する。
+
+    weko_shared_ids は新形式、weko_shared_id は旧形式(共有なしは -1)。
+    どちらのキーも持たないレコードが実在し、素の record.get() だと
+    len(None) で TypeError になって認可判定ごと落ちていた。
+    """
+    from weko_records_ui.permissions import check_created_id
+
+    record = {
+        "path": ["1657555088462"],
+        "owner": 99,                          # 所有者でも作成者でもない
+        "recid": "1",
+        "_deposit": {"id": "1", "owner": 99, "owners": [99], "created_by": 99},
+        "item_type_id": "15",
+        "publish_status": "0",
+    }
+    # 利用者の id は DB の状態で変わるので fixture から取る
+    me = users[7]["id"]
+    if extra == "SELF_LEGACY":
+        extra = {"weko_shared_id": me}
+    elif extra == "SELF_LIST":
+        extra = {"weko_shared_ids": [me + 1000, me]}
+    record.update(extra)
+
+    # users[7] は user@test.org。ロールでは通らないので共有者判定だけが効く
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        with app.test_request_context():
+            assert check_created_id(record) == expected
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize("index,status",[
     (0,False),

@@ -601,6 +601,19 @@ def check_created_id(record):
         created_id = record.get('_deposit', {}).get('created_by')
         owner = record.get('owner')
         shared_ids = record.get('weko_shared_ids')
+        if not isinstance(shared_ids, list):
+            # 旧形式のレコードは単数の weko_shared_id を持ち、共有なしは -1。
+            # どちらのキーも無いと shared_ids が None になり、下の len() で
+            # TypeError になって認可判定ごと落ちるため、ここでリストに寄せる。
+            #
+            # TODO: 旧形式(weko_shared_id)は将来廃止し weko_shared_ids に
+            # 一本化する。既存レコードの移行が済んだらこの分岐を削除する。
+            legacy_shared_id = record.get('weko_shared_id')
+            try:
+                legacy_shared_id = int(legacy_shared_id)
+            except (TypeError, ValueError):
+                legacy_shared_id = -1
+            shared_ids = [legacy_shared_id] if legacy_shared_id > 0 else []
         if user_id and created_id and user_id == str(created_id):
             is_himself = True
         elif user_id and owner and user_id == str(owner):
