@@ -1385,7 +1385,7 @@ def test_restore_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 403), # contributor
+        (0, 200), # contributor
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
@@ -1697,6 +1697,46 @@ def test_get_file_place(app,records,users, client):
             },
         )
         assert res.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_record_edit_permission_contributor_not_owner -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("endpoint", ["soft_delete", "restore"])
+def test_record_edit_permission_contributor_not_owner(
+        client, records, users, contributor_not_owner, endpoint):
+    """Holding the Contributor role is not enough without ownership.
+
+    users[0] (contributor) passes because _deposit.created_by is its id, and
+    users[7] (user) passes because the record's top-level owner is its id --
+    not because of their role. A third Contributor who is neither must be
+    rejected, otherwise the ownership check is not doing anything.
+    """
+    with patch("flask_login.utils._get_user", return_value=contributor_not_owner):
+        url = url_for("weko_records_ui." + endpoint, recid=1, _external=True)
+        with patch("flask.templating._render", return_value=""):
+            res = client.post(url)
+        assert res.status_code == 403
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_contributor_not_owner -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_replace_file_contributor_not_owner(
+        client, records, users, contributor_not_owner):
+    """Same for replace_file, which takes the record id from the form."""
+    with patch("flask_login.utils._get_user", return_value=contributor_not_owner):
+        with patch("weko_records_ui.views.replace_file_bucket", return_value={}):
+            res = client.post(
+                url_for("weko_records_ui.replace_file"),
+                data={
+                    'return_file_place': 'S3',
+                    'pid': '1',
+                    'bucket_id': '1',
+                    'file_name': 'helloworld.pdf',
+                    'file_size': 100,
+                    'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                    'new_bucket_id': '1',
+                    'new_version_id': '1',
+                },
+            )
+        assert res.status_code == 403
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_replace_file_acl_guest(app, records, users, client):
