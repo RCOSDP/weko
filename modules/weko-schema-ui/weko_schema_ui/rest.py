@@ -27,7 +27,6 @@ import uuid
 import zipfile
 
 from flask import Blueprint, abort, current_app, jsonify, request
-from flask_login import login_required
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_pidstore import current_pidstore
@@ -38,6 +37,7 @@ from invenio_records_rest.links import default_links_factory
 from invenio_records_rest.utils import obj_or_import_string
 from invenio_records_rest.views import \
     create_error_handlers as records_rest_error_handlers
+from invenio_oauth2server import require_api_auth
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 
@@ -177,7 +177,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
     # is passed, so it is a no-op for these record-less POST/PUT handlers.
     # Guard with the same permission the admin screen uses instead
     # (weko_schema_ui/admin.py: OAISchemaSettingView).
-    @login_required
+    @require_api_auth(allow_anonymous=False)
     @schema_permission.require(http_exception=403)
     def post(self, **kwargs):
         """Create a uuid and return a links dict. file upload step is below create a uuuid.
@@ -274,7 +274,7 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
             return response
 
-    @login_required
+    @require_api_auth(allow_anonymous=False)
     @schema_permission.require(http_exception=403)
     def put(self, **kwargs):
         """Create a uuid and return a links dict. file upload step is below upload file to server.

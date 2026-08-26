@@ -22,6 +22,7 @@
 
 from flask import jsonify
 from flask_babelex import gettext as _
+from werkzeug.exceptions import Unauthorized
 from flask_login import user_logged_in, user_logged_out
 
 from . import config
@@ -181,10 +182,25 @@ class WekoAccountsREST(object):
             return
 
         def _unauthorized():
-            return jsonify(
+            # Raise instead of returning. flask_login *returns* whatever this
+            # callback gives back, and ContentNegotiatedMethodView (used by
+            # every invenio-records-rest resource) feeds a view's return value
+            # straight into make_response(*result) -- a returned response tuple
+            # is unpacked as (pid, record) and blows up with a 500. Raising
+            # lets the response travel as an exception, which works for both
+            # plain views and the REST resources.
+            response = jsonify(
                 status=401,
                 message='Authentication required.',
-            ), 401
+            )
+            response.status_code = 401
+            # werkzeug 0.15's Unauthorized.__init__ takes
+            # (description, www_authenticate) and does not accept `response`,
+            # so attach it afterwards; HTTPException.get_response() returns
+            # self.response when it is set.
+            exception = Unauthorized()
+            exception.response = response
+            raise exception
 
         def _install():
             login_manager = getattr(app, 'login_manager', None)
