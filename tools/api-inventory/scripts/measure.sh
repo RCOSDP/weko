@@ -84,6 +84,7 @@ say "  対象: $(wc -l < "$WORK/targets.txt") 行"
 python3 -u "$HERE/probe_ci.py" --only "$WORK/targets.txt" \
   --fixtures "$WEKO_API_INVENTORY_DIR/fixtures.json" \
   --web-container "$WEB_CONTAINER" \
+  --base "$BASE" --host "$HOSTHDR" \
   --refresh-fixtures "$REFRESH" \
   $WRITES --out "$WORK/probe.json" > "$WORK/probe.log" 2>&1
 grep -E '^測定' "$WORK/probe.log" | sed 's/^/  /'
