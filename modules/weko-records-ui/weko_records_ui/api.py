@@ -509,8 +509,8 @@ def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
             s3_client.put_public_access_block(
                 Bucket=bucket_name,
                 PublicAccessBlockConfiguration={
-                    'BlockPublicAcls': False,
-                    'IgnorePublicAcls': False,
+                    'BlockPublicAcls': True,
+                    'IgnorePublicAcls': True,
                     'BlockPublicPolicy': False,
                     'RestrictPublicBuckets': False
                 }
@@ -523,7 +523,7 @@ def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
                     "Sid": "Public",
                     "Effect": "Allow",
                     "Principal": "*",
-                    "Action": ["s3:*"],
+                    "Action": ["s3:GetObject"],
                     "Resource": f"arn:aws:s3:::{bucket_name}/*"
                 }
             ]
