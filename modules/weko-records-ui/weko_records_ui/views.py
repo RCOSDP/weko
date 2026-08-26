@@ -50,7 +50,10 @@ from invenio_records_ui.signals import record_viewed
 from invenio_files_rest.signals import file_downloaded
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
+from weko_accounts.utils import roles_required
 from weko_accounts.views import _redirect_method
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting, get_restricted_access
 from weko_deposit.api import WekoRecord
@@ -844,6 +847,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     )
 
 @blueprint.route('/get-secret-settings', methods=['GET'])
+@login_required
 def get_secret_setting():
     """
     Get secret URL settings.
@@ -1124,6 +1128,9 @@ def parent_view_method(pid_value=0):
 
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def set_pdfcoverpage_header():
     """Set pdfcoverage header."""
     @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
@@ -1521,7 +1528,20 @@ def get_file_place():
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])
+@login_required
 def replace_file():
+    # Replacing a file mutates the record's file entity, so require the same
+    # ownership check as the other destructive record operations
+    # (see soft_delete / restore).
+    pid = request.form.get('pid')
+    try:
+        permitted = bool(pid) and check_created_id_by_recid(pid)
+    except Exception as e:
+        current_app.logger.error(str(e))
+        permitted = False
+    if not permitted:
+        abort(403)
+
     return_file_place = request.form.get('return_file_place')
 
     if (return_file_place == 'S3'):

@@ -9,14 +9,17 @@
 
 # TODO: This is an example file. Remove it if you do not need it, including
 # the templates and static folders as well as the test case.
+#
+# NOTE: The /retrieve, /register and /delete routes were removed. They exposed
+# weko_handle.api.Handle over unauthenticated POST (anyone could register or
+# delete a handle), and nothing in WEKO called them: handle registration goes
+# through Handle() directly from weko-workflow. Use the Python API instead.
 
 from __future__ import absolute_import, print_function
 
-from flask import Blueprint, current_app, jsonify, render_template, request
+from flask import Blueprint, current_app, render_template
 from flask_babelex import gettext as _
 from invenio_db import db
-
-from .api import Handle
 
 blueprint = Blueprint(
     'weko_handle',
@@ -40,48 +43,6 @@ def index():
     """Renders a Page-Not-found screen"""
     return render_template("invenio_theme/404.html")
 
-
-@blueprint.route('/retrieve', methods=['POST'])
-def retrieve_handle():
-    """Retrieve a handle."""
-    try:
-        handle = request.form['handle']
-        handle_obj = Handle()
-        if handle:
-            return handle_obj.retrieve_handle(handle)
-        else:
-            return jsonify(code=0, msg='Retrieved handle not found!')
-    except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
-
-
-@blueprint.route('/register', methods=['POST'])
-def register_handle():
-    """Register a handle."""
-    try:
-        location = request.form['location']
-        handle_obj = Handle()
-        if location:
-            handle = handle_obj.register_handle(location)
-            return jsonify(handle)
-
-        return jsonify({'code': -1, 'msg': 'error'})
-    except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
-
-@blueprint.route('/delete', methods=['POST'])
-def delete_handle():
-    """Delete a handle."""
-    try:
-        hdl = request.form['hdl']
-        handle_obj = Handle()
-        if hdl:
-            handle = handle_obj.delete_handle(hdl)
-            return jsonify(handle)
-
-        return jsonify({'code': -1, 'msg': 'error'})
-    except Exception as e:
-        current_app.logger.error('Unexpected error: ', e)
 
 @blueprint.teardown_request
 @blueprint_api.teardown_request

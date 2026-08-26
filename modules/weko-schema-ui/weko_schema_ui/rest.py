@@ -27,6 +27,7 @@ import uuid
 import zipfile
 
 from flask import Blueprint, abort, current_app, jsonify, request
+from flask_login import login_required
 from invenio_db import db
 from invenio_files_rest.storage import PyFSFileStorage
 from invenio_pidstore import current_pidstore
@@ -40,6 +41,7 @@ from invenio_records_rest.views import \
 from invenio_rest import ContentNegotiatedMethodView
 from invenio_rest.views import create_api_errorhandler
 
+from .permissions import schema_permission
 from .schema import SchemaConverter, get_oai_metadata_formats
 
 # from copy import deepcopy
@@ -171,7 +173,12 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
         """Get Method."""
         pass
 
-    # @need_record_permission('create_permission_factory')
+    # NOTE: need_record_permission() only enforces the factory when a record
+    # is passed, so it is a no-op for these record-less POST/PUT handlers.
+    # Guard with the same permission the admin screen uses instead
+    # (weko_schema_ui/admin.py: OAISchemaSettingView).
+    @login_required
+    @schema_permission.require(http_exception=403)
     def post(self, **kwargs):
         """Create a uuid and return a links dict. file upload step is below create a uuuid.
 
@@ -267,7 +274,8 @@ class SchemaFilesResource(ContentNegotiatedMethodView):
 
             return response
 
-    # @need_record_permission('create_permission_factory')
+    @login_required
+    @schema_permission.require(http_exception=403)
     def put(self, **kwargs):
         """Create a uuid and return a links dict. file upload step is below upload file to server.
 
