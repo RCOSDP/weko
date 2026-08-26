@@ -24,7 +24,7 @@ python -m pip install -U setuptools wheel pip
 python -m pip install -r packages.txt
 python -m pip install -r packages-invenio.txt
 sed -E 's/\/code\///g' requirements-weko-modules.txt | xargs python -m pip install
-python -m pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5.3,<5.0.0' 'mock==3.0.5' 'moto==1.3.7' pytest-cov pytest-invenio 'responses==0.10.3'
+python -m pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5.3,<5.0.0' 'mock==3.0.5' 'moto==1.3.7' 'pytest-mock==3.6.1' pytest-cov pytest-invenio 'responses==0.10.3'
 ```
 
 ### Run the tests
@@ -101,7 +101,7 @@ chmod g+w .
 Run the following command to install test packages inside your docker container.
 
 ```shell
-docker-compose exec web sh -c "pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5.3,<5.0.0' 'mock==3.0.5' 'moto==1.3.7' pytest-cov pytest-invenio 'responses==0.10.3'"
+docker-compose exec web sh -c "pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5.3,<5.0.0' 'mock==3.0.5' 'moto==1.3.7' 'pytest-mock==3.6.1' pytest-cov pytest-invenio 'responses==0.10.3'"
 ```
 
 > **Do not use `moto==1.3.5`.** It requires `botocore<1.11` and pip silently
@@ -111,6 +111,10 @@ docker-compose exec web sh -c "pip install 'pytest>=4.6.4,<5.0.0' 'coverage>=4.5
 > `moto==1.3.7` requires `botocore>=1.12.13`, which the pinned
 > `boto3==1.9.83` / `botocore==1.12.209` in `modules/*/requirements2.txt`
 > already satisfy.
+>
+> `pytest-mock` is needed too. Without it the tests that use the `mocker`
+> fixture (weko-items-ui and others) fail at setup with
+> `fixture 'mocker' not found`.
 >
 > If you hit this, restore the pinned versions:
 >
