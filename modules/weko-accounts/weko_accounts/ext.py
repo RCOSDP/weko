@@ -20,12 +20,11 @@
 
 """Extensions for weko-accounts."""
 
-from flask import jsonify
 from flask_babelex import gettext as _
-from werkzeug.exceptions import Unauthorized
 from flask_login import user_logged_in, user_logged_out
 
 from . import config
+from .unauthorized import install as install_unauthorized_handler
 from .utils import get_sp_info
 
 
@@ -61,6 +60,19 @@ class WekoAccounts(object):
         self.init_limiter(app)
 
         self.init_login(app)
+
+        self.init_unauthorized_handler(app)
+
+    def init_unauthorized_handler(self, app):
+        """Return 401 JSON to AJAX callers, redirect page requests as before.
+
+        Without this an AJAX call to a ``login_required`` view gets 302 and
+        then the login page's HTML, which the caller cannot parse.
+        See :mod:`weko_accounts.unauthorized`.
+
+        :param app: The flask application.
+        """
+        install_unauthorized_handler(app)
 
     def init_config(self, app):
         """
@@ -165,55 +177,12 @@ class WekoAccountsREST(object):
         """Return 401 JSON instead of redirecting to the login screen.
 
         The API app has no ``security`` blueprint, so flask_login's default
-        ``unauthorized()`` cannot build ``url_for('security.login')`` and
-        raises BuildError, which surfaces as a 500. That makes it impossible
-        to tell "blocked by authentication" from "crashed", and it is what
-        prevents ``login_required`` from being applied under ``/api/``.
-
-        Registering an ``unauthorized_callback`` short-circuits before the
-        ``url_for`` call, so the BuildError can no longer happen.
-
-        Only the API app is affected: this extension is registered under
-        ``invenio_base.api_apps`` only, so the UI app keeps redirecting (302).
+        cannot build ``url_for('security.login')`` and raises BuildError,
+        which surfaces as a 500. See :mod:`weko_accounts.unauthorized`.
 
         :param app: An instance of :class:`flask.Flask`.
         """
-        if not app.config.get('WEKO_ACCOUNTS_REST_UNAUTHORIZED_JSON', True):
-            return
-
-        def _unauthorized():
-            # Raise instead of returning. flask_login *returns* whatever this
-            # callback gives back, and ContentNegotiatedMethodView (used by
-            # every invenio-records-rest resource) feeds a view's return value
-            # straight into make_response(*result) -- a returned response tuple
-            # is unpacked as (pid, record) and blows up with a 500. Raising
-            # lets the response travel as an exception, which works for both
-            # plain views and the REST resources.
-            response = jsonify(
-                status=401,
-                message='Authentication required.',
-            )
-            response.status_code = 401
-            # werkzeug 0.15's Unauthorized.__init__ takes
-            # (description, www_authenticate) and does not accept `response`,
-            # so attach it afterwards; HTTPException.get_response() returns
-            # self.response when it is set.
-            exception = Unauthorized()
-            exception.response = response
-            raise exception
-
-        def _install():
-            login_manager = getattr(app, 'login_manager', None)
-            # Defer to another extension that already installed a handler.
-            if login_manager is not None \
-                    and login_manager.unauthorized_callback is None:
-                login_manager.unauthorized_handler(_unauthorized)
-
-        _install()
-        if getattr(app, 'login_manager', None) is None:
-            # Entry point load order under invenio_base.api_apps is not
-            # guaranteed, so retry once the app is fully initialized.
-            app.before_first_request(_install)
+        install_unauthorized_handler(app, api_only=True)
 
     def init_config(self, app):
         """
