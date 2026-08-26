@@ -2,7 +2,7 @@
 """台帳・スナップショット等の所在解決。
 
 WEKO3 リポジトリは **public** なので、所見(sec_*)や実証結果(dynamic_verified)を
-含むデータは一切置かない。データは秘密の場所で管理し、環境変数で指し示す。
+含むデータは一切置かない。データはプライベートリポジトリで管理し、環境変数で指し示す。
 
     export WEKO_API_INVENTORY_DIR=/path/to/weko-secret
 
@@ -28,7 +28,7 @@ def data_dir(required=True):
     sys.exit(
         f'{ENV} が未設定、または存在しないディレクトリです。\n'
         '  このリポジトリは public のため、台帳・スナップショットは同梱していません。\n'
-        f'  秘密の場所を指定してください:  export {ENV}=/path/to/weko-secret\n'
+        f'  プライベートリポジトリの場所を指定してください:  export {ENV}=/path/to/weko-secret\n'
         '  詳細は tools/api-inventory/ci/README.md')
 
 

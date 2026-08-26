@@ -282,7 +282,7 @@ def render(old, new, res, mv, conf_changed, commented_new, pkg_changed, gate_lis
                 if len(items) > 40:
                     L.append(f'- … ほか {len(items) - 40} 件')
             else:
-                L.append('> 件数のみ。該当の経路名は秘密側の完全版レポートを参照。')
+                L.append('> 件数のみ。該当の経路名はプライベートリポジトリ側の完全版レポートを参照。')
             L.append('')
             continue
         for x in items[:40]:

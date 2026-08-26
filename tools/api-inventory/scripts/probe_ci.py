@@ -477,7 +477,7 @@ def main():
     skipped = [r for r in results if r.get('status') == 'skip']
     print(f"\n測定 {len(measured)} / スキップ {len(skipped)} (対象 no {len(targets)}件)")
     if a.summary_only:
-        print('  (件数のみ。明細は秘密側の完全版レポートを参照)')
+        print('  (件数のみ。明細はプライベートリポジトリ側の完全版レポートを参照)')
         print(f"\n[G8] 未認証で到達する書き込み系: {len(g8)}件")
         print(f"[G9] 台帳では遮断だが実測で到達(回帰): {len(g9)}件")
         if a.gate and (g8 or g9):

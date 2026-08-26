@@ -216,7 +216,7 @@ def main():
     L.append(f"- 台帳: 行={len(rows)} URI={len(I)}")
     if summary_only:
         L.append('')
-        L.append('> 件数のみ。詳細は秘密側の完全版レポートを参照。')
+        L.append('> 件数のみ。詳細はプライベートリポジトリ側の完全版レポートを参照。')
     L.append('')
     unexplained = (len(missing) + len(phantom) + len(method_diff)
                    + len(app_diff) + len(ep_missing))

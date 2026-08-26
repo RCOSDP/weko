@@ -3,9 +3,9 @@
 # 【重要】このリポジトリは public。Actions のログ・artifact・PR コメントは誰でも読める。
 # したがって:
 #   - 台帳(所見・実証結果を含む)とベースラインは **このリポジトリに置かない**。
-#     秘密のリポジトリから Secret 経由で取得する。
+#     プライベートリポジトリ(RCOSDP/weko-secret)から Secret 経由で取得する。
 #   - 出力は --summary-only で **件数のみ**。URI や endpoint 名は出さない。
-#     明細は秘密側に置いたレポートで確認する。
+#     明細はプライベートリポジトリ側に置いたレポートで確認する。
 #
 # 必要な Secret:
 #   secrets.API_INVENTORY_REPO      取得元の private リポジトリ (RCOSDP/weko-secret)
@@ -47,7 +47,7 @@ jobs:
             echo "::notice::API_INVENTORY_REPO / API_INVENTORY_SSH_KEY が未設定のためスキップします"
           fi
 
-      # 台帳・ベースラインを秘密リポジトリから取得する。
+      # 台帳・ベースラインをプライベートリポジトリから取得する。
       # チェックアウト先は .api-inventory-data/(.gitignore 済み)。
       - name: Checkout inventory data (private)
         if: steps.cfg.outputs.enabled == 'true'
@@ -145,7 +145,7 @@ jobs:
             };
             let body = '## API インベントリ差分（件数のみ）\n\n'
               + '> 明細は公開できないため件数のみ表示しています。'
-              + '該当箇所は秘密側の台帳・レポートで確認してください。';
+              + '該当箇所はプライベートリポジトリ側の台帳・レポートで確認してください。';
             body += read('/tmp/drift.md', 'ベースラインとの差分');
             body += read('/tmp/reconcile.md', '台帳との突き合わせ');
             await github.rest.issues.createComment({

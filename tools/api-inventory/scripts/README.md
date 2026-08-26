@@ -2,7 +2,7 @@
 
 > **【重要】このリポジトリは public。データを置かないこと。**
 > 台帳(`weko3_api_list*.tsv`)は「どの経路を・どう叩けば・何が取れるか」と実証結果を
-> 持つため、公開領域には置かない。ツールは環境変数で秘密の場所を参照する。
+> 持つため、公開領域には置かない。ツールは環境変数でプライベートリポジトリを参照する。
 >
 > ```bash
 > export WEKO_API_INVENTORY_DIR=/path/to/api-inventory-private
@@ -117,7 +117,7 @@ python3 tools/api-inventory/scripts/add_authmech.py      # auth_mechanism / bola
 | **`TODO`(31列)** | **summary / response / status_codes / exceptions / roles / auth_response_variance / restricted_content / data_op / data_target / data_store / side_effects / config_deps / test_file / category_tags / notes / sec_* / dynamic_verified / csrf_protection / input_validation / audit_logged / triggers_task / resource_limit / redirect_target / ssrf_surface / idempotency / data_op_detail / bola_risk** |
 
 `TODO` は **ソースを読まないと書けない列**。Phase 2(静的解析)と Phase 3(実機実測)で
-やっていることを、その1行について行う。埋め方は列定義 README(秘密側の
+やっていることを、その1行について行う。埋め方は列定義 README(プライベートリポジトリ側の
 `weko3_api_list_full_README.md`)の各列の説明に従う。
 
 派生列(`priority` / `test_*` / `cleanup`)は空のままでよい。手順6で自動的に付く。
@@ -202,25 +202,31 @@ curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
 
 ## ケース2c: 実測(dynamic_verified)を測り直す
 
-`remeasure.sh` が「フィクスチャ投入 → 実測 → 台帳反映 → 再計算」を通しで行う。
+**入口は `measure.sh` だけ**(上の「実測はいつも `measure.sh` 1本」を参照)。
+`remeasure.sh` は統合済みで、実行しても案内を出して終了する。
 
 ```bash
 export WEKO_API_INVENTORY_DIR=/path/to/weko-secret
 ./install.sh                                   # スタックを起動しておく
 
-tools/api-inventory/scripts/remeasure.sh                    # 未測定の P1/P2 を測る
-tools/api-inventory/scripts/remeasure.sh --all-unmeasured   # 未測定を全件
-tools/api-inventory/scripts/remeasure.sh --nos 607,618      # no を直接指定
-tools/api-inventory/scripts/remeasure.sh --allow-writes     # 書き込み系も測る(データが変わる)
+cd tools/api-inventory/scripts
+./measure.sh                    # profile の skip_category_tags を除く全行
+./measure.sh --nos 607,618      # no を直接指定
 ```
 
-**既定は読み取り専用(GET/HEAD のみ)で副作用がない。** 書き込み系まで測るには
-`--allow-writes` を明示する。実機のデータ(著者DB・サイト情報・ワークフローの状態)が
-書き換わるため、使い捨て環境で回すか、終了後に `./install.sh` で作り直すこと。
+対象の絞り込みは `--nos` だけ。「未測定の P1/P2 だけ」のような条件で回したいときは、
+台帳から no を抽出して `--nos` に渡す(条件をスクリプト側に増やさない)。
 
-反映は `apply_probe_results.py` が行い、**`dynamic_verified` が空の行だけ**を埋める。
-既存の実測値(★実証など人手で精査した記述を含む)は残す。差し替えるときは
-`--overwrite` を明示する。
+**既定では書き込み系も測る。** `measure_profile.json` の `allow_writes` が
+既定で `true` のため、実機のデータ(著者DB・サイト情報・ワークフローの状態)が
+書き換わる。**使い捨て環境で回すか、終了後に `./install.sh` で作り直すこと。**
+読み取りだけで済ませたいときは profile の `allow_writes` を `false` にする
+(条件を変えるとレポート先頭のハッシュも変わるので、後から差が追える)。
+
+反映は `apply_probe_results.py` が行う。`measure.sh` は常に
+`--overwrite --keep-history` で呼ぶので、**既存の `dynamic_verified` は新しい実測値で
+上書きされ、前の値は履歴として残る**。人手で精査した記述を消したくない行は、
+測定対象から外す(`--nos` で絞る)。
 
 ### 測定できる範囲
 
@@ -360,10 +366,11 @@ done
 ### 5. 実測する
 
 ```bash
-python3 .../fixtures.py --out "$WEKO_API_INVENTORY_DIR/fixtures.json"
-python3 .../probe_ci.py --nos 927,928,929,930,931 --allow-writes --out /tmp/probe.json
-python3 .../apply_probe_results.py --probe /tmp/probe.json
+tools/api-inventory/scripts/measure.sh --nos 927,928,929,930,931
 ```
+
+フィクスチャ投入 → 実測 → 台帳反映 → 派生列の再計算までを固定順で回す。
+個別スクリプトを直接叩くと条件がずれてバージョン間で比較できなくなるので使わない。
 
 > 実績: `fixtures.py` は `errors=3` を返したが中身は ES への reindex 失敗で、
 > 到達可否の測定には影響しない。5件中4件を測定、`<task_id>` を持つ 1件は
@@ -1141,7 +1148,7 @@ P2 まで引き上げるため、`test_coverage.py` を先に回すこと。
 
 `security_finding` / `security_flags` / `dynamic_verified` / `data_op` / `data_target` /
 `method` / `auth` / `test_gap` から、対応優先度を機械判定して台帳に書き戻す。
-判定基準・凡例・限界は秘密側の `weko3_api_list_README.md`「priority の凡例」に記載。
+判定基準・凡例・限界はプライベートリポジトリ側の `weko3_api_list_README.md`「priority の凡例」に記載。
 
 「データ破壊」は **既存の実データを不可逆に壊すこと** と定義している。メタデータの
 更新や新規作成は含めない。新規作成しかせず既存データを壊さないものは、認証が

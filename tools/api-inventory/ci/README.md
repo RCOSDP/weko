@@ -11,7 +11,8 @@
 | **本リポジトリ `tools/api-inventory/`** | **ツールのみ**(scripts / ci)。データは1件も置かない |
 | **`RCOSDP/weko-secret`**(private) | 台帳TSV(57列/24列)、列定義README、`api_snapshot.json`、`reconcile_allow.json`、`reconcile_report.md`、調査記録 |
 
-スクリプトは環境変数 `WEKO_API_INVENTORY_DIR` で秘密の場所を指す。未設定なら理由を添えて中断する。
+本書では `RCOSDP/weko-secret`(private)を単に**プライベートリポジトリ**と呼ぶ。
+スクリプトは環境変数 `WEKO_API_INVENTORY_DIR` でその場所を指す。未設定なら理由を添えて中断する。
 
 ```bash
 git clone https://github.com/RCOSDP/weko-secret.git
@@ -39,13 +40,14 @@ weko/tools/api-inventory/          ← public。ツールのみ
 │   ├── reconcile.py           Phase 6: スナップショット ↔ 台帳の突き合わせ
 │   ├── changed_rows.py        Phase 6: git差分 → 再レビュー対象行
 │   ├── fixtures.py            Phase 7: 到達可否測定用の最小コーパス投入
-│   └── probe_ci.py            Phase 7: フィクスチャ駆動の到達可否測定
+│   ├── probe_ci.py            Phase 7: フィクスチャ駆動の到達可否測定(CI が直接呼ぶ)
+│   └── measure.sh             手作業で実測するときの唯一の入口(上記を固定順で回す)
 ├── ci/
 │   ├── api-inventory-drift.yml
 │   └── README.md              このファイル
 └── .gitignore                 データ類を誤ってコミットしないための保険
 
-$WEKO_API_INVENTORY_DIR/         ← 秘密の場所。public リポジトリには置かない
+$WEKO_API_INVENTORY_DIR/         ← プライベートリポジトリ。public リポジトリには置かない
 ├── weko3_api_list_full.tsv      台帳(57列・所見と実証結果つき)
 ├── weko3_api_list.tsv           台帳(24列)
 ├── weko3_api_list_README.md     24列の列定義・運用手順
@@ -61,8 +63,6 @@ $WEKO_API_INVENTORY_DIR/         ← 秘密の場所。public リポジトリに
 
 ---
 
----
-
 ## 2. 導入の順序（順序依存があるので守ること）
 
 ベースライン `api_snapshot.json` が無いと `diff_snapshot.py` は動かない。
@@ -70,7 +70,7 @@ $WEKO_API_INVENTORY_DIR/         ← 秘密の場所。public リポジトリに
 **先にデータを入れ、最後にワークフローを有効化する。**
 
 ```bash
-# --- 秘密の場所を用意する ---
+# --- プライベートリポジトリを用意する ---
 git clone https://github.com/RCOSDP/weko-secret.git
 export WEKO_API_INVENTORY_DIR=$PWD/weko-secret
 
@@ -84,16 +84,16 @@ mkdir -p tools/api-inventory
 # 2) 実機を起動
 ./install.sh
 
-# 3) ベースラインを現行リビジョンで生成し、**秘密の場所に**保存する
+# 3) ベースラインを現行リビジョンで生成し、**プライベートリポジトリに**保存する
 python3 tools/api-inventory/scripts/snapshot.py \
   --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
 
 # 4) 台帳と一致することを確認(0 でなければ先に台帳を直す)
 python3 tools/api-inventory/scripts/reconcile.py --gate
 
-# 4b) 到達可否まで測るならフィクスチャを投入する
-python3 tools/api-inventory/scripts/fixtures.py --out /tmp/fixtures.json
-python3 tools/api-inventory/scripts/probe_ci.py --fixtures /tmp/fixtures.json --nos 34,925,25
+# 4b) 到達可否まで測るなら measure.sh を使う(フィクスチャ投入から台帳反映まで一括)
+#     測定条件は $WEKO_API_INVENTORY_DIR/measure_profile.json に置く。
+tools/api-inventory/scripts/measure.sh --nos 34,925,25
 
 # 5) ワークフローを配置
 cp tools/api-inventory/ci/api-inventory-drift.yml .github/workflows/
@@ -112,7 +112,7 @@ cp tools/api-inventory/ci/api-inventory-drift.yml .github/workflows/
 git add -A && git commit -m "chore(ci): API インベントリ差分検知を追加"
 ```
 
-**秘密の場所には何も commit しないこと。** `git status` で `tools/api-inventory/` 配下に
+**公開リポジトリにはデータを一切 commit しないこと。** `git status` で `tools/api-inventory/` 配下に
 `*.tsv` や `api_snapshot.json` が現れたら、置き場所を間違えている。
 
 3 のベースラインは**そのブランチのリビジョンで取り直す**こと。
@@ -123,8 +123,8 @@ weko-document に置いてあるものは `d2fdc0e3b`(v2.0.3) 時点なので、
 
 ## 3. ベースラインの更新ルール（これを決めないと形骸化する）
 
-**API を変更した PR では、秘密側の `api_snapshot.json` を更新する。**
-公開リポジトリのコード変更と、秘密側のベースライン更新は**別の PR になる**。
+**API を変更した PR では、プライベートリポジトリ側の `api_snapshot.json` を更新する。**
+公開リポジトリのコード変更と、プライベートリポジトリ側のベースライン更新は**別の PR になる**。
 案C(データを公開領域に置かない)の代償で、ここだけは手順が2つに分かれる。
 
 ```bash
@@ -132,11 +132,11 @@ weko-document に置いてあるものは `d2fdc0e3b`(v2.0.3) 時点なので、
 ./install.sh
 python3 tools/api-inventory/scripts/snapshot.py \
   --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
-# → 秘密リポジトリ側で commit / PR を作る
+# → プライベートリポジトリ側で commit / PR を作る
 ```
 
-差分は**秘密リポジトリの `git diff`** に出る。「どの経路が増えたか・認証がどう変わったか」を
-レビュアの目に入れる仕組みは維持されるが、見る場所が秘密側になる。
+差分は**プライベートリポジトリの `git diff`** に出る。「どの経路が増えたか・認証がどう変わったか」を
+レビュアの目に入れる仕組みは維持されるが、見る場所がプライベートリポジトリ側になる。
 公開リポジトリの CI は件数だけを報告し、詳細は出さない。
 
 なお PR の CI は「PR ブランチの実機」と「PR ブランチのベースライン」を比べるため、
@@ -172,7 +172,7 @@ W6 は WARN なのでゲートは通るが、放置すると本当の依存更�
 
 台帳は「どのリビジョンの WEKO3 に対する調査結果か」が分からないと意味を失う。
 `api_snapshot.json` の `meta.revision` / `meta.tag` に生成元は記録されるが、
-**秘密リポジトリ側にも同名のタグを打って対応を固定する**。
+**プライベートリポジトリ側にも同名のタグを打って対応を固定する**。
 
 ```bash
 cd "$WEKO_API_INVENTORY_DIR"
@@ -191,7 +191,7 @@ git push origin v2.0.3
 1. WEKO3 の新バージョンで `install.sh` → `snapshot.py` でベースラインを作り直す
 2. `reconcile.py` の差分を 0 にする(新規経路を台帳に追加、消えた経路を整理)
 3. `changed_rows.py` が出す行を Phase 2-3 で再確認する
-4. 秘密リポジトリを commit し、**WEKO3 と同名のタグを打つ**
+4. プライベートリポジトリを commit し、**WEKO3 と同名のタグを打つ**
 
 タグを打たずに台帳だけ更新すると、過去のバージョンに対する調査結果を後から
 参照できなくなる(インシデント調査や監査で「その時点でどうだったか」を問われる)。
@@ -200,23 +200,48 @@ git push origin v2.0.3
 
 ## 4. ゲートが FAIL したときの対処
 
+ジョブが落ちる条件は3つ。どのステップで落ちたかで切り分ける。
+
+| 落ちた場所 | 落ちる条件 |
+|---|---|
+| `diff_snapshot.py --gate` (`drift.md`) | G1〜G7 のいずれかに該当 |
+| `reconcile.py --gate` (`reconcile.md`) | A + B + C + D + E の合計が 1 件以上 |
+| `probe_ci.py --gate` | G8 / G9 に該当（明細を含むため artifact には上げていない。件数は Actions のログ） |
+
 | ゲート | 意味 | 対処 |
 |---|---|---|
-| G1 新規に認証デコレータが無い | 認証の付け忘れの可能性 | 意図的な公開なら台帳に根拠を書いたうえでベースライン更新。そうでなければ実装を直す |
+| G1 新規経路に認証デコレータが無い | 認証の付け忘れの可能性 | 意図的な公開なら台帳に根拠を書いたうえでベースライン更新。そうでなければ実装を直す |
 | G2 認証デコレータが削除された | | 同上 |
 | G3 認証のコメントアウトが増えた | no.34(IIIF)と同型 | 原則やり直し。残すなら理由をコード中のコメントに明記 |
-| G4 config が危険側に変わった | no.10/519/520/920 と同型 | 原則やり直し |
+| G4 config が危険側に変わった | no.10/519/520/920 と同型。`*_PERMISSION_FACTORY=None` / CSRF保護=False / 認証の全無効化=True | 原則やり直し |
 | G5 ModelView の can_delete/can_export 有効化 | 削除・全件CSV出力面が開く | 意図的なら台帳の data_op を更新 |
 | G6 属性不明の経路が増えた | 外部ライブラリ由来など | 台帳に行を追加してから `reconcile.py` を通す |
 | G7 依存更新で経路が増減 | Flask-IIIF 等 | 増えた経路を台帳に追加。減った場合は該当行を削除するか allow に登録 |
-| G8 未認証で到達する書き込み系 | 認可が効いていない | 原則やり直し。意図的な公開なら台帳の根拠を更新 |
+| G8 未認証で到達する書き込み系 | 台帳の `data_op` が作成/更新/削除の行に、匿名で到達した | 原則やり直し。意図的な公開なら台帳の根拠を更新。`data_op` の記載誤りなら台帳を直す |
 | G9 台帳では遮断だが実測で到達 | 認可の回帰 | 原則やり直し |
-| reconcile A(未収載) | 台帳に無い経路がある | `weko3_api_list_full.tsv` に行を追加 → `build_checklist.py` で24列版を再生成 |
-| reconcile B(実機に無い) | 台帳にあるが登録されていない | 理由を確認し `reconcile_allow.json` に**理由付きで**登録。理由なしの登録は禁止 |
+| reconcile A(未収載) | 実機にあるが台帳に無い(URI 単位) | `weko3_api_list_full.tsv` に行を追加 → `build_checklist.py` で24列版を再生成 |
+| reconcile B(実機に無い) | 台帳にあるが url_map に登録されていない | 理由を確認し `reconcile_allow.json` に**理由付きで**登録。理由なしの登録は禁止 |
 | reconcile C/D | メソッド・app列の記載誤り | 台帳を実機に合わせる |
+| reconcile E(endpoint 未収載) | 同じ URI に複数の Blueprint/設定が登録されていて、URI 単位の A では拾えない取りこぼし | 台帳は endpoint 単位で行を持つ方針なので、行を追加する |
+
+`reconcile_allow.json` に登録済みの行は **B'(既知・許容)** として別枠で数え、ゲートには効かない。
+**E'(endpoint が実機に無い)** も参考表示のみでゲート対象外。
 
 「とりあえず allow に入れて通す」を防ぐため、`reconcile_allow.json` は
 **理由の文字列が必須**（キーの値が説明文になっている）。レビューで理由を読むこと。
+
+### WARN(W1〜W6)はゲートを通すが、レビューでは見る
+
+| WARN | 意味 |
+|---|---|
+| W1 | ModelView が追加された(1つにつき自動生成8ルート・削除系を含む) |
+| W2 | デコレータ据置きで実装本体が変化(認可ロジックを内包している可能性) |
+| W3 | HTTPメソッドが増減した |
+| W4 | URL が変化した |
+| W5 | 監視対象 config が変化した(危険側の値でなければ WARN) |
+| W6 | 依存パッケージの版が変化した |
+
+W6 は §3b のとおり、ベースラインを CI と違う環境で作ると出続けて形骸化する。
 
 ---
 
@@ -231,7 +256,7 @@ CI は既定プロファイル(`--profile default`)のみを回す。全機能�
 
 ```bash
 python3 tools/api-inventory/scripts/snapshot.py \
-  --out tools/api-inventory/api_snapshot.full.json --profile full-features
+  --out "$WEKO_API_INVENTORY_DIR/api_snapshot.full.json" --profile full-features
 ```
 
 比較は**同一プロファイル同士**で行うこと。異なる場合は `diff_snapshot.py` が
@@ -302,18 +327,17 @@ AST では属性を取れない。G6 で人のレビューに回すのが設計�
 CI を入れずに、リリース前の棚卸しだけ機械化することもできる。
 
 ```bash
+export WEKO_API_INVENTORY_DIR=/path/to/weko-secret
 ./install.sh
-WEB=$(docker compose -f docker-compose2.yml ps -q web)
-python3 tools/api-inventory/scripts/snapshot.py --out /tmp/new.json --container "$WEB"
+# --container は省略してよい(compose のラベルから web を自動検出する。§6 参照)
+python3 tools/api-inventory/scripts/snapshot.py --out /tmp/new.json
 python3 tools/api-inventory/scripts/diff_snapshot.py \
-  tools/api-inventory/api_snapshot.json /tmp/new.json --out drift.md
-python3 tools/api-inventory/scripts/reconcile.py --snapshot /tmp/new.json --out reconcile.md
-python3 tools/api-inventory/scripts/changed_rows.py <前回タグ> HEAD --out rerun_nos.txt
+  "$WEKO_API_INVENTORY_DIR/api_snapshot.json" /tmp/new.json --out /tmp/drift.md
+python3 tools/api-inventory/scripts/reconcile.py --snapshot /tmp/new.json --out /tmp/reconcile.md
+python3 tools/api-inventory/scripts/changed_rows.py <前回タグ> HEAD --out /tmp/rerun_nos.txt
 
-# 到達可否まで測る場合(使い捨て環境でのみ --allow-writes)
-python3 tools/api-inventory/scripts/fixtures.py --out /tmp/fixtures.json
-python3 tools/api-inventory/scripts/probe_ci.py --fixtures /tmp/fixtures.json \
-  --only rerun_nos.txt --allow-writes --out probe.json
+# 到達可否まで測る場合(データが変わるので使い捨て環境で)
+tools/api-inventory/scripts/measure.sh --nos "$(paste -sd, /tmp/rerun_nos.txt)"
 ```
 
 ただし「ベースラインを更新せずに API を変えること」は防げないため、
