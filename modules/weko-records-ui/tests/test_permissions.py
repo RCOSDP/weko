@@ -851,6 +851,47 @@ def test_check_created_id_shared_ids_variants(app, users, extra, expected):
             assert check_created_id(record) == expected
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id_proxy_posting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("proxy_posting,position,expected", [
+    (False, "last",  True),    # 既定。末尾の1人だけ通る
+    (False, "first", False),   # 既定。末尾でないので通らない
+    (True,  "last",  True),    # 複数共有が有効。誰でも通る
+    (True,  "first", True),    # 複数共有が有効。誰でも通る
+])
+def test_check_created_id_proxy_posting(app, users, proxy_posting, position,
+                                        expected):
+    """複数共有者は WEKO_ITEMS_UI_PROXY_POSTING を True にすると有効になる。
+
+    False(既定)のときは shared_ids の末尾1人だけが対象。
+    True にすると shared_ids のいずれでも対象になる。
+    同じ切り替えが weko_workflow/api.py:1806-1824 の docstring にもある。
+    """
+    from weko_records_ui.permissions import check_created_id
+
+    me = users[7]["id"]
+    other = me + 1000
+    shared_ids = [me, other] if position == "first" else [other, me]
+
+    record = {
+        "path": ["1657555088462"],
+        "owner": 99,                          # 所有者でも作成者でもない
+        "recid": "1",
+        "_deposit": {"id": "1", "owner": 99, "owners": [99], "created_by": 99},
+        "item_type_id": "15",
+        "publish_status": "0",
+        "weko_shared_ids": shared_ids,
+    }
+
+    original = app.config.get("WEKO_ITEMS_UI_PROXY_POSTING")
+    app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = proxy_posting
+    try:
+        with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+            with app.test_request_context():
+                assert check_created_id(record) == expected
+    finally:
+        app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = original
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize("index,status",[
     (0,False),
