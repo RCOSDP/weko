@@ -20,6 +20,7 @@
 
 """Extensions for weko-accounts."""
 
+from flask import jsonify
 from flask_babelex import gettext as _
 from flask_login import user_logged_in, user_logged_out
 
@@ -157,6 +158,46 @@ class WekoAccountsREST(object):
         blueprint = create_blueprint(app, app.config['WEKO_ACCOUNTS_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko_accounts_rest'] = self
+        self.init_unauthorized_handler(app)
+
+    def init_unauthorized_handler(self, app):
+        """Return 401 JSON instead of redirecting to the login screen.
+
+        The API app has no ``security`` blueprint, so flask_login's default
+        ``unauthorized()`` cannot build ``url_for('security.login')`` and
+        raises BuildError, which surfaces as a 500. That makes it impossible
+        to tell "blocked by authentication" from "crashed", and it is what
+        prevents ``login_required`` from being applied under ``/api/``.
+
+        Registering an ``unauthorized_callback`` short-circuits before the
+        ``url_for`` call, so the BuildError can no longer happen.
+
+        Only the API app is affected: this extension is registered under
+        ``invenio_base.api_apps`` only, so the UI app keeps redirecting (302).
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        if not app.config.get('WEKO_ACCOUNTS_REST_UNAUTHORIZED_JSON', True):
+            return
+
+        def _unauthorized():
+            return jsonify(
+                status=401,
+                message='Authentication required.',
+            ), 401
+
+        def _install():
+            login_manager = getattr(app, 'login_manager', None)
+            # Defer to another extension that already installed a handler.
+            if login_manager is not None \
+                    and login_manager.unauthorized_callback is None:
+                login_manager.unauthorized_handler(_unauthorized)
+
+        _install()
+        if getattr(app, 'login_manager', None) is None:
+            # Entry point load order under invenio_base.api_apps is not
+            # guaranteed, so retry once the app is fully initialized.
+            app.before_first_request(_install)
 
     def init_config(self, app):
         """
