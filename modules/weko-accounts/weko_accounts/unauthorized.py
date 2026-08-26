@@ -63,11 +63,12 @@ def wants_json():
     if dest:
         return dest != 'document'
 
-    # Redirecting a state-changing request to a login page is never useful:
-    # the browser would follow it with a GET and the caller would get HTML.
-    if request.method not in ('GET', 'HEAD'):
-        return True
-
+    # No "non-GET implies JSON" rule here. Redirecting a state-changing
+    # request to a login page is indeed useless for an AJAX caller, but an
+    # ordinary HTML form POST wants exactly that redirect, and without
+    # Sec-Fetch-Dest the two are indistinguishable. Browsers that send
+    # Sec-Fetch-Dest are already handled above, so falling through keeps the
+    # previous behaviour for everything genuinely ambiguous.
     accept = request.accept_mimetypes
     return accept['application/json'] > accept['text/html']
 
