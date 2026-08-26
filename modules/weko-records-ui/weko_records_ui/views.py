@@ -46,6 +46,7 @@ from invenio_oaiserver.response import getrecord
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+from invenio_records_files.models import RecordsBuckets
 from invenio_records_ui.signals import record_viewed
 from invenio_files_rest.signals import file_downloaded
 from invenio_records_ui.utils import obj_or_import_string
@@ -1475,8 +1476,87 @@ def dbsession_clean(exception):
     db.session.remove()
 
 
+def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
+                                  new_bucket_id=None, new_version_id=None):
+    """Validate a request for the institutional storage APIs.
+
+    Returns None when the request is valid, otherwise a Flask response tuple
+    that the caller can return as-is.
+    """
+    user_id = current_user.get_id()
+    if not current_app.config.get(
+            'WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED', False):
+        current_app.logger.info(
+            'Storage modification is disabled. api={}, user_id={}'.format(
+                request.path, user_id))
+        return jsonify({'error': _('This feature is currently disabled.')}), 403
+
+    if not pid:
+        return None
+
+    denied = jsonify(
+        {'error': _('You do not have permission to perform this operation.')}), 403
+    try:
+        record = WekoRecord.get_record_by_pid(pid)
+        if not check_created_id(record):
+            current_app.logger.warning(
+                'Storage API denied. reason=no_permission, api={}, user_id={}, '
+                'pid={}'.format(request.path, user_id, pid))
+            return denied
+
+        pid_obj = PersistentIdentifier.get('recid', pid)
+        if pid_obj != get_record_without_version(pid_obj):
+            current_app.logger.warning(
+                'Storage API denied. reason=not_base_recid, api={}, user_id={}, '
+                'pid={}'.format(request.path, user_id, pid))
+            return denied
+
+        if str(record.get('_buckets', {}).get('deposit')) != str(bucket_id):
+            current_app.logger.warning(
+                'Storage API denied. reason=bucket_mismatch, api={}, user_id={}, '
+                'pid={}, bucket_id={}'.format(
+                    request.path, user_id, pid, bucket_id))
+            return denied
+
+        if ObjectVersion.get(bucket=bucket_id, key=file_name) is None:
+            current_app.logger.warning(
+                'Storage API denied. reason=object_not_found, api={}, user_id={}, '
+                'pid={}, bucket_id={}, file_name={}'.format(
+                    request.path, user_id, pid, bucket_id, file_name))
+            return denied
+
+        if new_bucket_id:
+            if ObjectVersion.get(bucket=new_bucket_id, key=file_name,
+                                 version_id=new_version_id) is None \
+                    or RecordsBuckets.query.filter_by(
+                        bucket_id=new_bucket_id).first() is not None:
+                current_app.logger.warning(
+                    'Storage API denied. reason=invalid_new_bucket, api={}, '
+                    'user_id={}, pid={}, new_bucket_id={}, new_version_id={}'.format(
+                        request.path, user_id, pid, new_bucket_id, new_version_id))
+                return denied
+    except (PIDDoesNotExistError, NoResultFound):
+        current_app.logger.warning(
+            'Storage API denied. reason=pid_not_found, api={}, user_id={}, '
+            'pid={}'.format(request.path, user_id, pid))
+        return denied
+    except Exception as e:
+        current_app.logger.error(
+            'Unexpected error while validating storage API request. '
+            'api={}, user_id={}, pid={}'.format(request.path, user_id, pid))
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 400
+
+    return None
+
+
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
+@login_required
 def get_bucket_list():
+    error = _validate_storage_api_request()
+    if error:
+        return error
+
     try:
         bucket_list = get_s3_bucket_list()
         return jsonify(bucket_list)
@@ -1485,6 +1565,7 @@ def get_bucket_list():
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/copy_bucket", methods=['POST'])
+@login_required
 def copy_bucket():
     data = request.get_json()
     pid = data.get('pid')
@@ -1492,6 +1573,12 @@ def copy_bucket():
     bucket_id = data.get('bucket_id')
     checked = data.get('checked')
     bucket_name = data.get('bucket_name')
+
+    error = _validate_storage_api_request(
+        pid=pid, bucket_id=bucket_id, file_name=filename)
+    if error:
+        return error
+
     try:
         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
         return jsonify(uri)
@@ -1502,10 +1589,16 @@ def copy_bucket():
 
 
 @blueprint.route("/records/get_file_place", methods=['POST'])
+@login_required
 def get_file_place():
     pid = request.form.get('pid')
     bucket_id = request.form.get('bucket_id')
     file_name = request.form.get('file_name')
+
+    error = _validate_storage_api_request(
+        pid=pid, bucket_id=bucket_id, file_name=file_name)
+    if error:
+        return error
 
     try:
         file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name)
@@ -1521,18 +1614,27 @@ def get_file_place():
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])
+@login_required
 def replace_file():
     return_file_place = request.form.get('return_file_place')
+    pid = request.form.get('pid')
+    bucket_id = request.form.get('bucket_id')
+    file_name = request.form.get('file_name')
+    new_bucket_id = request.form.get('new_bucket_id') \
+        if return_file_place == 'S3' else None
+    new_version_id = request.form.get('new_version_id') \
+        if return_file_place == 'S3' else None
+
+    error = _validate_storage_api_request(
+        pid=pid, bucket_id=bucket_id, file_name=file_name,
+        new_bucket_id=new_bucket_id, new_version_id=new_version_id)
+    if error:
+        return error
 
     if (return_file_place == 'S3'):
 
-        pid = request.form.get('pid')
-        bucket_id = request.form.get('bucket_id')
-        file_name = request.form.get('file_name')
         file_size = int(request.form.get('file_size'))
         file_checksum = request.form.get('file_checksum')
-        new_bucket_id = request.form.get('new_bucket_id')
-        new_version_id = request.form.get('new_version_id')
         try:
             result = replace_file_bucket(pid, bucket_id, file_name=file_name,
                                       file_size=file_size, new_bucket_id=new_bucket_id,
@@ -1544,10 +1646,7 @@ def replace_file():
             return jsonify({'error': str(e)}), 400
 
     else:
-        pid = request.form.get('pid')
-        bucket_id = request.form.get('bucket_id')
         file = request.files['file']
-        file_name = request.form.get('file_name')
         file_size = int(request.form.get('file_size'))
 
         try:
