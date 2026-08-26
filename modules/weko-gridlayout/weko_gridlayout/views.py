@@ -594,6 +594,7 @@ def uploaded_file(filename, community_id=0):
 
 
 @blueprint_api.route('/widget/unlock', methods=["POST"])
+@login_required
 def unlocked_widget():
     """Get widget static file.
 
