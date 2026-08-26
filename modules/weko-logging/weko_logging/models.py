@@ -133,6 +133,40 @@ class UserActivityLog(db.Model,_UserActivityLogBase):
         { "postgresql_partition_by": 'RANGE (date)' }
     )
 
+def _create_current_month_partition(target, connection, **kw):
+    """Attach the current month's partition right after the table is created.
+
+    ``user_activity_logs`` is RANGE partitioned on ``date``. A partitioned
+    table with no partition attached rejects every insert with
+    ``no partition of relation "user_activity_logs" found for row``, which
+    aborts the surrounding transaction. Operators create partitions ahead of
+    time with ``flask logging partition create <year> [<month>]``, but nothing
+    covers the moment the table itself is created -- notably ``db.create_all()``
+    in the test suites, where every insert made by UserActivityLogger failed
+    and poisoned the session.
+
+    Creating the current month here means a freshly created table is usable
+    straight away. It is idempotent and does not touch months the CLI manages.
+    """
+    if connection.dialect.name != 'postgresql':
+        return
+    start = datetime.now(timezone.utc).replace(
+        day=1, hour=0, minute=0, second=0, microsecond=0, tzinfo=None)
+    end = start + relativedelta(months=1)
+    connection.execute(
+        "CREATE TABLE IF NOT EXISTS {table}_{suffix} PARTITION OF {table} "
+        "FOR VALUES FROM ('{start}') TO ('{end}')".format(
+            table=UserActivityLog.__tablename__,
+            suffix=start.strftime('%Y%m'),
+            start=start.strftime('%Y-%m-%d'),
+            end=end.strftime('%Y-%m-%d')))
+
+
+event.listen(UserActivityLog.__table__,
+             'after_create',
+             _create_current_month_partition)
+
+
 def get_user_activity_logs_partition_tables():
     """Get the partition table for the user_activity_logs table
 
