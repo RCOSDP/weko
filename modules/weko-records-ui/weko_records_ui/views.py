@@ -87,9 +87,10 @@ from weko_records_ui.models import (
     PDFCoverPageSettings
 )
 from weko_records_ui.permissions import (
-    check_content_clickable, check_created_id, check_created_id_by_recid,
+    check_content_clickable, check_created_id,
     check_file_download_permission, check_original_pdf_download_permission,
-    check_permission_period, file_permission_factory, get_permission
+    check_permission_period, file_permission_factory, get_permission,
+    record_edit_permission_required
 )
 from weko_records_ui.utils import (
     check_items_settings, can_manage_onetime_url, can_manage_secret_url,
@@ -1224,6 +1225,7 @@ def citation(record, pid, style=None, ln=None):
 
 @blueprint.route("/records/soft_delete/<recid>", methods=['POST'])
 @login_required
+@record_edit_permission_required(strip_prefix='del_ver_')
 def soft_delete(recid):
     """
     Soft delete item.
@@ -1235,8 +1237,6 @@ def soft_delete(recid):
             return json data
     """
     try:
-        if not check_created_id_by_recid(recid.replace("del_ver_", "")):
-            abort(403)
         if not UserActivityLogger.issue_log_group_id(db.session):
             current_app.logger.error(
                 'Failed to issue log group id for soft delete operation.')
@@ -1306,12 +1306,10 @@ def soft_delete(recid):
 
 @blueprint.route("/records/restore/<recid>", methods=['POST'])
 @login_required
+@record_edit_permission_required()
 def restore(recid):
     """Restore item."""
     try:
-        record = WekoRecord.get_record_by_pid(recid)
-        if not check_created_id(record):
-            abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
@@ -1529,19 +1527,8 @@ def get_file_place():
 
 @blueprint.route("/records/replace_file", methods=['POST'])
 @login_required
+@record_edit_permission_required(param='pid')
 def replace_file():
-    # Replacing a file mutates the record's file entity, so require the same
-    # ownership check as the other destructive record operations
-    # (see soft_delete / restore).
-    pid = request.form.get('pid')
-    try:
-        permitted = bool(pid) and check_created_id_by_recid(pid)
-    except Exception as e:
-        current_app.logger.error(str(e))
-        permitted = False
-    if not permitted:
-        abort(403)
-
     return_file_place = request.form.get('return_file_place')
 
     if (return_file_place == 'S3'):

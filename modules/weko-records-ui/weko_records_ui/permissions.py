@@ -22,6 +22,7 @@
 
 from datetime import datetime as dt
 from datetime import timedelta, timezone
+from functools import wraps
 import traceback
 from typing import List, Optional
 
@@ -519,6 +520,65 @@ def check_created_id_by_recid(recid):
     if not record:
         return False
     return check_created_id(record)
+
+def record_edit_permission_required(param='recid', strip_prefix=None):
+    """Require edit permission on the record identified by ``param``.
+
+    The record id is resolved from the view args first, then the request body
+    (form or JSON) and finally the query string, so the same decorator covers
+    ``/records/soft_delete/<recid>`` and POSTs that carry ``pid`` in the form.
+
+    The check itself is :func:`check_created_id`: the creator, a shared user,
+    a Community Administrator of the record's community, or a super user.
+
+    Apply it *inside* ``login_required`` so that anonymous requests go through
+    the normal login flow; used on its own it aborts 401.
+
+    Aborting from a decorator also keeps the 403 out of the view's own
+    ``try/except Exception``, which would otherwise swallow it and return 500.
+
+    Args:
+        param (str): name of the request parameter holding the record id.
+        strip_prefix (str): prefix to drop from the id before looking it up
+            (e.g. ``'del_ver_'`` for the version-delete route).
+    """
+    def decorator(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            if not (current_user and current_user.is_authenticated):
+                abort(401)
+
+            recid = kwargs.get(param)
+            if recid is None:
+                recid = request.form.get(param)
+            if recid is None and request.mimetype == 'application/json':
+                body = request.get_json(silent=True)
+                if isinstance(body, dict):
+                    recid = body.get(param)
+            if recid is None:
+                recid = request.args.get(param)
+            if recid is None or recid == '':
+                current_app.logger.error(
+                    'record_edit_permission_required: '
+                    'no {} in request'.format(param))
+                abort(400)
+
+            recid = str(recid)
+            if strip_prefix and recid.startswith(strip_prefix):
+                recid = recid[len(strip_prefix):]
+
+            try:
+                permitted = check_created_id_by_recid(recid)
+            except Exception as e:
+                current_app.logger.error(e)
+                permitted = False
+            if not permitted:
+                abort(403)
+
+            return f(*args, **kwargs)
+        return decorated
+    return decorator
+
 
 def check_created_id(record):
     """Check edit permission to the record for the current user

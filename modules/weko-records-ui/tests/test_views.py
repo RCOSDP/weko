@@ -1261,8 +1261,8 @@ def test_soft_delete_acl_guest(client, records):
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
-        (4, 500), # generaluser
-        (5, 500), # originalroleuser
+        (4, 403), # generaluser
+        (5, 403), # originalroleuser
         (6, 200), # originalroleuser2
         (7, 200), # user
     ],
@@ -1385,12 +1385,12 @@ def test_restore_acl_guest(client, records):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 500), # contributor
+        (0, 403), # contributor
         (1, 200), # repoadmin
         (2, 200), # sysadmin
         (3, 200), # comadmin
-        (4, 500), # generaluser
-        (5, 500), # originalroleuser
+        (4, 403), # generaluser
+        (5, 403), # originalroleuser
         (6, 200), # originalroleuser2
         (7, 200), # user
     ],
@@ -1698,9 +1698,56 @@ def test_get_file_place(app,records,users, client):
         )
         assert res.status_code == 400
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_replace_file_acl_guest(app, records, users, client):
+    """Anonymous requests are sent to the login screen."""
+    res = client.post(url_for("weko_records_ui.replace_file"))
+    assert res.status_code == 302
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (2, 200), # sysadmin
+        (4, 403), # generaluser
+        (5, 403), # originalroleuser
+    ],
+)
+def test_replace_file_acl(app, records, users, client, id, status_code):
+    """Only users who may edit the record can replace its files."""
+    login(client, obj=users[id]["obj"])
+    with patch("weko_records_ui.views.replace_file_bucket", return_value={}):
+        res = client.post(
+            url_for("weko_records_ui.replace_file"),
+            data={
+                'return_file_place': 'S3',
+                'pid': '1',
+                'bucket_id': '1',
+                'file_name': 'helloworld.pdf',
+                'file_size': 100,
+                'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
+                'new_bucket_id': '1',
+                'new_version_id': '1',
+            },
+        )
+        assert res.status_code == status_code
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_no_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_replace_file_no_pid(app, records, users, client):
+    """A request without a record id is rejected before reaching the view."""
+    login(client, obj=users[2]["obj"])  # sysadmin
+    res = client.post(
+        url_for("weko_records_ui.replace_file"),
+        data={'return_file_place': 'S3'},
+    )
+    assert res.status_code == 400
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_replace_file(app,records,users, client):
-    login(client,obj=users[0]["obj"])
+    login(client,obj=users[2]["obj"])  # sysadmin
     url = url_for("weko_records_ui.replace_file")
     # テスト用のデータを用意
     test_data = b'Hello, World!' # バイナリデータ
