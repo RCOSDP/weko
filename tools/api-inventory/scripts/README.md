@@ -1038,12 +1038,20 @@ Phase 6 は**構造の変化**(経路・デコレータ・config)を検知する
 ## 7-1. `fixtures.py` — 最小テストコーパスの投入
 
 ```bash
-python3 scripts/fixtures.py --out fixtures.json \
-        --redact-out "$WEKO_API_INVENTORY_DIR/fixtures_snapshot.json"
-# users=5 records=3 index=900001/900011 file=あり token=あり community=あり group=あり
+# テストに必要な最低限(measure.sh はこの形で呼ぶ)
+python3 scripts/fixtures.py --out fixtures.json
+
+# デモ環境として規模感を持たせる。install.sh のあとに1回流せばよい
+python3 scripts/fixtures.py --out fixtures.json --scale 1000
+
+# 片付ける
+python3 scripts/fixtures.py --clean demo   # デモ用アイテムだけ
+python3 scripts/fixtures.py --clean all    # 本スクリプトが作るもの全部
 ```
 
-`measure.sh` は上記の形で呼ぶ。手で叩く必要は無い。
+`--scale` は 100 / 1000 / 10000 / 100000 / 1000000 を想定。既定は 0 で、
+*測定に必要な最低限しか作らない*。measure.sh は測定中に何度も
+このスクリプトを流し直すため、既定で件数を積むと無駄が大きい。
 
 投入するもの:
 
@@ -1061,22 +1069,16 @@ python3 scripts/fixtures.py --out fixtures.json \
 毎回入れ直す。先行ステップ(インデックス作成など)が失敗した回に作られたレコードは
 `path` が空のままになり `check_index_permissions` を通らないため、再実行で直るようにしてある。
 
-### 生成物を2本に分けている理由
+### `fixtures.json` は追跡する
 
-| ファイル | 追跡 | 中身 |
-|---|:--:|---|
-| `fixtures.json` | **しない** | 実体。OAuthアクセストークンと平文パスワードを含む |
-| `fixtures_snapshot.json` | **する**(台帳リポジトリ側) | 上記の秘密2つだけを `(redacted)` にしたもの |
+秘密は入らない。パスワードは本スクリプトの定数(既に公開)で、
+アクセストークンも固定のダミー値にしてある。
 
-伏せるのは**実際に環境を触れる2つだけ**で、recid / バケット / インデックス /
-activity_id などの ID は隠さない。
+*測定対象の記録として台帳リポジトリ側で追跡する。* 測定条件
+(`measure_profile.json`)だけ残っていても、その条件をどの recid /
+バケット / インデックスに当てたかが分からないと結果を読み解けない。
 
-**測定条件(`measure_profile.json`)は追跡しているのに、その条件を当てた対象が
-どこにも残らない、という非対称を避けるため。** 後から測定結果を読むとき、
-「どの recid のどのファイルに対して測ったのか」が分からないと解釈できない。
-
-`fixtures_snapshot.json` は**記録専用**で、これを読み込んで測定することはできない
-(トークンが伏せてあるため)。環境を作り直すのは常に `fixtures.py` を流す。
+public 側には置かない(環境依存の値のため `.gitignore` 済み)。
 
 ### フィクスチャで再現できること(検証済み)
 

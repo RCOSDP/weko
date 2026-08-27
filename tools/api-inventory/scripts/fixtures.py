@@ -19,11 +19,12 @@
 
 冪等: 既存の値があれば再利用し、無ければ作る。CI で毎回流してよい。
 
-``--redact-out`` を付けると、平文パスワードと OAuth アクセストークンだけを
-伏せた同じ内容をもう1本書き出す。*こちらは追跡してよい。*
-測定条件(measure_profile.json)は台帳リポジトリで追跡しているのに、
-その条件を当てた対象(どの recid / バケット / インデックスか)が
-どこにも残らないと、後から測定結果を読み解けなくなるため。
+生成物 ``fixtures.json`` に秘密は入らない。パスワードは本スクリプトの
+定数（既に公開）で、アクセストークンも固定のダミー値にしてある。
+*測定対象の記録として台帳リポジトリで追跡する。*
+測定条件(measure_profile.json)だけ残っていても、その条件を
+どの recid / バケット / インデックスに当てたかが分からないと
+結果を読み解けないため。
 """
 import argparse
 import json
@@ -35,6 +36,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from snapshot import resolve_container, sh  # noqa: E402  同ディレクトリのヘルパを再利用
 
 PASSWORD = 'Passw0rd!123'
+DUMMY_TOKEN = 'apiinv-probe-token-0000000000000000000000000000'
+"""固定のダミー。生成値だと実行のたびに fixtures.json が変わってしまう。"""
 
 PAYLOAD = r'''
 # -*- coding: utf-8 -*-
@@ -43,6 +46,8 @@ from flask import current_app
 from invenio_db import db
 
 PASSWORD = "%(password)s"
+SCALE = %(scale)d
+DUMMY_TOKEN = "%(token)s"
 OUT = {"password": PASSWORD, "users": {}, "records": {}, "file": {},
        "index": None, "index_child": None, "index_health": None,
        "token": None, "community": None, "group": None,
@@ -96,7 +101,8 @@ def _index():
         used = [i.position for i in Index.query.filter_by(parent=0).all()]
         pos = (max(used) + 1) if used else 0
         idx = Index(id=900001, parent=0, position=pos,
-                    index_name="APIインベントリ検証用", index_name_english="APIInventory Public",
+                    index_name="テスト大学 学術情報リポジトリ",
+                    index_name_english="APIInventory Public",
                     public_state=True, harvest_public_state=True,
                     browsing_role="3,-98,-99", contribute_role="1,2,3,4,-98,-99",
                     public_date=None, owner_user_id=1)
@@ -115,33 +121,48 @@ def _index():
     db.session.flush()
     OUT["index"] = int(idx.id)
 
-    # 子インデックス。コミュニティ配下の判定は「ルートと一致するか」ではなく
+    # 子インデックス。機関リポジトリらしい資料種別で分ける。
+    # コミュニティ配下の判定は「ルートと一致するか」ではなく
     # 「部分木に含まれるか」なので、深さ1では再帰の検証にならない。
-    child = Index.query.filter_by(
-        index_name_english="APIInventory Child").one_or_none()
-    if child is None:
-        used = [i.position for i in Index.query.filter_by(parent=idx.id).all()]
-        pos = (max(used) + 1) if used else 0
-        child = Index(id=900011, parent=idx.id, position=pos,
-                      index_name="APIインベントリ検証用(子)",
-                      index_name_english="APIInventory Child",
-                      public_state=True, harvest_public_state=True,
-                      browsing_role="3,-98,-99", contribute_role="1,2,3,4,-98,-99",
+    # 非公開インデックスを1つ混ぜてあるのは、公開状態で結果が変わる
+    # エンドポイント(検索・インデックスツリー系)を測れるようにするため。
+    children = [
+        (900011, "紀要論文",     "Departmental Bulletin Paper", True),
+        (900012, "学位論文",     "Thesis",                      True),
+        (900013, "研究報告書",   "Research Report",             True),
+        (900014, "会議発表資料", "Conference Paper",            True),
+        (900015, "非公開資料",   "Restricted",                  False),
+    ]
+    OUT["indexes"] = {}
+    for cid, ja, en, public in children:
+        c = Index.query.filter_by(id=cid).one_or_none()
+        if c is None:
+            used = [i.position for i in Index.query.filter_by(parent=idx.id).all()]
+            pos = (max(used) + 1) if used else 0
+            c = Index(id=cid, parent=idx.id, position=pos,
+                      index_name=ja, index_name_english=en,
+                      public_state=public, harvest_public_state=public,
+                      browsing_role="3,-98,-99",
+                      contribute_role="1,2,3,4,-98,-99",
                       public_date=None, owner_user_id=1)
-        db.session.add(child)
-        db.session.flush()
-    child.is_deleted = False
-    child.parent = idx.id
-    child.public_state = True
-    child.harvest_public_state = True
-    db.session.add(child)
+            db.session.add(c)
+            db.session.flush()
+        c.is_deleted = False
+        c.parent = idx.id
+        c.index_name = ja
+        c.index_name_english = en
+        c.public_state = public
+        c.harvest_public_state = public
+        db.session.add(c)
+        OUT["indexes"][en] = int(c.id)
     db.session.flush()
-    OUT["index_child"] = int(child.id)
+    # 従来のキー。他人所有レコードの置き場所として probe が参照する
+    OUT["index_child"] = OUT["indexes"]["Departmental Bulletin Paper"]
 
 
 # ---------------------------------------------------------------- レコード
 def _make_record(recid, owner_id, publish_status, title, with_file,
-                 index_key="index"):
+                 index_key="index", item_type_id="1"):
     """PID(recid/depid/parent)+RecordMetadata+バケットを作る。
 
     合成レコードなのでアイテムタイプ固有フィールドは入れていない。
@@ -198,7 +219,7 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
         "recid": str(recid),
         "title": [title],
         "item_title": title,
-        "item_type_id": "1",
+        "item_type_id": str(item_type_id),
         "pubdate": {"attribute_name": "PubDate", "attribute_value": "2026-01-01"},
         "publish_date": "2026-01-01",
         "publish_status": publish_status,
@@ -215,6 +236,7 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
     db.session.add(rm)
     db.session.flush()
     RecordsBuckets.create(record=rm, bucket=bucket)
+    _item_metadata(uid, item_type_id, title, owner_id)
 
     for t, v in (("recid", str(recid)), ("depid", str(recid)),
                  ("parent", "parent:%%s" %% recid)):
@@ -229,6 +251,27 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
         db.session.flush()
         finfo = _file_info(bucket.id, ov)
     return rm, str(bucket.id), finfo
+
+
+def _item_metadata(uid, item_type_id, title, owner_id):
+    """item_metadata を作る。
+
+    無いと ES への反映が落ちる。invenio-indexer の before_record_index が
+    weko_deposit.receivers.append_file_content -> WekoDeposit.item_metadata
+    -> ItemsMetadata.get_record(...).one() を通るため、行が無いと
+    NoResultFound になり *検索に出ない*。
+    合成レコードでも検索・一覧を確認したいので作っておく。
+    """
+    from weko_records.models import ItemMetadata
+    if ItemMetadata.query.get(uid) is not None:
+        return
+    db.session.add(ItemMetadata(
+        id=uid, item_type_id=int(item_type_id),
+        json={"title": title, "owner": str(owner_id),
+              "$schema": "/items/jsonschema/%%s" %% item_type_id,
+              "pubdate": "2026-01-01"},
+        version_id=1))
+    db.session.flush()
 
 
 def _file_info(bucket_id, ov):
@@ -285,12 +328,36 @@ def _versioning():
 # ---------------------------------------------------------------- OAuthトークン
 @step("oauth_token")
 def _token():
+    """検証用の個人アクセストークン。
+
+    値は*固定のダミー*にする。生成値のままだと fixtures.json が
+    実行のたびに変わるうえ、記録として残せなくなるため。
+    この環境でしか通らない値で、秘密として扱う必要はない。
+
+    以前は毎回 create_personal していて、実行のたびにトークン行が増えていた。
+    """
     from invenio_oauth2server.models import Token
     uid = OUT["users"].get("contributor@example.org", {}).get("id", 3)
     scopes = list(current_app.extensions["invenio-oauth2server"].scopes.keys())
-    t = Token.create_personal("api-inventory-probe", uid, scopes=scopes,
-                              is_internal=True)
-    OUT["token"] = {"access_token": t.access_token, "user_id": uid,
+    # 既にダミー値を持つ行があればそれを使う。別の行に同じ値を入れると
+    # ix_oauth2server_token_access_token の一意制約に当たる。
+    t = Token.query.filter_by(access_token=DUMMY_TOKEN).first()
+    if t is None:
+        t = Token.create_personal("api-inventory-probe", uid, scopes=scopes,
+                                  is_internal=True)
+        t.access_token = DUMMY_TOKEN
+    t.user_id = uid
+    t.scopes = scopes
+    t.expires = None
+    db.session.add(t)
+    db.session.flush()
+    # 旧実装は実行のたびに新しいトークンを作っていた。溜まった分を片付ける。
+    for old in Token.query.filter_by(user_id=uid, is_personal=True,
+                                     is_internal=True).all():
+        if old.id != t.id:
+            db.session.delete(old)
+    db.session.flush()
+    OUT["token"] = {"access_token": DUMMY_TOKEN, "user_id": uid,
                     "scopes": scopes}
 
 
@@ -509,6 +576,161 @@ def _lookups():
             OUT["errors"].append("lookup %%s: %%s" %% (key, exc))
 
 
+# ------------------------------------------------------ デモ用アイテム(規模)
+DEMO_SUBJECTS = [
+    "地方都市における公共交通網の再編", "近世日本の農村社会と土地制度",
+    "深層学習を用いた医用画像の分類", "沿岸域の生態系サービス評価",
+    "高齢化社会における地域医療連携", "気候変動が水稲収量に与える影響",
+    "オープンサイエンスと研究データ管理", "触媒表面での水素吸着機構",
+    "第二言語習得における語彙獲得過程", "大規模災害時の避難行動モデル",
+    "量子ドットを用いた太陽電池の高効率化", "中山間地域の集落機能の変容",
+    "機械学習による地震動予測の試み", "近代日本文学における都市表象",
+    "微生物叢が宿主代謝に及ぼす影響",
+]
+DEMO_FORMS = ["に関する研究", "の実証的分析", "についての一考察",
+              "の基礎的検討", "に関する事例研究"]
+DEMO_AUTHORS = [
+    ("山田 太郎", "Yamada, Taro"), ("佐藤 花子", "Sato, Hanako"),
+    ("鈴木 一郎", "Suzuki, Ichiro"), ("高橋 美咲", "Takahashi, Misaki"),
+    ("田中 健二", "Tanaka, Kenji"), ("伊藤 直樹", "Ito, Naoki"),
+    ("渡辺 由美", "Watanabe, Yumi"), ("中村 大輔", "Nakamura, Daisuke"),
+]
+# 子インデックスごとの資料種別。index_name_english -> (resourcetype, uri, item_type_id)
+DEMO_KINDS = [
+    ("Departmental Bulletin Paper", "departmental bulletin paper",
+     "http://purl.org/coar/resource_type/c_6501", "3"),
+    ("Thesis", "thesis", "http://purl.org/coar/resource_type/c_46ec", "1"),
+    ("Research Report", "research report",
+     "http://purl.org/coar/resource_type/c_18ws", "4"),
+    ("Conference Paper", "conference paper",
+     "http://purl.org/coar/resource_type/c_5794", "10"),
+]
+
+
+@step("demo_items")
+def _demo_items():
+    """リポジトリの規模感を再現するデモ用アイテム。
+
+    ``--scale`` で件数を選ぶ。*既定は 0 で、何も作らない。*
+    測定は3件のフィクスチャで足りるうえ、measure.sh は測定中に
+    このスクリプトを何度も流し直すため、既定で件数を積むと無駄が大きい。
+    デモや一覧の見え方を確認したいときだけ 100 / 1000 / 10000 /
+    100000 / 1000000 を明示する。
+
+    ページングや並び替えを確認するには一覧に十分な件数が要る。台帳では
+    ``page`` を取る行が51、``limit`` が31、``offset`` が30、``sort`` が41 ある。
+    3件のフィクスチャではどれも確かめられない。
+
+    ORM で1件ずつ作ると1万件でも現実的な時間に収まらないので core insert で
+    まとめて流す。*ファイル実体とバケットは作らない* — ここでの目的は一覧の
+    見え方であって、ダウンロードや IIIF は既存の3件で測るため。
+
+    冪等: ``_demo`` 印の付いたレコード数を数え、不足分だけ足す。
+    """
+    import datetime
+    from invenio_records.models import RecordMetadata as RM
+    from invenio_pidstore.models import PersistentIdentifier as PID
+    from weko_records.models import ItemMetadata as IM
+
+    have = db.session.execute(
+        "SELECT count(*) FROM records_metadata WHERE json->>'_demo' = '1'"
+    ).scalar() or 0
+    want = SCALE
+    OUT["demo"] = {"scale": want, "existing": int(have), "created": 0}
+    if have >= want:
+        return
+
+    idxs = OUT.get("indexes") or {}
+    kinds = [(idxs.get(en), rt, uri, it) for en, rt, uri, it in DEMO_KINDS
+             if idxs.get(en)]
+    if not kinds:
+        raise RuntimeError("子インデックスが無いためデモデータを作れない")
+    owner = OUT["users"].get("contributor@example.org", {}).get("id", 3)
+    now = datetime.datetime.utcnow()
+    base = 1000000
+    chunk, rows_rm, rows_pid, rows_im = 2000, [], [], []
+    created = 0
+
+    def flush_rows():
+        if rows_rm:
+            db.session.execute(RM.__table__.insert(), rows_rm)
+            db.session.execute(IM.__table__.insert(), rows_im)
+            db.session.execute(PID.__table__.insert(), rows_pid)
+            db.session.commit()
+        del rows_rm[:]
+        del rows_pid[:]
+        del rows_im[:]
+
+    for k in range(int(have) + 1, want + 1):
+        recid = base + k
+        idx_id, rtype, ruri, itype = kinds[k %% len(kinds)]
+        subj = DEMO_SUBJECTS[k %% len(DEMO_SUBJECTS)]
+        form = DEMO_FORMS[k %% len(DEMO_FORMS)]
+        ja, en = DEMO_AUTHORS[k %% len(DEMO_AUTHORS)]
+        year = 2015 + (k %% 12)
+        month = 1 + (k %% 12)
+        pub = "%%04d-%%02d-01" %% (year, month)
+        title = "%%s%%s (%%d)" %% (subj, form, k)
+        # 1割を非公開にして、公開状態で結果が変わる経路も測れるようにする
+        status = "1" if k %% 10 == 0 else "0"
+        uid = _uuid.uuid4()
+        js = {
+            "_oai": {"id": "oai:weko3.example.org:%%08d" %% recid},
+            "_demo": "1",
+            "path": [str(idx_id)],
+            "owner": str(owner),
+            "recid": str(recid),
+            "title": [title],
+            "item_title": title,
+            "item_type_id": itype,
+            "pubdate": {"attribute_name": "PubDate", "attribute_value": pub},
+            "publish_date": pub,
+            "publish_status": status,
+            "weko_shared_ids": [],
+            "_buckets": {"deposit": ""},
+            "_deposit": {
+                "id": str(recid),
+                "pid": {"type": "depid", "value": str(recid), "revision_id": 0},
+                "owner": str(owner), "owners": [owner],
+                "created_by": owner, "status": "published",
+            },
+            "item_1617186331708": {
+                "attribute_name": "Title",
+                "attribute_value_mlt": [
+                    {"subitem_1551255647225": title,
+                     "subitem_1551255648112": "ja"}]},
+            "item_1617186419668": {
+                "attribute_name": "Creator",
+                "attribute_value_mlt": [
+                    {"creatorNames": [
+                        {"creatorName": ja, "creatorNameLang": "ja"},
+                        {"creatorName": en, "creatorNameLang": "en"}]}]},
+            "item_1617258105262": {
+                "attribute_name": "Resource Type",
+                "attribute_value_mlt": [
+                    {"resourcetype": rtype, "resourceuri": ruri}]},
+        }
+        rows_rm.append({"id": uid, "json": js, "version_id": 1,
+                        "created": now, "updated": now})
+        rows_im.append({"id": uid, "item_type_id": int(itype),
+                        "json": {"title": title, "owner": str(owner),
+                                 "$schema": "/items/jsonschema/%%s" %% itype,
+                                 "pubdate": pub},
+                        "version_id": 1, "created": now, "updated": now})
+        for t, v in (("recid", str(recid)), ("depid", str(recid))):
+            rows_pid.append({"pid_type": t, "pid_value": v,
+                             "status": "R", "object_type": "rec",
+                             "object_uuid": uid,
+                             "created": now, "updated": now})
+        created += 1
+        if len(rows_rm) >= chunk:
+            flush_rows()
+            print("  demo_items: %%d / %%d" %% (int(have) + created, want),
+                  flush=True)
+    flush_rows()
+    OUT["demo"]["created"] = created
+
+
 # ---------------------------------------------------------------- ES反映
 @step("reindex")
 def _reindex():
@@ -532,6 +754,175 @@ for e in OUT["errors"]:
 '''
 
 
+CLEAN_PAYLOAD = r'''
+# -*- coding: utf-8 -*-
+"""fixtures.py が投入したものを消す。ユーザとロールには触らない。"""
+import traceback
+from invenio_db import db
+
+SCOPE = "%(scope)s"
+DEMO_IDS = [900001, 900002, 900003]          # probe 用レコードの recid
+INDEX_IDS = [900011, 900012, 900013, 900014, 900015, 900001]
+OUT = {"deleted": {}, "errors": []}
+
+
+def step(name):
+    def deco(fn):
+        try:
+            OUT["deleted"][name] = fn() or 0
+            db.session.commit()
+        except Exception as exc:
+            db.session.rollback()
+            OUT["errors"].append("%%s: %%s: %%s" %% (name, type(exc).__name__, exc))
+            traceback.print_exc()
+        return fn
+    return deco
+
+
+@step("demo_items")
+def _demo():
+    """--scale で作ったデモ用アイテム。件数が多いので SQL でまとめて消す。"""
+    n = db.session.execute(
+        "SELECT count(*) FROM records_metadata WHERE json->>'_demo' = '1'"
+    ).scalar() or 0
+    if not n:
+        return 0
+    db.session.execute(
+        "DELETE FROM pidstore_pid WHERE object_uuid IN "
+        "(SELECT id FROM records_metadata WHERE json->>'_demo' = '1')")
+    db.session.execute(
+        "DELETE FROM item_metadata WHERE id IN "
+        "(SELECT id FROM records_metadata WHERE json->>'_demo' = '1')")
+    db.session.execute(
+        "DELETE FROM records_metadata_version WHERE id IN "
+        "(SELECT id FROM records_metadata WHERE json->>'_demo' = '1')")
+    db.session.execute(
+        "DELETE FROM records_metadata WHERE json->>'_demo' = '1'")
+    return int(n)
+
+
+if SCOPE == "all":
+
+    @step("probe_records")
+    def _records():
+        """probe 用の3件。ファイル実体・バケット・PID関連まで落とす。
+
+        ORM で消すと autoflush が途中で走り、まだ参照が残っている段階で
+        NOT NULL 制約に当たる(pidrelations が PID を参照している)。
+        依存の順番を自分で決めたいので SQL で消す。
+        """
+        # pid_value は varchar。数値のまま渡すと型比較で落ちる
+        ids = ",".join("'%%s'" %% i for i in DEMO_IDS)
+        # uuid は先に確定させる。pidstore_pid を消したあとに引き直すと
+        # 対象が取れなくなり、records_metadata が消し残る。
+        # PID 経由と recid 直引きの両方。過去の削除が途中で失敗すると
+        # PID だけ消えて records_metadata が孤児として残ることがある。
+        uuids = [str(r[0]) for r in db.session.execute(
+            "SELECT object_uuid FROM pidstore_pid "
+            "WHERE pid_type='recid' AND pid_value IN (%%s) "
+            "UNION "
+            "SELECT id FROM records_metadata WHERE json->>'recid' IN (%%s)"
+            %% (ids, ids))]
+        if not uuids:
+            return 0
+        u_in = ",".join("'%%s'" %% u for u in uuids)
+        # PID は object_uuid だけでは拾えない。insert_child が親PIDを
+        # REDIRECTED にして object_uuid を Redirect 行の id に書き換えるため、
+        # 親PIDはレコードを指さなくなる。pid_value でも引く。
+        vals = ",".join(
+            "'%%s'" %% v for i in DEMO_IDS
+            for v in (str(i), "parent:%%s" %% i))
+        sel_pid = ("SELECT id FROM pidstore_pid WHERE object_uuid IN (%%s) "
+                   "OR pid_value IN (%%s)" %% (u_in, vals))
+        # リダイレクト先の行。親PIDの object_uuid が指している
+        sel_redirect = ("SELECT object_uuid FROM pidstore_pid "
+                        "WHERE pid_value IN (%%s) AND status='M'" %% vals)
+        # バケットIDも先に確定させる。records_buckets を消すと引けなくなる。
+        buckets = [str(r[0]) for r in db.session.execute(
+            "SELECT bucket_id FROM records_buckets WHERE record_id IN (%%s)"
+            %% u_in)]
+        b_in = ",".join("'%%s'" %% b for b in buckets) or "'00000000-0000-0000-0000-000000000000'"
+        for sql in (
+            # PID の被参照を先に落とす
+            "DELETE FROM pidrelations_pidrelation WHERE parent_id IN (%%s) "
+            "OR child_id IN (%%s)" %% (sel_pid, sel_pid),
+            "DELETE FROM pidstore_redirect WHERE pid_id IN (%%s)" %% sel_pid,
+            "DELETE FROM pidstore_redirect WHERE id IN (%%s)" %% sel_redirect,
+            # ファイル側は オブジェクト -> 紐づけ -> バケット の順
+            "DELETE FROM files_objecttags WHERE version_id IN "
+            "(SELECT version_id FROM files_object WHERE bucket_id IN (%%s))"
+            %% b_in,
+            "DELETE FROM files_object WHERE bucket_id IN (%%s)" %% b_in,
+            "DELETE FROM files_buckettags WHERE bucket_id IN (%%s)" %% b_in,
+            "DELETE FROM records_buckets WHERE record_id IN (%%s)" %% u_in,
+            "DELETE FROM files_bucket WHERE id IN (%%s)" %% b_in,
+            # 最後にレコードと PID
+            "DELETE FROM item_metadata_version WHERE id IN (%%s)" %% u_in,
+            "DELETE FROM item_metadata WHERE id IN (%%s)" %% u_in,
+            "DELETE FROM records_metadata_version WHERE id IN (%%s)" %% u_in,
+            "DELETE FROM pidstore_pid WHERE object_uuid IN (%%s) "
+            "OR pid_value IN (%%s)" %% (u_in, vals),
+            "DELETE FROM records_metadata WHERE id IN (%%s)" %% u_in,
+        ):
+            db.session.execute(sql)
+        return len(uuids)
+
+    @step("community")
+    def _community():
+        from invenio_communities.models import Community
+        c = Community.query.get("apiinv")
+        if c is None:
+            return 0
+        db.session.delete(c)
+        return 1
+
+    @step("indexes")
+    def _indexes():
+        """コミュニティより後に消す(root_node_id に参照されているため)。"""
+        from weko_index_tree.models import Index
+        n = 0
+        for i in INDEX_IDS:
+            idx = Index.query.filter_by(id=i).one_or_none()
+            if idx is not None:
+                db.session.delete(idx)
+                n += 1
+        return n
+
+    @step("token")
+    def _token():
+        from invenio_oauth2server.models import Token
+        n = 0
+        for t in Token.query.filter_by(is_personal=True, is_internal=True).all():
+            if t.access_token == "%(token)s":
+                db.session.delete(t)
+                n += 1
+        return n
+
+print("CLEAN_OK errors=%%d" %% len(OUT["errors"]))
+for k, v in OUT["deleted"].items():
+    print("  DEL %%s=%%s" %% (k, v))
+for e in OUT["errors"]:
+    print("  ERR", e)
+'''
+
+
+def run_payload(container, src, label):
+    """ペイロードをコンテナの invenio shell で実行する。"""
+    import tempfile
+    work = tempfile.mkdtemp(prefix='api-fixtures-')
+    local = os.path.join(work, '_payload.py')
+    with open(local, 'w', encoding='utf-8') as f:
+        f.write(src)
+    r = sh(['docker', 'cp', local, f'{container}:/tmp/_payload.py'])
+    if r.returncode:
+        sys.exit(f'docker cp 失敗: {r.stderr.strip()}')
+    return sh([
+        'docker', 'exec', container, 'bash', '-lc',
+        'source ~/.virtualenvs/invenio/bin/activate; cd /code; '
+        'invenio shell -c "exec(open(\'/tmp/_payload.py\').read())"',
+    ])
+
+
 def main():
     p = argparse.ArgumentParser(description='動的検証用フィクスチャを投入する')
     p.add_argument('--out', default=os.path.join(
@@ -539,25 +930,35 @@ def main():
     p.add_argument('--container', default='',
                    help='投入先コンテナ(省略時は compose ラベルから自動検出)')
     p.add_argument('--password', default=PASSWORD)
-    p.add_argument('--redact-out', default='',
-                   help='秘密を伏せた版の出力先。追跡してよい記録用')
+    p.add_argument('--scale', type=int, default=0,
+                   help='デモ用アイテムの件数。0(既定)はテストに必要な最低限のみ。'
+                        'リポジトリの規模感を再現するには 100 / 1000 / 10000 / '
+                        '100000 / 1000000 を指定する')
+    p.add_argument('--clean', choices=['demo', 'all'], default='',
+                   help='投入したデータを消す。demo: デモ用アイテムのみ / '
+                        'all: 本スクリプトが作るもの全部(ユーザは消さない)')
     a = p.parse_args()
 
     container = resolve_container(a.container)
-    import tempfile
-    work = tempfile.mkdtemp(prefix='api-fixtures-')
-    local = os.path.join(work, '_fixtures_payload.py')
-    with open(local, 'w', encoding='utf-8') as f:
-        f.write(PAYLOAD % {'password': a.password})
 
-    r = sh(['docker', 'cp', local, f'{container}:/tmp/_fixtures_payload.py'])
-    if r.returncode:
-        sys.exit(f'docker cp 失敗: {r.stderr.strip()}')
-    r = sh([
-        'docker', 'exec', container, 'bash', '-lc',
-        'source ~/.virtualenvs/invenio/bin/activate; cd /code; '
-        'invenio shell -c "exec(open(\'/tmp/_fixtures_payload.py\').read())"',
-    ])
+    if a.clean:
+        r = run_payload(container,
+                        CLEAN_PAYLOAD % {'scope': a.clean,
+                                         'token': DUMMY_TOKEN},
+                        'clean')
+        if 'CLEAN_OK' not in r.stdout:
+            sys.exit(f'削除に失敗:\n{r.stdout[-3000:]}\n{r.stderr[-2000:]}')
+        for line in r.stdout.splitlines():
+            t = line.strip()
+            if t.startswith(('CLEAN_OK', 'DEL ', 'ERR ')):
+                print('  ' + t)
+        print('\n  投入し直すには --clean を外して実行してください。')
+        return
+
+    r = run_payload(container,
+                    PAYLOAD % {'password': a.password, 'scale': a.scale,
+                               'token': DUMMY_TOKEN},
+                    'fixtures')
     if 'FIXTURES_OK' not in r.stdout:
         sys.exit(f'フィクスチャ投入に失敗:\n{r.stdout[-3000:]}\n{r.stderr[-2000:]}')
     for line in r.stdout.splitlines():
@@ -569,21 +970,11 @@ def main():
         sys.exit(f'fixtures.json の取得に失敗: {r.stderr.strip()}')
     data = json.load(open(a.out, encoding='utf-8'))
 
-    if a.redact_out:
-        # 伏せるのは実際に環境を触れる2つだけ。ID は隠す理由がない。
-        red = json.loads(json.dumps(data))
-        red['password'] = '(redacted)'
-        if isinstance(red.get('token'), dict):
-            red['token'] = dict(red['token'], access_token='(redacted)')
-        red['_note'] = ('fixtures.py が生成した値のうち、平文パスワードと '
-                        'OAuth アクセストークンを伏せたもの。'
-                        'どの対象に対して測定したかを残すための記録で、'
-                        'これを読み込んで測定することはできない。')
-        with open(a.redact_out, 'w', encoding='utf-8') as f:
-            json.dump(red, f, ensure_ascii=False, indent=1, sort_keys=True)
-            f.write('\n')
-        print(f"  記録用(秘密を伏せた版): {a.redact_out}")
     print(f"\n{a.out}")
+    demo = data.get('demo') or {}
+    if demo.get('scale'):
+        print(f"  デモ用アイテム: 既存 {demo.get('existing', 0)} 件 + "
+              f"新規 {demo.get('created', 0)} 件 = 目標 {demo['scale']} 件")
     print(f"  users={len(data['users'])} records={len(data['records'])} "
           f"index={data['index']}/{data.get('index_child')} "
           f"file={'あり' if data['file'] else 'なし'} "
