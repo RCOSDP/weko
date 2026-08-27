@@ -1,3 +1,21 @@
+async function parseJsonResponse(res) {
+  if (res.redirected) {
+    // Session expired: fetch followed the redirect to the login page.
+    window.location.href = res.url;
+    // Never settles, so the caller's .then()/.catch() will not run.
+    return new Promise(function () {});
+  }
+  const contentType = res.headers.get('Content-Type') || '';
+  if (contentType.indexOf('application/json') === -1) {
+    throw new Error(res.status + ' ' + res.statusText);
+  }
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error);
+  }
+  return data;
+}
+
 async function openBucketCopyModal() {
   $('#bucket_copy_modal').modal('show');
   $('#modal-guide').hide();
@@ -10,14 +28,7 @@ async function openBucketCopyModal() {
 
   url ="/records/get_bucket_list";
   await fetch(url ,{method:'GET' ,headers:{'Content-Type':'application/json'} ,credentials:"include"})
-  .then(res => {
-    if (!res.ok) {
-      return res.json().then(errorData => {
-          throw new Error(errorData.error);
-      });
-    }
-    return res.json();
-  })
+  .then(parseJsonResponse)
   .then((result) => {
     $('.options-list').empty();
     result.forEach(function(bucket_name) {
@@ -101,14 +112,7 @@ async function copyFileToBucket() {
   }
   url ="/records/copy_bucket";
   await fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
-  .then(res => {
-    if (!res.ok) {
-      return res.json().then(errorData => {
-          throw new Error(errorData.error);
-      });
-    }
-    return res.json();
-  })
+  .then(parseJsonResponse)
   .then(result => {
     $('#modal-result-message').text(copy_success_message);
     $('#modal-result-uri').text(result);
@@ -156,14 +160,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
     url ="/records/get_file_place";
 
     await fetch(url ,{method:'POST', credentials:"include", body: formData})
-    .then(res => {
-      if (!res.ok) {
-        return res.json().then(errorData => {
-            throw new Error(errorData.error);
-        });
-      }
-      return res.json();
-    })
+    .then(parseJsonResponse)
     .then(result => {
       console.log(result);
       return_file_place = result.file_place
@@ -197,14 +194,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
       formData_second.append('new_version_id', return_version_id);
 
       await fetch(url ,{method:'POST', credentials:"include", body: formData_second})
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(errorData => {
-              throw new Error(errorData.error);
-          });
-        }
-        return res.json();
-      })
+      .then(parseJsonResponse)
       .then(result => {
         alert(file_replacement_successful_message);
         window.location = record_url;
@@ -224,14 +214,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
       formData_second.append('file_size', file.size);
 
       await fetch(url ,{method:'POST', credentials:"include", body: formData_second})
-      .then(res => {
-        if (!res.ok) {
-          return res.json().then(errorData => {
-              throw new Error(errorData.error);
-          });
-        }
-        return res.json();
-      })
+      .then(parseJsonResponse)
       .then(result => {
         alert(file_replacement_successful_message);
         window.location = record_url;
