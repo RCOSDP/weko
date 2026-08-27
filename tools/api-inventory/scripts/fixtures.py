@@ -18,6 +18,12 @@
 生成したIDは fixtures.json に書き出し、probe.py がプレースホルダ解決に使う。
 
 冪等: 既存の値があれば再利用し、無ければ作る。CI で毎回流してよい。
+
+``--redact-out`` を付けると、平文パスワードと OAuth アクセストークンだけを
+伏せた同じ内容をもう1本書き出す。*こちらは追跡してよい。*
+測定条件(measure_profile.json)は台帳リポジトリで追跡しているのに、
+その条件を当てた対象(どの recid / バケット / インデックスか)が
+どこにも残らないと、後から測定結果を読み解けなくなるため。
 """
 import argparse
 import json
@@ -533,6 +539,8 @@ def main():
     p.add_argument('--container', default='',
                    help='投入先コンテナ(省略時は compose ラベルから自動検出)')
     p.add_argument('--password', default=PASSWORD)
+    p.add_argument('--redact-out', default='',
+                   help='秘密を伏せた版の出力先。追跡してよい記録用')
     a = p.parse_args()
 
     container = resolve_container(a.container)
@@ -560,6 +568,21 @@ def main():
     if r.returncode:
         sys.exit(f'fixtures.json の取得に失敗: {r.stderr.strip()}')
     data = json.load(open(a.out, encoding='utf-8'))
+
+    if a.redact_out:
+        # 伏せるのは実際に環境を触れる2つだけ。ID は隠す理由がない。
+        red = json.loads(json.dumps(data))
+        red['password'] = '(redacted)'
+        if isinstance(red.get('token'), dict):
+            red['token'] = dict(red['token'], access_token='(redacted)')
+        red['_note'] = ('fixtures.py が生成した値のうち、平文パスワードと '
+                        'OAuth アクセストークンを伏せたもの。'
+                        'どの対象に対して測定したかを残すための記録で、'
+                        'これを読み込んで測定することはできない。')
+        with open(a.redact_out, 'w', encoding='utf-8') as f:
+            json.dump(red, f, ensure_ascii=False, indent=1, sort_keys=True)
+            f.write('\n')
+        print(f"  記録用(秘密を伏せた版): {a.redact_out}")
     print(f"\n{a.out}")
     print(f"  users={len(data['users'])} records={len(data['records'])} "
           f"index={data['index']}/{data.get('index_child')} "

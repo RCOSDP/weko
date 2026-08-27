@@ -71,7 +71,11 @@ python3 "$HERE/reconcile.py" > "$WORK/reconcile.md" 2>&1 || true
 head -1 "$WORK/reconcile.md" | sed 's/^/  /'
 
 say "[3/6] フィクスチャを投入する"
-python3 "$HERE/fixtures.py" --out "$WEKO_API_INVENTORY_DIR/fixtures.json" >"$WORK/fixtures.log" 2>&1
+# fixtures.json は秘密を含むので追跡しない。どの対象に対して測ったかを
+# 残すため、秘密だけ伏せた版を同時に書き出す(こちらは追跡する)。
+python3 "$HERE/fixtures.py" --out "$WEKO_API_INVENTORY_DIR/fixtures.json" \
+        --redact-out "$WEKO_API_INVENTORY_DIR/fixtures_snapshot.json" \
+        >"$WORK/fixtures.log" 2>&1
 grep -E '^  (users|※|    )' "$WORK/fixtures.log" | sed 's/^/  /' || true
 
 say "[4/6] 実測する"

@@ -1038,27 +1038,45 @@ Phase 6 は**構造の変化**(経路・デコレータ・config)を検知する
 ## 7-1. `fixtures.py` — 最小テストコーパスの投入
 
 ```bash
-python3 scripts/fixtures.py --out fixtures.json
-# users=5 records=3 index=900001 file=あり token=あり community=あり group=あり
+python3 scripts/fixtures.py --out fixtures.json \
+        --redact-out "$WEKO_API_INVENTORY_DIR/fixtures_snapshot.json"
+# users=5 records=3 index=900001/900011 file=あり token=あり community=あり group=あり
 ```
+
+`measure.sh` は上記の形で呼ぶ。手で叩く必要は無い。
 
 投入するもの:
 
 - 既知パスワード(`Passw0rd!123`)に揃えたユーザ5人
-- 公開インデックス(`900001`)
+- 公開インデックス(`900001`)と子インデックス(`900011`)
 - レコード3件 — いずれもバケット付き
   - `public` (recid 900001, publish_status=0, owner=Contributor)
   - `private` (recid 900002, publish_status=1, owner=Contributor, **ファイル実体付き**)
   - `other_owner` (recid 900003, publish_status=1, owner=General, **ファイル実体付き**)
 - 全19スコープの個人アクセストークン
 - Community / Group
+- 上記の健全性の回復(`index_health`)
 
 **冪等かつ自己修復。** 既存があれば再利用しつつ `path` / `owner` / `publish_status` を
 毎回入れ直す。先行ステップ(インデックス作成など)が失敗した回に作られたレコードは
 `path` が空のままになり `check_index_permissions` を通らないため、再実行で直るようにしてある。
 
-生成物 `fixtures.json` は **`.gitignore` 済み**。OAuthアクセストークンと平文パスワードを
-含むのでリポジトリには入れない。CI では毎回生成する。
+### 生成物を2本に分けている理由
+
+| ファイル | 追跡 | 中身 |
+|---|:--:|---|
+| `fixtures.json` | **しない** | 実体。OAuthアクセストークンと平文パスワードを含む |
+| `fixtures_snapshot.json` | **する**(台帳リポジトリ側) | 上記の秘密2つだけを `(redacted)` にしたもの |
+
+伏せるのは**実際に環境を触れる2つだけ**で、recid / バケット / インデックス /
+activity_id などの ID は隠さない。
+
+**測定条件(`measure_profile.json`)は追跡しているのに、その条件を当てた対象が
+どこにも残らない、という非対称を避けるため。** 後から測定結果を読むとき、
+「どの recid のどのファイルに対して測ったのか」が分からないと解釈できない。
+
+`fixtures_snapshot.json` は**記録専用**で、これを読み込んで測定することはできない
+(トークンが伏せてあるため)。環境を作り直すのは常に `fixtures.py` を流す。
 
 ### フィクスチャで再現できること(検証済み)
 
