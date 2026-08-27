@@ -1481,6 +1481,7 @@ def dbsession_clean(exception):
 
 
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
+@login_required
 def get_bucket_list():
     try:
         bucket_list = get_s3_bucket_list()
@@ -1490,6 +1491,8 @@ def get_bucket_list():
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/copy_bucket", methods=['POST'])
+@login_required
+@record_edit_permission_required(param='pid')
 def copy_bucket():
     data = request.get_json()
     pid = data.get('pid')

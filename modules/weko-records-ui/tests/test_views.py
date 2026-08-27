@@ -1624,14 +1624,25 @@ def test_publish(app, client, records):
                             mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_bucket_list(app,records,users):
-    with app.test_request_context():
-        with patch("weko_records_ui.views.get_s3_bucket_list", return_value=[]):
-            response = get_bucket_list()
-            assert response.status_code == 200
-        with patch("weko_records_ui.views.get_s3_bucket_list",side_effect=Exception):
-            response = get_bucket_list()
-            assert response[1] == 400
+def test_get_bucket_list(app, records, users, client):
+    # ビュー関数を直接呼ぶとデコレータを通らないため client 経由にした
+    login(client, obj=users[0]["obj"])
+    url = url_for("weko_records_ui.get_bucket_list")
+    with patch("weko_records_ui.views.get_s3_bucket_list", return_value=[]):
+        assert client.get(url).status_code == 200
+    with patch("weko_records_ui.views.get_s3_bucket_list", side_effect=Exception):
+        assert client.get(url).status_code == 400
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_bucket_list_acl_guest(app, records, users, client):
+    """Lists the caller's own S3 buckets, so it needs a caller.
+
+    get_s3_bucket_list raises a bare Exception for anonymous users and the
+    view turns that into 400, which is indistinguishable from a bad request.
+    """
+    res = client.get(url_for("weko_records_ui.get_bucket_list"))
+    assert res.status_code == 302
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_copy_bucket(app,records,users, client):
@@ -1664,6 +1675,64 @@ def test_copy_bucket(app,records,users, client):
             content_type='application/json',
         )
         assert res.status_code == 400
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_copy_bucket_acl_guest(app, records, users, client):
+    """Anonymous requests get 401 JSON rather than the login page.
+
+    Unlike replace_file, the caller sends a JSON body, so the unauthorized
+    handler answers in JSON instead of redirecting -- a redirect would reach
+    the fetch() caller as the login page's HTML and fail while parsing.
+    """
+    res = client.post(url_for("weko_records_ui.copy_bucket"),
+                      data=json.dumps({'pid': '1'}),
+                      content_type='application/json')
+    assert res.status_code == 401
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (2, 200), # sysadmin
+        (4, 403), # generaluser
+        (5, 403), # originalroleuser
+    ],
+)
+def test_copy_bucket_acl(app, records, users, client, id, status_code):
+    """Copying a record's file out to a bucket is an edit of that record."""
+    login(client, obj=users[id]["obj"])
+    with patch("weko_records_ui.views.copy_bucket_to_s3", return_value={}):
+        res = client.post(
+            url_for("weko_records_ui.copy_bucket"),
+            data=json.dumps({
+                'pid': '1',
+                'file_name': 'helloworld.pdf',
+                'bucket_id': '1',
+                'checked': 'True',
+                'bucket_name': 'name',
+            }),
+            content_type='application/json',
+        )
+        assert res.status_code == status_code
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_contributor_not_owner -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_copy_bucket_contributor_not_owner(
+        client, records, users, contributor_not_owner):
+    """Holding the Contributor role is not enough without ownership.
+
+    The record id arrives in the JSON body here, not the URL.
+    """
+    with patch("flask_login.utils._get_user", return_value=contributor_not_owner):
+        with patch("weko_records_ui.views.copy_bucket_to_s3", return_value={}):
+            res = client.post(
+                url_for("weko_records_ui.copy_bucket"),
+                data=json.dumps({'pid': '1', 'bucket_name': 'name'}),
+                content_type='application/json',
+            )
+        assert res.status_code == 403
+
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_file_place(app,records,users, client):
