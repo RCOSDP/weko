@@ -22,13 +22,14 @@
 
 import json
 import sys
+from functools import wraps
 from wsgiref.util import request_uri
 
 import redis
 from redis import sentinel
 from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
-from flask_login import login_required
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
@@ -45,6 +46,50 @@ from weko_redis.redis import RedisConnection
 from .api import WekoDeposit, WekoRecord
 
 # from copy import deepcopy
+
+
+def require_item_edit_permission(f):
+    """depid ルートが指すアイテムの編集権限を要求する。
+
+    ItemResource は ContentNegotiatedMethodView で、ビュー本体が丸ごと
+    ``try:`` に入っている。中で abort すると except に捕まって別のコードに
+    化けるため、判定はデコレータにしてビューの外に出す。
+
+    未認証も ``@login_required`` ではなくここで ``abort(401)`` する。
+    ``login_required`` は UI アプリだとログイン画面への 302 を *返す* ため、
+    その Response が ``make_response(*result)`` に渡されて
+    ``(pid, record)`` として展開され TypeError になる。
+    例外なら CNMV も素通しするので、必ず raise 側で返す。
+
+    ``pid_value`` は URL コンバータが解決した PID オブジェクトで届く。
+    publish と同じく recid として引き直し、同じ ``edit_permission_factory``
+    で判定する。
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # 循環 import を避けるため関数内で読み込む
+        from weko_items_ui.permissions import edit_permission_factory
+        if not (current_user and current_user.is_authenticated):
+            abort(401)
+        pid_value = kwargs.get('pid_value')
+        pid_value = str(getattr(pid_value, 'value', pid_value))
+        pid = PersistentIdentifier.query.filter_by(
+            pid_type='recid', pid_value=pid_value).first()
+        if pid is None and '.' in pid_value:
+            # バージョン付き(1.0 / 1.1)は親の recid で判定する。
+            # put 自身も pid_value.split(".")[0] で親を引いており、
+            # 編集権限は親レコードが持っている。
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value=pid_value.split('.')[0]).first()
+        if pid is None:
+            abort(404, "Item not found")
+        r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+        if r is None:
+            abort(404, "Item not found")
+        if not edit_permission_factory(r.json).can():
+            abort(403, "You do not have permission to edit this item")
+        return f(*args, **kwargs)
+    return decorated
 
 
 @login_required
@@ -219,6 +264,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
         self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
 
+    @require_item_edit_permission
     @pass_record
     def post(self, pid, record, **kwargs):
         """Post."""
@@ -228,6 +274,7 @@ class ItemResource(ContentNegotiatedMethodView):
                                   201,
                                   links_factory=base_factory)
 
+    @require_item_edit_permission
     def put(self, **kwargs):
         """Put."""
         from weko_workflow.api import WorkActivity
