@@ -9,10 +9,11 @@
 
 投入するもの:
   - 既知パスワードのユーザ(既存アカウントのパスワードを揃える)
-  - 公開インデックス
+  - 公開インデックスとその配下の子インデックス
   - 公開アイテム / 非公開アイテム / 他人所有の非公開アイテム(いずれもファイル実体付き)
   - 全スコープの個人アクセストークン
   - Community / Group(担当外リソースの越境検証用)
+  - 上記の健全性の回復(削除済みになったインデックスを戻す)
 
 生成したIDは fixtures.json に書き出し、probe.py がプレースホルダ解決に使う。
 
@@ -37,7 +38,8 @@ from invenio_db import db
 
 PASSWORD = "%(password)s"
 OUT = {"password": PASSWORD, "users": {}, "records": {}, "file": {},
-       "index": None, "token": None, "community": None, "group": None,
+       "index": None, "index_child": None, "index_health": None,
+       "token": None, "community": None, "group": None,
        "activity": None, "activity_other": None, "ids": {}, "errors": []}
 
 # 1x1 透明PNG(75B)。ファイル露出検証はバイト列が取れれば十分
@@ -94,11 +96,46 @@ def _index():
                     public_date=None, owner_user_id=1)
         db.session.add(idx)
         db.session.flush()
+    # 冪等かつ自己修復。--allow-writes の probe はインデックス削除系も叩くため、
+    # 測定のたびに is_deleted が立ちうる。放置すると次回以降の測定が壊れる:
+    # get_child_list_recursive は is_deleted を除外したうえで .one() するので、
+    # コミュニティのルートが削除済みだと NoResultFound になり、
+    # has_comadmin_permission -> check_created_id が例外を投げて 500 になる。
+    idx.is_deleted = False
+    idx.parent = 0
+    idx.public_state = True
+    idx.harvest_public_state = True
+    db.session.add(idx)
+    db.session.flush()
     OUT["index"] = int(idx.id)
+
+    # 子インデックス。コミュニティ配下の判定は「ルートと一致するか」ではなく
+    # 「部分木に含まれるか」なので、深さ1では再帰の検証にならない。
+    child = Index.query.filter_by(
+        index_name_english="APIInventory Child").one_or_none()
+    if child is None:
+        used = [i.position for i in Index.query.filter_by(parent=idx.id).all()]
+        pos = (max(used) + 1) if used else 0
+        child = Index(id=900011, parent=idx.id, position=pos,
+                      index_name="APIインベントリ検証用(子)",
+                      index_name_english="APIInventory Child",
+                      public_state=True, harvest_public_state=True,
+                      browsing_role="3,-98,-99", contribute_role="1,2,3,4,-98,-99",
+                      public_date=None, owner_user_id=1)
+        db.session.add(child)
+        db.session.flush()
+    child.is_deleted = False
+    child.parent = idx.id
+    child.public_state = True
+    child.harvest_public_state = True
+    db.session.add(child)
+    db.session.flush()
+    OUT["index_child"] = int(child.id)
 
 
 # ---------------------------------------------------------------- レコード
-def _make_record(recid, owner_id, publish_status, title, with_file):
+def _make_record(recid, owner_id, publish_status, title, with_file,
+                 index_key="index"):
     """PID(recid/depid/parent)+RecordMetadata+バケットを作る。
 
     合成レコードなのでアイテムタイプ固有フィールドは入れていない。
@@ -120,7 +157,8 @@ def _make_record(recid, owner_id, publish_status, title, with_file):
         from sqlalchemy.orm.attributes import flag_modified
         rm = RecordMetadata.query.get(existing.object_uuid)
         js = dict(rm.json or {})
-        js["path"] = [str(OUT["index"])] if OUT["index"] else js.get("path", [])
+        idx = OUT.get(index_key)
+        js["path"] = [str(idx)] if idx else js.get("path", [])
         js["owner"] = str(owner_id)
         js["publish_status"] = publish_status
         js.setdefault("pubdate", {"attribute_name": "PubDate",
@@ -149,7 +187,7 @@ def _make_record(recid, owner_id, publish_status, title, with_file):
 
     js = {
         "_oai": {"id": "oai:weko3.example.org:%%08d" %% recid},
-        "path": [str(OUT["index"])] if OUT["index"] else [],
+        "path": [str(OUT.get(index_key))] if OUT.get(index_key) else [],
         "owner": str(owner_id),
         "recid": str(recid),
         "title": [title],
@@ -201,12 +239,19 @@ def _records():
     owner_c = OUT["users"].get("contributor@example.org", {}).get("id", 3)
     owner_u = OUT["users"].get("user@example.org", {}).get("id", 4)
     specs = [
-        ("public",       900001, owner_c, "0", "APIInventory 公開アイテム",   False),
-        ("private",      900002, owner_c, "1", "APIInventory 非公開アイテム", True),
-        ("other_owner",  900003, owner_u, "1", "APIInventory 他人所有",       True),
+        ("public",       900001, owner_c, "0", "APIInventory 公開アイテム",   False,
+         "index"),
+        ("private",      900002, owner_c, "1", "APIInventory 非公開アイテム", True,
+         "index"),
+        # 他人所有だけ子インデックス配下に置く。コミュニティ管理者は
+        # 「自分の担当インデックスの部分木にある他人のアイテム」を扱えるので、
+        # 深さ1のままだとその判定を測れない。
+        ("other_owner",  900003, owner_u, "1", "APIInventory 他人所有",       True,
+         "index_child"),
     ]
-    for name, recid, owner, pub, title, with_file in specs:
-        rm, bucket, finfo = _make_record(recid, owner, pub, title, with_file)
+    for name, recid, owner, pub, title, with_file, index_key in specs:
+        rm, bucket, finfo = _make_record(recid, owner, pub, title, with_file,
+                                         index_key)
         OUT["records"][name] = {"recid": recid, "uuid": str(rm.id),
                                 "owner": owner, "publish_status": pub,
                                 "bucket": bucket, "file": finfo}
@@ -266,7 +311,58 @@ def _community():
                       root_node_id=root)
         db.session.add(c)
         db.session.flush()
-    OUT["community"] = {"id": cid, "owner": c.id_user}
+    # 自己修復: ルートに指しているインデックスが消えていたら差し替える。
+    # root_node_id は NOT NULL だが、参照先の存在は保証されていない。
+    if OUT["index"] is not None:
+        root_idx = Index.query.filter_by(id=c.root_node_id).one_or_none()
+        if root_idx is None:
+            c.root_node_id = OUT["index"]
+            db.session.add(c)
+            db.session.flush()
+    OUT["community"] = {"id": cid, "owner": c.id_user,
+                        "root_node_id": int(c.root_node_id)}
+
+
+# ------------------------------------------------ インデックスの健全性
+@step("index_health")
+def _index_health():
+    """コミュニティのルートから部分木を辿れる状態かを確かめ、壊れていれば直す。
+
+    コミュニティ管理者の認可判定はここを通る。辿れない状態のまま測ると、
+    その識別子の結果が 500 や 403 に化けて台帳の roles 列が実態とずれる。
+    """
+    from invenio_communities.models import Community
+    from weko_index_tree.models import Index
+    from weko_index_tree.api import Indexes
+
+    repaired, broken = [], []
+    for c in Community.query.all():
+        idx = Index.query.filter_by(id=c.root_node_id).one_or_none()
+        if idx is None:
+            if OUT["index"] is None:
+                broken.append("%%s: root_node_id=%%s が存在しない" %% (c.id, c.root_node_id))
+                continue
+            c.root_node_id = OUT["index"]
+            db.session.add(c)
+            repaired.append("%%s: ルートを %%s に差し替え" %% (c.id, OUT["index"]))
+        elif idx.is_deleted:
+            idx.is_deleted = False
+            db.session.add(idx)
+            repaired.append("%%s: ルート %%s の削除フラグを戻した" %% (c.id, idx.id))
+    db.session.flush()
+
+    # 直したうえで、実際に辿れることを確認する
+    for c in Community.query.all():
+        try:
+            Indexes.get_child_list_recursive(c.root_node_id)
+        except Exception as exc:
+            broken.append("%%s: root=%%s %%s: %%s"
+                          %% (c.id, c.root_node_id, type(exc).__name__, exc))
+    OUT["index_health"] = {"repaired": repaired, "broken": broken}
+    for m in repaired:
+        OUT["errors"].append("index_health 修復(非致命): %%s" %% m)
+    for m in broken:
+        OUT["errors"].append("index_health 未解決: %%s" %% m)
 
 
 # ---------------------------------------------------------------- Group
@@ -466,13 +562,24 @@ def main():
     data = json.load(open(a.out, encoding='utf-8'))
     print(f"\n{a.out}")
     print(f"  users={len(data['users'])} records={len(data['records'])} "
-          f"index={data['index']} file={'あり' if data['file'] else 'なし'} "
+          f"index={data['index']}/{data.get('index_child')} "
+          f"file={'あり' if data['file'] else 'なし'} "
           f"token={'あり' if data['token'] else 'なし'} "
           f"community={'あり' if data['community'] else 'なし'} "
           f"group={'あり' if data['group'] else 'なし'} "
           f"activity={'あり' if data.get('activity') else 'なし'} "
           f"ids={len(data.get('ids') or {})} "
           f"errors={len(data['errors'])}")
+    health = data.get('index_health') or {}
+    if health.get('repaired'):
+        print('  ※ インデックスを修復しました(前回の測定で壊れた分):')
+        for m in health['repaired']:
+            print(f'      {m}')
+    if health.get('broken'):
+        print('  ※ コミュニティのルートから部分木を辿れません。'
+              'コミュニティ管理者の測定値は信用できません:')
+        for m in health['broken']:
+            print(f'      {m}')
     if data['errors']:
         print('  ※ 失敗した投入があります。probe の測定範囲が狭まります。')
 

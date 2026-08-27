@@ -72,7 +72,7 @@ head -1 "$WORK/reconcile.md" | sed 's/^/  /'
 
 say "[3/6] フィクスチャを投入する"
 python3 "$HERE/fixtures.py" --out "$WEKO_API_INVENTORY_DIR/fixtures.json" >"$WORK/fixtures.log" 2>&1
-grep -E '^  (users|※)' "$WORK/fixtures.log" | sed 's/^/  /' || true
+grep -E '^  (users|※|    )' "$WORK/fixtures.log" | sed 's/^/  /' || true
 
 say "[4/6] 実測する"
 if [ -n "$NOS" ]; then
