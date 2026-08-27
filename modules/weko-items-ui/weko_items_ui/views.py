@@ -842,6 +842,8 @@ def get_search_data(data_type=''):
 
 
 @blueprint_api.route('/validate_email_and_index', methods=['POST'])
+@login_required
+@item_permission.require(http_exception=403)
 def validate_user_email_and_index():
     """Validate user mail and index.
 
