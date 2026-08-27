@@ -17,13 +17,16 @@ from os.path import dirname, exists, getsize, join
 
 import pytest
 from fs.errors import DirectoryNotEmptyError, ResourceNotFoundError
-from mock import patch
+from unittest.mock import patch
 from six import BytesIO
+from sqlalchemy import event
 
 from invenio_files_rest.errors import FileSizeError, StorageError, \
     UnexpectedFileSizeError
 from invenio_files_rest.limiters import FileSizeLimit
-from invenio_files_rest.storage import FileStorage, PyFSFileStorage
+from invenio_files_rest.models import Location
+from invenio_files_rest.storage import FileStorage, PyFSFileStorage, \
+    pyfs_storage_factory
 
 
 def test_storage_interface():
@@ -348,3 +351,183 @@ def test_non_unicode_filename(app, pyfs):
             'żółć.txt', mimetype='text/plain', checksum=checksum)
         assert res.status_code == 200
         assert res.headers['Content-Disposition'] == 'inline'
+
+
+def _add_location(db, name, uri, default=False):
+    """Add a location row and commit it.
+
+    ``Location.name`` is validated against ``^[a-z][a-z0-9-]+$``
+    (``invenio_files_rest/models.py``), so names must be two characters or
+    longer, start with a lower-case letter and contain only lower-case
+    alphanumerics and dashes.
+    """
+    loc = Location(name=name, uri=uri, default=default)
+    db.session.add(loc)
+    db.session.commit()
+    return loc
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_prefix_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_prefix_match(app, db, dummy_location):
+    """Test that a location whose URI prefixes the fileurl is selected."""
+    _add_location(db, 'loc-a', 's3://bucket-a')
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-a/ab/cd/ef/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name == 'loc-a'
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_longest_prefix_wins -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_longest_prefix_wins(app, db, dummy_location):
+    """Test that the longest matching location URI wins.
+
+    The shorter URI is inserted first on purpose: without the
+    ``ORDER BY length(uri) DESC`` clause PostgreSQL returns rows in physical
+    (insert) order, so dropping the ordering makes this test fail.
+    """
+    _add_location(db, 'loc-a', 's3://bucket-a')
+    _add_location(db, 'loc-b', 's3://bucket-a/sub')
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-a/sub/ab/cd/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name == 'loc-b'
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_no_partial_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_no_partial_match(app, db, dummy_location):
+    """Test that a location URI matches only at the start of the fileurl.
+
+    ``/mnt/other`` appears in the fileurl but not as a prefix, so it must not
+    be selected and the default location must be used instead.
+    """
+    _add_location(db, 'loc-x', '/mnt/other')
+
+    storage = pyfs_storage_factory(fileurl='/mnt/data/backup/mnt/other/ab/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name != 'loc-x'
+    assert storage.location.id == dummy_location.id
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_uri_underscore_not_wildcard -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_uri_underscore_not_wildcard(
+        app, db, dummy_location):
+    """Test that an underscore in a location URI is not a LIKE wildcard."""
+    _add_location(db, 'loc-us', 's3://weko_bucket')
+
+    storage = pyfs_storage_factory(fileurl='s3://wekoxbucket/ab/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name != 'loc-us'
+    assert storage.location.id == dummy_location.id
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_default_fallback -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_default_fallback(app, db, dummy_location):
+    """Test the fallback to the default location when nothing matches."""
+    storage = pyfs_storage_factory(fileurl='s3://nowhere/ab/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.id == dummy_location.id
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_no_location_logs_warning -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_no_location_logs_warning(app, db, mocker):
+    """Test that a warning is logged when no location can be resolved.
+
+    No location fixture is requested on purpose: with a default location
+    present the fallback would succeed and no warning would be emitted.
+    """
+    warning_mock = mocker.patch.object(app.logger, 'warning')
+
+    storage = pyfs_storage_factory(fileurl='s3://nowhere/ab/data', size=1)
+
+    assert storage.location is None
+    warning_mock.assert_called_once()
+    assert 's3://nowhere/ab/data' in warning_mock.call_args[0][0]
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_default_location_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_default_location_match(
+        app, db, dummy_location, mocker):
+    """Test that an explicit default_location takes precedence.
+
+    ``loc-a`` prefixes the fileurl and would win the prefix lookup, so it also
+    proves that the prefix lookup is not executed once the URI of
+    ``default_location`` has been resolved.
+    """
+    _add_location(db, 'loc-a', 's3://bucket-a')
+
+    fileinstance = mocker.MagicMock()
+    fileinstance.size = 1
+    fileinstance.updated = None
+    fileinstance.uri = 's3://bucket-a/ab/data'
+
+    storage = pyfs_storage_factory(
+        fileinstance=fileinstance, default_location=dummy_location.uri)
+
+    assert storage.location is not None
+    assert storage.location.name != 'loc-a'
+    assert storage.location.id == dummy_location.id
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_skips_query_when_no_default_location -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_skips_query_when_no_default_location(
+        app, db, mocker):
+    """Test that no query is issued when default_location is not given.
+
+    ``loc-none`` has the literal URI ``'None'``: without the guard the lookup
+    would compare against ``str(None)`` and select it.
+    """
+    _add_location(db, 'loc-a', 's3://bucket-a')
+    _add_location(db, 'loc-none', 'None')
+
+    fileinstance = mocker.MagicMock()
+    fileinstance.size = 1
+    fileinstance.updated = None
+    fileinstance.uri = 's3://bucket-a/ab/data'
+
+    statements = []
+
+    def _record(conn, cursor, statement, parameters, context, executemany):
+        statements.append(statement)
+
+    event.listen(db.engine, 'before_cursor_execute', _record)
+    try:
+        storage = pyfs_storage_factory(fileinstance=fileinstance)
+    finally:
+        event.remove(db.engine, 'before_cursor_execute', _record)
+
+    assert storage.location is not None
+    assert storage.location.name != 'loc-none'
+    assert storage.location.name == 'loc-a'
+    assert len(statements) == 1
+    assert 'substr' in statements[0].lower()
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_no_full_scan -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_no_full_scan(app, db, dummy_location, mocker):
+    """Test that the whole location table is never loaded into memory."""
+    _add_location(db, 'loc-a', 's3://bucket-a')
+    mock_all = mocker.patch('invenio_files_rest.models.Location.all')
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-a/ab/data', size=1)
+
+    mock_all.assert_not_called()
+    assert storage.location is not None
+    assert storage.location.name == 'loc-a'
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_passes_args_to_filestorage_class -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_passes_args_to_filestorage_class(app, db, dummy_location, mocker):
+    """Test the arguments handed over to the file storage class."""
+    loc_a = _add_location(db, 'loc-a', 's3://bucket-a')
+    fake_class = mocker.MagicMock()
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-a/ab/data', size=1, filestorage_class=fake_class)
+
+    fake_class.assert_called_once_with('s3://bucket-a/ab/data', size=1, modified=None, clean_dir=True, location=loc_a)
+    assert fake_class.call_args[1]['location'].name == 'loc-a'
+    assert storage is fake_class.return_value
