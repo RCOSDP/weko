@@ -1507,6 +1507,8 @@ def copy_bucket():
 
 
 @blueprint.route("/records/get_file_place", methods=['POST'])
+@login_required
+@record_edit_permission_required(param='pid')
 def get_file_place():
     pid = request.form.get('pid')
     bucket_id = request.form.get('bucket_id')

@@ -1698,6 +1698,58 @@ def test_get_file_place(app,records,users, client):
         )
         assert res.status_code == 400
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_file_place_acl_guest(app, records, users, client):
+    """Anonymous requests are sent to the login screen."""
+    res = client.post(url_for("weko_records_ui.get_file_place"))
+    assert res.status_code == 302
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (2, 200), # sysadmin
+        (4, 403), # generaluser
+        (5, 403), # originalroleuser
+    ],
+)
+def test_get_file_place_acl(app, records, users, client, id, status_code):
+    """get_file_place hands out an upload target, so it needs the same
+    permission as replace_file. Without it the two-step replace flow is
+    only guarded on its second half."""
+    login(client, obj=users[id]["obj"])
+    with patch("weko_records_ui.views.get_file_place_info",
+               return_value=("S3", "uri", "1", "1")):
+        res = client.post(
+            url_for("weko_records_ui.get_file_place"),
+            data={
+                'pid': '1',
+                'bucket_id': '1',
+                'file_name': 'helloworld.pdf',
+            },
+        )
+        assert res.status_code == status_code
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_contributor_not_owner -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_get_file_place_contributor_not_owner(
+        client, records, users, contributor_not_owner):
+    """Holding the Contributor role is not enough without ownership."""
+    with patch("flask_login.utils._get_user", return_value=contributor_not_owner):
+        with patch("weko_records_ui.views.get_file_place_info",
+                   return_value=("S3", "uri", "1", "1")):
+            res = client.post(
+                url_for("weko_records_ui.get_file_place"),
+                data={
+                    'pid': '1',
+                    'bucket_id': '1',
+                    'file_name': 'helloworld.pdf',
+                },
+            )
+        assert res.status_code == 403
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_record_edit_permission_contributor_not_owner -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize("endpoint", ["soft_delete", "restore"])
 def test_record_edit_permission_contributor_not_owner(
