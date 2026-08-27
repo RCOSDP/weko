@@ -252,6 +252,8 @@ def get_selected_lang():
 
 
 @blueprint_api.route('/get_api_cert_type', methods=['GET'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM])
 def get_api_cert_type():
     """Get list of supported API, to display on the combobox on UI.
 
@@ -282,8 +284,7 @@ def get_api_cert_type():
 
 @blueprint_api.route('/get_curr_api_cert/<string:api_code>', methods=['GET'])
 @login_required
-@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM])
 def get_curr_api_cert(api_code=''):
     """Get current API certification data, to display on textbox on UI.
 

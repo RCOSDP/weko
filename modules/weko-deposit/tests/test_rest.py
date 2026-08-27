@@ -54,20 +54,20 @@ def test_publish_guest(client, deposit):
     input = {}
     res = client.put(url, data=json.dumps(input),
                      content_type='application/json')
-    assert res.status_code == 200
-    assert json.loads(res.data) == {"status": "success"}
+    # 未認証は公開できない。以前は permission_factory が無く 200 で通っていた。
+    assert res.status_code in (302, 401)
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_publish_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 @pytest.mark.parametrize('index, status_code', [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
-    (7, 200),
+    (0, 403),  # contributor       所有者でも管理者でもない
+    (1, 200),  # repoadmin
+    (2, 200),  # sysadmin
+    (3, 403),  # comadmin          当該コミュニティ配下ではない
+    (4, 403),  # generaluser
+    (5, 403),  # originalroleuser
+    (6, 200),  # originalroleuser2 repoadmin ロールを持つ
+    (7, 200),  # user              deposit の所有者
 ])
 def test_publish_users(client, users, deposit, index, status_code):
     """
@@ -83,6 +83,10 @@ def test_publish_users(client, users, deposit, index, status_code):
                      content_type='application/json')
     assert res.status_code == status_code
 
+    if status_code != 200:
+        return
+
+    # 認可を通った利用者だけが公開処理に入る。処理が落ちたときは 400。
     with patch("weko_deposit.rest.WekoDeposit",side_effect=BaseException("test_error")):
         res = client.put(url, data=json.dumps(input),
                      content_type='application/json')

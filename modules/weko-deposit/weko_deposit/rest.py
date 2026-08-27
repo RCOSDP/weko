@@ -28,6 +28,7 @@ import redis
 from redis import sentinel
 from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
+from flask_login import login_required
 from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
@@ -46,13 +47,33 @@ from .api import WekoDeposit, WekoRecord
 # from copy import deepcopy
 
 
+@login_required
 def publish(**kwargs):
-    """Publish item."""
+    """Publish item.
+
+    このルートは add_url_rule(view_func=publish) で素の関数として登録されており
+    permission_factory も付いていなかったため、未認証で任意アイテムの公開状態を
+    変更できた。編集系の他経路と同じ edit_permission_factory で判定する。
+
+    認可は try の外で行う。try の中で abort すると except BaseException に
+    捕まって 400 に化け、「権限不足」と「公開処理の失敗」が区別できなくなる。
+    """
+    # 循環 import を避けるため関数内で読み込む
+    # (weko_deposit -> weko_items_ui -> weko_records_ui -> weko_deposit)
+    from weko_items_ui.permissions import edit_permission_factory
+
+    pid_value = kwargs.get('pid_value').value
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=pid_value).first()
+    if pid is None:
+        abort(404, "Item not found")
+    r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+    if r is None:
+        abort(404, "Item not found")
+    if not edit_permission_factory(r.json).can():
+        abort(403, "You do not have permission to publish this item")
+
     try:
-        pid_value = kwargs.get('pid_value').value
-        pid = PersistentIdentifier.query.filter_by(
-            pid_type='recid', pid_value=pid_value).first()
-        r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
         dep = WekoDeposit(r.json, r)
         dep.update_request_mail()
         dep.publish()
