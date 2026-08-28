@@ -123,7 +123,7 @@ def _addOAISet(id):
                 list(traceback.TracebackException.from_exception(sqlerror).format()))
             db.session.rollback()
         current_app.logger.debug(
-            "comunity: {0}, count: {1}".format(c.id, count))
+            "community: {0}, count: {1}".format(c.id, count))
 
 
 def addOAISetToAll():

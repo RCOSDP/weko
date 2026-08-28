@@ -203,7 +203,7 @@ def request_create_action_param(action_version, link_data = None, identifier = N
             identifier_grant_ndl_jalc_doi_link (str): identifier grant ndl jalc doi link
             identifier_grant_ndl_jalc_doi_suffix (str): identifier grant ndl jalc doi suffix
             community (str): community id
-            commond (str): commond
+            command (str): command
             temporary_save (int): temporary save
     """
     return_params = {
