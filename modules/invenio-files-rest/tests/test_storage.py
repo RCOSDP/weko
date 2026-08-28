@@ -531,3 +531,93 @@ def test_pyfs_storage_factory_passes_args_to_filestorage_class(app, db, dummy_lo
     fake_class.assert_called_once_with('s3://bucket-a/ab/data', size=1, modified=None, clean_dir=True, location=loc_a)
     assert fake_class.call_args[1]['location'].name == 'loc-a'
     assert storage is fake_class.return_value
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_similar_bucket_name_not_matched -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_similar_bucket_name_not_matched(
+        app, db, dummy_location):
+    """Test that a location URI only matches on a path boundary.
+
+    ``s3://bucket-a`` is a plain text prefix of ``s3://bucket-a2/...`` but not
+    a path prefix of it. Without the boundary condition ``loc-a`` would be
+    selected and would supply the S3 credentials of the wrong account for a
+    file that actually lives in another bucket.
+    """
+    _add_location(db, 'loc-a', 's3://bucket-a')
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-a2/ab/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name != 'loc-a'
+    assert storage.location.id == dummy_location.id
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_uri_with_trailing_slash -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_uri_with_trailing_slash(app, db, dummy_location):
+    """Test that a location URI already ending with ``/`` still matches.
+
+    The boundary must not be required twice: for ``s3://bucket-b/`` the
+    separator is part of the URI itself, so the character following it is a
+    regular path character and the location must still be selected.
+    """
+    _add_location(db, 'loc-b', 's3://bucket-b/')
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-b/ab/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name == 'loc-b'
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_similar_bucket_names_coexist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_similar_bucket_names_coexist(
+        app, db, dummy_location):
+    """Test that similarly named buckets each resolve to their own location.
+
+    Both ``s3://bucket-a`` and ``s3://bucket-a2`` are registered, so a purely
+    textual prefix match would resolve both file URLs to ``loc-a`` and mix up
+    the credentials of the two buckets.
+    """
+    _add_location(db, 'loc-a', 's3://bucket-a')
+    _add_location(db, 'loc-a2', 's3://bucket-a2')
+
+    storage_a = pyfs_storage_factory(fileurl='s3://bucket-a/ab/data', size=1)
+    storage_a2 = pyfs_storage_factory(fileurl='s3://bucket-a2/ab/data', size=1)
+
+    assert storage_a.location is not None
+    assert storage_a.location.name == 'loc-a'
+    assert storage_a2.location is not None
+    assert storage_a2.location.name == 'loc-a2'
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_local_path_boundary -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_local_path_boundary(app, db, dummy_location):
+    """Test that the boundary also applies to local file system locations.
+
+    ``/mnt/data`` must not swallow files stored below ``/mnt/data2``, which
+    may be a completely different mount point.
+    """
+    _add_location(db, 'loc-data', '/mnt/data')
+    _add_location(db, 'loc-data2', '/mnt/data2')
+
+    storage = pyfs_storage_factory(fileurl='/mnt/data2/ab/data', size=1)
+    storage_other = pyfs_storage_factory(fileurl='/mnt/database/ab/data', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name == 'loc-data2'
+    assert storage_other.location is not None
+    assert storage_other.location.id == dummy_location.id
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_exact_uri_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_pyfs_storage_factory_exact_uri_match(app, db, dummy_location):
+    """Test that a fileurl equal to the location URI still matches.
+
+    There is no character left after the URI to carry the separator, so the
+    boundary check has to accept an exact match as well.
+    """
+    _add_location(db, 'loc-a', 's3://bucket-a')
+
+    storage = pyfs_storage_factory(fileurl='s3://bucket-a', size=1)
+
+    assert storage.location is not None
+    assert storage.location.name == 'loc-a'

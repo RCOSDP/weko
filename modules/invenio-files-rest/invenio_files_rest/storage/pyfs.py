@@ -18,7 +18,7 @@ import cchardet as chardet
 from flask import current_app
 from fs.opener import opener
 from fs.path import basename, dirname
-from sqlalchemy import String, func, literal
+from sqlalchemy import String, and_, func, literal, or_
 
 from ..helpers import make_path
 from .base import FileStorage, StorageError
@@ -232,9 +232,26 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
             location = Location.query.filter(Location.uri == str(default_location)).first()
 
     if location is None:
+        # Match ``Location.uri`` as a path prefix of ``fileurl``, not as a
+        # plain text prefix: a boundary is required right after the URI so
+        # that e.g. the location ``s3://bucket-a`` never matches a file
+        # stored in ``s3://bucket-a2``. Selecting the wrong location would
+        # hand out the wrong (S3) credentials for the file.
+        fileurl_expr = literal(str(fileurl), String)
+        uri_length = func.length(Location.uri)
         location = Location.query.filter(
-            func.substr(literal(str(fileurl), String), 1, func.length(Location.uri)) == Location.uri
-        ).order_by(func.length(Location.uri).desc()).first()
+            and_(
+                func.substr(fileurl_expr, 1, uri_length) == Location.uri,
+                or_(
+                    # fileurl is exactly the location URI
+                    func.length(fileurl_expr) == uri_length,
+                    # the location URI already ends with a separator
+                    func.substr(Location.uri, uri_length, 1) == '/',
+                    # the character right after the URI is a separator
+                    func.substr(fileurl_expr, uri_length + 1, 1) == '/',
+                ),
+            )
+        ).order_by(uri_length.desc()).first()
 
     if location is None:
         # if not match fileurl with location, then get default location
