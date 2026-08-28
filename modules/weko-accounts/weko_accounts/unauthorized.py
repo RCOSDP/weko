@@ -39,6 +39,20 @@ from flask_login import login_url
 from werkzeug.exceptions import Unauthorized
 
 
+NAVIGATION_DESTS = frozenset((
+    'document',   # 通常の画面遷移
+    'iframe',     # <iframe>
+    'frame',      # <frame>
+    'embed',      # <embed>
+    'object',     # <object>
+))
+"""Sec-Fetch-Dest のうち、ブラウザが HTML を描画する遷移。
+
+いずれもログイン画面を返すべきもので、JSON を返すとフレームの中に
+生の JSON が表示されてログイン導線が消える。
+"""
+
+
 def wants_json():
     """Tell an API/AJAX call apart from a browser navigating to a page.
 
@@ -56,12 +70,18 @@ def wants_json():
     if request.mimetype == 'application/json':
         return True
 
-    # Sent by current browsers on every request: 'document' for a navigation,
-    # 'empty' for fetch()/XHR. This is what catches the fetch() callers that
-    # send no Accept header of their own (e.g. bucket.js, detail.js).
+    # Sent by current browsers on every request: 'empty' for fetch()/XHR,
+    # which is what catches the fetch() callers that send no Accept header of
+    # their own (e.g. bucket.js, detail.js).
+    #
+    # Every value in NAVIGATION_DESTS is a browser navigation that renders
+    # HTML, so those need the login screen, not JSON. 'document' is a
+    # top-level navigation; the rest are nested ones. Answering an <iframe>
+    # with {"status": 401} paints raw JSON inside the frame and loses the way
+    # to log in -- invenio-previewer embeds restricted files that way.
     dest = request.headers.get('Sec-Fetch-Dest')
     if dest:
-        return dest != 'document'
+        return dest not in NAVIGATION_DESTS
 
     # No "non-GET implies JSON" rule here. Redirecting a state-changing
     # request to a login page is indeed useless for an AJAX caller, but an
