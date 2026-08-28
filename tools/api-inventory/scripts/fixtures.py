@@ -952,7 +952,7 @@ def _demo_items():
         return
 
     idxs = OUT.get("indexes") or {}
-    kinds = [(idxs.get(en), rt, uri, it) for en, rt, uri, it in DEMO_KINDS
+    kinds = [(idxs.get(en), rt, uri) for en, rt, uri in DEMO_KINDS
              if idxs.get(en)]
     if not kinds:
         raise RuntimeError("子インデックスが無いためデモデータを作れない")
@@ -974,7 +974,8 @@ def _demo_items():
 
     for k in range(int(have) + 1, want + 1):
         recid = base + k
-        idx_id, rtype, ruri, itype = kinds[k %% len(kinds)]
+        idx_id, rtype, ruri = kinds[k %% len(kinds)]
+        itype = ITEM_TYPE_ID
         subj = DEMO_SUBJECTS[k %% len(DEMO_SUBJECTS)]
         form = DEMO_FORMS[k %% len(DEMO_FORMS)]
         ja, en = DEMO_AUTHORS[k %% len(DEMO_AUTHORS)]
@@ -1031,7 +1032,13 @@ def _demo_items():
                                  "$schema": "/items/jsonschema/%%s" %% itype,
                                  "pubdate": pub},
                         "version_id": 1, "created": now, "updated": now})
-        for t, v in (("recid", str(recid)), ("depid", str(recid))):
+        # 実レコードと同じ PID 構成。base が最後の子にならないよう
+        # <n> と <n>.1 を作る(詳細画面の is_last_child 判定のため)。
+        # 5本とも同じ object_uuid を指す。デモ用途では版ごとに別レコードを
+        # 作るまでの必要はなく、行数を5倍に増やさずに済む。
+        for t, v in (("recid", str(recid)), ("depid", str(recid)),
+                     ("recid", "%%s.1" %% recid), ("depid", "%%s.1" %% recid),
+                     ("parent", "parent:%%s" %% recid)):
             rows_pid.append({"pid_type": t, "pid_value": v,
                              "status": "R", "object_type": "rec",
                              "object_uuid": uid,
@@ -1042,6 +1049,37 @@ def _demo_items():
             print("  demo_items: %%d / %%d" %% (int(have) + created, want),
                   flush=True)
     flush_rows()
+
+    # PID リレーションは件数が多いので INSERT ... SELECT で一括生成する。
+    # 5本の PID は同じ object_uuid を指すので、そこで結合できる。
+    demo_uuid = ("SELECT id FROM records_metadata WHERE json->>'_demo' = '1'")
+    db.session.execute("""
+        INSERT INTO pidrelations_pidrelation (parent_id, child_id,
+                                              relation_type, "index",
+                                              created, updated)
+        SELECT p.id, c.id, 2,
+               CASE WHEN c.pid_value LIKE '%%%%.1' THEN 1 ELSE 0 END,
+               now(), now()
+        FROM pidstore_pid p
+        JOIN pidstore_pid c
+          ON c.object_uuid = p.object_uuid AND c.pid_type = 'recid'
+        WHERE p.pid_type = 'parent' AND p.object_uuid IN (%%s)
+          AND NOT EXISTS (SELECT 1 FROM pidrelations_pidrelation x
+                          WHERE x.parent_id = p.id AND x.child_id = c.id)
+    """ %% demo_uuid)
+    db.session.execute("""
+        INSERT INTO pidrelations_pidrelation (parent_id, child_id,
+                                              relation_type, created, updated)
+        SELECT r.id, d.id, 3, now(), now()
+        FROM pidstore_pid r
+        JOIN pidstore_pid d
+          ON d.object_uuid = r.object_uuid AND d.pid_type = 'depid'
+         AND d.pid_value = r.pid_value
+        WHERE r.pid_type = 'recid' AND r.object_uuid IN (%%s)
+          AND NOT EXISTS (SELECT 1 FROM pidrelations_pidrelation x
+                          WHERE x.parent_id = r.id AND x.child_id = d.id)
+    """ %% demo_uuid)
+    db.session.commit()
     OUT["demo"]["created"] = created
 
 
@@ -1104,9 +1142,16 @@ def _demo():
     ).scalar() or 0
     if not n:
         return 0
+    sel = "SELECT id FROM records_metadata WHERE json->>'_demo' = '1'"
+    sel_pid = "SELECT id FROM pidstore_pid WHERE object_uuid IN (%%s)" %% sel
+    # PID を参照している行を先に落とす
     db.session.execute(
-        "DELETE FROM pidstore_pid WHERE object_uuid IN "
-        "(SELECT id FROM records_metadata WHERE json->>'_demo' = '1')")
+        "DELETE FROM pidrelations_pidrelation WHERE parent_id IN (%%s) "
+        "OR child_id IN (%%s)" %% (sel_pid, sel_pid))
+    db.session.execute(
+        "DELETE FROM pidstore_redirect WHERE pid_id IN (%%s)" %% sel_pid)
+    db.session.execute(
+        "DELETE FROM pidstore_pid WHERE object_uuid IN (%%s)" %% sel)
     db.session.execute(
         "DELETE FROM item_metadata WHERE id IN "
         "(SELECT id FROM records_metadata WHERE json->>'_demo' = '1')")
