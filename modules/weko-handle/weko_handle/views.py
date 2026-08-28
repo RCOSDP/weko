@@ -14,7 +14,11 @@ from __future__ import absolute_import, print_function
 
 from flask import Blueprint, current_app, jsonify, render_template, request
 from flask_babelex import gettext as _
+from flask_login import login_required
 from invenio_db import db
+from weko_accounts.utils import roles_required
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
 
 from .api import Handle
 
@@ -42,6 +46,9 @@ def index():
 
 
 @blueprint.route('/retrieve', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def retrieve_handle():
     """Retrieve a handle."""
     try:
@@ -56,6 +63,9 @@ def retrieve_handle():
 
 
 @blueprint.route('/register', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def register_handle():
     """Register a handle."""
     try:
@@ -70,6 +80,9 @@ def register_handle():
         current_app.logger.error('Unexpected error: ', e)
 
 @blueprint.route('/delete', methods=['POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def delete_handle():
     """Delete a handle."""
     try:

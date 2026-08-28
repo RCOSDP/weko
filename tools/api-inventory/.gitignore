@@ -8,7 +8,9 @@ reconcile_allow.json
 reconcile_report.md
 probe*.json
 drift*.md
-# fixtures.py が生成する。OAuthアクセストークンと平文パスワードを含む。
+# fixtures.py が生成する。秘密は入らない(パスワードは fixtures.py の定数、
+# アクセストークンは固定のダミー)が、環境依存の値なので public 側には置かない。
+# 台帳リポジトリ側では測定対象の記録として追跡する。
 fixtures.json
 __pycache__/
 *.pyc

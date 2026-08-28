@@ -23,6 +23,10 @@ import pytest
 from flask import Flask
 from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
+from invenio_access import InvenioAccess
+from invenio_accounts.ext import InvenioAccounts
+from invenio_accounts.models import Role, User
+from invenio_accounts.testutils import create_test_user
 from invenio_db import InvenioDB
 from invenio_db import db as db_
 
@@ -101,6 +105,8 @@ def base_app(instance_path):
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
     InvenioDB(app_)
+    InvenioAccounts(app_)
+    InvenioAccess(app_)
     WekoHandle(app_)
     app_.register_blueprint(blueprint)
 
@@ -130,3 +136,28 @@ def db(app):
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+
+@pytest.fixture()
+def users(app, db):
+    """Create the users the handle views' role check needs."""
+    ds = app.extensions['invenio-accounts'].datastore
+
+    def _user(email):
+        user = User.query.filter_by(email=email).first()
+        return user if user else create_test_user(email=email)
+
+    def _role(name):
+        role = Role.query.filter_by(name=name).first()
+        return role if role else ds.create_role(name=name)
+
+    sysadmin = _user('sysadmin@test.org')
+    generaluser = _user('generaluser@test.org')
+    ds.add_role_to_user(sysadmin, _role('System Administrator'))
+    ds.add_role_to_user(generaluser, _role('General'))
+    db.session.commit()
+
+    return [
+        {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
+    ]

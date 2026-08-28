@@ -20964,14 +20964,14 @@ def test_get_search_data_acl_user(client_api, users, db_userprofile, db_sessionl
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
-        (7, 200),
+        (0, 200), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser      item-access なし
+        (5, 403), # originalroleuser item-access なし
+        (6, 200), # originalroleuser2
+        (7, 403), # user             item-access なし
     ],
 )
 def test_validate_user_email_and_index_login(client_api, users, id, status_code):
@@ -20993,7 +20993,7 @@ def test_validate_user_email_and_index_guest(client_api, users):
             data=json.dumps({}),
             content_type="application/json",
         )
-        assert res.status_code == 200
+        assert res.status_code == 401
 
 
 # def validate_user_info():
@@ -21001,14 +21001,14 @@ def test_validate_user_email_and_index_guest(client_api, users):
 @pytest.mark.parametrize(
     "id, status_code",
     [
-        (0, 200),
-        (1, 200),
-        (2, 200),
-        (3, 200),
-        (4, 200),
-        (5, 200),
-        (6, 200),
-        (7, 200),
+        (0, 200), # contributor
+        (1, 200), # repoadmin
+        (2, 200), # sysadmin
+        (3, 200), # comadmin
+        (4, 403), # generaluser      item-access なし
+        (5, 403), # originalroleuser item-access なし
+        (6, 200), # originalroleuser2
+        (7, 403), # user             item-access なし
     ],
 )
 def test_validate_user_info_login(client_api, users, id, status_code):
@@ -21028,7 +21028,7 @@ def test_validate_user_info_guest(client_api, users):
         data=json.dumps({"username": "", "email": ""}),
         content_type="application/json",
     )
-    assert res.status_code == 200
+    assert res.status_code == 401
 
 # def validate_users_info():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_users_info_login -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

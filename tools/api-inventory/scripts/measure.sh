@@ -71,8 +71,11 @@ python3 "$HERE/reconcile.py" > "$WORK/reconcile.md" 2>&1 || true
 head -1 "$WORK/reconcile.md" | sed 's/^/  /'
 
 say "[3/6] フィクスチャを投入する"
-python3 "$HERE/fixtures.py" --out "$WEKO_API_INVENTORY_DIR/fixtures.json" >"$WORK/fixtures.log" 2>&1
-grep -E '^  (users|※)' "$WORK/fixtures.log" | sed 's/^/  /' || true
+# 測定は最低限のフィクスチャで足りる(--scale は既定 0)。
+# デモ用の件数を積むのは環境構築時に別途 --scale を付けて実行する。
+python3 "$HERE/fixtures.py" --out "$WEKO_API_INVENTORY_DIR/fixtures.json" \
+        >"$WORK/fixtures.log" 2>&1
+grep -E '^  (users|※|    )' "$WORK/fixtures.log" | sed 's/^/  /' || true
 
 say "[4/6] 実測する"
 if [ -n "$NOS" ]; then

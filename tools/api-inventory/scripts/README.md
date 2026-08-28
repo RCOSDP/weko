@@ -1038,27 +1038,57 @@ Phase 6 は**構造の変化**(経路・デコレータ・config)を検知する
 ## 7-1. `fixtures.py` — 最小テストコーパスの投入
 
 ```bash
+# テストに必要な最低限(measure.sh はこの形で呼ぶ)
 python3 scripts/fixtures.py --out fixtures.json
-# users=5 records=3 index=900001 file=あり token=あり community=あり group=あり
+
+# デモ環境として規模感を持たせる。install.sh のあとに1回流せばよい
+python3 scripts/fixtures.py --out fixtures.json --scale 1000
+
+# 片付ける
+python3 scripts/fixtures.py --clean demo   # デモ用アイテムだけ
+python3 scripts/fixtures.py --clean all    # 本スクリプトが作るもの全部
 ```
+
+`--scale` は 100 / 1000 / 10000 / 100000 / 1000000 を想定。既定は 0 で、
+*測定に必要な最低限しか作らない*。measure.sh は測定中に何度も
+このスクリプトを流し直すため、既定で件数を積むと無駄が大きい。
 
 投入するもの:
 
 - 既知パスワード(`Passw0rd!123`)に揃えたユーザ5人
-- 公開インデックス(`900001`)
+- 公開インデックス(`900001`)と子インデックス(`900011`)
+- **リソースタイプ別アイテム13件**(recid 900101〜) と
+  **全項目を埋めたアイテム1件**(recid 900100)
+  - アイテムタイプは*デフォルトアイテムタイプ（フル）*(30002)に統一。
+    1〜14 は `harvesting_type=t` のハーベスト用で登録アイテムには使わない
+  - 項目は手書きせず**アイテムタイプのスキーマから生成**する。
+    `enum` があれば先頭の有効値、`array`/`object` は再帰、文字列はキー名と
+    `format` から日付/URI/メールを判定。アイテムタイプが変わっても追随する
+  - `resourcetype` と COAR URI の対応は推測せず、リポジトリ内の
+    既存データから抽出したものを使っている
+  - `--scale` とは無関係に常に作る(テストに必要な最低限のため)
 - レコード3件 — いずれもバケット付き
   - `public` (recid 900001, publish_status=0, owner=Contributor)
   - `private` (recid 900002, publish_status=1, owner=Contributor, **ファイル実体付き**)
   - `other_owner` (recid 900003, publish_status=1, owner=General, **ファイル実体付き**)
 - 全19スコープの個人アクセストークン
 - Community / Group
+- 上記の健全性の回復(`index_health`)
 
 **冪等かつ自己修復。** 既存があれば再利用しつつ `path` / `owner` / `publish_status` を
 毎回入れ直す。先行ステップ(インデックス作成など)が失敗した回に作られたレコードは
 `path` が空のままになり `check_index_permissions` を通らないため、再実行で直るようにしてある。
 
-生成物 `fixtures.json` は **`.gitignore` 済み**。OAuthアクセストークンと平文パスワードを
-含むのでリポジトリには入れない。CI では毎回生成する。
+### `fixtures.json` は追跡する
+
+秘密は入らない。パスワードは本スクリプトの定数(既に公開)で、
+アクセストークンも固定のダミー値にしてある。
+
+*測定対象の記録として台帳リポジトリ側で追跡する。* 測定条件
+(`measure_profile.json`)だけ残っていても、その条件をどの recid /
+バケット / インデックスに当てたかが分からないと結果を読み解けない。
+
+public 側には置かない(環境依存の値のため `.gitignore` 済み)。
 
 ### フィクスチャで再現できること(検証済み)
 
