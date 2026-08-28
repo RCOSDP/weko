@@ -59,6 +59,102 @@ PNG = base64.b64decode(
     "YPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==")
 
 
+# アイテムタイプは「デフォルトアイテムタイプ（フル）」に統一する。
+# 1〜14 は harvesting_type=t のハーベスト用で、登録アイテムには使わない。
+ITEM_TYPE_ID = 30002
+
+_SCHEMA_CACHE = {}
+
+
+def _item_schema():
+    """アイテムタイプ 30002 のスキーマ。項目は手書きせずここから引く。"""
+    if "props" not in _SCHEMA_CACHE:
+        from weko_records.models import ItemType
+        it = ItemType.query.get(ITEM_TYPE_ID)
+        if it is None:
+            raise RuntimeError(
+                "アイテムタイプ %%d が無い。install.sh を先に流すこと" %% ITEM_TYPE_ID)
+        _SCHEMA_CACHE["props"] = (it.schema or {}).get("properties", {})
+    return _SCHEMA_CACHE["props"]
+
+
+def _sample(key, node):
+    """文字列項目のダミー値。キー名と format から見当を付ける。"""
+    fmt = node.get("format", "")
+    k = key.lower()
+    if "date" in k or fmt in ("date", "datetime"):
+        return "2026-01-01"
+    if "uri" in k or "url" in k or "identifier" in k and "reg" not in k:
+        return "https://example.org/demo"
+    if "mail" in k:
+        return "demo@example.org"
+    if "lang" in k:
+        return "ja"
+    if fmt in ("integer", "number"):
+        return "1"
+    ttl = node.get("title_i18n", {}).get("ja") or node.get("title") or key
+    return "デモ値(%%s)" %% ttl
+
+
+def _gen(node, key=""):
+    """スキーマの1ノードから、形の合ったダミー値を作る。"""
+    if "enum" in node:
+        vals = [v for v in node["enum"] if v is not None]
+        return vals[0] if vals else None
+    t = node.get("type")
+    if t == "array":
+        return [_gen(node.get("items", {}), key)]
+    if t == "object":
+        return {k: _gen(v, k) for k, v in (node.get("properties") or {}).items()}
+    if t in ("number", "integer"):
+        return 1
+    if t == "boolean":
+        return True
+    return _sample(key, node)
+
+
+def build_metadata(title, ja, en, rtype, ruri, pub, full=False):
+    """アイテムタイプ 30002 の項目を組み立てる。
+
+    ``full=True`` でスキーマ上の全項目を埋める。項目を手書きすると
+    アイテムタイプの変更に追随できないので、スキーマから生成する。
+
+    records_metadata 側は attribute_name / attribute_value_mlt で包む形、
+    item_metadata 側は登録フォームの生の形。両方を返す。
+    """
+    props = _item_schema()
+    raw = {
+        "item_30002_title0": [
+            {"subitem_title": title, "subitem_title_language": "ja"}],
+        "item_30002_creator2": [{"creatorNames": [
+            {"creatorName": ja, "creatorNameLang": "ja"},
+            {"creatorName": en, "creatorNameLang": "en"}]}],
+        "item_30002_resource_type13": {"resourcetype": rtype,
+                                       "resourceuri": ruri},
+        "item_30002_language12": [{"subitem_language": "jpn"}],
+        "item_30002_publisher10": [
+            {"subitem_publisher": "テスト大学",
+             "subitem_publisher_language": "ja"}],
+    }
+    if full:
+        for k, node in props.items():
+            # system_* はシステムが埋める項目。pubdate は別途入れている
+            if k.startswith("system_") or k == "pubdate" or k in raw:
+                continue
+            raw[k] = _gen(node, k)
+    raw["pubdate"] = pub
+    raw["$schema"] = "/items/jsonschema/%%d" %% ITEM_TYPE_ID
+
+    wrapped = {}
+    for k, v in raw.items():
+        if not k.startswith("item_%%d_" %% ITEM_TYPE_ID):
+            continue
+        name = (props.get(k, {}).get("title")
+                or props.get(k, {}).get("title_i18n", {}).get("en") or k)
+        wrapped[k] = {"attribute_name": name,
+                      "attribute_value_mlt": v if isinstance(v, list) else [v]}
+    return wrapped, raw
+
 def step(name):
     """各投入を独立させる。1つ失敗しても残りは進める。"""
     def deco(fn):
@@ -162,7 +258,10 @@ def _index():
 
 # ---------------------------------------------------------------- レコード
 def _make_record(recid, owner_id, publish_status, title, with_file,
-                 index_key="index", item_type_id="1"):
+                 index_key="index", item_type_id=None,
+                 rtype="journal article",
+                 ruri="http://purl.org/coar/resource_type/c_6501",
+                 full=False):
     """PID(recid/depid/parent)+RecordMetadata+バケットを作る。
 
     合成レコードなのでアイテムタイプ固有フィールドは入れていない。
@@ -207,6 +306,7 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
                 finfo = _file_info(rb.bucket_id, ov)
         return rm, bucket_id, finfo
 
+    item_type_id = item_type_id or ITEM_TYPE_ID
     uid = _uuid.uuid4()
     loc = Location.get_default() or Location.query.first()
     bucket = Bucket.create(loc)
@@ -219,7 +319,7 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
         "recid": str(recid),
         "title": [title],
         "item_title": title,
-        "item_type_id": str(item_type_id),
+        "item_type_id": str(item_type_id or ITEM_TYPE_ID),
         "pubdate": {"attribute_name": "PubDate", "attribute_value": "2026-01-01"},
         "publish_date": "2026-01-01",
         "publish_status": publish_status,
@@ -232,11 +332,14 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
             "created_by": owner_id, "status": "published",
         },
     }
+    wrapped, raw = build_metadata(title, "山田 太郎", "Yamada, Taro",
+                                  rtype, ruri, "2026-01-01", full=full)
+    js.update(wrapped)
     rm = RecordMetadata(id=uid, json=js, version_id=1)
     db.session.add(rm)
     db.session.flush()
     RecordsBuckets.create(record=rm, bucket=bucket)
-    _item_metadata(uid, item_type_id, title, owner_id)
+    _item_metadata(uid, item_type_id, title, owner_id, raw)
 
     for t, v in (("recid", str(recid)), ("depid", str(recid)),
                  ("parent", "parent:%%s" %% recid)):
@@ -253,7 +356,7 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
     return rm, str(bucket.id), finfo
 
 
-def _item_metadata(uid, item_type_id, title, owner_id):
+def _item_metadata(uid, item_type_id, title, owner_id, raw=None):
     """item_metadata を作る。
 
     無いと ES への反映が落ちる。invenio-indexer の before_record_index が
@@ -265,12 +368,13 @@ def _item_metadata(uid, item_type_id, title, owner_id):
     from weko_records.models import ItemMetadata
     if ItemMetadata.query.get(uid) is not None:
         return
+    js = dict(raw or {})
+    js.setdefault("$schema", "/items/jsonschema/%%s" %% item_type_id)
+    js.setdefault("pubdate", "2026-01-01")
+    js["title"] = title
+    js["owner"] = str(owner_id)
     db.session.add(ItemMetadata(
-        id=uid, item_type_id=int(item_type_id),
-        json={"title": title, "owner": str(owner_id),
-              "$schema": "/items/jsonschema/%%s" %% item_type_id,
-              "pubdate": "2026-01-01"},
-        version_id=1))
+        id=uid, item_type_id=int(item_type_id), json=js, version_id=1))
     db.session.flush()
 
 
@@ -307,6 +411,70 @@ def _records():
         # 非公開アイテムのファイルが露出検証(IIIF/files-rest)の主対象
         if finfo and name == "private":
             OUT["file"] = finfo
+
+
+# --------------------------------------------- リソースタイプ別 / 全項目アイテム
+# resourcetype と COAR URI の対応は、推測せずリポジトリ内の既存データから
+# 抽出したものを使っている(modules/ 配下の JSON / テストデータ)。
+RESOURCE_TYPES = [
+    ("journal article",             "c_6501"),
+    ("departmental bulletin paper", "c_6501"),
+    ("doctoral thesis",             "c_db06"),
+    ("conference paper",            "c_5794"),
+    ("research report",             "c_18ws"),
+    ("technical report",            "c_18gh"),
+    ("dataset",                     "c_ddb1"),
+    ("software",                    "c_5ce6"),
+    ("book",                        "c_2f33"),
+    ("still image",                 "c_ecc8"),
+    ("sound",                       "c_18cc"),
+    ("learning object",             "c_e059"),
+    ("other",                       "c_1843"),
+]
+COAR = "http://purl.org/coar/resource_type/%%s"
+
+
+@step("pattern_items")
+def _pattern_items():
+    """リソースタイプ別のアイテムと、全項目を埋めたアイテム。
+
+    アイテムタイプは *デフォルトアイテムタイプ（フル）*(30002) に統一する。
+    1〜14 は harvesting_type=t のハーベスト用で、登録アイテムには使わない。
+
+    - 900100 … スキーマ上の*全項目*を埋めた1件。項目ごとの表示・出力を
+      1件で確認できるようにするため
+    - 900101〜 … リソースタイプ別。種別で分岐する処理(OAI/JPCoAR 出力、
+      検索ファセット、詳細画面)を種別ごとに確かめられるようにする
+
+    測定に必要な最低限の一部なので --scale とは無関係に常に作る。
+    """
+    owner = OUT["users"].get("contributor@example.org", {}).get("id", 3)
+    idxs = list((OUT.get("indexes") or {}).values()) or [OUT.get("index")]
+    OUT["pattern_items"] = {"full": None, "by_resource_type": {}}
+
+    rm, _, _ = _make_record(
+        900100, owner, "0", "全項目入力アイテム（検証用）", False,
+        index_key="index", rtype="journal article", ruri=COAR %% "c_6501",
+        full=True)
+    OUT["pattern_items"]["full"] = {"recid": 900100, "uuid": str(rm.id)}
+
+    for i, (rtype, code) in enumerate(RESOURCE_TYPES):
+        recid = 900101 + i
+        # 子インデックスに散らす。インデックス側の条件と組み合わせて測れる
+        key = "index" if not idxs else None
+        rm, _, _ = _make_record(
+            recid, owner, "0", "%%s のサンプル" %% rtype, False,
+            index_key="index", rtype=rtype, ruri=COAR %% code)
+        if idxs:
+            # index_key は既存3件と同じ経路なので、path だけ差し替える
+            from sqlalchemy.orm.attributes import flag_modified
+            j = dict(rm.json or {})
+            j["path"] = [str(idxs[i %% len(idxs)])]
+            rm.json = j
+            flag_modified(rm, "json")
+            db.session.add(rm)
+        OUT["pattern_items"]["by_resource_type"][rtype] = recid
+    db.session.flush()
 
 
 # ---------------------------------------------------------------- PIDVersioning
@@ -595,16 +763,18 @@ DEMO_AUTHORS = [
     ("田中 健二", "Tanaka, Kenji"), ("伊藤 直樹", "Ito, Naoki"),
     ("渡辺 由美", "Watanabe, Yumi"), ("中村 大輔", "Nakamura, Daisuke"),
 ]
-# 子インデックスごとの資料種別。index_name_english -> (resourcetype, uri, item_type_id)
+# 子インデックスごとの資料種別。index_name_english -> (resourcetype, uri)
 DEMO_KINDS = [
     ("Departmental Bulletin Paper", "departmental bulletin paper",
-     "http://purl.org/coar/resource_type/c_6501", "3"),
-    ("Thesis", "thesis", "http://purl.org/coar/resource_type/c_46ec", "1"),
+     "http://purl.org/coar/resource_type/c_6501"),
+    ("Thesis", "thesis", "http://purl.org/coar/resource_type/c_46ec"),
     ("Research Report", "research report",
-     "http://purl.org/coar/resource_type/c_18ws", "4"),
+     "http://purl.org/coar/resource_type/c_18ws"),
     ("Conference Paper", "conference paper",
-     "http://purl.org/coar/resource_type/c_5794", "10"),
+     "http://purl.org/coar/resource_type/c_5794"),
 ]
+
+
 
 
 @step("demo_items")
@@ -761,7 +931,8 @@ import traceback
 from invenio_db import db
 
 SCOPE = "%(scope)s"
-DEMO_IDS = [900001, 900002, 900003]          # probe 用レコードの recid
+DEMO_IDS = ([900001, 900002, 900003, 900100]   # probe 用 + 全項目アイテム
+            + list(range(900101, 900101 + 13)))  # リソースタイプ別
 INDEX_IDS = [900011, 900012, 900013, 900014, 900015, 900001]
 OUT = {"deleted": {}, "errors": []}
 
