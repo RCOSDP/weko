@@ -1477,8 +1477,15 @@ def dbsession_clean(exception):
 
 
 def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
-                                  new_bucket_id=None, new_version_id=None):
+                                  new_bucket_id=None, new_version_id=None,
+                                  feature_flag_only=False):
     """Validate a request for the institutional storage APIs.
+
+    The record based checks (ownership, base recid, bucket and object) are
+    mandatory by default: a request without ``pid`` is rejected. Only the APIs
+    that do not operate on a single record (currently ``get_bucket_list``) may
+    opt out by passing ``feature_flag_only=True``, which stops right after the
+    feature flag check.
 
     Returns None when the request is valid, otherwise a Flask response tuple
     that the caller can return as-is.
@@ -1491,11 +1498,18 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
                 request.path, user_id))
         return jsonify({'error': _('This feature is currently disabled.')}), 403
 
-    if not pid:
+    if feature_flag_only:
         return None
 
     denied = jsonify(
         {'error': _('You do not have permission to perform this operation.')}), 403
+
+    if not pid:
+        current_app.logger.warning(
+            'Storage API denied. reason=missing_pid, api={}, user_id={}'.format(
+                request.path, user_id))
+        return denied
+
     try:
         record = WekoRecord.get_record_by_pid(pid)
         if not check_created_id(record):
@@ -1525,9 +1539,10 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
                     request.path, user_id, pid, bucket_id, file_name))
             return denied
 
-        if new_bucket_id:
-            if ObjectVersion.get(bucket=new_bucket_id, key=file_name,
-                                 version_id=new_version_id) is None \
+        if new_bucket_id or new_version_id:
+            if not (new_bucket_id and new_version_id) \
+                    or ObjectVersion.get(bucket=new_bucket_id, key=file_name,
+                                         version_id=new_version_id) is None \
                     or RecordsBuckets.query.filter_by(
                         bucket_id=new_bucket_id).first() is not None:
                 current_app.logger.warning(
@@ -1553,7 +1568,7 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
 @login_required
 def get_bucket_list():
-    error = _validate_storage_api_request()
+    error = _validate_storage_api_request(feature_flag_only=True)
     if error:
         return error
 
