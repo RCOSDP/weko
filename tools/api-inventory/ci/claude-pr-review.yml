@@ -34,6 +34,9 @@ on:
 env:
   POST_TO_PR: 'true'
   MODEL: 'sonnet'
+  # 同じ差分でも実行のたびに結果が揺れる(同一内容の PR で 0件/1件に割れた実績あり)。
+  # 見逃しのほうが痛いので複数回走らせて和集合を取る。
+  REVIEW_PASSES: '3'
   MAX_DIFF_BYTES: '200000'     # これを超える差分はレビューしない(分割が必要)
 
 jobs:
@@ -90,8 +93,8 @@ jobs:
           # 文脈不足で誤検知が出る(初回試行で「%% は SyntaxError」という誤指摘が出た。
           # 実際はその文字列が後で % 展開される前提だった)。
           # 変更系のツールは許可せず、--permission-mode plan も併用する。
-          set +e
-          claude -p "$(cat <<'PROMPT'
+          # プロンプトはファイルに出しておく。複数回まわすので毎回書かない。
+          cat > prompt.txt <<'PROMPT'
           このリポジトリの Pull Request をレビューしてください。
           差分は標準入力から渡されます。
 
@@ -106,8 +109,13 @@ jobs:
             - 「この書式は誤り」→ その文字列が後で加工される前提かもしれない
             - 「呼び出し側の追随が無い」→ 差分外のファイルを grep すれば分かる
 
-          裏が取れなかったものは **書かない**。件数を稼ぐ必要はありません。
-          指摘ゼロは正当な結論です。
+          裏が取れたものは findings に、取れなかったが気になるものは
+          unverified に入れてください。**裏の取れないものを findings に
+          混ぜない**こと。件数を稼ぐ必要はありません。
+          findings がゼロなのは正当な結論です。
+
+          unverified は「確認しきれなかった」を捨てずに残すための枠です。
+          認可まわりでは、誤検知より見逃しのほうが高くつきます。
 
           ## 観点(この順で重視)
 
@@ -127,46 +135,169 @@ jobs:
           最後に次のJSONだけを出力してください。前後に文章を付けないこと。
 
           {"findings":[{"file":"","line":0,"severity":"high|medium|low",
-                        "title":"","detail":"","evidence":"","verified":""}]}
+                        "title":"","detail":"","evidence":"","verified":"",
+                        "suggestion":""}],
+           "unverified":[{"file":"","line":0,"title":"","detail":"",
+                          "why":""}]}
 
-            detail   : 何が問題で何が起きるかを1〜2文で
-            evidence : 該当行の抜粋
-            verified : **どのファイルを読んで裏を取ったか**(例 "utils.py:120-140 を確認")
-                       ここが埋まらない指摘は出力しないこと
+            findings.detail   : 何が問題で何が起きるかを1〜2文で
+            findings.evidence : 該当行の抜粋
+            findings.verified : **どのファイルを読んで裏を取ったか**
+                                (例 "utils.py:120-140 を確認")
+                                ここが埋まらないものは findings に入れないこと
+            findings.suggestion: 直し方が明確なら短いコードか1文で。
+                                 分からなければ空文字にすること
 
-          指摘が無ければ {"findings":[]} を返してください。
+            unverified.why    : なぜ確認しきれなかったか
+                                (例 "呼び出し元が動的で grep では追えない")
+
+          どちらも無ければ {"findings":[],"unverified":[]} を返してください。
           PROMPT
-          )" --output-format json --model "$MODEL" --permission-mode plan \
-             --allowed-tools "Read,Grep,Glob" \
-             < diff.patch > raw.json 2> claude.err
-          rc=$?
-          set -e
-          echo "claude exit=$rc"
-          echo "----- stderr -----"; head -c 3000 claude.err || true
-          echo "----- stdout(先頭) -----"; head -c 1500 raw.json || true
-          if [ $rc -ne 0 ]; then
-            echo "::warning::claude の実行に失敗しました(exit=$rc)。診断のためジョブは継続します"
+
+          # 同じ差分でも結果が揺れるので複数回まわす。1回でも落ちれば残りは続行し、
+          # 得られた分だけで集計する(全滅したときだけ警告)。
+          ok=0
+          for i in $(seq 1 "$REVIEW_PASSES"); do
+            echo "===== pass $i / $REVIEW_PASSES ====="
+            set +e
+            claude -p "$(cat prompt.txt)" \
+               --output-format json --model "$MODEL" --permission-mode plan \
+               --allowed-tools "Read,Grep,Glob" \
+               < diff.patch > "raw_$i.json" 2> "claude_$i.err"
+            rc=$?
+            set -e
+            echo "claude exit=$rc"
+            if [ $rc -ne 0 ]; then
+              echo "::warning::pass $i が失敗しました(exit=$rc)"
+              head -c 1000 "claude_$i.err" || true
+            else
+              ok=$((ok + 1))
+              head -c 600 "raw_$i.json" || true
+            fi
+          done
+          cat raw_*.err > claude.err 2>/dev/null || true
+          if [ "$ok" -eq 0 ]; then
+            echo "::warning::すべての pass が失敗しました。診断のためジョブは継続します"
+            cat claude_*.err 2>/dev/null | head -c 3000 || true
             exit 0
           fi
           python3 - <<'PY' > review.md
-          import json, re
-          raw = json.load(open('raw.json'))
-          text = raw.get('result') or raw.get('text') or ''
-          m = re.search(r'\{.*\}', text, re.S)
-          data = json.loads(m.group(0)) if m else {'findings': []}
-          f = data.get('findings', [])
-          json.dump(data, open('findings.json', 'w'), ensure_ascii=False, indent=1)
+          import glob, json, re
+
+          def key(x):
+              """同じ指摘を1つにまとめるための鍵。表記揺れを吸収する。"""
+              return (str(x.get('file', '')).strip(),
+                      str(x.get('line', '')).strip(),
+                      re.sub(r'\s+', '', str(x.get('title', '')))[:60])
+
+          import os
+          model = os.environ.get('MODEL', '?')
+          passes, cost = 0, 0.0
+          found, unver = {}, {}
+          for path in sorted(glob.glob('raw_*.json')):
+              try:
+                  raw = json.load(open(path))
+              except Exception:
+                  continue
+              passes += 1
+              cost += raw.get('total_cost_usd', 0) or 0
+              text = raw.get('result') or raw.get('text') or ''
+              m = re.search(r'\{.*\}', text, re.S)
+              if not m:
+                  continue
+              try:
+                  data = json.loads(m.group(0))
+              except Exception:
+                  continue
+              # 和集合を取る。1回でも挙がったものは残す。
+              # 何回のパスで挙がったかは判断材料になるので数えておく。
+              for bucket, src in ((found, data.get('findings') or []),
+                                  (unver, data.get('unverified') or [])):
+                  for x in src:
+                      if not isinstance(x, dict):
+                          continue
+                      k = key(x)
+                      if k in bucket:
+                          bucket[k]['_hits'] += 1
+                      else:
+                          bucket[k] = dict(x, _hits=1)
+
+          f = list(found.values())
+          u = list(unver.values())
+          json.dump({'passes': passes, 'findings': f, 'unverified': u},
+                    open('findings.json', 'w'), ensure_ascii=False, indent=1)
+
           order = {'high': 0, 'medium': 1, 'low': 2}
-          f.sort(key=lambda x: order.get(x.get('severity'), 9))
-          print(f"## Claude によるレビュー\n\n指摘 {len(f)} 件"
-                f"（コスト ${raw.get('total_cost_usd', 0):.4f}）\n")
+          f.sort(key=lambda x: (order.get(x.get('severity'), 9), -x['_hits']))
+          u.sort(key=lambda x: -x['_hits'])
+
+          def hits(x):
+              # 全パスで挙がっていないものは、その旨を添える
+              return '' if x['_hits'] == passes else f"（{x['_hits']}/{passes} パス）"
+
+          SEV = {'high': ('🔴', '高'), 'medium': ('🟠', '中'),
+                 'low': ('🟡', '低')}
+
+          def sev(x):
+              return SEV.get(x.get('severity'), ('⚪', '不明'))
+
+          n_hi = sum(1 for x in f if x.get('severity') == 'high')
+          n_md = sum(1 for x in f if x.get('severity') == 'medium')
+          n_lo = len(f) - n_hi - n_md
+
+          print("## 🔍 Claude によるレビュー\n")
+          if not f and not u:
+              print("指摘はありません。\n")
+          else:
+              print(f"**指摘 {len(f)} 件** — 🔴 高 {n_hi} ／ 🟠 中 {n_md} ／ "
+                    f"🟡 低 {n_lo}" + (f" ／ 🔎 未確認 {len(u)} 件" if u else "")
+                    + "\n")
+
           for x in f:
+              mark, label = sev(x)
+              print("---\n")
+              print(f"### {mark} [{label}] {x.get('title','')}\n")
               loc = f"`{x.get('file','')}:{x.get('line','')}`"
-              print(f"- **[{x.get('severity','?')}] {x.get('title','')}** {loc}")
+              line = loc if x['_hits'] == passes else f"{loc} {hits(x)}"
+              print(f"{line}\n")
               if x.get('detail'):
-                  print(f"  - {x['detail']}")
-              if x.get('verified'):
-                  print(f"  - 確認: {x['verified']}")
+                  print(f"{x['detail']}\n")
+              if x.get('suggestion'):
+                  print("**提案**\n")
+                  sug = str(x['suggestion'])
+                  if '\n' in sug or sug.lstrip().startswith(('def ', 'if ', '@')):
+                      print("```\n" + sug + "\n```\n")
+                  else:
+                      print(f"{sug}\n")
+              ev, vf = x.get('evidence'), x.get('verified')
+              if ev or vf:
+                  print("<details><summary>根拠</summary>\n")
+                  if ev:
+                      print("```\n" + str(ev) + "\n```\n")
+                  if vf:
+                      print(f"確認: {vf}\n")
+                  print("</details>\n")
+
+          if u:
+              print("---\n")
+              print(f"<details><summary>🔎 未確認 — 裏が取れなかったもの "
+                    f"{len(u)} 件</summary>\n")
+              for x in u:
+                  loc = f"`{x.get('file','')}:{x.get('line','')}`"
+                  print(f"- **{x.get('title','')}** {loc} {hits(x)}")
+                  if x.get('detail'):
+                      print(f"  - {x['detail']}")
+                  if x.get('why'):
+                      print(f"  - 確認できなかった理由: {x['why']}")
+              print("\n</details>\n")
+
+          print("---\n")
+          note = (f"モデル {model} ／ {passes} 回実行して和集合 ／ "
+                  f"コスト ${cost:.4f}")
+          if passes > 1:
+              note += "。同じ差分でも結果が揺れるため複数回まわし、"
+              note += "一部のパスでしか挙がらなかったものには回数を添えています"
+          print(f"<sub>{note}</sub>")
           PY
           cat review.md
 
@@ -178,8 +309,8 @@ jobs:
           path: |
             review.md
             findings.json
-            raw.json
-            claude.err
+            raw_*.json
+            claude_*.err
 
       - name: Comment on PR
         if: steps.cfg.outputs.enabled == 'true' && env.POST_TO_PR == 'true' &&
