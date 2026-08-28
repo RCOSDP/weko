@@ -293,6 +293,9 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
         # len(None) で TypeError になり、詳細画面が 500 になる(v2.0.3/v2.1.0 とも)。
         # 新規作成側では入れているが、この自己修復パスで入れ忘れていた。
         js.setdefault("weko_shared_ids", [])
+        js.setdefault("relation_version_is_last", True)
+        js.setdefault("owners", [owner_id])
+        js.setdefault("author_link", [])
         rm.json = js
         flag_modified(rm, "json")
         db.session.add(rm)
@@ -324,6 +327,11 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
         "publish_date": "2026-01-01",
         "publish_status": publish_status,
         "weko_shared_ids": [],
+        # 詳細画面はこの3つを見る。無いと権限を通っても 404 になる
+        # (既存の実レコードと突き合わせて判明)
+        "relation_version_is_last": True,
+        "owners": [owner_id],
+        "author_link": [],
         "_buckets": {"deposit": str(bucket.id)},
         "_deposit": {
             "id": str(recid),
@@ -341,11 +349,9 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
     RecordsBuckets.create(record=rm, bucket=bucket)
     _item_metadata(uid, item_type_id, title, owner_id, raw)
 
-    for t, v in (("recid", str(recid)), ("depid", str(recid)),
-                 ("parent", "parent:%%s" %% recid)):
-        if PersistentIdentifier.query.filter_by(pid_type=t, pid_value=v).one_or_none() is None:
-            PersistentIdentifier.create(t, v, object_type="rec", object_uuid=uid,
-                                        status=PIDStatus.REGISTERED)
+    db.session.flush()
+    # PID とバージョン構造。呼び出し順に依存しないようここで作る
+    _link_version(recid, uid)
 
     finfo = None
     if with_file:
@@ -354,6 +360,52 @@ def _make_record(recid, owner_id, publish_status, title, with_file,
         db.session.flush()
         finfo = _file_info(bucket.id, ov)
     return rm, str(bucket.id), finfo
+
+
+def _link_version(recid, uid):
+    """実レコードと同じ PID 構造を作る。
+
+    詳細画面は次の判定で 404 にする(weko_records_ui/views.py)::
+
+        pid_ver = PIDVersioning(child=pid)
+        if not pid_ver.exists or pid_ver.is_last_child:
+            abort(404)
+
+    つまり *base の recid が最後の子であってはいけない*。実データは
+    parent:<n> の下に <n> / <n>.0 / <n>.1 をぶら下げており、base は
+    最後ではないので通る。ここでも <n> と <n>.1 の2つをぶら下げる。
+
+    リレーション種別は実データに合わせる(2=バージョン、3=recid->depid)。
+    PIDVersioning.insert_child は親を REDIRECTED にしてしまうが、
+    実データの親は R のままなので使わない。
+    """
+    from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+    from invenio_pidrelations.models import PIDRelation
+
+    def pid(t, v):
+        p = PersistentIdentifier.query.filter_by(
+            pid_type=t, pid_value=v).one_or_none()
+        if p is None:
+            p = PersistentIdentifier.create(
+                t, v, object_type="rec", object_uuid=uid,
+                status=PIDStatus.REGISTERED)
+        return p
+
+    def relate(parent, child, rtype, index=None):
+        if PIDRelation.query.filter_by(parent_id=parent.id,
+                                       child_id=child.id).one_or_none() is None:
+            db.session.add(PIDRelation(parent_id=parent.id, child_id=child.id,
+                                       relation_type=rtype, index=index))
+
+    parent = pid("parent", "parent:%%s" %% recid)
+    db.session.flush()
+    for i, v in enumerate((str(recid), "%%s.1" %% recid)):
+        child = pid("recid", v)
+        dep = pid("depid", v)
+        db.session.flush()
+        relate(parent, child, 2, i)   # バージョン
+        relate(child, dep, 3)         # recid -> depid
+    db.session.flush()
 
 
 def _item_metadata(uid, item_type_id, title, owner_id, raw=None):
@@ -480,17 +532,13 @@ def _pattern_items():
 # ---------------------------------------------------------------- PIDVersioning
 @step("pid_versioning")
 def _versioning():
-    """親PIDから last_child が解決する状態にする(records系の到達に必要)。"""
-    from invenio_pidstore.models import PersistentIdentifier
-    from invenio_pidrelations.contrib.versioning import PIDVersioning
+    """既にあるレコードの取りこぼしを埋める。
+
+    新規作成時は _make_record が張るので、ここは前回までに作られた分の
+    補完用。
+    """
     for r in OUT["records"].values():
-        child = PersistentIdentifier.query.filter_by(
-            pid_type="recid", pid_value=str(r["recid"])).one()
-        parent = PersistentIdentifier.query.filter_by(
-            pid_type="parent", pid_value="parent:%%s" %% r["recid"]).one()
-        pv = PIDVersioning(parent=parent)
-        if pv.last_child is None:
-            pv.insert_child(child)
+        _link_version(r["recid"], _uuid.UUID(r["uuid"]))
 
 
 # ---------------------------------------------------------------- OAuthトークン
@@ -618,6 +666,99 @@ def _group():
         g = Group.create(name=name, description="probe用",
                          admins=[admin] if admin else [])
     OUT["group"] = {"id": g.id, "name": name}
+
+
+# ------------------------------------------- インデックスのアクセス制御パターン
+@step("index_acl")
+def _index_acl():
+    """閲覧・投稿の制御パターンを一通り作る。
+
+    weko_index_tree.utils.check_roles / check_groups の仕様に合わせている。
+      * browsing_role に "-99" があれば*未ログインでも閲覧可*。無ければ遮断
+      * "-98" はロールを持たない認証済ユーザの扱い
+      * 認証済ユーザは*自分の全ロールがリストに含まれる*必要がある(AND判定)。
+        "1,2" は System/Repository 管理者だけが通り、Contributor は通らない
+      * browsing_group は所属していれば通る
+
+    group を使うのでグループ作成の後に置く。
+    """
+    import datetime
+    from weko_index_tree.models import Index
+
+    root = OUT.get("index")
+    if not root:
+        raise RuntimeError("親インデックスが無い")
+    gid = (OUT.get("group") or {}).get("id")
+    future = datetime.datetime(2099, 1, 1)
+    private_id = (OUT.get("indexes") or {}).get("Restricted")
+
+    specs = [
+        (900016, "公開前資料", "Embargoed", root,
+         {"public_state": True, "public_date": future}),
+        (900017, "ログイン限定", "LoginOnly", root,
+         {"browsing_role": "1,2,3,4,-98"}),        # -99 が無い = ゲスト遮断
+        (900018, "管理者限定", "AdminOnly", root,
+         {"browsing_role": "1,2"}),
+        (900019, "グループ限定", "GroupOnly", root,
+         {"browsing_group": str(gid) if gid else ""}),
+        (900020, "投稿制限", "ContributeRestricted", root,
+         {"contribute_role": "1,2"}),              # 閲覧は自由、投稿だけ制限
+        (900021, "ハーベスト非公開", "HarvestPrivate", root,
+         {"harvest_public_state": False}),
+    ]
+    # 親が非公開のときに子がどう見えるか(継承の確認)
+    if private_id:
+        specs.append((900022, "非公開の親の子", "ChildOfPrivate", private_id, {}))
+
+    acl = {}
+    for iid, ja, en, parent, extra in specs:
+        idx = Index.query.filter_by(id=iid).one_or_none()
+        if idx is None:
+            used = [i.position for i in Index.query.filter_by(parent=parent).all()]
+            pos = (max(used) + 1) if used else 0
+            idx = Index(id=iid, parent=parent, position=pos,
+                        index_name=ja, index_name_english=en,
+                        public_state=True, harvest_public_state=True,
+                        browsing_role="3,-98,-99",
+                        contribute_role="1,2,3,4,-98,-99",
+                        public_date=None, owner_user_id=1)
+            db.session.add(idx)
+            db.session.flush()
+        # 冪等: 毎回この形に戻したうえで、そのパターンの設定だけ上書きする
+        idx.is_deleted = False
+        idx.parent = parent
+        idx.index_name = ja
+        idx.index_name_english = en
+        idx.public_state = True
+        idx.harvest_public_state = True
+        idx.browsing_role = "3,-98,-99"
+        idx.contribute_role = "1,2,3,4,-98,-99"
+        idx.browsing_group = None
+        idx.contribute_group = None
+        idx.public_date = None
+        for k, v in extra.items():
+            setattr(idx, k, v)
+        db.session.add(idx)
+        acl[en] = iid
+    db.session.flush()
+    OUT["indexes_acl"] = acl
+
+    # 各パターンにアイテムを1件ずつ置く。インデックス側の設定だけでは
+    # 到達可否を測れないため
+    owner = OUT["users"].get("contributor@example.org", {}).get("id", 3)
+    from sqlalchemy.orm.attributes import flag_modified
+    items = {}
+    for i, (en, iid) in enumerate(sorted(acl.items())):
+        recid = 900201 + i
+        rm, _, _ = _make_record(recid, owner, "0", "%%s のアイテム" %% en, False)
+        j = dict(rm.json or {})
+        j["path"] = [str(iid)]
+        rm.json = j
+        flag_modified(rm, "json")
+        db.session.add(rm)
+        items[en] = recid
+    db.session.flush()
+    OUT["indexes_acl_items"] = items
 
 
 # ---------------------------------------------------------------- ワークフロー
@@ -857,6 +998,9 @@ def _demo_items():
             "publish_date": pub,
             "publish_status": status,
             "weko_shared_ids": [],
+            "relation_version_is_last": True,
+            "owners": [owner],
+            "author_link": [],
             "_buckets": {"deposit": ""},
             "_deposit": {
                 "id": str(recid),
@@ -932,8 +1076,10 @@ from invenio_db import db
 
 SCOPE = "%(scope)s"
 DEMO_IDS = ([900001, 900002, 900003, 900100]   # probe 用 + 全項目アイテム
-            + list(range(900101, 900101 + 13)))  # リソースタイプ別
-INDEX_IDS = [900011, 900012, 900013, 900014, 900015, 900001]
+            + list(range(900101, 900101 + 13))   # リソースタイプ別
+            + list(range(900201, 900201 + 7)))   # アクセス制御パターン
+INDEX_IDS = ([900016, 900017, 900018, 900019, 900020, 900021, 900022]
+             + [900011, 900012, 900013, 900014, 900015, 900001])
 OUT = {"deleted": {}, "errors": []}
 
 
