@@ -79,7 +79,7 @@ from invenio_search import InvenioSearch, current_search_client
 from invenio_search_ui import InvenioSearchUI
 from invenio_theme import InvenioTheme
 from six import BytesIO
-from sqlalchemy_utils.functions import create_database, database_exists
+from sqlalchemy_utils.functions import create_database, database_exists, drop_database
 from weko_admin import WekoAdmin
 from weko_admin.models import SessionLifetime
 from weko_admin.models import AdminSettings
@@ -380,8 +380,9 @@ def esindex(app):
 @pytest.yield_fixture()
 def db(app):
     """Database fixture."""
-    if not database_exists(str(db_.engine.url)):
-        create_database(str(db_.engine.url))
+    if database_exists(str(db_.engine.url)):
+        drop_database(str(db_.engine.url))
+    create_database(str(db_.engine.url))
     db_.create_all()
     yield db_
     db_.session.remove()
