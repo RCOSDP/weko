@@ -833,7 +833,8 @@ def test_uploaded_file(client, communities):
 
 
 # def unlocked_widget():
-def test_unlocked_widget(client):
+def test_unlocked_widget(client, users):
+    login_user_via_session(client=client, email=users[2]["email"])
     with patch('weko_gridlayout.views.WidgetItemServices.unlock_widget', return_value=False):
         res = client.post(
                 url_for("weko_gridlayout_api.unlocked_widget"),
@@ -844,6 +845,7 @@ def test_unlocked_widget(client):
 
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_unlocked_widget_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_unlocked_widget_issue50978(client, users):
+    login_user_via_session(client=client, email=users[2]["email"])
     with patch('weko_gridlayout.views.WidgetItemServices.unlock_widget', return_value=False):
         # no request data
         res3 = client.post(

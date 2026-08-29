@@ -24,6 +24,7 @@ from flask_babelex import gettext as _
 from flask_login import user_logged_in, user_logged_out
 
 from . import config
+from .unauthorized import install as install_unauthorized_handler
 from .utils import get_sp_info
 
 
@@ -59,6 +60,19 @@ class WekoAccounts(object):
         self.init_limiter(app)
 
         self.init_login(app)
+
+        self.init_unauthorized_handler(app)
+
+    def init_unauthorized_handler(self, app):
+        """Return 401 JSON to AJAX callers, redirect page requests as before.
+
+        Without this an AJAX call to a ``login_required`` view gets 302 and
+        then the login page's HTML, which the caller cannot parse.
+        See :mod:`weko_accounts.unauthorized`.
+
+        :param app: The flask application.
+        """
+        install_unauthorized_handler(app)
 
     def init_config(self, app):
         """
@@ -157,6 +171,18 @@ class WekoAccountsREST(object):
         blueprint = create_blueprint(app, app.config['WEKO_ACCOUNTS_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko_accounts_rest'] = self
+        self.init_unauthorized_handler(app)
+
+    def init_unauthorized_handler(self, app):
+        """Return 401 JSON instead of redirecting to the login screen.
+
+        The API app has no ``security`` blueprint, so flask_login's default
+        cannot build ``url_for('security.login')`` and raises BuildError,
+        which surfaces as a 500. See :mod:`weko_accounts.unauthorized`.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        install_unauthorized_handler(app, api_only=True)
 
     def init_config(self, app):
         """

@@ -34,6 +34,9 @@ from invenio_db import db
 from invenio_pidstore.models import PIDStatus, PersistentIdentifier
 from invenio_i18n.ext import current_i18n
 from sqlalchemy.sql.expression import func
+from weko_accounts.utils import roles_required
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY, \
+    WEKO_ADMIN_PERMISSION_ROLE_REPO, WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
 from weko_index_tree.api import Indexes
@@ -356,6 +359,9 @@ def journal_detail(index_id=0):
 
 @blueprint.route("/search/feedback_mail_list", methods=["GET"])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def search_feedback_mail_list():
     """Render a check view."""
     result = FeedbackMailList.get_feedback_mail_list()

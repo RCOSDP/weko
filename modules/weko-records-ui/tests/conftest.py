@@ -534,6 +534,26 @@ def users(app, db):
 
 
 @pytest.fixture()
+def contributor_not_owner(app, db, users):
+    """A Contributor who neither created nor owns the ``records`` fixture.
+
+    The fixture records carry ``owner`` = 1 and ``_deposit.created_by`` = 2,
+    which are the ``user`` and ``contributor`` accounts. This one is a third
+    account with the same Contributor role, so it isolates the ownership
+    branch of check_created_id() from the role branch.
+    """
+    ds = app.extensions["invenio-accounts"].datastore
+    email = "contributor_not_owner@test.org"
+    account = User.query.filter_by(email=email).first()
+    if account is None:
+        account = create_test_user(email=email)
+    role = Role.query.filter_by(name="Contributor").first()
+    ds.add_role_to_user(account, role)
+    db.session.commit()
+    return account
+
+
+@pytest.fixture()
 def indextree(client, users):
     index_metadata = {
         "id": 1,

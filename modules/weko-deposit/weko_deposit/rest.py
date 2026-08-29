@@ -22,12 +22,14 @@
 
 import json
 import sys
+from functools import wraps
 from wsgiref.util import request_uri
 
 import redis
 from redis import sentinel
 from elasticsearch import ElasticsearchException
 from flask import Blueprint, abort, current_app, jsonify, request
+from flask_login import current_user, login_required
 from invenio_db import db
 from invenio_pidstore import current_pidstore
 from invenio_pidstore.models import PersistentIdentifier
@@ -46,13 +48,77 @@ from .api import WekoDeposit, WekoRecord
 # from copy import deepcopy
 
 
-def publish(**kwargs):
-    """Publish item."""
-    try:
-        pid_value = kwargs.get('pid_value').value
+def require_item_edit_permission(f):
+    """depid ルートが指すアイテムの編集権限を要求する。
+
+    ItemResource は ContentNegotiatedMethodView で、ビュー本体が丸ごと
+    ``try:`` に入っている。中で abort すると except に捕まって別のコードに
+    化けるため、判定はデコレータにしてビューの外に出す。
+
+    未認証も ``@login_required`` ではなくここで ``abort(401)`` する。
+    ``login_required`` は UI アプリだとログイン画面への 302 を *返す* ため、
+    その Response が ``make_response(*result)`` に渡されて
+    ``(pid, record)`` として展開され TypeError になる。
+    例外なら CNMV も素通しするので、必ず raise 側で返す。
+
+    ``pid_value`` は URL コンバータが解決した PID オブジェクトで届く。
+    publish と同じく recid として引き直し、同じ ``edit_permission_factory``
+    で判定する。
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        # 循環 import を避けるため関数内で読み込む
+        from weko_items_ui.permissions import edit_permission_factory
+        if not (current_user and current_user.is_authenticated):
+            abort(401)
+        pid_value = kwargs.get('pid_value')
+        pid_value = str(getattr(pid_value, 'value', pid_value))
         pid = PersistentIdentifier.query.filter_by(
             pid_type='recid', pid_value=pid_value).first()
+        if pid is None and '.' in pid_value:
+            # バージョン付き(1.0 / 1.1)は親の recid で判定する。
+            # put 自身も pid_value.split(".")[0] で親を引いており、
+            # 編集権限は親レコードが持っている。
+            pid = PersistentIdentifier.query.filter_by(
+                pid_type='recid', pid_value=pid_value.split('.')[0]).first()
+        if pid is None:
+            abort(404, "Item not found")
         r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+        if r is None:
+            abort(404, "Item not found")
+        if not edit_permission_factory(r.json).can():
+            abort(403, "You do not have permission to edit this item")
+        return f(*args, **kwargs)
+    return decorated
+
+
+@login_required
+def publish(**kwargs):
+    """Publish item.
+
+    このルートは add_url_rule(view_func=publish) で素の関数として登録されており
+    permission_factory も付いていなかったため、未認証で任意アイテムの公開状態を
+    変更できた。編集系の他経路と同じ edit_permission_factory で判定する。
+
+    認可は try の外で行う。try の中で abort すると except BaseException に
+    捕まって 400 に化け、「権限不足」と「公開処理の失敗」が区別できなくなる。
+    """
+    # 循環 import を避けるため関数内で読み込む
+    # (weko_deposit -> weko_items_ui -> weko_records_ui -> weko_deposit)
+    from weko_items_ui.permissions import edit_permission_factory
+
+    pid_value = kwargs.get('pid_value').value
+    pid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', pid_value=pid_value).first()
+    if pid is None:
+        abort(404, "Item not found")
+    r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
+    if r is None:
+        abort(404, "Item not found")
+    if not edit_permission_factory(r.json).can():
+        abort(403, "You do not have permission to publish this item")
+
+    try:
         dep = WekoDeposit(r.json, r)
         dep.update_request_mail()
         dep.publish()
@@ -198,6 +264,7 @@ class ItemResource(ContentNegotiatedMethodView):
 
         self.pid_fetcher = current_pidstore.fetchers[self.pid_fetcher]
 
+    @require_item_edit_permission
     @pass_record
     def post(self, pid, record, **kwargs):
         """Post."""
@@ -207,6 +274,7 @@ class ItemResource(ContentNegotiatedMethodView):
                                   201,
                                   links_factory=base_factory)
 
+    @require_item_edit_permission
     def put(self, **kwargs):
         """Put."""
         from weko_workflow.api import WorkActivity

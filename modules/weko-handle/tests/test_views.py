@@ -33,7 +33,8 @@ def test_index(app, client):
 
 
 # .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_retrieve_handle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
-def test_retrieve_handle(app, client):
+def test_retrieve_handle(app, client, users):
+    login_user_via_session(client=client, email=users[0]["email"])  # sysadmin
     url = url_for(
         "weko_handle.retrieve_handle", format="json", _external=True
     )
@@ -53,7 +54,8 @@ def test_retrieve_handle(app, client):
 
 
 # .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_register_handle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
-def test_register_handle(app, client):
+def test_register_handle(app, client, users):
+    login_user_via_session(client=client, email=users[0]["email"])  # sysadmin
     url = url_for(
         "weko_handle.register_handle", format="json", _external=True
     )
@@ -74,7 +76,8 @@ def test_register_handle(app, client):
 
 
 # .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_delete_handle -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
-def test_delete_handle(app, client):
+def test_delete_handle(app, client, users):
+    login_user_via_session(client=client, email=users[0]["email"])  # sysadmin
     url = url_for(
         "weko_handle.delete_handle", format="json", _external=True
     )
@@ -98,3 +101,20 @@ def test_dbsession_clean(app):
 
     with patch("weko_handle.views.db.session.commit", side_effect=KeyError('test')):
         dbsession_clean(exception=None)
+
+
+# .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_handle_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
+@pytest.mark.parametrize("endpoint", ["retrieve_handle", "register_handle", "delete_handle"])
+def test_handle_acl_guest(app, client, users, endpoint):
+    """Anonymous requests are rejected before reaching the Handle API."""
+    res = client.post(url_for("weko_handle." + endpoint, _external=True))
+    assert res.status_code in (302, 401)
+
+
+# .tox/c1/bin/pytest --cov=weko_handle tests/test_views.py::test_handle_acl_non_admin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-handle/.tox/c1/tmp
+@pytest.mark.parametrize("endpoint", ["retrieve_handle", "register_handle", "delete_handle"])
+def test_handle_acl_non_admin(app, client, users, endpoint):
+    """A logged-in non-administrator is rejected."""
+    login_user_via_session(client=client, email=users[1]["email"])  # generaluser
+    res = client.post(url_for("weko_handle." + endpoint, _external=True))
+    assert res.status_code == 403

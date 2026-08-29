@@ -1,0 +1,168 @@
+# ユニットテスト / UIテスト が共通で使う「ビルド済みイメージ」を用意する
+# 再利用ワークフロー(workflow_call)。
+#
+# タグは IMAGE_EPOCH + 依存関係ファイルのハッシュ。既に GHCR にあれば
+# ビルドを丸ごと飛ばす。
+# モジュールは requirements-weko-modules.txt により -e (editable) で入り、
+# docker-compose2.yml が . を /code に bind mount するため、ソースを変えても
+# イメージを作り直す必要はない。
+#
+# 【イメージを差し替えたいとき】
+#   1. 依存を変えた場合 (Dockerfile / packages*.txt / requirements-weko-modules.txt
+#      / modules/*/setup.py / nginx/ / elasticsearch/ など)
+#        → 何もしなくてよい。ハッシュが変わるので新しいタグで自動的に作られる。
+#   2. 依存は変えていないが作り直したい場合
+#      (ベースイメージ側の更新取り込み、pull 元の消失、壊れたイメージの差し替え)
+#        → Actions から Unit Tests / UI Tests を手動実行し、force_rebuild を
+#          true にする。同じタグへ --no-cache でビルドして push し直す。
+#   3. 全ブランチで一斉に作り直したい場合
+#        → 下の IMAGE_EPOCH を上げてコミットする。全タグが変わる。
+#
+# 古いイメージは GHCR に残り続ける。不要になったバージョンはパッケージ設定
+# (Packages → weko-ci-* → Manage versions) から削除するか、保持ポリシーを設定する。
+
+name: CI images
+
+on:
+  workflow_call:
+    inputs:
+      force_rebuild:
+        description: 既存イメージを無視して作り直す
+        type: boolean
+        default: false
+    outputs:
+      web:
+        description: WEKO 本体イメージ
+        value: ${{ jobs.build.outputs.web }}
+      es:
+        description: Elasticsearch イメージ
+        value: ${{ jobs.build.outputs.es }}
+      nginx:
+        description: nginx (Shibboleth 込み) イメージ
+        value: ${{ jobs.build.outputs.nginx }}
+
+env:
+  # 依存ファイルを変えずに全イメージを作り直したいときに上げる
+  IMAGE_EPOCH: v1
+
+jobs:
+  build:
+    name: Prepare images
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      web: ${{ steps.tags.outputs.web }}
+      es: ${{ steps.tags.outputs.es }}
+      nginx: ${{ steps.tags.outputs.nginx }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # イメージのタグ = 依存関係ファイルのハッシュ。
+      # ここに挙げたファイルが変わらない限り、既存イメージを再利用する。
+      - name: Compute image tags
+        id: tags
+        env:
+          WEB_HASH: ${{ hashFiles('Dockerfile', 'scripts/provision-web.sh', 'scripts/create-instance.sh', 'scripts/create-instance2.sh', 'scripts/instance.cfg', 'packages.txt', 'packages-invenio.txt', 'requirements-weko-modules.txt', 'requirements-devel.txt', 'package.json', 'modules/*/setup.py') }}
+          ES_HASH: ${{ hashFiles('elasticsearch/Dockerfile', 'scripts/provision-elasticsearch.sh', 'elasticsearch/dic/character/kui.txt') }}
+          NGINX_HASH: ${{ hashFiles('nginx/**') }}
+        run: |
+          if [ -z "$WEB_HASH" ] || [ -z "$ES_HASH" ] || [ -z "$NGINX_HASH" ]; then
+            echo "::error::イメージタグの元になるファイルが見つかりません"
+            exit 1
+          fi
+          owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
+          {
+            echo "web=ghcr.io/${owner}/weko-ci-web:${IMAGE_EPOCH}-${WEB_HASH}"
+            echo "es=ghcr.io/${owner}/weko-ci-es:${IMAGE_EPOCH}-${ES_HASH}"
+            echo "nginx=ghcr.io/${owner}/weko-ci-nginx:${IMAGE_EPOCH}-${NGINX_HASH}"
+          } >> "$GITHUB_OUTPUT"
+
+      # fork からの PR には GHCR への書き込み権限が渡らない。
+      - name: Check push permission
+        id: perm
+        run: |
+          if [ '${{ github.event_name }}' != 'pull_request' ] || \
+             [ '${{ github.event.pull_request.head.repo.full_name }}' = '${{ github.repository }}' ]; then
+            echo "push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "push=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::fork からの PR のため GHCR には push しません(ビルドキャッシュのみ作成)"
+          fi
+
+      - name: Log in to GHCR
+        if: steps.perm.outputs.push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 既にレジストリにあればビルドを丸ごと飛ばす。
+      - name: Check registry for existing images
+        id: exists
+        run: |
+          for name in web es nginx; do
+            case "$name" in
+              web)   ref='${{ steps.tags.outputs.web }}' ;;
+              es)    ref='${{ steps.tags.outputs.es }}' ;;
+              nginx) ref='${{ steps.tags.outputs.nginx }}' ;;
+            esac
+            if [ '${{ inputs.force_rebuild }}' = 'true' ]; then
+              found=0
+            elif docker manifest inspect "$ref" >/dev/null 2>&1; then
+              found=1
+            else
+              found=0
+            fi
+            echo "${name}=${found}" >> "$GITHUB_OUTPUT"
+            if [ "$found" = 1 ]; then
+              echo "::notice::${ref} を再利用します(ビルドなし)"
+            else
+              echo "::notice::${ref} をビルドします"
+            fi
+          done
+
+      - name: Set up Docker Buildx
+        if: steps.exists.outputs.web == '0' || steps.exists.outputs.es == '0' || steps.exists.outputs.nginx == '0'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build WEKO image
+        if: steps.exists.outputs.web == '0'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          tags: ${{ steps.tags.outputs.web }}
+          push: ${{ steps.perm.outputs.push == 'true' }}
+          no-cache: ${{ inputs.force_rebuild }}
+          cache-from: type=gha,scope=weko-web
+          cache-to: type=gha,mode=max,scope=weko-web
+
+      - name: Build Elasticsearch image
+        if: steps.exists.outputs.es == '0'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: elasticsearch/Dockerfile
+          tags: ${{ steps.tags.outputs.es }}
+          push: ${{ steps.perm.outputs.push == 'true' }}
+          no-cache: ${{ inputs.force_rebuild }}
+          cache-from: type=gha,scope=weko-es
+          cache-to: type=gha,mode=max,scope=weko-es
+
+      # nginx は Shibboleth モジュール込みでソースからビルドしていて重い。
+      - name: Build nginx image
+        if: steps.exists.outputs.nginx == '0'
+        uses: docker/build-push-action@v6
+        with:
+          context: ./nginx
+          file: ./nginx/Dockerfile
+          tags: ${{ steps.tags.outputs.nginx }}
+          push: ${{ steps.perm.outputs.push == 'true' }}
+          no-cache: ${{ inputs.force_rebuild }}
+          cache-from: type=gha,scope=weko-nginx
+          cache-to: type=gha,mode=max,scope=weko-nginx
