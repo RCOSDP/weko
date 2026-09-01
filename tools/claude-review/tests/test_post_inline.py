@@ -139,3 +139,47 @@ def test_title_and_reason_cannot_inject_structure():
     # 改行が畳み込まれ、injected という語が独立した行として出現しない
     assert "\ninjected" not in body
     assert "line1 line2" in body
+
+
+def test_description_fix_kind_is_rejected_without_keyerror():
+    """kind != 'suggestion' のとき file/start_line 等を持たなくても落ちない。
+
+    aggregate.py は description/none の fix に file/start_line/end_line を
+    要求しない。_candidate() が kind を見る前に fx["file"] 等へアクセスして
+    いないことを確認する（ガードの順序を保証する回帰テスト）。
+    """
+    changed = post_inline.changed_lines(DIFF)
+    fx = {"kind": "description", "note": "説明のみで inline 化できない修正案"}
+    assert post_inline.select(_findings(fx), changed, set()) == []
+
+
+def test_none_fix_kind_is_rejected_without_keyerror():
+    changed = post_inline.changed_lines(DIFF)
+    fx = {"kind": "none"}
+    assert post_inline.select(_findings(fx), changed, set()) == []
+
+
+def test_existing_hashes_filters_to_own_bot_comments(monkeypatch):
+    """existing_hashes は github-actions[bot] 以外のコメント本文を見ない。
+
+    誰でも書ける PR コメントに `<!-- claude-fix:<hash> -->` を仕込むだけで
+    ハッシュを偽造でき、本物の修正案が「投稿済み」として黙って抑止される
+    （select() のログには一切残らない）。jq のフィルタ段階で自分（bot）が
+    書いたコメントだけに絞る。
+    """
+    calls = {}
+
+    class _Result:
+        stdout = "<!-- claude-fix:abcdef123456 -->"
+        returncode = 0
+
+    def fake_run(cmd, **kwargs):
+        calls["cmd"] = cmd
+        return _Result()
+
+    monkeypatch.setattr(post_inline.subprocess, "run", fake_run)
+    result = post_inline.existing_hashes("o", "r", 1)
+
+    assert result == {"abcdef123456"}
+    jq_arg = calls["cmd"][calls["cmd"].index("--jq") + 1]
+    assert 'select(.user.login=="github-actions[bot]")' in jq_arg
