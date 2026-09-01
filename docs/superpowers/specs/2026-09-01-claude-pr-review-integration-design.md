@@ -298,14 +298,33 @@ CodeRabbit の `<details>` ブロック(静的解析ログなど)は非常に大
   → その 1 件をスキップして警告。集約コメントの投稿は必ず行う。
 - 差分が `MAX_DIFF_BYTES` 超 → 現行どおりスキップ。
 
+## ファイル構成
+
+`api-inventory-drift.yml` が `tools/api-inventory/scripts/*.py` を
+`python3 $T/foo.py` の形で呼ぶ規約が既にある。これに合わせ、
+ワークフロー YAML は薄い配線に留め、ロジックは Python に切り出す。
+インライン Python のままだと YAML に 400 行超が埋まり、テストも目視確認しかできない。
+
+| ファイル | 責務 |
+|---|---|
+| `.github/workflows/claude-pr-review.yml` | トリガ・ガード・配線のみ |
+| `tools/claude-review/prompt.md` | Claude へのプロンプト(静的) |
+| `tools/claude-review/scripts/collect_reviews.py` | GraphQL 取得 → `reviews.json` |
+| `tools/claude-review/scripts/build_input.py` | 差分 + reviews.json → Claude への標準入力(切り詰めと外部データ枠) |
+| `tools/claude-review/scripts/aggregate.py` | `raw_*.json` → `findings.json`(和集合・検証) |
+| `tools/claude-review/scripts/render.py` | `findings.json` → `review.md` |
+| `tools/claude-review/scripts/post_inline.py` | `findings.json` + `diff.patch` → inline suggestion 投稿 |
+| `tools/claude-review/tests/` | pytest。#1905 の実データを fixture に使う |
+
 ## テスト
 
-CI ワークフローのためユニットテストは置けない。次の手順で確認する。
+各スクリプトを pytest で検証する(`python3 -m pytest tools/claude-review/tests -q`)。
+fixture は #1905 の実データを保存して使う。ワークフローは実行の先頭でこの
+pytest を走らせ、壊れたスクリプトで本番レビューが走らないようにする。
 
-1. **集約スクリプトの単体確認** — `raw_*.json` 生成部と Markdown 生成部を
-   ワークフロー内のインライン Python のまま維持し、
-   #1905 の実データを保存した固定入力に対してローカルで実行し、出力を目視確認する。
-2. **`workflow_dispatch` で #1905 を対象に実行** — CodeRabbit の 4 件と
+さらに次を手動で確認する。
+
+1. **`workflow_dispatch` で #1905 を対象に実行** — CodeRabbit の 4 件と
    ivis-kuroda の反論が揃っており、`isResolved` の両方の値、bot と人間の混在、
    決着済みスレッドがすべて含まれる理想的な検証対象。期待する結果:
    - `conftest.py:385` は議論で決着済みのため `false_positive`
@@ -317,6 +336,6 @@ CI ワークフローのためユニットテストは置けない。次の手�
 
 ## 移行
 
-`claude-pr-review.yml` を 1 ファイル内で改修する。新規ファイルは作らない。
-まず `POST_INLINE_SUGGESTIONS=false` で集約コメントのみを有効にして数 PR 運用し、
+`claude-pr-review.yml` は配線のみに整理し、ロジックは上表のとおり
+`tools/claude-review/` に新設する。まず `POST_INLINE_SUGGESTIONS=false` で集約コメントのみを有効にして数 PR 運用し、
 裁定の精度を確認してから inline suggestion を有効にする。
