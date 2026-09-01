@@ -139,9 +139,10 @@ def test_reviews_structure_and_filtering(graphql_payload):
 def test_limit_detection(graphql_payload):
     """取得件数が上限に達したら _limits に記録される。
 
-    first:100 で最古の N 件を取るため、issue コメントが 100 件超過の
-    PR では previous が落ちる。warnings は normalize() でなく
-    main() 側で出す。
+    comments は last:100 で最新の N 件を取るため、issue コメントが
+    100 件を超える PR では、その 100 件より古いコメント(前回の自分の
+    集約コメント previous を含みうる)が黙って落ちる。warnings は
+    normalize() でなく main() 側で出す。
     """
     payload = graphql_payload
     pr = payload["data"]["repository"]["pullRequest"]
