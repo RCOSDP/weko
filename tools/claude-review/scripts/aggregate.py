@@ -144,11 +144,16 @@ def aggregate(raw_list: list) -> dict:
     summary = ""
 
     for raw in raw_list:
-        passes += 1
         cost += raw.get("total_cost_usd") or 0
         data = _extract(raw)
         if data is None:
             continue
+        # JSON を作れなかったパスは「実行されたが結果を出さなかった」もので
+        # あり、分母に数えると _hits/passes の比率(「N/M パス」表示や末尾の
+        # 「passes 回実行して和集合」)が実態より水増しされる。1 パスが
+        # エラーで 1 パスが成功しただけなのに「2 パス中 1 パスで検出」と
+        # 誤読させてしまう(所見3)。
+        passes += 1
         if not summary and str(data.get("summary") or "").strip():
             summary = str(data["summary"]).strip()
 

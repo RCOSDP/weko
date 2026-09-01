@@ -96,14 +96,35 @@ def test_own_findings_keyed_by_file_line_title():
 
 
 def test_unparsable_pass_is_skipped_not_fatal():
-    """1 パスが壊れても残りで集計する。"""
+    """1 パスが壊れても残りで集計する。
+
+    壊れたパスは _hits/passes の分母に数えない(所見3)。数えると、
+    実際には 1 パスしか結果を出していないのに「2 パス中 1 パスで検出」
+    という誤った分母を表示することになる。
+    """
     out = aggregate.aggregate([
         {"result": "JSON ではない"},
         raw({"adjudications": [adj()], "own_findings": [], "unverified": [],
              "summary": "s"}),
     ])
-    assert out["passes"] == 2
+    assert out["passes"] == 1
     assert len(out["adjudications"]) == 1
+    assert out["adjudications"][0]["_hits"] == 1
+
+
+def test_error_envelope_pass_does_not_inflate_passes_denominator():
+    """所見3: JSON を含まない(エラー)パスは passes の分母に数えない。
+
+    1 良好パス + 1 エラーパスなら passes == 1 ・ _hits == 1 になり、
+    render.py の（1/2 パス）のような誤った注記が付かないことを保証する。
+    """
+    out = aggregate.aggregate([
+        raw({"adjudications": [adj()], "own_findings": [], "unverified": [],
+             "summary": "s"}),
+        {"result": "エラー: 実行に失敗しました", "total_cost_usd": 0.01},
+    ])
+    assert out["passes"] == 1
+    assert out["adjudications"][0]["_hits"] == 1
 
 
 def test_cost_is_summed():
