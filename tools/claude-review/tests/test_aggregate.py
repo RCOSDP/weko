@@ -47,6 +47,23 @@ def test_conflicting_verdict_takes_the_heavier():
     assert sorted(a["_verdicts"]) == ["false_positive", "valid"]
 
 
+def test_adj_with_empty_title_is_dropped():
+    """所見11: clean_adj は clean_own/clean_unver と同じく空の title を
+    弾く。空だと "### 1. ✅ 妥当" のあとに何も続かない見出しと、空の表セルが
+    残る。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [adj(title="")], "own_findings": [],
+             "unverified": [], "summary": ""})])
+    assert out["adjudications"] == []
+
+
+def test_adj_with_whitespace_only_title_is_dropped():
+    out = aggregate.aggregate([
+        raw({"adjudications": [adj(title="   ")], "own_findings": [],
+             "unverified": [], "summary": ""})])
+    assert out["adjudications"] == []
+
+
 def test_unknown_verdict_is_dropped():
     """列挙外の値は捨てる。モデル出力をそのまま信用しない。"""
     out = aggregate.aggregate([
