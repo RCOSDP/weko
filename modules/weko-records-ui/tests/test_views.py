@@ -1749,6 +1749,19 @@ def _assert_no_storage_access(backends):
         mock.assert_not_called()
 
 
+@pytest.fixture
+def storage_api(app, client, users, mocker):
+    """Common preconditions of the logged in storage API tests.
+
+    ``_setup_storage_api`` + ``_mock_edit_permission`` are repeated by nearly
+    every storage API test, so they are bundled here. The tests that need a
+    different setup (``enabled=False`` / ``do_login=False``) keep calling
+    ``_setup_storage_api`` directly.
+    """
+    _setup_storage_api(app, client, users)
+    _mock_edit_permission(mocker)
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_get_bucket_list(app, records, users, client):
     # ビュー関数を直接呼ぶとデコレータを通らないため client 経由にした
@@ -1758,28 +1771,6 @@ def test_get_bucket_list(app, records, users, client):
         assert client.get(url).status_code == 200
     with patch("weko_records_ui.views.get_s3_bucket_list", side_effect=Exception):
         assert client.get(url).status_code == 400
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_bucket_list_success(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.get_s3_bucket_list", return_value=[])
-
-    res = _call_get_bucket_list(client)
-
-    assert res.status_code == 200
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_bucket_list_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.get_s3_bucket_list", side_effect=Exception)
-
-    res = _call_get_bucket_list(client)
-
-    assert res.status_code == 400
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1824,30 +1815,6 @@ def test_copy_bucket(app,records,users, client):
             content_type='application/json',
         )
         assert res.status_code == 400
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket_success(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.copy_bucket_to_s3", return_value={})
-
-    res = _call_copy_bucket(client)
-
-    assert res.status_code == 200
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.copy_bucket_to_s3", side_effect=Exception)
-
-    res = _call_copy_bucket(client)
-
-    assert res.status_code == 400
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1940,33 +1907,6 @@ def test_get_file_place(app,records,users, client):
             },
         )
         assert res.status_code == 400
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_success(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch(
-        "weko_records_ui.views.get_file_place_info",
-        return_value=('file_place', 'uri', 'new_bucket_id', 'new_version_id'))
-
-    res = _call_get_file_place(client)
-
-    assert res.status_code == 200
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.get_file_place_info",
-                 side_effect=Exception)
-
-    res = _call_get_file_place(client)
-
-    assert res.status_code == 400
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -2184,195 +2124,136 @@ def test_replace_file(app,records,users, client):
         assert res.status_code == 400
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_s3_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_s3_success(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_storage_api_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "call_api, backend, return_value",
+    [
+        (_call_get_bucket_list, 'get_s3_bucket_list', []),
+        (_call_copy_bucket, 'copy_bucket_to_s3', {}),
+        (_call_get_file_place, 'get_file_place_info',
+         ('file_place', 'uri', 'new_bucket_id', 'new_version_id')),
+        (_call_replace_file_s3, 'replace_file_bucket', {}),
+        (_call_replace_file_local, 'replace_file_bucket', {}), # local (else) branch
+    ],
+    ids=["get_bucket_list", "copy_bucket", "get_file_place",
+         "replace_file_s3", "replace_file_local"],
+)
+def test_storage_api_success(client, mocker, storage_api, call_api, backend,
+                             return_value):
+    """Every storage API answers 200 when its backend succeeds.
+
+    ``backend`` is a key of the dict returned by ``_mock_storage_backends``
+    rather than a patch target built by string concatenation, so that grepping
+    for ``views.get_s3_bucket_list`` & co. still finds this test.
+    """
     _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.replace_file_bucket", return_value={})
-
-    res = _call_replace_file_s3(client)
-
-    assert res.status_code == 200
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_s3_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_s3_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.replace_file_bucket",
-                 side_effect=Exception)
-
-    res = _call_replace_file_s3(client)
-
-    assert res.status_code == 400
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_local_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_local_success(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.replace_file_bucket", return_value={})
-
-    res = _call_replace_file_local(client)
-
-    assert res.status_code == 200
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_local_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_local_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_passed(mocker)
-    mocker.patch("weko_records_ui.views.replace_file_bucket",
-                 side_effect=Exception)
-
-    res = _call_replace_file_local(client)
-
-    assert res.status_code == 400
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_bucket_list_requires_login(app, users, client, mocker):
-    _setup_storage_api(app, client, users, do_login=False)
     backends = _mock_storage_backends(mocker)
+    backends[backend].return_value = return_value
 
-    res = _call_get_bucket_list(client)
+    res = call_api(client)
 
-    assert res.status_code == 302
-    _assert_no_storage_access(backends)
+    assert res.status_code == 200
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket_requires_login(app, users, client, mocker):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_storage_api_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "call_api, backend",
+    [
+        (_call_get_bucket_list, 'get_s3_bucket_list'),
+        (_call_copy_bucket, 'copy_bucket_to_s3'),
+        (_call_get_file_place, 'get_file_place_info'),
+        (_call_replace_file_s3, 'replace_file_bucket'),
+        (_call_replace_file_local, 'replace_file_bucket'), # local (else) branch
+    ],
+    ids=["get_bucket_list", "copy_bucket", "get_file_place",
+         "replace_file_s3", "replace_file_local"],
+)
+def test_storage_api_error(client, mocker, storage_api, call_api, backend):
+    """A failing backend is turned into 400 by every storage API."""
+    _mock_validation_passed(mocker)
+    backends = _mock_storage_backends(mocker)
+    backends[backend].side_effect = Exception
+
+    res = call_api(client)
+
+    assert res.status_code == 400
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_storage_api_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "call_api, status_code",
+    [
+        (_call_get_bucket_list, 302), # redirected to the login page
+        (_call_copy_bucket, 401), # JSON body, so the unauthorized handler answers in JSON
+        (_call_get_file_place, 302), # redirected to the login page
+        (_call_replace_file_s3, 302), # redirected to the login page
+    ],
+    ids=["get_bucket_list", "copy_bucket", "get_file_place", "replace_file_s3"],
+)
+def test_storage_api_requires_login(app, users, client, mocker, call_api,
+                                    status_code):
     """Anonymous requests are rejected before the view.
 
-    The caller sends a JSON body, so the unauthorized handler answers 401 in
-    JSON instead of redirecting to the login page.
+    Only ``copy_bucket`` answers 401 instead of 302: its caller sends a JSON
+    body, so the unauthorized handler replies in JSON rather than redirecting
+    -- a redirect would reach the fetch() caller as the login page's HTML and
+    fail while parsing.
     """
     _setup_storage_api(app, client, users, do_login=False)
     backends = _mock_storage_backends(mocker)
 
-    res = _call_copy_bucket(client)
+    res = call_api(client)
 
-    assert res.status_code == 401
+    assert res.status_code == status_code
     _assert_no_storage_access(backends)
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_requires_login(app, users, client, mocker):
-    _setup_storage_api(app, client, users, do_login=False)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_get_file_place(client)
-
-    assert res.status_code == 302
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_requires_login(app, users, client, mocker):
-    _setup_storage_api(app, client, users, do_login=False)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_replace_file_s3(client)
-
-    assert res.status_code == 302
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_bucket_list_denied_when_disabled(app, users, client, mocker):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_storage_api_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "call_api",
+    [
+        _call_get_bucket_list,
+        _call_copy_bucket,
+        _call_get_file_place,
+        _call_replace_file_s3,
+    ],
+    ids=["get_bucket_list", "copy_bucket", "get_file_place", "replace_file_s3"],
+)
+def test_storage_api_denied_when_disabled(app, users, client, mocker, call_api):
+    """The feature flag is checked before any storage access happens."""
     _setup_storage_api(app, client, users, enabled=False)
+    # get_bucket_list is not guarded by record_edit_permission_required, so the
+    # permission mock is never reached there -- applying it unconditionally is
+    # harmless and keeps the parametrization uniform.
+    _mock_edit_permission(mocker)
     backends = _mock_storage_backends(mocker)
 
-    res = _call_get_bucket_list(client)
+    res = call_api(client)
 
     assert res.status_code == 403
     assert 'error' in res.get_json()
     _assert_no_storage_access(backends)
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket_denied_when_disabled(app, users, client, mocker):
-    _setup_storage_api(app, client, users, enabled=False)
-    _mock_edit_permission(mocker)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_copy_bucket(client)
-
-    assert res.status_code == 403
-    assert 'error' in res.get_json()
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_denied_when_disabled(app, users, client, mocker):
-    _setup_storage_api(app, client, users, enabled=False)
-    _mock_edit_permission(mocker)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_get_file_place(client)
-
-    assert res.status_code == 403
-    assert 'error' in res.get_json()
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_denied_when_disabled(app, users, client, mocker):
-    _setup_storage_api(app, client, users, enabled=False)
-    _mock_edit_permission(mocker)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_replace_file_s3(client)
-
-    assert res.status_code == 403
-    assert 'error' in res.get_json()
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket_returns_validation_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_storage_api_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "call_api",
+    [
+        _call_copy_bucket,
+        _call_get_file_place,
+        _call_replace_file_s3,
+    ],
+    ids=["copy_bucket", "get_file_place", "replace_file_s3"],
+)
+def test_storage_api_returns_validation_error(client, mocker, storage_api,
+                                              call_api):
+    """A validator rejection is returned as-is, before any storage access."""
     _mock_validation_denied(mocker)
     backends = _mock_storage_backends(mocker)
 
-    res = _call_copy_bucket(client)
+    res = call_api(client)
 
     assert res.status_code == 403
-    backends['copy_bucket_to_s3'].assert_not_called()
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_returns_validation_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_denied(mocker)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_get_file_place(client)
-
-    assert res.status_code == 403
-    backends['get_file_place_info'].assert_not_called()
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_returns_validation_error(app, users, client, mocker):
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_denied(mocker)
-    backends = _mock_storage_backends(mocker)
-
-    res = _call_replace_file_s3(client)
-
-    assert res.status_code == 403
-    backends['replace_file_bucket'].assert_not_called()
     _assert_no_storage_access(backends)
 
 
@@ -2448,36 +2329,31 @@ def test_replace_file_passes_new_bucket_params_local(app, users, client,
 
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_denied_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_copy_bucket_denied_without_pid(app, users, client, mocker):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_storage_api_denied_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "call_api, base_payload",
+    [
+        (_call_copy_bucket, _COPY_BUCKET_PAYLOAD), # pid comes from the JSON body
+        (_call_get_file_place, _GET_FILE_PLACE_PAYLOAD), # pid comes from the form
+    ],
+    ids=["copy_bucket", "get_file_place"],
+)
+def test_storage_api_denied_without_pid(app, users, client, mocker, call_api,
+                                        base_payload):
     """``pid`` is attacker controlled, so omitting it must not bypass the checks.
 
-    ``copy_bucket`` reads ``pid`` from the JSON body, and
-    ``copy_bucket_to_s3`` locates the file from ``bucket_id`` / ``filename``
-    alone. Without this guard any logged in user could copy somebody else's
-    file into their own S3 bucket simply by leaving ``pid`` out. The guard is
-    ``record_edit_permission_required``, which aborts with 400.
+    ``copy_bucket_to_s3`` / ``get_file_place_info`` locate the file from
+    ``bucket_id`` / file name alone, so without this guard any logged in user
+    could reach somebody else's file simply by leaving ``pid`` out. The guard
+    is ``record_edit_permission_required``, which aborts with 400 -- an HTML
+    error page, so there is no JSON body to assert on.
     """
     _setup_storage_api(app, client, users)
     backends = _mock_storage_backends(mocker)
-    payload = dict(_COPY_BUCKET_PAYLOAD)
+    payload = dict(base_payload)
     del payload['pid']
 
-    res = _call_copy_bucket(client, payload)
-
-    assert res.status_code == 400
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_denied_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_file_place_denied_without_pid(app, users, client, mocker):
-    """A request without ``pid`` is rejected by ``record_edit_permission_required``."""
-    _setup_storage_api(app, client, users)
-    backends = _mock_storage_backends(mocker)
-    payload = dict(_GET_FILE_PLACE_PAYLOAD)
-    del payload['pid']
-
-    res = _call_get_file_place(client, payload)
+    res = call_api(client, payload)
 
     assert res.status_code == 400
     _assert_no_storage_access(backends)
@@ -2500,43 +2376,23 @@ def test_get_bucket_list_allowed_without_pid(app, users, client, mocker):
     assert res.get_json() == []
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_without_new_version_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_denied_without_new_version_id(app, users, client, mocker):
-    """``new_bucket_id`` without ``new_version_id`` must be rejected at the entrance.
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_with_partial_new_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("missing_key", ['new_version_id', 'new_bucket_id'])
+def test_replace_file_denied_with_partial_new_bucket(client, mocker,
+                                                     storage_api, missing_key):
+    """A half specified replacement target must be rejected at the entrance.
 
-    Otherwise ``ObjectVersion.get()`` silently falls back to the head version,
-    the request passes validation and ``None`` ends up stored as the file's
-    ``version_id`` in the record metadata.
+    ``ObjectVersion.get()`` deliberately falls back to the head version when
+    ``version_id`` is falsy, so ``new_bucket_id`` without ``new_version_id``
+    would otherwise pass validation and ``None`` would end up stored as the
+    file's ``version_id`` in the record metadata. The mirror case
+    (``new_version_id`` without ``new_bucket_id``) is rejected as well.
     """
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
     _mock_validation_dependencies(mocker, deposit_bucket='1')
-    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = None
+    _mock_object_lookups(mocker)
     backends = _mock_storage_backends(mocker)
     payload = dict(_REPLACE_FILE_S3_PAYLOAD)
-    del payload['new_version_id']
-
-    res = _call_replace_file_s3(client, payload)
-
-    assert res.status_code == 403
-    assert 'error' in res.get_json()
-    _assert_no_storage_access(backends)
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_without_new_bucket_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_replace_file_denied_without_new_bucket_id(app, users, client, mocker):
-    """``new_version_id`` without ``new_bucket_id`` must be rejected as well."""
-    _setup_storage_api(app, client, users)
-    _mock_edit_permission(mocker)
-    _mock_validation_dependencies(mocker, deposit_bucket='1')
-    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = None
-    backends = _mock_storage_backends(mocker)
-    payload = dict(_REPLACE_FILE_S3_PAYLOAD)
-    del payload['new_bucket_id']
+    del payload[missing_key]
 
     res = _call_replace_file_s3(client, payload)
 
@@ -2558,6 +2414,33 @@ def _mock_validation_dependencies(mocker, deposit_bucket='aaa'):
     return pid_obj
 
 
+_UNSET = object()
+
+
+def _mock_object_lookups(mocker, object_version=_UNSET, records_bucket=None):
+    """Mock the object / bucket lookups of ``_validate_storage_api_request``.
+
+    ``ObjectVersion.get`` resolves the file (and, for a replacement, the new
+    file), and ``RecordsBuckets`` tells whether the new bucket is already
+    attached to a record. The defaults describe a valid request: the file is
+    found and the new bucket is still free.
+    """
+    if object_version is _UNSET:
+        object_version = mocker.MagicMock()
+    mock_object_version = mocker.patch(
+        "weko_records_ui.views.ObjectVersion.get", return_value=object_version)
+    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
+    mock_records_buckets.query.filter_by.return_value.first.return_value = \
+        records_bucket
+    return mock_object_version, mock_records_buckets
+
+
+@pytest.fixture
+def storage_api_enabled(app):
+    """Turn on the feature flag that every validator test but one needs."""
+    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test__validate_storage_api_request_disabled(app):
     app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = False
@@ -2569,21 +2452,19 @@ def test__validate_storage_api_request_disabled(app):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_feature_flag_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_feature_flag_only(app):
+def test__validate_storage_api_request_feature_flag_only(app, storage_api_enabled):
     """``feature_flag_only=True`` stops right after the feature flag check.
 
     This is the only way to skip the record based checks, and it is used by
     ``get_bucket_list``, which does not operate on a single record.
     """
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
     with app.test_request_context():
         result = _validate_storage_api_request(feature_flag_only=True)
     assert result is None
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_not_base_recid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_not_base_recid(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_not_base_recid(app, mocker, storage_api_enabled):
     mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value={'_buckets': {'deposit': 'aaa'}})
     mocker.patch("weko_records_ui.views.PersistentIdentifier.get", return_value=mocker.MagicMock())
     mocker.patch("weko_records_ui.views.get_record_without_version", return_value=mocker.MagicMock())
@@ -2594,8 +2475,7 @@ def test__validate_storage_api_request_not_base_recid(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_bucket_mismatch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_bucket_mismatch(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_bucket_mismatch(app, mocker, storage_api_enabled):
     _mock_validation_dependencies(mocker)
     with app.test_request_context():
         result = _validate_storage_api_request(pid='1', bucket_id='bbb', file_name='helloworld.pdf')
@@ -2604,10 +2484,9 @@ def test__validate_storage_api_request_bucket_mismatch(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_object_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_object_not_found(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_object_not_found(app, mocker, storage_api_enabled):
     _mock_validation_dependencies(mocker)
-    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=None)
+    _mock_object_lookups(mocker, object_version=None)
     with app.test_request_context():
         result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
     assert result[1] == 403
@@ -2615,8 +2494,12 @@ def test__validate_storage_api_request_object_not_found(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_invalid_new_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_invalid_new_version(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_invalid_new_version(app, mocker, storage_api_enabled):
+    """The second ``ObjectVersion.get`` -- for the replacement -- finds nothing.
+
+    The two calls need different results, so this one keeps its own
+    ``side_effect`` instead of using ``_mock_object_lookups``.
+    """
     _mock_validation_dependencies(mocker)
     mocker.patch("weko_records_ui.views.ObjectVersion.get",
                  side_effect=[mocker.MagicMock(), None])
@@ -2627,72 +2510,46 @@ def test__validate_storage_api_request_invalid_new_version(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_bucket_attached -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_new_bucket_attached(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_new_bucket_attached(app, mocker, storage_api_enabled):
     _mock_validation_dependencies(mocker)
-    mocker.patch("weko_records_ui.views.ObjectVersion.get",
-                 return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = \
-        mocker.MagicMock()
+    _mock_object_lookups(mocker, records_bucket=mocker.MagicMock())
     with app.test_request_context():
         result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id='1')
     assert result[1] == 403
     assert 'error' in result[0].get_json()
 
 
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_bucket_without_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_new_bucket_without_version(app, mocker):
-    """``new_bucket_id`` without ``new_version_id`` must be rejected.
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_partial_new_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "new_bucket_id, new_version_id",
+    [
+        ('bbb', None), # new_bucket_id without new_version_id
+        ('bbb', ''), # an empty new_version_id counts as missing too
+        (None, '1'), # new_version_id without new_bucket_id
+    ],
+)
+def test__validate_storage_api_request_partial_new_bucket(
+        app, mocker, storage_api_enabled, new_bucket_id, new_version_id):
+    """A half specified replacement target must be rejected.
 
     ``ObjectVersion.get()`` deliberately falls back to the head version when
     ``version_id`` is falsy, so the query alone would accept the request and
-    the missing version id would later be written into the record metadata.
+    the missing identifier would later be written into the record metadata.
     """
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
     _mock_validation_dependencies(mocker)
-    mock_object_version = mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = None
+    mock_object_version, _ = _mock_object_lookups(mocker)
     with app.test_request_context():
-        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id=None)
+        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id=new_bucket_id, new_version_id=new_version_id)
     assert result[1] == 403
     assert 'error' in result[0].get_json()
-    assert mock_object_version.call_count == 1
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_bucket_with_empty_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_new_bucket_with_empty_version(app, mocker):
-    """An empty ``new_version_id`` string is rejected just like a missing one."""
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
-    _mock_validation_dependencies(mocker)
-    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = None
-    with app.test_request_context():
-        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id='')
-    assert result[1] == 403
-    assert 'error' in result[0].get_json()
-
-
-# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_version_without_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_new_version_without_bucket(app, mocker):
-    """``new_version_id`` without ``new_bucket_id`` must be rejected too."""
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
-    _mock_validation_dependencies(mocker)
-    mock_object_version = mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = None
-    with app.test_request_context():
-        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id=None, new_version_id='1')
-    assert result[1] == 403
-    assert 'error' in result[0].get_json()
+    # ``not (new_bucket_id and new_version_id)`` short-circuits the or-chain in
+    # all three cases, so ObjectVersion.get is only called once (for the file
+    # itself) and never for the replacement.
     assert mock_object_version.call_count == 1
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_pid_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_pid_not_found(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_pid_not_found(app, mocker, storage_api_enabled):
     mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", side_effect=PIDDoesNotExistError('recid', '999'))
     with app.test_request_context():
         result = _validate_storage_api_request(pid='999', bucket_id='aaa', file_name='helloworld.pdf')
@@ -2702,8 +2559,7 @@ def test__validate_storage_api_request_pid_not_found(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_unexpected_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_unexpected_error(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_unexpected_error(app, mocker, storage_api_enabled):
     mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", side_effect=Exception('boom'))
     with app.test_request_context():
         result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
@@ -2712,12 +2568,9 @@ def test__validate_storage_api_request_unexpected_error(app, mocker):
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test__validate_storage_api_request_success(app, mocker):
-    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
+def test__validate_storage_api_request_success(app, mocker, storage_api_enabled):
     _mock_validation_dependencies(mocker)
-    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
-    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
-    mock_records_buckets.query.filter_by.return_value.first.return_value = None
+    _mock_object_lookups(mocker)
     with app.test_request_context():
         result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf',new_bucket_id='bbb', new_version_id='1')
     assert result is None
