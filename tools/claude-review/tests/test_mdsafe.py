@@ -176,14 +176,14 @@ def test_esc_breaks_at_mention_adjacency():
     """@ の直後にゼロ幅スペースが入り、"@word" の連続性が断たれる。"""
     out = mdsafe.esc("@coderabbitai full review")
     assert "@coderabbitai" not in out
-    assert out.startswith("@​coderabbitai")
+    assert out.startswith("@\u200Bcoderabbitai")
 
 
 def test_esc_at_mention_defanging_applies_to_every_occurrence():
     out = mdsafe.esc("cc @alice and @bob")
     assert "@alice" not in out
     assert "@bob" not in out
-    assert out.count("​") == 2
+    assert out.count("\u200B") == 2
 
 
 def test_cell_also_defangs_at_mentions():
@@ -199,3 +199,44 @@ def test_fence_does_not_touch_at_mentions():
     # fence() はフェンスの長さしか返さない契約なので、呼び出し側が
     # content をそのまま使うことを確認する。
     assert "@coderabbitai" in content
+
+
+# --- code(): 閉じられないインラインコード ---------------------------------
+
+
+def test_code_wraps_plain_value_in_single_backticks():
+    assert mdsafe.code("views.py:1568") == "`views.py:1568`"
+
+
+def test_code_grows_the_delimiter_past_embedded_backticks():
+    """値の中のバッククォートでコードスパンが閉じないこと。
+
+    file はモデル出力由来（元は公開 PR に誰でも書けるレビューコメント）。
+    固定長の ` で囲むと ``x` ![](http://evil/px) `y`` のような値が
+    スパンを閉じ、そこから先が生の Markdown として解釈される。
+    """
+    out = mdsafe.code("x` ![](http://evil/px) `y")
+    assert out.startswith("``") and out.endswith("``")
+    assert "![](http://evil/px)" in out
+    # 区切りは中身の連続長より必ず長い
+    assert max(len(r) for r in re.findall(r"`+", "x` `y")) < len(
+        re.match(r"`+", out).group(0))
+
+
+def test_code_pads_when_content_touches_a_backtick():
+    """先頭・末尾がバッククォートなら空白で挟む(CommonMark の規則)。"""
+    assert mdsafe.code("`x`") == "`` `x` ``"
+
+
+def test_code_folds_newlines():
+    assert "\n" not in mdsafe.code("a\nb")
+
+
+def test_code_of_empty_value_is_still_a_span():
+    assert mdsafe.code("") == "` `"
+
+
+def test_code_escapes_pipe_for_table_cells():
+    """表のセルでは素の | がセル区切りとして働く(コードスパンの中でも)。"""
+    assert mdsafe.code("a|b", table=True) == "`a\\|b`"
+    assert mdsafe.code("a|b") == "`a|b`"

@@ -149,6 +149,31 @@ def existing_hashes(owner: str, repo: str, pr: int) -> set:
     return set(FIX_MARK.findall(proc.stdout))
 
 
+def head_unchanged(owner: str, repo: str, pr: int, head_sha: str) -> bool:
+    """投稿直前に PR の head が変わっていないかを確かめる。
+
+    レビューは Resolve PR で確定した 1 つのリビジョンに対して行うが、
+    その間に push されることがある。古いリビジョンの行番号で inline
+    comment を投稿すると、当たらない（422）か、別の行に当たってしまう。
+    変わっていたら投稿しない。新しいリビジョンは synchronize で走る
+    次の実行が見る。
+    """
+    proc = subprocess.run(
+        ["gh", "api", "repos/%s/%s/pulls/%d" % (owner, repo, pr),
+         "--jq", ".head.sha"],
+        capture_output=True, text=True)
+    if proc.returncode != 0:
+        print("::warning::head の確認に失敗しました: %s"
+              % proc.stderr.strip()[:200])
+        return False
+    current = proc.stdout.strip()
+    if current != head_sha:
+        print("::warning::実行中に push されました(%s → %s)。"
+              "inline suggestion は投稿しません" % (head_sha[:9], current[:9]))
+        return False
+    return True
+
+
 def post(owner: str, repo: str, pr: int, head_sha: str, item: dict) -> bool:
     payload = {k: v for k, v in item.items() if not k.startswith("_")}
     payload["commit_id"] = head_sha
@@ -172,12 +197,19 @@ def main() -> None:
     ap.add_argument("--findings", required=True)
     ap.add_argument("--diff", required=True)
     ap.add_argument("--reviews", required=True)
+    ap.add_argument("--head-sha",
+                    help="レビュー対象として確定させた head SHA。"
+                         "省略時は reviews.json の head_sha を使う")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
 
     findings = json.load(open(a.findings, encoding="utf-8"))
     diff = open(a.diff, encoding="utf-8", errors="replace").read()
-    head_sha = json.load(open(a.reviews, encoding="utf-8"))["head_sha"]
+    # ワークフローが確定させた SHA を最優先で使う。reviews.json の head_sha は
+    # GraphQL を引いた時点の値で、差分・checkout とは別のタイミングで
+    # 解決されているため、実行中に push されるとずれる。
+    head_sha = a.head_sha or json.load(
+        open(a.reviews, encoding="utf-8"))["head_sha"]
 
     changed = changed_lines(diff)
     existing = set() if a.dry_run else existing_hashes(a.owner, a.repo, a.pr)
@@ -187,6 +219,9 @@ def main() -> None:
     if a.dry_run:
         for it in items:
             print("--- %s:%s\n%s" % (it["path"], it["line"], it["body"]))
+        return
+
+    if items and not head_unchanged(a.owner, a.repo, a.pr, head_sha):
         return
 
     ok = sum(1 for it in items if post(a.owner, a.repo, a.pr, head_sha, it))

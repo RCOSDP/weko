@@ -1,5 +1,4 @@
 """build_input の切り詰めと外部データ枠のテスト。"""
-import json
 
 import build_input
 import collect_reviews

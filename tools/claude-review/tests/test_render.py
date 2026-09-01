@@ -156,8 +156,8 @@ def test_table_pipe_in_title_does_not_shift_columns():
     """title に | が入っても表の列がずれない。"""
     d = dict(BASE, adjudications=[adj(title="a | b | c")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    header = next(l for l in out.splitlines() if l.startswith("| # |"))
-    row = next(l for l in out.splitlines() if l.startswith("| 1 |"))
+    header = next(line for line in out.splitlines() if line.startswith("| # |"))
+    row = next(line for line in out.splitlines() if line.startswith("| 1 |"))
     assert len(_split_cells(row)) == len(_split_cells(header))
 
 
@@ -165,8 +165,8 @@ def test_table_newline_in_title_stays_one_line():
     """title に改行が入っても表がその行で終わらない。"""
     d = dict(BASE, adjudications=[adj(title="line1\nline2")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    header = next(l for l in out.splitlines() if l.startswith("| # |"))
-    rows = [l for l in out.splitlines() if l.startswith("| 1 |")]
+    header = next(line for line in out.splitlines() if line.startswith("| # |"))
+    rows = [line for line in out.splitlines() if line.startswith("| 1 |")]
     assert len(rows) == 1
     assert len(_split_cells(rows[0])) == len(_split_cells(header))
 
@@ -228,8 +228,8 @@ def test_table_backslash_pipe_pairing_does_not_shift_columns():
     """
     d = dict(BASE, adjudications=[adj(title="path x\\|y end")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    header = next(l for l in out.splitlines() if l.startswith("| # |"))
-    row = next(l for l in out.splitlines() if l.startswith("| 1 |"))
+    header = next(line for line in out.splitlines() if line.startswith("| # |"))
+    row = next(line for line in out.splitlines() if line.startswith("| 1 |"))
     assert len(_split_cells(row)) == len(_split_cells(header))
 
 
@@ -237,8 +237,8 @@ def test_table_lone_backslashes_do_not_shift_columns():
     """パイプを伴わない素のバックスラッシュ（Windows パスなど）でも列数が変わらない。"""
     d = dict(BASE, adjudications=[adj(title="C:\\path\\to\\file")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    header = next(l for l in out.splitlines() if l.startswith("| # |"))
-    row = next(l for l in out.splitlines() if l.startswith("| 1 |"))
+    header = next(line for line in out.splitlines() if line.startswith("| # |"))
+    row = next(line for line in out.splitlines() if line.startswith("| 1 |"))
     assert len(_split_cells(row)) == len(_split_cells(header))
 
 
@@ -247,14 +247,14 @@ def test_heading_title_newline_cannot_inject_a_fake_heading():
     d = dict(BASE, adjudications=[adj(verdict="valid",
              title="evil\n# 偽の見出し")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    assert not any(l.startswith("# 偽の見出し") for l in out.splitlines())
+    assert not any(line.startswith("# 偽の見出し") for line in out.splitlines())
 
 
 def test_summary_paragraph_newline_cannot_inject_a_fake_heading():
     """段落として出る summary の改行 + `#` が、独立した見出し行を作らない。"""
     d = dict(BASE, summary="ok\n## 偽のセクション")
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    assert not any(l.startswith("## 偽のセクション") for l in out.splitlines())
+    assert not any(line.startswith("## 偽のセクション") for line in out.splitlines())
 
 
 def test_ctx_reason_newline_cannot_inject_a_fake_bullet():
@@ -262,7 +262,7 @@ def test_ctx_reason_newline_cannot_inject_a_fake_bullet():
     d = dict(BASE, adjudications=[adj(verdict="needs_context",
              reason="a\n- 偽の項目")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    assert not any(l.startswith("- 偽の項目") for l in out.splitlines())
+    assert not any(line.startswith("- 偽の項目") for line in out.splitlines())
 
 
 # --- 所見1: 行頭に来た構造記号でブロックを開けない ------------------------
@@ -284,7 +284,7 @@ def test_reason_paragraph_leading_fence_cannot_open_an_unclosed_block():
              reason="```\nrest hidden")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
     lines = out.splitlines()
-    assert not any(re.match(r"^ {0,3}`{3,}", l) for l in lines)
+    assert not any(re.match(r"^ {0,3}`{3,}", line) for line in lines)
     assert "rest hidden" in out
     assert "<sub>" in out          # 呑み込まれず末尾の注記まで残っている
 
@@ -301,8 +301,8 @@ def test_own_finding_detail_leading_heading_cannot_forge_a_section():
            "evidence": "", "verified": "", "_hits": 1}
     d = dict(BASE, own_findings=[own])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    headings = [l for l in out.splitlines()
-                if re.match(r"^ {0,3}#{1,6}(\s|$)", l)]
+    headings = [line for line in out.splitlines()
+                if re.match(r"^ {0,3}#{1,6}(\s|$)", line)]
     # 本物の見出しは冒頭のタイトルと own_findings の項目見出しの 2 本だけ。
     # 偽の "## 🔍 Claude レビュー統合" が detail から独立した見出しとして
     # 追加されていないこと。
@@ -314,7 +314,7 @@ def test_fix_note_leading_marker_cannot_open_a_block():
     d = dict(BASE, adjudications=[adj(fix={
         "kind": "description", "note": "```\nrest hidden"})])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    assert not any(re.match(r"^ {0,3}`{3,}", l) for l in out.splitlines())
+    assert not any(re.match(r"^ {0,3}`{3,}", line) for line in out.splitlines())
     assert "rest hidden" in out
     assert "<sub>" in out
 
@@ -323,9 +323,9 @@ def test_ctx_reason_leading_marker_cannot_open_a_block():
     d = dict(BASE, adjudications=[adj(verdict="needs_context",
              reason="# 偽の見出し")])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
-    assert not any(l.startswith("# 偽の見出し") for l in out.splitlines())
-    headings = [l for l in out.splitlines()
-                if re.match(r"^ {0,3}#{1,6}(\s|$)", l)]
+    assert not any(line.startswith("# 偽の見出し") for line in out.splitlines())
+    headings = [line for line in out.splitlines()
+                if re.match(r"^ {0,3}#{1,6}(\s|$)", line)]
     assert headings == ["## 🔍 Claude レビュー統合"]
 
 
@@ -334,8 +334,8 @@ def test_unverified_detail_and_why_leading_marker_cannot_open_a_block():
              "detail": "```\nhidden", "why": "- 偽の項目", "_hits": 1}])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
     lines = out.splitlines()
-    assert not any(re.match(r"^ {0,3}`{3,}", l) for l in lines)
-    assert not any(l.startswith("- 偽の項目") for l in lines)
+    assert not any(re.match(r"^ {0,3}`{3,}", line) for line in lines)
+    assert not any(line.startswith("- 偽の項目") for line in lines)
     assert "<sub>" in out
 
 
@@ -388,3 +388,37 @@ def test_fence_content_newlines_are_preserved():
              "note": ""})])
     out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
     assert payload in out
+
+
+def test_file_with_backtick_cannot_escape_the_code_span():
+    """箇所(file)のバッククォートでコードスパンを閉じられないこと。
+
+    file は Claude 出力由来。固定長の ` で囲んでいた頃は
+    ``x` [spoof](http://evil) `y`` のような値でスパンが閉じ、リンクや
+    画像が bot のコメントに生の Markdown として入った。
+    """
+    payload = "x` [spoof](http://evil/) `y.py"
+    d = dict(BASE, adjudications=[adj(file=payload)])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0},
+                        "sonnet")
+    # 本文のどこにも「コードスパンの外にあるリンク」が現れない
+    for line in out.splitlines():
+        if "[spoof](http://evil/)" not in line:
+            continue
+        # 出現する行では、リンクは必ずコードスパン(``...``)の内側にある
+        assert "``" in line
+
+
+def test_file_with_pipe_does_not_break_the_table():
+    """表のセルでは | が区切りとして働く。列数がずれないこと。"""
+    d = dict(BASE, adjudications=[adj(file="a|b.py")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0},
+                        "sonnet")
+    header = next(line for line in out.splitlines()
+                  if line.startswith("| # |"))
+    row = next(line for line in out.splitlines() if line.startswith("| 1 |"))
+    # セル区切りとして働くのはエスケープされていない | だけ
+    def seps(s):
+        return len(re.findall(r"(?<!\\)\|", s))
+    assert seps(row) == seps(header)
+    assert "a\\|b.py" in row

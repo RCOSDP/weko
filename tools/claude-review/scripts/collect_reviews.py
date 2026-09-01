@@ -17,7 +17,10 @@ query($owner:String!,$repo:String!,$pr:Int!){
       headRefOid
       reviewThreads(first:100){ nodes{
         id isResolved isOutdated path line startLine
-        comments(first:30){ nodes{ databaseId author{login} body createdAt } }
+        comments(first:30){ totalCount nodes{
+          databaseId author{login} body createdAt } }
+        tail: comments(last:10){ nodes{
+          databaseId author{login} body createdAt } }
       }}
       reviews(last:100){ nodes{ author{login} state body submittedAt } }
       comments(last:100){ nodes{ author{login} body createdAt } }
@@ -56,16 +59,48 @@ def _login(node) -> str:
     return ((node or {}).get("author") or {}).get("login") or "(unknown)"
 
 
+def _thread_comments(t: dict) -> tuple:
+    """1 スレッドのコメントを「最初の 30 件 + 最後の 10 件」で組む。
+
+    プロンプトは「議論の結論まで読んでから判定する」ことを求めている。
+    先頭 30 件だけを取ると、長いスレッドでは最初の指摘は読めても
+    「その後の反論で取り下げられた」という結論が落ち、決着済みの議論を
+    valid として蒸し返す。逆に末尾だけを取ると元の指摘が読めない。
+    そこで同じ connection を 2 通りに取り（GraphQL のエイリアス）、
+    databaseId で重複を除いて連結する。
+
+    返り値は (コメント列, 省略した件数)。省略件数は totalCount から
+    求める（古い形式のペイロードで totalCount / tail が無い場合は 0）。
+    """
+    head = t["comments"]["nodes"]
+    tail = ((t.get("tail") or {}).get("nodes")) or []
+    merged = list(head)
+    seen = {c.get("databaseId") for c in head}
+    for c in tail:
+        if c.get("databaseId") in seen:
+            continue
+        seen.add(c.get("databaseId"))
+        merged.append(c)
+    total = t["comments"].get("totalCount")
+    omitted = max(0, total - len(merged)) if isinstance(total, int) else 0
+    return merged, omitted
+
+
 def normalize(payload: dict) -> dict:
     pr = payload["data"]["repository"]["pullRequest"]
 
     # reviewThreads(first:100) — スレッド内の最初の指摘本文が必須なため最古側を落とせない。
-    # ただし 1 スレッドが 30 コメント超過の場合、末尾の結論が落ちて決着判定を誤る可能性がある。
+    # 30 件を超えるスレッドは先頭 30 件 + 末尾 10 件を取り、間を省略する
+    # (_thread_comments)。省略した件数は omitted に持たせ、Claude に
+    # 「途中が抜けている」ことを伝える。
     threads = []
+    omitted_total = 0
     for t in pr["reviewThreads"]["nodes"]:
+        nodes, omitted = _thread_comments(t)
+        omitted_total += omitted
         comments = [{"id": c.get("databaseId"), "author": _login(c),
                      "body": c.get("body") or "", "created_at": c.get("createdAt")}
-                    for c in t["comments"]["nodes"]]
+                    for c in nodes]
         # 自分が付けた suggestion スレッドは裁定対象ではない
         if not comments or all(_is_self(c["author"]) for c in comments):
             continue
@@ -73,7 +108,7 @@ def normalize(payload: dict) -> dict:
             "id": t["id"], "resolved": bool(t["isResolved"]),
             "outdated": bool(t["isOutdated"]), "path": t["path"],
             "line": t["line"], "start_line": t["startLine"],
-            "comments": comments})
+            "omitted": omitted, "comments": comments})
 
     # reviews(last:100) — 最新のレビューを取得する必要があるため last を使う
     reviews = [{"author": _login(r), "state": r["state"],
@@ -96,9 +131,7 @@ def normalize(payload: dict) -> dict:
     # limit saturation detection (internal use only, prefixed with _)
     limits = {
         "threads_saturated": len(pr["reviewThreads"]["nodes"]) == 100,
-        "thread_comments_saturated": any(
-            len(t["comments"]["nodes"]) == 30 for t in pr["reviewThreads"]["nodes"]
-        ),
+        "thread_comments_omitted": omitted_total,
         "reviews_saturated": len(pr["reviews"]["nodes"]) == 100,
         "comments_saturated": len(pr["comments"]["nodes"]) == 100,
     }
@@ -128,8 +161,9 @@ def main() -> None:
         print("::warning::issue コメントが上限 100 件に達しました。古いコメントは取得していません")
     if limits["threads_saturated"]:
         print("::warning::レビュースレッドが上限 100 件に達しました。古いスレッドは取得していません")
-    if limits["thread_comments_saturated"]:
-        print("::warning::1スレッド以上が30コメント上限に達しました。決着の判定を誤る可能性があります")
+    if limits["thread_comments_omitted"]:
+        print("::warning::長いスレッドの途中を計 %d 件省略しました"
+              "(先頭30件と末尾10件は渡しています)" % limits["thread_comments_omitted"])
 
     with open(a.out, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=1)

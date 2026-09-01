@@ -51,7 +51,7 @@
 
 ### 規則 2-1: private 側には weko と同名のブランチを作る
 
-```
+```text
 RCOSDP/weko          fix/issue62569 ──PR──> develop_v2.0.4
                           │ 同名で対応させる
 RCOSDP/weko-secret   fix/issue62569 ──PR──> develop_v2.0.4
@@ -165,8 +165,13 @@ WARN（W1〜W6）はゲートを通すが、レビューでは見る。
 
 - deploy key を使うのは、対象が 1 リポジトリに構造的に限定され、読み取り専用で、
   個人アカウントに紐づかないため（PAT より事故時の影響が小さい）。
-- **Secret は fork からの PR には渡らない。** 各ワークフローは fork PR で起動しないよう
-  明示的に弾いている。未設定ならジョブは何もせずスキップする。
+- **Secret は fork からの PR には渡らない。** `pull_request` イベントは GitHub が
+  fork PR に Secret を渡さない。`issue_comment` は base 側の文脈で走るため Secret が
+  使える状態でジョブが始まるが、`claude-pr-review.yml` は最初のステップ
+  （`Resolve PR`）で head repo を API で確かめ、fork ならそこで打ち切る。
+  Secret を step の env に置くのはその後（`Check token`）。この順序を崩すと
+  この節の保証が成り立たなくなるので、ステップを入れ替えないこと。
+- 未設定ならジョブは何もせずスキップする。
 
 ---
 

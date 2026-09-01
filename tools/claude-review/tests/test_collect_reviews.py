@@ -148,7 +148,6 @@ def test_limit_detection(graphql_payload):
     pr = payload["data"]["repository"]["pullRequest"]
 
     # comments を 100 件まで充足
-    original_comments = pr["comments"]["nodes"]
     while len(pr["comments"]["nodes"]) < 100:
         pr["comments"]["nodes"].append({
             "author": {"login": "test-user"},
@@ -169,3 +168,46 @@ def test_limit_detection(graphql_payload):
     assert set(k for k in out.keys() if not k.startswith("_")) == \
            {"head_sha", "threads", "reviews", "conversation", "previous"}, \
            "Contract keys should not change"
+
+
+def _thread(n_head, n_tail, total, tid="T_long"):
+    def c(i):
+        return {"databaseId": i, "author": {"login": "coderabbitai"},
+                "body": "c%d" % i, "createdAt": "2026-09-01T00:00:%02dZ" % i}
+    return {"id": tid, "isResolved": False, "isOutdated": False,
+            "path": "a.py", "line": 1, "startLine": None,
+            "comments": {"totalCount": total,
+                         "nodes": [c(i) for i in range(1, n_head + 1)]},
+            "tail": {"nodes": [c(i) for i in
+                               range(total - n_tail + 1, total + 1)]}}
+
+
+def test_long_thread_keeps_both_ends(graphql_payload):
+    """30 件を超えるスレッドは先頭 30 件 + 末尾 10 件を渡す。
+
+    プロンプトは「議論の結論まで読んでから判定する」ことを求めている。
+    先頭 30 件だけだと、反論で取り下げられた指摘の結論が落ちて、
+    決着済みの議論を valid として蒸し返す。
+    """
+    pr = graphql_payload["data"]["repository"]["pullRequest"]
+    pr["reviewThreads"]["nodes"] = [_thread(30, 10, 45)]
+
+    out = collect_reviews.normalize(graphql_payload)
+    t = out["threads"][0]
+    ids = [c["id"] for c in t["comments"]]
+    assert ids[:30] == list(range(1, 31))     # 最初の指摘
+    assert ids[-10:] == list(range(36, 46))   # 議論の結論
+    assert t["omitted"] == 5
+    assert out["_limits"]["thread_comments_omitted"] == 5
+
+
+def test_short_thread_has_no_omission(graphql_payload):
+    """30 件以下なら tail は head に含まれ、重複も省略も出ない。"""
+    pr = graphql_payload["data"]["repository"]["pullRequest"]
+    pr["reviewThreads"]["nodes"] = [_thread(5, 5, 5)]
+
+    out = collect_reviews.normalize(graphql_payload)
+    t = out["threads"][0]
+    assert [c["id"] for c in t["comments"]] == [1, 2, 3, 4, 5]
+    assert t["omitted"] == 0
+    assert out["_limits"]["thread_comments_omitted"] == 0
