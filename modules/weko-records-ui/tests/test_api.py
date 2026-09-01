@@ -925,8 +925,8 @@ def test_create_storage_bucket_success_default_region(mocker):
     mock_s3_client.put_public_access_block.assert_called_once_with(
         Bucket="test-bucket",
         PublicAccessBlockConfiguration={
-            'BlockPublicAcls': False,
-            'IgnorePublicAcls': False,
+            'BlockPublicAcls': True,
+            'IgnorePublicAcls': True,
             'BlockPublicPolicy': False,
             'RestrictPublicBuckets': False
         })
@@ -939,7 +939,7 @@ def test_create_storage_bucket_success_default_region(mocker):
                     "Sid": "Public",
                     "Effect": "Allow",
                     "Principal": "*",
-                    "Action": ["s3:*"],
+                    "Action": ["s3:GetObject"],
                     "Resource": "arn:aws:s3:::test-bucket/*"
                 }
             ]
@@ -961,8 +961,18 @@ def test_create_storage_bucket_success_non_default_region(mocker):
         Bucket="test-bucket",
         CreateBucketConfiguration={'LocationConstraint': "ap-northeast-1"}
     )
-    mock_s3_client.put_public_access_block.assert_called_once()
+    mock_s3_client.put_public_access_block.assert_called_once_with(
+        Bucket="test-bucket",
+        PublicAccessBlockConfiguration={
+            'BlockPublicAcls': True,
+            'IgnorePublicAcls': True,
+            'BlockPublicPolicy': False,
+            'RestrictPublicBuckets': False
+        })
     mock_s3_client.put_bucket_policy.assert_called_once()
+    policy = json.loads(
+        mock_s3_client.put_bucket_policy.call_args[1]["Policy"])
+    assert policy["Statement"][0]["Action"] == ["s3:GetObject"]
 
 
 # def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
@@ -979,6 +989,9 @@ def test_create_storage_bucket_success_non_aws_endpoint(mocker):
     mock_s3_client.create_bucket.assert_called_once_with(Bucket="test-bucket")
     mock_s3_client.put_public_access_block.assert_not_called()
     mock_s3_client.put_bucket_policy.assert_called_once()
+    policy = json.loads(
+        mock_s3_client.put_bucket_policy.call_args[1]["Policy"])
+    assert policy["Statement"][0]["Action"] == ["s3:GetObject"]
 
 
 # def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
