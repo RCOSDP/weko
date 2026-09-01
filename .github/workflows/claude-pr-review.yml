@@ -4,20 +4,18 @@
 #   ローカルで:  claude setup-token          # 1年有効・scope=user:inference
 #   登録:        gh secret set CLAUDE_CODE_AUTH_TOKEN --repo RCOSDP/weko
 #
-# 通信はすべてアウトバウンド(ランナー → Anthropic / GitHub)。
-# 公開エンドポイント・固定IP・ポート開放・常駐プロセスは不要。
+# 【役割】PR に既に付いているレビュー(CodeRabbit・人間)を読み、実コードで裏を取って
+#   裁定し、修正案まで出す。独自の指摘も併せて行う。
+#   ロジックは tools/claude-review/scripts/ に置く(api-inventory と同じ規約)。
+#   設計: docs/superpowers/specs/2026-09-01-claude-pr-review-integration-design.md
 #
 # 【このリポジトリは public】
 #   Secret 名は CLAUDE_CODE_AUTH_TOKEN、CLI が読む環境変数は CLAUDE_CODE_OAUTH_TOKEN。
-#   - Secret は fork からの PR には渡らない。下の if で同一リポジトリに限定する。
-#   - **レビュー結果を PR に投稿する設定にしている(POST_TO_PR=true)。このリポジトリは
-#     public なので投稿内容は誰でも読める。** 認可の欠落など機微な指摘が出る可能性が
-#     あるため、公開して差し支えない内容かを運用で見ておくこと。
-#     投稿を止めるには POST_TO_PR を false にする(artifact には残る)。
-#
-# 注: cloud-hosted の `claude ultrareview` は 2026-08 時点でこのアカウントでは
-#     利用できなかった("Ultrareview is currently unavailable")。ここでは
-#     ヘッドレス実行(`claude -p`)を使う。動作は確認済み。
+#   - Secret は fork からの PR には渡らない。下の if と Resolve PR で二重に弾く。
+#   - **レビュー結果を PR に投稿する(POST_TO_PR=true)。投稿内容は誰でも読める。**
+#     認可の欠落など機微な指摘が出る可能性があるため、運用で見ておくこと。
+#   - 他人が書いたレビュー本文を読ませるため、プロンプトインジェクションの面がある。
+#     build_input.py が外部データ枠で囲み、許可ツールは Read/Grep/Glob のみに絞る。
 
 name: Claude PR Review
 
@@ -30,30 +28,52 @@ on:
   pull_request:
     branches: ['**']
     types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+  pull_request_review_comment:
+    types: [created]
+  issue_comment:
+    types: [created]
 
 env:
   POST_TO_PR: 'true'
   MODEL: 'sonnet'
-  # 同じ差分でも実行のたびに結果が揺れる(同一内容の PR で 0件/1件に割れた実績あり)。
-  # 見逃しのほうが痛いので複数回走らせて和集合を取る。
-  REVIEW_PASSES: '3'
+  # 同じ入力でも結果が揺れる。見逃しのほうが痛いので複数回まわして和集合を取る。
+  # 裁定は対象が列挙済みで揺れが小さいため、独自レビュー時代の 3 から 2 に下げた。
+  REVIEW_PASSES: '2'
   MAX_DIFF_BYTES: '200000'     # これを超える差分はレビューしない(分割が必要)
+  MAX_REVIEW_BYTES: '100000'   # 既存レビューをこのバイト数まで詰め込む
+  # 移行のため既定は false。集約コメントの精度を数 PR 確認してから true にする。
+  POST_INLINE_SUGGESTIONS: 'false'
+
+# CodeRabbit は review を連投することがある(#1905 では 00:41 と 00:47)。
+# PR 単位で束ねないと同じ内容を二重に走らせる。
+concurrency:
+  group: claude-review-${{ github.event.issue.number || github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
 
 jobs:
   review:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: github.event_name == 'workflow_dispatch' ||
-        (github.event.pull_request.head.repo.full_name == github.repository &&
-         github.event.pull_request.draft == false)
+    # 自分の投稿で再発火しないこと(inline suggestion も集約コメントも自分が書く)。
+    if: >-
+      github.event.sender.login != 'github-actions[bot]' &&
+      (
+        github.event_name == 'workflow_dispatch' ||
+        ((github.event_name == 'pull_request' ||
+          github.event_name == 'pull_request_review' ||
+          github.event_name == 'pull_request_review_comment') &&
+         github.event.pull_request.head.repo.full_name == github.repository &&
+         github.event.pull_request.draft == false) ||
+        (github.event_name == 'issue_comment' &&
+         github.event.issue.pull_request != null &&
+         startsWith(github.event.comment.body, '@claude'))
+      )
     permissions:
       contents: read
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
       - name: Check token
         id: cfg
         env:
@@ -63,29 +83,90 @@ jobs:
           else echo "enabled=false" >> "$GITHUB_OUTPUT"
                echo "::notice::CLAUDE_CODE_AUTH_TOKEN が未設定のためスキップします"; fi
 
-      - name: Install Claude Code
+      # issue_comment の payload には head repo が無い。ここで API を引いて弾く。
+      - name: Resolve PR
         if: steps.cfg.outputs.enabled == 'true'
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ github.event.inputs.pr_number || github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          info=$(gh api "repos/${{ github.repository }}/pulls/$N")
+          head_repo=$(echo "$info" | jq -r .head.repo.full_name)
+          # コンフリクトしている PR には refs/pull/N/merge が無い。その場合は head を読む。
+          if [ "$(echo "$info" | jq -r .mergeable)" = "false" ]; then
+            echo "ref=refs/pull/$N/head" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=refs/pull/$N/merge" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$head_repo" != "${{ github.repository }}" ]; then
+            echo "::notice::fork からの PR ($head_repo) のためスキップします"
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "number=$N" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(echo "$info" | jq -r .head.sha)" >> "$GITHUB_OUTPUT"
+          echo "PR #$N head=$(echo "$info" | jq -r .head.sha)"
+
+      # issue_comment / pull_request_review では既定ブランチが出る。
+      # PR の中身を読ませるので必ず PR の ref を明示する(Resolve PR で決めた ref)。
+      - uses: actions/checkout@v4
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
+        with:
+          fetch-depth: 0
+          ref: ${{ steps.pr.outputs.ref }}
+
+      - uses: actions/setup-python@v5
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
+        with:
+          python-version: '3.11'
+
+      # 壊れたスクリプトで本番レビューを走らせない。数秒で終わる。
+      - name: Test review scripts
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
+        run: |
+          pip install --quiet pytest
+          python3 -m pytest tools/claude-review/tests -q
+
+      - name: Install Claude Code
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
         run: |
           curl -fsSL https://claude.ai/install.sh | bash
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Collect diff
-        if: steps.cfg.outputs.enabled == 'true'
-        id: diff
+      - name: Collect diff and existing reviews
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
+        id: collect
         env:
           GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.inputs.pr_number || github.event.pull_request.number }}
+          PR: ${{ steps.pr.outputs.number }}
         run: |
-          gh pr diff "$PR" > diff.patch
+          gh pr diff "$PR" -R "${{ github.repository }}" > diff.patch
           size=$(stat -c%s diff.patch)
           echo "差分: ${size} bytes"
           if [ "$size" -gt "${MAX_DIFF_BYTES}" ]; then
             echo "::warning::差分が大きすぎます(${size} > ${MAX_DIFF_BYTES})。スキップします"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
 
+          T=tools/claude-review/scripts
+          # GraphQL が落ちてもレビュー全体は落とさない。既存レビューなしとして続ける。
+          if ! python3 $T/collect_reviews.py \
+               --owner "${{ github.repository_owner }}" \
+               --repo "${{ github.event.repository.name }}" \
+               --pr "$PR" --out reviews.json; then
+            echo "::warning::既存レビューの取得に失敗しました。独自レビューのみ行います"
+            jq -n --arg sha "${{ steps.pr.outputs.head_sha }}" \
+              '{head_sha:$sha,threads:[],reviews:[],conversation:[],previous:null}' \
+              > reviews.json
+          fi
+
+          python3 $T/build_input.py --diff diff.patch --reviews reviews.json \
+            --max-bytes "${MAX_REVIEW_BYTES}" \
+            --out claude_input.txt --meta-out input_meta.json
+
       - name: Review
-        if: steps.cfg.outputs.enabled == 'true' && steps.diff.outputs.skip != 'true'
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
+            steps.collect.outputs.skip != 'true'
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
         run: |
@@ -93,77 +174,14 @@ jobs:
           # 文脈不足で誤検知が出る(初回試行で「%% は SyntaxError」という誤指摘が出た。
           # 実際はその文字列が後で % 展開される前提だった)。
           # 変更系のツールは許可せず、--permission-mode plan も併用する。
-          # プロンプトはファイルに出しておく。複数回まわすので毎回書かない。
-          cat > prompt.txt <<'PROMPT'
-          このリポジトリの Pull Request をレビューしてください。
-          差分は標準入力から渡されます。
-
-          ## 最重要の規則: 指摘する前に必ず裏を取る
-
-          差分は前後の文脈が欠けています。差分の見た目だけで判断すると誤検知になります。
-          指摘を書く前に、必ず Read/Grep/Glob で該当ファイルの実物を読み、
-          その指摘が本当に成立するかを確認してください。
-
-          確認せずに指摘してはいけない例:
-            - 「この変数は未定義に見える」→ ファイル全体を読めば定義されている
-            - 「この書式は誤り」→ その文字列が後で加工される前提かもしれない
-            - 「呼び出し側の追随が無い」→ 差分外のファイルを grep すれば分かる
-
-          裏が取れたものは findings に、取れなかったが気になるものは
-          unverified に入れてください。**裏の取れないものを findings に
-          混ぜない**こと。件数を稼ぐ必要はありません。
-          findings がゼロなのは正当な結論です。
-
-          unverified は「確認しきれなかった」を捨てずに残すための枠です。
-          認可まわりでは、誤検知より見逃しのほうが高くつきます。
-
-          ## 観点(この順で重視)
-
-          1. 認可の欠落・後退
-             デコレータの削除、permission factory の無効化(None 代入等)、
-             所有者チェックの欠落、ロール判定の緩和
-          2. 破壊的操作の追加・条件緩和
-             削除/上書き処理の新設、既定値が安全側から危険側に変わる変更
-          3. 入力検証の不足
-             外部入力をそのまま使う、パス連結、スキーマ検証なし
-          4. 既存挙動を変える変更で、呼び出し側への影響が未考慮のもの
-             関数シグネチャ、戻り値の形、列名・キー名の変更など。
-             **grep で実際に呼び出し箇所を確認してから指摘すること**
-
-          ## 出力
-
-          最後に次のJSONだけを出力してください。前後に文章を付けないこと。
-
-          {"findings":[{"file":"","line":0,"severity":"high|medium|low",
-                        "title":"","detail":"","evidence":"","verified":"",
-                        "suggestion":""}],
-           "unverified":[{"file":"","line":0,"title":"","detail":"",
-                          "why":""}]}
-
-            findings.detail   : 何が問題で何が起きるかを1〜2文で
-            findings.evidence : 該当行の抜粋
-            findings.verified : **どのファイルを読んで裏を取ったか**
-                                (例 "utils.py:120-140 を確認")
-                                ここが埋まらないものは findings に入れないこと
-            findings.suggestion: 直し方が明確なら短いコードか1文で。
-                                 分からなければ空文字にすること
-
-            unverified.why    : なぜ確認しきれなかったか
-                                (例 "呼び出し元が動的で grep では追えない")
-
-          どちらも無ければ {"findings":[],"unverified":[]} を返してください。
-          PROMPT
-
-          # 同じ差分でも結果が揺れるので複数回まわす。1回でも落ちれば残りは続行し、
-          # 得られた分だけで集計する(全滅したときだけ警告)。
           ok=0
           for i in $(seq 1 "$REVIEW_PASSES"); do
             echo "===== pass $i / $REVIEW_PASSES ====="
             set +e
-            claude -p "$(cat prompt.txt)" \
+            claude -p "$(cat tools/claude-review/prompt.md)" \
                --output-format json --model "$MODEL" --permission-mode plan \
                --allowed-tools "Read,Grep,Glob" \
-               < diff.patch > "raw_$i.json" 2> "claude_$i.err"
+               < claude_input.txt > "raw_$i.json" 2> "claude_$i.err"
             rc=$?
             set -e
             echo "claude exit=$rc"
@@ -175,130 +193,16 @@ jobs:
               head -c 600 "raw_$i.json" || true
             fi
           done
-          cat raw_*.err > claude.err 2>/dev/null || true
           if [ "$ok" -eq 0 ]; then
             echo "::warning::すべての pass が失敗しました。診断のためジョブは継続します"
             cat claude_*.err 2>/dev/null | head -c 3000 || true
             exit 0
           fi
-          python3 - <<'PY' > review.md
-          import glob, json, re
 
-          def key(x):
-              """同じ指摘を1つにまとめるための鍵。表記揺れを吸収する。"""
-              return (str(x.get('file', '')).strip(),
-                      str(x.get('line', '')).strip(),
-                      re.sub(r'\s+', '', str(x.get('title', '')))[:60])
-
-          import os
-          model = os.environ.get('MODEL', '?')
-          passes, cost = 0, 0.0
-          found, unver = {}, {}
-          for path in sorted(glob.glob('raw_*.json')):
-              try:
-                  raw = json.load(open(path))
-              except Exception:
-                  continue
-              passes += 1
-              cost += raw.get('total_cost_usd', 0) or 0
-              text = raw.get('result') or raw.get('text') or ''
-              m = re.search(r'\{.*\}', text, re.S)
-              if not m:
-                  continue
-              try:
-                  data = json.loads(m.group(0))
-              except Exception:
-                  continue
-              # 和集合を取る。1回でも挙がったものは残す。
-              # 何回のパスで挙がったかは判断材料になるので数えておく。
-              for bucket, src in ((found, data.get('findings') or []),
-                                  (unver, data.get('unverified') or [])):
-                  for x in src:
-                      if not isinstance(x, dict):
-                          continue
-                      k = key(x)
-                      if k in bucket:
-                          bucket[k]['_hits'] += 1
-                      else:
-                          bucket[k] = dict(x, _hits=1)
-
-          f = list(found.values())
-          u = list(unver.values())
-          json.dump({'passes': passes, 'findings': f, 'unverified': u},
-                    open('findings.json', 'w'), ensure_ascii=False, indent=1)
-
-          order = {'high': 0, 'medium': 1, 'low': 2}
-          f.sort(key=lambda x: (order.get(x.get('severity'), 9), -x['_hits']))
-          u.sort(key=lambda x: -x['_hits'])
-
-          def hits(x):
-              # 全パスで挙がっていないものは、その旨を添える
-              return '' if x['_hits'] == passes else f"（{x['_hits']}/{passes} パス）"
-
-          SEV = {'high': ('🔴', '高'), 'medium': ('🟠', '中'),
-                 'low': ('🟡', '低')}
-
-          def sev(x):
-              return SEV.get(x.get('severity'), ('⚪', '不明'))
-
-          n_hi = sum(1 for x in f if x.get('severity') == 'high')
-          n_md = sum(1 for x in f if x.get('severity') == 'medium')
-          n_lo = len(f) - n_hi - n_md
-
-          print("## 🔍 Claude によるレビュー\n")
-          if not f and not u:
-              print("指摘はありません。\n")
-          else:
-              print(f"**指摘 {len(f)} 件** — 🔴 高 {n_hi} ／ 🟠 中 {n_md} ／ "
-                    f"🟡 低 {n_lo}" + (f" ／ 🔎 未確認 {len(u)} 件" if u else "")
-                    + "\n")
-
-          for x in f:
-              mark, label = sev(x)
-              print("---\n")
-              print(f"### {mark} [{label}] {x.get('title','')}\n")
-              loc = f"`{x.get('file','')}:{x.get('line','')}`"
-              line = loc if x['_hits'] == passes else f"{loc} {hits(x)}"
-              print(f"{line}\n")
-              if x.get('detail'):
-                  print(f"{x['detail']}\n")
-              if x.get('suggestion'):
-                  print("**提案**\n")
-                  sug = str(x['suggestion'])
-                  if '\n' in sug or sug.lstrip().startswith(('def ', 'if ', '@')):
-                      print("```\n" + sug + "\n```\n")
-                  else:
-                      print(f"{sug}\n")
-              ev, vf = x.get('evidence'), x.get('verified')
-              if ev or vf:
-                  print("<details><summary>根拠</summary>\n")
-                  if ev:
-                      print("```\n" + str(ev) + "\n```\n")
-                  if vf:
-                      print(f"確認: {vf}\n")
-                  print("</details>\n")
-
-          if u:
-              print("---\n")
-              print(f"<details><summary>🔎 未確認 — 裏が取れなかったもの "
-                    f"{len(u)} 件</summary>\n")
-              for x in u:
-                  loc = f"`{x.get('file','')}:{x.get('line','')}`"
-                  print(f"- **{x.get('title','')}** {loc} {hits(x)}")
-                  if x.get('detail'):
-                      print(f"  - {x['detail']}")
-                  if x.get('why'):
-                      print(f"  - 確認できなかった理由: {x['why']}")
-              print("\n</details>\n")
-
-          print("---\n")
-          note = (f"モデル {model} ／ {passes} 回実行して和集合 ／ "
-                  f"コスト ${cost:.4f}")
-          if passes > 1:
-              note += "。同じ差分でも結果が揺れるため複数回まわし、"
-              note += "一部のパスでしか挙がらなかったものには回数を添えています"
-          print(f"<sub>{note}</sub>")
-          PY
+          T=tools/claude-review/scripts
+          python3 $T/aggregate.py --glob 'raw_*.json' --out findings.json
+          python3 $T/render.py --findings findings.json --meta input_meta.json \
+            --model "$MODEL" --out review.md
           cat review.md
 
       - name: Upload result
@@ -309,26 +213,32 @@ jobs:
           path: |
             review.md
             findings.json
+            reviews.json
+            input_meta.json
             raw_*.json
             claude_*.err
+          if-no-files-found: ignore
 
       - name: Comment on PR
-        if: steps.cfg.outputs.enabled == 'true' && env.POST_TO_PR == 'true' &&
-            github.event_name == 'pull_request'
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
+            env.POST_TO_PR == 'true'
         uses: actions/github-script@v7
+        env:
+          PR: ${{ steps.pr.outputs.number }}
         with:
           script: |
             const fs = require('fs');
             const MARK = '<!-- claude-pr-review -->';
+            const n = Number(process.env.PR);
             let body = '(レビュー結果を生成できませんでした)';
             try { body = fs.readFileSync('review.md', 'utf8'); } catch (e) {}
             body = MARK + '\n' + body.slice(0, 60000)
-                 + '\n\n<sub>差分のみを対象にした自動レビューです。'
+                 + '\n\n<sub>他レビューを踏まえた自動レビューです。'
                  + '誤りが含まれることがあります。</sub>';
-            // 同じ PR に push するたびコメントが増えないよう、既存の1件を更新する
+            // 同じ PR で実行のたびコメントが増えないよう、既存の1件を更新する
             const { data: comments } = await github.rest.issues.listComments({
-              issue_number: context.issue.number,
-              owner: context.repo.owner, repo: context.repo.repo, per_page: 100,
+              issue_number: n, owner: context.repo.owner,
+              repo: context.repo.repo, per_page: 100,
             });
             const mine = comments.find(c => c.body && c.body.includes(MARK));
             if (mine) {
@@ -338,7 +248,20 @@ jobs:
               });
             } else {
               await github.rest.issues.createComment({
-                issue_number: context.issue.number, owner: context.repo.owner,
+                issue_number: n, owner: context.repo.owner,
                 repo: context.repo.repo, body,
               });
             }
+
+      - name: Post inline suggestions
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
+            env.POST_TO_PR == 'true' && env.POST_INLINE_SUGGESTIONS == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/claude-review/scripts/post_inline.py \
+            --owner "${{ github.repository_owner }}" \
+            --repo "${{ github.event.repository.name }}" \
+            --pr "${{ steps.pr.outputs.number }}" \
+            --findings findings.json --diff diff.patch --reviews reviews.json
