@@ -22,6 +22,15 @@ def _norm(s) -> str:
     return re.sub(r"\s+", "", str(s or ""))[:60]
 
 
+def _validate_line(val) -> int | None:
+    """行番号を検証する。正の整数に変換できたら返す。"""
+    try:
+        line = int(val)
+        return line if line >= 1 else None
+    except (TypeError, ValueError):
+        return None
+
+
 def clean_fix(fix) -> dict:
     """修正案を検証する。壊れているものは投稿対象から外す。"""
     if not isinstance(fix, dict):
@@ -56,7 +65,7 @@ def clean_adj(x) -> dict | None:
     sev = x.get("severity")
     return {"source": str(x.get("source") or ""),
             "thread_id": str(x.get("thread_id") or ""),
-            "file": str(x.get("file") or ""), "line": x.get("line"),
+            "file": str(x.get("file") or ""), "line": _validate_line(x.get("line")),
             "title": str(x.get("title") or ""), "verdict": verdict,
             "reason": str(x.get("reason") or ""),
             "verified": str(x.get("verified") or ""),
@@ -68,7 +77,7 @@ def clean_own(x) -> dict | None:
     if not isinstance(x, dict) or not str(x.get("title") or "").strip():
         return None
     sev = x.get("severity")
-    return {"file": str(x.get("file") or ""), "line": x.get("line"),
+    return {"file": str(x.get("file") or ""), "line": _validate_line(x.get("line")),
             "severity": sev if sev in SEVERITIES else "low",
             "title": str(x.get("title") or ""),
             "detail": str(x.get("detail") or ""),
@@ -80,7 +89,7 @@ def clean_own(x) -> dict | None:
 def clean_unver(x) -> dict | None:
     if not isinstance(x, dict) or not str(x.get("title") or "").strip():
         return None
-    return {"file": str(x.get("file") or ""), "line": x.get("line"),
+    return {"file": str(x.get("file") or ""), "line": _validate_line(x.get("line")),
             "title": str(x.get("title") or ""),
             "detail": str(x.get("detail") or ""),
             "why": str(x.get("why") or "")}
@@ -123,11 +132,23 @@ def aggregate(raw_list: list) -> dict:
         if not summary and str(data.get("summary") or "").strip():
             summary = str(data["summary"]).strip()
 
+        # 1 パス内での重複排除（同じキーが複数回出ていたら重い方を採る）
+        pass_adjs = {}
         for x in data.get("adjudications") or []:
             c = clean_adj(x)
             if not c:
                 continue
             k = adj_key(c)
+            if k in pass_adjs:
+                # パス内でも重い方を採用
+                if (VERDICT_ORDER.index(c["verdict"])
+                        < VERDICT_ORDER.index(pass_adjs[k]["verdict"])):
+                    pass_adjs[k] = c
+            else:
+                pass_adjs[k] = c
+
+        # クロスパスへのマージ
+        for k, c in pass_adjs.items():
             if k in adjs:
                 adjs[k]["_hits"] += 1
                 adjs[k]["_verdicts"].append(c["verdict"])
@@ -140,21 +161,35 @@ def aggregate(raw_list: list) -> dict:
             else:
                 adjs[k] = dict(c, _hits=1, _verdicts=[c["verdict"]])
 
+        # own_findings の重複排除
+        pass_owns = {}
         for x in data.get("own_findings") or []:
             c = clean_own(x)
             if not c:
                 continue
             k = own_key(c)
+            if k not in pass_owns:
+                pass_owns[k] = c
+
+        # クロスパスへのマージ
+        for k, c in pass_owns.items():
             if k in owns:
                 owns[k]["_hits"] += 1
             else:
                 owns[k] = dict(c, _hits=1)
 
+        # unverified の重複排除
+        pass_unvers = {}
         for x in data.get("unverified") or []:
             c = clean_unver(x)
             if not c:
                 continue
             k = own_key(c)
+            if k not in pass_unvers:
+                pass_unvers[k] = c
+
+        # クロスパスへのマージ
+        for k, c in pass_unvers.items():
             if k in unvers:
                 unvers[k]["_hits"] += 1
             else:
