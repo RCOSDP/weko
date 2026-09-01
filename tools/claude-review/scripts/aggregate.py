@@ -31,6 +31,17 @@ def _validate_line(val) -> int | None:
         return None
 
 
+def _line_key_repr(validated_line, raw_line) -> int | str:
+    """マージ鍵に使う行の表現を作る。
+
+    正当な行: その int 値
+    不正な行: "raw:" + repr(元の値) （異なる不正値が衝突しないようにする）
+    """
+    if validated_line is not None:
+        return validated_line
+    return "raw:" + repr(raw_line)
+
+
 def clean_fix(fix) -> dict:
     """修正案を検証する。壊れているものは投稿対象から外す。"""
     if not isinstance(fix, dict):
@@ -63,46 +74,55 @@ def clean_adj(x) -> dict | None:
     if verdict == "valid" and not str(x.get("verified") or "").strip():
         verdict = "needs_context"
     sev = x.get("severity")
+    raw_line = x.get("line")
+    validated_line = _validate_line(raw_line)
     return {"source": str(x.get("source") or ""),
             "thread_id": str(x.get("thread_id") or ""),
-            "file": str(x.get("file") or ""), "line": _validate_line(x.get("line")),
+            "file": str(x.get("file") or ""), "line": validated_line,
             "title": str(x.get("title") or ""), "verdict": verdict,
             "reason": str(x.get("reason") or ""),
             "verified": str(x.get("verified") or ""),
             "severity": sev if sev in SEVERITIES else "low",
-            "fix": clean_fix(x.get("fix"))}
+            "fix": clean_fix(x.get("fix")),
+            "_line_key": _line_key_repr(validated_line, raw_line)}
 
 
 def clean_own(x) -> dict | None:
     if not isinstance(x, dict) or not str(x.get("title") or "").strip():
         return None
     sev = x.get("severity")
-    return {"file": str(x.get("file") or ""), "line": _validate_line(x.get("line")),
+    raw_line = x.get("line")
+    validated_line = _validate_line(raw_line)
+    return {"file": str(x.get("file") or ""), "line": validated_line,
             "severity": sev if sev in SEVERITIES else "low",
             "title": str(x.get("title") or ""),
             "detail": str(x.get("detail") or ""),
             "evidence": str(x.get("evidence") or ""),
             "verified": str(x.get("verified") or ""),
-            "fix": clean_fix(x.get("fix"))}
+            "fix": clean_fix(x.get("fix")),
+            "_line_key": _line_key_repr(validated_line, raw_line)}
 
 
 def clean_unver(x) -> dict | None:
     if not isinstance(x, dict) or not str(x.get("title") or "").strip():
         return None
-    return {"file": str(x.get("file") or ""), "line": _validate_line(x.get("line")),
+    raw_line = x.get("line")
+    validated_line = _validate_line(raw_line)
+    return {"file": str(x.get("file") or ""), "line": validated_line,
             "title": str(x.get("title") or ""),
             "detail": str(x.get("detail") or ""),
-            "why": str(x.get("why") or "")}
+            "why": str(x.get("why") or ""),
+            "_line_key": _line_key_repr(validated_line, raw_line)}
 
 
 def adj_key(x) -> str:
     if x["thread_id"]:
         return "t:" + x["thread_id"]
-    return "k:%s:%s:%s" % (x["file"], x["line"], _norm(x["title"]))
+    return "k:%s:%s:%s" % (x["file"], x["_line_key"], _norm(x["title"]))
 
 
 def own_key(x) -> str:
-    return "%s:%s:%s" % (x["file"], x["line"], _norm(x["title"]))
+    return "%s:%s:%s" % (x["file"], x["_line_key"], _norm(x["title"]))
 
 
 def _extract(raw) -> dict | None:
@@ -205,6 +225,10 @@ def aggregate(raw_list: list) -> dict:
     o = sorted(owns.values(),
                key=lambda x: (order.get(x["severity"], 9), -x["_hits"]))
     u = sorted(unvers.values(), key=lambda x: -x["_hits"])
+
+    # 内部キー _line_key を削除（出力に含めない）
+    for x in a + o + u:
+        x.pop("_line_key", None)
 
     return {"passes": passes, "cost": cost, "summary": summary,
             "adjudications": a, "own_findings": o, "unverified": u}
