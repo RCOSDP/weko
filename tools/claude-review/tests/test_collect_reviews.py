@@ -49,6 +49,41 @@ def test_own_output_is_excluded(graphql_payload):
     assert all(c["author"] != "github-actions" for c in out["conversation"])
 
 
+def test_own_output_is_excluded_with_bot_suffixed_login(graphql_payload):
+    """所見8: GraphQL の author.login が "github-actions[bot]" 表記でも
+    自分の投稿として除外できる。
+
+    SELF = "github-actions" と完全一致でしか比較していなかった。REST の
+    user.login は "github-actions[bot]"(角括弧つき)、GraphQL の
+    author.login がどちらの表記で来るかは実測で確認していない前提だった
+    (frozen fixture に bot の投稿が無い)。表記が違えば previous が
+    永遠に解決せず、かつ自分の集約コメントが会話として Claude に
+    再入力されてしまう。
+    """
+    payload = graphql_payload
+    pr = payload["data"]["repository"]["pullRequest"]
+    pr["comments"]["nodes"].append({
+        "author": {"login": "github-actions[bot]"},
+        "body": "<!-- claude-pr-review -->\n## 前回の結果(bot表記)",
+        "createdAt": "2026-09-01T02:00:00Z"})
+    pr["reviewThreads"]["nodes"].append({
+        "id": "T_self_bot", "isResolved": False, "isOutdated": False,
+        "path": "a.py", "line": 1, "startLine": None,
+        "comments": {"nodes": [{
+            "databaseId": 2, "author": {"login": "github-actions[bot]"},
+            "body": "<!-- claude-fix:abc123abc123 -->", "createdAt": "x"}]}})
+    pr["reviews"]["nodes"].append({
+        "author": {"login": "github-actions[bot]"}, "state": "COMMENTED",
+        "body": "test review from bot-suffixed self",
+        "submittedAt": "2026-09-01T00:00:00Z"})
+
+    out = collect_reviews.normalize(payload)
+    assert out["previous"].startswith("<!-- claude-pr-review -->")
+    assert all(t["id"] != "T_self_bot" for t in out["threads"])
+    assert all(c["author"] != "github-actions[bot]" for c in out["conversation"])
+    assert all(r["author"] != "github-actions[bot]" for r in out["reviews"])
+
+
 def test_deleted_user_does_not_crash(graphql_payload):
     """アカウント削除済みユーザは author が null になる。"""
     pr = graphql_payload["data"]["repository"]["pullRequest"]
