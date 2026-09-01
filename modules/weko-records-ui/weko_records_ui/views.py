@@ -1481,9 +1481,24 @@ def dbsession_clean(exception):
     db.session.remove()
 
 
-def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
-                                  new_bucket_id=None, new_version_id=None,
-                                  feature_flag_only=False):
+def _check_storage_feature_flag():
+    """Reject the request when the institutional storage APIs are disabled.
+
+    Returns:
+        tuple: ``(response, status_code)`` to be returned as-is when the
+            feature is disabled, or None when it is enabled.
+    """
+    if not current_app.config.get(
+            'WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED', False):
+        current_app.logger.info(
+            'Storage modification is disabled. api={}, user_id={}'.format(
+                request.path, current_user.get_id()))
+        return jsonify({'error': _('This feature is currently disabled.')}), 403
+
+    return None
+
+
+def _validate_storage_api_request(pid, bucket_id, file_name):
     """Validate a request for the institutional storage APIs.
 
     Authentication, the presence of ``pid`` and the record ownership check are
@@ -1496,29 +1511,16 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
             bucket of the record.
         file_name (str): Object key sent by the caller. Must exist in
             ``bucket_id``.
-        new_bucket_id (str): Destination bucket id, set only when the file is
-            moved to a new bucket.
-        new_version_id (str): Destination object version id, set only when the
-            file is moved to a new bucket.
-        feature_flag_only (bool): Stop right after the feature flag check. Set
-            only by ``get_bucket_list``, which does not operate on a single
-            record.
 
     Returns:
         tuple: ``(response, status_code)`` to be returned as-is when the
             request is rejected, or None when it is valid.
     """
+    error = _check_storage_feature_flag()
+    if error:
+        return error
+
     user_id = current_user.get_id()
-    if not current_app.config.get(
-            'WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED', False):
-        current_app.logger.info(
-            'Storage modification is disabled. api={}, user_id={}'.format(
-                request.path, user_id))
-        return jsonify({'error': _('This feature is currently disabled.')}), 403
-
-    if feature_flag_only:
-        return None
-
     denied = jsonify(
         {'error': _('You do not have permission to perform this operation.')}), 403
 
@@ -1545,18 +1547,6 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
                 'pid={}, bucket_id={}, file_name={}'.format(
                     request.path, user_id, pid, bucket_id, file_name))
             return denied
-
-        if new_bucket_id or new_version_id:
-            if not (new_bucket_id and new_version_id) \
-                    or ObjectVersion.get(bucket=new_bucket_id, key=file_name,
-                                         version_id=new_version_id) is None \
-                    or RecordsBuckets.query.filter_by(
-                        bucket_id=new_bucket_id).first() is not None:
-                current_app.logger.warning(
-                    'Storage API denied. reason=invalid_new_bucket, api={}, '
-                    'user_id={}, pid={}, new_bucket_id={}, new_version_id={}'.format(
-                        request.path, user_id, pid, new_bucket_id, new_version_id))
-                return denied
     except (PIDDoesNotExistError, NoResultFound):
         current_app.logger.warning(
             'Storage API denied. reason=pid_not_found, api={}, user_id={}, '
@@ -1572,10 +1562,71 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
     return None
 
 
+def _validate_new_file_target(pid, file_name, new_bucket_id, new_version_id):
+    """Validate the destination a file is moved to by ``replace_file``.
+
+    Only ``replace_file`` sends a destination, and it always sends one on its
+    S3 branch, so every check below runs unconditionally: a missing identifier
+    is a rejection, never a reason to skip the validation.
+
+    Args:
+        pid (str): Record id the request operates on. Used for logging only.
+        file_name (str): Object key sent by the caller. Must exist in
+            ``new_bucket_id``.
+        new_bucket_id (str): Destination bucket id. Must not be attached to a
+            record yet.
+        new_version_id (str): Destination object version id.
+
+    Returns:
+        tuple: ``(response, status_code)`` to be returned as-is when the
+            request is rejected, or None when it is valid.
+    """
+    user_id = current_user.get_id()
+    denied = jsonify(
+        {'error': _('You do not have permission to perform this operation.')}), 403
+
+    try:
+        # ``ObjectVersion.get()`` deliberately falls back to the head version
+        # when ``version_id`` is falsy, so a half specified target would
+        # silently resolve to another object. Both identifiers must therefore
+        # be present before the lookup below is attempted -- keep this check
+        # first.
+        if not (new_bucket_id and new_version_id):
+            current_app.logger.warning(
+                'Storage API denied. reason=missing_new_target, api={}, '
+                'user_id={}, pid={}, new_bucket_id={}, new_version_id={}'.format(
+                    request.path, user_id, pid, new_bucket_id, new_version_id))
+            return denied
+
+        if ObjectVersion.get(bucket=new_bucket_id, key=file_name,
+                             version_id=new_version_id) is None:
+            current_app.logger.warning(
+                'Storage API denied. reason=new_object_not_found, api={}, '
+                'user_id={}, pid={}, new_bucket_id={}, new_version_id={}'.format(
+                    request.path, user_id, pid, new_bucket_id, new_version_id))
+            return denied
+
+        if RecordsBuckets.query.filter_by(
+                bucket_id=new_bucket_id).first() is not None:
+            current_app.logger.warning(
+                'Storage API denied. reason=new_bucket_attached, api={}, '
+                'user_id={}, pid={}, new_bucket_id={}, new_version_id={}'.format(
+                    request.path, user_id, pid, new_bucket_id, new_version_id))
+            return denied
+    except Exception as e:
+        current_app.logger.error(
+            'Unexpected error while validating the new file target. '
+            'api={}, user_id={}, pid={}'.format(request.path, user_id, pid))
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({'error': str(e)}), 400
+
+    return None
+
+
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
 @login_required
 def get_bucket_list():
-    error = _validate_storage_api_request(feature_flag_only=True)
+    error = _check_storage_feature_flag()
     if error:
         return error
 
@@ -1597,7 +1648,7 @@ def copy_bucket():
     checked = data.get('checked')
     bucket_name = data.get('bucket_name')
 
-    error = _validate_storage_api_request(pid=pid, bucket_id=bucket_id, file_name=filename)
+    error = _validate_storage_api_request(pid, bucket_id, filename)
     if error:
         return error
 
@@ -1618,7 +1669,7 @@ def get_file_place():
     bucket_id = request.form.get('bucket_id')
     file_name = request.form.get('file_name')
 
-    error = _validate_storage_api_request(pid=pid, bucket_id=bucket_id, file_name=file_name)
+    error = _validate_storage_api_request(pid, bucket_id, file_name)
     if error:
         return error
 
@@ -1643,18 +1694,17 @@ def replace_file():
     pid = request.form.get('pid')
     bucket_id = request.form.get('bucket_id')
     file_name = request.form.get('file_name')
-    new_bucket_id = request.form.get('new_bucket_id') \
-        if return_file_place == 'S3' else None
-    new_version_id = request.form.get('new_version_id') \
-        if return_file_place == 'S3' else None
 
-    error = _validate_storage_api_request(
-        pid=pid, bucket_id=bucket_id, file_name=file_name,
-        new_bucket_id=new_bucket_id, new_version_id=new_version_id)
+    error = _validate_storage_api_request(pid, bucket_id, file_name)
     if error:
         return error
 
     if (return_file_place == 'S3'):
+        new_bucket_id = request.form.get('new_bucket_id')
+        new_version_id = request.form.get('new_version_id')
+        error = _validate_new_file_target(pid, file_name, new_bucket_id, new_version_id)
+        if error:
+            return error
 
         file_size = int(request.form.get('file_size'))
         file_checksum = request.form.get('file_checksum')
