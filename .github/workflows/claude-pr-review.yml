@@ -48,8 +48,13 @@ env:
 
 # CodeRabbit は review を連投することがある(#1905 では 00:41 と 00:47)。
 # PR 単位で束ねないと同じ内容を二重に走らせる。
+# concurrency はジョブの if より先に(ワークフロー実行単位で)評価される。
+# 自分の集約コメント投稿が issue_comment を発火させ、同じグループに人間/CodeRabbit
+# 起因の実行がまだ動いていると cancel-in-progress で巻き添えキャンセルされてしまう。
+# sender で bot 起因の実行を別グループに隔離し、自分たち同士でしかキャンセルし合わない
+# ようにする。
 concurrency:
-  group: claude-review-${{ github.event.issue.number || github.event.pull_request.number || github.event.inputs.pr_number }}
+  group: claude-review-${{ github.event.issue.number || github.event.pull_request.number || github.event.inputs.pr_number }}-${{ github.event.sender.login == 'github-actions[bot]' && 'bot' || 'user' }}
   cancel-in-progress: true
 
 jobs:
@@ -93,12 +98,14 @@ jobs:
         run: |
           info=$(gh api "repos/${{ github.repository }}/pulls/$N")
           head_repo=$(echo "$info" | jq -r .head.repo.full_name)
-          # コンフリクトしている PR には refs/pull/N/merge が無い。その場合は head を読む。
-          if [ "$(echo "$info" | jq -r .mergeable)" = "false" ]; then
-            echo "ref=refs/pull/$N/head" >> "$GITHUB_OUTPUT"
-          else
-            echo "ref=refs/pull/$N/merge" >> "$GITHUB_OUTPUT"
-          fi
+          # gh pr diff は base...head の差分を出すので、読ませるコードも head に揃える。
+          # merge ref は base 側の変更も含み差分と一致しない上、mergeable は push のたび
+          # 非同期に null へリセットされ数秒かけて再計算される(このステップは
+          # synchronize 直後に走るため null を観測しやすい)。null を merge 側に倒すと、
+          # 新規 PR では refs/pull/N/merge がまだ無くジョブが落ち、既存 PR への push では
+          # 古い merge ref のまま新しい head の差分をレビューして裏取りが静かにずれる。
+          # head は常に存在し非同期計算にも依存しないため、常に head を使う。
+          echo "ref=refs/pull/$N/head" >> "$GITHUB_OUTPUT"
           if [ "$head_repo" != "${{ github.repository }}" ]; then
             echo "::notice::fork からの PR ($head_repo) のためスキップします"
             echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
@@ -167,6 +174,7 @@ jobs:
       - name: Review
         if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
             steps.collect.outputs.skip != 'true'
+        id: review
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
         run: |
@@ -204,6 +212,7 @@ jobs:
           python3 $T/render.py --findings findings.json --meta input_meta.json \
             --model "$MODEL" --out review.md
           cat review.md
+          echo "rendered=true" >> "$GITHUB_OUTPUT"
 
       - name: Upload result
         if: always() && steps.cfg.outputs.enabled == 'true'
@@ -219,9 +228,31 @@ jobs:
             claude_*.err
           if-no-files-found: ignore
 
+      # Comment on PR より前に置く。集約コメントの投稿は自分の実行を止める最後の
+      # 一手になる(投稿直後に issue_comment が発火し、bot 用 concurrency グループの
+      # 実行中インスタンスがあれば cancel-in-progress で自分自身がキャンセルされ得る)。
+      # 残作業を先に済ませておけば、そのキャンセルが起きても失うものがない。
+      - name: Post inline suggestions
+        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
+            env.POST_TO_PR == 'true' && env.POST_INLINE_SUGGESTIONS == 'true' &&
+            steps.review.outputs.rendered == 'true'
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 tools/claude-review/scripts/post_inline.py \
+            --owner "${{ github.repository_owner }}" \
+            --repo "${{ github.event.repository.name }}" \
+            --pr "${{ steps.pr.outputs.number }}" \
+            --findings findings.json --diff diff.patch --reviews reviews.json
+
+      # レビューを生成できなかった(差分超過・全パス失敗・GraphQL 失敗等)ときは
+      # steps.review.outputs.rendered が空文字列のままで、このステップ自体が
+      # スキップされる。プレースホルダで前回の正常なコメントを上書きするより、
+      # 何もしないほうがましなので、既存コメントには一切触れない。
       - name: Comment on PR
         if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
-            env.POST_TO_PR == 'true'
+            env.POST_TO_PR == 'true' && steps.review.outputs.rendered == 'true'
         uses: actions/github-script@v7
         env:
           PR: ${{ steps.pr.outputs.number }}
@@ -230,9 +261,7 @@ jobs:
             const fs = require('fs');
             const MARK = '<!-- claude-pr-review -->';
             const n = Number(process.env.PR);
-            let body = '(レビュー結果を生成できませんでした)';
-            try { body = fs.readFileSync('review.md', 'utf8'); } catch (e) {}
-            body = MARK + '\n' + body.slice(0, 60000)
+            const body = MARK + '\n' + fs.readFileSync('review.md', 'utf8').slice(0, 60000)
                  + '\n\n<sub>他レビューを踏まえた自動レビューです。'
                  + '誤りが含まれることがあります。</sub>';
             // 同じ PR で実行のたびコメントが増えないよう、既存の1件を更新する
@@ -252,16 +281,3 @@ jobs:
                 repo: context.repo.repo, body,
               });
             }
-
-      - name: Post inline suggestions
-        if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true' &&
-            env.POST_TO_PR == 'true' && env.POST_INLINE_SUGGESTIONS == 'true'
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          python3 tools/claude-review/scripts/post_inline.py \
-            --owner "${{ github.repository_owner }}" \
-            --repo "${{ github.event.repository.name }}" \
-            --pr "${{ steps.pr.outputs.number }}" \
-            --findings findings.json --diff diff.patch --reviews reviews.json
