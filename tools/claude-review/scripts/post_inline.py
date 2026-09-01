@@ -16,6 +16,11 @@ import subprocess
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 FIX_MARK = re.compile(r"<!-- claude-fix:([0-9a-f]{12}) -->")
 
+# REST の pulls/{n}/comments が返す user.login は "github-actions[bot]"
+# （角括弧つき）。GraphQL の author.login で使う "github-actions" とは
+# 表記が異なるので混同しないこと。
+EXISTING_COMMENTS_JQ = '.[] | select(.user.login=="github-actions[bot]") | .body'
+
 BODY = """<!-- claude-fix:%s -->
 **%s**
 
@@ -132,10 +137,20 @@ def select(findings: dict, changed: dict, existing: set) -> list:
 
 
 def existing_hashes(owner: str, repo: str, pr: int) -> set:
+    """投稿済みハッシュを集める。
+
+    PR には誰でもコメントできる。フィルタを付けずに全コメントの本文から
+    マーカーを拾うと、攻撃者が自分のコメントに `<!-- claude-fix:<hash> -->`
+    を書き込むだけでハッシュを偽造できてしまい、`select()` が本物の修正案を
+    「投稿済み」として黙って抑止してしまう（file/start_line/end_line/
+    replacement から決定的に計算されるハッシュは、差分から公開されている
+    情報だけで事前計算できる）。そのため、この bot 自身
+    （`github-actions[bot]`）が投稿したコメントだけに絞る。
+    """
     proc = subprocess.run(
         ["gh", "api", "--paginate",
          "repos/%s/%s/pulls/%d/comments" % (owner, repo, pr),
-         "--jq", ".[].body"],
+         "--jq", EXISTING_COMMENTS_JQ],
         capture_output=True, text=True, check=True)
     return set(FIX_MARK.findall(proc.stdout))
 
