@@ -226,3 +226,127 @@ def test_unverified_line_validation():
     ])
     assert len(out["unverified"]) == 1
     assert out["unverified"][0]["line"] is None
+
+
+def test_invalid_lines_do_not_collide():
+    """異なる不正な line 値は衝突しない。raw が違えば別鍵になる。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [],
+             "own_findings": [
+                 {"file": "b.py", "line": -5, "severity": "high",
+                  "title": "SQL injection", "detail": "detail A",
+                  "evidence": "e", "verified": "b.py:1-9",
+                  "fix": {"kind": "none"}},
+                 {"file": "b.py", "line": "garbage", "severity": "high",
+                  "title": "SQL injection", "detail": "detail B",
+                  "evidence": "e", "verified": "b.py:1-9",
+                  "fix": {"kind": "none"}}
+             ],
+             "unverified": [], "summary": ""}),
+    ])
+    assert len(out["own_findings"]) == 2, "異なる不正な line 値が衝突している"
+    details = {item["detail"] for item in out["own_findings"]}
+    assert details == {"detail A", "detail B"}
+
+
+def test_same_invalid_lines_merge():
+    """同じ不正な line 値なら併合される。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [],
+             "own_findings": [{"file": "b.py", "line": -5, "severity": "high",
+                               "title": "issue", "detail": "d",
+                               "evidence": "e", "verified": "b.py:1-9",
+                               "fix": {"kind": "none"}}],
+             "unverified": [], "summary": ""}),
+        raw({"adjudications": [],
+             "own_findings": [{"file": "b.py", "line": -5, "severity": "high",
+                               "title": "issue", "detail": "d",
+                               "evidence": "e", "verified": "b.py:1-9",
+                               "fix": {"kind": "none"}}],
+             "unverified": [], "summary": ""}),
+    ])
+    assert len(out["own_findings"]) == 1
+    assert out["own_findings"][0]["_hits"] == 2
+
+
+def test_valid_and_invalid_lines_do_not_collide():
+    """正当な行と不正な行は絶対に衝突しない。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [],
+             "own_findings": [
+                 {"file": "b.py", "line": None, "severity": "high",
+                  "title": "issue", "detail": "detail invalid",
+                  "evidence": "e", "verified": "b.py:1-9",
+                  "fix": {"kind": "none"}},
+                 {"file": "b.py", "line": 12, "severity": "high",
+                  "title": "issue", "detail": "detail valid",
+                  "evidence": "e", "verified": "b.py:1-9",
+                  "fix": {"kind": "none"}}
+             ],
+             "unverified": [], "summary": ""}),
+    ])
+    assert len(out["own_findings"]) == 2
+    details = {item["detail"] for item in out["own_findings"]}
+    assert details == {"detail invalid", "detail valid"}
+
+
+def test_string_line_and_int_line_merge():
+    """正当な行は "12" と 12 が同じ鍵に併合される。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [],
+             "own_findings": [{"file": "b.py", "line": "12", "severity": "high",
+                               "title": "issue", "detail": "d",
+                               "evidence": "e", "verified": "b.py:1-9",
+                               "fix": {"kind": "none"}}],
+             "unverified": [], "summary": ""}),
+        raw({"adjudications": [],
+             "own_findings": [{"file": "b.py", "line": 12, "severity": "high",
+                               "title": "issue", "detail": "d",
+                               "evidence": "e", "verified": "b.py:1-9",
+                               "fix": {"kind": "none"}}],
+             "unverified": [], "summary": ""}),
+    ])
+    assert len(out["own_findings"]) == 1
+    assert out["own_findings"][0]["_hits"] == 2
+
+
+def test_adjudications_invalid_lines_no_thread_id():
+    """adjudications でも thread_id が空なら、異なる不正な line 値は衝突しない。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [
+                 {"source": "c", "thread_id": "", "file": "a.py",
+                  "line": 0, "title": "x", "verdict": "valid", "reason": "r1",
+                  "verified": "a.py:1-20", "severity": "high",
+                  "fix": {"kind": "none"}},
+                 {"source": "c", "thread_id": "", "file": "a.py",
+                  "line": "nope", "title": "x", "verdict": "valid", "reason": "r2",
+                  "verified": "a.py:1-20", "severity": "high",
+                  "fix": {"kind": "none"}}
+             ],
+             "own_findings": [], "unverified": [], "summary": ""}),
+    ])
+    assert len(out["adjudications"]) == 2, "異なる不正な line 値の adjudications が衝突している"
+    reasons = {item["reason"] for item in out["adjudications"]}
+    assert reasons == {"r1", "r2"}
+
+
+def test_adjudications_with_thread_id_ignores_line_for_key():
+    """adjudications で thread_id がある場合、line は鍵に影響しない（従来どおり）。"""
+    out = aggregate.aggregate([
+        raw({"adjudications": [
+                 {"source": "c", "thread_id": "T_1", "file": "a.py",
+                  "line": 10, "title": "x", "verdict": "valid", "reason": "r",
+                  "verified": "a.py:1-20", "severity": "high",
+                  "fix": {"kind": "none"}}
+             ],
+             "own_findings": [], "unverified": [], "summary": ""}),
+        raw({"adjudications": [
+                 {"source": "c", "thread_id": "T_1", "file": "a.py",
+                  "line": 20, "title": "x", "verdict": "valid", "reason": "r",
+                  "verified": "a.py:1-20", "severity": "high",
+                  "fix": {"kind": "none"}}
+             ],
+             "own_findings": [], "unverified": [], "summary": ""}),
+    ])
+    assert len(out["adjudications"]) == 1
+    assert out["adjudications"][0]["_hits"] == 2
