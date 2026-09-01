@@ -74,7 +74,11 @@ for t in p['reviewThreads']['nodes']:
 "
 ```
 
-Expected: 4 スレッド。`conftest.py:385` が `resolved=True` で著者 3 名(coderabbitai, ivis-kuroda, coderabbitai)、`views.py:1568` が `resolved=True` で著者 1 名、`test_storage.py:20` と `views.py:1653` が `resolved=False`。
+Expected: 4 スレッド。`conftest.py:385` が `resolved=True` で著者 3 名(coderabbitai, ivis-kuroda, coderabbitai)、`views.py:1568` が `resolved=True` で著者 1 名、`views.py:1653` が `resolved=False`。
+
+**#1905 は進行中の PR で、スレッドの解決状態は変わりうる。** 採取した時点の値がそのまま
+fixture の契約になる。以降のテストは「解決済みと未解決が両方含まれる」ことだけに依存させ、
+特定スレッドの解決状態を直書きしないこと。採取後に両方が含まれることを必ず確認する。
 
 - [ ] **Step 3: conftest.py を書く**
 
