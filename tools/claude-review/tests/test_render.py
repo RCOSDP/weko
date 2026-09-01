@@ -58,6 +58,43 @@ def test_needs_context_and_unverified_are_folded():
     assert out.count("<details>") >= 2
 
 
+def test_suggestion_fix_shows_plain_ari_when_inline_disabled():
+    """所見4: POST_INLINE_SUGGESTIONS=false のとき、'あり(inline)' を出さない。
+
+    render.py は POST_INLINE_SUGGESTIONS を知らないため、既定
+    (inline_enabled 省略 = False)では実際には投稿されない inline
+    suggestion を「あり(inline)」と誤って告知してはいけない。
+    """
+    d = dict(BASE, adjudications=[adj(fix={"kind": "suggestion", "file": "a.py",
+             "start_line": 1, "end_line": 2, "replacement": "x", "note": ""})])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert "あり(inline)" not in out
+    assert "| あり |" in out
+
+
+def test_suggestion_fix_shows_inline_label_when_inline_enabled():
+    d = dict(BASE, adjudications=[adj(fix={"kind": "suggestion", "file": "a.py",
+             "start_line": 1, "end_line": 2, "replacement": "x", "note": ""})])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet",
+                        inline_enabled=True)
+    assert "| あり(inline) |" in out
+
+
+def test_own_finding_suggestion_fix_cell_respects_inline_enabled():
+    own = {"file": "a.py", "line": 1, "title": "t", "detail": "d",
+           "severity": "high",
+           "fix": {"kind": "suggestion", "file": "a.py", "start_line": 1,
+                   "end_line": 2, "replacement": "x", "note": ""},
+           "evidence": "", "verified": "", "_hits": 1}
+    d = dict(BASE, own_findings=[own])
+    out_default = render.render(d, {"dropped_threads": 0, "dropped_other": 0},
+                                "sonnet")
+    assert "あり(inline)" not in out_default
+    out_enabled = render.render(d, {"dropped_threads": 0, "dropped_other": 0},
+                                "sonnet", inline_enabled=True)
+    assert "あり(inline)" in out_enabled
+
+
 def test_footer_has_model_passes_cost():
     out = render.render(BASE, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
     assert "sonnet" in out and "2 回" in out and "0.12" in out

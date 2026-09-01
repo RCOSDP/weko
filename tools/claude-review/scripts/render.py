@@ -38,9 +38,15 @@ def _hits(x, passes) -> str:
     return "" if x["_hits"] == passes else "（%d/%d パス）" % (x["_hits"], passes)
 
 
-def _fix_cell(fx) -> str:
-    return {"suggestion": "あり(inline)", "description": "あり"}.get(
-        fx.get("kind"), "—")
+def _fix_cell(fx, inline_enabled: bool) -> str:
+    if fx.get("kind") == "suggestion":
+        # inline_enabled が False のとき(既定)、または
+        # POST_INLINE_SUGGESTIONS='false' で運用しているときは、
+        # post_inline.py が実際には inline comment を投稿しない。
+        # ここで「あり(inline)」と告知すると、待っても現れない inline
+        # suggestion があるかのように著者に誤解させる(所見4)。
+        return "あり(inline)" if inline_enabled else "あり"
+    return {"description": "あり"}.get(fx.get("kind"), "—")
 
 
 def _fix_block(fx, out) -> None:
@@ -55,7 +61,8 @@ def _fix_block(fx, out) -> None:
         out.append("**修正案**\n\n" + _esc(fx["note"]) + "\n")
 
 
-def render(findings: dict, meta: dict, model: str) -> str:
+def render(findings: dict, meta: dict, model: str,
+           inline_enabled: bool = False) -> str:
     passes = findings["passes"]
     adjs = findings["adjudications"]
     owns = findings["own_findings"]
@@ -87,12 +94,12 @@ def render(findings: dict, meta: dict, model: str) -> str:
         rows.append("| %d | %s | %s | %s | %s | %s |"
                     % (i, _cell(a["source"] or "?"), _cell(_loc(a)),
                        _cell(a["title"]), VERDICT_LABEL[a["verdict"]],
-                       _fix_cell(a["fix"])))
+                       _fix_cell(a["fix"], inline_enabled)))
     for j, o in enumerate(owns, len(main) + 1):
         mark, label = SEV_LABEL.get(o["severity"], ("⚪", "不明"))
         rows.append("| %d | Claude | %s | %s | %s 追加指摘（%s） | %s |"
                     % (j, _cell(_loc(o)), _cell(o["title"]), mark, label,
-                       _fix_cell(o["fix"])))
+                       _fix_cell(o["fix"], inline_enabled)))
     if rows:
         out.append("| # | 出所 | 箇所 | 指摘 | 判定 | 修正案 |")
         out.append("|---|---|---|---|---|---|")
@@ -183,11 +190,17 @@ def main() -> None:
     ap.add_argument("--meta", required=True)
     ap.add_argument("--model", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--inline-enabled", action="store_true",
+                    help="POST_INLINE_SUGGESTIONS が有効なときに指定する。"
+                         "指定しなければ suggestion の修正案は表内で"
+                         "「あり(inline)」ではなく「あり」と表示する"
+                         "(投稿されない inline suggestion を告知しないため)。")
     a = ap.parse_args()
 
     findings = json.load(open(a.findings, encoding="utf-8"))
     meta = json.load(open(a.meta, encoding="utf-8"))
-    open(a.out, "w", encoding="utf-8").write(render(findings, meta, a.model))
+    open(a.out, "w", encoding="utf-8").write(
+        render(findings, meta, a.model, inline_enabled=a.inline_enabled))
     print("wrote %s" % a.out)
 
 

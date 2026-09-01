@@ -209,8 +209,10 @@ jobs:
 
           T=tools/claude-review/scripts
           python3 $T/aggregate.py --glob 'raw_*.json' --out findings.json
+          INLINE_FLAG=""
+          if [ "$POST_INLINE_SUGGESTIONS" = "true" ]; then INLINE_FLAG="--inline-enabled"; fi
           python3 $T/render.py --findings findings.json --meta input_meta.json \
-            --model "$MODEL" --out review.md
+            --model "$MODEL" --out review.md $INLINE_FLAG
           cat review.md
           echo "rendered=true" >> "$GITHUB_OUTPUT"
 
