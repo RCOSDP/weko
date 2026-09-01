@@ -65,7 +65,7 @@ def clean_fix(fix) -> dict:
 
 
 def clean_adj(x) -> dict | None:
-    if not isinstance(x, dict):
+    if not isinstance(x, dict) or not str(x.get("title") or "").strip():
         return None
     verdict = x.get("verdict")
     if verdict not in VERDICT_ORDER:
