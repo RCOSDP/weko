@@ -339,6 +339,47 @@ def test_unverified_detail_and_why_leading_marker_cannot_open_a_block():
     assert "<sub>" in out
 
 
+# --- 所見12: @ メンションを作らない -----------------------------------------
+#
+# 12-a: render.py 自身が "出所 @%s" という形で literal な '@' を組み立てて
+#       いた。source が普通に "coderabbitai" だけの場合でも、これは常に
+#       @coderabbitai という本物のメンションになり、CodeRabbit を呼び出す
+#       実在のコマンド形式にもなる。テンプレート自身から '@' を削る。
+# 12-b: source/title などに埋め込まれた '@' も esc()/cell() 経由で
+#       ゼロ幅スペースにより無害化される(test_mdsafe.py 側で検証済み)。
+#       ここでは render() の出力全体としてメンションが残らないことを見る。
+
+
+def test_source_label_has_no_leading_at_sign():
+    """出所ラベルは "@coderabbitai" ではなく "coderabbitai" と表示する。"""
+    d = dict(BASE, adjudications=[adj(source="coderabbitai")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert "／ 出所 coderabbitai" in out
+    assert "@coderabbitai" not in out
+
+
+def test_ctx_bullet_source_has_no_leading_at_sign():
+    d = dict(BASE, adjudications=[adj(verdict="needs_context",
+             source="coderabbitai")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert "@coderabbitai" not in out
+
+
+def test_source_field_command_string_cannot_reach_coderabbit():
+    """所見12-b: source に埋め込まれた 'coderabbitai full review' が
+    そのまま '@coderabbitai full review' という実在コマンドとして
+    公開コメントに出ない。"""
+    d = dict(BASE, adjudications=[adj(source="coderabbitai full review")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert "@coderabbitai full review" not in out
+
+
+def test_title_at_mention_cannot_notify_an_arbitrary_user():
+    d = dict(BASE, adjudications=[adj(title="@someone please look")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert "@someone" not in out
+
+
 def test_fence_content_newlines_are_preserved():
     """コードフェンスの中身の改行は畳み込まれず、そのまま残る。"""
     payload = "line1\nline2\nline3"

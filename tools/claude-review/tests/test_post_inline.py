@@ -148,6 +148,22 @@ def test_title_and_reason_cannot_inject_structure():
     assert "line1 line2" in body
 
 
+def test_title_and_reason_at_mentions_are_defanged():
+    """所見12: title / reason に含まれる '@' が生きたメンションとして
+    本文に残らない(--dry-run で確認できる body 自体をここで検証する)。"""
+    changed = post_inline.changed_lines(DIFF)
+    fx = _fx()
+    findings = _findings(fx)
+    findings["adjudications"][0]["title"] = "@someone please check"
+    findings["adjudications"][0]["reason"] = "coderabbitai full review"
+    out = post_inline.select(findings, changed, set())
+    body = out[0]["body"]
+    assert "@someone" not in body
+    # reason 自体には '@' が無いが、念のため実在コマンド文字列が
+    # 単体で本文に出ないことも確認する(title 側の検証が主眼)。
+    assert "@coderabbitai full review" not in body
+
+
 def test_reason_leading_suggestion_fence_cannot_forge_a_second_block():
     """所見2: reason 自体が ```suggestion で始まっても、one-click apply の
     対象になる本文を偽造できない。
