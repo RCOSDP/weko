@@ -245,8 +245,31 @@ def test_get_selected_lang(api):
 
 #def get_api_cert_type():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_api_cert_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_api_cert_type(api):
+@pytest.mark.parametrize("index,is_permission",[
+                         (0,True),# sysadmin
+                         (1,False),# repoadmin
+                         (2,False),# comadmin
+                         (3,False),# contributor
+                         (4,False),# generaluser
+                         ])
+def test_get_api_cert_type_acl(api,users,index,is_permission):
     url = url_for("weko_admin.get_api_cert_type")
+    login_user_via_session(client=api, email=users[index]["email"])
+    res = api.get(url)
+    assert_role(res,is_permission)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_api_cert_type_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_api_cert_type_acl_guest(api):
+    url = url_for("weko_admin.get_api_cert_type")
+    res = api.get(url)
+    assert res.status_code in (302, 401)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_api_cert_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_api_cert_type(api, users):
+    url = url_for("weko_admin.get_api_cert_type")
+    login_user_via_session(client=api, email=users[0]["email"])
     with patch("weko_admin.views.get_api_certification_type",return_value=[{"api_code":"test_api","aip_name":"test_name"}]):
         res = api.get(url)
         assert response_data(res) == {"results":[{"api_code":"test_api","aip_name":"test_name"}],"error":""}
@@ -259,8 +282,31 @@ def test_get_api_cert_type(api):
 
 #def get_curr_api_cert(api_code=''):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_api_cert_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_curr_api_cert(api):
+@pytest.mark.parametrize("index,is_permission",[
+                         (0,True),# sysadmin
+                         (1,False),# repoadmin
+                         (2,False),# comadmin
+                         (3,False),# contributor
+                         (4,False),# generaluser
+                         ])
+def test_get_curr_api_cert_acl(api,users,index,is_permission):
+    url = url_for("weko_admin.get_curr_api_cert", api_code="test_api")
+    login_user_via_session(client=api, email=users[index]["email"])
+    res = api.get(url)
+    assert_role(res,is_permission)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_curr_api_cert_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_curr_api_cert_acl_guest(api):
+    url = url_for("weko_admin.get_curr_api_cert", api_code="test_api")
+    res = api.get(url)
+    assert res.status_code in (302, 401)
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_curr_api_cert -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_curr_api_cert(api, users):
     url = url_for("weko_admin.get_curr_api_cert",api_code="test_code")
+    login_user_via_session(client=api, email=users[0]["email"])
     with patch("weko_admin.views.get_current_api_certification",return_value={"api_code":"test_code","api_name":"test_name","cert_data":"test_data"}):
         res = api.get(url)
         assert response_data(res) == {"results":{"api_code":"test_code","api_name":"test_name","cert_data":"test_data"},"error":""}

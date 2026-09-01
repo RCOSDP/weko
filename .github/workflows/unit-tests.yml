@@ -1,14 +1,62 @@
-name: Unit Tests (Smart Image Build)
+# ユニットテスト。
+#
+# 【設計】本体イメージは「1回だけ」ビルドして GHCR に置き、45個のマトリクス
+# ジョブはそれを pull するだけにしている。
+#
+#   - イメージの用意は ci-images.yml (UIテストと共通) に委譲している。
+#     タグは依存関係ファイルのハッシュで、モジュールのソースは
+#     requirements-weko-modules.txt により -e (editable) インストールされ、
+#     docker-compose2.yml が . を /code に bind mount するため、ソース変更で
+#     イメージを作り直す必要がない。
+#     → 依存を触らない普通の PR ではビルドが 0 回になる。
+#     イメージを差し替えたいときの手順は ci-images.yml の先頭を参照。
+#
+#   - install.sh は CI では使わない。ユニットテストは conftest.py が自前で
+#     wekotest DB を作り、instance_path も tempfile.mkdtemp() を使うので、
+#     populate-instance / デモSQL / invenio assets build / invenio collect と
+#     nginx・pgpool・worker・inbox・mongo・flower の起動はいずれも不要。
+#     起動するのは PostgreSQL / Elasticsearch / Redis / RabbitMQ の4つだけ。
+#
+#   - tox が毎回 requirements2.txt (約290パッケージ) を入れ直す分は、
+#     bind mount 済みの .ci-cache/pip を pip のキャッシュにして共有する。
+#
+# fork からの PR は GHCR に push できない。その場合はビルドキャッシュ
+# (type=gha) だけ作り、各ジョブがそこからローカルビルドする。
 
-on: [push, pull_request]
+name: Unit Tests
 
-env:
-  IMAGE_TAG: ghcr.io/rcosdp/weko:${{ github.sha }}
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: CI イメージを作り直す(依存を変えずに差し替えたいとき)
+        type: boolean
+        default: false
 
 jobs:
+  images:
+    uses: ./.github/workflows/ci-images.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      force_rebuild: ${{ inputs.force_rebuild || false }}
+
   test:
+    name: ${{ matrix.module }}
+    needs: images
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+    env:
+      COMPOSE_FILE: docker-compose2.yml:docker-compose.ci.yml
+      WEKO_IMAGE: ${{ needs.images.outputs.web }}
+      WEKO_ES_IMAGE: ${{ needs.images.outputs.es }}
+      WEKO_NGINX_IMAGE: ${{ needs.images.outputs.nginx }}
     strategy:
       fail-fast: false
       max-parallel: 4
@@ -63,86 +111,105 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.9'
-
+    # テストはコンテナ内で動くので、ランナー側の Python は不要。
+    # フォントは描画系のテストが参照する。
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y docker-compose fonts-noto-cjk fonts-noto-color-emoji
+        sudo apt-get install -y fonts-noto-cjk fonts-noto-color-emoji
 
-    - name: Change owner
-      run: sudo chown -R 1000:1000 ./modules 
-        
+    - name: Log in to GHCR
+      continue-on-error: true
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull prebuilt images
+      id: pull
+      continue-on-error: true
+      run: |
+        docker pull -q "$WEKO_IMAGE"
+        docker pull -q "$WEKO_ES_IMAGE"
+
+    # fork PR など pull できない場合のみ、ビルドキャッシュからローカルビルドする。
     - name: Set up Docker Buildx
+      if: steps.pull.outcome == 'failure'
       uses: docker/setup-buildx-action@v3
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
+    - name: Build WEKO image (fallback)
+      if: steps.pull.outcome == 'failure'
+      uses: docker/build-push-action@v6
       with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        context: .
+        file: Dockerfile
+        tags: ${{ env.WEKO_IMAGE }}
+        load: true
+        cache-from: type=gha,scope=weko-web
+
+    - name: Build Elasticsearch image (fallback)
+      if: steps.pull.outcome == 'failure'
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: elasticsearch/Dockerfile
+        tags: ${{ env.WEKO_ES_IMAGE }}
+        load: true
+        cache-from: type=gha,scope=weko-es
+
+    # tox が張る venv への pip インストールを、ダウンロードなしで済ませる。
+    # .ci-cache は bind mount 経由でコンテナから /code/.ci-cache として見える。
+    - name: Restore pip cache
+      uses: actions/cache/restore@v4
+      with:
+        path: .ci-cache/pip
+        key: weko-pip-${{ hashFiles('modules/*/requirements2.txt') }}
         restore-keys: |
-          ${{ runner.os }}-buildx-
-    - name: Start WEKO containers
+          weko-pip-
+
+    - name: Prepare workspace permissions
+      # コンテナは uid 1000 (invenio) で動く。bind mount 先を書けるようにする。
       run: |
-        chmod +x install.sh
-        ./install.sh
-      env:
-        DOCKER_BUILDKIT: 1
-        COMPOSE_DOCKER_CLI_BUILD: 1
+        mkdir -p .ci-cache/pip
+        sudo chown -R 1000:1000 ./modules .ci-cache
+
+    # ユニットテストが使うのはこの4つだけ。
+    # nginx・pgpool・worker・inbox・mongo・flower は起動しない。
+    - name: Start test services
+      run: docker compose up -d --quiet-pull postgresql elasticsearch redis rabbitmq
 
     - name: Wait for services to be ready
-      run: |
-        echo "Waiting for WEKO services to start..."
-        start_time=$(date +%s)
-        max_attempts=60
-        attempt=0
-        while [ $attempt -lt $max_attempts ]; do
-          attempt=$((attempt + 1))
-          current_time=$(date +%s)
-          elapsed=$((current_time - start_time))
-          echo "Attempt $attempt/$max_attempts (${elapsed}s elapsed): Checking WEKO availability..."
-          # Check if we can connect to the service
-          if curl -f -s --insecure https://localhost/ > /dev/null 2>&1; then
-            echo "✓ WEKO is ready! (took ${elapsed}s)"
-            exit 0
-          else
-            # Get HTTP response code for debugging
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")
-            echo "  ✗ HTTP response: $http_code"
-          fi
-          if [ $attempt -lt $max_attempts ]; then
-            echo "  → Retrying in 5 seconds..."
-            sleep 5
-          fi
-        done
-        echo ""
-        echo "❌ WEKO failed to start within 300 seconds"
-        echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
-        echo ""
-        echo "Container status:"
-        docker compose -f docker-compose2.yml ps
-        exit 1
-
-    - name: Install test dependencies
-      run: |
-          docker compose -f docker-compose2.yml exec -T web bash -c "pip install --upgrade pip && pip install tox tox-setuptools-version pytest-timeout"
+      run: bash scripts/ci/wait-for-services.sh
 
     - name: Run tox in ${{ matrix.module }}
       run: |
-          docker compose -f docker-compose2.yml exec -T web bash -c "cd modules/${{ matrix.module }} && tox"
+        docker compose run --rm --no-deps -T \
+          web bash /code/scripts/ci/run-module-tests.sh '${{ matrix.module }}'
 
     - name: Show logs if failed
       if: failure()
-      run: docker compose -f docker-compose2.yml logs
+      run: docker compose logs --tail=200
+
+    # pip の http キャッシュは 0600 で作られるため、uid 1000 のままだと
+    # ランナー(uid 1001)が tar で読めず保存に失敗する。所有権を戻す。
+    - name: Restore cache ownership
+      if: always()
+      run: |
+        [ -d .ci-cache ] || exit 0
+        sudo chown -R "$(id -u):$(id -g)" .ci-cache
+
+    # 45ジョブが同じキーで保存を試みるが、先着1つだけが保存され残りは
+    # 予約に失敗してスキップされる(警告のみ)。モジュール間で
+    # requirements2.txt はほぼ同一なので、1つ保存されれば全体に効く。
+    - name: Save pip cache
+      if: always()
+      continue-on-error: true
+      uses: actions/cache/save@v4
+      with:
+        path: .ci-cache/pip
+        key: weko-pip-${{ hashFiles('modules/*/requirements2.txt') }}
 
     - name: Stop containers
       if: always()
-      run: |
-        docker compose -f docker-compose2.yml down -v
-        docker system prune -f
-      
-      
+      run: docker compose down -v

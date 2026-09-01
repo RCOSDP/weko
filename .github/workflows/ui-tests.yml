@@ -1,3 +1,14 @@
+# UIテスト。
+#
+# 本体イメージ(web/worker) と Elasticsearch、nginx(Shibboleth 込み)は
+# ci-images.yml が用意したビルド済みイメージを pull して使う。タグは依存関係
+# ファイルのハッシュなので、依存を触らない PR ではビルドが 0 回になる。
+# ソースの変更は . を /code に bind mount しているので反映される。
+#
+# UIテストは動いている WEKO 一式が要るので、install.sh によるインスタンス
+# 初期化 (populate-instance / デモSQL / assets build / collect) はそのまま行う。
+# WEKO_SKIP_BUILD=1 でイメージのビルド部分だけを飛ばしている。
+
 name: UI Tests
 
 on:
@@ -6,11 +17,33 @@ on:
   pull_request:
     branches: [ '**' ]
   workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: CI イメージを作り直す(依存を変えずに差し替えたいとき)
+        type: boolean
+        default: false
 
 jobs:
+  images:
+    uses: ./.github/workflows/ci-images.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      force_rebuild: ${{ inputs.force_rebuild || false }}
+
   ui-tests:
+    needs: images
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: read
+    env:
+      COMPOSE_FILE: docker-compose2.yml:docker-compose.ci.yml
+      WEKO_IMAGE: ${{ needs.images.outputs.web }}
+      WEKO_ES_IMAGE: ${{ needs.images.outputs.es }}
+      WEKO_NGINX_IMAGE: ${{ needs.images.outputs.nginx }}
 
     steps:
     - name: Checkout code
@@ -24,24 +57,67 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y docker-compose fonts-noto-cjk fonts-noto-color-emoji
+        sudo apt-get install -y fonts-noto-cjk fonts-noto-color-emoji
 
+    - name: Log in to GHCR
+      continue-on-error: true
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Pull prebuilt images
+      id: pull
+      continue-on-error: true
+      run: |
+        docker pull -q "$WEKO_IMAGE"
+        docker pull -q "$WEKO_ES_IMAGE"
+        docker pull -q "$WEKO_NGINX_IMAGE"
+
+    # fork PR など pull できない場合のみ、ビルドキャッシュからローカルビルドする。
     - name: Set up Docker Buildx
+      if: steps.pull.outcome == 'failure'
       uses: docker/setup-buildx-action@v3
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
+    - name: Build WEKO image (fallback)
+      if: steps.pull.outcome == 'failure'
+      uses: docker/build-push-action@v6
       with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
+        context: .
+        file: Dockerfile
+        tags: ${{ env.WEKO_IMAGE }}
+        load: true
+        cache-from: type=gha,scope=weko-web
 
+    - name: Build Elasticsearch image (fallback)
+      if: steps.pull.outcome == 'failure'
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: elasticsearch/Dockerfile
+        tags: ${{ env.WEKO_ES_IMAGE }}
+        load: true
+        cache-from: type=gha,scope=weko-es
+
+    - name: Build nginx image (fallback)
+      if: steps.pull.outcome == 'failure'
+      uses: docker/build-push-action@v6
+      with:
+        context: ./nginx
+        file: ./nginx/Dockerfile
+        tags: ${{ env.WEKO_NGINX_IMAGE }}
+        load: true
+        cache-from: type=gha,scope=weko-nginx
+
+    # イメージは用意済みなので、install.sh はインスタンス初期化だけ行う。
+    # inbox だけは移動するブランチを clone するため、ここで compose がビルドする。
     - name: Start WEKO containers
       run: |
         chmod +x install.sh
         ./install.sh
       env:
+        WEKO_SKIP_BUILD: 1
         DOCKER_BUILDKIT: 1
         COMPOSE_DOCKER_CLI_BUILD: 1
 
@@ -80,7 +156,7 @@ jobs:
         echo "Final HTTP response: $(curl -s -o /dev/null -w "%{http_code}" --insecure https://localhost/ 2>/dev/null || echo "connection_failed")"
         echo ""
         echo "Container status:"
-        docker compose -f docker-compose2.yml ps
+        docker compose ps
         exit 1
 
     - name: Install UI test dependencies
@@ -122,18 +198,18 @@ jobs:
       if: failure()
       run: |
         echo "=== Docker Compose Services ==="
-        docker compose -f docker-compose2.yml ps
+        docker compose ps
         echo "=== Web Container Logs ==="
-        docker compose -f docker-compose2.yml logs web
+        docker compose logs web
         echo "=== Worker Container Logs ==="
-        docker compose -f docker-compose2.yml logs worker
+        docker compose logs worker
         echo "=== PostgreSQL Container Logs ==="
-        docker compose -f docker-compose2.yml logs postgresql
+        docker compose logs postgresql
         echo "=== Elasticsearch Container Logs ==="
-        docker compose -f docker-compose2.yml logs elasticsearch
+        docker compose logs elasticsearch
 
     - name: Cleanup containers
       if: always()
       run: |
-        docker compose -f docker-compose2.yml down -v
+        docker compose down -v
         docker system prune -f

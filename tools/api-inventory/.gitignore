@@ -1,0 +1,16 @@
+# このリポジトリは public。台帳・スナップショット・実測結果は一切置かない。
+# データは $WEKO_API_INVENTORY_DIR(プライベートリポジトリ)で管理する。
+weko3_api_list*.tsv
+weko3_api_list*_README.md
+weko3_api_auth_findings.md
+api_snapshot*.json
+reconcile_allow.json
+reconcile_report.md
+probe*.json
+drift*.md
+# fixtures.py が生成する。秘密は入らない(パスワードは fixtures.py の定数、
+# アクセストークンは固定のダミー)が、環境依存の値なので public 側には置かない。
+# 台帳リポジトリ側では測定対象の記録として追跡する。
+fixtures.json
+__pycache__/
+*.pyc
