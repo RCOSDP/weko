@@ -79,6 +79,12 @@ jobs:
     # "[bot]" が付くログインは GitHub App のインストールに紐づく予約名で、
     # 通常のユーザー名には角括弧を含められないため、一般ユーザーが
     # このログインを詐称することはできない。
+    #
+    # issue_comment("@claude" コマンド)も同じ理由で投稿者を問う。
+    # ここだけガードが無いと、誰でも PR に "@claude" と書くだけで
+    # 30 分ジョブ・Claude 2 パスを起動できてしまう。こちらは
+    # CodeRabbit のような bot がコマンドを打つ想定が無いため、
+    # 例外を設けず OWNER/MEMBER/COLLABORATOR だけに絞る。
     if: >-
       github.event.sender.login != 'github-actions[bot]' &&
       (
@@ -97,13 +103,49 @@ jobs:
          )) ||
         (github.event_name == 'issue_comment' &&
          github.event.issue.pull_request != null &&
+         contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+                  github.event.comment.author_association) &&
          startsWith(github.event.comment.body, '@claude'))
       )
     permissions:
       contents: read
       pull-requests: write
     steps:
+      # fork 判定を Secret より先に行う。issue_comment は fork PR でも base 側の
+      # 文脈で走り、Secret が使える状態でジョブが始まる。fork を弾く前に
+      # CLAUDE_CODE_AUTH_TOKEN を step の env に置くと「fork PR には Secret を
+      # 渡さない」という運用上の約束が実装と食い違うため、この順序は変えないこと。
+      #
+      # issue_comment の payload には head repo が無い。ここで API を引いて弾く。
+      - name: Resolve PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+          N: ${{ github.event.inputs.pr_number || github.event.issue.number || github.event.pull_request.number }}
+        run: |
+          info=$(gh api "repos/${{ github.repository }}/pulls/$N")
+          head_repo=$(echo "$info" | jq -r .head.repo.full_name)
+          # 差分は base...head の 3 点差分を出すので、読ませるコードも head に揃える。
+          # merge ref は base 側の変更も含み差分と一致しない上、mergeable は push のたび
+          # 非同期に null へリセットされ数秒かけて再計算される(このステップは
+          # synchronize 直後に走るため null を観測しやすい)。null を merge 側に倒すと、
+          # 新規 PR では refs/pull/N/merge がまだ無くジョブが落ち、既存 PR への push では
+          # 古い merge ref のまま新しい head の差分をレビューして裏取りが静かにずれる。
+          # head は常に存在し非同期計算にも依存しないため、常に head を使う。
+          if [ "$head_repo" != "${{ github.repository }}" ]; then
+            echo "::notice::fork からの PR ($head_repo) のためスキップします"
+            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          echo "number=$N" >> "$GITHUB_OUTPUT"
+          # 以降のステップ(checkout・差分・inline 投稿)はすべてこの 1 つの SHA を
+          # 使う。refs/pull/N/head は動く参照で、実行中に push されると
+          # 「読んだ木」「差分」「inline の commit_id」が別リビジョンを指し得る。
+          echo "head_sha=$(echo "$info" | jq -r .head.sha)" >> "$GITHUB_OUTPUT"
+          echo "base_sha=$(echo "$info" | jq -r .base.sha)" >> "$GITHUB_OUTPUT"
+          echo "PR #$N head=$(echo "$info" | jq -r .head.sha)"
+
       - name: Check token
+        if: steps.pr.outputs.skip != 'true'
         id: cfg
         env:
           TOKEN: ${{ secrets.CLAUDE_CODE_AUTH_TOKEN }}
@@ -112,39 +154,16 @@ jobs:
           else echo "enabled=false" >> "$GITHUB_OUTPUT"
                echo "::notice::CLAUDE_CODE_AUTH_TOKEN が未設定のためスキップします"; fi
 
-      # issue_comment の payload には head repo が無い。ここで API を引いて弾く。
-      - name: Resolve PR
-        if: steps.cfg.outputs.enabled == 'true'
-        id: pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-          N: ${{ github.event.inputs.pr_number || github.event.issue.number || github.event.pull_request.number }}
-        run: |
-          info=$(gh api "repos/${{ github.repository }}/pulls/$N")
-          head_repo=$(echo "$info" | jq -r .head.repo.full_name)
-          # gh pr diff は base...head の差分を出すので、読ませるコードも head に揃える。
-          # merge ref は base 側の変更も含み差分と一致しない上、mergeable は push のたび
-          # 非同期に null へリセットされ数秒かけて再計算される(このステップは
-          # synchronize 直後に走るため null を観測しやすい)。null を merge 側に倒すと、
-          # 新規 PR では refs/pull/N/merge がまだ無くジョブが落ち、既存 PR への push では
-          # 古い merge ref のまま新しい head の差分をレビューして裏取りが静かにずれる。
-          # head は常に存在し非同期計算にも依存しないため、常に head を使う。
-          echo "ref=refs/pull/$N/head" >> "$GITHUB_OUTPUT"
-          if [ "$head_repo" != "${{ github.repository }}" ]; then
-            echo "::notice::fork からの PR ($head_repo) のためスキップします"
-            echo "skip=true" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          echo "number=$N" >> "$GITHUB_OUTPUT"
-          echo "head_sha=$(echo "$info" | jq -r .head.sha)" >> "$GITHUB_OUTPUT"
-          echo "PR #$N head=$(echo "$info" | jq -r .head.sha)"
-
       # issue_comment / pull_request_review では既定ブランチが出る。
-      # PR の中身を読ませるので必ず PR の ref を明示する(Resolve PR で決めた ref)。
+      # PR の中身を読ませるので必ず PR のリビジョンを明示する。refs/pull/N/head
+      # のような動く参照ではなく Resolve PR で確定した SHA を使う(実行中の
+      # push で木と差分がずれないようにするため)。fetch-depth: 0 は差分を
+      # ローカルで作るために必要(base 側の履歴も要る)。
       - uses: actions/checkout@v4
         if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
         with:
           fetch-depth: 0
-          ref: ${{ steps.pr.outputs.ref }}
+          ref: ${{ steps.pr.outputs.head_sha }}
 
       - uses: actions/setup-python@v5
         if: steps.cfg.outputs.enabled == 'true' && steps.pr.outputs.skip != 'true'
@@ -170,8 +189,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ steps.pr.outputs.number }}
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+          HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
-          gh pr diff "$PR" -R "${{ github.repository }}" > diff.patch
+          # 差分は Resolve PR で確定した base/head の 2 点から作る(gh pr diff と
+          # 同じ 3 点差分。index 行の短縮桁数だけが違う)。gh pr diff は実行時点の
+          # head を毎回引き直すため、実行中に push されると checkout した木と
+          # 差分が別リビジョンになる。取れなかったときだけ API に落とす。
+          if ! git diff --merge-base "$BASE_SHA" "$HEAD_SHA" > diff.patch; then
+            echo "::warning::ローカルで差分を作れませんでした。API から取得します"
+            gh pr diff "$PR" -R "${{ github.repository }}" > diff.patch
+          fi
           size=$(stat -c%s diff.patch)
           echo "差分: ${size} bytes"
           if [ "$size" -gt "${MAX_DIFF_BYTES}" ]; then
@@ -270,6 +298,7 @@ jobs:
             --owner "${{ github.repository_owner }}" \
             --repo "${{ github.event.repository.name }}" \
             --pr "${{ steps.pr.outputs.number }}" \
+            --head-sha "${{ steps.pr.outputs.head_sha }}" \
             --findings findings.json --diff diff.patch --reviews reviews.json
 
       # レビューを生成できなかった(差分超過・全パス失敗・GraphQL 失敗等)ときは
@@ -290,12 +319,19 @@ jobs:
             const body = MARK + '\n' + fs.readFileSync('review.md', 'utf8').slice(0, 60000)
                  + '\n\n<sub>他レビューを踏まえた自動レビューです。'
                  + '誤りが含まれることがあります。</sub>';
-            // 同じ PR で実行のたびコメントが増えないよう、既存の1件を更新する
-            const { data: comments } = await github.rest.issues.listComments({
+            // 同じ PR で実行のたびコメントが増えないよう、既存の1件を更新する。
+            // listComments は 1 ページ 100 件までなので、コメントが 100 件を
+            // 超える PR では paginate しないと既存分を見つけられず、実行の
+            // たびに新しい集約コメントが増える。
+            // マーカーは HTML コメントで誰でも本文に書けるため、投稿者が
+            // この bot 自身であることも確かめる(他人のコメントを集約結果で
+            // 上書きしないため)。
+            const comments = await github.paginate(github.rest.issues.listComments, {
               issue_number: n, owner: context.repo.owner,
               repo: context.repo.repo, per_page: 100,
             });
-            const mine = comments.find(c => c.body && c.body.includes(MARK));
+            const mine = comments.find(c => c.body && c.body.includes(MARK)
+              && c.user && c.user.login === 'github-actions[bot]');
             if (mine) {
               await github.rest.issues.updateComment({
                 comment_id: mine.id, owner: context.repo.owner,

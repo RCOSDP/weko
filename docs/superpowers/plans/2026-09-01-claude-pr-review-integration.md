@@ -4,7 +4,7 @@
 > レビューで見つかった欠陥の修正は反映されていません。特に埋め込みのワークフローには、
 > 実装では修正済みの `mergeable` 判定と sender を含まない concurrency グループが残っています。
 > ここからコードを再生成しないこと。
-
+>
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** CI の Claude レビューを、PR に既に付いている他レビュー(CodeRabbit・人間)を裏取りして裁定し、修正案まで出す統合役に変える。

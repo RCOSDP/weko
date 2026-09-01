@@ -7,8 +7,12 @@ import json
 
 import mdsafe
 
-VERDICT_LABEL = {"valid": "✅ 妥当", "false_positive": "❌ 誤検知",
-                 "needs_context": "🔎 要文脈", "already_fixed": "☑️ 対応済み"}
+VERDICT_LABEL = {
+    "valid": "✅ 妥当",
+    "false_positive": "❌ 誤検知",
+    "needs_context": "🔎 要文脈",
+    "already_fixed": "☑️ 対応済み",
+}
 SEV_LABEL = {"high": ("🔴", "高"), "medium": ("🟠", "中"), "low": ("🟡", "低")}
 
 # title / source / reason / detail / evidence / note / replacement / why /
@@ -20,18 +24,23 @@ SEV_LABEL = {"high": ("🔴", "高"), "medium": ("🟠", "中"), "low": ("🟡",
 _esc = mdsafe.esc
 _cell = mdsafe.cell
 _fence = mdsafe.fence
+_code = mdsafe.code
 
 
-def _loc(x) -> str:
+def _loc(x, table: bool = False) -> str:
     # aggregate.py は不正な行番号（辞書・負数・0・非数値文字列）を line=None にして
     # 件数自体は残す。ここでは行番号がないときは file だけを出し、末尾の
-    # コロン（`file:None`）を見せない。file はファイルパス由来の外部文字列
-    # なのでエスケープする。
+    # コロン（`file:None`）を見せない。
+    #
+    # file は Claude 出力由来の外部文字列。固定長のバッククォートで囲むと
+    # 値の中のバッククォートでコードスパンが閉じ、そこから先が生の Markdown
+    # として解釈される（リンクや画像を注入できる）。mdsafe.code() が中身に
+    # 応じて区切りの長さを決めるので、esc() は通さずそのまま渡す
+    # （コードスパンの中では `<` も `@` も記法として働かない）。
     line = x.get("line")
-    file = _esc(x.get("file", ""))
-    if line is None:
-        return "`%s`" % file
-    return "`%s:%s`" % (file, line)
+    file = str(x.get("file", ""))
+    text = file if line is None else "%s:%s" % (file, line)
+    return _code(text, table=table)
 
 
 def _hits(x, passes) -> str:
@@ -51,8 +60,9 @@ def _fix_cell(fx, inline_enabled: bool) -> str:
 
 def _fix_block(fx, out) -> None:
     if fx.get("kind") == "suggestion":
-        out.append("**修正案** `%s:%s-%s`\n" % (_esc(fx["file"]), fx["start_line"],
-                                               fx["end_line"]))
+        out.append("**修正案** %s\n"
+                   % _code("%s:%s-%s" % (fx["file"], fx["start_line"],
+                                         fx["end_line"])))
         fence = _fence(fx["replacement"])
         out.append(fence + "\n" + fx["replacement"] + "\n" + fence + "\n")
         if fx.get("note"):
@@ -92,14 +102,14 @@ def render(findings: dict, meta: dict, model: str,
     rows = []
     for i, a in enumerate(main, 1):
         rows.append("| %d | %s | %s | %s | %s | %s |"
-                    % (i, _cell(a["source"] or "?"), _cell(_loc(a)),
+                    % (i, _cell(a["source"] or "?"), _loc(a, table=True),
                        _cell(a["title"]), VERDICT_LABEL[a["verdict"]],
                        _fix_cell(a["fix"], inline_enabled)))
     for j, o in enumerate(owns, len(main) + 1):
         mark, label = SEV_LABEL.get(o["severity"], ("⚪", "不明"))
         rows.append("| %d | Claude | %s | %s | %s 追加指摘（%s） | %s |"
-                    % (j, _cell(_loc(o)), _cell(o["title"]), mark, label,
-                       _fix_cell(o["fix"], inline_enabled)))
+                    % (j, _loc(o, table=True), _cell(o["title"]), mark,
+                       label, _fix_cell(o["fix"], inline_enabled)))
     if rows:
         out.append("| # | 出所 | 箇所 | 指摘 | 判定 | 修正案 |")
         out.append("|---|---|---|---|---|---|")

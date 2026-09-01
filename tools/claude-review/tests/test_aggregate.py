@@ -388,3 +388,29 @@ def test_adjudications_with_thread_id_ignores_line_for_key():
     ])
     assert len(out["adjudications"]) == 1
     assert out["adjudications"][0]["_hits"] == 2
+
+
+def test_prose_with_braces_before_the_json_does_not_drop_the_pass():
+    """前置きの文章に { が混じっても JSON を取り出せる。
+
+    最初の { から最後の } までを貪欲に切り出していた頃は、前置きの
+    `{}` ひとつで json.loads が失敗し、そのパスが丸ごと捨てられていた
+    (そのパスでしか挙がらなかった指摘が黙って消え、passes の分母も減る)。
+    """
+    payload = {"adjudications": [adj()], "own_findings": [],
+               "unverified": [], "summary": "s"}
+    text = ("差分の `dict(a={\"k\": 1})` を読みました。結果は次のとおりです。\n"
+            + json.dumps(payload, ensure_ascii=False))
+    out = aggregate.aggregate([{"result": text, "total_cost_usd": 0.01}])
+    assert out["passes"] == 1
+    assert len(out["adjudications"]) == 1
+
+
+def test_trailing_prose_with_a_brace_does_not_break_extraction():
+    """JSON のあとに } を含む文章が続いても読める。"""
+    payload = {"adjudications": [], "own_findings": [], "unverified": [],
+               "summary": "s"}
+    text = json.dumps(payload, ensure_ascii=False) + "\n以上です {おわり}"
+    out = aggregate.aggregate([{"result": text, "total_cost_usd": 0.01}])
+    assert out["passes"] == 1
+    assert out["summary"] == "s"

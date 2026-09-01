@@ -33,7 +33,9 @@ _LEADING_ORDERED = re.compile(r"^( {0,3})(\d+)([.)])")
 
 # @mention 無害化用のゼロ幅スペース(U+200B)。「@」の直後に挿入し、
 # 見た目を変えずに「@username」としての文字の連続性だけを断つ。
-_ZWSP = "​"
+# リテラルのゼロ幅文字はエディタでも lint でも見えないため、必ず
+# エスケープ列で書く(Ruff PLE2515)。
+_ZWSP = "\u200B"
 
 
 def esc(s) -> str:
@@ -130,3 +132,34 @@ def fence(content: str) -> str:
     runs = re.findall(r"`+", content)
     longest = max((len(r) for r in runs), default=0)
     return "`" * max(3, longest + 1)
+
+
+def code(s, table: bool = False) -> str:
+    """外部由来の短い文字列を、閉じられないインラインコードにする。
+
+    `esc()` はバッククォートに触れない（本文中の書式には手を出さない方針）。
+    そのため呼び出し側が固定長の `` ` `` で囲むと、値の中のバッククォート
+    ひとつでコードスパンが閉じ、そこから先が生の Markdown として解釈される
+    （例: file が ``x` ![](http://evil/px) `y`` だと画像が入る）。ここでは
+    CommonMark の規則どおり、中身に現れるバッククォートの連続の最大長より
+    1 つ長い区切りを使い、値そのものはエスケープしない
+    （コードスパンの中では `<`・`@`・`*` などは記法として働かず、GitHub の
+    @mention 化も `<code>` の中は対象外）。
+
+    - 改行は空白 1 つに畳む。空行が入ると段落が切れてスパンが閉じないまま
+      終わるため。
+    - 中身の先頭か末尾がバッククォートのときは空白で挟む。CommonMark は
+      両端が空白のとき片側 1 つずつを取り除くので、表示は変わらない。
+    - `table=True` のときは `|` を `\\|` にする。GFM の表はセルの中身を
+      解釈する前に行を `|` で割るため、コードスパンの中でも素の `|` は
+      セル区切りとして働く。
+    """
+    s = re.sub(r"\r\n|\r|\n", " ", str(s))
+    if table:
+        s = s.replace("|", "\\|")
+    if not s:
+        s = " "                       # 空のコードスパンは書けない
+    runs = re.findall(r"`+", s)
+    delim = "`" * (max((len(r) for r in runs), default=0) + 1)
+    pad = " " if s.startswith("`") or s.endswith("`") else ""
+    return delim + pad + s + pad + delim

@@ -125,16 +125,39 @@ def own_key(x) -> str:
     return "%s:%s:%s" % (x["file"], x["_line_key"], _norm(x["title"]))
 
 
+# 出力 JSON が持つはずのキー。前置きの文章に紛れた「JSON に見えるもの」と
+# 本物を区別するために使う。
+_TOP_KEYS = {"adjudications", "own_findings", "unverified", "summary"}
+
+
 def _extract(raw) -> dict | None:
+    """1 パス分の出力から JSON を取り出す。
+
+    プロンプトでは「JSON だけを出力する」と指示しているが、実際には前後に
+    文章が付くことがある。以前は最初の `{` から最後の `}` までを貪欲に
+    切り出していたため、前置きの文章に `{` が 1 つでもあるとそこから
+    始まってしまい、json.loads に失敗してそのパスが丸ごと捨てられていた
+    （そのパスでしか挙がらなかった指摘が黙って消える）。
+
+    ここでは `{` を先頭から順に試し、そこから 1 つの JSON 値として
+    読めるものを探す。出力仕様のキーを持つものを優先し、無ければ最初に
+    読めた辞書を返す（従来の挙動を保つ）。
+    """
     text = raw.get("result") or raw.get("text") or ""
-    m = re.search(r"\{.*\}", text, re.S)
-    if not m:
-        return None
-    try:
-        data = json.loads(m.group(0))
-    except Exception:
-        return None
-    return data if isinstance(data, dict) else None
+    decoder = json.JSONDecoder()
+    fallback = None
+    for m in re.finditer(r"\{", text):
+        try:
+            data, _ = decoder.raw_decode(text[m.start():])
+        except ValueError:
+            continue
+        if not isinstance(data, dict):
+            continue
+        if _TOP_KEYS & set(data):
+            return data
+        if fallback is None:
+            fallback = data
+    return fallback
 
 
 def aggregate(raw_list: list) -> dict:

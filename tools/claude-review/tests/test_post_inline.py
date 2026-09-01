@@ -182,10 +182,10 @@ def test_reason_leading_suggestion_fence_cannot_forge_a_second_block():
     body = out[0]["body"]
     lines = body.splitlines()
     # ```suggestion で始まる行は BODY テンプレートが作る本物の 1 箇所だけ。
-    suggestion_openers = [l for l in lines if l == "```suggestion"]
+    suggestion_openers = [line for line in lines if line == "```suggestion"]
     assert len(suggestion_openers) == 1
-    assert not any(re.match(r"^ {0,3}`{3,}suggestion", l) for l in lines
-                   if l != "```suggestion")
+    assert not any(re.match(r"^ {0,3}`{3,}suggestion", line) for line in lines
+                   if line != "```suggestion")
 
 
 def test_title_leading_structural_char_cannot_open_a_block():
@@ -196,8 +196,8 @@ def test_title_leading_structural_char_cannot_open_a_block():
     findings["adjudications"][0]["title"] = "## 偽の見出し"
     out = post_inline.select(findings, changed, set())
     body = out[0]["body"]
-    assert not any(re.match(r"^ {0,3}#{1,6}(\s|$)", l)
-                   for l in body.splitlines())
+    assert not any(re.match(r"^ {0,3}#{1,6}(\s|$)", line)
+                   for line in body.splitlines())
 
 
 def test_description_fix_kind_is_rejected_without_keyerror():
@@ -290,3 +290,34 @@ def test_existing_comments_jq_only_extracts_first_line_of_body():
     assert proc.stdout.splitlines() == ["<!-- claude-fix:%s -->" % real_hash]
     hashes = set(post_inline.FIX_MARK.findall(proc.stdout))
     assert hashes == {real_hash}
+
+
+def test_head_unchanged_detects_a_push_during_the_run(monkeypatch):
+    """実行中に push されたら inline suggestion を投稿しない。
+
+    レビューは Resolve PR で確定した 1 つのリビジョンに対して行う。
+    その間に push されると、古い行番号で付けた inline comment は
+    当たらない(422)か、別の行に当たる。
+    """
+    class _Result:
+        def __init__(self, out):
+            self.stdout = out
+            self.stderr = ""
+            self.returncode = 0
+
+    monkeypatch.setattr(post_inline.subprocess, "run",
+                        lambda cmd, **kw: _Result("b" * 40 + "\n"))
+    assert post_inline.head_unchanged("o", "r", 1, "a" * 40) is False
+    assert post_inline.head_unchanged("o", "r", 1, "b" * 40) is True
+
+
+def test_head_unchanged_is_false_when_the_api_call_fails(monkeypatch):
+    """head を確かめられなかったときは投稿しない(安全側に倒す)。"""
+    class _Result:
+        stdout = ""
+        stderr = "gh: error"
+        returncode = 1
+
+    monkeypatch.setattr(post_inline.subprocess, "run",
+                        lambda cmd, **kw: _Result())
+    assert post_inline.head_unchanged("o", "r", 1, "a" * 40) is False
