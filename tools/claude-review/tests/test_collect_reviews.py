@@ -55,3 +55,81 @@ def test_deleted_user_does_not_crash(graphql_payload):
     pr["reviewThreads"]["nodes"][0]["comments"]["nodes"][0]["author"] = None
     out = collect_reviews.normalize(graphql_payload)
     assert out["threads"][0]["comments"][0]["author"] == "(unknown)"
+
+
+def test_reviews_structure_and_filtering(graphql_payload):
+    """reviews 出力は author/state/body/submitted_at の 4 キーを持つ。
+
+    body が空・空白のレビューは除外し、github-actions も除外される。
+    fixture には非空 body のレビューが 3 件ある。
+    """
+    payload = graphql_payload
+    pr = payload["data"]["repository"]["pullRequest"]
+
+    # fixture のレビューで非空 body のものを数える
+    original_reviews = pr["reviews"]["nodes"]
+    expected_count = len([
+        r for r in original_reviews
+        if (r.get("body") or "").strip() and r.get("author", {}).get("login") != "github-actions"
+    ])
+
+    out = collect_reviews.normalize(payload)
+
+    # 各レビューが 4 つのキーを持つこと
+    assert len(out["reviews"]) == expected_count, \
+        f"Expected {expected_count} reviews, got {len(out['reviews'])}"
+
+    for r in out["reviews"]:
+        assert set(r.keys()) == {"author", "state", "body", "submitted_at"}, \
+            f"Unexpected keys in review: {r.keys()}"
+        assert r["author"] != "github-actions", "github-actions review should be excluded"
+        assert r["body"].strip(), "Empty body reviews should be excluded"
+        assert r["state"], "state field should be preserved"
+
+    # github-actions のレビューが含まれないこと（テスト用に追加してテスト）
+    payload2 = graphql_payload
+    pr2 = payload2["data"]["repository"]["pullRequest"]
+    pr2["reviews"]["nodes"].append({
+        "author": {"login": "github-actions"},
+        "state": "COMMENTED",
+        "body": "test review",
+        "submittedAt": "2026-09-01T00:00:00Z"
+    })
+
+    out2 = collect_reviews.normalize(payload2)
+    assert all(r["author"] != "github-actions" for r in out2["reviews"]), \
+        "github-actions review should be excluded"
+
+
+def test_limit_detection(graphql_payload):
+    """取得件数が上限に達したら _limits に記録される。
+
+    first:100 で最古の N 件を取るため、issue コメントが 100 件超過の
+    PR では previous が落ちる。warnings は normalize() でなく
+    main() 側で出す。
+    """
+    payload = graphql_payload
+    pr = payload["data"]["repository"]["pullRequest"]
+
+    # comments を 100 件まで充足
+    original_comments = pr["comments"]["nodes"]
+    while len(pr["comments"]["nodes"]) < 100:
+        pr["comments"]["nodes"].append({
+            "author": {"login": "test-user"},
+            "body": "filler comment",
+            "createdAt": "2026-09-01T00:00:00Z"
+        })
+
+    out = collect_reviews.normalize(payload)
+
+    # _limits キーが存在する
+    assert "_limits" in out, "_limits key should be present"
+
+    # comments が 100 に達した状態を記録
+    assert out["_limits"]["comments_saturated"] is True, \
+        "comments_saturated should be True when at 100"
+
+    # 既存の 5 つのキーは変わらない
+    assert set(k for k in out.keys() if not k.startswith("_")) == \
+           {"head_sha", "threads", "reviews", "conversation", "previous"}, \
+           "Contract keys should not change"
