@@ -105,11 +105,18 @@ query($owner:String!,$repo:String!,$pr:Int!){
         id isResolved isOutdated path line startLine
         comments(first:30){ nodes{ databaseId author{login} body createdAt } }
       }}
-      reviews(first:100){ nodes{ author{login} state body submittedAt } }
+      reviews(last:100){ nodes{ author{login} state body submittedAt } }
+      comments(last:100){ nodes{ author{login} body createdAt } }
     }
   }
 }
 ```
+
+`reviews` と `comments` が `last` なのは、`first:N` がカーソルなしだと**最古の N 件**を
+返すため。前回の自分の集約コメントは最新側にあり、`first:100` だとコメントが 100 件を
+超えた PR で `previous` が黙って `None` になり、追跡が止まる。逆にスレッド内の
+`comments` は最初の指摘本文が要るので `first` のままにする。
+どちらも上限に達したら `::warning::` を出し、黙って落とさない。
 
 #1905 での実測結果:
 
