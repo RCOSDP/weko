@@ -147,3 +147,55 @@ def test_cell_also_neutralizes_leading_structural_char():
     """cell() は esc() を経由するため同じ保護を受ける。"""
     out = mdsafe.cell("```\nhidden")
     assert not re.match(r"^ {0,3}`{3,}", out)
+
+
+# --- 所見12: @ メンションを無害化する ---------------------------------------
+#
+# GitHub の @mention 通知/リンク化は CommonMark/GFM の仕様には無く、
+# Markdown を HTML にレンダリングした「後」に、レンダリング結果のテキスト
+# ノードを正規表現 `@[a-z0-9][a-z0-9-]*` で走査する別処理
+# (html-pipeline の MentionFilter)。CommonMark のバックスラッシュエスケープ
+# は「その文字を Markdown 構文として解釈しない」効果しかなく、レンダリング
+# 結果には escape されていたという情報が残らない（`\@x` も `@x` も
+# レンダリング後は同じ「@x」というテキストノードになる）。つまり `\@` は
+# 所見1/2の行頭記号（レンダリング"前"の生テキストをブロック解析する
+# CommonMark 自身の話）とは防御の層が異なり、メンション化には効かない
+# （html-pipeline の MentionFilter は <code>/<pre>/<a> 配下だけを除外する）。
+#
+# 有効なのは「@ の直後に見た目に影響しない文字を挟んで隣接を断つ」ことで、
+# ゼロ幅スペース(U+200B)はその代表例（Wikipedia 等でも意図しないメンション
+# を避ける目的で使われている）。GitHub はレンダリング時にゼロ幅スペースを
+# 除去しないため、表示は変わらないままメンション化の正規表現にマッチしなく
+# なる。同じ理由で、生のコメント本文を素朴な部分文字列/正規表現で走査する
+# 外部 bot（例: "@coderabbitai full review" コマンド）に対しても、
+# ゼロ幅スペースを挟めば "@coderabbitai" という連続した文字列自体が
+# 本文中に存在しなくなるため有効に働く。
+
+
+def test_esc_breaks_at_mention_adjacency():
+    """@ の直後にゼロ幅スペースが入り、"@word" の連続性が断たれる。"""
+    out = mdsafe.esc("@coderabbitai full review")
+    assert "@coderabbitai" not in out
+    assert out.startswith("@​coderabbitai")
+
+
+def test_esc_at_mention_defanging_applies_to_every_occurrence():
+    out = mdsafe.esc("cc @alice and @bob")
+    assert "@alice" not in out
+    assert "@bob" not in out
+    assert out.count("​") == 2
+
+
+def test_cell_also_defangs_at_mentions():
+    out = mdsafe.cell("@coderabbitai")
+    assert "@coderabbitai" not in out
+
+
+def test_fence_does_not_touch_at_mentions():
+    """フェンス内(replacement/evidence)はコードとして扱われ、GitHub の
+    MentionFilter も <code>/<pre> 配下は素通りするため加工しない。"""
+    content = "reported by @coderabbitai"
+    assert mdsafe.fence(content) == "```"
+    # fence() はフェンスの長さしか返さない契約なので、呼び出し側が
+    # content をそのまま使うことを確認する。
+    assert "@coderabbitai" in content

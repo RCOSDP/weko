@@ -110,7 +110,11 @@ def render(findings: dict, meta: dict, model: str,
         out.append("---\n")
         out.append("### %d. %s %s\n" % (i, VERDICT_LABEL[a["verdict"]],
                                         _esc(a["title"])))
-        out.append("%s ／ 出所 @%s %s\n"
+        # "出所" の直前に literal な '@' を置かない(所見12-a)。source は
+        # 普通は "coderabbitai" のような素の名前で、'@' を前置すると常に
+        # 本物のメンションになり、CodeRabbit を呼び出す実在のコマンド
+        # 形式("@coderabbitai ...")そのものを作ってしまう。
+        out.append("%s ／ 出所 %s %s\n"
                    % (_loc(a), _esc(a["source"] or "?"), _hits(a, passes)))
         if a["_split"]:
             out.append("> パス間で判定が割れました（%s）。安全側の判定を採っています。\n"
@@ -146,8 +150,8 @@ def render(findings: dict, meta: dict, model: str,
         out.append("<details><summary>🔎 要文脈 — 判断しきれなかった他レビューの指摘 "
                    "%d 件</summary>\n" % len(ctx))
         for a in ctx:
-            out.append("- **%s** %s @%s" % (_esc(a["title"]), _loc(a),
-                                            _esc(a["source"])))
+            out.append("- **%s** %s %s" % (_esc(a["title"]), _loc(a),
+                                           _esc(a["source"])))
             if a["reason"]:
                 out.append("  - %s" % _esc(a["reason"]))
         out.append("\n</details>\n")
