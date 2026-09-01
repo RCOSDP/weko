@@ -1,5 +1,6 @@
 """post_inline の差分レンジ判定と投稿条件のテスト。"""
 import json
+import re
 import shutil
 import subprocess
 
@@ -145,6 +146,42 @@ def test_title_and_reason_cannot_inject_structure():
     # 改行が畳み込まれ、injected という語が独立した行として出現しない
     assert "\ninjected" not in body
     assert "line1 line2" in body
+
+
+def test_reason_leading_suggestion_fence_cannot_forge_a_second_block():
+    """所見2: reason 自体が ```suggestion で始まっても、one-click apply の
+    対象になる本文を偽造できない。
+
+    改行を畳むだけの旧実装では reason="```suggestion" が本物の
+    ```suggestion フェンスの直前に独立した行として現れ、info string
+    "suggestion" を持たない内側のフェンスが外側を閉じない一方で GitHub は
+    単一の suggestion として解釈してしまい、reason の残りの行 +
+    replacement の内容がそのまま 1 クリックでソースに書き込まれる。
+    """
+    changed = post_inline.changed_lines(DIFF)
+    fx = _fx()
+    findings = _findings(fx)
+    findings["adjudications"][0]["reason"] = "```suggestion"
+    out = post_inline.select(findings, changed, set())
+    body = out[0]["body"]
+    lines = body.splitlines()
+    # ```suggestion で始まる行は BODY テンプレートが作る本物の 1 箇所だけ。
+    suggestion_openers = [l for l in lines if l == "```suggestion"]
+    assert len(suggestion_openers) == 1
+    assert not any(re.match(r"^ {0,3}`{3,}suggestion", l) for l in lines
+                   if l != "```suggestion")
+
+
+def test_title_leading_structural_char_cannot_open_a_block():
+    """title 自体が先頭 # / ``` などでも、独立したブロック開始行にならない。"""
+    changed = post_inline.changed_lines(DIFF)
+    fx = _fx()
+    findings = _findings(fx)
+    findings["adjudications"][0]["title"] = "## 偽の見出し"
+    out = post_inline.select(findings, changed, set())
+    body = out[0]["body"]
+    assert not any(re.match(r"^ {0,3}#{1,6}(\s|$)", l)
+                   for l in body.splitlines())
 
 
 def test_description_fix_kind_is_rejected_without_keyerror():
