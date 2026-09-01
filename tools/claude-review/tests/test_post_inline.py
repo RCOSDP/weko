@@ -1,4 +1,10 @@
 """post_inline の差分レンジ判定と投稿条件のテスト。"""
+import json
+import shutil
+import subprocess
+
+import pytest
+
 import post_inline
 
 
@@ -182,4 +188,52 @@ def test_existing_hashes_filters_to_own_bot_comments(monkeypatch):
 
     assert result == {"abcdef123456"}
     jq_arg = calls["cmd"][calls["cmd"].index("--jq") + 1]
-    assert 'select(.user.login=="github-actions[bot]")' in jq_arg
+    # フィルタ全体を厳密一致で確認する（余計な条件が紛れ込む変更にも
+    # 反応するように、部分一致ではなく完全一致にする）。
+    assert jq_arg == post_inline.EXISTING_COMMENTS_JQ
+
+
+def test_body_first_line_is_the_marker():
+    """アンカー方式（1 行目だけを投稿済み判定に使う）の前提条件を固定する。
+
+    replacement はコードとしてエスケープせず本文に埋め込むため、そこに
+    偽の `<!-- claude-fix:... -->` を混ぜられても投稿者フィルタは通過して
+    しまう。本文の 1 行目だけを既投稿判定に使うことでこの経路を塞いでいる
+    （EXISTING_COMMENTS_JQ 参照）が、これは BODY テンプレートが常に
+    マーカーを 1 行目に置いていることが前提になる。ここでその前提を固定する。
+    """
+    changed = post_inline.changed_lines(DIFF)
+    out = post_inline.select(_findings(_fx()), changed, set())
+    first_line = out[0]["body"].splitlines()[0]
+    assert post_inline.FIX_MARK.fullmatch(first_line)
+
+
+@pytest.mark.skipif(shutil.which("jq") is None,
+                    reason="jq が見つからない環境ではスキップ")
+def test_existing_comments_jq_only_extracts_first_line_of_body():
+    """EXISTING_COMMENTS_JQ を実物の jq に食わせ、各本文の 1 行目だけが
+    出力されることを検証する（replacement 内の偽マーカーが混ざらない
+    ことの直接の根拠）。
+
+    gh api --jq は実行時に GitHub API のレスポンス（コメントオブジェクトの
+    配列）にこのフィルタを適用する。ここでは synthetic な配列を作り、
+    実際の jq バイナリで同じフィルタ文字列を実行して出力の形を確認する。
+    """
+    real_hash = "3d1b9f0df4f0"
+    forged_hash_in_replacement = "1ee3616294a9"
+    non_bot_hash = "000000000000"
+    payload = [
+        {"user": {"login": "github-actions[bot]"},
+         "body": ("<!-- claude-fix:%s -->\n**t**\n\n```suggestion\n"
+                  "    y = 3\n    # <!-- claude-fix:%s -->\n    z = 4\n"
+                  "```\n") % (real_hash, forged_hash_in_replacement)},
+        {"user": {"login": "attacker"},
+         "body": "<!-- claude-fix:%s -->\nnot a bot" % non_bot_hash},
+    ]
+    proc = subprocess.run(
+        ["jq", "-r", post_inline.EXISTING_COMMENTS_JQ],
+        input=json.dumps(payload), capture_output=True, text=True, check=True)
+
+    assert proc.stdout.splitlines() == ["<!-- claude-fix:%s -->" % real_hash]
+    hashes = set(post_inline.FIX_MARK.findall(proc.stdout))
+    assert hashes == {real_hash}
