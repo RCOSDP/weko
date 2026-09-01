@@ -1486,14 +1486,27 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
                                   feature_flag_only=False):
     """Validate a request for the institutional storage APIs.
 
-    The record based checks (ownership, base recid, bucket and object) are
-    mandatory by default: a request without ``pid`` is rejected. Only the APIs
-    that do not operate on a single record (currently ``get_bucket_list``) may
-    opt out by passing ``feature_flag_only=True``, which stops right after the
-    feature flag check.
+    Authentication, the presence of ``pid`` and the record ownership check are
+    handled by :func:`record_edit_permission_required`, so only the storage
+    specific checks are performed here.
 
-    Returns None when the request is valid, otherwise a Flask response tuple
-    that the caller can return as-is.
+    Args:
+        pid (str): Record id the request operates on. Must be the base recid.
+        bucket_id (str): Bucket id sent by the caller. Must be the deposit
+            bucket of the record.
+        file_name (str): Object key sent by the caller. Must exist in
+            ``bucket_id``.
+        new_bucket_id (str): Destination bucket id, set only when the file is
+            moved to a new bucket.
+        new_version_id (str): Destination object version id, set only when the
+            file is moved to a new bucket.
+        feature_flag_only (bool): Stop right after the feature flag check. Set
+            only by ``get_bucket_list``, which does not operate on a single
+            record.
+
+    Returns:
+        tuple: ``(response, status_code)`` to be returned as-is when the
+            request is rejected, or None when it is valid.
     """
     user_id = current_user.get_id()
     if not current_app.config.get(
@@ -1509,19 +1522,8 @@ def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
     denied = jsonify(
         {'error': _('You do not have permission to perform this operation.')}), 403
 
-    if not pid:
-        current_app.logger.warning(
-            'Storage API denied. reason=missing_pid, api={}, user_id={}'.format(
-                request.path, user_id))
-        return denied
-
     try:
         record = WekoRecord.get_record_by_pid(pid)
-        if not check_created_id(record):
-            current_app.logger.warning(
-                'Storage API denied. reason=no_permission, api={}, user_id={}, '
-                'pid={}'.format(request.path, user_id, pid))
-            return denied
 
         pid_obj = PersistentIdentifier.get('recid', pid)
         if pid_obj != get_record_without_version(pid_obj):
@@ -1595,8 +1597,7 @@ def copy_bucket():
     checked = data.get('checked')
     bucket_name = data.get('bucket_name')
 
-    error = _validate_storage_api_request(
-        pid=pid, bucket_id=bucket_id, file_name=filename)
+    error = _validate_storage_api_request(pid=pid, bucket_id=bucket_id, file_name=filename)
     if error:
         return error
 
@@ -1617,8 +1618,7 @@ def get_file_place():
     bucket_id = request.form.get('bucket_id')
     file_name = request.form.get('file_name')
 
-    error = _validate_storage_api_request(
-        pid=pid, bucket_id=bucket_id, file_name=file_name)
+    error = _validate_storage_api_request(pid=pid, bucket_id=bucket_id, file_name=file_name)
     if error:
         return error
 
