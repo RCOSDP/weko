@@ -62,15 +62,39 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # 自分の投稿で再発火しないこと(inline suggestion も集約コメントも自分が書く)。
+    #
+    # pull_request_review / pull_request_review_comment には元々、発火元の
+    # 権限を問うガードが無かった。public リポジトリでは誰でも PR にレビュー
+    # ・レビューコメントを付けられるため、無関係な GitHub アカウントが
+    # レビューを 1 件出すだけで 30 分ジョブ・Claude 2 パスを起動できてしまう
+    # (個人サブスクリプションのトークンを消費する)。author_association が
+    # OWNER/MEMBER/COLLABORATOR のときだけ許可する。
+    #
+    # ただし CodeRabbit(coderabbitai[bot])のレビューはこのリポジトリの
+    # collaborator ではなく、実測(PR #1905 ほか)で author_association は
+    # "NONE" になる。このゲートをそのまま適用すると、この機能が裁定
+    # しようとしている当の CodeRabbit のレビューが起動要因から締め出される
+    # (「他レビューを踏まえて裁定する」という目的そのものを壊す)。
+    # そのため coderabbitai[bot] のログインを明示的に許可する。
+    # "[bot]" が付くログインは GitHub App のインストールに紐づく予約名で、
+    # 通常のユーザー名には角括弧を含められないため、一般ユーザーが
+    # このログインを詐称することはできない。
     if: >-
       github.event.sender.login != 'github-actions[bot]' &&
       (
         github.event_name == 'workflow_dispatch' ||
-        ((github.event_name == 'pull_request' ||
-          github.event_name == 'pull_request_review' ||
-          github.event_name == 'pull_request_review_comment') &&
+        (github.event_name == 'pull_request' &&
          github.event.pull_request.head.repo.full_name == github.repository &&
          github.event.pull_request.draft == false) ||
+        ((github.event_name == 'pull_request_review' ||
+          github.event_name == 'pull_request_review_comment') &&
+         github.event.pull_request.head.repo.full_name == github.repository &&
+         github.event.pull_request.draft == false &&
+         (
+           contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'),
+                    github.event.review.author_association || github.event.comment.author_association) ||
+           (github.event.review.user.login || github.event.comment.user.login) == 'coderabbitai[bot]'
+         )) ||
         (github.event_name == 'issue_comment' &&
          github.event.issue.pull_request != null &&
          startsWith(github.event.comment.body, '@claude'))
