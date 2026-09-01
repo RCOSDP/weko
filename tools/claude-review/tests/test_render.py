@@ -86,19 +86,27 @@ def test_loc_with_none_line_renders_file_only():
 def _split_cells(line):
     """GFM の表の 1 行をセルに分割する（検証用の簡易パーサ）。
 
-    エスケープされた `\\|` はセル区切りとして数えない。素朴な
-    `line.split("|")` では区別できないため、テストの側でこのパーサを持つ。
+    GFM の実際のペアリング規則に合わせる: `|` の直前に連続する
+    バックスラッシュの個数を数え、奇数ならエスケープ済み（セル区切りでは
+    ない）、偶数（0 を含む）ならセル区切りとして扱う。単に「直前の 1 文字が
+    `\\` か」だけを見る素朴な実装では、入力に元からバックスラッシュが
+    含まれる場合（`x\\|y` など）にペアリングを誤り、レンダラの実際の
+    挙動と食い違う。
     """
     cells, cur, i = [], [], 0
     while i < len(line):
         ch = line[i]
-        if ch == "\\" and i + 1 < len(line) and line[i + 1] == "|":
-            cur.append("|")
-            i += 2
-            continue
         if ch == "|":
-            cells.append("".join(cur))
-            cur = []
+            bs = 0
+            j = len(cur) - 1
+            while j >= 0 and cur[j] == "\\":
+                bs += 1
+                j -= 1
+            if bs % 2 == 1:
+                cur.append(ch)
+            else:
+                cells.append("".join(cur))
+                cur = []
             i += 1
             continue
         cur.append(ch)
@@ -163,3 +171,68 @@ def test_plain_input_is_rendered_unchanged():
     out = render.render(BASE, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
     assert "&lt;" not in out and "&gt;" not in out
     assert "\\|" not in out
+
+
+# --- ラウンド 2: バックスラッシュのペアリング回帰 + 改行によるブロック注入 ---
+#
+# 所見1の初回修正（`.replace("|", "\\|")` を先に適用）は、入力に元から
+# バックスラッシュが含まれる場合（Windows パス、正規表現、エスケープ済み
+# JSON など）に GFM のペアリング規則で「区切り」に戻ってしまう回帰を
+# 生んでいた。また `_esc()` が改行を畳んでいなかったため、見出し・箇条書き
+# のトップレベル文書構造を偽装できた（<details> の中には限らない）。
+
+
+def test_table_backslash_pipe_pairing_does_not_shift_columns():
+    """バックスラッシュ+パイプが GFM のペアリング規則どおり 1 セルに収まる。
+
+    以前の実装（パイプを先にエスケープしてからバックスラッシュに触れない）
+    では、この入力が偶数個のバックスラッシュに見えてしまい、区切りとして
+    復活していた。
+    """
+    d = dict(BASE, adjudications=[adj(title="path x\\|y end")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    header = next(l for l in out.splitlines() if l.startswith("| # |"))
+    row = next(l for l in out.splitlines() if l.startswith("| 1 |"))
+    assert len(_split_cells(row)) == len(_split_cells(header))
+
+
+def test_table_lone_backslashes_do_not_shift_columns():
+    """パイプを伴わない素のバックスラッシュ（Windows パスなど）でも列数が変わらない。"""
+    d = dict(BASE, adjudications=[adj(title="C:\\path\\to\\file")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    header = next(l for l in out.splitlines() if l.startswith("| # |"))
+    row = next(l for l in out.splitlines() if l.startswith("| 1 |"))
+    assert len(_split_cells(row)) == len(_split_cells(header))
+
+
+def test_heading_title_newline_cannot_inject_a_fake_heading():
+    """見出しに使われる title の改行 + `#` が、独立した見出し行を作らない。"""
+    d = dict(BASE, adjudications=[adj(verdict="valid",
+             title="evil\n# 偽の見出し")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert not any(l.startswith("# 偽の見出し") for l in out.splitlines())
+
+
+def test_summary_paragraph_newline_cannot_inject_a_fake_heading():
+    """段落として出る summary の改行 + `#` が、独立した見出し行を作らない。"""
+    d = dict(BASE, summary="ok\n## 偽のセクション")
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert not any(l.startswith("## 偽のセクション") for l in out.splitlines())
+
+
+def test_ctx_reason_newline_cannot_inject_a_fake_bullet():
+    """要文脈の reason の改行 + `-` が、独立した箇条書き行を作らない。"""
+    d = dict(BASE, adjudications=[adj(verdict="needs_context",
+             reason="a\n- 偽の項目")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert not any(l.startswith("- 偽の項目") for l in out.splitlines())
+
+
+def test_fence_content_newlines_are_preserved():
+    """コードフェンスの中身の改行は畳み込まれず、そのまま残る。"""
+    payload = "line1\nline2\nline3"
+    d = dict(BASE, adjudications=[adj(fix={"kind": "suggestion", "file": "a.py",
+             "start_line": 1, "end_line": 3, "replacement": payload,
+             "note": ""})])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert payload in out
