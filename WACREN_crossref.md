@@ -3,13 +3,61 @@
 WEKO3 で Crossref DOI が付与された際に、Crossref の Content Registration API を叩いて
 実際に DOI を登録する機能の設計案。設定でオン/オフを切り替えられることを前提とする。
 
-- 対象ブランチ: `feature/nii_WACREN_pre`
-- 作成日: 2026-08-04
-- ステータス: **検討段階（未実装）**
+- 対象ブランチ: `feature/nii_WACREN_crossref_doi`（設計時: `feature/nii_WACREN_pre`）
+- 作成日: 2026-08-04 / 最終更新: 2026-09-01
+- ステータス: **実装済み（Phase 0〜3）／管理 UI（Phase 4）は未実装**
+- 実装コミット: `23af9ad4` *feat(workflow): register Crossref DOIs through a shared deposit foundation*
+
+---
+
+## 0. 実装状況（2026-09-01 時点）
+
+**§1 以降は 2026-08-04 時点の設計案。** 実装は共通基盤
+[`WACREN_doi_registration.md`](./WACREN_doi_registration.md) の構成に沿って行われたため、
+ファイル名・設定キー名・テーブル名は §4-2 / §4-4 / §5 の案とは異なる。
+各節の末尾に「実装結果」を併記した。
+
+| Phase | 内容 | 状況 |
+| --- | --- | --- |
+| Phase 0 | テストアカウント取得（§2-2 経路 A） | ✅ 取得済み |
+| Phase 1 | XML マッパー | ✅ `doi/agencies/crossref_mapper.py`（§6-4） |
+| Phase 2 | デポジット送信（`servlet/deposit`） | ✅ `CrossrefAgency.register()` |
+| Phase 3 | Celery 非同期化・ポーリング・状態遷移・リトライ | ✅ 共通基盤の `doi/orchestrator.py` / `doi/tasks.py` |
+| Phase 4 | 管理 UI・失敗通知 | ⚠️ 通知メールと CLI のみ。管理画面は未実装（§7） |
+| Phase 5 | `rest_v2` / DOI 更新・削除 | ❌ 未実装（§9-2 の結論により `rest_v2` は採らない） |
+
+### 実 API 検証
+
+`test.crossref.org` への往復検証を実施済み。そこで判明した挙動は実装に反映されている。
+
+- `item_number` は **32 文字上限** → アイテム uuid のハイフンを除去して渡す
+- Crossref は **スキーマが通す値も弾く** → ISSN のチェックディジットと DOI 形式を送信前に検証する
+- 未処理のサブミッションに `doi_batch_diagnostic status="unknown_submission"` が返る
+  → 「不明」ではなく「処理待ち」として扱う
+- 認証失敗時は XML ではなく平文 `Cannot authenticate user` が返る → リトライ対象として扱う
+
+> テスト用の認証情報は NII 側の作業環境にあり、本リポジトリにも `scripts/instance.cfg` にも含まれていない。
+
+> 登録される DOI 値は**管理画面「DOI 識別子付与」のプレフィックス**（`jalc_crossref_doi`）から
+> 組み立てられたものをそのまま使う。本機能は独自のプレフィックス設定を持たない → **§4-6**。
+
+### 未実装
+
+管理 UI（§7）、DataCite / JaLC / NDL JaLC アダプタ、既存 DOI の一括登録（§9-6）、
+DOI の更新・削除（§9-3）、DOI 付与時バリデーションとの整合（§9-5）。
+
+### テスト
+
+`modules/weko-workflow/tests/test_doi.py`（533 行 / 24 ケース）。
+ISSN 検証・`item_number` 正規化・submissionDownload のパース・`is_allowed()`・
+XML 生成・register / poll・オーケストレータの状態遷移を含む。
 
 ---
 
 ## 1. 現状の整理
+
+> **以下は実装前（2026-08-04 時点）の状況。** 現在は `saving_doi_pidstore()` の末尾から
+> Crossref への登録が呼ばれる（§0、§4-3）。JaLC / DataCite については下記のままである。
 
 ### 1-1. 現在の DOI 処理フロー
 
@@ -41,7 +89,7 @@ saving_doi_pidstore(item_id, record_without_version, data, doi_select)
 | `weko-items-autofill/utils.py` `get_crossref_record_data()` | DOI からのメタデータ自動入力（**取得のみ**） | `https://doi.crossref.org` |
 | `weko-workspace/config.py` | JaLC / DataCite からのメタデータ取得 | `api.japanlinkcenter.org/dois/`, `api.datacite.org/dois/` |
 
-いずれも **参照系**であり、登録（deposit）系の実装は存在しない。
+いずれも **参照系**であり、（実装前の時点では）登録（deposit）系の実装は存在しなかった。
 
 ### 1-3. 既存の Crossref 関連設定
 
@@ -74,6 +122,8 @@ Crossref は本番と同等に動作する **テストシステム** を提供�
 | データ | 本番とは別。定期的にリセットされる場合がある |
 
 ### 2-2. テストアカウントの取得方法
+
+> **状況: 取得済み（Phase 0 完了）。** 以下は申請時の手順の記録。
 
 テストアカウントの申請窓口は **`support@crossref.org` へのメール依頼のみ**（Web の申込フォームは無い）。
 申請には立場によって 2 つの経路がある。
@@ -414,6 +464,14 @@ saving_doi_pidstore()                                    [weko_workflow/utils.py
 > 独立モジュール `weko-crossref` にする案もあるが、`setup.py` / entry point / alembic ブランチの
 > 追加が必要でコストが大きい。将来 JaLC / DataCite の API 登録も追加するなら再検討する。
 
+> **実装結果**: 共通基盤化に伴い、上表の 3 ファイルは `weko_workflow/doi/` パッケージに再編された。
+> 全体構成は [`WACREN_doi_registration.md` §14](./WACREN_doi_registration.md) を参照。
+> Crossref 固有の実装は `doi/agencies/crossref.py`（可否判定・送信前検証・クライアント）と
+> `doi/agencies/crossref_mapper.py`（XML 生成）の 2 ファイルのみ。
+> 管理画面は未実装のため `weko_admin/admin.py` への追記は無く、代わりに `weko_workflow/cli.py` に
+> `weko workflow doi list` / `weko workflow doi resend <log_id>` を追加した。
+> `retry_failed_crossref_deposits` に相当する定期リトライタスクは実装していない（再送は CLI から）。
+
 ### 4-3. フック位置の検討
 
 | 候補 | 長所 | 短所 | 評価 |
@@ -463,6 +521,18 @@ pending ──deposit成功──> submitted ──poll──> success
 （設定オフ・必須設定不足の場合は skipped）
 ```
 
+> **実装結果**: テーブル名は **`doi_deposit_log`**（エージェンシー共通。`agency` カラムで区別）。
+> 定義は `weko_workflow/models.py` の `DoiDepositLog`、
+> マイグレーションは `alembic/b1c7d3f9a204_add_doi_deposit_log.py`。
+> 上図との差分:
+>
+> - `file_name` / `batch_id` / `submission_id` → **`tracking_id`** に集約（値は `doi_batch_id`）
+> - `request_xml` / `response_xml` → **`payload`** / **`response`**（エージェンシー非依存の名前）
+> - `is_test` は持たない。送信先 URL の設定で区別する
+> - `agency` / `doi_select` / `poll_attempt` / `http_status` を追加
+> - **`skipped` は無い**。設定オフ・必須設定不足の場合はそもそもログ行を作らない
+> - **`unknown` を追加**。`WEKO_DOI_MAX_POLL_ATTEMPTS` に達してポーリングを打ち切った状態
+
 ### 4-5. エラーハンドリング方針
 
 **ARK 実装と同じ方針を踏襲する**: 外部サービスの障害がアイテム登録自体を止めてはならない。
@@ -473,6 +543,67 @@ pending ──deposit成功──> submitted ──poll──> success
   - `429`（キュー上限）/ タイムアウト / 5xx → 指数バックオフでリトライ
   - `record_diagnostic status="Failure"` → リトライせず `failure` で確定し、管理者に通知
 - 失敗時は設定 `WEKO_CROSSREF_NOTIFY_EMAIL` 宛にメール通知（既存の `invenio-mail` を利用）。
+
+> **実装結果**: 方針どおり実装済み。通知先の設定キーは共通化され
+> **`WEKO_DOI_NOTIFY_EMAIL`**（未設定なら通知しない）。
+> 恒久的失敗と一時的失敗の区別は `DepositStatus.FAILED` / `RETRIABLE` で行い、
+> `429` と 5xx、および接続不能・XML でない応答（認証失敗の平文など）を `RETRIABLE` としている。
+
+### 4-6. 登録される DOI 値の出どころ ← **管理画面のプレフィックスを使う**
+
+**Crossref に登録される DOI は、管理画面で設定したプレフィックスから組み立てられた
+既存の DOI 文字列をそのまま使う。** 本機能は独自のプレフィックス設定を持たない。
+
+```
+管理画面「DOI 識別子付与」（weko-admin: IdentifierSettingView）
+   → doi_identifier テーブル（weko_admin.models.Identifier）
+        jalc_crossref_doi : プレフィックス（「JaLC CrossRef DOI」欄・例 10.1234）
+        suffix            : 半自動サフィックス
+        jalc_crossref_flag: Crossref DOI 付与の有効/無効
+             │
+             ▼  weko_workflow/utils.py:5222（get_identifier_setting 経由）
+   _jalc_cr_doi_link = 'https://doi.org/{jalc_crossref_doi}/{サフィックス部}'
+             │
+             ▼  識別子付与アクションで表示し、ユーザが「JaLC CrossRef DOI」を選択
+             ▼  承認時 saving_doi_pidstore()   utils.py:186-192
+   doi_register_val = '{プレフィックス}/{サフィックス}'   ← ホスト部を落としただけ
+   doi_register_typ = 'Crossref'
+             │
+             ▼  utils.py 末尾のフック（§4-3）
+   request_doi_deposit(record_without_version, doi_select, doi_register_val)
+             │
+             ▼
+   DoiDepositLog.doi → DoiMetadataSource.doi → crossref_mapper の <doi_data><doi>
+```
+
+サフィックスの決まり方は既存の `IDENTIFIER_GRANT_SUFFIX_METHOD` のまま
+（`0`: 連番 `%010d` / `1`: 設定 `suffix` + 入力値 / `2`: 入力値のみ）。
+インポート経由（`weko_search_ui/utils.py:3554, 3595`）も同じプレフィックスを使い、
+同じ `saving_doi_pidstore()` を通るため、扱いは同一。
+
+**エージェンシーの選択はプレフィックスではなく `doi_select`（`'2'` = JaLC CrossRef DOI）で行う**
+（[`WACREN_doi_registration.md` §5](./WACREN_doi_registration.md)）。プレフィックスの値は判定に使わない。
+
+#### 注意点
+
+1. **プレフィックス未設定は送信前に弾く。**
+   未設定の場合、表示用に `<Empty>` が埋められた結果 DOI が `<Empty>/0000000001` のような
+   文字列になる。`CrossrefAgency.validate()` が `^10\.\d{4,9}/\S+$` で照合し、
+   「check the Crossref prefix in the identifier settings」を理由に `failure` とする
+   （Crossref への往復を発生させない）。
+
+2. **そのプレフィックスがデポジットアカウントの権限下にある必要がある** ← **§9-1 の未決事項**
+   WEKO のこの欄は名前のとおり「**JaLC を通じて登録する** Crossref DOI」のプレフィックスを
+   想定している。本機能は JaLC を介さず Crossref へ直接デポジットするため、
+   `WEKO_CROSSREF_LOGIN_ID` のアカウントがそのプレフィックスの登録権限を持っていなければ
+   Crossref 側で拒否される。**JaLC 発行のプレフィックスを直接デポジットに流用することはできない。**
+   既存の `jalc_crossref_doi` を流用するか `crossref_doi` 欄を新設するかも §9-1 で未決。
+
+3. **`jalc_crossref_flag` はデポジット側では参照していない。**
+   同フラグは「Crossref DOI を付与できるか」を制御するもので、付与済み DOI の送信は止めない
+   （フラグを後から無効にしても、既に付与された DOI の再送は行われる）。
+   実運用上はフラグが無効なら DOI 自体が付与されないため影響は限定的
+   （[`WACREN_doi_registration.md` §9-3](./WACREN_doi_registration.md)）。
 
 ---
 
@@ -507,6 +638,28 @@ ARK の `WEKO_HANDLE_ARK_*` と同じ命名・検証パターンに揃える。
 | `WEKO_CROSSREF_NOTIFY_EMAIL` | `None` | 失敗時の通知先。未設定なら通知しない |
 | `WEKO_CROSSREF_DRY_RUN` | `False` | `True` なら XML 生成とログ記録のみ行い、送信しない |
 
+> **実装結果**: エージェンシー共通の設定は `WEKO_DOI_*` に切り出された
+> （[`WACREN_doi_registration.md` §9](./WACREN_doi_registration.md)）。実装されたキーは次のとおり。
+>
+> - **共通**: `WEKO_DOI_AGENCIES`（`{'2': 'weko_workflow.doi.agencies.crossref.CrossrefAgency'}`）/
+>   `WEKO_DOI_SUBMIT_COUNTDOWN`(10) / `WEKO_DOI_MAX_RETRY`(3) / `WEKO_DOI_RETRY_COUNTDOWN`(60) /
+>   `WEKO_DOI_FIRST_POLL_DELAY`(60) / `WEKO_DOI_POLL_INTERVAL`(300) /
+>   `WEKO_DOI_MAX_POLL_ATTEMPTS`(20) / `WEKO_DOI_NOTIFY_EMAIL`(None)
+> - **Crossref 固有**: `WEKO_CROSSREF_ALLOW_REGISTER_DOI`(False) / `WEKO_CROSSREF_DEPOSIT_URL` /
+>   `WEKO_CROSSREF_SUBMISSION_LOG_URL` / `WEKO_CROSSREF_LOGIN_ID` / `WEKO_CROSSREF_LOGIN_PASSWD` /
+>   `WEKO_CROSSREF_DEPOSITOR_NAME` / `WEKO_CROSSREF_DEPOSITOR_EMAIL` / `WEKO_CROSSREF_REGISTRANT` /
+>   `WEKO_CROSSREF_RECORD_TYPE_POLICY`(`'posted_content'`) / `WEKO_CROSSREF_TIMEOUT`(30)
+>
+> 上表のうち **未実装**: `WEKO_CROSSREF_API_MODE` / `WEKO_CROSSREF_ASYNC`（§9-2 の結論により
+> 経路が 1 本になったため不要）、`WEKO_CROSSREF_TEST_DEPOSIT`、
+> `WEKO_CROSSREF_SCHEMA_VERSION`（5.4.0 固定）、
+> `WEKO_CROSSREF_RESOURCE_URL_PATTERN`（`{root_url}records/{親 recid}` 固定）、
+> `WEKO_CROSSREF_DEFAULT_RECORD_TYPE` / `WEKO_CROSSREF_RECORD_TYPE_MAP`
+> （`WEKO_CROSSREF_RECORD_TYPE_POLICY` に置換、§6-4）、`WEKO_CROSSREF_DRY_RUN`。
+>
+> なお `WEKO_DOI_` / `WEKO_CROSSREF_` プレフィックスは `weko_workflow/ext.py` で
+> `WEKO_WORKFLOW_` と同様に app.config へ流し込まれる。
+
 ### 5-1. 設定の妥当性チェック
 
 ARK の `is_ark_registration_allowed()` と同じ設計で、
@@ -535,6 +688,9 @@ def is_crossref_registration_allowed():
     return True
 ```
 
+> **実装結果**: `CrossrefAgency.is_allowed()` として実装済み（`doi/agencies/crossref.py`）。
+> 必須設定には上記に加えて `WEKO_CROSSREF_SUBMISSION_LOG_URL` が入る（計 7 キー）。
+
 ### 5-2. オン/オフの粒度
 
 3 段階で制御できるようにする。
@@ -554,6 +710,10 @@ def is_crossref_registration_allowed():
   DB へのパスワード保存となるため暗号化の検討が必要。
 
 まず案 A で実装し、必要になった時点で案 B に拡張する。
+
+> **実装結果**: 案 A（設定ファイル）で実装済み。`WEKO_CROSSREF_DRY_RUN` /
+> `WEKO_CROSSREF_TEST_DEPOSIT` は実装していないため、送信抑止は
+> `WEKO_CROSSREF_ALLOW_REGISTER_DOI` と送信先 URL（既定はテスト系）で行う。
 
 ---
 
@@ -614,9 +774,43 @@ WEKO は `item_metadata_validation()` で既に資源タイプを分類してい
   ここは `item_metadata_validation()` の既存ロジックと役割が重なるので、
   DOI 付与時のバリデーションを強化するか、送信直前に再チェックするかを設計時に決める。
 
+### 6-4. 実装結果
+
+`doi/agencies/crossref_mapper.py`。スキーマは **5.4.0 固定**、名前空間は Crossref + JATS。
+
+**レコードタイプは 2 系統のみ。**
+
+| 生成される record type | 条件 |
+| --- | --- |
+| `journal_article`（`journal` > `journal_metadata` + `journal_issue` + `journal_article`） | `WEKO_CROSSREF_RECORD_TYPE_POLICY='auto'` **かつ** 資源タイプが journal 系 **かつ** `jpcoar:sourceTitle` がある |
+| `posted_content`（`type` は thesis 系なら `dissertation`、それ以外 `other`） | 上記以外すべて。**既定（`'posted_content'`）では常にこちら** |
+
+既定を「全件 `posted_content`」としたのは §8-2 の圧縮案を採ったため。
+§6-1 の `dissertation` / `report-paper` / `book` / `database` の独立したレコードタイプは実装していない。
+
+**実装した要素**: `doi_batch_id` / `timestamp` / `depositor` / `registrant` /
+`titles`（+ 別言語タイトルは `original_language_title`）/
+`contributors`（`person_name`・`given_name`・`surname`・`affiliations`・`ORCID`、先頭が `sequence="first"`）/
+`posted_date` または `publication_date` / `institution_name`（学位授与機関 → 出版者の順に採用）/
+`item_number`（uuid・32 文字）/ `jats:abstract` / `doi_data`（`doi` + `resource`）/
+`journal_metadata`（`full_title`・`issn`）/ `journal_issue`（`journal_volume`・`issue`）/ `pages`。
+
+**§6-2 のうち未実装の要素**: `collection property="text-mining"`、
+`program name="AccessIndicators"`（ライセンス）、`program name="fundref"`、
+`program name="relations"`、`degree` / `approval_date`、`citation_list`。
+
+XML 生成は `lxml` ではなく標準ライブラリの `xml.etree.ElementTree` を使っている
+（バージョン間で出力が揺れないよう XML 宣言のみ自前で付与）。
+
 ---
 
 ## 7. 管理 UI
+
+> **状況: 未実装。** 当面は CLI と失敗時メール通知で代替している（§8-2 の圧縮案）。
+>
+> - `weko workflow doi list [--status <status>] [--limit N]` — 登録状況の一覧
+> - `weko workflow doi resend <log_id>` — 失敗分の再送（`pending` に戻して再投入）
+> - 失敗通知は `WEKO_DOI_NOTIFY_EMAIL`（未設定なら通知しない）
 
 ### 7-1. 設定画面
 
@@ -639,6 +833,9 @@ WEKO は `item_metadata_validation()` で既に資源タイプを分類してい
 ---
 
 ## 8. 段階的な実装計画
+
+> **実績は §0 を参照。** Phase 0〜3 は完了、Phase 4 は CLI と通知のみ、Phase 5 は未着手。
+> 以下は当初の計画と見積。
 
 | Phase | 内容 | Crossref アカウント | 見積 |
 | --- | --- | --- | --- |
@@ -725,6 +922,9 @@ Phase 1 が **10〜16 → 4〜6 人日**に落ちる。
 
 ## 9. 未決事項・要確認事項
 
+> 2026-09-01 時点の解決状況: 9-1 は**一部解決**（テストアカウント取得済み・会員資格は未定）、
+> 9-2 と 9-7 は**解決済み**。9-3〜9-6 は**未解決のまま**で、いずれも未実装項目として残っている。
+
 ### 9-1. Crossref との関係・会員資格 ← **最優先**
 
 WEKO の既存フィールド名 `jalc_crossref_doi` は「JaLC を通じて登録する Crossref DOI」を意味する
@@ -751,11 +951,25 @@ WEKO の既存フィールド名 `jalc_crossref_doi` は「JaLC を通じて登�
 ただし **§8 Phase 1〜3（XML 生成・テスト系への送信・非同期化）は会員資格が無くても進められる**ため、
 会員申請の完了を待たずに実装に着手してよい。
 
-### 9-2. 同期 REST Deposit v2 の利用可否
+> **2026-09-01 時点**: 経路 A でテストアカウントを取得し、Phase 1〜3 を実装・検証済み（§0）。
+> **会員資格・DOI プレフィックスは依然として未定**のため、**本番系への登録はまだできない**。
+> 既存の `jalc_crossref_doi` フィールドを流用するか新設するかも未決のまま
+> （現実装は `doi_select == '2'` でエージェンシーを解決しており、フィールド名には依存していない）。
+> 実装が登録する DOI 値は管理画面のプレフィックスから組み立てられたものをそのまま使うため、
+> **そのプレフィックスがデポジットアカウントの権限下にあることが本番稼働の前提**になる → **§4-6**。
+
+### 9-2. 同期 REST Deposit v2 の利用可否 → **解決済み: 利用不可**
 
 §3-2 のとおり、`api.crossref.org/v2/deposits` がメンバー／サービスプロバイダ向けに
-開かれているかが不明。**§2-5 の申請メールの質問 1 として同梱済み**。
-回答によって結果ポーリング（§4-1）の要否が変わる。
+開かれているかが不明だったため、**§2-5 の申請メールの質問 1 として同梱していた**。
+
+> **結論: 当方からは利用できない。** したがって実装は
+> 非同期の HTTPS POST（`servlet/deposit`）+ `submissionDownload` ポーリングの**単一経路**とし、
+> `WEKO_CROSSREF_API_MODE` / `WEKO_CROSSREF_ASYNC` による切り替えは実装していない。
+> 同期／非同期の差は共通基盤側の `DepositStatus.ACCEPTED` +
+> `AgencyCapabilities.requires_polling` で吸収されるため、
+> 将来 `rest_v2` が使えるようになってもオーケストレータは変更不要
+> （[`WACREN_doi_registration.md` §4-3](./WACREN_doi_registration.md)）。
 
 ### 9-3. DOI の更新・削除
 
@@ -766,10 +980,17 @@ WEKO の既存フィールド名 `jalc_crossref_doi` は「JaLC を通じて登�
   WEKO の `delete_pidstore_doi()`（DOI 削除）が呼ばれても Crossref 側には反映できない。
   解決先 URL を「取り下げ」ページに変更する（`doTransferDOIsUpload`）などの運用方針を決める必要がある。
 
+> **2026-09-01 時点: 未解決・未実装。** 現実装が Crossref を呼ぶのは `saving_doi_pidstore()`
+> 経由の**新規付与時のみ**で、メタデータ更新時の再デポジットも `delete_pidstore_doi()` への
+> 追随も行わない。`WEKO_CROSSREF_UPDATE_ON_EDIT` は未実装。
+
 ### 9-4. 対象とする資源タイプ
 
 Crossref は主に学術出版物を対象としており、研究データについては DataCite が使われるのが一般的。
 `dataset_type` の扱い（Crossref に登録するか、対象外とするか）を決める。
+
+> **2026-09-01 時点: 未解決。** 現実装は資源タイプで登録可否を分けておらず、
+> Crossref DOI が付与されたものはすべて送信する（`dataset_type` は `posted_content type="other"` になる）。
 
 ### 9-5. 既存メタデータ検証との整合
 
@@ -779,10 +1000,20 @@ Crossref XML の必須要素（`<titles>`, `<publication_date>`, `<doi_data>`）
 API 登録を有効にした場合、**DOI 付与時点でのバリデーションを Crossref の要件に合わせて強化すべきか**を決める。
 （強化しないと、承認は通るが Crossref 登録だけ失敗する状態が発生する）
 
+> **2026-09-01 時点: 未解決。** 送信直前の再チェックのみ実装した
+> （`CrossrefAgency.validate()`: DOI 形式・解決先 URL・`dc:title`・`datacite:date`・
+> journal_article 時の `sourceTitle` と ISSN チェックディジット）。
+> **DOI 付与アクション側からは呼んでおらず**、「承認は通るが Crossref 登録だけ失敗する」状態は
+> 依然として発生しうる。その場合は `doi_deposit_log` が `failure` で残り、
+> メタデータ修正後に `weko workflow doi resend` で再送する運用になる。
+
 ### 9-6. 既存 DOI の一括登録
 
 API 登録を有効化する以前に付与済みの Crossref DOI について、
 遡って一括登録するバッチ（CLI コマンド）が必要かを確認する。
+
+> **2026-09-01 時点: 未実装。** `weko workflow doi` の CLI は `list` / `resend` のみで、
+> 既存 DOI を走査して投入するコマンドは無い。
 
 ### 9-7. JaLC / DataCite への展開 → **解決済み: 共通基盤として設計**
 
@@ -803,6 +1034,12 @@ API 登録を有効化する以前に付与済みの Crossref DOI について�
 
 **実装順序は DataCite → Crossref を推奨**（共通基盤の検証を安価に済ませるため）。
 詳細は [`WACREN_doi_registration.md` §15](./WACREN_doi_registration.md) を参照。
+
+> **2026-09-01 時点**: 共通基盤（Phase A）は Crossref と同時に実装済み。
+> ただし**実際の実装順序は推奨と逆の A → C（Crossref）**となり、DataCite（Phase B）は未着手。
+> 共通基盤が非同期側で先に検証されたため、DataCite は
+> `DataCiteAgency` の追加と `WEKO_DOI_AGENCIES` への 1 行追加で載る見込み
+> （[`WACREN_doi_registration.md` §11](./WACREN_doi_registration.md) の手順）。
 
 ---
 

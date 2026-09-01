@@ -3,12 +3,40 @@
 Crossref / DataCite（将来的に JaLC / NDL JaLC）への DOI 登録を、
 単一の抽象の上に載せるための共通基盤の設計仕様。
 
-- 対象ブランチ: `feature/nii_WACREN_pre`
-- 作成日: 2026-08-04
-- ステータス: **設計段階（未実装）**
+- 対象ブランチ: `feature/nii_WACREN_crossref_doi`（設計時: `feature/nii_WACREN_pre`）
+- 作成日: 2026-08-04 / 最終更新: 2026-09-01
+- ステータス: **Phase A（共通基盤）実装済み**
+- 実装コミット: `23af9ad4` *feat(workflow): register Crossref DOIs through a shared deposit foundation*
 - 関連文書:
-  - [`WACREN_crossref.md`](./WACREN_crossref.md) — Crossref 固有の仕様（XML マッピング、非同期デポジット）
-  - [`WACREN_datacite.md`](./WACREN_datacite.md) — DataCite 固有の仕様（JSON マッピング、同期 REST）
+  - [`WACREN_crossref.md`](./WACREN_crossref.md) — Crossref 固有の仕様（XML マッピング、非同期デポジット）**実装済み**
+  - [`WACREN_datacite.md`](./WACREN_datacite.md) — DataCite 固有の仕様（JSON マッピング、同期 REST）**未実装**
+
+---
+
+## 0. 実装状況（2026-09-01 時点）
+
+| Phase | 内容 | 状況 |
+| --- | --- | --- |
+| A. 基盤 | `base` / `errors` / `registry` / `metadata` / `orchestrator` / `tasks` / `DoiDepositLog` + alembic / フック | ✅ 実装済み |
+| B. DataCite | `DataCiteAgency` | ❌ 未着手 |
+| C. Crossref | `CrossrefAgency` | ✅ 実装済み（`test.crossref.org` で検証済み） |
+| D. 管理 UI | 設定画面・一覧・再送・CLI・通知 | ⚠️ CLI（`weko workflow doi list` / `resend`）と失敗通知メールのみ。管理画面は未実装（§13） |
+| E. 将来 | `JalcAgency` / `NdlJalcAgency`、ARK 統合 | ❌ 未着手 |
+
+**実装順序は §15-2 の推奨（B → C）とは逆になり、A と C を同時に実装した。**
+非同期・ポーリング側で基盤を先に検証したかたちで、同期エージェンシー用の
+`DepositStatus.SUCCEEDED` 経路はまだ実コードでは使われていない（DataCite 実装時に初めて通る）。
+
+**設計との主な差分** — 詳細は各節の「実装結果」を参照。
+
+- 全体マスタースイッチ `WEKO_DOI_ALLOW_REGISTER` は**実装していない**。可否はエージェンシー単位
+  （`WEKO_CROSSREF_ALLOW_REGISTER_DOI`）のみで判定する（§9）
+- `doi_identifier.jalc_*_flag` によるリポジトリ単位のスイッチは**参照していない**（§9-3）
+- `skipped` 状態は持たない。送らない場合はログ行自体を作らない（§7-1）
+- `WEKO_DOI_AGENCY_REGISTRY` → **`WEKO_DOI_AGENCIES`**（§5）
+- `FakeAgency` は用意せず、`CrossrefAgency` + `requests` のパッチで状態遷移を検証している（§12）
+
+**テスト**: `modules/weko-workflow/tests/test_doi.py`（533 行 / 24 ケース）。
 
 ---
 
@@ -455,6 +483,11 @@ request_doi_deposit(
 
 `request_doi_deposit()` は**例外を外に出さない**。内部で捕捉してログに残す。
 
+> **実装結果**: 実装済み（`weko_workflow/utils.py`）。引数は
+> `request_doi_deposit(record_without_version, doi_select, doi_register_val)` の 3 つで、
+> `identifier_url` は渡していない（解決先 URL はオーケストレータ側で
+> `build_resource_url()` が親 recid から組み立てる）。
+
 ### 7-3. コミット競合への対策 ← **実装時の注意点**
 
 `saving_doi_pidstore()` は呼び出し側で `db.session.commit()` される**前**に実行される。
@@ -469,6 +502,11 @@ Celery ワーカーが「まだコミットされていない PID / レコード
    ただし WEKO のセッション管理（`db.session.begin_nested()` の多用）との相性検証が必要。
 
 初期実装は 1 + 2 で進め、問題が出たら 3 に切り替える。
+
+> **実装結果**: 1 + 2 で実装。2 はレコード有無ではなく **`DoiDepositLog` 行の可視性**で判定し、
+> 見えなければ `DepositLogNotReadyError` を投げて `WEKO_DOI_SUBMIT_COUNTDOWN` 秒後に
+> Celery の `self.retry()`（最大 `WEKO_DOI_MAX_RETRY` 回）で再試行する。
+> 3（`after_commit`）は採用していない。
 
 ---
 
@@ -533,6 +571,27 @@ Crossref 版・DataCite 版で共通して面倒な部分であり
 | `WEKO_DOI_NOTIFY_EMAIL` | `None` | 失敗時の通知先 |
 | `WEKO_DOI_PAYLOAD_RETENTION_DAYS` | `90` | 成功ログの `payload` を保持する日数（§10-4） |
 
+> **実装結果**（`weko_workflow/config.py`）: 実装されたのは次の 8 キー。
+>
+> | 実装された設定キー | 既定値 | 上表との対応 |
+> | --- | --- | --- |
+> | `WEKO_DOI_AGENCIES` | `{'2': '…CrossrefAgency'}` | `WEKO_DOI_AGENCY_REGISTRY` を改名 |
+> | `WEKO_DOI_SUBMIT_COUNTDOWN` | `10` | 同名 |
+> | `WEKO_DOI_MAX_RETRY` | `3` | 同名。`WEKO_DOI_NOT_FOUND_MAX_RETRY` も兼ねる |
+> | `WEKO_DOI_RETRY_COUNTDOWN` | `60` | `WEKO_DOI_RETRY_DELAY` を改名・既定値変更 |
+> | `WEKO_DOI_FIRST_POLL_DELAY` | `60` | `WEKO_DOI_POLL_DELAY` を改名 |
+> | `WEKO_DOI_POLL_INTERVAL` | `300` | **新設**（2 回目以降のポーリング間隔） |
+> | `WEKO_DOI_MAX_POLL_ATTEMPTS` | `20` | `WEKO_DOI_POLL_MAX_ATTEMPTS` を改名 |
+> | `WEKO_DOI_NOTIFY_EMAIL` | `None` | 同名 |
+>
+> **未実装**: `WEKO_DOI_ALLOW_REGISTER`（全体マスタースイッチ。エージェンシー単位の
+> スイッチで足りると判断）、`WEKO_DOI_ASYNC`、`WEKO_DOI_DRY_RUN`、
+> `WEKO_DOI_RESOURCE_URL_PATTERN`（`orchestrator.build_resource_url()` で
+> `{root_url}records/{親 recid}` 固定）、`WEKO_DOI_PAYLOAD_RETENTION_DAYS`（§16-4 は未決のまま）。
+>
+> これらのキーは `weko_workflow/ext.py` で `WEKO_DOI_` / `WEKO_CROSSREF_` プレフィックスごと
+> app.config へ流し込まれる。
+
 ### 9-2. エージェンシー固有設定
 
 各エージェンシーの文書で定義する。命名は `WEKO_<AGENCY>_*` に揃える。
@@ -558,6 +617,23 @@ doi_identifier.jalc_<agency>_flag が False     → リポジトリ単位でオ�
 
 既存の `doi_identifier` テーブル（`jalc_crossref_flag` / `jalc_datacite_flag`）を
 **リポジトリ単位のスイッチとしてそのまま流用する**。新しいカラムは追加しない。
+
+> **実装結果**: 実際の判定は 2 段階のみ。
+>
+> ```
+> WEKO_DOI_AGENCIES に doi_select の登録が無い     → 何もしない（ログ行も作らない）
+>   ↓ あり
+> agency.is_allowed() が False
+>   ├─ WEKO_CROSSREF_ALLOW_REGISTER_DOI が False   → 何もしない
+>   └─ 必須設定（7 キー）が欠けている               → ERROR ログを出して何もしない
+>   ↓ True
+> 実行
+> ```
+>
+> `WEKO_DOI_ALLOW_REGISTER` による全体オフと、`doi_identifier.jalc_*_flag` による
+> リポジトリ単位のオフは**実装していない**。後者は「DOI 付与そのものの可否」を既に制御しており、
+> 付与された DOI を登録しない用途は現状無いと判断したため。
+> `skipped` というログ状態も持たない（送らない場合は行を作らない）。
 
 ---
 
@@ -597,6 +673,13 @@ doi_identifier.jalc_<agency>_flag が False     → リポジトリ単位でオ�
 
 **オーケストレータ・テーブル・Celery タスク・管理 UI の変更は不要。**
 
+> **実装結果**: 実際の基底クラス（`doi/base.py`）が持つのは `name` / `capabilities` と
+> `is_allowed()` / `validate()` / `build_payload()` / `register()` / `poll()`。
+> 設計時の `key` 属性は無く（レジストリのキーは `WEKO_DOI_AGENCIES` の dict のキー）、
+> `update()` / `hide()` も未定義（DOI 更新・非公開化が未実装のため）。
+> `validate(source) -> List[str]` は設計時になかったが、送信前にメタデータを弾くために追加した。
+> 手順 3 の登録先は **`WEKO_DOI_AGENCIES`**。
+
 ---
 
 ## 12. テスト戦略
@@ -614,9 +697,29 @@ doi_identifier.jalc_<agency>_flag が False     → リポジトリ単位でオ�
 > 同期・非同期の両パターンを実 API なしで検証でき、
 > 新エージェンシー追加時の回帰テストにもそのまま使える。
 
+> **実装結果**（`modules/weko-workflow/tests/test_doi.py`、24 ケース）:
+>
+> - **`FakeAgency` は用意しなかった。** 状態遷移テストは `CrossrefAgency` を通し、
+>   `requests.post` / `requests.get` をパッチして `ACCEPTED` / `FAILED` / `unknown` を検証している。
+>   そのため**同期エージェンシー（`SUCCEEDED` を直接返す経路）のテストはまだ無い**。
+>   DataCite 実装時に `FakeAgency` を入れるのが望ましい。
+> - 実 API（`test.crossref.org`）への投入は手動で実施済み。自動テストには含めていない。
+> - XSD 検証は自動テストに組み込んでいない（生成 XML の要素・属性を突き合わせるかたち）。
+> - `DoiMetadataSource` は `FakeMappingData` 経由で多値・多言語・欠損を検証。
+> - 回帰（`saving_doi_pidstore()` の既存挙動）は、エージェンシー未設定・
+>   `is_allowed()` が False のとき何も起きないことで担保している。
+
 ---
 
 ## 13. 管理 UI
+
+> **状況: 未実装。** 現状は CLI（`weko_workflow/cli.py`）のみ。
+>
+> - `weko workflow doi list [--status <status>] [--limit N]`
+> - `weko workflow doi resend <log_id>` — 1 件ずつ再送（`pending` に戻して再投入）
+>
+> §13-2 にある `--agency` / `--since` での絞り込みや一括再送はまだ無い。
+> 失敗通知は `WEKO_DOI_NOTIFY_EMAIL` 宛のメールのみ。
 
 `weko-admin` に「DOI 登録」画面を 1 つ作る。**エージェンシーごとに画面を作らない。**
 
@@ -661,6 +764,35 @@ modules/weko-workflow/weko_workflow/
    └─ xxxx_add_doi_deposit_log.py
 ```
 
+> **実装結果**（`23af9ad4`）: 上記のうち `agencies/datacite.py` 以外は実装済み。
+>
+> ```
+> modules/weko-workflow/weko_workflow/
+> ├─ doi/
+> │  ├─ __init__.py          44 行
+> │  ├─ base.py             174 行
+> │  ├─ errors.py            71 行
+> │  ├─ registry.py          56 行  get_agency() / is_supported()
+> │  ├─ metadata.py         396 行  DoiMetadataSource
+> │  ├─ orchestrator.py     282 行  request_doi_deposit() / run_deposit() / run_poll() / notify_failure()
+> │  ├─ tasks.py            116 行  deposit_doi / poll_doi_deposit / resend_doi_deposit
+> │  └─ agencies/
+> │     ├─ __init__.py
+> │     ├─ crossref.py            346 行
+> │     └─ crossref_mapper.py     305 行  ← 設計時に無かった分割
+> ├─ models.py             DoiDepositLog（+63 行）
+> ├─ config.py             WEKO_DOI_* / WEKO_CROSSREF_*（+75 行）
+> ├─ utils.py              saving_doi_pidstore() のフック（+5 行）
+> ├─ tasks.py              doi/tasks.py の再エクスポート（+1 行）
+> ├─ ext.py                WEKO_DOI_ / WEKO_CROSSREF_ プレフィックスの読み込み
+> ├─ cli.py                weko workflow doi list / resend（+39 行）
+> └─ alembic/
+>    └─ b1c7d3f9a204_add_doi_deposit_log.py   （down_revision: f312b8c2839a）
+> ```
+>
+> 差分: `retry_failed_deposits`（定期リトライ）は実装せず、代わりに手動再送の
+> `resend_doi_deposit` を置いた。`agencies/datacite.py` は未作成。
+
 > **配置理由**: `saving_doi_pidstore()` / `IdentifierHandle` / `item_metadata_validation()` が
 > すべて `weko-workflow` にあり、ARK 対応も同モジュールに追加した実績がある。
 > `doi/` サブパッケージに閉じることで、将来 `weko-doi` として切り出す余地も残す。
@@ -668,6 +800,9 @@ modules/weko-workflow/weko_workflow/
 ---
 
 ## 15. 段階導入計画
+
+> **実績は §0 を参照。** A と C が完了、D は CLI と通知のみ、B と E は未着手。
+> 以下は当初の計画と見積。
 
 | Phase | 内容 | 前提 | 人日 |
 | --- | --- | --- | --- |
@@ -705,6 +840,12 @@ modules/weko-workflow/weko_workflow/
 （`ACCEPTED` / `poll()` / `requires_polling` は最初から用意する）。
 これを後付けにすると §4-3 の分岐がオーケストレータ外に漏れる。
 
+> **実際の経緯（2026-09-01）**: Crossref のテストアカウントが先に取得できたため、
+> **推奨と逆の A + C（Crossref）から実装した**。§4-3 の抽象を最初から入れていたので
+> インターフェースの歪みは生じていないが、裏返しの副作用として
+> **同期経路（`DepositStatus.SUCCEEDED` を `register()` が直接返す流れ）は
+> まだ実コードでもテストでも通っていない**。DataCite 実装時にここが最初の検証点になる。
+
 ---
 
 ## 16. 未決事項
@@ -715,11 +856,18 @@ Crossref・DataCite とも WACREN 側機関の会員資格が未確定
 （[`WACREN_crossref.md` §9-1](./WACREN_crossref.md)、[`WACREN_datacite.md` §10-1](./WACREN_datacite.md)）。
 **Phase A は会員資格と無関係に着手できる。**
 
+> **2026-09-01 時点**: Crossref はサービスプロバイダ経路でテストアカウントを取得し、
+> テスト系での検証まで完了。**会員資格・DOI プレフィックスは依然として未確定**で、
+> 本番系への登録はできない。DataCite のテストアカウントは未取得。
+
 ### 16-2. 認証情報の格納場所
 
 [`WACREN_crossref.md` §5-2](./WACREN_crossref.md) の案 A（設定ファイル）/ 案 B（DB + 管理画面）。
 共通基盤としては**どちらでも動くように、`is_allowed()` と設定読み出しをエージェンシー側に閉じる**。
 初期実装は案 A。マルチテナント要件が出た時点で案 B に拡張する。
+
+> **実装結果**: 案 A（設定ファイル）。`CrossrefAgency.is_allowed()` が
+> `WEKO_CROSSREF_*` の必須 7 キーの充足を確認し、欠けていれば ERROR ログを出して送信しない。
 
 ### 16-3. DOI 付与時の検証と登録要件の不一致
 
@@ -738,6 +886,8 @@ DOI 付与アクションの検証時にも同じ関数を呼ぶ。
 成功ログの `payload` を一定期間後に NULL 化するバッチ
 （`WEKO_DOI_PAYLOAD_RETENTION_DAYS`）の要否と既定値を決める。
 
+> **2026-09-01 時点: 未解決・未実装。** `payload` / `response` は無期限に残る。
+
 ### 16-5. ARK / Handle の統合
 
 ARK（`register_ark_by_item_id`）と Handle（`register_hdl_by_item_id`）も
@@ -754,6 +904,8 @@ Phase A の設計時に「DOI 専用」と割り切るか、
 
 API 登録を有効化する以前に付与済みの DOI を遡って登録するバッチ（CLI）の要否。
 共通基盤があれば `agency` を指定して流すだけで済むため、実装は軽い（1〜2 人日）。
+
+> **2026-09-01 時点: 未実装。** CLI にあるのは `list` / `resend` のみ。
 
 ---
 

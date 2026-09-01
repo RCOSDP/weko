@@ -2,10 +2,29 @@
 
 WEKO3 で DataCite DOI が付与された際に、DataCite REST API を叩いて実際に DOI を登録する機能の設計案。
 
-- 対象ブランチ: `feature/nii_WACREN_pre`
-- 作成日: 2026-08-04
-- ステータス: **検討段階（未実装）**
+- 対象ブランチ: `feature/nii_WACREN_crossref_doi`（設計時: `feature/nii_WACREN_pre`）
+- 作成日: 2026-08-04 / 最終更新: 2026-09-01
+- ステータス: **未実装（共通基盤と Crossref は実装済み。残るのは `DataCiteAgency` のみ）**
 - 関連文書: [`WACREN_crossref.md`](./WACREN_crossref.md) — **共通アーキテクチャ（フック位置・非同期化・ステータス管理・エラー方針）は同文書 §4 を参照**。本書は DataCite 固有の差分を扱う。
+
+---
+
+## 0-0. 実装状況（2026-09-01 時点）
+
+**DataCite 対応そのものは未着手。** ただし前提が変わっている。
+
+- 共通基盤（`weko_workflow/doi/`）と Crossref アダプタは実装・テスト系検証まで完了
+  （`23af9ad4`、[`WACREN_doi_registration.md` §0](./WACREN_doi_registration.md)）
+- したがって**残る作業は `doi/agencies/datacite.py` の追加と
+  `WEKO_DOI_AGENCIES` への `'3'` の登録、`WEKO_DATACITE_*` 設定の追加のみ**。
+  フック・状態管理テーブル・Celery タスク・リトライ・CLI・失敗通知はそのまま流用できる
+  （[`WACREN_doi_registration.md` §11](./WACREN_doi_registration.md) の手順）
+- 見積は §8 の「Crossref を先に実装済みの場合」の **5〜8 人日**が該当する
+- **§9 の「DataCite を先に」という推奨は実現しなかった**（Crossref のテストアカウントが
+  先に取れたため A + C から着手した）。その結果、共通基盤の**同期経路
+  （`register()` が `DepositStatus.SUCCEEDED` を直接返す流れ）はまだ一度も通っていない**。
+  DataCite 実装時に最初に検証すべき箇所。
+- DataCite のテストアカウントは未取得（§2-2 の申請は未実施）
 
 ---
 
@@ -420,6 +439,10 @@ Crossref と DataCite の両方を実装するなら、
 [`WACREN_crossref.md` §9-7](./WACREN_crossref.md) で挙げた共通インターフェースを
 **最初から切るべきか、後から切り出すか**を決める必要がある。
 
+> **2026-09-01 追記**: 案 1 で共通基盤が実装済み
+> （[`WACREN_doi_registration.md`](./WACREN_doi_registration.md)）。
+> ただし下記「推奨する進め方」の順序（DataCite 先行）は採らず、Crossref から実装した。
+
 ### 案 1: 最初から共通インターフェースを設計する ← **推奨**
 
 ```
@@ -458,11 +481,18 @@ DoiRegistrationAgency（抽象）
 4. 逆順（Crossref 先）だと、非同期前提で作った抽象に同期 API を後付けすることになり、
    インターフェースが歪みやすい。
 
+> **実際は逆順（Crossref 先）になった。** 4 の懸念に対しては、共通基盤の設計時点で
+> `DepositStatus.ACCEPTED` と `AgencyCapabilities.requires_polling` を先に用意することで
+> 対処してある（[`WACREN_doi_registration.md` §4-3](./WACREN_doi_registration.md)）。
+> 同期エージェンシーは `register()` から `SUCCEEDED` を返し、`poll()` を実装しなければよい。
+
 ---
 
 ## 10. 未決事項・要確認事項
 
 ### 10-1. DataCite 会員資格
+
+> **2026-09-01 時点: 未解決。** テストアカウントの申請（§2-2）も未実施。
 
 Crossref（[`WACREN_crossref.md` §9-1](./WACREN_crossref.md)）と同じ論点。
 
