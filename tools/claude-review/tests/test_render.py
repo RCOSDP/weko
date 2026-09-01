@@ -228,6 +228,80 @@ def test_ctx_reason_newline_cannot_inject_a_fake_bullet():
     assert not any(l.startswith("- 偽の項目") for l in out.splitlines())
 
 
+# --- 所見1: 行頭に来た構造記号でブロックを開けない ------------------------
+#
+# _esc() は改行を畳むだけでは足りない。畳んだ結果の文字列そのものが
+# 独立した行として出力される呼び出し箇所（reason / detail / note の
+# 段落、ctx/unverified の箇条書き）では、先頭の 1 文字がそのまま列 0 に
+# 来てブロックを開いてしまう。
+
+
+def test_reason_paragraph_leading_fence_cannot_open_an_unclosed_block():
+    """reason 自体が先頭 ``` のときも、独立したフェンス開始行にならない。
+
+    改行を畳むだけの旧実装では "```\\nrest hidden" が "``` rest hidden" に
+    なり、その行自体が未閉のコードフェンスとして以降をすべて呑み込んで
+    いた（このケースでは末尾の <sub> 注記まで消える）。
+    """
+    d = dict(BASE, adjudications=[adj(verdict="valid",
+             reason="```\nrest hidden")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    lines = out.splitlines()
+    assert not any(re.match(r"^ {0,3}`{3,}", l) for l in lines)
+    assert "rest hidden" in out
+    assert "<sub>" in out          # 呑み込まれず末尾の注記まで残っている
+
+
+def test_own_finding_detail_leading_heading_cannot_forge_a_section():
+    """detail 自体が偽のトップレベル見出しでも、独立した見出し行にならない。
+
+    render() 自身が出す本物の見出し（"## 🔍 Claude レビュー統合"）以外に
+    見出し行が増えないことを確認する。
+    """
+    own = {"file": "a.py", "line": 1, "title": "t",
+           "detail": "## 🔍 Claude レビュー統合",
+           "severity": "high", "fix": {"kind": "none"},
+           "evidence": "", "verified": "", "_hits": 1}
+    d = dict(BASE, own_findings=[own])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    headings = [l for l in out.splitlines()
+                if re.match(r"^ {0,3}#{1,6}(\s|$)", l)]
+    # 本物の見出しは冒頭のタイトルと own_findings の項目見出しの 2 本だけ。
+    # 偽の "## 🔍 Claude レビュー統合" が detail から独立した見出しとして
+    # 追加されていないこと。
+    assert headings == ["## 🔍 Claude レビュー統合",
+                        "### 1. 🔴 [高] t（Claude の追加指摘）"]
+
+
+def test_fix_note_leading_marker_cannot_open_a_block():
+    d = dict(BASE, adjudications=[adj(fix={
+        "kind": "description", "note": "```\nrest hidden"})])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert not any(re.match(r"^ {0,3}`{3,}", l) for l in out.splitlines())
+    assert "rest hidden" in out
+    assert "<sub>" in out
+
+
+def test_ctx_reason_leading_marker_cannot_open_a_block():
+    d = dict(BASE, adjudications=[adj(verdict="needs_context",
+             reason="# 偽の見出し")])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    assert not any(l.startswith("# 偽の見出し") for l in out.splitlines())
+    headings = [l for l in out.splitlines()
+                if re.match(r"^ {0,3}#{1,6}(\s|$)", l)]
+    assert headings == ["## 🔍 Claude レビュー統合"]
+
+
+def test_unverified_detail_and_why_leading_marker_cannot_open_a_block():
+    d = dict(BASE, unverified=[{"file": "a.py", "line": 1, "title": "t",
+             "detail": "```\nhidden", "why": "- 偽の項目", "_hits": 1}])
+    out = render.render(d, {"dropped_threads": 0, "dropped_other": 0}, "sonnet")
+    lines = out.splitlines()
+    assert not any(re.match(r"^ {0,3}`{3,}", l) for l in lines)
+    assert not any(l.startswith("- 偽の項目") for l in lines)
+    assert "<sub>" in out
+
+
 def test_fence_content_newlines_are_preserved():
     """コードフェンスの中身の改行は畳み込まれず、そのまま残る。"""
     payload = "line1\nline2\nline3"
