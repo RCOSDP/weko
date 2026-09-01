@@ -19,7 +19,18 @@ FIX_MARK = re.compile(r"<!-- claude-fix:([0-9a-f]{12}) -->")
 # REST の pulls/{n}/comments が返す user.login は "github-actions[bot]"
 # （角括弧つき）。GraphQL の author.login で使う "github-actions" とは
 # 表記が異なるので混同しないこと。
-EXISTING_COMMENTS_JQ = '.[] | select(.user.login=="github-actions[bot]") | .body'
+#
+# 本文全体ではなく 1 行目だけを取り出す。`replacement` はコードとして
+# エスケープせずにそのまま本文に埋め込むため、そこに
+# `# <!-- claude-fix:<他の提案のhash> -->` のようなコメントを混ぜられると、
+# 投稿者フィルタ（bot 自身の投稿）を通過したうえで別の提案のハッシュを
+# 偽装できてしまう（本物の bot コメントの中に偽マーカーが混入する）。
+# マーカーは BODY テンプレートで必ず 1 行目に置いているので、1 行目だけを
+# 対象にすればこの経路は塞げる。本文が \r\n 区切りでも split("\n")[0] の
+# 結果の末尾に \r が残るだけで、FIX_MARK の正規表現はその手前のマーカーに
+# 一致する。
+EXISTING_COMMENTS_JQ = ('.[] | select(.user.login=="github-actions[bot]") '
+                        '| .body | split("\\n")[0]')
 
 BODY = """<!-- claude-fix:%s -->
 **%s**
