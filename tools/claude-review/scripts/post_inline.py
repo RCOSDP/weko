@@ -13,6 +13,8 @@ import json
 import re
 import subprocess
 
+import mdsafe
+
 HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 FIX_MARK = re.compile(r"<!-- claude-fix:([0-9a-f]{12}) -->")
 
@@ -45,35 +47,16 @@ BODY = """<!-- claude-fix:%s -->
 # title / reason / detail はすべて Claude の出力由来で、その元は公開 PR に
 # 誰でも書けるレビューコメント。github-actions[bot] として public リポジトリに
 # 投稿されるため、コードフェンスの外に置くものは必ずエスケープする。
-# （render.py の _esc() / _fence() と同じ考え方。post_inline.py は独立した
-# CLI スクリプトのため import はせず、同じロジックをここに複製する。）
+# エスケープの実体は render.py と共有する
+# tools/claude-review/scripts/mdsafe.py にある。
+#
+# BODY テンプレートは suggestion フェンスの info string を必ず「suggestion」
+# という文字列そのままにすること（前後に空白や別の文字を挟まない）。
+# GitHub の one-click apply はこの info string が完全一致のときしか
+# suggestion として認識しない。
 
-
-def _esc(s) -> str:
-    """コードフェンスの外に置く外部由来文字列をエスケープする。
-
-    `<`/`>` を変換して HTML タグとしての解釈を防ぐ（`&` は変換しない —
-    二重エスケープになるため）。改行は半角スペース 1 つに畳み込み、
-    偽の見出しや区切り線を本文の構造に注入できないようにする。
-    """
-    s = str(s)
-    s = s.replace("<", "&lt;").replace(">", "&gt;")
-    return re.sub(r"\r\n|\r|\n", " ", s)
-
-
-def _fence(content: str) -> str:
-    """内容を安全に囲めるコードフェンスを返す。
-
-    中身に含まれるバッククォートの連続の最大長 + 1（最小 3）の長さにする。
-    GitHub が suggestion ブロックとして解釈するのは info string が
-    ちょうど "suggestion" の場合のみなので、フェンスの本数を増やしても
-    直後に続く "suggestion" という文字列自体は変えない。
-    replacement 自体はエスケープしない（コードとして読ませるため、
-    フェンス長を計算で確保することが封じ込めの手段になる）。
-    """
-    runs = re.findall(r"`+", content)
-    longest = max((len(r) for r in runs), default=0)
-    return "`" * max(3, longest + 1)
+_esc = mdsafe.esc
+_fence = mdsafe.fence
 
 
 def changed_lines(diff_text: str) -> dict:
