@@ -46,6 +46,13 @@ cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
   (`security_finding` / `dynamic_verified` / `data_op` / `deprecated` 等)を直すか、
   `prioritize.py` のルールを変える。
 - **実行順がある。** `prioritize.py` は `test_gap` を参照するので `test_coverage.py` が先。
+- **git 由来の列は放っておくと古びる。** `impl_line` と
+  `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag` は
+  ソースが変われば実態とずれるが、上の3本では更新されない。
+  **実装に手が入ったら `refresh_impl.py --write` → `enrich_git.py --write` を回すこと**
+  (v2.0.3 → v2.0.4 では、この2本が手順に無かったために台帳の release_tag が
+  v2.0.3 生成時のまま据え置かれ、issue62569 で認可を足した30行が
+  「v0.1.0b1 で最後に変更」と表示され続けた)。
 
 ## ケース1: 派生列を再計算するだけ(最も多い)
 
@@ -131,10 +138,20 @@ python3 tools/api-inventory/scripts/add_authmech.py      # auth_mechanism / bola
 
 ```bash
 vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"   # 本体列(1-57)だけを直す
+
+# 実装(modules/*.py)にも手が入っているなら、先にこの2本 ★順序が重要
+python3 tools/api-inventory/scripts/refresh_impl.py --write   # impl_line を引き直す
+python3 tools/api-inventory/scripts/enrich_git.py   --write   # last_commit / release_tag
+
 python3 tools/api-inventory/scripts/test_coverage.py
 python3 tools/api-inventory/scripts/prioritize.py
 python3 tools/api-inventory/scripts/build_checklist.py
 ```
+
+`enrich_git.py` は `impl_line` の指す関数のコミットを引くので、`impl_line` がずれたまま
+回すと**手前の関数のコミットを拾う**(no.480 `publish` は行がずれた状態だと
+直前の `get_version` を見て 2019 年のコミットを返した)。必ず `refresh_impl.py` が先。
+台帳だけを直して実装は触っていない(注記の追加など)なら、この2本は不要。
 
 派生列(58-65)は手で直しても次の実行で消える。優先度を変えたいときは、
 判定の入力側(`security_finding` / `dynamic_verified` / `data_op` / `deprecated`)を
@@ -494,11 +511,17 @@ python3 .../changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
 ### 7. 再計算してゲートを通す
 
 ```bash
+python3 .../refresh_impl.py --write  # impl_line を新バージョンのソースへ追随させる
+python3 .../enrich_git.py   --write  # last_commit / date / subject / release_tag
 python3 .../test_coverage.py
 python3 .../prioritize.py
 python3 .../build_checklist.py
 python3 .../reconcile.py --gate     # exit 0 を確認
 ```
+
+バージョンアップでは行番号が必ずずれるので、先頭2本を飛ばすと台帳の
+`release_tag` が前バージョンのまま残る。**`release_tag` に今回のタグが
+1行も出てこなかったら、この2本を回し忘れている。**
 
 > 実績(v2.1.0 / 931行): 特定617 特定不能314 /
 > P1=82 P2=150 P3=450 P4=4 P5=64 整理対象=20 環境依存=11 対象外=150 / reconcile ✅ 0件。
@@ -535,6 +558,7 @@ git push origin main --follow-tags
 | `snapshot.py` | 実機 url_map + ソース | `api_snapshot.json` |
 | `reconcile.py` | snapshot + full.tsv | 何も書かない(差分を報告するだけ) |
 | `refresh_impl.py` | full.tsv + 実装ソース(AST) | full.tsv の `impl_line`(`--write` 時のみ) |
+| `enrich_git.py` | full.tsv + `git log -L` / `git tag --contains` | full.tsv の `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`(`--write` 時のみ)。**`refresh_impl.py` の後に回す** |
 | `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 + 変更ヘルパ関数の報告 |
 | `test_coverage.py` | full.tsv + テストコード | full.tsv の 60-64列 |
 | `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
@@ -548,6 +572,7 @@ git push origin main --follow-tags
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
 (冪等)。24列版は full.tsv から完全に再現できることを確認済み。
+`refresh_impl.py` → `enrich_git.py` も、解析対象リビジョンが同じなら冪等。
 
 ---
 
@@ -669,10 +694,18 @@ docker exec weko-web-1 bash -lc 'source ~/.virtualenvs/invenio/bin/activate; cd 
 
 ### git情報の付与
 ```bash
-python3 tools/api-inventory/enrich_git.py body.tsv body_enriched.tsv
+python3 tools/api-inventory/scripts/refresh_impl.py --write        # 先に impl_line
+python3 tools/api-inventory/scripts/enrich_git.py                  # 差分の確認だけ
+python3 tools/api-inventory/scripts/enrich_git.py   --write        # 台帳へ書き戻す
+python3 tools/api-inventory/scripts/enrich_git.py --tsv body.tsv --out body_enriched.tsv
 ```
 `git log -L <開始>,<終了>:<file>` で**実装関数の行範囲**の最終コミットを取得(ファイル単位より正確)。
-`git tag --sort=creatordate --contains <sha>` で導入リリースタグ。
+`git tag --sort=creatordate --contains <sha>` で導入リリースタグ。どのタグにも入っていなければ
+`(未リリース)`、`impl_file` が実ファイルでない行(Flask-Admin ModelView の総称表記 /
+framework 自動生成 / site-packages)は `-`。
+
+対象は列名で引く(`last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`)。
+解析対象リポジトリは `WEKO_ROOT`、台帳は `WEKO_API_INVENTORY_DIR`。
 
 ## Phase 3: 動的検証(実測で裏取り) ★静的だけでは不正確
 
