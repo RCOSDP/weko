@@ -1,8 +1,12 @@
 # -*- coding: utf-8 -*-
-"""57列詳細版 → 24列チェックリスト版に統合"""
+"""詳細版(62列) → チェックリスト版(32列) に統合する。
+
+出力列は schema.CHECKLIST_COLUMNS。列定義は schema.py を直す。
+"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import data_path
+from schema import CHECKLIST_COLUMNS
 SRC = sys.argv[1] if len(sys.argv) > 1 else data_path("weko3_api_list_full.tsv")
 DST = sys.argv[2] if len(sys.argv) > 2 else data_path("weko3_api_list.tsv")
 def load(p): return [l.rstrip("\n").split("\t") for l in open(p,encoding="utf-8") if l.rstrip("\n")]
@@ -11,14 +15,9 @@ H={name:i for i,name in enumerate(hd)}
 def g(c,name): 
     i=H[name]; return c[i] if len(c)>i and c[i] not in("","-","不明") else ""
 
-# 24列チェックリスト設計
-NEW=["no","module","api_type","method","uri","impl","summary",
-     "auth","roles_scope","access_variance","data_op","data_store","side_effects",
-     "security_finding","security_flags","dynamic_verified",
-     "api_version","deprecated","test_file","last_change","tags","notes","config_deps","response",
-     # 末尾に追加する。既存列の位置を動かすと README の awk 例が全て壊れるため。
-     "priority","priority_reason",
-     "test_normal","test_abnormal","test_boundary","test_exception","test_gap","cleanup"]
+# 出力列は schema.py が唯一の正。ここに直接並べると README・テスト・台帳の
+# どれかと必ずずれる(実測: 「24列」と書かれたまま実体は32列になっていた)。
+NEW = CHECKLIST_COLUMNS
 
 out=[NEW]
 for c in data:

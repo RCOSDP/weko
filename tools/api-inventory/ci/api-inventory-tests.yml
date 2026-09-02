@@ -1,0 +1,57 @@
+# WEKO3 リポジトリ(RCOSDP/weko)の .github/workflows/ に配置する。
+#
+# 台帳ツールの単体テスト。**Docker も実機も台帳も要らない**ので数秒で終わる。
+# api-inventory-drift.yml(実機を起こして突き合わせる。60分枠)とは役割が違う:
+#
+#   このワークフロー   … 台帳を作る側(スクリプト・手順書)が壊れていないか
+#   drift ワークフロー … 台帳の中身が実機とずれていないか
+#
+# ツールが壊れたまま drift だけ回すと、検知器が黙って死んでいても緑で通る。
+# 先にこちらを通すこと。Secret も不要なので fork からの PR でも動く。
+
+name: API Inventory Tests
+
+on:
+  pull_request:
+    paths:
+      - 'tools/api-inventory/**'
+      - '.github/workflows/api-inventory-tests.yml'
+  push:
+    branches: ['**']
+    paths:
+      - 'tools/api-inventory/**'
+  workflow_dispatch:
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pytest
+        run: python3 -m pip install --disable-pip-version-check pytest
+
+      - name: Run unit tests
+        working-directory: tools/api-inventory
+        run: python3 -m pytest -q
+
+      # 台帳が無くても、ソースからの経路検知そのものは動く。
+      # 検知件数が 0 に落ちていれば、検知器が壊れている。
+      - name: Smoke check the static detector
+        run: |
+          set -o pipefail
+          python3 tools/api-inventory/scripts/detect_routes.py \
+            --weko-root "$PWD" --summary-only | tee /tmp/detect.md
+          python3 - <<'PY'
+          import re, sys
+          text = open('/tmp/detect.md', encoding='utf-8').read()
+          total = int(re.search(r'\*\*計\*\* \| \*\*(\d+)\*\*', text).group(1))
+          print(f'detections={total}')
+          # 経路が数百ある前提のリポジトリ。2桁に落ちたら検知器の故障を疑う。
+          sys.exit(0 if total >= 300 else 1)
+          PY

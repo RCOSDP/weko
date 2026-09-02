@@ -4,9 +4,14 @@
     python3 snapshot.py --out api_snapshot.json
 
 なぜ実機 url_map が正か:
-  AST で `@bp.route` / `add_url_rule` を全部拾っても 357件。実機は 903ルート。static 配信ルートも収録する(is_static で識別)。
-  差の 52% は Flask-Admin の自動生成(223) / `@expose`(約100) / config駆動 REST(約30) /
+  AST で `@bp.route` / `add_url_rule` を拾っても 357件。実機は 903ルート。static 配信ルートも収録する(is_static で識別)。
+  差は Flask-Admin の自動生成 / `@expose` / config駆動 REST /
   modules配下に無い pip パッケージ / route が式の add_url_rule / framework 由来。
+
+  ただし **実機 url_map はこの環境で登録された経路しか映さない**。config で無効・
+  プラグイン未導入・設定値が真のときだけ登録される経路は、API として存在するのに
+  ここには出ない。その穴は `detect_routes.py`(ソースだけから 6系統で検知)が埋める。
+  台帳の網羅性は「実機(reconcile.py) + 静的(detect_routes.py)」の二段で担保する。
 
 出力構造:
   meta       … 生成条件(リビジョン・プロファイル・件数)
