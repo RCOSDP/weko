@@ -1,0 +1,17 @@
+# aarch64 のホストで CI と同じテストを回すための最小の差分。
+# scripts/ci/run-local.sh が、ホストが x86_64 でないときだけ重ねる。
+#
+# なぜ要るか:
+#   Elasticsearch 6.8 の seccomp 実装は x86_64 専用で、ARM では
+#     seccomp unavailable: CONFIG_SECCOMP not compiled into kernel
+#   を投げ、非ループバックアドレスに bind した時点の bootstrap check に失敗して
+#   起動しない。discovery.type=single-node にすると bootstrap check 自体が
+#   省かれる(リポジトリの docker-compose.arm64.yml と同じ扱い)。
+#
+# GitHub のランナーは x86_64 なので CI では不要。**ここが CI との唯一の差**で、
+# テストの中身には影響しないが、差があること自体は自覚しておくこと。
+services:
+  elasticsearch:
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2048m -Xmx2048m
