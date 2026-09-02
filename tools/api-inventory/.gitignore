@@ -6,6 +6,7 @@ weko3_api_auth_findings.md
 api_snapshot*.json
 reconcile_allow.json
 reconcile_report.md
+detect_allow.json
 probe*.json
 drift*.md
 # fixtures.py が生成する。秘密は入らない(パスワードは fixtures.py の定数、
@@ -14,3 +15,4 @@ drift*.md
 fixtures.json
 __pycache__/
 *.pyc
+.pytest_cache/

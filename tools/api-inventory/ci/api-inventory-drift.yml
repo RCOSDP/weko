@@ -17,6 +17,13 @@
 # 個人アカウントに紐づかないため(PAT より事故時の影響が小さい)。
 # 未設定なら、このジョブは何もせずスキップする(fork からの PR でも安全)。
 #
+# 網羅性は二段で見る:
+#   reconcile.py     実機 url_map ↔ 台帳(この環境で登録されている経路)
+#   detect_routes.py ソース(AST) ↔ 台帳(config で無効な経路まで含む)
+# 前者だけだと、config で無効・プラグイン未導入の経路が台帳から落ちても気付けない。
+#
+# ツールそのものの単体テストは api-inventory-tests.yml(Secret も Docker も不要)。
+#
 # 設置手順: tools/api-inventory/ci/README.md
 
 name: API Inventory Drift
@@ -147,6 +154,13 @@ jobs:
             --snapshot /tmp/api_snapshot.new.json \
             --summary-only --gate --out /tmp/reconcile.md
 
+          # 実機 url_map は「この環境で登録された経路」しか映さない。config で無効・
+          # プラグイン未導入・設定値が真のときだけ登録される経路は、API として
+          # 存在するのに reconcile では見えない。ソースからの検知で二段目を張る。
+          python3 $T/detect_routes.py \
+            --weko-root "$PWD" --cross-check \
+            --summary-only --gate --out /tmp/detect.md
+
       - name: Probe changed endpoints
         if: always() && steps.cfg.outputs.enabled == 'true'
         env:
@@ -175,6 +189,7 @@ jobs:
           path: |
             /tmp/drift.md
             /tmp/reconcile.md
+            /tmp/detect.md
 
       - name: Comment on PR (counts only)
         if: always() && steps.cfg.outputs.enabled == 'true' && github.event_name == 'pull_request'
@@ -206,6 +221,7 @@ jobs:
               + '該当箇所はプライベートリポジトリ側の台帳・レポートで確認してください。';
             body += read('/tmp/drift.md', 'ベースラインとの差分');
             body += read('/tmp/reconcile.md', '台帳との突き合わせ');
+            body += read('/tmp/detect.md', 'ソース由来の経路検知');
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

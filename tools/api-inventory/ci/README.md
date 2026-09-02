@@ -9,7 +9,7 @@
 | 置き場所 | 内容 |
 |---|---|
 | **本リポジトリ `tools/api-inventory/`** | **ツールのみ**(scripts / ci)。データは1件も置かない |
-| **`RCOSDP/weko-secret`**(private) | 台帳TSV(57列/24列)、列定義README、`api_snapshot.json`、`reconcile_allow.json`、`reconcile_report.md`、調査記録 |
+| **`RCOSDP/weko-secret`**(private) | 台帳TSV(62列/32列)、列定義README、`api_snapshot.json`、`reconcile_allow.json`、`detect_allow.json`、`reconcile_report.md`、調査記録、台帳の検査テスト |
 
 本書では `RCOSDP/weko-secret`(private)を単に**プライベートリポジトリ**と呼ぶ。
 スクリプトは環境変数 `WEKO_API_INVENTORY_DIR` でその場所を指す。未設定なら理由を添えて中断する。
@@ -21,6 +21,19 @@ python3 tools/api-inventory/scripts/reconcile.py --gate
 ```
 
 CI の出力は **`--summary-only` で件数のみ**。URI や endpoint 名は出さない。
+
+## ワークフローは2本
+
+| ワークフロー | 見るもの | 要るもの | 所要 |
+|---|---|---|---|
+| `api-inventory-tests.yml` | **台帳を作る側**(スクリプト・手順書)が壊れていないか | なし | 数秒 |
+| `api-inventory-drift.yml` | **台帳の中身**が実機・ソースとずれていないか | Secret + Docker | 60分枠 |
+
+ツールが壊れたまま drift だけ回すと、検知器が黙って死んでいても緑で通る。
+**先に tests を通すこと。**
+
+台帳の中身そのものの検査(列数・語彙・派生列の再現・突き合わせゲート)は、
+データのある**プライベートリポジトリ側の `tests/`** が持つ。
 
 ## 1. 移設するファイル
 
@@ -34,27 +47,34 @@ weko/tools/api-inventory/          ← public。ツールのみ
 │   ├── paths.py               $WEKO_API_INVENTORY_DIR の解決
 │   ├── extract_routes.py …    Phase 1-2: 静的抽出・観点付与
 │   ├── probe.py / asuser.sh   Phase 3: 実機Docker実測(参考実装)
-│   ├── build_checklist.py     Phase 5: 57列 → 24列の再生成
+│   ├── schema.py              列定義の唯一の正(62列 / 32列)
+│   ├── build_checklist.py     Phase 5: 62列 → 32列の再生成
 │   ├── snapshot.py            Phase 6: 実機url_map → スナップショット
 │   ├── diff_snapshot.py       Phase 6: スナップショット間の差分 + ゲート
 │   ├── reconcile.py           Phase 6: スナップショット ↔ 台帳の突き合わせ
+│   ├── detect_routes.py       ソース(AST)↔ 台帳の突き合わせ。実機不要
 │   ├── changed_rows.py        Phase 6: git差分 → 再レビュー対象行
 │   ├── fixtures.py            Phase 7: 到達可否測定用の最小コーパス投入
 │   ├── probe_ci.py            Phase 7: フィクスチャ駆動の到達可否測定(CI が直接呼ぶ)
 │   └── measure.sh             手作業で実測するときの唯一の入口(上記を固定順で回す)
+├── tests/                     ツールの単体テスト(pytest。データ不要)
+├── pytest.ini
 ├── ci/
-│   ├── api-inventory-drift.yml
+│   ├── api-inventory-drift.yml    実機を起こして突き合わせる(60分枠)
+│   ├── api-inventory-tests.yml    ツールの単体テスト(数秒。Secret 不要)
 │   └── README.md              このファイル
 └── .gitignore                 データ類を誤ってコミットしないための保険
 
 $WEKO_API_INVENTORY_DIR/         ← プライベートリポジトリ。public リポジトリには置かない
-├── weko3_api_list_full.tsv      台帳(57列・所見と実証結果つき)
-├── weko3_api_list.tsv           台帳(24列)
-├── weko3_api_list_README.md     24列の列定義・運用手順
-├── weko3_api_list_full_README.md 57列の列定義
+├── weko3_api_list_full.tsv      台帳(62列・所見と実証結果つき)
+├── weko3_api_list.tsv           台帳(32列)
+├── weko3_api_list_README.md     32列の列定義・運用手順
+├── weko3_api_list_full_README.md 62列の列定義
 ├── api_snapshot.json            経路のベースライン
-├── reconcile_allow.json         実機に無い行の許可リスト
+├── reconcile_allow.json         実機に無いが台帳に残す行の許可リスト
+├── detect_allow.json            ソースにあるが経路にならないものの許可リスト
 ├── reconcile_report.md          突き合わせ結果
+├── tests/                       台帳そのものの検査(pytest。実機不要)
 └── weko3_api_auth_findings.md   調査記録
 ```
 
