@@ -20,6 +20,11 @@
 #   - tox が毎回 requirements2.txt (約290パッケージ) を入れ直す分は、
 #     bind mount 済みの .ci-cache/pip を pip のキャッシュにして共有する。
 #
+#   - 手元で同じことをするには scripts/ci/run-local.sh を使う。同じ compose
+#     オーバレイ・同じ待ち受けスクリプト・同じ run-module-tests.sh・同じマトリクスを
+#     読むので、ローカルと CI で結果が食い違わない。
+#     モジュール一覧はこのファイルの matrix が唯一の正 (scripts/ci/matrix.sh が読む)。
+#
 # fork からの PR は GHCR に push できない。その場合はビルドキャッシュ
 # (type=gha) だけ作り、各ジョブがそこからローカルビルドする。
 
@@ -36,6 +41,18 @@ on:
         default: false
 
 jobs:
+  # マトリクスの列挙漏れを止める。数十行のリストは静かに古びる:
+  # v2.0.5 までに weko-notifications / weko-signposting / weko-workspace の3つが
+  # 漏れ、テスト一式(283本)を持ちながら一度も実行されていなかった。
+  # ジョブが立たない以上、赤くもならないので誰も気付けない。
+  matrix-check:
+    name: Matrix covers every testable module
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash scripts/ci/matrix.sh check
+
   images:
     uses: ./.github/workflows/ci-images.yml
     permissions:

@@ -1,5 +1,78 @@
 # Running tests locally
 
+## CI と同じ経路で回す（推奨）
+
+```shell
+scripts/ci/run-local.sh weko-records      # 1モジュール
+scripts/ci/run-local.sh --all             # マトリクス全部
+scripts/ci/run-local.sh --list            # 対象モジュール一覧
+```
+
+GitHub Actions の Unit Tests ジョブと**同じ部品**を呼びます。
+
+| | ローカル | CI |
+|---|---|---|
+| compose | `docker-compose2.yml:docker-compose.ci.yml` | 同左 |
+| 起動サービス | postgresql / elasticsearch / redis / rabbitmq のみ | 同左 |
+| 起動待ち | `scripts/ci/wait-for-services.sh` | 同左 |
+| テスト実行 | `scripts/ci/run-module-tests.sh`（= tox） | 同左 |
+| モジュール一覧 | `.github/workflows/unit-tests.yml` の matrix | 同左 |
+| イメージ | 同じ入力ファイルのハッシュでタグ付け、無ければビルド | 同じ入力で GHCR から pull |
+
+分岐しているのはイメージの入手方法だけです。CI と完全に同一のイメージで
+確かめたいときは `WEKO_IMAGE` / `WEKO_ES_IMAGE` で明示してください。
+
+### ローカルだけで回すと踏む罠
+
+**別の回し方をすると、テストは正常なのに落ちます。** 実測した2件:
+
+- **手元の無関係な `weko-web` イメージを流用した** → イメージに焼き付いた古い
+  egg-info の entry_point（`weko_theme.bundles:js_preview_widget`。現行の
+  `setup.py` には無い）を `invenio_assets` が読みにいって **191件が ImportError**。
+  CI は `ci-images.yml` が `modules/*/setup.py` を含むハッシュでタグを決めるので、
+  `setup.py` が変われば作り直され発生しません。
+  `run-local.sh` は起動直後に entry_point の健全性を確認して落とします。
+- **invenio の venv で直接 `pytest` を叩いた** → `pytest-mock` / `mock` が無く
+  `fixture 'mocker' not found`。CI は tox が `requirements2.txt` から入れます。
+
+また、別の WEKO スタックを動かしたままだとポート（29201 / 26301 / 24301）が
+衝突し、最悪そちらのサービスを掴みます。`run-local.sh` は起動前に検出します。
+
+### 残る差: ホストのアーキテクチャ
+
+CI は `ubuntu-latest`（x86_64）です。**ARM のホストでは1点だけ差が出ます。**
+
+Elasticsearch 6.8 の seccomp 実装は x86_64 専用で、ARM では
+`seccomp unavailable: CONFIG_SECCOMP not compiled into kernel` を投げて
+bootstrap check に失敗し起動しません。`run-local.sh` はホストが x86_64 でないとき
+`scripts/ci/compose.arm64.yml` を重ねて `discovery.type=single-node` にします
+（bootstrap check 自体が省かれる。リポジトリの `docker-compose.arm64.yml` と同じ扱い）。
+起動時にその旨を表示します。テストの内容には影響しませんが、
+**最終的な合否は CI で確認してください。**
+
+なお `Dockerfile.arm64` / `elasticsearch/Dockerfile.arm64` は使いません。
+nodesource の `setup_4.x` が消えており現在はビルドできないためで、
+標準の `Dockerfile` / `elasticsearch/Dockerfile` は aarch64 でもビルドできます。
+
+### モジュールを増やしたとき
+
+`.github/workflows/unit-tests.yml` の `matrix.module` が唯一の正です。
+`tests/` と `tox.ini` を持つのに未登録のモジュールがあると、CI の
+`matrix-check` ジョブが落とします（ジョブが立たない＝赤くもならない、という
+静かな漏れを防ぐため）。手元では次で確認できます。
+
+```shell
+scripts/ci/matrix.sh check
+```
+
+---
+
+## 以下は旧手順（CI とは別経路。参考）
+
+> Python 3.5 の venv を自前で組む手順です。**CI とは Python も依存も tox の
+> 有無も違う**ため、ここで通っても CI で通る保証はありません。結果を CI と
+> 突き合わせたいときは上の `run-local.sh` を使ってください。
+
 ## Running with venv
 
 ### Install python 3.5.x
