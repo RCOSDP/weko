@@ -11,6 +11,7 @@
 | **本書** | **日々守るべき運用ルール**（誰が・いつ・何をするか） |
 | `tools/api-inventory/ci/README.md` | API 台帳 CI の設置手順・トラブルシュート |
 | `tools/api-inventory/scripts/README.md` | 台帳そのものの作り方（Phase 1-9） |
+| `tools/claude-review/README.md` | Claude PR レビューのスクリプト構成と実行順 |
 
 本書は**手順書ではなくルール**。手順は上の各 README を見る。
 迷ったときに「どうすべきか」を決める根拠がここにある。
@@ -68,6 +69,10 @@ head を先に見るのは、公開側のコード PR と private 側の台帳 P
 対応ブランチが無くても CI は止まらないが、**出る件数は当てにならない。**
 警告付きの PR コメントを「PASS だった」と読まないこと。
 FAIL にしていないのは、対応ブランチの無いリリースラインで全 PR が止まるのを避けるため。
+
+実例（2026-09-01）: `RCOSDP/weko` の `release_v2.0.4` に合わせて、
+`RCOSDP/weko-secret` にも `release_v2.0.4` を作り `main` へ PR した
+（weko-secret PR #2）。マージ後に `v2.0.4` タグを打っている。
 
 ### 規則 2-3: バージョンタグは両リポジトリで同名にする
 
@@ -151,9 +156,16 @@ WARN（W1〜W6）はゲートを通すが、レビューでは見る。
 | ワークフロー | いつ走る | 出すもの | 出さないもの |
 |---|---|---|---|
 | `api-inventory-drift` | PR / 手動 | 件数のみ、台帳ブランチ名 | URI・endpoint 名・台帳の中身 |
-| `claude-pr-review` | PR / レビュー投稿時 / `@claude` | 指摘と修正案 | — |
+| `claude-pr-review` | PR / レビュー投稿時 / `@claude`（※） | 指摘と修正案 | — |
 | `unit-tests` / `ui-tests` | PR | テスト結果 | — |
 | `ci-images` | 呼び出し元から | ビルド済みイメージ | — |
+
+※ `claude-pr-review` を**レビュー投稿と `@claude` で起動できるのは、
+`author_association` が OWNER / MEMBER / COLLABORATOR の人だけ**
+（CodeRabbit のレビューだけは例外として許可。裁定対象がそれ自身のため）。
+public リポジトリなので、この条件が無いと無関係のアカウントが
+30 分ジョブ・Claude 2 パスを何度でも起動でき、サブスクリプションの
+トークンを消費できてしまう。
 
 ### 秘密情報
 
