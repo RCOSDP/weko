@@ -1,0 +1,7 @@
+     7  Crossref   success    10.5555/0002000091                       Crossref registered the DOI.
+     6  Crossref   success    10.5555/0002000090                       Crossref registered the DOI.
+     5  Crossref   success    10.5555/0002000089                       Crossref registered the DOI.
+     4  Crossref   success    10.5555/0002000088                       Crossref registered the DOI.
+     3  Crossref   success    10.5555/0002000087                       Crossref registered the DOI.
+     2  Crossref   success    10.5555/0002000086                       Crossref registered the DOI.
+     1  Crossref   success    10.5555/0002000085                       Crossref registered the DOI.

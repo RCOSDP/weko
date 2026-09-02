@@ -1,0 +1,58 @@
+# Overrides for capturing the Crossref DOI manual screenshots.
+#
+# Usage (from the repository root):
+#   docker compose -f docker-compose.yml \
+#                  -f works/crossref-doi-manual/e2e/compose.e2e.yml up -d
+#
+# It does three things:
+#   1. moves the published ports off 80/443/8080 so the stack can run next to
+#      whatever else is already bound on the host,
+#   2. adds `crossref-stub`, a local stand-in for test.crossref.org, and
+#      appends `crossref_e2e.cfg` to the rendered invenio.cfg so web and worker
+#      deposit to it,
+#   3. leaves everything else in docker-compose.yml untouched.
+version: "3.2"
+
+services:
+  web:
+    command: >
+      bash -c "jinja2 /code/scripts/instance.cfg
+      > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg
+      && cat /code/works/crossref-doi-manual/e2e/crossref_e2e.cfg
+      >> /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg
+      && /usr/bin/supervisord -c /code/scripts/supervisord_web.conf"
+
+  worker:
+    command: >
+      bash -c "jinja2 /code/scripts/instance.cfg
+      > /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg
+      && cat /code/works/crossref-doi-manual/e2e/crossref_e2e.cfg
+      >> /home/invenio/.virtualenvs/invenio/var/instance/conf/invenio.cfg
+      && /usr/bin/supervisord -c /code/scripts/supervisord_worker.conf"
+
+  nginx:
+    ports: !override
+      - "8090:80"
+      - "8443:443"
+
+  inbox:
+    # !override: compose appends to the base list otherwise, and the base
+    # 8080:8080 collides with whatever else is on the host.
+    ports: !override
+      - "8081:8080"
+
+  crossref-stub:
+    image: python:3.11-slim
+    restart: "always"
+    # Run as the host user so the deposits it writes into the bind mount are
+    # readable and removable outside the container.
+    user: "${UID:-1000}:${GID:-1000}"
+    command: python -u /stub/crossref_stub.py
+    environment:
+      - CROSSREF_STUB_PORT=8000
+    volumes:
+      - type: bind
+        source: ./works/crossref-doi-manual/e2e
+        target: /stub
+    ports:
+      - "8000:8000"

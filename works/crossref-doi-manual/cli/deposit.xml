@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<doi_batch xmlns="http://www.crossref.org/schema/5.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="5.4.0" xsi:schemaLocation="http://www.crossref.org/schema/5.4.0 https://www.crossref.org/schemas/crossref5.4.0.xsd">
+  <head>
+    <doi_batch_id>weko-1fe366e8bed8402e9e744fb782f53d79-20260902050825</doi_batch_id>
+    <timestamp>20260902050825000</timestamp>
+    <depositor>
+      <depositor_name>WEKO3 Repository</depositor_name>
+      <email_address>wekosoftware@nii.ac.jp</email_address>
+    </depositor>
+    <registrant>National Institute of Informatics</registrant>
+  </head>
+  <body>
+    <journal>
+      <journal_metadata>
+        <full_title>Journal of WEKO Studies</full_title>
+        <issn media_type="electronic">0317-8471</issn>
+      </journal_metadata>
+      <journal_issue>
+        <publication_date media_type="online">
+          <month>09</month>
+          <day>02</day>
+          <year>2026</year>
+        </publication_date>
+      </journal_issue>
+      <journal_article language="en" publication_type="full_text">
+        <titles>
+          <title>Registering a Crossref DOI from WEKO3</title>
+        </titles>
+        <publication_date media_type="online">
+          <month>09</month>
+          <day>02</day>
+          <year>2026</year>
+        </publication_date>
+        <doi_data>
+          <doi>10.5555/0002000091</doi>
+          <resource>https://weko3.example.org:8443/records/2000091</resource>
+        </doi_data>
+      </journal_article>
+    </journal>
+  </body>
+</doi_batch>
