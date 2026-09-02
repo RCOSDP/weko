@@ -22,7 +22,7 @@
 > 成果物TSV/MDは一つ上の階層(`../weko3_api_list.tsv` 等)にある。
 
 
-`weko3_api_list.tsv`(24列・チェックリスト版)と `weko3_api_list_full.tsv`(57列・詳細版)を
+`weko3_api_list.tsv`(32列・チェックリスト版)と `weko3_api_list_full.tsv`(62列・詳細版)を
 **バージョンアップのたびに再生成**するための手順とスクリプト一式。
 
 # 台帳の更新手順(まずここを読む)
@@ -39,7 +39,7 @@ cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
 
 ## 大原則
 
-- **`weko3_api_list.tsv`(24列版)は直接編集しない。** `weko3_api_list_full.tsv` から
+- **`weko3_api_list.tsv`(32列版)は直接編集しない。** `weko3_api_list_full.tsv` から
   `build_checklist.py` が丸ごと生成する派生物で、手を入れても次の生成で消える。
 - **派生列も手編集しない。** `priority` / `priority_reason` / `test_normal`〜`test_gap` /
   `cleanup` はスクリプトが毎回上書きする。直したいときは判定の入力側
@@ -61,12 +61,12 @@ cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
 ```bash
 python3 tools/api-inventory/scripts/test_coverage.py    # テスト4観点を判定
 python3 tools/api-inventory/scripts/prioritize.py       # 優先度・整理対象を付与
-python3 tools/api-inventory/scripts/build_checklist.py  # 24列版を再生成
+python3 tools/api-inventory/scripts/build_checklist.py  # 32列版を再生成
 ```
 
 ## ケース2: 台帳に行を追加する
 
-`reconcile.py` が「A. インベントリ未収載」を出したとき。57列を手で並べる必要はない。
+`reconcile.py` が「A. インベントリ未収載」を出したとき。62列を手で並べる必要はない。
 
 ```bash
 # 1) 何が未収載かを確認する
@@ -84,10 +84,10 @@ python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo --a
 vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
 # 5) 列数の検算
-awk -F'\t' 'NR>1 && NF!=65{print "行"NR" 列数="NF}' \
+awk -F'\t' 'NR>1 && NF!=62{print "行"NR" 列数="NF}' \
   "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
-# 6) 派生列を再計算 → 24列版を再生成 → 突き合わせ
+# 6) 派生列を再計算 → 32列版を再生成 → 突き合わせ
 python3 tools/api-inventory/scripts/test_coverage.py
 python3 tools/api-inventory/scripts/prioritize.py
 python3 tools/api-inventory/scripts/build_checklist.py
@@ -104,24 +104,24 @@ python3 tools/api-inventory/scripts/add_cols.py          # csrf_protection / inp
                                                           # audit_logged / triggers_task / resource_limit
 python3 tools/api-inventory/scripts/add_ssrf_redirect.py # redirect_target / ssrf_surface
 python3 tools/api-inventory/scripts/add_idempotency.py   # idempotency
-python3 tools/api-inventory/scripts/add_dataop4.py       # data_op_detail
+python3 tools/api-inventory/scripts/add_dataop4.py       # data_op(操作4区分)
 python3 tools/api-inventory/scripts/add_authmech.py      # auth_mechanism / bola_risk
 ```
 
 **これらは空欄/`TODO` のセルだけを埋める。既存値は上書きしない。**
 台帳の既存値は機械出力そのままではなく後から精査されており、一括再生成すると劣化する
-(実測: `bola_risk` の判定が逆転、`data_op_detail` の論理削除/物理削除の区別が失われる、
+(実測: `bola_risk` の判定が逆転、`data_op` の論理削除/物理削除の区別が失われる、
 `csrf_protection` の指摘が消える)。意図して作り直すときだけ
 `WEKO_INVENTORY_OVERWRITE=1` を付ける。
 
 ### add_row.py が埋める列 / 埋めない列
 
-`api_snapshot.json`(実機 url_map)と git から**機械的に決まる27列**を埋め、
-調査が要る31列に `TODO` を入れる。
+`api_snapshot.json`(実機 url_map)と git から**機械的に決まる26列**を埋め、
+調査が要る28列に `TODO` を入れる(残り8列は派生列。手順6で自動的に付く)。
 
-| 自動(27列) | no / module / api_type / app / method / uri / path_params / blueprint / endpoint / impl_func / impl_file / impl_line / auth_required / auth_method / auth_mechanism / api_version / last_commit系4列 ほか |
+| 自動(26列) | no / module / api_type / app / method / uri / path_params / query_params / body_params / request_content_type / blueprint / endpoint / impl_func / impl_file / impl_line / auth_required / auth_method / oauth_scope / cache_ratelimit / api_version / deprecated / auth_mechanism / last_commit系4列 |
 |---|---|
-| **`TODO`(31列)** | **summary / response / status_codes / exceptions / roles / auth_response_variance / restricted_content / data_op / data_target / data_store / side_effects / config_deps / test_file / category_tags / notes / sec_* / dynamic_verified / csrf_protection / input_validation / audit_logged / triggers_task / resource_limit / redirect_target / ssrf_surface / idempotency / data_op_detail / bola_risk** |
+| **`TODO`(28列)** | **summary / response / response_content_type / status_codes / exceptions / roles / access_variance / data_op / data_store / side_effects / config_deps / test_file / category_tags / notes / sec_pattern / sec_detail / sec_exposed / sec_evidence / dynamic_verified / csrf_protection / input_validation / audit_logged / triggers_task / resource_limit / redirect_target / ssrf_surface / idempotency / bola_risk** |
 
 `TODO` は **ソースを読まないと書けない列**。Phase 2(静的解析)と Phase 3(実機実測)で
 やっていることを、その1行について行う。埋め方は列定義 README(プライベートリポジトリ側の
@@ -133,6 +133,40 @@ python3 tools/api-inventory/scripts/add_authmech.py      # auth_mechanism / bola
 `prioritize.py` が誤った区分を付ける(例: `data_op` が `TODO` だと破壊系の判定に入らない)。
 調査が終わるまでは、少なくとも `data_op` / `auth_required` / `dynamic_verified` を
 埋めること。
+
+## ケース1b: 実機に映らない経路まで含めて漏れを見る
+
+`reconcile.py` は **実機 url_map** が正。今このコンテナで登録されている経路しか映さない。
+config で無効・プラグイン未導入・設定値が真のときだけ登録される経路は、
+API として存在するのに実機からは見えず、台帳から落ちても誰も気付けない。
+
+`detect_routes.py` はソースだけを読んで、6系統(`route` / `expose` / `add_url_rule` /
+`rest_config` / `modelview` / `entry_point`)から「あるべき経路」を検知し、台帳と
+突き合わせる。**Docker も実機も要らない。**
+
+```bash
+export WEKO_ROOT=/path/to/weko
+python3 tools/api-inventory/scripts/detect_routes.py --cross-check          # 一覧
+python3 tools/api-inventory/scripts/detect_routes.py --cross-check --gate   # 差分0を強制
+```
+
+検知したのに台帳に無いものが出たら、次のどちらかを必ず行う。
+
+1. 台帳に行を足す(`add_row.py` → TODO を埋める)
+2. 経路にならない正当な理由を `$WEKO_API_INVENTORY_DIR/detect_allow.json` に**理由付きで**書く
+
+```json
+{
+  "modules/invenio-deposit/invenio_deposit/config.py::DEPOSIT_REST_ENDPOINTS:list_route":
+    "invenio-deposit の既定値。weko-deposit/config.py が同名で再定義して上書きするため登録されない"
+}
+```
+
+許可リストのキーは `ファイル::識別子` で、**行番号を含めない**。行がずれるたびに
+書き直す運用は続かないため。
+
+網羅性は「実機(`reconcile.py`)+ 静的(`detect_routes.py`)」の二段で担保する。
+どちらか一方でしか見えない経路があるので、両方を通すこと。
 
 ## ケース2b: 既存行を修正する
 
@@ -153,7 +187,7 @@ python3 tools/api-inventory/scripts/build_checklist.py
 直前の `get_version` を見て 2019 年のコミットを返した)。必ず `refresh_impl.py` が先。
 台帳だけを直して実装は触っていない(注記の追加など)なら、この2本は不要。
 
-派生列(58-65)は手で直しても次の実行で消える。優先度を変えたいときは、
+派生列(55-62)は手で直しても次の実行で消える。優先度を変えたいときは、
 判定の入力側(`security_finding` / `dynamic_verified` / `data_op` / `deprecated`)を
 直すか、`prioritize.py` のルールを変える。
 
@@ -352,7 +386,7 @@ git log --oneline <前回タグ>..HEAD -- '*/alembic/*'   # 追加リビジョ�
 python3 .../diff_snapshot.py "$WEKO_API_INVENTORY_DIR/api_snapshot.json" /tmp/snap_new.json
 cp /tmp/snap_new.json "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
 python3 .../reconcile.py            # A(未収載) を洗い出す
-python3 .../add_row.py --append --no <新規のendpoint>   # 自動27列だけ埋まる
+python3 .../add_row.py --append --no <新規のendpoint>   # 自動26列だけ埋まる
 python3 .../reconcile.py --gate     # 0件になるまで繰り返す
 ```
 
@@ -557,21 +591,25 @@ git push origin main --follow-tags
 |---|---|---|
 | `snapshot.py` | 実機 url_map + ソース | `api_snapshot.json` |
 | `reconcile.py` | snapshot + full.tsv | 何も書かない(差分を報告するだけ) |
+| `detect_routes.py` | ソース(AST)+ full.tsv | 何も書かない(ソース由来の経路と台帳の差を報告するだけ) |
 | `refresh_impl.py` | full.tsv + 実装ソース(AST) | full.tsv の `impl_line`(`--write` 時のみ) |
 | `enrich_git.py` | full.tsv + `git log -L` / `git tag --contains` | full.tsv の `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`(`--write` 時のみ)。**`refresh_impl.py` の後に回す** |
 | `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 + 変更ヘルパ関数の報告 |
-| `test_coverage.py` | full.tsv + テストコード | full.tsv の 60-64列 |
-| `prioritize.py` | full.tsv | full.tsv の 58-59, 65列 + 末尾列順の正規化 |
+| `test_coverage.py` | full.tsv + テストコード | full.tsv の 57-61列 |
+| `prioritize.py` | full.tsv | full.tsv の 55-56, 62列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
 | `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ / `--overwrite` で差し替え、`--keep-history` で旧値を ` ‖ 旧: ` として残す) |
 | `measure.sh` | `measure_profile.json` | 実測の唯一の入口。上記を固定順で回し `measure_report.md` を書く |
 | `_ensure_profile.py` / `_read_profile.py` / `_targets.py` / `_report.py` | — | `measure.sh` の内部ヘルパ |
+| `schema.py` | — | 列定義の唯一の正。他から import されるだけ |
+| `add_reqinfo.py` | full.tsv + 実装ソース | full.tsv の `query_params` / `body_params` / `request_content_type` / `oauth_scope` の空欄 |
+| `apply2.py` / `check_reachable.py` / `dump_modelviews.py` | — | Phase 1-3 の使い捨て。パスが決め打ちなので、そのままでは回らない。参考として残してある |
 | `remeasure.sh` | — | 非推奨。`measure.sh` に統合(案内のみ) |
 | `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
-(冪等)。24列版は full.tsv から完全に再現できることを確認済み。
+(冪等)。32列版は full.tsv から完全に再現できることを確認済み。
 `refresh_impl.py` → `enrich_git.py` も、解析対象リビジョンが同じなら冪等。
 
 ---
@@ -643,13 +681,13 @@ git describe --tags                     # タグ
 
 ### 1-1. blueprint route を AST 抽出
 ```bash
-python3 tools/api-inventory/extract_routes.py routes.json
+python3 tools/api-inventory/scripts/extract_routes.py routes.json
 ```
 `@blueprint.route` / `add_url_rule` を全 modules から収集。357件程度。
 
 ### 1-2. config駆動 REST エンドポイントを抽出
 ```bash
-python3 tools/api-inventory/extract_endpoints.py endpoints.json
+python3 tools/api-inventory/scripts/extract_endpoints.py endpoints.json
 ```
 `*_REST_ENDPOINTS` config の route 文字列(`/<string:version>/...`)を展開。
 
@@ -683,7 +721,7 @@ docker exec weko-web-1 bash -lc 'source ~/.virtualenvs/invenio/bin/activate; cd 
 | `add_cols.py` | csrf_protection, input_validation, audit_logged, triggers_task, resource_limit |
 | `add_ssrf_redirect.py` | redirect_target(オープンリダイレクト), ssrf_surface |
 | `add_idempotency.py` | idempotency(冪等性) |
-| `add_dataop4.py` | data_op_detail(取得/作成/更新/**論理削除/物理削除**) |
+| `add_dataop4.py` | data_op(取得/作成/更新/**論理削除/物理削除**。旧 data_op_detail を統合済み) |
 | `add_authmech.py` | auth_mechanism(decorator/config-factory/modelview), bola_risk |
 
 ### 認証・認可の参照辞書(手動で維持)
@@ -748,9 +786,9 @@ python3 tools/api-inventory/probe.py probe_results.json    # 未認証+各ロー
 python3 tools/api-inventory/merge.py out/ merged.tsv       # 分割TSVを結合・重複排除・採番
 ```
 
-## Phase 5: チェックリスト版(24列)を生成
+## Phase 5: チェックリスト版(32列)を生成
 ```bash
-python3 tools/api-inventory/build_checklist.py             # 57列 full → 24列 に統合
+python3 tools/api-inventory/scripts/build_checklist.py     # 62列 full → 32列 に統合
 ```
 派生列を統合: impl(func+file+line), auth(required+method+mechanism),
 security_flags(CSRF/BOLA/SSRF等8観点を該当のみ), last_change(commit系4列) 等。
@@ -1151,7 +1189,7 @@ python3 scripts/probe_ci.py --only rerun_nos.txt --allow-writes --gate --out pro
 `probe_ci.py` は `fixtures.json` からプレースホルダを解決するため、まっさらな環境で動く。
 
 - 測定 identity: anon / general / contributor / comadmin / repoadmin / sysadmin
-- 測定対象は `--only` で渡した `no` に限定する(全926行を毎PR測ると時間がかかりすぎる)
+- 測定対象は `--only` で渡した `no` に限定する(全1048行を毎PR測ると時間がかかりすぎる)
 - **安全装置**: GET/HEAD 以外は既定でスキップ。`--allow-writes` を明示したときだけ測る
   (CI のコンテナは使い捨てなので許可してよいが、実環境では既定のままにすること)
 
@@ -1192,7 +1230,7 @@ CI では `changed_rows.py` が出す `rerun_nos.txt`(変更が触れた行)だ�
 ```bash
 python3 scripts/test_coverage.py       # 4観点(正常値/異常値/境界値/例外処理)を判定
 python3 scripts/prioritize.py          # 優先度を付与(テスト観点を参照するので後に実行)
-python3 scripts/build_checklist.py     # 24列版(=32列)へ引き継ぐ
+python3 scripts/build_checklist.py     # 32列版へ引き継ぐ
 ```
 
 **実行順が重要**: `prioritize.py` は `test_gap` を参照して「テスト観点が確認できない行」を
@@ -1209,8 +1247,9 @@ P2 まで引き上げるため、`test_coverage.py` を先に回すこと。
 
 ## prioritize.py
 
-`security_finding` / `security_flags` / `dynamic_verified` / `data_op` / `data_target` /
-`method` / `auth` / `test_gap` から、対応優先度を機械判定して台帳に書き戻す。
+`sec_pattern` / `dynamic_verified` / `data_op` / `data_store` / `method` / `auth_required` /
+`auth_method` / `deprecated` / `test_gap` から、対応優先度を機械判定して台帳に書き戻す
+(チェックリスト版を読ませたときは `security_finding` / `auth` / `data_store` の統合列でも引ける)。
 判定基準・凡例・限界はプライベートリポジトリ側の `weko3_api_list_README.md`「priority の凡例」に記載。
 
 「データ破壊」は **既存の実データを不可逆に壊すこと** と定義している。メタデータの
