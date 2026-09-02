@@ -1,6 +1,6 @@
 # ユニットテスト。
 #
-# 【設計】本体イメージは「1回だけ」ビルドして GHCR に置き、45個のマトリクス
+# 【設計】本体イメージは「1回だけ」ビルドして GHCR に置き、47個のマトリクス
 # ジョブはそれを pull するだけにしている。
 #
 #   - イメージの用意は ci-images.yml (UIテストと共通) に委譲している。
@@ -95,17 +95,20 @@ jobs:
           - weko-items-ui
           - weko-itemtypes-ui
           - weko-logging
+          - weko-notifications
           - weko-plugins
           - weko-records-ui
           - weko-records
           - weko-redis
           - weko-schema-ui
           - weko-search-ui
+          - weko-signposting
           - weko-sitemap
           - weko-swordserver
           - weko-theme
           - weko-user-profiles
           - weko-workflow
+          - weko-workspace
 
     steps:
     - name: Checkout code
@@ -199,7 +202,7 @@ jobs:
         [ -d .ci-cache ] || exit 0
         sudo chown -R "$(id -u):$(id -g)" .ci-cache
 
-    # 45ジョブが同じキーで保存を試みるが、先着1つだけが保存され残りは
+    # 47ジョブが同じキーで保存を試みるが、先着1つだけが保存され残りは
     # 予約に失敗してスキップされる(警告のみ)。モジュール間で
     # requirements2.txt はほぼ同一なので、1つ保存されれば全体に効く。
     - name: Save pip cache
