@@ -189,8 +189,9 @@ def resolve_container(name):
         sys.exit('web コンテナが見つかりません。スタックを起動してください。\n'
                  '  例: ./install.sh   /   docker compose -p weko up -d web\n'
                  '  起動済みなら --container <名前> を明示してください。')
-    sys.exit('web コンテナが複数あります。--container で指定してください:\n  '
-             + '\n  '.join(cands))
+    sys.exit('web コンテナが複数あります。--container か $WEKO_WEB_CONTAINER で'
+             '指定してください:\n  ' + '\n  '.join(cands)
+             + '\n  (compose の service=web ラベルは WEKO3 以外のスタックも持ちうる)')
 
 
 def live_dump(container, workdir):
@@ -541,8 +542,9 @@ def main():
     p = argparse.ArgumentParser(description='API スナップショットを生成する')
     p.add_argument('--out', default='api_snapshot.json')
     p.add_argument('--weko-root', default=default_weko_root())
-    p.add_argument('--container', default='',
-                   help='実機ダンプ元のコンテナ名(省略時は compose ラベルから自動検出)')
+    p.add_argument('--container', default=os.environ.get('WEKO_WEB_CONTAINER', ''),
+                   help='実機ダンプ元のコンテナ名。既定は $WEKO_WEB_CONTAINER、'
+                        'それも無ければ compose ラベルから自動検出')
     p.add_argument('--dump', help='ダンプ済み JSON を使う(コンテナ起動不要)')
     p.add_argument('--profile', default='default', help='設定プロファイル名(条件付き登録の差を区別する)')
     p.add_argument('--workdir', help='中間ファイル置き場')
