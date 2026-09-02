@@ -38,17 +38,30 @@ GitHub Actions の Unit Tests ジョブと**同じ部品**を呼びます。
 また、別の WEKO スタックを動かしたままだとポート（29201 / 26301 / 24301）が
 衝突し、最悪そちらのサービスを掴みます。`run-local.sh` は起動前に検出します。
 
-### 残る差: ホストのアーキテクチャ
+### CI との唯一の差: Elasticsearch の bootstrap check
 
-CI は `ubuntu-latest`（x86_64）です。**ARM のホストでは1点だけ差が出ます。**
+`run-local.sh` は `scripts/ci/compose.local.yml` を重ねて、Elasticsearch を
+`discovery.type=single-node` で起動します。**AMD(x86_64)でも ARM でも同じ**で、
+アーキテクチャによる分岐はしません。
 
-Elasticsearch 6.8 の seccomp 実装は x86_64 専用で、ARM では
-`seccomp unavailable: CONFIG_SECCOMP not compiled into kernel` を投げて
-bootstrap check に失敗し起動しません。`run-local.sh` はホストが x86_64 でないとき
-`scripts/ci/compose.arm64.yml` を重ねて `discovery.type=single-node` にします
-（bootstrap check 自体が省かれる。リポジトリの `docker-compose.arm64.yml` と同じ扱い）。
-起動時にその旨を表示します。テストの内容には影響しませんが、
-**最終的な合否は CI で確認してください。**
+ES 6.8 は非ループバックアドレスに bind した時点で bootstrap check（本番運用向けの
+検査）を強制しますが、これは**ホストのカーネルと sysctl に依存する**ため、
+開発機では環境しだいで落ちます。確認できたものだけでも:
+
+- **ARM**: seccomp の実装が x86_64 専用で、`seccomp unavailable:
+  CONFIG_SECCOMP not compiled into kernel` を投げて起動しない
+- **`vm.max_map_count` が 262144 未満のホスト**: `max_map_count` の検査で落ちる
+
+`discovery.type=single-node` にすると bootstrap check 自体が省かれます。ES は
+テストが使う単一ノードなので意味は変わりません（リポジトリの
+`docker-compose.arm64.yml` も同じ扱いです）。
+
+アーキで分岐しないのは、分岐すると「片方の CPU でしか再現しない失敗」を自分で
+作ることになり、ローカルと CI を揃えるという目的に反するためです。調整点は
+`install.sh` と同じく `COMPOSE_FILE` ひとつに寄せています。
+
+CI（GitHub Actions）はこのオーバレイを読みません。**最終的な合否は CI で確認して
+ください。**
 
 なお `Dockerfile.arm64` / `elasticsearch/Dockerfile.arm64` は使いません。
 nodesource の `setup_4.x` が消えており現在はビルドできないためで、

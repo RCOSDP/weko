@@ -1,0 +1,28 @@
+# 手元でテストを回すときの、CI との唯一の差分。
+# scripts/ci/run-local.sh が**アーキテクチャを問わず**常に重ねる。
+#
+# なぜ要るか:
+#   Elasticsearch 6.8 は非ループバックアドレスに bind した時点で bootstrap check
+#   (本番運用向けの検査) を強制する。これはホストのカーネルと sysctl に依存するため、
+#   開発機では環境しだいで落ちる。実際に確認できたものだけでも:
+#
+#     - ARM: seccomp の実装が x86_64 専用で
+#       「seccomp unavailable: CONFIG_SECCOMP not compiled into kernel」で失敗する
+#     - vm.max_map_count が 262144 未満のホスト: max_map_count の検査で失敗する
+#
+#   discovery.type=single-node にすると bootstrap check 自体が省かれる。
+#   ES はテストが使う単一ノードなので、これで意味が変わることはない。
+#   リポジトリの docker-compose.arm64.yml も同じ扱いをしている。
+#
+# なぜアーキテクチャで分岐しないか:
+#   分岐すると「片方のアーキでしか再現しない失敗」を作ることになり、
+#   ローカルとCIを揃えるという目的に反する。開発機が AMD でも ARM でも、
+#   手元では同じ条件で回るようにする。
+#
+# CI(GitHub Actions)はこのファイルを読まない。CI は bootstrap check が通る
+# 前提の環境なので、素の設定のまま動かす。
+services:
+  elasticsearch:
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms2048m -Xmx2048m

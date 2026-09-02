@@ -91,24 +91,24 @@ fi
 
 export COMPOSE_FILE=docker-compose2.yml:docker-compose.ci.yml
 
-# --- アーキテクチャ差 --------------------------------------------------------
-# GitHub のランナーは x86_64。ARM のホストでは Elasticsearch 6.8 が
-# 「seccomp unavailable」で bootstrap check に失敗して起動しないので、
-# リポジトリの docker-compose.arm64.yml と同じ扱い(single-node)に寄せる。
-# テストの中身には影響しないが、CI と完全に同一ではないことは自覚しておくこと。
-# Dockerfile は CI と同じものを使う(x86 用の Dockerfile / elasticsearch/Dockerfile は
-# aarch64 でもビルドできる)。リポジトリには Dockerfile.arm64 もあるが、
-# nodesource の setup_4.x が消えており現在はビルドできないので使わない。
-ARCH=$(uname -m)
+# --- compose の重ね方 --------------------------------------------------------
+# install.sh と同じく COMPOSE_FILE を唯一の調整点にする(アーキで分岐しない)。
+#
+# Dockerfile は CI と同じものを使う。x86_64 用の Dockerfile /
+# elasticsearch/Dockerfile は aarch64 でもビルドできる。リポジトリには
+# Dockerfile.arm64 もあるが、nodesource の setup_4.x が消えており現在は
+# ビルドできないので使わない。
 DOCKERFILE_WEB=Dockerfile
 DOCKERFILE_ES=elasticsearch/Dockerfile
-if [ "$ARCH" != "x86_64" ]; then
-  echo "ℹ️  ホストは $ARCH。CI(ubuntu-latest = x86_64)との差は1点だけ:"
-  echo "     Elasticsearch を discovery.type=single-node で起動する"
-  echo "     (ES 6.8 の seccomp は x86_64 専用で、ARM では bootstrap check に失敗する)"
-  echo "     テストの中身には影響しないが、最終的な合否は CI で確認すること。"
-  export COMPOSE_FILE="$COMPOSE_FILE:scripts/ci/compose.arm64.yml"
-fi
+
+# 手元では Elasticsearch の bootstrap check を外す。**アーキテクチャで分岐しない**:
+# 分岐すると「片方のアーキでしか再現しない失敗」を作ることになり、ローカルと CI を
+# 揃えるという目的に反する。理由は scripts/ci/compose.local.yml に書いてある。
+export COMPOSE_FILE="$COMPOSE_FILE:scripts/ci/compose.local.yml"
+echo "ℹ️  ホスト: $(uname -m)。CI(x86_64)との差は1点だけ:"
+echo "     Elasticsearch を discovery.type=single-node で起動する"
+echo "     (bootstrap check はホストのカーネル/sysctl に依存し、開発機では環境しだいで落ちる)"
+echo "     テストの内容には影響しないが、最終的な合否は CI で確認すること。"
 
 # --- イメージ ---------------------------------------------------------------
 # CI(ci-images.yml)がタグの元にしているのと同じファイル集合。ここが変われば
