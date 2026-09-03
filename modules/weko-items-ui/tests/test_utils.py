@@ -9099,7 +9099,8 @@ def test_get_ignore_item_from_mapping(users,db):
         db.session.add(itemtype_mapping)
     db.session.commit()
 
-    result =  get_ignore_item_from_mapping(10)
+    # item_type is a required argument now.
+    result =  get_ignore_item_from_mapping(10, item_type=itemtype)
     test = ['title', 'contributor', 'type',  ['date'], ['creator', 'creatorName'], ['contributor', 'contributorName']]
     assert result == test
 
@@ -9339,10 +9340,13 @@ def test_make_bibtex_data(app, db_records, db_itemtype, db_oaischema):
     schema['namespaces'] = db_oaischema.namespaces
     schema['schema'] = json.loads(
         db_oaischema.xsd, object_pairs_hook=OrderedDict)
-    with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
-        with patch('invenio_oaiserver.response.url_for', return_value='http://localhost/oai'):
-            with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
-                assert make_bibtex_data([1])=="test_data"
+    # make_bibtex_data reaches hide_meta_data_for_role, which reads
+    # current_user; outside a request that proxy resolves to None.
+    with app.test_request_context():
+        with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
+            with patch('invenio_oaiserver.response.url_for', return_value='http://localhost/oai'):
+                with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
+                    assert make_bibtex_data([1])=="test_data"
 
 
 # def translate_schema_form(form_element, cur_lang):

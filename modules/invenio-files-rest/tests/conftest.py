@@ -364,7 +364,11 @@ def permissions(db, bucket):
             user=users['objects']))
     db.session.commit()
 
-    yield users
+    # The commit expires these instances, and the first request that runs
+    # tears the session down and detaches them, so reading user.id later
+    # raises DetachedInstanceError. Hand out the ids instead; login_user
+    # takes either.
+    yield {name: (user.id if user else None) for name, user in users.items()}
 
 
 @pytest.yield_fixture()
