@@ -12,6 +12,27 @@ from weko_logging.models import UserActivityLog
 from weko_logging.utils import UserActivityLogUtils
 
 
+def ensure_partition(db, date):
+    """Attach the monthly partition that ``date`` falls into.
+
+    ``user_activity_logs`` is RANGE partitioned on ``date`` and creating the
+    table only brings the *current* month's partition with it, so a row dated
+    in any other month is rejected with "no partition of relation
+    ... found for row". Tests that write dates in the past have to add the
+    months they use themselves.
+    """
+    start = date.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    end = start + relativedelta(months=1)
+    db.session.execute(
+        "CREATE TABLE IF NOT EXISTS {table}_{suffix} PARTITION OF {table} "
+        "FOR VALUES FROM ('{start}') TO ('{end}')".format(
+            table=UserActivityLog.__tablename__,
+            suffix=start.strftime('%Y%m'),
+            start=start.strftime('%Y-%m-%d'),
+            end=end.strftime('%Y-%m-%d')))
+    db.session.commit()
+
+
 # UserActivityLogUtils.package_export_log(cls)
 # .tox/c1/bin/pytest --cov=weko_logging tests/test_utils.py::test_package_export_log -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-logging/.tox/c1/tmp
 def test_package_export_log(db, users, redis_connect, location):
@@ -28,8 +49,9 @@ def test_package_export_log(db, users, redis_connect, location):
         log={},
         remarks="test_remarks1"
     )
+    # date carries a unique constraint, so the second row needs its own.
     log_data2 = UserActivityLog(
-        date=mock_date,
+        date=mock_date + timedelta(seconds=1),
         user_id=users[1]["id"],
         community_id=None,
         log_group_id=2,
@@ -159,11 +181,10 @@ def test_delete_log(app, db):
             date=mock_date - relativedelta(years=5),
             log={"data": "before_5_years_data"},
         )
-        db.session.add(log_data1)
-        db.session.add(log_data2)
-        db.session.add(log_data3)
-        db.session.add(log_data4)
-        db.session.add(log_data5)
+        for log_data in (log_data1, log_data2, log_data3, log_data4,
+                         log_data5):
+            ensure_partition(db, log_data.date)
+            db.session.add(log_data)
         db.session.commit()
 
     # Case 1: config is None

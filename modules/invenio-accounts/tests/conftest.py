@@ -132,6 +132,27 @@ def app(request):
     yield app
 
 
+@pytest.yield_fixture()
+def recoverable_app(request):
+    """Flask application with the "forgot password" flow turned on.
+
+    invenio_accounts.config sets ``SECURITY_RECOVERABLE = False``, so the
+    ``security.forgot_password`` / ``security.reset_password`` endpoints are
+    not registered on the default app fixture and ``url_for_security`` for
+    them raises BuildError. Tests that exercise the flow need it enabled.
+    """
+    app = _app_factory(dict(SECURITY_RECOVERABLE=True))
+    app.config.update(ACCOUNTS_USERINFO_HEADERS=True)
+    InvenioAccess(app)
+    InvenioAccounts(app)
+
+    from invenio_accounts.views.settings import blueprint
+    app.register_blueprint(blueprint)
+
+    _database_setup(app, request)
+    yield app
+
+
 @pytest.fixture
 def script_info(app):
     """Get ScriptInfo object for testing CLI."""
