@@ -109,6 +109,16 @@ def app(base_app):
     InvenioFilesREST(base_app)
     base_app.register_blueprint(blueprint)
 
+    # flask-sqlalchemy removes the session on every app-context teardown, and
+    # helpers such as login_user() push and pop a nested context in the middle
+    # of a test. That detaches everything the fixtures handed out, so reading
+    # bucket.id after a login raises DetachedInstanceError. Keep the session
+    # for the length of the test; the db fixture still removes it at the end.
+    base_app.teardown_appcontext_funcs = [
+        f for f in base_app.teardown_appcontext_funcs
+        if f.__name__ != 'shutdown_session'
+    ]
+
     with base_app.app_context():
         yield base_app
 

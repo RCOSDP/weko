@@ -735,7 +735,9 @@ def test_find_rss_value(i18n_app, keyword, item_type):
             },
             "_item_metadata": {
                 "item_title": "item_title",
-                "control_number": "9999"
+                "control_number": "9999",
+                # The 'description' branch looks the item type up by this.
+                "item_type_id": 1
             }
         }
     }

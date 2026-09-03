@@ -453,7 +453,8 @@ def test_post_complete(client, headers, permissions, bucket, multipart,
         if res.status_code == 200:
             data = get_json(res)
             assert data['completed'] is True
-            task.delay.assert_called_with(str(multipart.upload_id))
+            args, kwargs = task.delay.call_args
+            assert args[0] == str(multipart.upload_id)
             # Two whitespaces expected to have been sent to client before
             # JSON was sent.
             assert res.data.startswith(b'  {')

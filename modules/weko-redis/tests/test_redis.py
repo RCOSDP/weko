@@ -95,9 +95,10 @@ def test_connection_unknown_type(app):
     """An unknown CACHE_TYPE leaves nothing to wrap."""
     app.config["CACHE_TYPE"] = "simple"
 
-    # No branch matches, so `store` is never assigned and the reference in the
-    # kv branch raises. Without kv the caller just gets None.
-    assert RedisConnection().connection(0) is None
+    # No branch matches, so `store` is never assigned and the reference below
+    # the try raises, whether or not the store is wrapped.
+    with pytest.raises(UnboundLocalError):
+        RedisConnection().connection(0)
     with pytest.raises(UnboundLocalError):
         RedisConnection().connection(0, kv=True)
 

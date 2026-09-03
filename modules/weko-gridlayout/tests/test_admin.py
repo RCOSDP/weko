@@ -215,11 +215,11 @@ def test_index_WidgetDesign(i18n_app, view_instance):
 
 
 # WidgetSettingView.index_view ~ ERROR
-def test_index_view_WidgetSettingView(i18n_app, admin_view, view_instance):
-    # index_view builds URLs for its own endpoint, which exists only once the
-    # view is registered with an Admin, and url_for needs a request context.
-    with i18n_app.test_request_context():
-        assert view_instance.index_view() != None
+def test_index_view_WidgetSettingView(client, admin_view):
+    # index_view builds URLs relative to the current blueprint, so it has to
+    # be reached through its own route rather than called directly.
+    res = client.get(url_for("widgetitem.index_view"))
+    assert res.status_code == 200
 
 
 # WidgetSettingView.create_view ~ ERROR

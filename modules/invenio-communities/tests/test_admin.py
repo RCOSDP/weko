@@ -13,6 +13,7 @@ from invenio_communities.models import Community
 from weko_records.models import ItemTypeProperty
 from weko_index_tree.models import IndexStyle,Index
 from invenio_accounts.testutils import login_user_via_session
+from invenio_admin import InvenioAdmin
 from invenio_admin.views import protected_adminview_factory
 from invenio_communities.admin import community_adminview,request_adminview,featured_adminview, CommunityModelView
 from wtforms.validators import ValidationError
@@ -68,7 +69,11 @@ def setup_view_community(app,db,users):
     db.session.commit()
 
 
-    admin = Admin(app)
+    # InvenioAdmin, not a bare flask-admin Admin: the protected view asks
+    # app.extensions['invenio-admin'] for its permission factory and reads
+    # ADMIN_LOGIN_ENDPOINT. entry_point_group=None keeps the other modules'
+    # admin views out of it.
+    admin = InvenioAdmin(app, entry_point_group=None).admin
     community_adminview_copy = dict(community_adminview)
     community_model = community_adminview_copy.pop("model")
     community_view = community_adminview_copy.pop("modelview")
@@ -883,7 +888,11 @@ class TestCommunityModelView():
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 class TestFeaturedCommunityModelView():
     def test_index_view_acl_guest(self,app,db,client):
-        admin = Admin(app)
+        # InvenioAdmin, not a bare flask-admin Admin: the protected view asks
+        # app.extensions['invenio-admin'] for its permission factory and reads
+        # ADMIN_LOGIN_ENDPOINT. entry_point_group=None keeps the other modules'
+        # admin views out of it.
+        admin = InvenioAdmin(app, entry_point_group=None).admin
         featured_adminview_copy = dict(featured_adminview)
         featured_model = featured_adminview_copy.pop("model")
         featured_view = featured_adminview_copy.pop("modelview")
@@ -909,7 +918,11 @@ class TestFeaturedCommunityModelView():
     ],
     )
     def test_index_view_acl(self,app,db,client,users,id,status_code):
-        admin = Admin(app)
+        # InvenioAdmin, not a bare flask-admin Admin: the protected view asks
+        # app.extensions['invenio-admin'] for its permission factory and reads
+        # ADMIN_LOGIN_ENDPOINT. entry_point_group=None keeps the other modules'
+        # admin views out of it.
+        admin = InvenioAdmin(app, entry_point_group=None).admin
         featured_adminview_copy = dict(featured_adminview)
         featured_model = featured_adminview_copy.pop("model")
         featured_view = featured_adminview_copy.pop("modelview")
@@ -925,7 +938,11 @@ class TestFeaturedCommunityModelView():
 # .tox/c1/bin/pytest --cov=invenio_communities tests/test_admin.py::TestInclusionRequestModelView -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
 class TestInclusionRequestModelView():
     def test_index_view_acl_guest(self,app,client,db):
-        admin = Admin(app)
+        # InvenioAdmin, not a bare flask-admin Admin: the protected view asks
+        # app.extensions['invenio-admin'] for its permission factory and reads
+        # ADMIN_LOGIN_ENDPOINT. entry_point_group=None keeps the other modules'
+        # admin views out of it.
+        admin = InvenioAdmin(app, entry_point_group=None).admin
         request_adminview_copy = dict(request_adminview)
         request_model = request_adminview_copy.pop("model")
         request_view = request_adminview_copy.pop("modelview")
@@ -950,7 +967,11 @@ class TestInclusionRequestModelView():
     ],
     )
     def test_index_view_acl(self,app,client,db,users,id,status_code):
-        admin = Admin(app)
+        # InvenioAdmin, not a bare flask-admin Admin: the protected view asks
+        # app.extensions['invenio-admin'] for its permission factory and reads
+        # ADMIN_LOGIN_ENDPOINT. entry_point_group=None keeps the other modules'
+        # admin views out of it.
+        admin = InvenioAdmin(app, entry_point_group=None).admin
         request_adminview_copy = dict(request_adminview)
         request_model = request_adminview_copy.pop("model")
         request_view = request_adminview_copy.pop("modelview")

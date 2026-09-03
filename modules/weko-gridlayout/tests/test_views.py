@@ -774,7 +774,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert res.status_code==200
                 assert json.loads(res.data) == test
                 args, kwargs = mock_set.call_args
-                # The cache key carries the path.
+                # The cache key carries the path ('main', or the page id).
                 assert args[0] == 'access_counter_main'
                 assert json.loads(args[1].data) == test
                 assert args[2] == 50
@@ -802,7 +802,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert res.status_code==200
                 assert json.loads(res.data) == test
                 args, kwargs = mock_set.call_args
-                assert args[0] == 'access_counter_page01'
+                assert args[0] == 'access_counter_1'
                 assert json.loads(args[1].data) == test
                 assert args[2] == 50
 
