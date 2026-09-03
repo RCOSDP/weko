@@ -136,12 +136,15 @@ def app(request):
 def recoverable_app(request):
     """Flask application with the "forgot password" flow turned on.
 
-    invenio_accounts.config sets ``SECURITY_RECOVERABLE = False``, so the
-    ``security.forgot_password`` / ``security.reset_password`` endpoints are
-    not registered on the default app fixture and ``url_for_security`` for
-    them raises BuildError. Tests that exercise the flow need it enabled.
+    invenio_accounts.config sets ``SECURITY_RECOVERABLE = False`` and
+    ``SECURITY_REGISTERABLE = False``, so the ``security.forgot_password`` /
+    ``security.reset_password`` / ``security.register`` endpoints are not
+    registered on the default app fixture: ``url_for_security`` raises
+    BuildError for them, and the forgot-password page carries no "Sign Up"
+    link. Tests that exercise the flow need both switched on.
     """
-    app = _app_factory(dict(SECURITY_RECOVERABLE=True))
+    app = _app_factory(dict(SECURITY_RECOVERABLE=True,
+                            SECURITY_REGISTERABLE=True))
     app.config.update(ACCOUNTS_USERINFO_HEADERS=True)
     InvenioAccess(app)
     InvenioAccounts(app)

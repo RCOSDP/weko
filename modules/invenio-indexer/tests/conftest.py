@@ -71,6 +71,12 @@ def base_app(request):
 
     def teardown():
         with app.app_context():
+            # DROP DATABASE fails while anything is still connected, and the
+            # pool holds connections open between tests. Without this the drop
+            # is skipped, the next test finds the database already there and
+            # db.create_all() stops on "relation ... already exists".
+            db.session.remove()
+            db.engine.dispose()
             drop_database(str(db.engine.url))
         shutil.rmtree(instance_path)
 

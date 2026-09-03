@@ -146,8 +146,14 @@ def test_client_management(settings_fixture):
                 follow_redirects=True)
             assert resp.status_code == 200
             assert 'Application / Test_Client' in str(resp.get_data())
-            test_client = Client.query.first()
-            assert test_client.client_id in str(resp.get_data())
+            # Every request ends with the session being removed, which
+            # detaches this instance; keep the id and re-read the row whenever
+            # an attribute is needed.
+            client_id = Client.query.first().client_id
+            assert client_id in str(resp.get_data())
+
+            def stored_client():
+                return Client.query.filter_by(client_id=client_id).one()
 
             # Client should be visible on index
             resp = client.get(url_for('invenio_oauth2server_settings.index'))
@@ -155,22 +161,22 @@ def test_client_management(settings_fixture):
             assert 'Test_Client' in str(resp.get_data())
 
             # Reset client secret
-            original_client_secret = test_client.client_secret
+            original_client_secret = stored_client().client_secret
             resp = client.post(
                 url_for('invenio_oauth2server_settings.client_reset',
-                        client_id=test_client.client_id),
+                        client_id=client_id),
                 data=dict(reset='yes'),
                 follow_redirects=True
             )
             assert resp.status_code == 200
-            assert test_client.client_secret in str(resp.get_data())
+            assert stored_client().client_secret in str(resp.get_data())
             assert original_client_secret not in str(resp.get_data())
 
             # Invalid redirect uri should error
-            original_redirect_uris = test_client.redirect_uris
+            original_redirect_uris = stored_client().redirect_uris
             resp = client.post(
                 url_for('invenio_oauth2server_settings.client_view',
-                        client_id=test_client.client_id),
+                        client_id=client_id),
                 data=dict(
                     name='Test_Client',
                     description='Test description for Test_Client',
@@ -179,12 +185,12 @@ def test_client_management(settings_fixture):
                 )
             )
             assert resp.status_code == 200
-            assert test_client.redirect_uris == original_redirect_uris
+            assert stored_client().redirect_uris == original_redirect_uris
 
             # Modify the client
             resp = client.post(
                 url_for('invenio_oauth2server_settings.client_view',
-                        client_id=test_client.client_id),
+                        client_id=client_id),
                 data=dict(
                     name='Modified_Name',
                     description='Modified Description',
@@ -198,11 +204,12 @@ def test_client_management(settings_fixture):
             assert 'http://modified-url.org' in str(resp.get_data())
 
             # Delete the client
+            client_name = stored_client().name
             resp = client.post(
                 url_for('invenio_oauth2server_settings.client_view',
-                        client_id=test_client.client_id),
+                        client_id=client_id),
                 follow_redirects=True,
                 data=dict(delete=True)
             )
             assert resp.status_code == 200
-            assert test_client.name not in str(resp.get_data())
+            assert client_name not in str(resp.get_data())
