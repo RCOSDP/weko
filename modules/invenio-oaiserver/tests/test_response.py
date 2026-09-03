@@ -1669,6 +1669,11 @@ def test_create_identifier_index(app):
 # def check_correct_system_props_mapping(object_uuid, system_mapping_config):
 # .tox/c1/bin/pytest --cov=invenio_oaiserver tests/test_response.py::test_check_correct_system_props_mapping -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiserver/.tox/c1/tmp
 def test_check_correct_system_props_mapping(app,db, item_type):
+    # get_mapping() walks render['table_row'] to decide which mapping entries
+    # to read. The item_type fixture has no table_row, so without these two
+    # keys the mapping below is never looked at (and the None is not iterable).
+    item_type.model.render = dict(item_type.model.render,
+                                  table_row=["ITEM1", "ITEM2"])
     obj_uuid = uuid.uuid4()
     item_metadata1 = ItemMetadata(id=obj_uuid,item_type_id=1,json={})
     mapping_data = {
@@ -1687,7 +1692,7 @@ def test_check_correct_system_props_mapping(app,db, item_type):
     # pass check
     system_mapping_config={"item1.subitem1_1":"ITEM1.item1.subitem1_1","item2.subitem1_2.subitem1_1_2": "ITEM2.item2.subitem1_2.subitem1_1_2"}
     result = check_correct_system_props_mapping(obj_uuid,system_mapping_config)
-    assert result == False
+    assert result == True
     
     # not pass check
     system_mapping_config={"item1.subitem1_1":"ITEM1.item1.subitem1_1","item2.subitem1_2.subitem1_1_2":"not_exist_system_value"}
