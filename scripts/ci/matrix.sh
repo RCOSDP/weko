@@ -16,14 +16,21 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 WORKFLOW="$ROOT/.github/workflows/unit-tests.yml"
 
+# 重いモジュールは pytest-split で分割され、同じ module 名が shard の数だけ
+# 並ぶ。ここが返すのは「モジュールの一覧」なので重複は畳む
+# (run-local.sh は分割せず1モジュールを丸ごと回す)。
 list_matrix() {
   [ -f "$WORKFLOW" ] || { echo "❌ $WORKFLOW が無い" >&2; return 1; }
-  # `        module:` の下に続く `          - name` を拾う。
+  # `        include:` の下に続く `          - module: name` を拾う。
   awk '
-    /^[[:space:]]+module:[[:space:]]*$/ { inlist = 1; next }
-    inlist && /^[[:space:]]+- [A-Za-z0-9_-]+[[:space:]]*$/ {
-      gsub(/^[[:space:]]+- |[[:space:]]+$/, ""); print; next
+    /^[[:space:]]+include:[[:space:]]*$/ { inlist = 1; next }
+    inlist && /^[[:space:]]+- module:[[:space:]]+[A-Za-z0-9_-]+[[:space:]]*$/ {
+      sub(/^[[:space:]]*- module:[[:space:]]*/, ""); gsub(/[[:space:]]+$/, "")
+      if (!seen[$0]++) print
+      next
     }
+    # shard: など、エントリに属する続きの行は読み飛ばす。
+    inlist && /^[[:space:]]+[a-z_]+:[[:space:]]/ { next }
     inlist { inlist = 0 }
   ' "$WORKFLOW"
 }

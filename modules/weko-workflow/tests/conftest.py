@@ -703,7 +703,12 @@ def users(app, db):
     if not user:
         user = create_test_user(email='user@test.org')
     
-    contributor = User.query.filter_by(email='user@test.org').one_or_none()
+    # 他モジュールの conftest からのコピーで、探す先が user@test.org に
+    # なっていた。そのため contributor@test.org は一度も作られず、
+    # users[0] ("contributor" のつもり) が user@test.org を指し、
+    # ユーザIDが以降ひとつずつずれていた
+    # (テストが決め打ちしている workflow_userlock_activity_5 = sysadmin など)。
+    contributor = User.query.filter_by(email='contributor@test.org').one_or_none()
     if not contributor:
         contributor = create_test_user(email='contributor@test.org')
 
@@ -840,9 +845,15 @@ def users(app, db):
         db.session.commit()
     
 
+    # comm01 の管理ロールは Community Administrator にする。他モジュールの
+    # conftest からのコピーで sysadmin_role になっていたが、このモジュールには
+    # 「コミュニティ管理者が自分のコミュニティだけ見える」ことを確かめるテストが
+    # 複数ある (Flow.get_flow_list / flowsetting の repositories など)。
+    # sysadmin_role のままだと comadmin に紐づくコミュニティが1つも無く、
+    # Community.get_by_user() が必ず空を返して落ちる。
     comm = Community.query.filter_by(id="comm01").one_or_none()
     if not comm:
-        comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+        comm = Community.create(community_id="comm01", role_id=comadmin_role.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
                             root_node_id=index.id)

@@ -1743,8 +1743,11 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_full_action,m
         )
     with app.test_request_context(), \
             patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
-            patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
             patch("weko_records_ui.views.soft_delete", return_value=True):
+        # weko_records_ui.views は check_created_id_by_recid を import して
+        # おらず (使っているのは permissions.check_created_id)、
+        # prepare_delete_workflow が呼ぶのも soft_delete だけなので、
+        # 権限チェックのモックは外してある。
         result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
         assert result.workflow_id
 
