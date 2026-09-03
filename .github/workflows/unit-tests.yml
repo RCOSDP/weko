@@ -65,7 +65,11 @@ jobs:
     name: ${{ matrix.module }}
     needs: images
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # weko-deposit は 228 本のテストを回すのに約 80 分かかり、60 分では
+    # 63% で打ち切られていた (毎回 cancelled)。テストの中身ではなく
+    # 1件あたりの db.create_all()/drop_all() と es_records の重さが効くので、
+    # 上限のほうを実測に合わせる。
+    timeout-minutes: 120
     permissions:
       contents: read
       packages: read

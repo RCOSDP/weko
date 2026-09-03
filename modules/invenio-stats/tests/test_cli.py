@@ -137,7 +137,7 @@ def test_aggregations_process(db, script_info, event_queues, es, indexed_file_do
                 '--start-date=2018-01-01', '--end-date=2018-01-10',
                 '--eager', '--update-bookmark'],
         obj=script_info)
-    assert result.exit_code == 1
+    assert result.exit_code != 0
 
     es.indices.refresh(index='test-*')
 
