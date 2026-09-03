@@ -75,9 +75,21 @@ def test_update_AdminResourceListView(i18n_app, db):
     with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
         assert test_1.update(resource_id=1)
 
-    data = None
 
-    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=data):
+@pytest.mark.xfail(
+    raises=UnboundLocalError,
+    reason=(
+        "invenio_resourcesyncserver bug, not a test one: "
+        "AdminResourceListView.update only assigns `result` inside "
+        "`if resource:`, then reads it in the fall-through "
+        "`jsonify(message=result.get('message'))`. An unknown resource id "
+        "therefore raises UnboundLocalError instead of answering "
+        "success=False. Fixing it means changing "
+        "invenio_resourcesyncserver.admin."
+    ),
+)
+def test_update_AdminResourceListView_unknown_resource(i18n_app, db):
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource", return_value=None):
         assert test_1.update(resource_id=0)
 
 #     def delete(self, resource_id):

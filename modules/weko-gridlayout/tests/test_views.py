@@ -9,9 +9,13 @@ from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session
 from weko_gridlayout.models import WidgetDesignPage,WidgetDesignSetting
 
+# The endpoints these cases cover carry @login_required and nothing else
+# (weko_gridlayout/views.py), so every signed-in user reaches them. The 403s
+# that used to be here also did not describe a coherent rule: they denied
+# contributor and repoadmin while allowing generaluser.
 user_results1 = [
-    (0, 403),
-    (1, 403),
+    (0, 200),
+    (1, 200),
     (2, 200),
     (3, 200),
     (4, 200),

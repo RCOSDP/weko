@@ -10,6 +10,8 @@
 
 from __future__ import absolute_import, print_function
 
+import tempfile
+
 import pytest
 import uuid
 import os
@@ -70,9 +72,18 @@ def test_admin_views(app, db, dummy_location):
         assert res.status_code == 200
         assert str(obj.file_id) in res.get_data(as_text=True)
 
+        # LocationModelView.get_query() hides default locations from anyone
+        # without the system-administrator role, and this client is anonymous.
+        # dummy_location is the default one.
+        visible_loc = Location(name='visibleloc', uri=tempfile.mkdtemp(),
+                               default=False)
+        db.session.add(visible_loc)
+        db.session.commit()
+
         res = client.get('/admin/location/')
         assert res.status_code == 200
-        assert str(b1.location.name) in res.get_data(as_text=True)
+        assert 'visibleloc' in res.get_data(as_text=True)
+        assert str(b1.location.name) not in res.get_data(as_text=True)
 
         res = client.get('/admin/objectversion/')
         assert res.status_code == 200
@@ -543,6 +554,9 @@ class TestLocationModelView():
 
     def test_get_count_query(self, app, db, monkeypatch):
         """Test get_count_query filters locations based on user roles."""
+        # get_count_query() hands back flask-admin's SELECT count(*)
+        # query, so the number is its scalar result; .count() would only
+        # say how many rows that query returns, which is always 1.
         monkeypatch.setenv('INVENIO_ROLE_SYSTEM', 'System Administrator')
         monkeypatch.setenv('INVENIO_ROLE_REPOSITORY', 'Repository Administrator')
         
@@ -565,7 +579,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should see all locations in the database
                 total_locations = db.session.query(Location).count()
                 assert count == total_locations
@@ -577,7 +591,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
@@ -589,7 +603,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
@@ -599,7 +613,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
