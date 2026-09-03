@@ -109,6 +109,16 @@ def app(base_app):
     InvenioFilesREST(base_app)
     base_app.register_blueprint(blueprint)
 
+    # views.dbsession_clean is a blueprint teardown that calls
+    # db.session.remove() after every request. In the app that is right; in a
+    # test it detaches every instance the fixtures handed out, so reading
+    # bucket.id after the first request raises DetachedInstanceError. Drop it
+    # here and let the db fixture close the session at the end of the test.
+    for name, funcs in base_app.teardown_request_funcs.items():
+        base_app.teardown_request_funcs[name] = [
+            f for f in funcs if f.__name__ != 'dbsession_clean'
+        ]
+
     with base_app.app_context():
         yield base_app
 
@@ -119,16 +129,8 @@ def db(app):
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
-    # invenio_files_rest registers a blueprint teardown (views.dbsession_clean)
-    # that calls db.session.remove() after every request, so every instance a
-    # fixture handed out is detached as soon as a test makes one. Leaving them
-    # unexpired keeps the attributes already loaded readable afterwards, which
-    # is what tests reading bucket.id between requests rely on.
-    db_.session.remove()
-    db_.session.configure(expire_on_commit=False)
     yield db_
     db_.session.remove()
-    db_.session.configure(expire_on_commit=True)
     db_.drop_all()
     drop_alembic_version_table()
 
