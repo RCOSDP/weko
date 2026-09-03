@@ -370,15 +370,26 @@ def test_query_file_reports(client, role_users, id, status_code):
 
 # class QueryCommonReports(WekoQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_common_reports -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_common_reports(client):
-    # get
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 403),
+        (1, 200),
+        (2, 200),
+        (3, 200),
+        (4, 403)
+    ],
+)
+def test_query_common_reports(client, role_users, id, status_code):
+    # The endpoint requires stats-api-access now.
+    login_user_via_session(client=client, email=role_users[id]["email"])
     res = client.get(
         url_for('invenio_stats.get_common_report', event='top_page_access', year=2022, month=9))
-    assert res.status_code==200
+    assert res.status_code==status_code
 
     res = client.get(
         url_for('invenio_stats.get_common_report', event='top_page_access', year=2022, month=9, repository_id='comm1'))
-    assert res.status_code==200
+    assert res.status_code==status_code
 
 
 # class QueryCeleryTaskReport(WekoQuery):
