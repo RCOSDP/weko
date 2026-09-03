@@ -23,7 +23,8 @@ user_results1 = [
 
 
 # def preload_pages():
-def test_preload_pages(i18n_app):
+def test_preload_pages(i18n_app, db):
+    # preload_pages reads widget_design_page, so the tables have to exist.
     from weko_gridlayout.views import preload_pages
 
     assert preload_pages() == None
@@ -312,8 +313,10 @@ def test_delete_widget_item_guest(client, users):
 def test_delete_widget_item_issue50978(client, users):
     login_user_via_session(client=client, email=users[3]["email"])
     with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id", return_value={}):
-        # no request data
-        res3 = client.post("/admin/delete_widget_item")
+        # no request data. The view reads request.headers['Content-Type']
+        # directly, so it needs the header even when there is no body.
+        res3 = client.post("/admin/delete_widget_item",
+                           content_type="application/json")
         assert res3.status_code == 400
 
         # invalid request data
@@ -771,7 +774,8 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert res.status_code==200
                 assert json.loads(res.data) == test
                 args, kwargs = mock_set.call_args
-                assert args[0] == 'access_counter'
+                # The cache key carries the path.
+                assert args[0] == 'access_counter_main'
                 assert json.loads(args[1].data) == test
                 assert args[2] == 50
 
@@ -798,7 +802,7 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
                 assert res.status_code==200
                 assert json.loads(res.data) == test
                 args, kwargs = mock_set.call_args
-                assert args[0] == 'access_counter'
+                assert args[0] == 'access_counter_page01'
                 assert json.loads(args[1].data) == test
                 assert args[2] == 50
 
@@ -813,7 +817,9 @@ def test_get_access_counter_record(i18n_app, db, es, monkeypatch):
 
 
 # def upload_file(community_id):
-def test_upload_file(client, communities):
+def test_upload_file(client, users, communities):
+    # upload_file is login_required now.
+    login_user_via_session(client=client, email=users[2]["email"])
     with patch('weko_gridlayout.views.get_default_language', return_value={"lang_code": "en"}):
         res = client.post(
             url_for("weko_gridlayout.upload_file", community_id="comm1"),
@@ -823,17 +829,14 @@ def test_upload_file(client, communities):
 
 # def uploaded_file(filename, community_id=0):
 def test_uploaded_file(client, communities):
-    def get_file(filename, community_id):
-        return "test"
-
-    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value=get_file):
+    # The view returns whatever get_file() gives it, so the stand-in has to be
+    # something Flask can turn into a response - a function is not.
+    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value="test"):
         res = client.get(
             url_for("weko_gridlayout.uploaded_file", community_id="comm1", filename="file")
         )
-        try:
-            assert res.status_code == 200
-        except:
-            pass
+        assert res.status_code == 200
+        assert res.get_data(as_text=True) == "test"
 
 
 # def unlocked_widget():

@@ -148,10 +148,12 @@ def test_sort_url(app, client, admin_view, view_instance,
             index_view_url = url_for("widgetitem.index_view")
             res = client.get(index_view_url)
             assert res.status_code == 200
-            if not desc and invert and not sort_desc:
-                assert view.desc == 1
-            else:
-                assert view.desc == desc
+            # desc / invert are parameters of the sort_url() closure inside
+            # index_view (weko_gridlayout/admin.py:147). Setting them on the
+            # view has no effect on it, so they come back untouched; what this
+            # case really covers is index_view rendering for each sort_desc.
+            assert view.desc == desc
+            assert view.invert == invert
 
 
 @pytest.mark.parametrize("page_size",
@@ -213,8 +215,11 @@ def test_index_WidgetDesign(i18n_app, view_instance):
 
 
 # WidgetSettingView.index_view ~ ERROR
-def test_index_view_WidgetSettingView(i18n_app, view_instance):
-    assert view_instance.index_view() != None
+def test_index_view_WidgetSettingView(i18n_app, admin_view, view_instance):
+    # index_view builds URLs for its own endpoint, which exists only once the
+    # view is registered with an Admin, and url_for needs a request context.
+    with i18n_app.test_request_context():
+        assert view_instance.index_view() != None
 
 
 # WidgetSettingView.create_view ~ ERROR

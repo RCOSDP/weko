@@ -53,7 +53,7 @@ def test_export_all(app,mocker):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_01_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_01_import_author(app):
     with patch("weko_authors.tasks.import_author_to_system"):
-        result = import_author({"status":"", "weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":""}, True, {})
         assert result["status"] == "SUCCESS"
 
 
@@ -61,7 +61,7 @@ def test_01_import_author(app):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_02_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_02_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=SQLAlchemyError("SQLAlchemyError")):
-        result = import_author({"status":"", "weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'SQLAlchemyError')] * 6
     assert info_logs == expected
@@ -72,7 +72,7 @@ def test_02_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_03_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_03_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=ElasticsearchException("ElasticsearchException")):
-        result = import_author({"status":"", "weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'ElasticsearchException')] * 6
     assert info_logs == expected
@@ -83,7 +83,7 @@ def test_03_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_04_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_04_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError("TimeoutError")):
-        result = import_author({"status":"", "weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, 'TimeoutError')] * 6
     assert info_logs == expected
@@ -94,7 +94,7 @@ def test_04_import_author(app, caplog: LogCaptureFixture):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_05_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_05_import_author(app, caplog: LogCaptureFixture):
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError({"error_id": 123, "message": "An error occurred"})):
-        result = import_author({"status":"", "weko_id":""}, True)
+        result = import_author({"status":"", "weko_id":""}, True, {})
     info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
     expected = [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'An error occurred'}")] * 6
     assert info_logs == expected
@@ -753,13 +753,15 @@ def test_import_id_prefix(app, caplog: LogCaptureFixture):
     assert 'start_date' in result
     assert 'end_date' in result
 
+    # weko-logging takes the app logger off the root handlers, so caplog
+    # never sees these records; watch the logger the task actually uses.
     with patch('weko_authors.tasks.import_id_prefix_to_system', side_effect=ValueError({"error_id": 123, "message": "DB upload failed"})):
-        # mock_func.side_effect = Exception("Mocked exception")
-        # with pytest.raises(Exception) as ex:
-        result = import_id_prefix(None)
-        info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
-        assert [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'DB upload failed'}")] == info_logs
+        with patch.object(app.logger, 'error') as mock_error:
+            result = import_id_prefix(None)
         assert result['status'] == 'FAILURE'
+        assert mock_error.call_count == 1
+        assert str(mock_error.call_args[0][0]) == \
+            "{'error_id': 123, 'message': 'DB upload failed'}"
 
 
 # def import_affiliation_id(affiliation_id):
@@ -770,11 +772,15 @@ def test_import_affiliation_id(app, caplog: LogCaptureFixture):
     assert 'start_date' in result
     assert 'end_date' in result
 
+    # weko-logging takes the app logger off the root handlers, so caplog
+    # never sees these records; watch the logger the task actually uses.
     with patch('weko_authors.tasks.import_affiliation_id_to_system', side_effect=ValueError({"error_id": 123, "message": "DB upload failed"})):
-        result = import_affiliation_id(None)
-        info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
-        assert [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'DB upload failed'}")] == info_logs
+        with patch.object(app.logger, 'error') as mock_error:
+            result = import_affiliation_id(None)
         assert result['status'] == 'FAILURE'
+        assert mock_error.call_count == 1
+        assert str(mock_error.call_args[0][0]) == \
+            "{'error_id': 123, 'message': 'DB upload failed'}"
 
 
 # def import_author_over_max(reached_point, task_ids ,max_part):
@@ -890,10 +896,12 @@ def test_check_task_end(app):
 
 # def check_tmp_file_time_for_author():
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_check_tmp_file_time_for_author -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko-authors/.tox/c1/tmp
-def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture, mocker):
-    tmp_dir = "/code/tmp/"
+def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture, mocker,
+                                        tmp_path):
+    # /code is the repository bind mount and is not writable by the test user
+    # in CI; pytest's tmp_path is.
     import os
-    os.makedirs(tmp_dir, exist_ok=True)
+    tmp_dir = str(tmp_path) + os.sep
     mocker.patch("weko_authors.tasks.tempfile.gettempdir", return_value=tmp_dir)
     export_tmp_dir = os.path.join(tmp_dir, app.config.get("WEKO_AUTHORS_EXPORT_TMP_DIR"))
     import_tmp_dir = os.path.join(tmp_dir, app.config.get("WEKO_AUTHORS_IMPORT_TMP_DIR"))

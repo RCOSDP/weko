@@ -180,7 +180,10 @@ def base_app(request, instance_path,search_class):
         WEKO_AUTHORS_IMPORT_CACHE_RESULT_SUMMARY_KEY= "result_summary_key",
         WEKO_AUTHORS_IMPORT_CACHE_OVER_MAX_TASK_KEY = "authors_import_over_max_task",
         WEKO_PERMISSION_SUPER_ROLE_USER = ['System Administrator', 'Repository Administrator'],
-        WEKO_PERMISSION_ROLE_COMMUNITY = ['Community Administrator']
+        WEKO_PERMISSION_ROLE_COMMUNITY = ['Community Administrator'],
+        # gatherById reaches weko-deposit, which reads this straight out of
+        # the config; the extension that would default it is not installed here.
+        WEKO_DEPOSIT_ITEM_UPDATE_TASK_TTL = 60 * 60 * 24 * 30,
     )
     Babel(app_)
     Menu(app_)

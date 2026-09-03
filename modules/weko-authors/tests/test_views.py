@@ -1181,9 +1181,11 @@ def test_get_list_schema_acl_users(client, users, index, is_permission):
 def test_get_list_schema(client, users):
     url = url_for("weko_authors.get_list_schema")
     login_user_via_session(client=client, email=users[0]['email'])
+    # WEKO_AUTHORS_LIST_SCHEME (weko_authors/config.py); 'index' is the
+    # position of 'Other', the last entry.
     test = {
-        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
-        "index":11
+        "list":['e-Rad', 'e-Rad_Researcher', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
+        "index":12
     }
     res = client.get(url)
     assert get_json(res) == test
