@@ -179,6 +179,7 @@ from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
 from tests.helpers import create_record, json_data
+from weko_accounts.unauthorized import install as install_unauthorized_handler
 from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -302,6 +303,12 @@ def base_app(instance_path):
     WekoSchemaUI(app_)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    # The schema REST endpoints live on the API app in production, where
+    # WekoAccountsREST installs this handler. Without it flask_login answers
+    # an unauthorized call with a 302 *return value*, which
+    # ContentNegotiatedMethodView then unpacks as (pid, record) and dies with
+    # "view() missing 1 required positional argument: 'record'".
+    install_unauthorized_handler(app_, api_only=True)
     # app_.register_blueprint(weko_schema_ui_blueprint)
     app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest

@@ -13,8 +13,14 @@
   </documentation>
 </annotation>
 
+<!-- Imported from a local copy rather than
+     http://dublincore.org/schemas/xmls/simpledc20021212.xsd: that URL now
+     redirects to https, which xmlschema 0.9.30 does not follow, so the dc
+     elements silently never load and the schema fails with
+     "missing a XsdElement object for '{http://purl.org/dc/elements/1.1/}title'".
+     A unit test should not need the public internet either way. -->
 <import namespace="http://purl.org/dc/elements/1.1/" 
-        schemaLocation="http://dublincore.org/schemas/xmls/simpledc20021212.xsd"/>
+        schemaLocation="simpledc20021212.xsd"/>
 	
 <element name="dc" type="oai_dc:oai_dcType"/>
 
