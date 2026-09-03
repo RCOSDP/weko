@@ -2176,6 +2176,14 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
       };
 
       $scope.isExistingTitle = function () {
+        // The subitem key used for an item type's title varies by item
+        // type (e.g. `subitem_item_title` vs.
+        // `subitem_restricted_access_item_title`). It is resolved
+        // server-side (weko_workflow.views.get_title_subitem_keys) and
+        // passed down via these hidden inputs, falling back to the
+        // standard JPCOAR name if unresolved.
+        let titleSubKey = $("#title_subitem_key").val() || "subitem_item_title";
+        let titleLanguageKey = $("#title_language_subitem_key").val() || "subitem_item_title_language";
         let model = $rootScope.recordsVM.invenioRecordsModel;
         if (Object.keys(model).length === 0 && model.constructor === Object) {
           return false;
@@ -2183,7 +2191,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           let isExisted = false;
           for (let key in model) {
             if (model.hasOwnProperty(key) && model[key].length > 0) {
-              let title = model[key][0]['subitem_item_title'];
+              let title = model[key][0][titleSubKey];
               if (title){
                 $scope.item_tile_key = key
                 let activity_id= title.match(/A-[0-9]{8}-[0-9]{5}/g);
@@ -2194,7 +2202,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               if (title && $("#auto_fill_title").val() !== '""') {
                 $scope.setFormReadOnly(key);
                 setTimeout(function () {
-                  $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
+                  $("input[name='" + titleSubKey + "'], select[name='" + titleLanguageKey + "']").attr("disabled", "disabled");
                 }, 3000);
                 isExisted = true;
                 break;
@@ -2226,21 +2234,28 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               userName = JSON.parse(userInfoData).results["subitem_displayname"];
             }
           }
-          let titleSubKey = "subitem_item_title";
-          let titleLanguageKey = "subitem_item_title_language";
+          let titleSubKey = $("#title_subitem_key").val() || "subitem_item_title";
+          let titleLanguageKey = $("#title_language_subitem_key").val() || "subitem_item_title_language";
           let recordsVM = $rootScope["recordsVM"];
           Object.entries(recordsVM["invenioRecordsSchema"].properties).forEach(
             function ([key, value]) {
               if (value && value.type === "array" && value.items) {
                 if (value.items.properties && value.items.properties.hasOwnProperty(titleSubKey)) {
+                  // Not every title property declares a language sub-key
+                  // (e.g. item_1578299480500 on item type 3007/3008) --
+                  // assigning an undeclared property breaks the whole
+                  // array item and the record fails to save with a title.
+                  let hasLanguageKey = value.items.properties.hasOwnProperty(titleLanguageKey);
                   $scope.item_tile_key = key;
                   let enTitle = {};
                   let jaTitle = {};
                   // TitleData and Username are mandatory, dataType either way
                   enTitle[titleSubKey] = dataType ? [dataType, titleData['en'], userName].join(" - ") : [titleData['en'], userName].join(" - ");
-                  enTitle[titleLanguageKey] = "en";
                   jaTitle[titleSubKey] = dataType ? [dataType, titleData['ja'], userName].join(" - ") : [titleData['ja'], userName].join(" - ");
-                  jaTitle[titleLanguageKey] = "ja";
+                  if (hasLanguageKey) {
+                    enTitle[titleLanguageKey] = "en";
+                    jaTitle[titleLanguageKey] = "ja";
+                  }
                   recordsVM["invenioRecordsModel"][key] = [jaTitle, enTitle];
                 }
               }
@@ -5266,8 +5281,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let defaultTitleEn = titleData['en'] + userName;
         let defaultTitleJa = titleData['ja'] + userName;
 
-        let titleSubKey = "subitem_item_title";
-        let titleLanguageKey = "subitem_item_title_language";
+        let titleSubKey = $("#title_subitem_key").val() || "subitem_item_title";
+        let titleLanguageKey = $("#title_language_subitem_key").val() || "subitem_item_title_language";
         let selectedUsageApplicationIDs = []
 
         let model = $rootScope["recordsVM"].invenioRecordsModel;

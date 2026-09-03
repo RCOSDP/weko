@@ -58,7 +58,7 @@ from weko_items_ui.api import item_login
 from weko_items_ui.utils import check_item_is_being_edit, get_workflow_by_item_type_id, \
     get_current_user
 from weko_logging.activity_logger import UserActivityLogger
-from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes, ItemApplication
+from weko_records.api import FeedbackMailList, RequestMailList, ItemLink, ItemTypes, ItemApplication, Mapping
 from weko_records.models import ItemMetadata
 from weko_records.serializers.utils import get_item_type_name
 from weko_records_ui.models import FilePermission
@@ -797,6 +797,37 @@ def verify_deletion(activity_id="0"):
 
     return jsonify(res), 200
 
+def get_title_subitem_keys(item_type_id):
+    """Resolve the subitem key names used for an item type's title.
+
+    Different item types name their "title" subitem differently
+    (e.g. ``subitem_item_title`` for the standard JPCOAR title
+    property, ``subitem_restricted_access_item_title`` for the
+    restricted-access reference item type). Rather than hardcoding
+    one name, resolve it the same way
+    :meth:`weko_deposit.api.WekoDeposit.get_titles` does: via the
+    item type's ``jpcoar_mapping.title`` mapping entry.
+
+    :param item_type_id: ID of the item type.
+    :returns: (title_subitem_key, title_language_subitem_key), each
+        an empty string if it could not be resolved.
+    """
+    title_subitem_key = ""
+    title_language_subitem_key = ""
+    item_type_mapping = Mapping.get_record(item_type_id) if item_type_id else None
+    if item_type_mapping:
+        for mapping_value in item_type_mapping.values():
+            if not isinstance(mapping_value, dict):
+                continue
+            jpcoar_title = (mapping_value.get('jpcoar_mapping') or {}).get('title')
+            if isinstance(jpcoar_title, dict) and jpcoar_title.get('@value'):
+                title_subitem_key = jpcoar_title.get('@value')
+                title_language_subitem_key = jpcoar_title.get(
+                    '@attributes', {}).get('xml:lang') or ""
+                break
+    return title_subitem_key, title_language_subitem_key
+
+
 @workflow_blueprint.route('/activity/detail/<string:activity_id>',
                  methods=['GET', 'POST'])
 @login_required_customize
@@ -955,6 +986,8 @@ def display_activity(activity_id="0", community_id=None):
     step_item_login_url = None
     term_and_condition_content = ''
     title = ""
+    title_subitem_key = ""
+    title_language_subitem_key = ""
     user_lock_key = "workflow_userlock_activity_{}".format(str(current_user.get_id()))
     if action_endpoint in ['item_login',
                            'item_login_application',
@@ -1007,6 +1040,8 @@ def display_activity(activity_id="0", community_id=None):
 
 
         title = auto_fill_title(item_type_name)
+        title_subitem_key, title_language_subitem_key = \
+            get_title_subitem_keys(workflow_detail.itemtype_id)
         show_autofill_metadata = is_show_autofill_metadata(item_type_name)
         is_hidden_pubdate_value = is_hidden_pubdate(item_type_name)
 
@@ -1209,6 +1244,8 @@ def display_activity(activity_id="0", community_id=None):
         approval_preview=approval_preview,
         auto_fill_data_type=data_type,
         auto_fill_title=title,
+        title_subitem_key=title_subitem_key,
+        title_language_subitem_key=title_language_subitem_key,
         community_id=community_id,
         cur_step=cur_step,
         contributors=contributors,
