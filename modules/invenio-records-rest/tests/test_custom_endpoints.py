@@ -51,7 +51,7 @@ def test_custom_endpoints_app(app):
     # Disable all endpoints from config. The test will create the endpoint.
     records_rest_endpoints=dict(),
 )], indirect=['app'])
-def test_get_record(test_custom_endpoints_app, test_records):
+def test_get_record(test_custom_endpoints_app, db, test_records):
     """Test the creation of a custom endpoint using RecordResource."""
     test_records = test_records
     """Test creation of a RecordResource view."""
@@ -82,6 +82,14 @@ def test_get_record(test_custom_endpoints_app, test_records):
 
     with test_custom_endpoints_app.app_context():
         pid, record = test_records[0]
+        # verify_record_permission() refuses an unpublished record whatever
+        # the permission factory says, and these fixture records carry none of
+        # WEKO's publication fields
+        # (weko_records_ui.permissions.check_publish_status).
+        record['publish_status'] = '0'
+        record['pubdate'] = {'attribute_value': '2000-01-01'}
+        record.commit()
+        db.session.commit()
         url = url_for('test_invenio_records_rest1.recid_item',
                       pid_value=pid.pid_value, user=1)
         with test_custom_endpoints_app.test_client() as client:

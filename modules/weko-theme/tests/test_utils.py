@@ -23,14 +23,17 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities, re
     with patch("weko_theme.utils.get_index_link_list", return_value=[(11, 'TEST INDEX')]):
         index_style = MagicMock()
         index_style.index_link_enabled = False
+        # getargs is the request's args mapping, not a community id: the
+        # function does getargs.get('c'). A bare string only got this far
+        # because 'c' in 'comm1' is also true.
         with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
-            result = get_weko_contents('comm1')
+            result = get_weko_contents({'c': 'comm1'})
             assert result
             assert not result['index_link_list']
 
             index_style.index_link_enabled = True
             with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
-                result = get_weko_contents('comm1')
+                result = get_weko_contents({'c': 'comm1'})
                 assert result
                 assert result['index_link_list']
 

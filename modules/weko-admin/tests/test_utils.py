@@ -138,13 +138,18 @@ def test_update_admin_lang_setting(language_setting):
     admin_lang_settings = [
         {"lang_code":"en","lang_name":"English2","is_registered":False,"sequence":10},
     ]
-    result = update_admin_lang_setting(admin_lang_settings)
-    assert result == "success"
-    assert AdminLangSettings.query.filter_by(lang_code="en").one().lang_name == "English2"
+    # update_admin_lang_setting returns nothing and does not swallow errors;
+    # what it does is write the rows.
+    assert update_admin_lang_setting(admin_lang_settings) is None
+    updated = AdminLangSettings.query.filter_by(lang_code="en").one()
+    assert updated.lang_name == "English2"
+    assert updated.is_registered is False
+    assert updated.sequence == 10
 
     with patch("weko_admin.utils.AdminLangSettings.update_lang",side_effect=Exception("test_error")):
-        result = update_admin_lang_setting(admin_lang_settings)
-        assert result=="test_error"
+        with pytest.raises(Exception) as e:
+            update_admin_lang_setting(admin_lang_settings)
+        assert str(e.value) == "test_error"
 
 
 # def get_selected_language():
@@ -461,8 +466,9 @@ def test_write_report_file_rows(db,users):
     output = StringIO()
     writer = csv.writer(output,delimiter=",",lineterminator="\n")
     write_report_file_rows(writer,record,"file_using_per_user")
+    # user 1 has the profile created just above, so its display name shows up.
     assert output.getvalue() == ",Guest,10,5\n"\
-                                "user@test.org,,10,5\n"
+                                "user@test.org,test smith,10,5\n"
 
     # filetype is top_page_access
     record = [{"host":"test_host","ip":"123.456.789","count":"10"}]
