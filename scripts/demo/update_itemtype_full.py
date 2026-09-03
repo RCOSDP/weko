@@ -148,8 +148,9 @@ def main():
 
                     flag_modified(_mapping, 'mapping')
                     db.session.merge(_mapping)
-                    Mapping.create(item_type_id=itemType.id,
-                               mapping=_mapping.mapping)
+                    # patched 2026-09-01: removed a redundant `Mapping.create(item_type_id=...)`
+                    # call after the merge() above -- same bug as update_itemtype_multiple.py,
+                    # the direct cause of the long-standing duplicate rows in item_type_mapping.
                     print("session merged.")
 
         db.session.commit()

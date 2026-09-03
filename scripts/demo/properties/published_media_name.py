@@ -28,7 +28,7 @@ def schema(title="", multi_flag=multiple_flag):
             "system_prop": True,
             "type": "object",
             "properties": {
-                "subitem_published_media_nam": {
+                "subitem_published_media_name": {
                     "format": "text",
                     "title": "公表媒体名",
                     "type": "string",
@@ -50,7 +50,7 @@ def form(
         _d = {
             "items": [
                 {
-                    "key": "{}.subitem_published_media_nam".format(key),
+                    "key": "{}.subitem_published_media_name".format(key),
                     "title": "公表媒体名",
                     "title_i18n": {"en": "Published Media Name", "ja": "公表媒体名"},
                     "type": "text",

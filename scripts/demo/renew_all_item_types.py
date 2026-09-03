@@ -6,6 +6,10 @@ import properties
 import traceback
 import argparse
 
+args = None  # patched 2026-09-01: avoids NameError when main() is imported and
+             # called directly (e.g. from update_jpcoar_2_0.py), which never
+             # defines this module-level name the way `if __name__ == '__main__'` does.
+
 def main():
     try:
         _renew_type = args.renew_type if args else ''

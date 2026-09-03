@@ -74,7 +74,13 @@ JPCOAR_HOLDING_AGENT = "1055"  # 所蔵機関
 JPCOAR_DATASET_SERIES = "1056"  # データセットシリーズ
 JPCOAR_CATALOG = "1057"  # カタログ
 DATASET_USAGE = "3001"  # データ名
-USER_INFORMATION = "3002"  # 登録者情報
+USER_INFORMATION = "3052"  # 登録者情報 (patched 2026-09-01: production has this at id=3052
+# with substantial JGSS-specific customization (closed-vocabulary position/institution
+# enums) that differs from the generic v2.0.3 free-text version normally registered at
+# id=3002. Pointing here to the existing id causes register_properties to treat it as
+# already-registered and SKIP overwriting it, preserving the JGSS customization.
+# UNLIKE the id=212/3018 case, this is NOT confirmed to be a pure rename/typo — the
+# content genuinely differs. Flagged for NII / 大商大 review (see main report).
 GUARANTOR = "3003"  # 保証人
 ADVISOR = "3004"  # 指導教員
 RESEARCH_TITLE = "3005"  # 研究題目
@@ -90,7 +96,12 @@ ANNUAL_REPORT = "3014"  # 年次報告
 STOP_CONTINUE = "3015"  # 終了／継続
 AUTHOR_NAME = "3016"  # 著者名
 OUTPUT_TYPE = "3017"  # 成果物のタイプ
-PUBLISHED_MEDIA_NAME = "3018"  # 公表媒体名
+PUBLISHED_MEDIA_NAME = "212"  # 公表媒体名 (patched 2026-09-01: production already has this
+# property registered at id=212 (JGSS legacy); the original id=3018 collided on the
+# name-uniqueness constraint and rolled back the entire register_properties batch.
+# id=212 and id=3018 were confirmed to be the same property (same schema/form content,
+# differing only by the subitem key typo fixed below), so we register under the
+# existing id instead of creating a duplicate.
 PUBLISHED_DOI_URL = "3019"  # 公表URL（DOI）
 PUBLISHED_DATE = "3020"  # 公表年月日
 SUMMARY = "3021"  # 要約

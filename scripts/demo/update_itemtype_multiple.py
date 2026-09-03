@@ -167,9 +167,13 @@ def main():
                 flag_modified(_mapping, 'mapping')
                 db.session.merge(_mapping)
                 fixed_mapping_ids.append(_mapping.id)
-                new_mapping = Mapping.create(item_type_id=itemType.id,
-                            mapping=_mapping.mapping)
-                fixed_mapping_ids.append(new_mapping.model.id)
+                # patched 2026-09-01: removed a redundant `Mapping.create(item_type_id=...)`
+                # call that ran immediately after the merge() above. It unconditionally
+                # inserted a second row with the same item_type_id and (at this point)
+                # identical content -- the direct cause of the long-standing duplicate
+                # rows in item_type_mapping (up to 53 for one item type in production).
+                # The merge() two lines above already updates the single row that should
+                # exist per item_type_id; no additional insert is needed.
                 current_app.logger.info("session merged.")
 
             db.session.commit()
