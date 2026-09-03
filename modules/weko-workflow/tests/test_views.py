@@ -35,7 +35,8 @@ from weko_workflow.views import (render_guest_workflow,
                                  check_authority,
                                  display_guest_activity,
                                  display_guest_activity_item_application,
-                                 render_guest_workflow)
+                                 render_guest_workflow,
+                                 get_title_subitem_keys)
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FileOnetimeDownload, FilePermission
 from weko_records.models import ItemMetadata, ItemReference
@@ -4626,6 +4627,28 @@ def test_verify_deletion(client, db, db_register2,db_register_full_action,users)
     res = client.get(url)
     assert res.status_code == 200
     assert json.loads(res.data) == {"code": 200, 'for_delete': False, "is_deleted": True}
+
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_title_subitem_keys -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
+def test_get_title_subitem_keys(app, item_type):
+    """get_title_subitem_keys() should resolve the title subitem key names
+    from the item type's own jpcoar_mapping, not a hardcoded name -- the
+    title subitem key varies by item type (e.g. subitem_item_title vs.
+    subitem_restricted_access_item_title)."""
+    item_type_id = item_type[0]["id"]
+    # tests/data/item_type/item_type_mapping.json maps
+    # item_1617186331708.jpcoar_mapping.title to these subitem keys.
+    title_subitem_key, title_language_subitem_key = \
+        get_title_subitem_keys(item_type_id)
+    assert title_subitem_key == "subitem_1551255647225"
+    assert title_language_subitem_key == "subitem_1551255648112"
+
+
+def test_get_title_subitem_keys_no_mapping(app, db):
+    """Falls back to empty strings (never raises) when there is no
+    item_type_mapping for the given id, or no id at all."""
+    assert get_title_subitem_keys(None) == ("", "")
+    assert get_title_subitem_keys(999999) == ("", "")
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 def test_display_activity_nologin(client,db_register2,mocker):
