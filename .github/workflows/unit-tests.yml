@@ -62,14 +62,12 @@ jobs:
       force_rebuild: ${{ inputs.force_rebuild || false }}
 
   test:
-    name: ${{ matrix.module }}
+    name: ${{ matrix.module }}${{ matrix.shard && format(' [{0}]', matrix.shard) || '' }}
     needs: images
     runs-on: ubuntu-latest
-    # weko-deposit は 228 本のテストを回すのに約 80 分かかり、60 分では
-    # 63% で打ち切られていた (毎回 cancelled)。テストの中身ではなく
-    # 1件あたりの db.create_all()/drop_all() と es_records の重さが効くので、
-    # 上限のほうを実測に合わせる。
-    timeout-minutes: 120
+    # 分割後は1ジョブ 30〜60 分の想定。余裕を見て 90 分。
+    # 分割の考え方は下の matrix.include のコメントを参照。
+    timeout-minutes: 90
     permissions:
       contents: read
       packages: read
@@ -80,57 +78,113 @@ jobs:
       WEKO_NGINX_IMAGE: ${{ needs.images.outputs.nginx }}
     strategy:
       fail-fast: false
-      max-parallel: 4
+      # 分割でジョブ数が 47 → 63 に増えた。1ジョブあたり tox の依存導入
+      # (約290パッケージ) が乗るので、同時実行を上げないと全体の時間が延びる。
+      max-parallel: 8
       matrix:
-        module:
-          - invenio-accounts
-          - invenio-communities
-          - invenio-db
-          - invenio-deposit
-          - invenio-files-rest
-          - invenio-iiif
-          - invenio-indexer
-          - invenio-mail
-          - invenio-oaiharvester
-          - invenio-oaiserver
-          - invenio-oauth2server
-          - invenio-previewer
-          - invenio-queues
-          - invenio-records-rest
-          - invenio-records
-          - invenio-resourcesyncclient
-          - invenio-resourcesyncserver
-          - invenio-s3
-          - invenio-stats
-          - weko-accounts
-          - weko-admin
-          - weko-authors
-          - weko-bulkupdate
-          - weko-deposit
-          - weko-gridlayout
-          - weko-groups
-          - weko-handle
-          - weko-index-tree
-          - weko-indextree-journal
-          - weko-items-autofill
-          - weko-items-ui
-          - weko-itemtypes-ui
-          - weko-logging
-          - weko-notifications
-          - weko-plugins
-          - weko-records-ui
-          - weko-records
-          - weko-redis
-          - weko-schema-ui
-          - weko-search-ui
-          - weko-signposting
-          - weko-sitemap
-          - weko-swordserver
-          - weko-theme
-          - weko-user-profiles
-          - weko-workflow
-          - weko-workspace
-
+        # モジュール一覧はここが唯一の正 (scripts/ci/matrix.sh が読み、
+        # matrix-check ジョブが列挙漏れを止める)。
+        #
+        # shard を付けたものは pytest-split で本数を等分し、1ジョブ1本だけ回す。
+        # 付けていないモジュールは従来どおり全件を1ジョブで回す。
+        #
+        # 【なぜ分割するか】weko-workflow は 794 本で 4時間54分かかり、
+        # timeout を 60 → 120 分に上げても足りなかった。GitHub のジョブ上限は
+        # 6 時間なので、上限を上げ続ける形では解決しない。
+        # 効いているのは各モジュールの conftest.py の db フィクスチャで、
+        # 1テストごとに WEKO 全モジュール分のテーブルを drop_all()/create_all()
+        # している (1件あたり約22秒)。フィクスチャのスコープを見直せば
+        # 分割は不要になるが、テスト間の独立性が変わるので別途 (issues.md C-1)。
+        #
+        # 【分割数の決め方】ローカル実測の総時間 ÷ 30〜45分。
+        # weko-workflow 以外の3つは 120 分で打ち切られていて実測が無いため、
+        # 暫定で 4 分割にしてある。実測が採れたら見直すこと。
+        # test_views.py だけで 447 本あるのでファイル単位では割れず、
+        # pytest-split に本数で等分させている。
+        include:
+          - module: invenio-accounts
+          - module: invenio-communities
+          - module: invenio-db
+          - module: invenio-deposit
+          - module: invenio-files-rest
+          - module: invenio-iiif
+          - module: invenio-indexer
+          - module: invenio-mail
+          - module: invenio-oaiharvester
+          - module: invenio-oaiserver
+          - module: invenio-oauth2server
+          - module: invenio-previewer
+          - module: invenio-queues
+          - module: invenio-records-rest
+          - module: invenio-records
+          - module: invenio-resourcesyncclient
+          - module: invenio-resourcesyncserver
+          - module: invenio-s3
+          - module: invenio-stats
+          - module: weko-accounts
+          - module: weko-admin
+          - module: weko-authors
+          - module: weko-bulkupdate
+          - module: weko-deposit
+            shard: 1/4
+          - module: weko-deposit
+            shard: 2/4
+          - module: weko-deposit
+            shard: 3/4
+          - module: weko-deposit
+            shard: 4/4
+          - module: weko-gridlayout
+          - module: weko-groups
+          - module: weko-handle
+          - module: weko-index-tree
+          - module: weko-indextree-journal
+          - module: weko-items-autofill
+          - module: weko-items-ui
+          - module: weko-itemtypes-ui
+          - module: weko-logging
+          - module: weko-notifications
+          - module: weko-plugins
+          - module: weko-records-ui
+            shard: 1/4
+          - module: weko-records-ui
+            shard: 2/4
+          - module: weko-records-ui
+            shard: 3/4
+          - module: weko-records-ui
+            shard: 4/4
+          - module: weko-records
+          - module: weko-redis
+          - module: weko-schema-ui
+          - module: weko-search-ui
+            shard: 1/4
+          - module: weko-search-ui
+            shard: 2/4
+          - module: weko-search-ui
+            shard: 3/4
+          - module: weko-search-ui
+            shard: 4/4
+          - module: weko-signposting
+          - module: weko-sitemap
+          - module: weko-swordserver
+          - module: weko-theme
+          - module: weko-user-profiles
+          - module: weko-workflow
+            shard: 1/8
+          - module: weko-workflow
+            shard: 2/8
+          - module: weko-workflow
+            shard: 3/8
+          - module: weko-workflow
+            shard: 4/8
+          - module: weko-workflow
+            shard: 5/8
+          - module: weko-workflow
+            shard: 6/8
+          - module: weko-workflow
+            shard: 7/8
+          - module: weko-workflow
+            shard: 8/8
+          - module: weko-workspace
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -209,7 +263,8 @@ jobs:
     - name: Run tox in ${{ matrix.module }}
       run: |
         docker compose run --rm --no-deps -T \
-          web bash /code/scripts/ci/run-module-tests.sh '${{ matrix.module }}'
+          web bash /code/scripts/ci/run-module-tests.sh \
+          '${{ matrix.module }}' '${{ matrix.shard }}'
 
     - name: Show logs if failed
       if: failure()

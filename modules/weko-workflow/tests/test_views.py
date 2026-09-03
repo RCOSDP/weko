@@ -873,7 +873,11 @@ def test_render_guest_workflow(client, users, db_register_full_action, db_guesta
     with patch('weko_workflow.views.GuestActivity.get_expired_activities',return_value=""):
         with patch('weko_workflow.views.validate_guest_activity_token',return_value=return_validate_guest_activity_token):
             with patch('weko_workflow.views.validate_guest_activity_expired', return_value =""):
-                with patch('weko_workflow.views.prepare_data_for_guest_activity',return_value={}):
+                # steps が空だと render_guest_workflow は 404 を返す
+                # (views.py の「can not get workflow_action_history」)。
+                # ここで見たいのは render_template が呼ばれることなので、
+                # 空でない steps を持たせる。
+                with patch('weko_workflow.views.prepare_data_for_guest_activity',return_value={"steps": [{}]}):
                     with patch('weko_workflow.views.get_usage_data',return_value={}):
                         with patch('weko_workflow.views.get_main_record_detail',return_value={"record":{"is_guest":True}}):
                             with patch('weko_workflow.views.render_template', mock_render_template):
@@ -884,7 +888,11 @@ def test_render_guest_workflow(client, users, db_register_full_action, db_guesta
     with patch('weko_workflow.views.GuestActivity.get_expired_activities',return_value=""):
         with patch('weko_workflow.views.validate_guest_activity_token',return_value=return_validate_guest_activity_token):
             with patch('weko_workflow.views.validate_guest_activity_expired', return_value =""):
-                with patch('weko_workflow.views.prepare_data_for_guest_activity',return_value={}):
+                # steps が空だと render_guest_workflow は 404 を返す
+                # (views.py の「can not get workflow_action_history」)。
+                # ここで見たいのは render_template が呼ばれることなので、
+                # 空でない steps を持たせる。
+                with patch('weko_workflow.views.prepare_data_for_guest_activity',return_value={"steps": [{}]}):
                     with patch('weko_workflow.views.get_usage_data',return_value={}):
                         with patch('weko_workflow.views.get_main_record_detail',return_value={}):
                             with patch('weko_workflow.views.render_template', mock_render_template):
