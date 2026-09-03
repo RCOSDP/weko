@@ -28,6 +28,7 @@ from elasticsearch.exceptions import RequestError
 from elasticsearch_dsl import response, Search
 from flask import Flask, url_for, Response
 from flask_login import LoginManager, UserMixin
+from flask_security import AnonymousUser
 from tests.helpers import create_record
 
 from invenio_access.models import ActionRoles, ActionUsers
@@ -522,6 +523,17 @@ def test_patch():
 
 
 @pytest.yield_fixture
+def request_context(app):
+    """Push a request context.
+
+    The serializers reach weko code that reads ``current_user`` and the
+    current locale; outside a request both resolve to None.
+    """
+    with app.test_request_context():
+        yield
+
+
+@pytest.yield_fixture
 def default_permissions(app):
     """Test default deny all permission."""
     for key in ['RECORDS_REST_DEFAULT_CREATE_PERMISSION_FACTORY',
@@ -531,9 +543,16 @@ def default_permissions(app):
         app.config[key] = getattr(config, key)
 
     lm = LoginManager(app)
+    # This replaces the login manager invenio-accounts installed, and with it
+    # flask-security's anonymous user. The record serializer reaches
+    # weko_records_ui.hide_meta_data_for_role, which reads current_user.roles,
+    # and flask_login's plain AnonymousUserMixin has no such attribute.
+    lm.anonymous_user = AnonymousUser
 
     # Allow easy login for tests purposes :-)
     class User(UserMixin):
+        roles = []
+
         def __init__(self, id):
             self.id = id
 
