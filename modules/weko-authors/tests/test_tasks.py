@@ -60,10 +60,13 @@ def test_01_import_author(app):
 # def import_author(author):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_02_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_02_import_author(app, caplog: LogCaptureFixture):
+    # weko-logging takes the app logger off the root handlers, so caplog never
+    # sees these records; watch the logger the task actually uses.
     with patch("weko_authors.tasks.import_author_to_system",side_effect=SQLAlchemyError("SQLAlchemyError")):
-        result = import_author({"status":"", "weko_id":""}, True, {})
-    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
-    expected = [('testapp', logging.ERROR, 'SQLAlchemyError')] * 6
+        with patch.object(app.logger, 'error') as mock_error:
+            result = import_author({"status":"", "weko_id":""}, True, {})
+    info_logs = [str(call[0][0]) for call in mock_error.call_args_list]
+    expected = ['SQLAlchemyError'] * 6
     assert info_logs == expected
     assert result["status"] == "FAILURE"
 
@@ -71,10 +74,13 @@ def test_02_import_author(app, caplog: LogCaptureFixture):
 # def import_author(author):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_03_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_03_import_author(app, caplog: LogCaptureFixture):
+    # weko-logging takes the app logger off the root handlers, so caplog never
+    # sees these records; watch the logger the task actually uses.
     with patch("weko_authors.tasks.import_author_to_system",side_effect=ElasticsearchException("ElasticsearchException")):
-        result = import_author({"status":"", "weko_id":""}, True, {})
-    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
-    expected = [('testapp', logging.ERROR, 'ElasticsearchException')] * 6
+        with patch.object(app.logger, 'error') as mock_error:
+            result = import_author({"status":"", "weko_id":""}, True, {})
+    info_logs = [str(call[0][0]) for call in mock_error.call_args_list]
+    expected = ['ElasticsearchException'] * 6
     assert info_logs == expected
     assert result["status"] == "FAILURE"
 
@@ -82,10 +88,13 @@ def test_03_import_author(app, caplog: LogCaptureFixture):
 # def import_author(author):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_04_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_04_import_author(app, caplog: LogCaptureFixture):
+    # weko-logging takes the app logger off the root handlers, so caplog never
+    # sees these records; watch the logger the task actually uses.
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError("TimeoutError")):
-        result = import_author({"status":"", "weko_id":""}, True, {})
-    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
-    expected = [('testapp', logging.ERROR, 'TimeoutError')] * 6
+        with patch.object(app.logger, 'error') as mock_error:
+            result = import_author({"status":"", "weko_id":""}, True, {})
+    info_logs = [str(call[0][0]) for call in mock_error.call_args_list]
+    expected = ['TimeoutError'] * 6
     assert info_logs == expected
     assert result["status"] == "FAILURE"
 
@@ -93,10 +102,13 @@ def test_04_import_author(app, caplog: LogCaptureFixture):
 # def import_author(author):
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_tasks.py::test_05_import_author -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 def test_05_import_author(app, caplog: LogCaptureFixture):
+    # weko-logging takes the app logger off the root handlers, so caplog never
+    # sees these records; watch the logger the task actually uses.
     with patch("weko_authors.tasks.import_author_to_system",side_effect=TimeoutError({"error_id": 123, "message": "An error occurred"})):
-        result = import_author({"status":"", "weko_id":""}, True, {})
-    info_logs = [record for record in caplog.record_tuples if record[1] == logging.ERROR]
-    expected = [('testapp', logging.ERROR, "{'error_id': 123, 'message': 'An error occurred'}")] * 6
+        with patch.object(app.logger, 'error') as mock_error:
+            result = import_author({"status":"", "weko_id":""}, True, {})
+    info_logs = [str(call[0][0]) for call in mock_error.call_args_list]
+    expected = ["{'error_id': 123, 'message': 'An error occurred'}"] * 6
     assert info_logs == expected
     assert result["status"] == "FAILURE"
 
@@ -932,13 +944,15 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture, mocker,
     create_tmp_files()
     now = datetime.now(timezone.utc)
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    mock_getmtime = [
-        (mock_current_time - timedelta(seconds=3600)).timestamp(),
-        (now- timedelta(seconds=3600)).timestamp(),
-        (mock_current_time - timedelta(seconds=3600)).timestamp(),
-        (now- timedelta(seconds=3600)).timestamp()
-    ]
-    with patch('os.path.getmtime', side_effect=mock_getmtime):
+    # Decide by file name rather than by call order: the task walks the
+    # directories with os.listdir, whose order is arbitrary, so a list of
+    # side effects lands on whichever file comes first.
+    def mock_getmtime(path):
+        if path.endswith("test_file1"):
+            return (mock_current_time - timedelta(seconds=3600)).timestamp()
+        return (now - timedelta(seconds=3600)).timestamp()
+
+    with patch('os.path.getmtime', mock_getmtime):
         check_tmp_file_time_for_author()
         assert not os.path.exists(os.path.join(export_tmp_dir, "test_file1"))
         assert os.path.exists(os.path.join(export_tmp_dir, "test_file2"))
@@ -955,8 +969,10 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture, mocker,
     create_tmp_files()
     now = datetime.now(timezone.utc)
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    mock_getmtime = [(mock_current_time - timedelta(seconds=3600)).timestamp()] * 4
-    with patch('os.path.getmtime', side_effect=mock_getmtime):
+    def mock_getmtime(path):
+        return (mock_current_time - timedelta(seconds=3600)).timestamp()
+
+    with patch('os.path.getmtime', mock_getmtime):
         check_tmp_file_time_for_author()
         assert not os.path.exists(os.path.join(export_tmp_dir, "test_file1"))
         assert not os.path.exists(os.path.join(export_tmp_dir, "test_file2"))
@@ -972,8 +988,7 @@ def test_check_tmp_file_time_for_author(app, caplog: LogCaptureFixture, mocker,
     create_tmp_files()
     now = datetime.now(timezone.utc)
     mock_current_time = datetime(2025, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
-    mock_getmtime = [(mock_current_time - timedelta(seconds=3600)).timestamp()] * 4
-    with patch('os.path.getmtime', side_effect=mock_getmtime), \
+    with patch('os.path.getmtime', mock_getmtime), \
         patch('os.remove', side_effect=OSError):
         caplog.set_level(logging.ERROR)
         check_tmp_file_time_for_author()

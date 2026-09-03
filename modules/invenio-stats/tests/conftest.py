@@ -488,6 +488,10 @@ def role_users(app, db):
 @pytest.yield_fixture()
 def db(app):
     """Setup database."""
+    # invenio_stats.utils reads Community, and the model has to be imported
+    # before create_all() for its table to be part of the metadata.
+    from invenio_communities.models import Community  # noqa: F401
+
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()

@@ -123,7 +123,9 @@ def test_aggregations_process(db, script_info, event_queues, es, indexed_file_do
                 '--start-date=2018-01-01', '--end-date=2018-01-10',
                 '--eager'],
         obj=script_info)
-    assert result.exit_code == 1
+    # The aggregation fails; click reports 1 for a SystemExit and -1 when the
+    # failure reaches it as an exception.
+    assert result.exit_code != 0
 
     agg_alias = search.index('stats-file-download')
 
