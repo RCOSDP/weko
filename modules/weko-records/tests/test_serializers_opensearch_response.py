@@ -1,4 +1,5 @@
 import pytest
+from mock import patch
 from tests.helpers import json_data
 
 from invenio_records_rest.schemas.json import RecordSchemaJSONV1
@@ -28,8 +29,17 @@ def test_oepnsearch_responsify(app, db, hit):
     _search_result = {'hits': {'total': 1, 'hits': [json_data(hit)]}}
     opensearch_v1 = OpenSearchSerializer(RecordSchemaJSONV1)
     opensearch = oepnsearch_responsify(opensearch_v1)
+    # The serializer looks the hit's control_number up as a record to decide
+    # whether the metadata may be shown; there is no such record here.
+    stored_record = {
+        'publish_status': '0',
+        'pubdate': {'attribute_value': '2000-01-01'},
+        '_deposit': {'created_by': 1},
+    }
     with app.test_request_context():
-        result = opensearch(fetcher, _search_result)
+        with patch('weko_deposit.api.WekoRecord.get_record_by_pid',
+                   return_value=stored_record):
+            result = opensearch(fetcher, _search_result)
         assert result.status_code==200
 
 # def add_link_header(response, links):
