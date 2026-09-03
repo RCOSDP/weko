@@ -109,16 +109,6 @@ def app(base_app):
     InvenioFilesREST(base_app)
     base_app.register_blueprint(blueprint)
 
-    # flask-sqlalchemy removes the session on every app-context teardown, and
-    # helpers such as login_user() push and pop a nested context in the middle
-    # of a test. That detaches everything the fixtures handed out, so reading
-    # bucket.id after a login raises DetachedInstanceError. Keep the session
-    # for the length of the test; the db fixture still removes it at the end.
-    base_app.teardown_appcontext_funcs = [
-        f for f in base_app.teardown_appcontext_funcs
-        if f.__name__ != 'shutdown_session'
-    ]
-
     with base_app.app_context():
         yield base_app
 
@@ -129,8 +119,16 @@ def db(app):
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
+    # invenio_files_rest registers a blueprint teardown (views.dbsession_clean)
+    # that calls db.session.remove() after every request, so every instance a
+    # fixture handed out is detached as soon as a test makes one. Leaving them
+    # unexpired keeps the attributes already loaded readable afterwards, which
+    # is what tests reading bucket.id between requests rely on.
+    db_.session.remove()
+    db_.session.configure(expire_on_commit=False)
     yield db_
     db_.session.remove()
+    db_.session.configure(expire_on_commit=True)
     db_.drop_all()
     drop_alembic_version_table()
 

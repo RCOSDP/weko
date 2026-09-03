@@ -448,9 +448,10 @@ class TestCommunityModelView():
             # get
             res = client.get(url)
             assert res.status_code == 200
+            # contributor holds no admin-access, so the protected view says no.
             login_user_via_session(client,email=users[0]["email"])
             res = client.get(url)
-            assert res.status_code == 200
+            assert res.status_code == 403
 
             login_user_via_session(client,email=user.email)
             # post

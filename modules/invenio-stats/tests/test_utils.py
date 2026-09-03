@@ -105,7 +105,9 @@ def test_get_aggregations(app, es):
     assert res=={}
 
     res = get_aggregations('test-stats-search', {'aggs': {}})
-    assert res=={'_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5}, 'hits': {'hits': [], 'max_score': None, 'total': 0}, 'timed_out': False, 'took': 0}
+    # 'took' is however long Elasticsearch happened to take.
+    res.pop('took')
+    assert res=={'_shards': {'failed': 0, 'skipped': 0, 'successful': 5, 'total': 5}, 'hits': {'hits': [], 'max_score': None, 'total': 0}, 'timed_out': False}
 
 # def get_start_end_date(year, month):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_utils.py::test_get_start_end_date -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
@@ -616,10 +618,10 @@ def test_query_record_view_report_helper(mock_Community, mock_get_descendant_ind
         ]
     }
     _data_list = []
-    # Calculation
-    with pytest.raises(Exception) as e:
-        QueryRecordViewReportHelper.Calculation(_res, _data_list)
-    assert e.type==UnsupportedCompilationError
+    # Calculation turns each bucket into a row and then reconciles the titles.
+    QueryRecordViewReportHelper.Calculation(_res, _data_list)
+    assert {d['record_id'] for d in _data_list} == {_id1, _id2}
+    assert sum(d['total_all'] for d in _data_list) == 3
 
     # correct_record_title
     _res = [['2', ['name2old']]]

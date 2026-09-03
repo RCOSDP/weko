@@ -27,6 +27,7 @@ from mock import MagicMock, patch
 from unittest.mock import call
 from invenio_indexer.api import BulkRecordIndexer, RecordIndexer, BulkBaseException, BulkConnectionTimeout, BulkConnectionError, BulkException
 from invenio_indexer.signals import before_record_index
+from tests.conftest import wait_for_messages
 from elasticsearch import ConnectionError, ConnectionTimeout
 from elasticsearch.helpers import BulkIndexError
 class DummyRecord:
@@ -79,6 +80,7 @@ def test_indexer_bulk_index(app, queue):
             id2 = uuid.uuid4()
             indexer.bulk_index([id1, id2])
             indexer.bulk_delete([id1, id2])
+            wait_for_messages(app, 4)
 
             consumer = Consumer(
                 connection=c,
@@ -157,6 +159,7 @@ def test_process_bulk_queue_errors(app, queue):
         db.session.commit()
 
         RecordIndexer().bulk_index([r1.id, r2.id])
+        wait_for_messages(app, 2)
 
         ret = {}
 
@@ -186,6 +189,7 @@ def test_process_bulk_queue(app, queue):
             # Each case below drains the queue (acking_actionsiter acks what it
             # was handed), so refill it before every one of them.
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', return_value=(10, 0)):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     assert RecordIndexer().process_bulk_queue(es_bulk_kwargs=es_bulk_kwargs) == (10, 0)
@@ -204,6 +208,7 @@ def test_process_bulk_queue(app, queue):
                 raise DummyBulkIndexError(errors)
 
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_be):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     with patch('invenio_indexer.api.click.secho') as mock_secho:
@@ -229,6 +234,7 @@ def test_process_bulk_queue(app, queue):
                 indexer.latest_item_id = 9
                 raise DummyBulkException(success=8, failed=1, errors=errors, original_exception=es_conn_error)
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', side_effect=mock_reindex_bulk_ct):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     with patch('invenio_indexer.api.click.secho') as mock_secho:
@@ -251,6 +257,7 @@ def test_process_bulk_queue(app, queue):
                 raise DummyBulkIndexError(errors)
 
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_be_empty):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     indexer = RecordIndexer()
@@ -266,6 +273,7 @@ def test_process_bulk_queue(app, queue):
                 self.success_ids = [str(r.id) for r in records[:9]]
                 raise DummyBulkIndexError(errors)
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_be_str):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     indexer = RecordIndexer()
@@ -283,6 +291,7 @@ def test_process_bulk_queue(app, queue):
                 indexer.latest_item_id = 9
                 raise DummyBulkException(success=10, failed=0, errors=errors, original_exception=es_conn_error)
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', side_effect=mock_reindex_bulk_exception_empty):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     indexer = RecordIndexer()
@@ -297,6 +306,7 @@ def test_process_bulk_queue(app, queue):
                 self.count = 10
                 raise DummyBulkException(success=0, failed=1, errors=errors, original_exception=Exception("Exception!", {}, {}))
             RecordIndexer().bulk_index(_values)
+            wait_for_messages(app, len(_values))
             with patch('invenio_indexer.api.RecordIndexer.reindex_bulk', new=mock_reindex_bulk_exception_str):
                 with patch('invenio_indexer.api.RecordIndexer._actionsiter', side_effect=acking_actionsiter([{}]*10)):
                     indexer = RecordIndexer()
@@ -326,6 +336,7 @@ def _bulk_queue_records(app):
                for i in range(10)]
     db.session.commit()
     RecordIndexer().bulk_index([str(r.id) for r in records])
+    wait_for_messages(app, len(records))
     return records
 
 
@@ -430,6 +441,7 @@ def test_process_bulk_queue_for_error_loop(app, queue):
         # error loop under test never runs. _actionsiter is patched below, so
         # the ids need not resolve - only the message count matters.
         RecordIndexer().bulk_index([str(uuid.uuid4()) for _ in range(4)])
+        wait_for_messages(app, 4)
 
         # Mock for reindex_bulk: _fail is a list
         def mock_reindex_bulk(*args, **kwargs):

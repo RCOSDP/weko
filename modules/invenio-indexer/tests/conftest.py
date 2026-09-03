@@ -13,6 +13,7 @@ from __future__ import absolute_import, print_function
 import os
 import shutil
 import tempfile
+import time
 
 import pytest
 from celery.messaging import establish_connection
@@ -95,6 +96,29 @@ def app(base_app):
 def script_info(app):
     """Get ScriptInfo object for testing CLI."""
     return ScriptInfo(create_app=lambda info: app)
+
+
+def wait_for_messages(app, count, timeout=30):
+    """Wait until the indexer queue holds at least ``count`` ready messages.
+
+    A publish returns before the broker necessarily makes the message
+    available to a consumer - noticeably so for the quorum queue this suite
+    declares - so reading the queue straight after bulk_index() can come back
+    empty. Returns the count actually seen.
+    """
+    from celery import current_app as current_celery_app
+
+    routing_key = app.config['INDEXER_MQ_ROUTING_KEY']
+    deadline = time.time() + timeout
+    ready = 0
+    while True:
+        with current_celery_app.pool.acquire(block=True) as conn:
+            with conn.channel() as chan:
+                _, ready, _ = chan.queue_declare(queue=routing_key,
+                                                 passive=True)
+        if ready >= count or time.time() > deadline:
+            return ready
+        time.sleep(0.2)
 
 
 @pytest.fixture()

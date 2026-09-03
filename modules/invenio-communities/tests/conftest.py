@@ -179,7 +179,7 @@ def users(app, db):
         comadmin = User.query.filter_by(email="comadmin@test.org").first()
         repoadmin = User.query.filter_by(email="repoadmin@test.org").first()
         sysadmin = User.query.filter_by(email="sysadmin@test.org").first()
-        generaluser = User.query.filter_by(email="generaluser@test.org")
+        generaluser = User.query.filter_by(email="generaluser@test.org").first()
         originalroleuser = create_test_user(email="originalroleuser@test.org")
         originalroleuser2 = create_test_user(email="originalroleuser2@test.org")
         subrepoadmin = User.query.filter_by(email="subrepoadmin@test.org").first()
@@ -280,7 +280,7 @@ def users(app, db):
         {"email": repoadmin.email, "id": repoadmin.id, "obj": repoadmin},
         {"email": sysadmin.email, "id": sysadmin.id, "obj": sysadmin},
         {"email": comadmin.email, "id": comadmin.id, "obj": comadmin},
-        {"email": generaluser.email, "id": generaluser.id, "obj": sysadmin},
+        {"email": generaluser.email, "id": generaluser.id, "obj": generaluser},
         {
             "email": originalroleuser.email,
             "id": originalroleuser.id,
