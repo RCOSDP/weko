@@ -223,10 +223,8 @@ def test_process_item(app, db, esindex, location, db_itemtype, harvest_setting, 
     app.config["WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE"] = {'e-Rad':'e-Rad_Researcher'}
     monkeypatch.setenv("TIKA_JAR_FILE_PATH", "/code/tika/tika-app-2.6.0.jar")
     mocker.patch("weko_search_ui.utils.send_item_created_event_to_es")
-    mock_resource_type_map={
-        'conference paper':'Harvesting dc'
-    }
-    mocker.patch("invenio_oaiharvester.harvester.RESOURCE_TYPE_MAP",mock_resource_type_map)
+    # harvester.RESOURCE_TYPE_MAP is gone: map_itemtype() no longer picks the
+    # item type from the record's resource type.
     # jpcoar
     # mapper.is_deleted is true
     _etree = etree.fromstring('<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-03-01T02:07:10Z</responseDate><request metadataPrefix="oai_dc" identifier="oai:weko3.example.org:00000001" verb="GetRecord">https://192.168.56.103/oai</request><GetRecord><record><header status="deleted"><identifier>oai:weko3.example.org:00000005</identifier><datestamp>2023-02-20T06:24:47Z</datestamp></header></record></GetRecord></OAI-PMH>')
