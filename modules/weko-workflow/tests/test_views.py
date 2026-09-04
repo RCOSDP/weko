@@ -6274,7 +6274,10 @@ def test_check_authority_action2(app, client, users, db_register_full_action, mo
                                 action_id=3,
                                 contain_login_item_application=False,
                                 action_order=1)
-            im.json['shared_user_ids'] = [1,2,3,4,5,6]
+            # WEKO_ITEMS_UI_PROXY_POSTING が True のときは「リストに含まれるか」、
+            # False のときは「リストの最後の1人か」で判定される。
+            # generaluser (id 6) を含めつつ末尾は別人にして、両方を確かめる。
+            im.json['shared_user_ids'] = [1,2,3,4,6,5]
             assert 0 == check_authority_action(activity_id='11',
                                 action_id=3,
                                 contain_login_item_application=False,
@@ -7328,7 +7331,12 @@ def test_display_activity_item_link_with_item_link(client, users, item_type,db_r
     cur_action = MagicMock()
     histories = []
     item_metadata = {'title': 'Test Item'}
-    steps = []
+    # 空だと display_activity は 404 を返す
+    # (views.py の「can not get workflow_action_history」)。
+    steps = [{'ActivityId': 'A-00000001-10001', 'ActionId': 3,
+              'ActionName': 'Item Registration', 'ActionVersion': '1.0.1',
+              'ActionEndpoint': 'item_login', 'Author': '',
+              'Status': ' ', 'ActionOrder': 2}]
     temporary_comment = None
     workflow_detail = MagicMock()
     workflow_detail.itemtype_id = 1
@@ -7415,7 +7423,12 @@ def test_display_activity_item_link_with_no_item_link(client, users, item_type,d
     cur_action = MagicMock()
     histories = []
     item_metadata = {'title': 'Test Item'}
-    steps = []
+    # 空だと display_activity は 404 を返す
+    # (views.py の「can not get workflow_action_history」)。
+    steps = [{'ActivityId': 'A-00000001-10001', 'ActionId': 3,
+              'ActionName': 'Item Registration', 'ActionVersion': '1.0.1',
+              'ActionEndpoint': 'item_login', 'Author': '',
+              'Status': ' ', 'ActionOrder': 2}]
     temporary_comment = None
     workflow_detail = MagicMock()
     workflow_detail.itemtype_id = 1
@@ -7498,7 +7511,12 @@ def test_display_activity_item_link_with_item_link_exception(client, users, item
     cur_action = MagicMock()
     histories = []
     item_metadata = {'title': 'Test Item'}
-    steps = []
+    # 空だと display_activity は 404 を返す
+    # (views.py の「can not get workflow_action_history」)。
+    steps = [{'ActivityId': 'A-00000001-10001', 'ActionId': 3,
+              'ActionName': 'Item Registration', 'ActionVersion': '1.0.1',
+              'ActionEndpoint': 'item_login', 'Author': '',
+              'Status': ' ', 'ActionOrder': 2}]
     temporary_comment = None
     workflow_detail = MagicMock()
     workflow_detail.itemtype_id = 1
@@ -7579,7 +7597,12 @@ def test_display_activity_approval_with_relation(client, users, item_type, db_re
     cur_action.action_endpoint = 'approval'
     histories = []
     item_metadata = {'title': 'Test Item'}
-    steps = []
+    # 空だと display_activity は 404 を返す
+    # (views.py の「can not get workflow_action_history」)。
+    steps = [{'ActivityId': 'A-00000001-10001', 'ActionId': 3,
+              'ActionName': 'Item Registration', 'ActionVersion': '1.0.1',
+              'ActionEndpoint': 'item_login', 'Author': '',
+              'Status': ' ', 'ActionOrder': 2}]
     temporary_comment = None
     workflow_detail = MagicMock()
     workflow_detail.itemtype_id = 1
@@ -7673,7 +7696,12 @@ def test_display_activity_approval_without_relation(client, users, item_type, db
     cur_action.action_endpoint = 'approval'
     histories = []
     item_metadata = {'title': 'Test Item'}
-    steps = []
+    # 空だと display_activity は 404 を返す
+    # (views.py の「can not get workflow_action_history」)。
+    steps = [{'ActivityId': 'A-00000001-10001', 'ActionId': 3,
+              'ActionName': 'Item Registration', 'ActionVersion': '1.0.1',
+              'ActionEndpoint': 'item_login', 'Author': '',
+              'Status': ' ', 'ActionOrder': 2}]
     temporary_comment = None
     workflow_detail = MagicMock()
     workflow_detail.itemtype_id = 1
@@ -7761,7 +7789,12 @@ def test_display_activity_approval_with_relation_exception(client, users, item_t
     cur_action.action_endpoint = 'approval'
     histories = []
     item_metadata = {'title': 'Test Item'}
-    steps = []
+    # 空だと display_activity は 404 を返す
+    # (views.py の「can not get workflow_action_history」)。
+    steps = [{'ActivityId': 'A-00000001-10001', 'ActionId': 3,
+              'ActionName': 'Item Registration', 'ActionVersion': '1.0.1',
+              'ActionEndpoint': 'item_login', 'Author': '',
+              'Status': ' ', 'ActionOrder': 2}]
     temporary_comment = None
     workflow_detail = MagicMock()
     workflow_detail.itemtype_id = 1

@@ -1110,8 +1110,13 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
                 type(pi).query = pi
                 pi.filter_by = MagicMock(return_value = pi)
                 pi.one_or_none = MagicMock(return_value = None)
-                recid = db_records[7][0]
-                deposit = db_records[7][6]
+                # draft_pid が無い経路を通す。db_records[7] は recid 194 で、
+                # data/test_records.json の 15件目に 194.0 (ドラフト) が
+                # 既にあるため、この経路に入ると prepare_draft_item が
+                # 194.0 を作り直そうとして uidx_type_pid に当たる。
+                # 195 はドラフトを持たない。
+                recid = db_records[8][0]
+                deposit = db_records[8][6]
                 result = prepare_edit_workflow(data,recid,deposit)
                 assert result.activity_id != None
         if order_if == 5:

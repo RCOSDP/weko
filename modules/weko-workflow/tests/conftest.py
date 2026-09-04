@@ -4190,40 +4190,30 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
         db.session.add_all(activities)
     db.session.commit()
 
-    # Register data in workflow_flow_define table
-    flow_define = FlowDefine(flow_name='Registration Activities', flow_user=1,)
-    with db.session.begin_nested():
-        db.session.add(flow_define)
-    db.session.commit()
-
     # Register data in workflow_flow_action table
+    #
+    # get_activity_list は
+    #   _FlowAction.action_id    == _Activity.action_id
+    #   _FlowAction.action_order == _Activity.action_order
+    # で突き合わせる。上の3件は workflow_approval のフローを指しているので、
+    # その組み合わせが同じフロー側に無いと1件も返らない。
+    # 元は新しい FlowDefine を作ってそこに (1,5) を2つぶら下げており、
+    # どの activity からも参照されていなかった。
     flow_actions = []
-    flow_actions.append(
-        FlowAction(
-            status='N',
-            flow_id=flow_define.flow_id,
-            action_id=1,
-            action_version='1.0.0',
-            action_order=5,
-            action_condition='',
-            action_status='A',
-            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
-            send_mail_setting={},
+    for _action_id, _action_order in ((1, 5), (1, 7), (2, 5)):
+        flow_actions.append(
+            FlowAction(
+                flow_id=workflow_approval['flow'].flow_id,
+                status='N',
+                action_id=_action_id,
+                action_version='1.0.0',
+                action_order=_action_order,
+                action_condition='',
+                action_status='A',
+                action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+                send_mail_setting={},
+            )
         )
-    )
-    flow_actions.append(
-        FlowAction(
-            status='N',
-            flow_id=flow_define.flow_id,
-            action_id=1,
-            action_version='1.0.0',
-            action_order=5,
-            action_condition='',
-            action_status='A',
-            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
-            send_mail_setting={},
-        )
-    )
     with db.session.begin_nested():
         db.session.add_all(flow_actions)
     db.session.commit()
