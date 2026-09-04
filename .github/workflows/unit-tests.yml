@@ -65,9 +65,11 @@ jobs:
     name: ${{ matrix.module }}${{ matrix.shard && format(' [{0}]', matrix.shard) || '' }}
     needs: images
     runs-on: ubuntu-latest
-    # 分割後は1ジョブ 30〜60 分の想定。余裕を見て 90 分。
+    # 分割後の実測は1ジョブ 5〜47 分。ただし本数で等分しているだけなので
+    # 重いテストが1本に寄ると伸びる (weko-deposit [4/4] と
+    # weko-records-ui [4/4] が 90 分で cancelled になった)。上限は 120 分。
     # 分割の考え方は下の matrix.include のコメントを参照。
-    timeout-minutes: 90
+    timeout-minutes: 120
     permissions:
       contents: read
       packages: read
@@ -78,7 +80,7 @@ jobs:
       WEKO_NGINX_IMAGE: ${{ needs.images.outputs.nginx }}
     strategy:
       fail-fast: false
-      # 分割でジョブ数が 47 → 63 に増えた。1ジョブあたり tox の依存導入
+      # 分割でジョブ数が 47 → 73 に増えた。1ジョブあたり tox の依存導入
       # (約290パッケージ) が乗るので、同時実行を上げないと全体の時間が延びる。
       max-parallel: 8
       matrix:
@@ -96,11 +98,15 @@ jobs:
         # している (1件あたり約22秒)。フィクスチャのスコープを見直せば
         # 分割は不要になるが、テスト間の独立性が変わるので別途 (issues.md C-1)。
         #
-        # 【分割数の決め方】ローカル実測の総時間 ÷ 30〜45分。
-        # weko-workflow 以外の3つは 120 分で打ち切られていて実測が無いため、
-        # 暫定で 4 分割にしてある。実測が採れたら見直すこと。
-        # test_views.py だけで 447 本あるのでファイル単位では割れず、
-        # pytest-split に本数で等分させている。
+        # 【分割数の決め方】1ジョブ 30 分前後に収まるまで割る。CI 実測:
+        #   weko-workflow  8分割 → 11〜15分   (ローカル通しでは 4時間54分)
+        #   weko-deposit   4分割 → 4〜29分、ただし[4/4]だけ 90分超で cancelled
+        #   weko-records-ui 4分割 → 44〜47分、[4/4]は 90分超で cancelled
+        #   weko-search-ui 4分割 → 11〜29分
+        # pytest-split は**本数**で等分するだけなので、重いテストが1本に寄ると
+        # このように偏る。偏った2つは分割数を倍にした。
+        # (根治は .test_durations を作って時間で割ること。issues.md C-1)
+        # test_views.py だけで 447 本あるためファイル単位では割れない。
         include:
           - module: invenio-accounts
           - module: invenio-communities
@@ -126,13 +132,21 @@ jobs:
           - module: weko-authors
           - module: weko-bulkupdate
           - module: weko-deposit
-            shard: 1/4
+            shard: 1/8
           - module: weko-deposit
-            shard: 2/4
+            shard: 2/8
           - module: weko-deposit
-            shard: 3/4
+            shard: 3/8
           - module: weko-deposit
-            shard: 4/4
+            shard: 4/8
+          - module: weko-deposit
+            shard: 5/8
+          - module: weko-deposit
+            shard: 6/8
+          - module: weko-deposit
+            shard: 7/8
+          - module: weko-deposit
+            shard: 8/8
           - module: weko-gridlayout
           - module: weko-groups
           - module: weko-handle
@@ -145,24 +159,36 @@ jobs:
           - module: weko-notifications
           - module: weko-plugins
           - module: weko-records-ui
-            shard: 1/4
+            shard: 1/8
           - module: weko-records-ui
-            shard: 2/4
+            shard: 2/8
           - module: weko-records-ui
-            shard: 3/4
+            shard: 3/8
           - module: weko-records-ui
-            shard: 4/4
+            shard: 4/8
+          - module: weko-records-ui
+            shard: 5/8
+          - module: weko-records-ui
+            shard: 6/8
+          - module: weko-records-ui
+            shard: 7/8
+          - module: weko-records-ui
+            shard: 8/8
           - module: weko-records
           - module: weko-redis
           - module: weko-schema-ui
           - module: weko-search-ui
-            shard: 1/4
+            shard: 1/6
           - module: weko-search-ui
-            shard: 2/4
+            shard: 2/6
           - module: weko-search-ui
-            shard: 3/4
+            shard: 3/6
           - module: weko-search-ui
-            shard: 4/4
+            shard: 4/6
+          - module: weko-search-ui
+            shard: 5/6
+          - module: weko-search-ui
+            shard: 6/6
           - module: weko-signposting
           - module: weko-sitemap
           - module: weko-swordserver
