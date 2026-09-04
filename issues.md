@@ -139,6 +139,40 @@
 - xfail: `tests/test_harvester.py` の `MULTIPLE_ITEMTYPE_XFAIL` (3 件)、
   `tests/test_tasks.py` の同名マーカー (2 件)。
 
+### A-10. weko-workflow: wait タブの JSON パスリテラルが不正
+
+- 場所: `modules/weko-workflow/weko_workflow/api.py`
+  `query_activities_by_tab_is_wait` の 1917-1919行あたり
+  (`query_activities_by_tab_is_all` / `_todo` にも同じ形がある)
+- 症状:
+  ```python
+  _Activity.temp_data.op("#>>")("{'metainfo', 'shared_user_ids'}")
+  ```
+  PostgreSQL の `#>>` は右辺を `text[]` として読む。`{'metainfo', 'shared_user_ids'}`
+  というリテラルの要素は **引用符込みの `'metainfo'`** になるため、
+  そんなキーは JSON に存在せず**常に NULL** を返す。
+  wait タブはこれを `not_(...)` に入れて AND で連ねているので、
+  NULL を否定しても NULL のままとなり、その枝は決して真にならない。
+  結果、`shared_user_ids` が NULL でないアクティビティは
+  **wait タブに1件も出てこない**。
+  all / todo タブでは OR の一枝なので実害は出ない。
+- xfail: `tests/test_api.py::TestWorkActivity::test_get_activity_list` の
+  `WAIT_TAB_XFAIL` (wait タブの 2 パラメータ)。
+- 直し方: `"{metainfo,shared_user_ids}"` にする。
+
+### A-11. weko-workflow: 存在しない activity_id で 404 ではなく 500
+
+- 場所: `modules/weko-workflow/weko_workflow/rest.py:747` `get_activity()` →
+  `weko_workflow/utils.py:3846` `get_activity_display_info()`
+- 症状: `Activity` が見つからないと `activity_detail` が None のまま
+  `activity_detail.workflow_id` を読み、`AttributeError` で 500 になる。
+  存在確認はどちらの層にも無い。
+  `views.display_activity` は戻り値の None を見て弾いているが、
+  `get_activity_display_info` 自身がその前に落ちる。
+- xfail: `tests/test_rest.py::test_FileApplicationActivity_post`
+- 直し方: `get_activity_display_info` の冒頭で activity を確認し、
+  無ければ 404 を返す。
+
 ---
 
 ## B. テスト側で回避したが、実アプリにも同じ形が残っているもの
@@ -257,6 +291,24 @@ CI は 1 ジョブ 1 コンテナなので毎回まっさらだが、ローカ�
   `role_id=sysadmin_role.id` で作られていた (これも他モジュールからのコピー)。
   このモジュールには「コミュニティ管理者が自分のコミュニティだけ見える」ことを
   確かめるテストが複数あり、`Community.get_by_user()` が必ず空を返していた。
+- **weko-workflow の `db_register_activity`**
+  FlowAction を「新しく作った FlowDefine」にぶら下げていたため、
+  どの Activity からも参照されず、`get_activity_list` の
+  `_FlowAction.action_id == _Activity.action_id` /
+  `action_order == _Activity.action_order` の突き合わせに一切当たらなかった。
+  workflow_approval のフローに (1,5) (1,7) (2,5) を足して解消。
+- **weko-workflow の `test_check_authority_action2`**
+  `im.json['shared_user_ids'] = [1,2,3,4,5,6]` としていたが、
+  `WEKO_ITEMS_UI_PROXY_POSTING` が False のときは**リストの最後の1人**しか
+  見ない。generaluser が id 6 になったことで末尾と一致してしまった。
+  6 を含みつつ末尾を別人にして、両方の分岐を確かめるようにした。
+- **weko-workflow の `test_prepare_edit_workflow[4]`**
+  ドラフト無しの経路を通すテストなのに、194.0 のドラフトを既に持つ
+  `db_records[7]` (recid 194) を渡していて `uidx_type_pid` に当たっていた。
+  ドラフトを持たない 195 (`db_records[8]`) に変更。
+- **weko-search-ui の `test_handle_fill_system_item3`**
+  設定名が `WEKO_HANDLE_ALLOW_REGISTER_CRNI` (正しくは CNRI) で、
+  `is_register_cnri` パラメータが一度も効いていなかった。
 - **invenio-files-rest の `dbsession_clean`**
   `invenio_files_rest.views` が blueprint に登録する `teardown_request` が
   テスト内でセッションを閉じ、`DetachedInstanceError` を撒いていた。

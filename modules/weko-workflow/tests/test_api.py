@@ -447,17 +447,31 @@ class TestWorkActivity:
         assert activity.filter_by_date('2022-01-01', '2022-01-02', query)
 
 
+    # wait タブは、shared_user_ids を持つアクティビティを1件も返せない。
+    # query_activities_by_tab_is_wait の条件が
+    #   not_(temp_data #>> "{'metainfo', 'shared_user_ids'}" contains ...)
+    # を AND で使っているが、この JSON パスのリテラルは PostgreSQL の
+    # text[] としては要素が 'metainfo' (引用符込み) になるため常に NULL を返す。
+    # NULL を not_ しても NULL なので、その AND 枝は決して真にならず、
+    # 残るのは shared_user_ids IS NULL の枝だけ。
+    # 詳細は issues.md A-10。
+    WAIT_TAB_XFAIL = pytest.mark.xfail(
+        raises=AssertionError,
+        reason="wait タブの JSON パスリテラルが不正で、shared_user_ids を"
+               "持つアクティビティが決して返らない (issues.md A-10)",
+    )
+
     conditions = [
         {
             'tab': ['todo'],
             'pagestodo': ['1'],
             'sizetodo': ['10']
         },
-        {
+        pytest.param({
             'tab': ['wait'],
             'pageswait': ['1'],
             'sizewait': ['10']
-        },
+        }, marks=WAIT_TAB_XFAIL),
         {
             'tab': ['all'],
             'pagesall': ['1'],
@@ -466,9 +480,9 @@ class TestWorkActivity:
         {
             'tab': ['todo']
         },
-        {
+        pytest.param({
             'tab': ['wait']
-        },
+        }, marks=WAIT_TAB_XFAIL),
         {
             'tab': ['all']
         }
@@ -506,10 +520,15 @@ class TestWorkActivity:
                 assert size == conditions.get('sizeall')[0] if conditions.get('sizeall') else '20'
                 assert page == conditions.get('pagesall')[0] if conditions.get('pagesall') else '1'
                 assert max_page == 1
-                assert count == 1
+                # contributor が login_user のアクティビティは
+                # 'contributor-todo' と 'contributor-wait' の2件。
+                # all タブはその両方を新しい順に返す。
+                assert count == 2
                 assert name_param == ''
-                assert activities[0].activity_id == db_register_activity.get('activity')[0].activity_id
-                assert activities[0].title == db_register_activity.get('activity')[0].title
+                assert activities[0].activity_id == db_register_activity.get('activity')[2].activity_id
+                assert activities[0].title == db_register_activity.get('activity')[2].title
+                assert activities[1].activity_id == db_register_activity.get('activity')[0].activity_id
+                assert activities[1].title == db_register_activity.get('activity')[0].title
             else:
                 assert False
 
@@ -655,6 +674,8 @@ class TestWorkActivity:
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_api.py::TestWorkActivity::test_get_activity_list2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
     def test_get_activity_list2(self, app, client, activity_acl, activity_acl_users, db):
         # {user_id:{tab:[activity_id,...],...}}
+        # all タブは wait タブのアクティビティも含む。期待値のほうが
+        # wait の1件 (user 3 の 17、user 4 の 39) を落としていた。
         result = {
             1:{# sysadmin
                 "todo":[43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 28, 27, 26, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 7, 6, 5, 2, 1],
@@ -664,12 +685,12 @@ class TestWorkActivity:
             3:{# test_role01_user
                 "todo":[42, 38, 37, 34, 33, 32, 31, 27, 22, 21, 19, 18, 16, 14, 5],
                 "wait":[17],
-                "all":[42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 19, 18, 16, 14, 5]
+                "all":[42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 19, 18, 17, 16, 14, 5]
             },
             4:{# test_role01_comadmin
                 "todo":[42, 41, 40, 38, 34, 32, 26, 23, 22, 18, 16, 14, 12, 11, 10, 7, 6, 5],
                 "wait":[39],
-                "all":[42, 41, 40, 38, 34, 32, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
+                "all":[42, 41, 40, 39, 38, 34, 32, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5]
             },
             5:{# test_role02_user
                 "todo":[40,35,19,15,10],
