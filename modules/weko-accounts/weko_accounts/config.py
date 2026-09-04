@@ -193,6 +193,17 @@ WEKO_ACCOUNTS_REAL_IP = None # X-Real-IP > X-Forwarded-For[0] > remote_addr
 # WEKO_ACCOUNTS_REAL_IP = 'x_forwarded_for' # X-Forwarded-For[first] > remote_addr
 # WEKO_ACCOUNTS_REAL_IP = 'x_forwarded_for_rev' # X-Forwarded-For[last] > remote_addr
 
+WEKO_ACCOUNTS_UNAUTHORIZED_JSON = True
+"""Answer unauthorized API/AJAX calls with 401 JSON.
+
+The API app always uses it: it has no login screen, and the flask_login
+default cannot build ``url_for('security.login')`` there, so it returns 500.
+The UI app uses it only for requests that look like API/AJAX calls; ordinary
+page requests keep redirecting to the login screen.
+
+Set to False to restore the flask_login default everywhere.
+"""
+
 WEKO_ACCOUNTS_REST_ENDPOINTS = {
     'login': {
         'route': '/<string:version>/login',

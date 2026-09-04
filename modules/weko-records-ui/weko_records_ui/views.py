@@ -50,7 +50,10 @@ from invenio_records_ui.signals import record_viewed
 from invenio_files_rest.signals import file_downloaded
 from invenio_records_ui.utils import obj_or_import_string
 from lxml import etree
+from weko_accounts.utils import roles_required
 from weko_accounts.views import _redirect_method
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM
 from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting, get_restricted_access
 from weko_deposit.api import WekoRecord
@@ -84,9 +87,10 @@ from weko_records_ui.models import (
     PDFCoverPageSettings
 )
 from weko_records_ui.permissions import (
-    check_content_clickable, check_created_id, check_created_id_by_recid,
+    check_content_clickable, check_created_id,
     check_file_download_permission, check_original_pdf_download_permission,
-    check_permission_period, file_permission_factory, get_permission
+    check_permission_period, file_permission_factory, get_permission,
+    record_edit_permission_required
 )
 from weko_records_ui.utils import (
     check_items_settings, can_manage_onetime_url, can_manage_secret_url,
@@ -876,6 +880,7 @@ def default_view_method(pid, record, filename=None, template=None, **kwargs):
     )
 
 @blueprint.route('/get-secret-settings', methods=['GET'])
+@login_required
 def get_secret_setting():
     """
     Get secret URL settings.
@@ -1156,6 +1161,9 @@ def parent_view_method(pid_value=0):
 
 
 @blueprint.route('/admin/pdfcoverpage', methods=['GET', 'POST'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def set_pdfcoverpage_header():
     """Set pdfcoverage header."""
     @blueprint.errorhandler(werkzeug.exceptions.RequestEntityTooLarge)
@@ -1249,6 +1257,7 @@ def citation(record, pid, style=None, ln=None):
 
 @blueprint.route("/records/soft_delete/<recid>", methods=['POST'])
 @login_required
+@record_edit_permission_required(strip_prefix='del_ver_')
 def soft_delete(recid):
     """
     Soft delete item.
@@ -1260,8 +1269,6 @@ def soft_delete(recid):
             return json data
     """
     try:
-        if not check_created_id_by_recid(recid.replace("del_ver_", "")):
-            abort(403)
         if not UserActivityLogger.issue_log_group_id(db.session):
             current_app.logger.error(
                 'Failed to issue log group id for soft delete operation.')
@@ -1331,12 +1338,10 @@ def soft_delete(recid):
 
 @blueprint.route("/records/restore/<recid>", methods=['POST'])
 @login_required
+@record_edit_permission_required()
 def restore(recid):
     """Restore item."""
     try:
-        record = WekoRecord.get_record_by_pid(recid)
-        if not check_created_id(record):
-            abort(403)
         restore_imp(recid)
         return make_response('PID: ' + str(recid) + ' RESTORED', 200)
     except Exception as ex:
@@ -1508,6 +1513,7 @@ def dbsession_clean(exception):
 
 
 @blueprint.route("/records/get_bucket_list", methods=['GET'])
+@login_required
 def get_bucket_list():
     try:
         bucket_list = get_s3_bucket_list()
@@ -1517,6 +1523,8 @@ def get_bucket_list():
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/copy_bucket", methods=['POST'])
+@login_required
+@record_edit_permission_required(param='pid')
 def copy_bucket():
     data = request.get_json()
     pid = data.get('pid')
@@ -1534,6 +1542,8 @@ def copy_bucket():
 
 
 @blueprint.route("/records/get_file_place", methods=['POST'])
+@login_required
+@record_edit_permission_required(param='pid')
 def get_file_place():
     pid = request.form.get('pid')
     bucket_id = request.form.get('bucket_id')
@@ -1553,6 +1563,8 @@ def get_file_place():
         return jsonify({'error': str(e)}), 400
 
 @blueprint.route("/records/replace_file", methods=['POST'])
+@login_required
+@record_edit_permission_required(param='pid')
 def replace_file():
     return_file_place = request.form.get('return_file_place')
 

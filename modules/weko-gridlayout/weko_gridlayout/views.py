@@ -569,6 +569,7 @@ def get_access_counter_record(repository_id, path, current_language):
                  methods=["POST"]
                  )
 @blueprint.route('/widget/uploads/<string:community_id>', methods=["POST"])
+@login_required
 def upload_file(community_id):
     """Upload widget static file.
 
@@ -602,6 +603,7 @@ def uploaded_file(filename, community_id=0):
 
 
 @blueprint_api.route('/widget/unlock', methods=["POST"])
+@login_required
 def unlocked_widget():
     """Get widget static file.
 

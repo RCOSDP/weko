@@ -861,6 +861,8 @@ def get_search_data(data_type=''):
 
 
 @blueprint_api.route('/validate_email_and_index', methods=['POST'])
+@login_required
+@item_permission.require(http_exception=403)
 def validate_user_email_and_index():
     """Validate user mail and index.
 
@@ -876,6 +878,8 @@ def validate_user_email_and_index():
 
 
 @blueprint_api.route('/validate_user_info', methods=['POST'])
+@login_required
+@item_permission.require(http_exception=403)
 def validate_user_info():
     """validate_user_info.
 
@@ -934,6 +938,8 @@ def validate_user_info():
     return jsonify(result)
 
 @blueprint_api.route('/validate_users_info', methods=['POST'])
+@login_required
+@item_permission.require(http_exception=403)
 def validate_users_info():
     """validate_users_info.
 
@@ -1064,6 +1070,8 @@ def get_current_login_user_id():
     return jsonify(result)
 
 @blueprint_api.route('/get_userinfo_by_emails', methods=['GET'])
+@login_required
+@item_permission.require(http_exception=403)
 def get_userinfo_by_emails():
     emails = request.args.getlist('emails')
     user_infos = []
