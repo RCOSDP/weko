@@ -421,6 +421,14 @@ CI は 1 ジョブ 1 コンテナなので毎回まっさらだが、ローカ�
   作っていたため、**UTC が 15:00 を過ぎている間 (日本時間の 0〜9 時) は
   「明日」が過去判定になり必ず落ちる**。CI の結果が時間帯で変わっていた原因。
   判定と同じ Asia/Tokyo のローカル日付で組み立てるようにした。
+- **weko-search-ui の `WEKO_SEARCH_KEYWORDS_DICT` 破壊**
+  `tests/test_query.py` がモジュールレベルの `WEKO_SEARCH_KEYWORDS_DICT` を
+  そのまま `app.config` に入れたうえで
+  `app.config['WEKO_SEARCH_KEYWORDS_DICT']['string'] = {...}` と書き換えていた。
+  config のキーを元に戻しても**共有オブジェクトは壊れたまま**なので、
+  以降そのモジュールの dict を使うテストからは `title` などの条件が消える。
+  CI ではこの破壊側が先に走り、部分実行では走らないため、
+  「CI だけで落ちる」形になっていた。config に入れるときに deepcopy する。
 - **weko-search-ui の `test_function_issue35902`**
   詳細検索の条件を `test_request_context(data=...)` で渡していた。
   GET のボディはフォームとして解釈されないことがあり、werkzeug の

@@ -193,7 +193,12 @@ def test_default_search_factory(app, users, communities):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
         search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        # モジュールレベルの dict をそのまま入れると、後で
+        # app.config['WEKO_SEARCH_KEYWORDS_DICT']['string'] = ... と
+        # 書き換えたときに共有オブジェクトごと壊れ、以降のテストから
+        # title などの条件が消える。必ずコピーを入れる。
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(
+            WEKO_SEARCH_KEYWORDS_DICT)
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         with app.test_request_context(headers=[('Accept-Language','en')], data=_data):
             app.extensions['invenio-oauth2server'] = 1
@@ -598,7 +603,12 @@ def test_default_search_factory_no_queries(app, users, communities):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
         search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        # モジュールレベルの dict をそのまま入れると、後で
+        # app.config['WEKO_SEARCH_KEYWORDS_DICT']['string'] = ... と
+        # 書き換えたときに共有オブジェクトごと壊れ、以降のテストから
+        # title などの条件が消える。必ずコピーを入れる。
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(
+            WEKO_SEARCH_KEYWORDS_DICT)
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         mock_searchperm = MagicMock(side_effect=MockSearchPerm)
         with patch('weko_search_ui.query.search_permission', mock_searchperm):
@@ -814,7 +824,12 @@ def test_function_issue35902(app, users, communities, mocker):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
         search = RecordsSearch()
-        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = WEKO_SEARCH_KEYWORDS_DICT
+        # モジュールレベルの dict をそのまま入れると、後で
+        # app.config['WEKO_SEARCH_KEYWORDS_DICT']['string'] = ... と
+        # 書き換えたときに共有オブジェクトごと壊れ、以降のテストから
+        # title などの条件が消える。必ずコピーを入れる。
+        app.config['WEKO_SEARCH_KEYWORDS_DICT'] = copy.deepcopy(
+            WEKO_SEARCH_KEYWORDS_DICT)
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
         mocker.patch("weko_search_ui.permissions.search_permission",side_effect=MockSearchPerm)
