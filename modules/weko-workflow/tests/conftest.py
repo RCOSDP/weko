@@ -213,11 +213,59 @@ def admin_settings(db):
     return settings
 
 
+@pytest.fixture(autouse=True)
+def _no_celery_broker():
+    """テスト中に Celery のブローカーへ繋ぎに行かせない。
+
+    テスト用アプリの設定ではブローカーに接続できず、kombu の
+    retry_over_time が延々と再試行するため、ブローカーに触るテストは
+    **戻ってこない**。CI では weko-workflow [8/8] のジョブが毎回
+    120 分の上限で cancelled になっていた。実際に止まっていたのは
+    edit_item_direct_after_login_04 で、
+
+      check_an_item_is_locked()          -> inspect().ping()
+      prepare_edit_workflow() -> commit() -> apply_async()
+
+    の 2 経路。前者は inspect を、後者は celery を eager にして塞ぐ。
+
+    ワーカーが居ない状態、つまり ping() が None を返す状態を既定にする。
+    inspect を自前で patch しているテスト
+    (test_utils.py::test_check_an_item_is_locked など) はそちらが優先される。
+    """
+    from celery import current_app as _celery
+
+    _keys = ('task_always_eager', 'task_eager_propagates', 'broker_url')
+    _prev = {k: _celery.conf.get(k) for k in _keys}
+    # Flask 側の CELERY_ALWAYS_EAGER はこのテストアプリでは celery まで
+    # 届かない (InvenioCelery を初期化していない) ので、celery のアプリに
+    # 直接入れる。
+    _celery.conf.update(
+        task_always_eager=True,
+        task_eager_propagates=False,
+        broker_url='memory://',
+    )
+    try:
+        with patch('weko_workflow.utils.inspect') as mock_inspect:
+            mock_inspect.return_value.ping.return_value = None
+            yield mock_inspect
+    finally:
+        _celery.conf.update(**_prev)
+
+
 @pytest.fixture()
 def base_app(instance_path, search_class, cache_config):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
+        # ブローカーに繋ぎに行かせない。テスト用アプリのブローカー設定では
+        # RabbitMQ に接続できず、apply_async() が kombu の retry_over_time で
+        # 延々と再試行するため、そこに到達したテストが戻ってこなくなる
+        # (CI では weko-workflow [8/8] が毎回 120 分の上限で cancelled)。
+        # weko-deposit の conftest と同じ設定にする。
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND='memory',
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND='cache',
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
