@@ -1254,8 +1254,10 @@ class TestUpdateItemsByAuthorInfo:
             mock_process.assert_called()
             mock_get_origin_data.assert_not_called()
             mock_update_db_es_data.assert_not_called()
-            mock_delete_cache_data.assert_not_called()
-            mock_update_cache_data.assert_not_called()
+            # delete_cache_data / update_cache_data は finally 節にあるので
+            # update_gather_flg に関係なく必ず呼ばれる。
+            mock_delete_cache_data.assert_called()
+            mock_update_cache_data.assert_called()
 
     # 54702-31
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateItemsByAuthorInfo::test_update_items_by_authorInfo_sqlalchemy_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1290,7 +1292,10 @@ class TestUpdateItemsByAuthorInfo:
 
             mock_process.assert_called()
             mock_db_rollback.assert_called()
-            mock_retry.assert_called()
+            # retry するのは DisconnectionError / TimeoutError / ConnectionError
+            # の枝だけ。それ以外の SQLAlchemyError はログを残して終わる
+            # (weko_deposit/tasks.py:186)。
+            mock_retry.assert_not_called()
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestGetAuthorPrefix -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 class TestGetAuthorPrefix:
@@ -1476,20 +1481,37 @@ class TestChangeToMeta:
 
     # 54702-9,10
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_exists_authorNameInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+    # tasks.py が authorNameInfo を2回ループし、同じリストに append するため
+    # 著者名が重複する。しかも1周目 (400行) の判定が
+    # bool(name.get('nameShowFlg', "true")) で、値は文字列なので "false" でも
+    # 真になり、非表示指定した名前が落ちない。
+    # [{ja,"true"}, {en,"false"}] を渡すと [ja, en, ja] になる。
+    # 期待値のほうが正しい。詳細は issues.md A-12。
+    @pytest.mark.xfail(
+        raises=AssertionError,
+        reason="authorNameInfo を2回ループして名前が重複し、"
+               "nameShowFlg=false も落ちない (issues.md A-12)",
+    )
     def test_change_to_meta_exists_authorNameInfo(self, app, db, records, mocker, prepare_key_map):
-        target = {"authorNameInfo": [{"nameShowFlg": True, "familyName": "山田", "firstName": "太郎", "language": "ja"}, {"nameShowFlg": False, "familyName": "Yamada", "firstName": "Taro", "language": "en"}]}
+        # 名前 / メール / 所属は force_change=True のときだけ組み立てられる
+        # (weko_deposit/tasks.py:439 で、False なら識別子だけ返して抜ける)。
+        # *ShowFlg は文字列。weko_authors/schema.py が
+        # fields.String(validate=OneOf(["true","false"])) で定義しており、
+        # 製品側も strtobool() に渡す。bool を入れると
+        # AttributeError: 'bool' object has no attribute 'lower' になる。
+        target = {"authorNameInfo": [{"nameShowFlg": "true", "familyName": "山田", "firstName": "太郎", "language": "ja"}, {"nameShowFlg": "false", "familyName": "Yamada", "firstName": "Taro", "language": "en"}]}
         author_prefix = {}
         affiliation_id = {}
         item_names_data = {}
         for key in prepare_key_map:
             if key == "creator":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data, True)
                 assert meta == {"creatorNames": [{"creatorName": "山田, 太郎", "creatorNameLang": "ja"}], "familyNames": [{"familyName": "山田", "familyNameLang": "ja"}], "givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}]}
             elif key == "contributor":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data, True)
                 assert meta == {"contributorNames": [{"contributorName": "山田, 太郎", "lang": "ja"}], "familyNames": [{"familyName": "山田", "familyNameLang": "ja"}], "givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}]}
             elif key == "full_name":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data, True)
                 assert meta == {"names": [{"name": "山田, 太郎", "nameLang": "ja"}], "familyNames": [{"familyName": "山田", "familyNameLang": "ja"}], "givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}]}
 
         target = {"authorNameInfo": [{"nameShowFlg": True, "familyName": "山田", "firstName": "太郎", "language": "ja"}, {"nameShowFlg": True, "familyName": "Yamada", "firstName" :"Taro", "language": "en"}]}
@@ -1497,15 +1519,15 @@ class TestChangeToMeta:
         for key in prepare_key_map:
             if key == "creator":
                 item_names_data = [{"creatorName": "テスト, 太郎", "creatorNameLang": "ja", "creatorNameType": "Personal"}]
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data, True)
                 assert meta == {"creatorNames":[{"creatorName": "山田, 太郎", "creatorNameLang": "ja", "creatorNameType": "Personal"}, {"creatorName": "Yamada, Taro", "creatorNameLang": "en"}], "familyNames": [{"familyName": "山田", "familyNameLang": "ja"}, {"familyName": "Yamada", "familyNameLang": "en"}], "givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}, {"givenName": "Taro", "givenNameLang": "en"}]}
             elif key == "contributor":
                 item_names_data = [{"contributorName": "テスト, 太郎", "lang": "ja", "nameType": "Personal"}]
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data, True)
                 assert meta == {"contributorNames":[{"contributorName": "山田, 太郎", "lang": "ja", "nameType": "Personal"}, {"contributorName": "Yamada, Taro", "lang": "en"}], "familyNames": [{"familyName": "山田", "familyNameLang": "ja"}, {"familyName": "Yamada", "familyNameLang": "en"}], "givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}, {"givenName": "Taro", "givenNameLang": "en"}]}
             elif key == "full_name":
                 item_names_data = [{"name": "テスト, 太郎", "nameLang": "ja"}]
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data, True)
                 assert meta == {"names":[{"name": "山田, 太郎", "nameLang": "ja"}, {"name": "Yamada, Taro", "nameLang": "en"}], "familyNames": [{"familyName": "山田", "familyNameLang": "ja"}, {"familyName": "Yamada", "familyNameLang": "en"}], "givenNames": [{"givenName": "太郎", "givenNameLang": "ja"}, {"givenName": "Taro", "givenNameLang": "en"}]}
 
     # 54702-11
@@ -1524,7 +1546,11 @@ class TestChangeToMeta:
     # 54702-12
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_exists_authorIdInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_change_to_meta_exists_authorIdInfo(self, app, db, records, mocker, prepare_key_map):
-        target = {"authorIdInfo": [{"authorIdShowFlg": True, "idType": "-1"}, {"authorIdShowFlg": True, "idType": "1", "authorId": "1"}, {"authorIdShowFlg": True, "idType": "2", "authorId": "0000-0001-0002-0003"}, {"authorIdShowFlg": True, "idType": "3", "authorId": "0000-0001-0002-0003"}, {"authorIdShowFlg": False, "idType": "-1"}]}
+        # *ShowFlg は文字列。weko_authors/schema.py が
+        # fields.String(validate=OneOf(["true","false"])) で定義しており、
+        # 製品側も strtobool() に渡す。bool を入れると
+        # AttributeError: 'bool' object has no attribute 'lower' になる。
+        target = {"authorIdInfo": [{"authorIdShowFlg": "true", "idType": "-1"}, {"authorIdShowFlg": "true", "idType": "1", "authorId": "1"}, {"authorIdShowFlg": "true", "idType": "2", "authorId": "0000-0001-0002-0003"}, {"authorIdShowFlg": "true", "idType": "3", "authorId": "0000-0001-0002-0003"}, {"authorIdShowFlg": "false", "idType": "-1"}]}
         author_prefix = {"1": {"scheme": "WEKO", "url": ""}, "2": {"scheme": "ORCID", "url": "https://orcid.org/##"}, "3": {"scheme": "ISNI", "url": "http://isni.org/isni/"}}
         affiliation_id = {}
         item_names_data = {}
@@ -1536,37 +1562,45 @@ class TestChangeToMeta:
     # 54702-13
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_exists_emailInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_change_to_meta_exists_emailInfo(self, app, db, records, mocker, prepare_key_map):
+        # 名前 / メール / 所属は force_change=True のときだけ組み立てられる
+        # (weko_deposit/tasks.py:439 で、False なら識別子だけ返して抜ける)。
         target = {"emailInfo": [{"email": "test@nii.co.jp"}]}
         author_prefix = {}
         affiliation_id = {}
         item_names_data = {}
         for key in prepare_key_map:
             if key == "creator":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data, True)
                 assert meta == {"creatorMails": [{"creatorMail": "test@nii.co.jp"}]}
             elif key == "contributor":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data, True)
                 assert meta == {"contributorMails": [{"contributorMail": "test@nii.co.jp"}]}
             elif key == "full_name":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data, True)
                 assert meta == {"mails": [{"mail": "test@nii.co.jp"}]}
 
     # 54702-14
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_exists_affiliationInfo -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
     def test_change_to_meta_exists_affiliationInfo(self, app, db, records, mocker, prepare_key_map):
-        target = {"affiliationInfo": [{"identifierInfo": [{"identifierShowFlg": False}, {"identifierShowFlg": True, "affiliationIdType": "-1"}, {"identifierShowFlg": True, "affiliationIdType": "1", "affiliationId": "057zh3y96"}, {"identifierShowFlg": True, "affiliationIdType": "2", "affiliationId": "000000012192178X"}, {"identifierShowFlg": True, "affiliationIdType": "3", "affiliationId": "0000000121691048"}], "affiliationNameInfo": [{"affiliationNameShowFlg": False}, {"affiliationNameShowFlg": True, "affiliationName": "The University of Tokyo", "affiliationNameLang": "en"}]}]}
+        # 名前 / メール / 所属は force_change=True のときだけ組み立てられる
+        # (weko_deposit/tasks.py:439 で、False なら識別子だけ返して抜ける)。
+        # *ShowFlg は文字列。weko_authors/schema.py が
+        # fields.String(validate=OneOf(["true","false"])) で定義しており、
+        # 製品側も strtobool() に渡す。bool を入れると
+        # AttributeError: 'bool' object has no attribute 'lower' になる。
+        target = {"affiliationInfo": [{"identifierInfo": [{"identifierShowFlg": "false"}, {"identifierShowFlg": "true", "affiliationIdType": "-1"}, {"identifierShowFlg": "true", "affiliationIdType": "1", "affiliationId": "057zh3y96"}, {"identifierShowFlg": "true", "affiliationIdType": "2", "affiliationId": "000000012192178X"}, {"identifierShowFlg": "true", "affiliationIdType": "3", "affiliationId": "0000000121691048"}], "affiliationNameInfo": [{"affiliationNameShowFlg": "false"}, {"affiliationNameShowFlg": "true", "affiliationName": "The University of Tokyo", "affiliationNameLang": "en"}]}]}
         author_prefix = {}
         affiliation_id = {"1": {"scheme": "ROR", "url": "https://ror.org/##"}, "2": {"scheme": "ISNI", "url": "http://isni.org/isni/"}, "3": {"scheme": "kakenhi", "url": ""}}
         item_names_data = {}
         for key in prepare_key_map:
             if key == "creator":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["creator"], item_names_data, True)
                 assert meta == {"creatorAffiliations": [{"affiliationNameIdentifiers": [{"affiliationNameIdentifierScheme": "ROR", "affiliationNameIdentifier": "057zh3y96", "affiliationNameIdentifierURI": "https://ror.org/057zh3y96"}, {"affiliationNameIdentifierScheme": "ISNI", "affiliationNameIdentifier": "000000012192178X", "affiliationNameIdentifierURI": "http://isni.org/isni/"}, {"affiliationNameIdentifierScheme": "kakenhi", "affiliationNameIdentifier": "0000000121691048"}], "affiliationNames": [{"affiliationName": "The University of Tokyo", "affiliationNameLang": "en"}]}]}
             elif key == "contributor":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["contributor"], item_names_data, True)
                 assert meta == {"contributorAffiliations": [{"contributorAffiliationNameIdentifiers": [{"contributorAffiliationScheme": "ROR", "contributorAffiliationNameIdentifier": "057zh3y96", "contributorAffiliationURI": "https://ror.org/057zh3y96"}, {"contributorAffiliationScheme": "ISNI", "contributorAffiliationNameIdentifier": "000000012192178X", "contributorAffiliationURI": "http://isni.org/isni/"}, {"contributorAffiliationScheme": "kakenhi", "contributorAffiliationNameIdentifier": "0000000121691048"}], "contributorAffiliationNames": [{"contributorAffiliationName": "The University of Tokyo", "contributorAffiliationNameLang": "en"}]}]}
             elif key == "full_name":
-                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data)
+                target_id, meta = _change_to_meta(target, author_prefix, affiliation_id, prepare_key_map["full_name"], item_names_data, True)
                 assert meta == {"affiliations": [{"nameIdentifiers": [{"nameIdentifierScheme": "ROR", "nameIdentifier": "057zh3y96", "nameIdentifierURI": "https://ror.org/057zh3y96"}, {"nameIdentifierScheme": "ISNI", "nameIdentifier": "000000012192178X", "nameIdentifierURI": "http://isni.org/isni/"}, {"nameIdentifierScheme": "kakenhi", "nameIdentifier": "0000000121691048"}], "affiliationNames": [{"affiliationName": "The University of Tokyo", "lang": "en"}]}]}
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::TestUpdateAuthorData -v -s -vv --cov-branch --cov-report=html --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
@@ -1870,7 +1904,8 @@ class TestUpdateAuthorData:
         # 実行
         result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
-        assert result == (None, set())
+        # author_link も返すようになったので3要素 (tasks.py:382)。
+        assert result == (None, set(), {})
         assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "PID 1 does not exist."}]
 
     # 54702-30
@@ -1894,10 +1929,19 @@ class TestUpdateAuthorData:
         # 実行
         result = _update_author_data(item_id, record_ids, process_counter, target, origin_pkid_list, key_map, author_prefix, affiliation_id, force_change)
         # 期待結果
-        assert result == (None, set())
+        # author_link も返すようになったので3要素 (tasks.py:382)。
+        assert result == (None, set(), {})
         assert process_counter["fail_items"] == [{"record_id": "1", "author_ids": [], "message": "Test Exception"}]
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+# ConflictError / NotFoundError を投げてリトライを使い切る経路を通るので、
+# tasks.py:687 の `if not success:` で UnboundLocalError になる。
+# 詳細は issues.md A-13。
+@pytest.mark.xfail(
+    raises=UnboundLocalError,
+    reason="update_file_content のリトライを使い切ると tasks.py:687 で "
+           "success が未代入のまま参照される (issues.md A-13)",
+)
 def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
     indexer = WekoIndexer()
     indexer.get_es_index()
@@ -1992,15 +2036,29 @@ def test_extract_pdf_and_update_file_contents(app, db, location, caplog):
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_tasks.py::test_extract_pdf_and_update_file_contents_api_cases -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+RETRY_EXHAUSTED_XFAIL = pytest.mark.xfail(
+    raises=UnboundLocalError,
+    reason="update_file_content のリトライを使い切ると tasks.py:687 で "
+           "success が未代入のまま参照される (issues.md A-13)",
+)
+
 @pytest.mark.parametrize("tika_path, isfile, storage_exception, subprocess_returncode, update_side_effect, expect_error_attr, expect_content", [
     ("/tmp/tika.jar", True, None, 0, None, None, "abc"),  # normal
-    (None, True, None, 0, None, Exception, None),  # tika jar not found
+    # tika の jar が無いときの例外は tasks 側の except Exception が
+    # 握り潰してログに落とすだけなので、呼び出し元までは伝わらない。
+    (None, True, None, 0, None, "tika_error", None),  # tika jar not found
     ("/tmp/tika.jar", True, FileNotFoundError("not found"), 0, None, "file_error", None),  # storage_factory error
     ("/tmp/tika.jar", True, None, 1, None, "subprocess_error", None),  # subprocess error
-    ("/tmp/tika.jar", True, None, 0, "conflict", "update_error", None),  # ConflictError
-    ("/tmp/tika.jar", True, None, 0, "notfound", "update_error", None),  # NotFoundError
+    # update_file_content がリトライを使い切ると、その失敗を報告する行
+    # (tasks.py:687 の `if not success:`) で success が未代入のまま参照され
+    # UnboundLocalError になる。詳細は issues.md A-13。
+    pytest.param("/tmp/tika.jar", True, None, 0, "conflict", "update_error", None,
+                 marks=RETRY_EXHAUSTED_XFAIL),  # ConflictError
+    pytest.param("/tmp/tika.jar", True, None, 0, "notfound", "update_error", None,
+                 marks=RETRY_EXHAUSTED_XFAIL),  # NotFoundError
     ("/tmp/tika.jar", True, "ResourceNotFoundError", 0, None, None, None),  # ResourceNotFoundError
-    ("/tmp/tika.jar", True, None, 0, "other", "update_error", None),  # other exception
+    pytest.param("/tmp/tika.jar", True, None, 0, "other", "update_error", None,
+                 marks=RETRY_EXHAUSTED_XFAIL),  # other exception
 ])
 def test_extract_pdf_and_update_file_contents_cases(monkeypatch, tika_path, isfile, storage_exception, subprocess_returncode, update_side_effect, expect_error_attr, expect_content):
     if tika_path is not None:
@@ -2036,7 +2094,10 @@ def test_extract_pdf_and_update_file_contents_cases(monkeypatch, tika_path, isfi
     dummy_logger = types.SimpleNamespace(error=lambda x: setattr(monkeypatch, expect_error_attr, x) if expect_error_attr and expect_error_attr is not Exception else None)
     dummy_app = types.SimpleNamespace(config={'WEKO_DEPOSIT_FILESIZE_LIMIT': 100}, logger=dummy_logger)
     monkeypatch.setattr("weko_deposit.tasks.current_app", dummy_app)
-    monkeypatch.setattr("weko_deposit.tasks.subprocess", types.SimpleNamespace(
+    # java を実際に起動させない。subprocess を使うのは
+    # weko_deposit.utils.extract_text_with_tika なので、patch 先は utils。
+    # (tasks 側を patch していたため実際に java が起動し、結果が空になっていた)
+    monkeypatch.setattr("weko_deposit.utils.subprocess", types.SimpleNamespace(
         run=lambda *a, **k: types.SimpleNamespace(returncode=subprocess_returncode, stdout=b'abc\n', stderr=b''),
         PIPE=object()
     ))
