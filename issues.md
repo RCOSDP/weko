@@ -173,6 +173,47 @@
 - 直し方: `get_activity_display_info` の冒頭で activity を確認し、
   無ければ 404 を返す。
 
+### A-12. weko-deposit: 著者名が重複し、非表示指定した名前も出る
+
+- 場所: `modules/weko-deposit/weko_deposit/tasks.py` `_change_to_meta()`
+  - 400-416行: `for name in target.get('authorNameInfo', [])`
+  - 446-463行: **同じループがもう一度**あり、同じ
+    `family_names` / `given_names` / `full_names` に append する
+- 症状: 著者情報の一括更新でアイテムのメタデータを書き換えると、
+  **著者名が重複して入る**。さらに1周目の判定が
+  ```python
+  if not bool(name.get('nameShowFlg', "true")):
+  ```
+  で、`nameShowFlg` は文字列 (`weko_authors/schema.py:39` が
+  `fields.String(validate=OneOf(["true","false"]))`) のため
+  `"false"` でも真になり、**非表示指定した名前が落ちない**。
+  2周目は `strtobool()` を使っており、そちらは正しい。
+  `[{ja,"true"}, {en,"false"}]` を渡すと `[ja, en, ja]` になる。
+- xfail: `tests/test_tasks.py::TestChangeToMeta::test_change_to_meta_exists_authorNameInfo`
+- 直し方: 400-416行のループを消す (446行のものが正しい)。
+
+### A-13. weko-deposit: リトライを使い切ると UnboundLocalError
+
+- 場所: `modules/weko-deposit/weko_deposit/tasks.py:670-687`
+  ```python
+  for attempt in range(retry_count):
+      try:
+          update_file_content(record_uuid, file_datas)
+          success = True
+          break
+      except ConflictError: ...
+      except NotFoundError: ...
+      except Exception: ...
+  if not success:
+      current_app.logger.error(...)
+  ```
+- 症状: 全リトライが失敗すると `success` は一度も代入されないため、
+  **その失敗を報告するはずの行**が `UnboundLocalError` で落ちる。
+  invenio-files-rest の A-1 とまったく同じ形。
+- xfail: `tests/test_tasks.py` の `RETRY_EXHAUSTED_XFAIL` (3 パラメータ) と
+  `test_extract_pdf_and_update_file_contents`。
+- 直し方: ループの前で `success = False` と初期化する。
+
 ---
 
 ## B. テスト側で回避したが、実アプリにも同じ形が残っているもの

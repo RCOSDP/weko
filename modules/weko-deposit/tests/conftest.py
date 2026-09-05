@@ -140,6 +140,10 @@ def base_app(instance_path):
     WEKO_INDEX_TREE_REST_ENDPOINTS["tid"]["index_route"] = "/tree/index/<int:index_id>"
 
     app_.config.update(
+        # weko_records_ui.utils が読む。このテストアプリは WekoRecordsUI を
+        # 初期化していないので、weko_records_ui/config.py の既定値が入らない。
+        WEKO_RECORDS_UI_EMAIL_ITEM_KEYS=[
+            'creatorMails', 'contributorMails', 'mails'],
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
