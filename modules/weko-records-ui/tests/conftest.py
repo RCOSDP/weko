@@ -259,9 +259,12 @@ def base_app(instance_path):
         PDF_COVERPAGE_LANG_FILENAME=PDF_COVERPAGE_LANG_FILENAME,
         # JPAEXG_TTF_FILEPATH=JPAEXG_TTF_FILEPATH,
         # JPAEXG_TTF_FILEPATH = "/code/modules/weko-records-ui/weko_records_ui/fonts/ipaexg00201/ipaexg.ttf",
-        JPAEXG_TTF_FILEPATH="tests/fonts/ipaexg.ttf",
+        # pdf.py は blueprint.root_path (= weko_records_ui/) にこの値を
+        # 単純連結する。"tests/fonts/..." だと weko_records_uitests/fonts/...
+        # という存在しないパスになるので、製品の既定値と同じ形にする。
+        JPAEXG_TTF_FILEPATH="/fonts/ipaexg00201/ipaexg.ttf",
         # JPAEXM_TTF_FILEPATH=JPAEXM_TTF_FILEPATH,
-        JPAEXM_TTF_FILEPATH="tests/fonts/ipaexm.ttf",
+        JPAEXM_TTF_FILEPATH="/fonts/ipaexm00201/ipaexm.ttf",
         URL_OA_POLICY_HEIGHT=URL_OA_POLICY_HEIGHT,
         HEADER_HEIGHT=HEADER_HEIGHT,
         TITLE_HEIGHT=TITLE_HEIGHT,
