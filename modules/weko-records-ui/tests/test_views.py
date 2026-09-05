@@ -192,7 +192,9 @@ def test_export_acl_guest(client, records):
         # (7, 302),
     ],
 )
-@pytest.mark.timeout(60)
+# 60 秒はフィクスチャの実測 (1件あたり40秒超) に対して短すぎる。
+# pytest-timeout が入るまでこのマーカーは効いていなかった。
+# モジュール全体の上限 (tox.ini の [pytest] timeout = 600) に任せる。
 def test_export_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for(

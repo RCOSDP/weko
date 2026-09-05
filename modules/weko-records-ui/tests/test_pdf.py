@@ -324,10 +324,11 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             "Language: English\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: test, taro\nE-mail: test.taro@test.org\nAffiliation: test_affiliation",
             "Language: English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         ),
+        # 2件目のレコードにも publisher が入るようになった。
         (
-            "Language: Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
-            "言語: Japanese\n出版者: \n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: \nメールアドレス: \n所属: ",
-            "Language: Japanese\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: test.taro@test.org\nAffiliation: ",
+            "Language: Japanese\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: \nAffiliation: ",
+            "言語: Japanese\n出版者: test_publisher\n公開日: 2024-03-21\nキーワード: テスト主題\n作成者: \nメールアドレス: \n所属: ",
+            "Language: Japanese\nPublisher: test_publisher\nDate of Publication: 2024-03-21\nKeywords: test_subject\nAuthor: \nE-mail: test.taro@test.org\nAffiliation: ",
             "Language: Japanese, English\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
         ),
         (
@@ -387,7 +388,10 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_display_position = "right"
             mock_page_setting.header_output_image = "tests/data/image01.jpg"
             mock_page_setting.header_display_type = "string"
-            res = make_combined_pdf(record.pid, fileobj, obj, None)
+            # 他の呼び出しと同じくリクエストコンテキストの中で呼ぶ。
+            # 外だと current_i18n.language が None を参照して落ちる。
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == tests[i][0]
             mock_multi_cell.call_args_list.clear()
@@ -396,7 +400,10 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_display_position = "right"
             mock_page_setting.header_output_image = ""
             mock_page_setting.header_display_type = "string"
-            res = make_combined_pdf(record.pid, fileobj, obj, None)
+            # 他の呼び出しと同じくリクエストコンテキストの中で呼ぶ。
+            # 外だと current_i18n.language が None を参照して落ちる。
+            with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == tests[i][0]
             mock_multi_cell.call_args_list.clear()
@@ -407,7 +414,8 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             mock_page_setting.header_output_image = ""
             mock_page_setting.header_display_type = "string"
             with patch("weko_records_ui.pdf.item_setting_show_email", return_value=True):
-                res = make_combined_pdf(record.pid, fileobj, obj, None)
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
                 args_list = mock_multi_cell.call_args_list
                 assert args_list[2][0][3] == tests[i][2]
                 mock_multi_cell.call_args_list.clear()
@@ -453,7 +461,8 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
             }
             with patch("weko_items_ui.utils.get_hide_list_by_schema_form", return_value=hide_list):
                 with patch("weko_records_ui.pdf.get_mapping", return_value=item_map):
-                    res = make_combined_pdf(record.pid, fileobj, obj, None)
+                    with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                        res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == tests[i][3]
             mock_multi_cell.call_args_list.clear()
@@ -464,7 +473,8 @@ def test_make_combined_pdf(app, db, esindex, location, pdfcoverpagesetting, mock
                 "title.@attributes.xml:lang": "item_1711081249402.subitem_title_language"
             }
             with patch("weko_records_ui.pdf.get_mapping",return_value=item_map):
-                res = make_combined_pdf(record.pid, fileobj, obj, None)
+                with app.test_request_context(headers=[('Accept-Language', 'en')]):
+                    res = make_combined_pdf(record.pid, fileobj, obj, None)
             args_list = mock_multi_cell.call_args_list
             assert args_list[2][0][3] == "Language: ja\nPublisher: \nDate of Publication: 2024-03-21\nKeywords: \nAuthor: \nE-mail: \nAffiliation: "
             mock_multi_cell.call_args_list.clear()

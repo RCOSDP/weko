@@ -171,6 +171,15 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
+    # weko_records_ui/fonts/*/*.pkl は fpdf のフォントメトリクス
+    # キャッシュで、生成したときの **相対パス** が ttffile として
+    # 焼き込まれている
+    # (modules/weko-records-ui/weko_records_ui/fonts/.../ipaexg.ttf)。
+    # fpdf はこのキャッシュを読み、出力時にその ttffile を開くため、
+    # 作業ディレクトリが違うと FileNotFoundError になる。
+    # キャッシュを使わせない (0=同じフォルダ, 1=使わない)。
+    from fpdf import fpdf as _fpdf
+    _fpdf.FPDF_CACHE_MODE = 1
     app_ = Flask(
         "testapp",
         instance_path=instance_path,
