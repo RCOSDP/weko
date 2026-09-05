@@ -214,6 +214,38 @@
   `test_extract_pdf_and_update_file_contents`。
 - 直し方: ループの前で `success = False` と初期化する。
 
+### A-14. weko-deposit: 実体の無いファイルが1つあると 500
+
+- 場所: `modules/weko-deposit/weko_deposit/api.py:1247` `get_content_files()`
+  ```python
+  except FileNotFoundError as se:
+      current_app.logger.error(...)
+  ```
+- 症状: ストレージ上に実体が無いファイルで `storage().open()` が投げるのは
+  `fs.errors.ResourceNotFoundError` で、`FileNotFoundError` では捕まらない。
+  外側の `except Exception` に落ちて `abort(500)` するため、
+  **1件でも実体の欠けたファイルがあるとコンテンツ抽出全体が 500 になる**。
+  内側に FileNotFoundError のハンドラを置いている以上、
+  1件だけ飛ばして続ける意図だったはず。
+- xfail: `tests/test_api.py::TestWekoDeposit::test_get_content_files`
+- 直し方: `except (FileNotFoundError, ResourceNotFoundError)` にする。
+
+### A-15. weko-deposit: ドラフトのあるアイテムを削除すると FK 違反
+
+- 場所: `modules/weko-deposit/weko_deposit/api.py:944-957` `WekoDeposit.delete()`
+  ```python
+  RecordsBuckets.query.filter_by(record_id=self.id).delete()
+  ...
+  bucket.remove()
+  ```
+- 症状: `.0` のドラフトは親レコードと同じバケットを参照する。
+  `delete()` は**自分の** `RecordsBuckets` 行だけ消してからバケット本体を
+  削除するので、ドラフト側の参照が残ったままとなり
+  `update or delete on table "files_bucket" violates foreign key constraint
+  "fk_records_buckets_bucket_id_files_bucket"` になる。
+- xfail: `tests/test_api.py::TestWekoDeposit::test_delete`
+- 直し方: 他に参照が残っていないか確かめてから `bucket.remove()` する。
+
 ---
 
 ## B. テスト側で回避したが、実アプリにも同じ形が残っているもの
