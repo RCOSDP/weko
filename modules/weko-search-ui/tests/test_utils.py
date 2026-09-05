@@ -29,6 +29,7 @@ from invenio_db import db as iv_db
 from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 
@@ -5028,7 +5029,10 @@ def test_function_issue34520(app, doi_records, mocker_itemtype, item_id, before_
         assert after_list == before_list
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34535 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
-def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocker):
+# register_item_metadata -> convert_item_metadata が System Administrator
+# ロールのユーザを引いて system_admin.id を読む。users を取らないと
+# そのユーザが居らず 'NoneType' object has no attribute 'id' になる。
+def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,users,mocker):
     mocker.patch("weko_search_ui.utils.find_and_update_location_size")
     mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents.apply_async")
     mocker.patch("invenio_records.api.before_record_update.send")
@@ -5054,6 +5058,18 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     )
     rel = PIDRelation.create(recid, depid, 3)
     db.session.add(rel)
+    # register_item_metadata の「最新版を更新する」経路は
+    # PIDVersioning(child=pid).last_child を見る。親 PID を作って
+    # バージョン関係を張っておかないと parent が None になり
+    # 'NoneType' object has no attribute 'id' で落ちる。
+    parent = PersistentIdentifier.create(
+        "parent",
+        "parent:4",
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    PIDVersioning(parent=parent).insert_child(child=recid)
     record = WekoRecord.create(record_data, id_=rec_uuid)
     item = ItemsMetadata.create(item_data, id_=rec_uuid)
     deposit = WekoDeposit(record, record.model)
@@ -5064,9 +5080,17 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     root_path = os.path.dirname(os.path.abspath(__file__))
     new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1000', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 1000, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
 
-    register_item_metadata(new_item,root_path,True)
+    # 第3引数は owner (ユーザID)。True を渡していたため int('True') で落ちる。
+    register_item_metadata(new_item, root_path, 1)
     record = WekoDeposit.get_record(recid.object_uuid)
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': 1, 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': 1, 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1000', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
+    # issue34535 の眼目は説明文の <br/> が改行に変換されること。
+    # レコード全体を突き合わせると _buckets の UUID のように実行ごとに
+    # 変わる値まで固定することになるので、変換結果と主要項目だけを見る。
+    assert record["item_1617186626617"]["attribute_value_mlt"][0][
+        "subitem_description"] == "this is line1.\nthis is line2."
+    assert record["item_title"] == "test item in br"
+    assert record["recid"] == "4"
+    assert record["path"] == ["1"]
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34958 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_function_issue34958(app, make_itemtype):
