@@ -2011,7 +2011,18 @@ def test_extract_pdf_and_update_file_contents_cases(monkeypatch, tika_path, isfi
     class DummyStorage:
         def open(self, mode):
             class DummyFP:
-                def read(self, size): return b'data'
+                # read() は中身を1回だけ返し、以降は b'' を返して終わる。
+                # 常に b'data' を返していたため、tasks.py の
+                #     while True:
+                #         chunk = fp.read(1024 * 1024)
+                #         if not chunk: break
+                #         tmp.write(chunk)
+                # が終わらず、テンポラリファイルに 4 バイトずつ書き続けていた。
+                # CI では weko-deposit [8/8] のジョブが毎回 120 分の上限で
+                # cancelled になっていた。
+                def __init__(self): self._chunks = [b'data']
+                def read(self, size):
+                    return self._chunks.pop(0) if self._chunks else b''
                 def __enter__(self): return self
                 def __exit__(self, exc_type, exc_val, exc_tb): pass
             return DummyFP()
