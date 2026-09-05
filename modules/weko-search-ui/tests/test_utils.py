@@ -3926,6 +3926,10 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 # def export_all(root_url, user_id, data): *** not yet done
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# CI では 600 秒 (tox.ini の [pytest] timeout) を超えることがある。
+# 手元の実測は本体 26 秒 / フィクスチャ込み 160 秒だが、CI の
+# PostgreSQL 待ちで大きく伸びる。ハングの歯止めは残したまま上限を上げる。
+@pytest.mark.timeout(1800)
 def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_connect, db, create_export_all_data, mocker):
     i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):

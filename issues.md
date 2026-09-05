@@ -285,6 +285,23 @@
 - テスト側の扱い: `test_validation_error` の期待値を実際の 500 に合わせ、
   「書き込まれていないこと」だけ確かめるようにした。
 
+### B-5. weko-records-ui: fpdf のフォントキャッシュに相対パスが焼き込まれている
+
+- 場所: `modules/weko-records-ui/weko_records_ui/fonts/*/ipaex*.pkl`
+- 症状: これは fpdf が作るフォントメトリクスのキャッシュで、中に
+  生成時の **ttffile が相対パスで記録されている**。
+  ```
+  ttffile: modules/weko-records-ui/weko_records_ui/fonts/ipaexg00201/ipaexg.ttf
+  ```
+  fpdf は `add_font()` でこのキャッシュを読み、PDF 出力時にその
+  `ttffile` を開くため、作業ディレクトリが「リポジトリ直下」でないと
+  `FileNotFoundError` になる。カバーページ付き PDF の生成が
+  起動ディレクトリに依存する。
+- テスト側の扱い: `tests/conftest.py` で `FPDF_CACHE_MODE = 1`
+  (キャッシュを使わない) にした。
+- 直し方: この `.pkl` をリポジトリから外す (fpdf が実行時に作り直す)。
+  生成環境のパスが混ざった生成物を配布物に含めない。
+
 ### B-4. weko-gridlayout の API は login_required のみ
 
 - `/admin/save_widget_layout_setting`、`/admin/delete_widget_item`、

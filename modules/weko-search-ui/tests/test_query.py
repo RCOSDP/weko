@@ -802,6 +802,10 @@ def test_function_issue35902(app, users, communities, mocker):
         app.config['WEKO_ADMIN_MANAGEMENT_OPTIONS'] = WEKO_ADMIN_MANAGEMENT_OPTIONS
         mocker.patch("weko_search_ui.query.search_permission",side_effect=MockSearchPerm)
         mocker.patch("weko_search_ui.permissions.search_permission",side_effect=MockSearchPerm)
+        # 閲覧可能なインデックスを固定する。差し替えないと環境によって
+        # path が ['1'] だったり [] だったりして、期待値と一致しない。
+        mocker.patch("weko_index_tree.api.Indexes.get_browsing_tree_paths",
+                     return_value=["1"])
         # ACL の条件が増えたので、共通部分は実クエリに合わせてある。
         test = [
             {"bool": {"should": [{"bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}, {"match": {"weko_creator_id": None}}]}}, {"bool": {"must": [{"terms": {"publish_status": ["0", "1"]}}, {"terms": {"weko_shared_ids": [None]}}]}}, {"bool": {"must": [{"terms": {"publish_status": ["0"]}}, {"range": {"publish_date": {"lte": "now/d", "time_zone": "UTC"}}}]}}], "must": [{"terms": {"path": ["1"]}}]}},
