@@ -246,6 +246,21 @@
 - xfail: `tests/test_api.py::TestWekoDeposit::test_delete`
 - 直し方: 他に参照が残っていないか確かめてから `bucket.remove()` する。
 
+### A-16. weko-search-ui: 存在しない item_link で 404 ではなく AttributeError
+
+- 場所: `modules/weko-search-ui/weko_search_ui/views.py:165`
+  ```python
+  recid = approval_record.get("control_number", None)
+  ```
+- 症状: `/search?item_link=1` のように存在しない値を渡すと、
+  `WorkActivity.get_activity_index_search()` が `approval_record` を
+  初期値の `[]` のまま返す (`weko_workflow/api.py:2786`) ため、
+  `list` に `.get()` を呼んで `AttributeError` になる。
+  404 を返すべきところが 500 になる。
+- xfail: `tests/test_views.py::test_search_acl_guest` /
+  `tests/test_views.py::test_search_acl`
+- 直し方: `approval_record` が dict でないときに 404 で抜ける。
+
 ---
 
 ## B. テスト側で回避したが、実アプリにも同じ形が残っているもの
