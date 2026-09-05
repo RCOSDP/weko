@@ -111,7 +111,8 @@ def test_IndexSearchResource_get(client_rest, users, item_type, db_records, face
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_rest.py::test_IndexSearchResource_get_Exception -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_IndexSearchResource_get_Exception(i18n_app, client_rest, db, users, item_type, db_records, facet_search_setting):
     i18n_app.config['WEKO_SEARCH_TYPE_INDEX'] = 'index'
-    sname = current_app.config["SERVER_NAME"]
+    # 生成される URL のホスト名は小文字になる (SERVER_NAME は TEST_SERVER)。
+    sname = current_app.config["SERVER_NAME"].lower()
     #from weko_index_tree.models import Index
     #datas = json_data("data/index.json")
     #indexes = list()
