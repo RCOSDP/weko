@@ -5288,7 +5288,10 @@ def test_set_by_jsonpath():
     set_by_jsonpath(data, "item_1.subitem_1", "value_1")
     assert data["item_1"]["subitem_1"] == "value_1"
 
-    set_by_jsonpath(data, "item_1.subitem_2.subsubitem_1", "value_2", {"item_1": {"subitem_2": {"default_factory": "default_value"}}})
+    # fixed_properties のキーは「ドット区切りの親パス」。
+    # ネストした dict ではなく "item_1.subitem_2" のような文字列キーで渡す
+    # (mapper.py:1423 が v[:v.rfind(".")] で組み立てている)。
+    set_by_jsonpath(data, "item_1.subitem_2.subsubitem_1", "value_2", {"item_1.subitem_2": {"default_factory": "default_value"}})
     assert data["item_1"]["subitem_2"]["default_factory"] == "default_value"
     assert data["item_1"]["subitem_2"]["subsubitem_1"] == "value_2"
 
@@ -5328,7 +5331,11 @@ def test_set_by_jsonpath():
         "pubdate": "2025-06-12",
         "item_1": {
             "subitem_1": "value_1",
-            "subitem_2": "value_2"
+            # fixed_properties でマージされた default_factory も入る。
+            "subitem_2": {
+                "default_factory": "default_value",
+                "subsubitem_1": "value_2"
+            }
         },
         "item_2": [
             {

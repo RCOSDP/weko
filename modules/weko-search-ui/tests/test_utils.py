@@ -356,6 +356,14 @@ def test_delete_records(i18n_app, db_activity):
                     ):
                         with patch(
                             "invenio_records.api.Record.delete", return_value=""
+                        ), patch(
+                            # レコードは ES に載っていないので、
+                            # update_es_data / soft_delete が
+                            # document_missing で 404 になる。
+                            "weko_search_ui.utils.WekoIndexer.update_es_data",
+                            return_value=None,
+                        ), patch(
+                            "weko_records_ui.utils.soft_delete", return_value=None
                         ):
                             assert delete_records(33, ignore_items=[])
                             assert delete_records(1, ignore_items=[])
@@ -1279,8 +1287,15 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
     item["$schema"] = "/items/jsonschema/1000"
     item["item_type_id"] = 1000
     mock_commit = mocker.patch('weko_deposit.api.WekoDeposit.commit', return_value=None)
-    with patch("invenio_files_rest.utils.find_and_update_location_size"):
-        assert register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+    with patch("invenio_files_rest.utils.find_and_update_location_size"), \
+            patch("weko_search_ui.utils.WekoDeposit.publish_without_commit",
+                  return_value=None):
+        # publish_without_commit を通すと、item_type_id を 1000 に差し替えた
+        # レコードに対して dictdiffer のパッチが当たらず KeyError になる。
+        # 隣の test_register_item_metadata2 も同じ理由でここを差し替えている。
+        # register_item_metadata は戻り値を返さない (常に None) ので、
+        # 例外を出さずに通ることだけを確かめる。
+        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp

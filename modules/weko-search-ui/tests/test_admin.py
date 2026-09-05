@@ -149,7 +149,11 @@ class TestItemManagementBulkSearch:
             res = client.get(url)
             assert res.status == '500 INTERNAL SERVER ERROR'
 
-        url = url_for("items/search.index", item_management="sort",  _external=True)
+        # url_for に item_management を渡すとクエリ文字列に載る。werkzeug は
+        # パスとキーワードの両方にクエリ文字列があると ValueError にするので、
+        # query_string 側だけに寄せる (元のコードは古い werkzeug が
+        # query_string で上書きしていたので実質 update だった)。
+        url = url_for("items/search.index", _external=True)
         with patch("flask_login.utils._get_user", return_value=user):
             with patch("flask.templating._render", return_value=""):
                 res = client.get(url, query_string={"item_management": "update"})
