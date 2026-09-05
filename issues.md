@@ -414,6 +414,18 @@ CI は 1 ジョブ 1 コンテナなので毎回まっさらだが、ローカ�
 - **weko-search-ui の `test_handle_fill_system_item3`**
   設定名が `WEKO_HANDLE_ALLOW_REGISTER_CRNI` (正しくは CNRI) で、
   `is_register_cnri` パラメータが一度も効いていなかった。
+- **invenio-oaiserver の `test_is_pubdate_in_future`**
+  `publish_date` は `BABEL_DEFAULT_TIMEZONE` (Asia/Tokyo) の日付として
+  解釈され、UTC に直してから `utcnow()` と比べられる
+  (`weko_records_ui/utils.py:95`)。テストは `datetime.utcnow()` で日付を
+  作っていたため、**UTC が 15:00 を過ぎている間 (日本時間の 0〜9 時) は
+  「明日」が過去判定になり必ず落ちる**。CI の結果が時間帯で変わっていた原因。
+  判定と同じ Asia/Tokyo のローカル日付で組み立てるようにした。
+- **weko-search-ui の `test_function_issue35902`**
+  詳細検索の条件を `test_request_context(data=...)` で渡していた。
+  GET のボディはフォームとして解釈されないことがあり、werkzeug の
+  バージョンによっては `request.values` に入らず条件が丸ごと落ちる
+  (CI と手元で挙動が違った)。`query_string=` に変更。
 - **invenio-files-rest の `dbsession_clean`**
   `invenio_files_rest.views` が blueprint に登録する `teardown_request` が
   テスト内でセッションを閉じ、`DetachedInstanceError` を撒いていた。

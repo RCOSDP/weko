@@ -807,6 +807,9 @@ def assert_same_clauses(actual, expected):
     assert sorted(actual, key=key) == sorted(expected, key=key)
 
 
+# 詳細検索の条件はクエリ文字列で渡す。data= で渡すと GET のボディになり、
+# werkzeug のバージョンによっては request.values に入らず、
+# タイトルなどの条件がクエリから丸ごと落ちる (CI と手元で挙動が違った)。
 def test_function_issue35902(app, users, communities, mocker):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
@@ -832,7 +835,7 @@ def test_function_issue35902(app, users, communities, mocker):
             "q":"test_data",
             "title":"aaa",
         }
-        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+        with app.test_request_context(headers=[("Accept-Language","en")],query_string=data):
             app.extensions['invenio-oauth2server'] = 1
             app.extensions['invenio-queues'] = 1
             test1 = copy.deepcopy(test)
@@ -857,7 +860,7 @@ def test_function_issue35902(app, users, communities, mocker):
             "q":"",
             "title":"aaa",
         }
-        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+        with app.test_request_context(headers=[("Accept-Language","en")],query_string=data):
             app.extensions['invenio-oauth2server'] = 1
             app.extensions['invenio-queues'] = 1
             test2 = copy.deepcopy(test)
@@ -874,7 +877,7 @@ def test_function_issue35902(app, users, communities, mocker):
             "page":"1","size":"20","sort":"-createdate",
             "search_type":"0","q":"test_data"
         }
-        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+        with app.test_request_context(headers=[("Accept-Language","en")],query_string=data):
             app.extensions['invenio-oauth2server'] = 1
             app.extensions['invenio-queues'] = 1
             test3 = copy.deepcopy(test)
@@ -903,7 +906,7 @@ def test_function_issue35902(app, users, communities, mocker):
             "title":"aaa",
             "community":"comm1"
         }
-        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+        with app.test_request_context(headers=[("Accept-Language","en")],query_string=data):
             app.extensions['invenio-oauth2server'] = 1
             app.extensions['invenio-queues'] = 1
             test1 = copy.deepcopy(test)
@@ -929,7 +932,7 @@ def test_function_issue35902(app, users, communities, mocker):
             "title":"aaa",
             "community":"comm1"
         }
-        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+        with app.test_request_context(headers=[("Accept-Language","en")],query_string=data):
             app.extensions['invenio-oauth2server'] = 1
             app.extensions['invenio-queues'] = 1
             test2 = copy.deepcopy(test)
@@ -947,7 +950,7 @@ def test_function_issue35902(app, users, communities, mocker):
             "search_type":"0","q":"test_data",
             "community":"comm1"
         }
-        with app.test_request_context(headers=[("Accept-Language","en")],data=data):
+        with app.test_request_context(headers=[("Accept-Language","en")],query_string=data):
             app.extensions['invenio-oauth2server'] = 1
             app.extensions['invenio-queues'] = 1
             test3 = copy.deepcopy(test)
