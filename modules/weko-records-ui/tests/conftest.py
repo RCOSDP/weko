@@ -171,6 +171,15 @@ def instance_path():
 @pytest.fixture()
 def base_app(instance_path):
     """Flask application fixture."""
+    # weko_records_ui/fonts/*/*.pkl は fpdf のフォントメトリクス
+    # キャッシュで、生成したときの **相対パス** が ttffile として
+    # 焼き込まれている
+    # (modules/weko-records-ui/weko_records_ui/fonts/.../ipaexg.ttf)。
+    # fpdf はこのキャッシュを読み、出力時にその ttffile を開くため、
+    # 作業ディレクトリが違うと FileNotFoundError になる。
+    # キャッシュを使わせない (0=同じフォルダ, 1=使わない)。
+    from fpdf import fpdf as _fpdf
+    _fpdf.FPDF_CACHE_MODE = 1
     app_ = Flask(
         "testapp",
         instance_path=instance_path,
@@ -259,9 +268,12 @@ def base_app(instance_path):
         PDF_COVERPAGE_LANG_FILENAME=PDF_COVERPAGE_LANG_FILENAME,
         # JPAEXG_TTF_FILEPATH=JPAEXG_TTF_FILEPATH,
         # JPAEXG_TTF_FILEPATH = "/code/modules/weko-records-ui/weko_records_ui/fonts/ipaexg00201/ipaexg.ttf",
-        JPAEXG_TTF_FILEPATH="tests/fonts/ipaexg.ttf",
+        # pdf.py は blueprint.root_path (= weko_records_ui/) にこの値を
+        # 単純連結する。"tests/fonts/..." だと weko_records_uitests/fonts/...
+        # という存在しないパスになるので、製品の既定値と同じ形にする。
+        JPAEXG_TTF_FILEPATH="/fonts/ipaexg00201/ipaexg.ttf",
         # JPAEXM_TTF_FILEPATH=JPAEXM_TTF_FILEPATH,
-        JPAEXM_TTF_FILEPATH="tests/fonts/ipaexm.ttf",
+        JPAEXM_TTF_FILEPATH="/fonts/ipaexm00201/ipaexm.ttf",
         URL_OA_POLICY_HEIGHT=URL_OA_POLICY_HEIGHT,
         HEADER_HEIGHT=HEADER_HEIGHT,
         TITLE_HEIGHT=TITLE_HEIGHT,

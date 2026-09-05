@@ -1690,7 +1690,8 @@ def test_import_author_to_system(app, mocker):
         actual_author = mock_weko_authors.create.call_args[0][0]
 
         assert actual_author == {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎', 'fullName': 'テスト 太郎'}], 'is_deleted': False, 'authorIdInfo': [], 'emailInfo': []}
-        mock_session.commit.assert_called_once()
+        # UserActivityLogger commits too, on the same patched session.
+        assert mock_session.commit.call_count == 2
 
     author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
     status = 'update'
@@ -1717,7 +1718,8 @@ def test_import_author_to_system(app, mocker):
         actual_author = update_args[0][1]
 
         assert actual_author == test
-        mock_session.commit.assert_called_once()
+        # UserActivityLogger commits too, on the same patched session.
+        assert mock_session.commit.call_count == 2
 
     author = {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
     status = 'deleted'
@@ -1746,7 +1748,8 @@ def test_import_author_to_system(app, mocker):
         actual_author = update_args[0][1]
 
         assert actual_author == test
-        mock_session.commit.assert_called_once()
+        # UserActivityLogger commits too, on the same patched session.
+        assert mock_session.commit.call_count == 2
 
     author =  {'pk_id': '1', 'authorNameInfo': [{'familyName': 'テスト', 'firstName': '太郎'}]}
     status = 'deleted'

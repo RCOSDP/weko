@@ -918,11 +918,13 @@ class TestItemTypes:
 
         with patch('weko_records.api.db.session.merge', return_value=""):
             with patch('weko_records.api.db.session.commit', return_value=""):
-                result = ItemTypes.reload(item_type_id)
+                # mapping_dict maps property id -> mapping; an empty one means
+                # "no replacement mapping supplied for any property".
+                result = ItemTypes.reload(item_type_id, {})
                 assert result["msg"] == "Fix ItemType({}) mapping".format(item_type_id)
                 assert result["code"] == 0
 
-                result = ItemTypes.reload(item_type_id, specified_list=[1000])
+                result = ItemTypes.reload(item_type_id, {}, specified_list=[1000])
                 assert result["msg"] == "Update ItemType({})".format(item_type_id)
                 assert result["code"] == 0
 

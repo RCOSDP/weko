@@ -80,9 +80,11 @@
             }
         ],
         "path": {
-            "buckets": [[]],
-            "doc_count_error_upper_bound": 0,
-            "sum_other_doc_count": 0
+            "buckets": [
+                []
+            ],
+            "doc_count_error_upper_bound": "0",
+            "sum_order_doc_count": "0"
         }
     },
     "hits": {
@@ -91,7 +93,7 @@
                 "created": "2022-05-24T08:28:07.807702+00:00",
                 "id": 1,
                 "links": {
-                    "self": "http://localhost:8443/records/1"
+                    "self": "http://test_server/records/1"
                 },
                 "metadata": {
                     "_comment": [
@@ -134,37 +136,21 @@
                             "attribute_type": "creator",
                             "attribute_value_mlt": [
                                 {
-                                    "givenNames": [
+                                    "creatorAffiliations": [
                                         {
-                                            "givenName": "太郎",
-                                            "givenNameLang": "ja"
-                                        },
-                                        {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
-                                        }
-                                    ],
-                                    "familyNames": [
-                                        {
-                                            "familyName": "情報",
-                                            "familyNameLang": "ja"
-                                        },
-                                        {
-                                            "familyName": "ジョウホウ",
-                                            "familyNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "familyName": "Joho",
-                                            "familyNameLang": "en"
-                                        }
-                                    ],
-                                    "creatorMails": [
-                                        {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
+                                            "affiliationNameIdentifiers": [
+                                                {
+                                                    "affiliationNameIdentifier": "0000000121691048",
+                                                    "affiliationNameIdentifierScheme": "ISNI",
+                                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048"
+                                                }
+                                            ],
+                                            "affiliationNames": [
+                                                {
+                                                    "affiliationName": "University",
+                                                    "affiliationNameLang": "en"
+                                                }
+                                            ]
                                         }
                                     ],
                                     "creatorNames": [
@@ -181,60 +167,6 @@
                                             "creatorNameLang": "en"
                                         }
                                     ],
-                                    "nameIdentifiers": [
-                                        {
-                                            "nameIdentifier": "1",
-                                            "nameIdentifierScheme": "WEKO"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
-                                        },
-                                        {
-                                            "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ],
-                                    "creatorAffiliations": [
-                                        {
-                                            "affiliationNames": [
-                                                {
-                                                    "affiliationName": "University",
-                                                    "affiliationNameLang": "en"
-                                                }
-                                            ],
-                                            "affiliationNameIdentifiers": [
-                                                {
-                                                    "affiliationNameIdentifier": "0000000121691048",
-                                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048",
-                                                    "affiliationNameIdentifierScheme": "ISNI"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                {
-                                    "givenNames": [
-                                        {
-                                            "givenName": "次郎",
-                                            "givenNameLang": "ja"
-                                        },
-                                        {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
-                                        }
-                                    ],
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -249,43 +181,6 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "creatorMails": [
-                                        {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
-                                        }
-                                    ],
-                                    "creatorNames": [
-                                        {
-                                            "creatorName": "情報, 次郎",
-                                            "creatorNameLang": "ja"
-                                        },
-                                        {
-                                            "creatorName": "ジョウホウ, タロウ",
-                                            "creatorNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "creatorName": "Joho, Taro",
-                                            "creatorNameLang": "en"
-                                        }
-                                    ],
-                                    "nameIdentifiers": [
-                                        {
-                                            "nameIdentifier": "2",
-                                            "nameIdentifierScheme": "WEKO"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
-                                        },
-                                        {
-                                            "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ]
-                                },
-                                {
                                     "givenNames": [
                                         {
                                             "givenName": "太郎",
@@ -300,6 +195,43 @@
                                             "givenNameLang": "en"
                                         }
                                     ],
+                                    "nameIdentifiers": [
+                                        {
+                                            "nameIdentifier": "1",
+                                            "nameIdentifierScheme": "WEKO"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
+                                        },
+                                        {
+                                            "nameIdentifier": "zzzzzzz",
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "creatorNames": [
+                                        {
+                                            "creatorName": "情報, 次郎",
+                                            "creatorNameLang": "ja"
+                                        },
+                                        {
+                                            "creatorName": "ジョウホウ, タロウ",
+                                            "creatorNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "creatorName": "Joho, Taro",
+                                            "creatorNameLang": "en"
+                                        }
+                                    ],
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -314,11 +246,38 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "creatorMails": [
+                                    "givenNames": [
                                         {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
+                                            "givenName": "次郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
                                         }
                                     ],
+                                    "nameIdentifiers": [
+                                        {
+                                            "nameIdentifier": "2",
+                                            "nameIdentifierScheme": "WEKO"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
+                                        },
+                                        {
+                                            "nameIdentifier": "zzzzzzz",
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
+                                        }
+                                    ]
+                                },
+                                {
                                     "creatorNames": [
                                         {
                                             "creatorName": "情報, 三郎",
@@ -333,6 +292,34 @@
                                             "creatorNameLang": "en"
                                         }
                                     ],
+                                    "familyNames": [
+                                        {
+                                            "familyName": "情報",
+                                            "familyNameLang": "ja"
+                                        },
+                                        {
+                                            "familyName": "ジョウホウ",
+                                            "familyNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "familyName": "Joho",
+                                            "familyNameLang": "en"
+                                        }
+                                    ],
+                                    "givenNames": [
+                                        {
+                                            "givenName": "太郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
+                                        }
+                                    ],
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "3",
@@ -340,13 +327,13 @@
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
                                         },
                                         {
                                             "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
                                         }
                                     ]
                                 }
@@ -387,13 +374,13 @@
                             "attribute_value_mlt": [
                                 {
                                     "subitem_description": "Description\\nDescription<br/>Description&EMPTY&\\nDescription",
-                                    "subitem_description_type": "Abstract",
-                                    "subitem_description_language": "en"
+                                    "subitem_description_language": "en",
+                                    "subitem_description_type": "Abstract"
                                 },
                                 {
                                     "subitem_description": "概要\\n概要&EMPTY&\\n概要\\n概要",
-                                    "subitem_description_type": "Abstract",
-                                    "subitem_description_language": "ja"
+                                    "subitem_description_language": "ja",
+                                    "subitem_description_type": "Abstract"
                                 }
                             ]
                         },
@@ -427,8 +414,8 @@
                             "attribute_name": "Identifier",
                             "attribute_value_mlt": [
                                 {
-                                    "subitem_identifier_uri": "http://localhost",
-                                    "subitem_identifier_type": "URI"
+                                    "subitem_identifier_type": "URI",
+                                    "subitem_identifier_uri": "http://localhost"
                                 }
                             ]
                         },
@@ -602,8 +589,8 @@
                             "attribute_name": "Resource Type",
                             "attribute_value_mlt": [
                                 {
-                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                                    "resourcetype": "conference paper"
+                                    "resourcetype": "conference paper",
+                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794"
                                 }
                             ]
                         },
@@ -620,20 +607,21 @@
                             "attribute_name": "Contributor",
                             "attribute_value_mlt": [
                                 {
-                                    "givenNames": [
+                                    "contributorNames": [
                                         {
-                                            "givenName": "太郎",
-                                            "givenNameLang": "ja"
+                                            "contributorName": "情報, 太郎",
+                                            "lang": "ja"
                                         },
                                         {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
+                                            "contributorName": "ジョウホウ, タロウ",
+                                            "lang": "ja-Kana"
                                         },
                                         {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
+                                            "contributorName": "Joho, Taro",
+                                            "lang": "en"
                                         }
                                     ],
+                                    "contributorType": "ContactPerson",
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -648,41 +636,35 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "contributorType": "ContactPerson",
+                                    "givenNames": [
+                                        {
+                                            "givenName": "太郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
+                                        }
+                                    ],
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ],
-                                    "contributorMails": [
-                                        {
-                                            "contributorMail": "wekosoftware@nii.ac.jp"
-                                        }
-                                    ],
-                                    "contributorNames": [
-                                        {
-                                            "lang": "ja",
-                                            "contributorName": "情報, 太郎"
-                                        },
-                                        {
-                                            "lang": "ja-Kana",
-                                            "contributorName": "ジョウホウ, タロウ"
-                                        },
-                                        {
-                                            "lang": "en",
-                                            "contributorName": "Joho, Taro"
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
                                         }
                                     ]
                                 }
@@ -727,27 +709,27 @@
                             "attribute_type": "file",
                             "attribute_value_mlt": [
                                 {
-                                    "url": {
-                                        "url": "https://weko3.example.org/record/1/files/1KB.pdf"
-                                    },
+                                    "accessrole": "open_date",
                                     "date": [
                                         {
                                             "dateType": "Available",
                                             "dateValue": "2021-05-27"
                                         }
                                     ],
-                                    "format": "text/plain",
+                                    "displaytype": "simple",
                                     "filename": "1KB.pdf",
                                     "filesize": [
                                         {
                                             "value": "1 KB"
                                         }
                                     ],
+                                    "format": "text/plain",
+                                    "licensetype": "license_0",
                                     "mimetype": "application/pdf",
-                                    "accessrole": "open_date",
-                                    "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
-                                    "displaytype": "simple",
-                                    "licensetype": "license_0"
+                                    "url": {
+                                        "url": "https://weko3.example.org/record/1/files/1KB.pdf"
+                                    },
+                                    "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489"
                                 }
                             ]
                         },
@@ -758,14 +740,14 @@
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "xxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
                                         }
                                     ],
                                     "rightHolderNames": [
                                         {
-                                            "rightHolderName": "Right Holder Name",
-                                            "rightHolderLanguage": "ja"
+                                            "rightHolderLanguage": "ja",
+                                            "rightHolderName": "Right Holder Name"
                                         }
                                     ]
                                 }
@@ -836,16 +818,16 @@
                             "affiliationName": [],
                             "nameIdentifier": []
                         },
-                        "givenName": [
-                            "タロウ"
+                        "creatorAlternative": [],
+                        "creatorName": [
+                            "テスト, タロウ"
                         ],
                         "familyName": [
                             "テスト"
                         ],
-                        "creatorName": [
-                            "テスト, タロウ"
+                        "givenName": [
+                            "タロウ"
                         ],
-                        "creatorAlternative": [],
                         "nameIdentifier": [
                             "1"
                         ]
@@ -891,7 +873,7 @@
                 "created": "2022-05-24T08:28:07.807702+00:00",
                 "id": 2,
                 "links": {
-                    "self": "http://localhost:8443/records/2"
+                    "self": "http://test_server/records/2"
                 },
                 "metadata": {
                     "_comment": [
@@ -934,37 +916,21 @@
                             "attribute_type": "creator",
                             "attribute_value_mlt": [
                                 {
-                                    "givenNames": [
+                                    "creatorAffiliations": [
                                         {
-                                            "givenName": "太郎",
-                                            "givenNameLang": "ja"
-                                        },
-                                        {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
-                                        }
-                                    ],
-                                    "familyNames": [
-                                        {
-                                            "familyName": "情報",
-                                            "familyNameLang": "ja"
-                                        },
-                                        {
-                                            "familyName": "ジョウホウ",
-                                            "familyNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "familyName": "Joho",
-                                            "familyNameLang": "en"
-                                        }
-                                    ],
-                                    "creatorMails": [
-                                        {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
+                                            "affiliationNameIdentifiers": [
+                                                {
+                                                    "affiliationNameIdentifier": "0000000121691048",
+                                                    "affiliationNameIdentifierScheme": "ISNI",
+                                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048"
+                                                }
+                                            ],
+                                            "affiliationNames": [
+                                                {
+                                                    "affiliationName": "University",
+                                                    "affiliationNameLang": "en"
+                                                }
+                                            ]
                                         }
                                     ],
                                     "creatorNames": [
@@ -981,60 +947,6 @@
                                             "creatorNameLang": "en"
                                         }
                                     ],
-                                    "nameIdentifiers": [
-                                        {
-                                            "nameIdentifier": "1",
-                                            "nameIdentifierScheme": "WEKO"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
-                                        },
-                                        {
-                                            "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ],
-                                    "creatorAffiliations": [
-                                        {
-                                            "affiliationNames": [
-                                                {
-                                                    "affiliationName": "University",
-                                                    "affiliationNameLang": "en"
-                                                }
-                                            ],
-                                            "affiliationNameIdentifiers": [
-                                                {
-                                                    "affiliationNameIdentifier": "0000000121691048",
-                                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048",
-                                                    "affiliationNameIdentifierScheme": "ISNI"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                {
-                                    "givenNames": [
-                                        {
-                                            "givenName": "次郎",
-                                            "givenNameLang": "ja"
-                                        },
-                                        {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
-                                        }
-                                    ],
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -1049,43 +961,6 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "creatorMails": [
-                                        {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
-                                        }
-                                    ],
-                                    "creatorNames": [
-                                        {
-                                            "creatorName": "情報, 次郎",
-                                            "creatorNameLang": "ja"
-                                        },
-                                        {
-                                            "creatorName": "ジョウホウ, タロウ",
-                                            "creatorNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "creatorName": "Joho, Taro",
-                                            "creatorNameLang": "en"
-                                        }
-                                    ],
-                                    "nameIdentifiers": [
-                                        {
-                                            "nameIdentifier": "2",
-                                            "nameIdentifierScheme": "WEKO"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
-                                        },
-                                        {
-                                            "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ]
-                                },
-                                {
                                     "givenNames": [
                                         {
                                             "givenName": "太郎",
@@ -1100,6 +975,43 @@
                                             "givenNameLang": "en"
                                         }
                                     ],
+                                    "nameIdentifiers": [
+                                        {
+                                            "nameIdentifier": "1",
+                                            "nameIdentifierScheme": "WEKO"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
+                                        },
+                                        {
+                                            "nameIdentifier": "zzzzzzz",
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "creatorNames": [
+                                        {
+                                            "creatorName": "情報, 次郎",
+                                            "creatorNameLang": "ja"
+                                        },
+                                        {
+                                            "creatorName": "ジョウホウ, タロウ",
+                                            "creatorNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "creatorName": "Joho, Taro",
+                                            "creatorNameLang": "en"
+                                        }
+                                    ],
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -1114,11 +1026,38 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "creatorMails": [
+                                    "givenNames": [
                                         {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
+                                            "givenName": "次郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
                                         }
                                     ],
+                                    "nameIdentifiers": [
+                                        {
+                                            "nameIdentifier": "2",
+                                            "nameIdentifierScheme": "WEKO"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
+                                        },
+                                        {
+                                            "nameIdentifier": "zzzzzzz",
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
+                                        }
+                                    ]
+                                },
+                                {
                                     "creatorNames": [
                                         {
                                             "creatorName": "情報, 三郎",
@@ -1133,6 +1072,34 @@
                                             "creatorNameLang": "en"
                                         }
                                     ],
+                                    "familyNames": [
+                                        {
+                                            "familyName": "情報",
+                                            "familyNameLang": "ja"
+                                        },
+                                        {
+                                            "familyName": "ジョウホウ",
+                                            "familyNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "familyName": "Joho",
+                                            "familyNameLang": "en"
+                                        }
+                                    ],
+                                    "givenNames": [
+                                        {
+                                            "givenName": "太郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
+                                        }
+                                    ],
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "3",
@@ -1140,13 +1107,13 @@
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
                                         },
                                         {
                                             "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
                                         }
                                     ]
                                 }
@@ -1187,13 +1154,13 @@
                             "attribute_value_mlt": [
                                 {
                                     "subitem_description": "Description\\nDescription<br/>Description&EMPTY&\\nDescription",
-                                    "subitem_description_type": "Abstract",
-                                    "subitem_description_language": "en"
+                                    "subitem_description_language": "en",
+                                    "subitem_description_type": "Abstract"
                                 },
                                 {
                                     "subitem_description": "概要\\n概要&EMPTY&\\n概要\\n概要",
-                                    "subitem_description_type": "Abstract",
-                                    "subitem_description_language": "ja"
+                                    "subitem_description_language": "ja",
+                                    "subitem_description_type": "Abstract"
                                 }
                             ]
                         },
@@ -1227,8 +1194,8 @@
                             "attribute_name": "Identifier",
                             "attribute_value_mlt": [
                                 {
-                                    "subitem_identifier_uri": "http://localhost",
-                                    "subitem_identifier_type": "URI"
+                                    "subitem_identifier_type": "URI",
+                                    "subitem_identifier_uri": "http://localhost"
                                 }
                             ]
                         },
@@ -1402,8 +1369,8 @@
                             "attribute_name": "Resource Type",
                             "attribute_value_mlt": [
                                 {
-                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                                    "resourcetype": "conference paper"
+                                    "resourcetype": "conference paper",
+                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794"
                                 }
                             ]
                         },
@@ -1420,20 +1387,21 @@
                             "attribute_name": "Contributor",
                             "attribute_value_mlt": [
                                 {
-                                    "givenNames": [
+                                    "contributorNames": [
                                         {
-                                            "givenName": "太郎",
-                                            "givenNameLang": "ja"
+                                            "contributorName": "情報, 太郎",
+                                            "lang": "ja"
                                         },
                                         {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
+                                            "contributorName": "ジョウホウ, タロウ",
+                                            "lang": "ja-Kana"
                                         },
                                         {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
+                                            "contributorName": "Joho, Taro",
+                                            "lang": "en"
                                         }
                                     ],
+                                    "contributorType": "ContactPerson",
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -1448,41 +1416,35 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "contributorType": "ContactPerson",
+                                    "givenNames": [
+                                        {
+                                            "givenName": "太郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
+                                        }
+                                    ],
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ],
-                                    "contributorMails": [
-                                        {
-                                            "contributorMail": "wekosoftware@nii.ac.jp"
-                                        }
-                                    ],
-                                    "contributorNames": [
-                                        {
-                                            "lang": "ja",
-                                            "contributorName": "情報, 太郎"
-                                        },
-                                        {
-                                            "lang": "ja-Kana",
-                                            "contributorName": "ジョウホウ, タロウ"
-                                        },
-                                        {
-                                            "lang": "en",
-                                            "contributorName": "Joho, Taro"
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
                                         }
                                     ]
                                 }
@@ -1527,27 +1489,27 @@
                             "attribute_type": "file",
                             "attribute_value_mlt": [
                                 {
-                                    "url": {
-                                        "url": "https://weko3.example.org/record/2/files/1KB.pdf"
-                                    },
+                                    "accessrole": "open_date",
                                     "date": [
                                         {
                                             "dateType": "Available",
                                             "dateValue": "2021-05-27"
                                         }
                                     ],
-                                    "format": "text/plain",
+                                    "displaytype": "simple",
                                     "filename": "1KB.pdf",
                                     "filesize": [
                                         {
                                             "value": "1 KB"
                                         }
                                     ],
+                                    "format": "text/plain",
+                                    "licensetype": "license_0",
                                     "mimetype": "application/pdf",
-                                    "accessrole": "open_date",
-                                    "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
-                                    "displaytype": "simple",
-                                    "licensetype": "license_0"
+                                    "url": {
+                                        "url": "https://weko3.example.org/record/2/files/1KB.pdf"
+                                    },
+                                    "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489"
                                 }
                             ]
                         },
@@ -1558,14 +1520,14 @@
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "xxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
                                         }
                                     ],
                                     "rightHolderNames": [
                                         {
-                                            "rightHolderName": "Right Holder Name",
-                                            "rightHolderLanguage": "ja"
+                                            "rightHolderLanguage": "ja",
+                                            "rightHolderName": "Right Holder Name"
                                         }
                                     ]
                                 }
@@ -1636,16 +1598,16 @@
                             "affiliationName": [],
                             "nameIdentifier": []
                         },
-                        "givenName": [
-                            "タロウ"
+                        "creatorAlternative": [],
+                        "creatorName": [
+                            "テスト, タロウ"
                         ],
                         "familyName": [
                             "テスト"
                         ],
-                        "creatorName": [
-                            "テスト, タロウ"
+                        "givenName": [
+                            "タロウ"
                         ],
-                        "creatorAlternative": [],
                         "nameIdentifier": [
                             "1"
                         ]
@@ -1689,7 +1651,7 @@
                 "created": "2022-05-24T08:28:07.807702+00:00",
                 "id": 3,
                 "links": {
-                    "self": "http://localhost:8443/records/3"
+                    "self": "http://test_server/records/3"
                 },
                 "metadata": {
                     "_comment": [
@@ -1732,37 +1694,21 @@
                             "attribute_type": "creator",
                             "attribute_value_mlt": [
                                 {
-                                    "givenNames": [
+                                    "creatorAffiliations": [
                                         {
-                                            "givenName": "太郎",
-                                            "givenNameLang": "ja"
-                                        },
-                                        {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
-                                        }
-                                    ],
-                                    "familyNames": [
-                                        {
-                                            "familyName": "情報",
-                                            "familyNameLang": "ja"
-                                        },
-                                        {
-                                            "familyName": "ジョウホウ",
-                                            "familyNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "familyName": "Joho",
-                                            "familyNameLang": "en"
-                                        }
-                                    ],
-                                    "creatorMails": [
-                                        {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
+                                            "affiliationNameIdentifiers": [
+                                                {
+                                                    "affiliationNameIdentifier": "0000000121691048",
+                                                    "affiliationNameIdentifierScheme": "ISNI",
+                                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048"
+                                                }
+                                            ],
+                                            "affiliationNames": [
+                                                {
+                                                    "affiliationName": "University",
+                                                    "affiliationNameLang": "en"
+                                                }
+                                            ]
                                         }
                                     ],
                                     "creatorNames": [
@@ -1779,60 +1725,6 @@
                                             "creatorNameLang": "en"
                                         }
                                     ],
-                                    "nameIdentifiers": [
-                                        {
-                                            "nameIdentifier": "1",
-                                            "nameIdentifierScheme": "WEKO"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
-                                        },
-                                        {
-                                            "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ],
-                                    "creatorAffiliations": [
-                                        {
-                                            "affiliationNames": [
-                                                {
-                                                    "affiliationName": "University",
-                                                    "affiliationNameLang": "en"
-                                                }
-                                            ],
-                                            "affiliationNameIdentifiers": [
-                                                {
-                                                    "affiliationNameIdentifier": "0000000121691048",
-                                                    "affiliationNameIdentifierURI": "http://isni.org/isni/0000000121691048",
-                                                    "affiliationNameIdentifierScheme": "ISNI"
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                },
-                                {
-                                    "givenNames": [
-                                        {
-                                            "givenName": "次郎",
-                                            "givenNameLang": "ja"
-                                        },
-                                        {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
-                                        }
-                                    ],
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -1847,43 +1739,6 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "creatorMails": [
-                                        {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
-                                        }
-                                    ],
-                                    "creatorNames": [
-                                        {
-                                            "creatorName": "情報, 次郎",
-                                            "creatorNameLang": "ja"
-                                        },
-                                        {
-                                            "creatorName": "ジョウホウ, タロウ",
-                                            "creatorNameLang": "ja-Kana"
-                                        },
-                                        {
-                                            "creatorName": "Joho, Taro",
-                                            "creatorNameLang": "en"
-                                        }
-                                    ],
-                                    "nameIdentifiers": [
-                                        {
-                                            "nameIdentifier": "2",
-                                            "nameIdentifierScheme": "WEKO"
-                                        },
-                                        {
-                                            "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
-                                        },
-                                        {
-                                            "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ]
-                                },
-                                {
                                     "givenNames": [
                                         {
                                             "givenName": "太郎",
@@ -1898,6 +1753,43 @@
                                             "givenNameLang": "en"
                                         }
                                     ],
+                                    "nameIdentifiers": [
+                                        {
+                                            "nameIdentifier": "1",
+                                            "nameIdentifierScheme": "WEKO"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
+                                        },
+                                        {
+                                            "nameIdentifier": "zzzzzzz",
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "creatorNames": [
+                                        {
+                                            "creatorName": "情報, 次郎",
+                                            "creatorNameLang": "ja"
+                                        },
+                                        {
+                                            "creatorName": "ジョウホウ, タロウ",
+                                            "creatorNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "creatorName": "Joho, Taro",
+                                            "creatorNameLang": "en"
+                                        }
+                                    ],
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -1912,11 +1804,38 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "creatorMails": [
+                                    "givenNames": [
                                         {
-                                            "creatorMail": "wekosoftware@nii.ac.jp"
+                                            "givenName": "次郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
                                         }
                                     ],
+                                    "nameIdentifiers": [
+                                        {
+                                            "nameIdentifier": "2",
+                                            "nameIdentifierScheme": "WEKO"
+                                        },
+                                        {
+                                            "nameIdentifier": "xxxxxxx",
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
+                                        },
+                                        {
+                                            "nameIdentifier": "zzzzzzz",
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
+                                        }
+                                    ]
+                                },
+                                {
                                     "creatorNames": [
                                         {
                                             "creatorName": "情報, 三郎",
@@ -1931,6 +1850,34 @@
                                             "creatorNameLang": "en"
                                         }
                                     ],
+                                    "familyNames": [
+                                        {
+                                            "familyName": "情報",
+                                            "familyNameLang": "ja"
+                                        },
+                                        {
+                                            "familyName": "ジョウホウ",
+                                            "familyNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "familyName": "Joho",
+                                            "familyNameLang": "en"
+                                        }
+                                    ],
+                                    "givenNames": [
+                                        {
+                                            "givenName": "太郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
+                                        }
+                                    ],
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "3",
@@ -1938,13 +1885,13 @@
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
                                         },
                                         {
                                             "nameIdentifier": "zzzzzzz",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
                                         }
                                     ]
                                 }
@@ -1985,13 +1932,13 @@
                             "attribute_value_mlt": [
                                 {
                                     "subitem_description": "Description\\nDescription<br/>Description&EMPTY&\\nDescription",
-                                    "subitem_description_type": "Abstract",
-                                    "subitem_description_language": "en"
+                                    "subitem_description_language": "en",
+                                    "subitem_description_type": "Abstract"
                                 },
                                 {
                                     "subitem_description": "概要\\n概要&EMPTY&\\n概要\\n概要",
-                                    "subitem_description_type": "Abstract",
-                                    "subitem_description_language": "ja"
+                                    "subitem_description_language": "ja",
+                                    "subitem_description_type": "Abstract"
                                 }
                             ]
                         },
@@ -2025,8 +1972,8 @@
                             "attribute_name": "Identifier",
                             "attribute_value_mlt": [
                                 {
-                                    "subitem_identifier_uri": "http://localhost",
-                                    "subitem_identifier_type": "URI"
+                                    "subitem_identifier_type": "URI",
+                                    "subitem_identifier_uri": "http://localhost"
                                 }
                             ]
                         },
@@ -2200,8 +2147,8 @@
                             "attribute_name": "Resource Type",
                             "attribute_value_mlt": [
                                 {
-                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794",
-                                    "resourcetype": "conference paper"
+                                    "resourcetype": "conference paper",
+                                    "resourceuri": "http://purl.org/coar/resource_type/c_5794"
                                 }
                             ]
                         },
@@ -2218,20 +2165,21 @@
                             "attribute_name": "Contributor",
                             "attribute_value_mlt": [
                                 {
-                                    "givenNames": [
+                                    "contributorNames": [
                                         {
-                                            "givenName": "太郎",
-                                            "givenNameLang": "ja"
+                                            "contributorName": "情報, 太郎",
+                                            "lang": "ja"
                                         },
                                         {
-                                            "givenName": "タロウ",
-                                            "givenNameLang": "ja-Kana"
+                                            "contributorName": "ジョウホウ, タロウ",
+                                            "lang": "ja-Kana"
                                         },
                                         {
-                                            "givenName": "Taro",
-                                            "givenNameLang": "en"
+                                            "contributorName": "Joho, Taro",
+                                            "lang": "en"
                                         }
                                     ],
+                                    "contributorType": "ContactPerson",
                                     "familyNames": [
                                         {
                                             "familyName": "情報",
@@ -2246,41 +2194,35 @@
                                             "familyNameLang": "en"
                                         }
                                     ],
-                                    "contributorType": "ContactPerson",
+                                    "givenNames": [
+                                        {
+                                            "givenName": "太郎",
+                                            "givenNameLang": "ja"
+                                        },
+                                        {
+                                            "givenName": "タロウ",
+                                            "givenNameLang": "ja-Kana"
+                                        },
+                                        {
+                                            "givenName": "Taro",
+                                            "givenNameLang": "en"
+                                        }
+                                    ],
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://ci.nii.ac.jp/",
-                                            "nameIdentifierScheme": "CiNii"
+                                            "nameIdentifierScheme": "CiNii",
+                                            "nameIdentifierURI": "https://ci.nii.ac.jp/"
                                         },
                                         {
                                             "nameIdentifier": "xxxxxxx",
-                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/",
-                                            "nameIdentifierScheme": "KAKEN2"
-                                        }
-                                    ],
-                                    "contributorMails": [
-                                        {
-                                            "contributorMail": "wekosoftware@nii.ac.jp"
-                                        }
-                                    ],
-                                    "contributorNames": [
-                                        {
-                                            "lang": "ja",
-                                            "contributorName": "情報, 太郎"
-                                        },
-                                        {
-                                            "lang": "ja-Kana",
-                                            "contributorName": "ジョウホウ, タロウ"
-                                        },
-                                        {
-                                            "lang": "en",
-                                            "contributorName": "Joho, Taro"
+                                            "nameIdentifierScheme": "KAKEN2",
+                                            "nameIdentifierURI": "https://kaken.nii.ac.jp/"
                                         }
                                     ]
                                 }
@@ -2325,27 +2267,27 @@
                             "attribute_type": "file",
                             "attribute_value_mlt": [
                                 {
-                                    "url": {
-                                        "url": "https://weko3.example.org/record/3/files/1KB.pdf"
-                                    },
+                                    "accessrole": "open_date",
                                     "date": [
                                         {
                                             "dateType": "Available",
                                             "dateValue": "2021-05-27"
                                         }
                                     ],
-                                    "format": "text/plain",
+                                    "displaytype": "simple",
                                     "filename": "1KB.pdf",
                                     "filesize": [
                                         {
                                             "value": "1 KB"
                                         }
                                     ],
+                                    "format": "text/plain",
+                                    "licensetype": "license_0",
                                     "mimetype": "application/pdf",
-                                    "accessrole": "open_date",
-                                    "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489",
-                                    "displaytype": "simple",
-                                    "licensetype": "license_0"
+                                    "url": {
+                                        "url": "https://weko3.example.org/record/3/files/1KB.pdf"
+                                    },
+                                    "version_id": "6e3b5a33-ab7c-49e3-86e2-90d1cf7a9489"
                                 }
                             ]
                         },
@@ -2356,14 +2298,14 @@
                                     "nameIdentifiers": [
                                         {
                                             "nameIdentifier": "xxxxxx",
-                                            "nameIdentifierURI": "https://orcid.org/",
-                                            "nameIdentifierScheme": "ORCID"
+                                            "nameIdentifierScheme": "ORCID",
+                                            "nameIdentifierURI": "https://orcid.org/"
                                         }
                                     ],
                                     "rightHolderNames": [
                                         {
-                                            "rightHolderName": "Right Holder Name",
-                                            "rightHolderLanguage": "ja"
+                                            "rightHolderLanguage": "ja",
+                                            "rightHolderName": "Right Holder Name"
                                         }
                                     ]
                                 }
@@ -2434,16 +2376,16 @@
                             "affiliationName": [],
                             "nameIdentifier": []
                         },
-                        "givenName": [
-                            "タロウ"
+                        "creatorAlternative": [],
+                        "creatorName": [
+                            "テスト, タロウ"
                         ],
                         "familyName": [
                             "テスト"
                         ],
-                        "creatorName": [
-                            "テスト, タロウ"
+                        "givenName": [
+                            "タロウ"
                         ],
-                        "creatorAlternative": [],
                         "nameIdentifier": [
                             "1"
                         ]

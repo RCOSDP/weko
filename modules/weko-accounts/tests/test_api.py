@@ -384,8 +384,11 @@ class TestShibUser:
         assert ret == "Can't get relation Weko User."
 
         # exist self.user, issubset, ret is None
+        # Both names must be keys of WEKO_ACCOUNTS_SHIB_ROLE_RELATION, or
+        # assign_user_role() finds the set is not a subset and never calls
+        # _set_weko_user_role.
         attr = {
-            "shib_role_authority_name":"管理者;機関内のOrthros"
+            "shib_role_authority_name":"管理者;図書館員"
         }
         shibuser = ShibUser(attr)
         shibuser.user = users[0]["obj"]

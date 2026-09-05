@@ -17,6 +17,7 @@ import tempfile
 
 import pytest
 from flask import Flask, url_for
+from flask.cli import ScriptInfo
 from flask.views import MethodView
 from flask_babelex import Babel
 from flask_breadcrumbs import Breadcrumbs
@@ -41,6 +42,12 @@ from invenio_oauth2server.views import server_blueprint, settings_blueprint
 
 
 @pytest.fixture()
+def script_info(app):
+    """Get ScriptInfo object for testing the CLI."""
+    return ScriptInfo(create_app=lambda info: app)
+
+
+@pytest.fixture()
 def app(request):
     """Flask application fixture."""
     instance_path = tempfile.mkdtemp()
@@ -56,6 +63,17 @@ def app(request):
             SECURITY_PASSWORD_HASH='plaintext',
             SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
             SECURITY_PASSWORD_SCHEMES=['plaintext'],
+            # InvenioAccountsUI always installs the session_ttl_update
+            # teardown, and that calls store.redis.expire(). Without a redis
+            # session store invenio-accounts falls back to simplekv's
+            # DictStore, which has no .redis, and every request carrying a
+            # session dies with AttributeError.
+            ACCOUNTS_SESSION_REDIS_URL=os.getenv(
+                'ACCOUNTS_SESSION_REDIS_URL', 'redis://redis:6379/1'),
+            ACCOUNTS_SESSION_REDIS_DB_NO=1,
+            CACHE_TYPE='redis',
+            CACHE_REDIS_HOST=os.getenv('CACHE_REDIS_HOST', 'redis'),
+            REDIS_PORT='6379',
             # SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
             #                                   'sqlite:///test.db'),
             SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',

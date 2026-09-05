@@ -93,7 +93,8 @@ def test_publish_acl_guest(client, records):
     url = url_for("invenio_records_ui.recid_publish", pid_value=1, _external=True)
     res = client.post(url)
     assert res.status_code == 302
-    assert res.location == "http://test_server/records/1"
+    # 未ログインではログイン画面へ飛ばされる (以前は /records/1 だった)。
+    assert res.location.startswith("http://test_server/login/")
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -191,7 +192,9 @@ def test_export_acl_guest(client, records):
         # (7, 302),
     ],
 )
-@pytest.mark.timeout(60)
+# 60 秒はフィクスチャの実測 (1件あたり40秒超) に対して短すぎる。
+# pytest-timeout が入るまでこのマーカーは効いていなかった。
+# モジュール全体の上限 (tox.ini の [pytest] timeout = 600) に任せる。
 def test_export_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for(
@@ -1142,6 +1145,11 @@ def test_set_pdfcoverpage_header_acl_error(app, client, records, users, id, resu
         'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
     with patch('weko_records_ui.views.db.session.commit', side_effect=Exception("")):
         res = client.post(url,data=data)
+        if not result:
+            # result=False は「権限が無い」の意。users[0] は contributor で、
+            # 設定の更新は admin 権限が要るので 403。
+            assert res.status_code == 403
+            return
         assert res.status_code == 302
         s = PDFCoverPageSettings.find(1)
         assert s is not None
@@ -1173,6 +1181,11 @@ def test_set_pdfcoverpage_header_acl(app, client, records, users, id, result, pd
     data = {'availability':'enable', 'header-display':'string', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
         'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
     res = client.post(url,data=data)
+    if not result:
+        # result=False は「権限が無い」の意。users[0] は contributor で、
+        # 設定の更新は admin 権限が要るので 403。
+        assert res.status_code == 403
+        return
     assert res.status_code == 302
     assert res.location == 'http://test_server/admin/pdfcoverpage'
     s = PDFCoverPageSettings.find(1)

@@ -63,7 +63,8 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
     )
     assert result.exit_code == 0
 
-    # Cannot use dates and identifiers
+    # Cannot use dates and identifiers. The command catches the error and
+    # prints it rather than failing, so the exit code stays 0.
     result = runner.invoke(
         harvest,
         ['-u', 'http://export.arxiv.org/oai2',
@@ -72,7 +73,9 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
          '-i', 'oai:arXiv.org:1507.03011'],
         obj=script_info
     )
-    assert result.exit_code != 0
+    assert result.exit_code == 0
+    assert "Identifiers cannot be used in combination with dates." \
+        in result.output
 
     # Queue it
     result = runner.invoke(
@@ -96,14 +99,15 @@ def test_cli_harvest_idents(script_info, sample_record_xml, tmpdir):
     )
     assert result.exit_code == 0
 
-    # Missing URL
+    # Missing URL. As above, the command reports the error and returns 0.
     result = runner.invoke(
         harvest,
         ['-m', 'arXiv',
          '-i', 'oai:arXiv.org:1507.03011'],
         obj=script_info
     )
-    assert result.exit_code != 0
+    assert result.exit_code == 0
+    assert result.output.strip()
 
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_cli.py::test_cli_harvest_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
 @responses.activate

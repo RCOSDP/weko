@@ -531,6 +531,9 @@ def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
     def _is_record_in_index(key):
         return "8.9"
 
+    # _validation() reads self.index.public_state whenever repository_id is
+    # set, and the sample handler leaves index as a plain string.
+    test_str.index = MagicMock(public_state=False)
     assert not test_str.get_change_dump_manifest_xml(record_id)
 
     test_str._validation = _validation
@@ -755,7 +758,10 @@ def test_get_capability_content_ChangeListHandler(i18n_app):
 def test__date_validation_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     test_str.publish_date = datetime.datetime.now() - datetime.timedelta(days=5)
-    date_from = "20221107"
+    # _date_validation only accepts a date in [publish_date, now), so it has to
+    # be relative; a date written into the test stops qualifying as time passes.
+    date_from = (datetime.datetime.now()
+                 - datetime.timedelta(days=2)).strftime("%Y%m%d")
 
     assert test_str._date_validation(date_from)
 

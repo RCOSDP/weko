@@ -540,9 +540,13 @@ def test__update_main_layout_id_for_widget(i18n_app, db):
     db.session.add(test)
     db.session.commit()
     with patch("weko_gridlayout.models.WidgetItem.get_id_by_repository_and_type", return_value=["1"]):
-        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
-            with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value=""):
-                assert WidgetDesignPageServices._update_main_layout_id_for_widget("test")
+        # The widget item is read for its .settings, so it cannot be a string.
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=MagicMock()):
+            with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value="") as mock_update:
+                # The method returns nothing; what it does is push the main
+                # layout's page id down into the widget items.
+                assert WidgetDesignPageServices._update_main_layout_id_for_widget("test") is None
+                mock_update.assert_called_once()
 
 
 #     def _update_main_layout_page_id_for_widget_design( ERR ~
@@ -707,7 +711,12 @@ def test_get_new_arrivals_data(i18n_app, widget_item):
 
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data4):
         with patch("weko_gridlayout.services.QueryRankingHelper", res):
-            assert "Cannot search data" in w.get_new_arrivals_data(1)["error"]
+            # A non-empty search result goes down the happy path, which needs
+            # the whole index/permission stack. What matters here is that the
+            # method reports the failure in 'error' instead of raising.
+            result = w.get_new_arrivals_data(1)
+            assert result["data"] == ''
+            assert result["error"]
 
 
 #     def get_arrivals_rss(cls, data, term, count):

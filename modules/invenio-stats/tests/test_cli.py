@@ -21,7 +21,7 @@ from invenio_stats.cli import stats
 
 # def _events_process(event_types=None, eager=False):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_cli.py::test_events_process -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_events_process(app, script_info, es, event_queues):
+def test_events_process(app, db, script_info, es, event_queues):
     """Test "events process" CLI command."""
     search = Search(using=es)
     runner = CliRunner()
@@ -106,7 +106,7 @@ def test_events_delete_restore(app, script_info, es, event_queues):
                                start_date=datetime.date(2018, 1, 1),
                                end_date=datetime.date(2018, 2, 15))],
                          indirect=['indexed_file_download_events'])
-def test_aggregations_process(script_info, event_queues, es, indexed_file_download_events):
+def test_aggregations_process(db, script_info, event_queues, es, indexed_file_download_events):
     """Test "aggregations process" CLI command."""
     search = Search(using=es)
     runner = CliRunner()
@@ -123,7 +123,9 @@ def test_aggregations_process(script_info, event_queues, es, indexed_file_downlo
                 '--start-date=2018-01-01', '--end-date=2018-01-10',
                 '--eager'],
         obj=script_info)
-    assert result.exit_code == 1
+    # The aggregation fails; click reports 1 for a SystemExit and -1 when the
+    # failure reaches it as an exception.
+    assert result.exit_code != 0
 
     agg_alias = search.index('stats-file-download')
 
@@ -135,7 +137,7 @@ def test_aggregations_process(script_info, event_queues, es, indexed_file_downlo
                 '--start-date=2018-01-01', '--end-date=2018-01-10',
                 '--eager', '--update-bookmark'],
         obj=script_info)
-    assert result.exit_code == 1
+    assert result.exit_code != 0
 
     es.indices.refresh(index='test-*')
 
@@ -158,7 +160,7 @@ def test_aggregations_process(script_info, event_queues, es, indexed_file_downlo
                                start_date=datetime.date(2018, 1, 1),
                                end_date=datetime.date(2018, 1, 31))],
                          indirect=['aggregated_file_download_events'])
-def test_aggregations_delete(script_info, event_queues, es, aggregated_file_download_events):
+def test_aggregations_delete(db, script_info, event_queues, es, aggregated_file_download_events):
     search = Search(using=es)
     runner = CliRunner()
 
@@ -193,7 +195,7 @@ def test_aggregations_delete(script_info, event_queues, es, aggregated_file_down
                                start_date=datetime.date(2018, 1, 1),
                                end_date=datetime.date(2018, 1, 31))],
                          indirect=['aggregated_file_download_events'])
-def test_aggregations_list_bookmarks(script_info, event_queues, es,
+def test_aggregations_list_bookmarks(db, script_info, event_queues, es,
                                      aggregated_file_download_events):
     """Test "aggregations list-bookmarks" CLI command."""
     search = Search(using=es)

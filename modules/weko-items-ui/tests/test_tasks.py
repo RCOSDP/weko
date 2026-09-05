@@ -70,7 +70,11 @@ def test_get_achievement_type(app):
     assert get_achievement_type({"type" : ["hoge"]}) == None
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_tasks.py::test_build_achievement -vv -s --cov-branch --cov-report=html --basetemp=/code/modules/weko_items-ui/.tox/c1/tmp
-def test_build_achievement(app, db_records_researchmap, es):
+def test_build_achievement(app, db_records_researchmap, es, monkeypatch):
+    # build_achievement reads these from the environment, and tox passes only
+    # LANG through, so they are not set under test.
+    monkeypatch.setenv('INVENIO_WEB_PROTOCOL', 'https')
+    monkeypatch.setenv('INVENIO_WEB_HOST_NAME', 'weko3.example.org')
     recid = PersistentIdentifier.get_by_object(pid_type='recid', object_type='rec', object_uuid=db_records_researchmap[0]) 
     record,item = get_item(db_records_researchmap[0])
     # mapping = Mapping.get_record(item.item_type_id)

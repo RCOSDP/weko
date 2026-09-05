@@ -213,11 +213,59 @@ def admin_settings(db):
     return settings
 
 
+@pytest.fixture(autouse=True)
+def _no_celery_broker():
+    """テスト中に Celery のブローカーへ繋ぎに行かせない。
+
+    テスト用アプリの設定ではブローカーに接続できず、kombu の
+    retry_over_time が延々と再試行するため、ブローカーに触るテストは
+    **戻ってこない**。CI では weko-workflow [8/8] のジョブが毎回
+    120 分の上限で cancelled になっていた。実際に止まっていたのは
+    edit_item_direct_after_login_04 で、
+
+      check_an_item_is_locked()          -> inspect().ping()
+      prepare_edit_workflow() -> commit() -> apply_async()
+
+    の 2 経路。前者は inspect を、後者は celery を eager にして塞ぐ。
+
+    ワーカーが居ない状態、つまり ping() が None を返す状態を既定にする。
+    inspect を自前で patch しているテスト
+    (test_utils.py::test_check_an_item_is_locked など) はそちらが優先される。
+    """
+    from celery import current_app as _celery
+
+    _keys = ('task_always_eager', 'task_eager_propagates', 'broker_url')
+    _prev = {k: _celery.conf.get(k) for k in _keys}
+    # Flask 側の CELERY_ALWAYS_EAGER はこのテストアプリでは celery まで
+    # 届かない (InvenioCelery を初期化していない) ので、celery のアプリに
+    # 直接入れる。
+    _celery.conf.update(
+        task_always_eager=True,
+        task_eager_propagates=False,
+        broker_url='memory://',
+    )
+    try:
+        with patch('weko_workflow.utils.inspect') as mock_inspect:
+            mock_inspect.return_value.ping.return_value = None
+            yield mock_inspect
+    finally:
+        _celery.conf.update(**_prev)
+
+
 @pytest.fixture()
 def base_app(instance_path, search_class, cache_config):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
+        # ブローカーに繋ぎに行かせない。テスト用アプリのブローカー設定では
+        # RabbitMQ に接続できず、apply_async() が kombu の retry_over_time で
+        # 延々と再試行するため、そこに到達したテストが戻ってこなくなる
+        # (CI では weko-workflow [8/8] が毎回 120 分の上限で cancelled)。
+        # weko-deposit の conftest と同じ設定にする。
+        CELERY_ALWAYS_EAGER=True,
+        CELERY_CACHE_BACKEND='memory',
+        CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
+        CELERY_RESULT_BACKEND='cache',
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',
@@ -703,7 +751,12 @@ def users(app, db):
     if not user:
         user = create_test_user(email='user@test.org')
     
-    contributor = User.query.filter_by(email='user@test.org').one_or_none()
+    # 他モジュールの conftest からのコピーで、探す先が user@test.org に
+    # なっていた。そのため contributor@test.org は一度も作られず、
+    # users[0] ("contributor" のつもり) が user@test.org を指し、
+    # ユーザIDが以降ひとつずつずれていた
+    # (テストが決め打ちしている workflow_userlock_activity_5 = sysadmin など)。
+    contributor = User.query.filter_by(email='contributor@test.org').one_or_none()
     if not contributor:
         contributor = create_test_user(email='contributor@test.org')
 
@@ -840,9 +893,15 @@ def users(app, db):
         db.session.commit()
     
 
+    # comm01 の管理ロールは Community Administrator にする。他モジュールの
+    # conftest からのコピーで sysadmin_role になっていたが、このモジュールには
+    # 「コミュニティ管理者が自分のコミュニティだけ見える」ことを確かめるテストが
+    # 複数ある (Flow.get_flow_list / flowsetting の repositories など)。
+    # sysadmin_role のままだと comadmin に紐づくコミュニティが1つも無く、
+    # Community.get_by_user() が必ず空を返して落ちる。
     comm = Community.query.filter_by(id="comm01").one_or_none()
     if not comm:
-        comm = Community.create(community_id="comm01", role_id=sysadmin_role.id,
+        comm = Community.create(community_id="comm01", role_id=comadmin_role.id,
                             id_user=sysadmin.id, title="test community",
                             description=("this is test community"),
                             root_node_id=index.id)
@@ -4179,40 +4238,30 @@ def db_register_activity(app, db, db_records, workflow_approval, users):
         db.session.add_all(activities)
     db.session.commit()
 
-    # Register data in workflow_flow_define table
-    flow_define = FlowDefine(flow_name='Registration Activities', flow_user=1,)
-    with db.session.begin_nested():
-        db.session.add(flow_define)
-    db.session.commit()
-
     # Register data in workflow_flow_action table
+    #
+    # get_activity_list は
+    #   _FlowAction.action_id    == _Activity.action_id
+    #   _FlowAction.action_order == _Activity.action_order
+    # で突き合わせる。上の3件は workflow_approval のフローを指しているので、
+    # その組み合わせが同じフロー側に無いと1件も返らない。
+    # 元は新しい FlowDefine を作ってそこに (1,5) を2つぶら下げており、
+    # どの activity からも参照されていなかった。
     flow_actions = []
-    flow_actions.append(
-        FlowAction(
-            status='N',
-            flow_id=flow_define.flow_id,
-            action_id=1,
-            action_version='1.0.0',
-            action_order=5,
-            action_condition='',
-            action_status='A',
-            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
-            send_mail_setting={},
+    for _action_id, _action_order in ((1, 5), (1, 7), (2, 5)):
+        flow_actions.append(
+            FlowAction(
+                flow_id=workflow_approval['flow'].flow_id,
+                status='N',
+                action_id=_action_id,
+                action_version='1.0.0',
+                action_order=_action_order,
+                action_condition='',
+                action_status='A',
+                action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
+                send_mail_setting={},
+            )
         )
-    )
-    flow_actions.append(
-        FlowAction(
-            status='N',
-            flow_id=flow_define.flow_id,
-            action_id=1,
-            action_version='1.0.0',
-            action_order=5,
-            action_condition='',
-            action_status='A',
-            action_date=datetime.strptime('2023/07/01 14:00:00', '%Y/%m/%d %H:%M:%S'),
-            send_mail_setting={},
-        )
-    )
     with db.session.begin_nested():
         db.session.add_all(flow_actions)
     db.session.commit()

@@ -325,7 +325,10 @@ class TestIndexActionResource:
             redis_connect.put("index_reset_tree_ignore_more_view_test_en","test_en_index_reset_tree_ignore_more".encode("UTF-8"),ttl_secs=30)
             res = client_rest.put(url, json=data)
             assert res.status_code == 200
-            assert json.loads(res.data) == {"delete_flag": False,"errors": [],"message": "Index updated successfully.","status": 200}
+            # check_doi_in_index is patched to True and public_state is False,
+            # so the update is refused; what this block checks is that the
+            # cached trees are dropped for every registered language anyway.
+            assert json.loads(res.data) == {"delete_flag": False,"errors": ['The index cannot be kept private because there are links from items that have a DOI.'],"message": "","status": 200}
             assert redis_connect.redis.exists("index_reset_tree_view_test_ja") == False
             assert redis_connect.redis.exists("index_reset_tree_view_test_en") == False
             assert redis_connect.redis.exists("index_reset_tree_ignore_more_view_test_ja") == False

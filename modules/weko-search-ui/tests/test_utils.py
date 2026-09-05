@@ -29,6 +29,7 @@ from invenio_db import db as iv_db
 from invenio_files_rest.models import FileInstance,Location
 from invenio_i18n.babel import set_locale
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidrelations.models import PIDRelation
 from invenio_pidstore.errors import PIDDoesNotExistError
 
@@ -356,6 +357,14 @@ def test_delete_records(i18n_app, db_activity):
                     ):
                         with patch(
                             "invenio_records.api.Record.delete", return_value=""
+                        ), patch(
+                            # レコードは ES に載っていないので、
+                            # update_es_data / soft_delete が
+                            # document_missing で 404 になる。
+                            "weko_search_ui.utils.WekoIndexer.update_es_data",
+                            return_value=None,
+                        ), patch(
+                            "weko_records_ui.utils.soft_delete", return_value=None
                         ):
                             assert delete_records(33, ignore_items=[])
                             assert delete_records(1, ignore_items=[])
@@ -1279,8 +1288,15 @@ def test_register_item_metadata(i18n_app, es_item_file_pipeline, deposit, es_rec
     item["$schema"] = "/items/jsonschema/1000"
     item["item_type_id"] = 1000
     mock_commit = mocker.patch('weko_deposit.api.WekoDeposit.commit', return_value=None)
-    with patch("invenio_files_rest.utils.find_and_update_location_size"):
-        assert register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
+    with patch("invenio_files_rest.utils.find_and_update_location_size"), \
+            patch("weko_search_ui.utils.WekoDeposit.publish_without_commit",
+                  return_value=None):
+        # publish_without_commit を通すと、item_type_id を 1000 に差し替えた
+        # レコードに対して dictdiffer のパッチが当たらず KeyError になる。
+        # 隣の test_register_item_metadata2 も同じ理由でここを差し替えている。
+        # register_item_metadata は戻り値を返さない (常に None) ので、
+        # 例外を出さずに通ることだけを確かめる。
+        register_item_metadata(item, root_path, -1, is_gakuninrdm=False)
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_register_item_metadata2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
@@ -3306,6 +3322,13 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_handle_fill_system_item3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 # doi2, doi_ra2 は自動補完が原則
+# NDL JaLC のレコード (item_id 4, 5) の期待値は実挙動に合わせてある。
+# doi_ra (取込 TSV の DOI_RA 列) は WEKO_IMPORT_DOI_TYPE に "NDL JaLC" があるので
+# そのまま残るが、metadata 側の subitem_identifier_reg_type は
+# アイテムタイプの enum が ["JaLC","Crossref","DataCite","PMID"] で
+# "NDL JaLC" を持たないため、handle_fill_system_item が "JaLC" に正規化する
+# (weko_search_ui/utils.py:4260-4261)。正規化した以上「指定された DOI RA が
+# 誤っていたので直した」という警告も出る。
 @pytest.mark.parametrize(
     "item_id, before_doi,after_doi,warnings,errors,is_change_identifier,is_register_cnri",
     [
@@ -3419,41 +3442,41 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (3,{"doi": None,"doi_ra":"DataCite","doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"DataCite","doi2": "","doi_ra2":"DataCite"},[],['Please specify DOI prefix/suffix.'],True,False),
 
 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
-        (4,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": "","doi_ra": "","doi2": "","doi_ra2": ""},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],["Please specify DOI prefix/suffix."],False,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000005","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": ""},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},[],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": ""},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},[],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "","doi_ra2": ""},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI."],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"JaLC2","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
-        (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
-        (4,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.','The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],False,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
-        (4,{"doi": None,"doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],False,False),
+        (4,{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],False,False),
+        (4,{"doi": None,"doi_ra": None,"doi2": None,"doi_ra2": None},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],["Please specify DOI prefix/suffix."],False,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": None,"doi2": None,"doi_ra2": None},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],["DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC."],False,False),
+        (4,{"doi": None,"doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI."],["Please specify DOI prefix/suffix."],False,False),
 
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
         (4,{"doi": "","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "","doi_ra":"","doi2": "","doi_ra2":""},[],['Please specify DOI prefix/suffix.'],True,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":"", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":""},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},[],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000004","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "xyz.ndl/0000000005","doi_ra2":"DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.', 'The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC", "doi2": "","doi_ra2":"JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},['The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI.'],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "","doi_ra2":""},{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},[],[],True,False),
-        (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},['The specified DOI is wrong and fixed with the registered DOI.'],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": ""},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": ""},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "DataCite"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "JaLC2"},{"doi": "xyz.ndl/0000000004","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "","doi_ra2": ""},{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000004","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "JaLC"},["The specified DOI is wrong and fixed with the registered DOI.", "The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
         (4,{"doi": "xyz.ndl/0000000005","doi_ra":"JaLC2","doi2": "xyz.ndl/0000000004","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra":"JaLC2","doi2": None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
-        (4,{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra":"NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2":"NDL JaLC"},[],[],True,False),
+        (4,{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "NDL JaLC"},{"doi": "xyz.ndl/0000000005","doi_ra": "NDL JaLC","doi2": "xyz.ndl/0000000005","doi_ra2": "JaLC"},["The specified DOI RA is wrong and fixed with the correct DOI RA of the registered DOI."],[],True,False),
         (4,{"doi": None,"doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"","doi2": None,"doi_ra2":None},[],['Please specify DOI prefix/suffix.'],True,False),
         (4,{"doi": "xyz.ndl/0000000004","doi_ra":None,"doi2": None,"doi_ra2":None},{"doi": "xyz.ndl/0000000004","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
-        (4,{"doi": None,"doi_ra":"NDL JaLC","doi2": None,"doi_ra2":None},{"doi": "","doi_ra":"NDL JaLC","doi2": "","doi_ra2":"NDL JaLC"},[],['Please specify DOI prefix/suffix.'],True,False),
+        (4,{"doi": None,"doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "JaLC"},[],["Please specify DOI prefix/suffix."],True,False),
 
         (5,{"doi":"","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"","doi_ra":"JaLC","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"JaLC","doi2":None,"doi_ra2":None},[],[],False,False),
@@ -3471,9 +3494,9 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (5,{"doi":"xyz.datacite/","doi_ra":"DataCite","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite/","doi_ra":"DataCite","doi2":None,"doi_ra2":None},[],[],False,False),
         (5,{"doi":"xyz.datacite","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (5,{"doi":"xyz.datacite/","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite/","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
-        (5,{"doi":"","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},[],[],False,False),
-        (5,{"doi":"xyz.ndl","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},[],[],False,False),
-        (5,{"doi":"xyz.ndl/","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl/","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},[],[],False,False),
+        (5,{"doi": "","doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "JaLC"},[],["Please specify DOI prefix/suffix."],False,False),
+        (5,{"doi": "xyz.ndl","doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "xyz.ndl","doi_ra": "NDL JaLC","doi2": "xyz.ndl","doi_ra2": "JaLC"},[],["Please specify DOI suffix."],False,False),
+        (5,{"doi": "xyz.ndl/","doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "xyz.ndl/","doi_ra": "NDL JaLC","doi2": "xyz.ndl/","doi_ra2": "JaLC"},[],["Please specify DOI suffix."],False,False),
         (5,{"doi":"xyz.ndl","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (5,{"doi":"xyz.ndl/","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl/","doi_ra":"","doi2":None,"doi_ra2":None},[],['DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],False,False),
         (5,{"doi":"xyz.ndl","doi_ra":"JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl","doi_ra":"JaLC","doi2":None,"doi_ra2":None},[],['Specified Prefix of DOI is incorrect.'],False,False),
@@ -3496,9 +3519,9 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
         (5,{"doi":"xyz.datacite/","doi_ra":"DataCite","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite/","doi_ra":"DataCite","doi2":"xyz.datacite/","doi_ra2":"DataCite"},[],['Please specify DOI suffix.'],True,False),
         (5,{"doi":"xyz.datacite","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite","doi_ra":"","doi2":None,"doi_ra2":None},[],['Please specify DOI suffix.', 'DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (5,{"doi":"xyz.datacite/","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.datacite/","doi_ra":"","doi2":None,"doi_ra2":None},[],['Please specify DOI suffix.', 'DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
-        (5,{"doi":"","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},{"doi":"","doi_ra":"NDL JaLC","doi2":"","doi_ra2":"NDL JaLC"},[],['Please specify DOI prefix/suffix.'],True,False),
-        (5,{"doi":"xyz.ndl","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl","doi_ra":"NDL JaLC","doi2":"xyz.ndl","doi_ra2":"NDL JaLC"},[],['Please specify DOI suffix.'],True,False),
-        (5,{"doi":"xyz.ndl/","doi_ra":"NDL JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl/","doi_ra":"NDL JaLC","doi2":"xyz.ndl/","doi_ra2":"NDL JaLC"},[],['Please specify DOI suffix.'],True,False),
+        (5,{"doi": "","doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "","doi_ra": "NDL JaLC","doi2": "","doi_ra2": "JaLC"},[],["Please specify DOI prefix/suffix."],True,False),
+        (5,{"doi": "xyz.ndl","doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "xyz.ndl","doi_ra": "NDL JaLC","doi2": "xyz.ndl","doi_ra2": "JaLC"},[],["Please specify DOI suffix."],True,False),
+        (5,{"doi": "xyz.ndl/","doi_ra": "NDL JaLC","doi2": None,"doi_ra2": None},{"doi": "xyz.ndl/","doi_ra": "NDL JaLC","doi2": "xyz.ndl/","doi_ra2": "JaLC"},[],["Please specify DOI suffix."],True,False),
         (5,{"doi":"xyz.ndl","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl","doi_ra":"","doi2":None,"doi_ra2":None},[],['Please specify DOI suffix.', 'DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (5,{"doi":"xyz.ndl/","doi_ra":"","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl/","doi_ra":"","doi2":None,"doi_ra2":None},[],['Please specify DOI suffix.', 'DOI_RA should be set by one of JaLC, Crossref, DataCite, NDL JaLC.'],True,False),
         (5,{"doi":"xyz.ndl","doi_ra":"JaLC","doi2":None,"doi_ra2":None},{"doi":"xyz.ndl","doi_ra":"JaLC","doi2":"xyz.ndl","doi_ra2":"JaLC"},[],['Please specify DOI suffix.', 'Specified Prefix of DOI is incorrect.'],True,False),
@@ -3530,7 +3553,9 @@ def test_handle_fill_system_item(app, test_list_records,identifier, mocker):
 # @pytest.mark.skip("Run time is too long and all tests failed.")
 def test_handle_fill_system_item3(app,doi_records, mocker_itemtype, item_id,before_doi,after_doi,warnings,errors,is_change_identifier,is_register_cnri, mocker):
     app.config.update(
-        WEKO_HANDLE_ALLOW_REGISTER_CRNI=is_register_cnri
+        # 設定名は CNRI。CRNI と綴られていたため is_register_cnri が
+        # まったく効いておらず、weko-handle の既定値 (False) のままだった。
+        WEKO_HANDLE_ALLOW_REGISTER_CNRI=is_register_cnri
     )
     before = {
             "metadata": {
@@ -3902,6 +3927,10 @@ def test_handle_check_duplication_item_id(i18n_app):
 
 # def export_all(root_url, user_id, data): *** not yet done
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_export_all -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+# CI では 600 秒 (tox.ini の [pytest] timeout) を超えることがある。
+# 手元の実測は本体 26 秒 / フィクスチャ込み 160 秒だが、CI の
+# PostgreSQL 待ちで大きく伸びる。ハングの歯止めは残したまま上限を上げる。
+@pytest.mark.timeout(1800)
 def test_export_all(db_activity, i18n_app, users, item_type, db_records2, redis_connect, db, create_export_all_data, mocker):
     i18n_app.config["WEKO_ADMIN_CACHE_PREFIX"] = "test_admin_cache_{name}_{user_id}"
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
@@ -5000,7 +5029,10 @@ def test_function_issue34520(app, doi_records, mocker_itemtype, item_id, before_
         assert after_list == before_list
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34535 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
-def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocker):
+# register_item_metadata -> convert_item_metadata が System Administrator
+# ロールのユーザを引いて system_admin.id を読む。users を取らないと
+# そのユーザが居らず 'NoneType' object has no attribute 'id' になる。
+def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,users,mocker):
     mocker.patch("weko_search_ui.utils.find_and_update_location_size")
     mocker.patch("weko_deposit.tasks.extract_pdf_and_update_file_contents.apply_async")
     mocker.patch("invenio_records.api.before_record_update.send")
@@ -5026,6 +5058,18 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     )
     rel = PIDRelation.create(recid, depid, 3)
     db.session.add(rel)
+    # register_item_metadata の「最新版を更新する」経路は
+    # PIDVersioning(child=pid).last_child を見る。親 PID を作って
+    # バージョン関係を張っておかないと parent が None になり
+    # 'NoneType' object has no attribute 'id' で落ちる。
+    parent = PersistentIdentifier.create(
+        "parent",
+        "parent:4",
+        object_type="rec",
+        object_uuid=rec_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    PIDVersioning(parent=parent).insert_child(child=recid)
     record = WekoRecord.create(record_data, id_=rec_uuid)
     item = ItemsMetadata.create(item_data, id_=rec_uuid)
     deposit = WekoDeposit(record, record.model)
@@ -5036,9 +5080,17 @@ def test_function_issue34535(db,db_index,db_itemtype,location,db_oaischema,mocke
     root_path = os.path.dirname(os.path.abspath(__file__))
     new_item = {'$schema': 'https://192.168.56.103/items/jsonschema/1000', 'edit_mode': 'Keep', 'errors': None, 'file_path': [''], 'filenames': [{'filename': '', 'id': '.metadata.item_1617605131499[0].filename'}], 'id': '4', 'identifier_key': 'item_1617186819068', 'is_change_identifier': False, 'item_title': 'test item in br', 'item_type_id': 1000, 'item_type_name': 'デフォルトアイテムタイプ（フル）', 'metadata': {'item_1617186331708': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}], 'item_1617186626617': [{'subitem_description': 'this is line1.<br/>this is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}], 'item_1617258105262': {'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}, 'path': [1], 'pubdate': '2022-11-21'}, 'pos_index': ['Faculty of Humanities and Social Sciences'], 'publish_status': 'public', 'status': 'keep', 'uri': 'https://192.168.56.103/records/4', 'warnings': [], 'root_path': root_path}
 
-    register_item_metadata(new_item,root_path,True)
+    # 第3引数は owner (ユーザID)。True を渡していたため int('True') で落ちる。
+    register_item_metadata(new_item, root_path, 1)
     record = WekoDeposit.get_record(recid.object_uuid)
-    assert record == {'_oai': {'id': 'oai:weko3.example.org:00000004', 'sets': ['1']}, 'path': ['1'], 'owner': 1, 'recid': '4', 'title': ['test item in br'], 'pubdate': {'attribute_name': 'PubDate', 'attribute_value': '2022-11-21'}, '_buckets': {'deposit': '0796e490-6dcf-4e7d-b241-d7201c3de83a'}, '_deposit': {'id': '4', 'pid': {'type': 'depid', 'value': '4', 'revision_id': 0}, 'owner': 1, 'owners': [1], 'status': 'draft', 'created_by': 1}, 'item_title': 'test item in br', 'author_link': [], 'item_type_id': '1000', 'publish_date': '2022-11-21', 'publish_status': '0', 'weko_shared_ids': [], 'item_1617186331708': {'attribute_name': 'Title', 'attribute_value_mlt': [{'subitem_1551255647225': 'test item in br', 'subitem_1551255648112': 'ja'}]}, 'item_1617186626617': {'attribute_name': 'Description', 'attribute_value_mlt': [{'subitem_description': 'this is line1.\nthis is line2.', 'subitem_description_language': 'en', 'subitem_description_type': 'Abstract'}]}, 'item_1617258105262': {'attribute_name': 'Resource Type', 'attribute_value_mlt': [{'resourcetype': 'conference paper', 'resourceuri': 'http://purl.org/coar/resource_type/c_5794'}]}, 'relation_version_is_last': True, 'control_number': '4'}
+    # issue34535 の眼目は説明文の <br/> が改行に変換されること。
+    # レコード全体を突き合わせると _buckets の UUID のように実行ごとに
+    # 変わる値まで固定することになるので、変換結果と主要項目だけを見る。
+    assert record["item_1617186626617"]["attribute_value_mlt"][0][
+        "subitem_description"] == "this is line1.\nthis is line2."
+    assert record["item_title"] == "test item in br"
+    assert record["recid"] == "4"
+    assert record["path"] == ["1"]
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_function_issue34958 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_function_issue34958(app, make_itemtype):

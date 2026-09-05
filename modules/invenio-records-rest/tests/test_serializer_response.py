@@ -53,7 +53,7 @@ def test_record_responsify(app):
 
 
 # .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_serializer_response.py::test_search_responsify -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
-def test_search_responsify(app, item_type):
+def test_search_responsify(app, item_type, request_context):
     """Test JSON serialize."""
     search_serializer = search_responsify(
         TestSerializer(), 'application/x-custom')

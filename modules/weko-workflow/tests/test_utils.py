@@ -1110,8 +1110,13 @@ def test_prepare_edit_workflow(app, workflow, db_records,users,mocker, order_if)
                 type(pi).query = pi
                 pi.filter_by = MagicMock(return_value = pi)
                 pi.one_or_none = MagicMock(return_value = None)
-                recid = db_records[7][0]
-                deposit = db_records[7][6]
+                # draft_pid が無い経路を通す。db_records[7] は recid 194 で、
+                # data/test_records.json の 15件目に 194.0 (ドラフト) が
+                # 既にあるため、この経路に入ると prepare_draft_item が
+                # 194.0 を作り直そうとして uidx_type_pid に当たる。
+                # 195 はドラフトを持たない。
+                recid = db_records[8][0]
+                deposit = db_records[8][6]
                 result = prepare_edit_workflow(data,recid,deposit)
                 assert result.activity_id != None
         if order_if == 5:
@@ -1743,8 +1748,11 @@ def test_prepare_delete_workflow(app, db_records,users,db_register_full_action,m
         )
     with app.test_request_context(), \
             patch("flask_login.utils._get_user", return_value=users[0]['obj']), \
-            patch("weko_records_ui.views.check_created_id_by_recid", return_value=True), \
             patch("weko_records_ui.views.soft_delete", return_value=True):
+        # weko_records_ui.views は check_created_id_by_recid を import して
+        # おらず (使っているのは permissions.check_created_id)、
+        # prepare_delete_workflow が呼ぶのも soft_delete だけなので、
+        # 権限チェックのモックは外してある。
         result = prepare_delete_workflow(del_post_activity, del_recid, del_deposit)
         assert result.workflow_id
 
@@ -4000,7 +4008,10 @@ def test_get_activity_display_info(app,db, users, db_register_full_action, mocke
         with db.session.begin_nested():
             db.session.add(db_history1)
         test_steps = [
-            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"user@test.org", "Status":"action_doing", "ActionOrder":1},
+            # このアクティビティの登録者は users[0] = contributor@test.org。
+            # conftest が contributor を作れておらず user@test.org を
+            # 指していた頃の名残で user@test.org になっていた。
+            {"ActivityId":activity_id,"ActionId":1,"ActionName":"Start","ActionVersion":"1.0.0","ActionEndpoint":"begin_action", "Author":"contributor@test.org", "Status":"action_doing", "ActionOrder":1},
             {"ActivityId":activity_id,"ActionId":3,"ActionName":"Item Registration","ActionVersion":"1.0.0","ActionEndpoint":"item_login", "Author":"", "Status":" ","ActionOrder":2},
             {"ActivityId":activity_id,"ActionId":5,"ActionName":"Item Link","ActionVersion":"1.0.0","ActionEndpoint":"item_link", "Author":"", "Status":" ","ActionOrder":3},
             {"ActivityId":activity_id,"ActionId":4,"ActionName":"Approval","ActionVersion":"1.0.0","ActionEndpoint":"approval","Author":"","Status":" ","ActionOrder":4}

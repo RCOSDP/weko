@@ -23,7 +23,8 @@
 
 import pytest
 from mock import patch, MagicMock
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, g, json, jsonify, session, url_for
+from flask_principal import AnonymousIdentity
 
 from weko_groups.models import Group
 from weko_groups.views import (
@@ -75,12 +76,19 @@ def test_groupcount(app_2):
 
 
 # def _has_admin_access():
-def test__has_admin_access(app):
-    with app.app_context():
-        user = MagicMock()
-        user.is_authenticated = True
-        with patch("flask_login.utils._get_user", return_value=user):
-            assert _has_admin_access() == False
+def test__has_admin_access(app_2, db_2):
+    # app_2 rather than app: invenio-admin's permission needs invenio-access
+    # installed, and only base_app registers it.
+    #
+    # That permission also asks flask-principal for the current identity,
+    # which normally only exists once a request has set it up. An anonymous
+    # one is enough here: it carries no admin-access need, so the permission
+    # denies and the call returns False.
+    g.identity = AnonymousIdentity()
+    user = MagicMock()
+    user.is_authenticated = True
+    with patch("flask_login.utils._get_user", return_value=user):
+        assert _has_admin_access() == False
 
 
 # def index():

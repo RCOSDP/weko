@@ -318,7 +318,6 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         def dumps(self):
             return item_type_mapping
     mocker.patch("weko_records.utils.Mapping.get_record",return_value=MockMapping())
-    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
 
     # weko_shared_ids!=[], shared_user_ids=[], exist control_number
     data3={
@@ -349,7 +348,6 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
 
     # weko_shared_ids!=-1, shared_user_ids!=[], sm.get is not none
     class MockSM:
-        mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
         search_conditions=WEKO_ADMIN_MANAGEMENT_OPTIONS
     with patch("weko_records.utils.sm.get",return_value=MockSM()):
         data4={
@@ -371,7 +369,6 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[2]),('owner', 1),('owners',[1])])
         assert jrc == {'item_6': ['item_6_1_v'], 'item_5': ['item_5'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[2]),('owner', 1),('owners',[1])]), 'itemtype': 'test10', 'publish_date': None, 'author_link': ['1234', '5678'],'weko_creator_id': '1','weko_shared_ids': [2]}
         assert is_edit == True
-        mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             data5={
@@ -855,9 +852,10 @@ def test_get_author_link(app,mocker):
             }]
         }
     ]
-    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1"])
+    # get_author_link takes the nameIdentifier as it stands; it no longer
+    # looks a pk id up through weko_authors.
     ret = get_author_link(author_link, value_list)
-    assert ['1'] == author_link
+    assert ['v1'] == author_link
 
     author_link = []
     value_dict = {
@@ -866,9 +864,8 @@ def test_get_author_link(app,mocker):
                 "nameIdentifier": 'v2'
                 }]
     }
-    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["2"])
     ret = get_author_link(author_link,  value_dict)
-    assert ['2'] == author_link
+    assert ['v2'] == author_link
 
     author_link = []
     value_str = 'v2'

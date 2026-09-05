@@ -115,7 +115,10 @@ python3 tools/api-inventory/scripts/reconcile.py --gate
 #     測定条件は $WEKO_API_INVENTORY_DIR/measure_profile.json に置く。
 tools/api-inventory/scripts/measure.sh --nos 34,925,25
 
-# 5) ワークフローを配置
+# 5) ワークフローを配置(2本とも)
+#    ここに置いただけでは動かない。.github/workflows/ が実体で、ci/ 配下は原本。
+#    片方だけ直すとずれるので、変更したら必ず両方に反映する。
+cp tools/api-inventory/ci/api-inventory-tests.yml .github/workflows/   # Secret 不要。先に入れる
 cp tools/api-inventory/ci/api-inventory-drift.yml .github/workflows/
 
 # 6) GitHub に Secret を登録する
