@@ -794,6 +794,17 @@ def test_item_search_factory(i18n_app, users, indices):
 
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_query.py::test_function_issue35902 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def assert_same_clauses(actual, expected):
+    """must 節を順序を無視して比べる。
+
+    どの条件を先に積むかは環境によって入れ替わることがあり
+    (CI では全文検索の節がタイトルの節より前に来た)、
+    リストの順序まで固定すると環境依存のテストになる。
+    """
+    key = lambda x: json.dumps(x, sort_keys=True, ensure_ascii=False)
+    assert sorted(actual, key=key) == sorted(expected, key=key)
+
+
 def test_function_issue35902(app, users, communities, mocker):
     with app.test_client() as client:
         login_user_via_session(client, email=users[3]["email"])
@@ -835,7 +846,7 @@ def test_function_issue35902(app, users, communities, mocker):
             res,urlkwargs = default_search_factory(self=None, search=search)
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
-            assert result == test1
+            assert_same_clauses(result, test1)
 
         # detail search
         data = {
@@ -854,7 +865,7 @@ def test_function_issue35902(app, users, communities, mocker):
             res,urlkwargs = default_search_factory(self=None, search=search)
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
-            assert result == test2
+            assert_same_clauses(result, test2)
 
         # full text search
         data = {
@@ -874,7 +885,7 @@ def test_function_issue35902(app, users, communities, mocker):
             res,urlkwargs = default_search_factory(self=None, search=search)
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
-            assert result == test3
+            assert_same_clauses(result, test3)
 
         # exist community
         # ACL の条件が増えたので、共通部分は実クエリに合わせてある。
@@ -906,7 +917,7 @@ def test_function_issue35902(app, users, communities, mocker):
             res,urlkwargs = default_search_factory(self=None, search=search)
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
-            assert result == test1
+            assert_same_clauses(result, test1)
 
         # detail search
         data = {
@@ -926,7 +937,7 @@ def test_function_issue35902(app, users, communities, mocker):
             res,urlkwargs = default_search_factory(self=None, search=search)
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
-            assert result == test2
+            assert_same_clauses(result, test2)
 
         # full text search
         data = {
@@ -947,7 +958,7 @@ def test_function_issue35902(app, users, communities, mocker):
             res,urlkwargs = default_search_factory(self=None, search=search)
             result = (res.query()).to_dict()
             result = result["query"]["bool"]["filter"][0]["bool"]["must"]
-            assert result == test3
+            assert_same_clauses(result, test3)
 
 
 # def _split_text_by_or(text):
