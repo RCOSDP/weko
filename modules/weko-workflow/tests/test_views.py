@@ -7104,10 +7104,12 @@ def test_edit_item_direct_after_login_03_2(client, users, db_register_full_actio
     assert res.status_code == status_code
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_edit_item_direct_after_login_04 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# users[3] (comadmin) は has_comadmin_permission が通るので拒否されない。
+# コミュニティ管理者が通る側は test_edit_item_direct_after_login_05 が
+# has_comadmin_permission=True で見ている。
 @pytest.mark.parametrize(
     "users_index, status_code",
     [
-        (3, 400),
         (4, 400),
         (5, 400),
     ],
