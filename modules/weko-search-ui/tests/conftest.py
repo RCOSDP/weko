@@ -4402,7 +4402,12 @@ def create_export_all_data(db):
     for meta in item_meta_data_list:
         meta.item_type_id = 1
         db.session.merge(meta)
-    for i in range(1000, 1110):
+    # make_record は1件ごとに DB と Elasticsearch に書くので、CI の I/O では
+    # 1件あたり十数秒かかる。110件だとフィクスチャだけで 30 分を超え、
+    # weko-search-ui [6/6] がタイムアウトしていた。
+    # test_export_all が実際に書き出すのは item_id_range="1" の1件だけで、
+    # 残りは背景データなので 10 件で足りる。
+    for i in range(1000, 1010):
         make_record(db, indexer, i, filepath, filename, mimetype, '')
 
 @pytest.fixture
