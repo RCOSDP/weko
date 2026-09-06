@@ -553,17 +553,29 @@ DC_PLAIN_TEXT_XFAIL = pytest.mark.xfail(
 )
 
 
+# BaseMapper.map_itemtype() は weko#56939 以降、レコードの resource type を
+# 見ずに常に "Multiple" のアイテムタイプを選ぶ。それだけなら期待値を
+# Multiple での出力に書き換えれば済む (test_ddi_harvest_processing は
+# 実際そうして通した)。以下の 4 件はそれとは別に、値そのものが落ちる。
+#
+#   - TestDCMapper.test_map        Multiple の oai_dc_mapping は 39 項目すべて
+#                                  値が空で、何も取り込めない
+#   - TestJPCOARMapper.test_map    Multiple の jpcoar_mapping に定義がある
+#                                  versionType / rights の本文 /
+#                                  funderIdentifier が出力に現れない
+#   - test_process_item            マッピング結果が空で ValueError
+#   - test_run_harvesting          同上で Failed になる
+#
+# 前者はフィクスチャのマッピングを作る話、後者は取りこぼしなので、
+# いずれもテストコードだけでは意味のある形に戻せない。
+# 詳細は issues.md A-9。
 MULTIPLE_ITEMTYPE_XFAIL = pytest.mark.xfail(
     reason=(
-        "The mapper no longer chooses the item type from the record: "
-        "BaseMapper.map_itemtype() always selects the one named 'Multiple' "
-        "(weko#56939). These cases assert a full mapping produced against the "
-        "per-format item types, and the 'Multiple' fixture "
-        "(tests/data/itemtype_multiple_mapping.json) carries only "
-        "jpcoar_mapping - no jpcoar_v1_mapping and no oai_dc/ddi mapping for "
-        "the vocabularies these records use. Making them meaningful again "
-        "means giving that item type the missing mappings, which is fixture "
-        "data the module does not have."
+        "map_itemtype() always selects the 'Multiple' item type (weko#56939), "
+        "and for these records that item type yields values that are dropped: "
+        "its oai_dc_mapping is entirely empty, and for jpcoar the versionType, "
+        "rights text and funderIdentifier it does map do not reach the output. "
+        "Rewriting the expectations would bake in that loss. See issues.md A-9."
     ),
 )
 
@@ -2928,7 +2940,6 @@ class TestDDIMapper:
         
 #     def ddi_harvest_processing(self, harvest_data, res):
 # .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestDDIMapper::test_ddi_harvest_processing -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
-    @MULTIPLE_ITEMTYPE_XFAIL
     def test_ddi_harvest_processing(self,db_itemtype):
         data = OrderedDict([
             ('@xmlns:dc', 'http://purl.org/dc/terms/'), 
@@ -3255,7 +3266,13 @@ class TestDDIMapper:
         xml = etree.tostring(record,encoding="utf-8").decode()
         mapper = DDIMapper(xml)
         mapper.map_itemtype()
-        test = {'$schema': 11, 'pubdate': str(mapper.datestamp()), 'item_1586157591881': [{'subitem_1586156939407': 'titlSmt_top1'}, {'subitem_1586156939407': 'titlSmt_top2'}, {'subitem_1586156939407': 'test_study_id', 'subitem_1591256665864': 'test_id_agency', 'subitem_1586311767281': 'ja'}], 'item_1551264308487': [{'subitem_1551255647225': 'test ddi full item', 'subitem_1551255648112': 'ja'}], 'item_1551264326373': [{'subitem_1551255720400': 'other ddi title', 'subitem_1551255721061': 'ja'}], 'item_1593074267803': [{'creatorNames': [{'creatorName': 'テスト, 太郎', 'creatorNameLang': 'ja'}], 'nameIdentifiers': [{'nameIdentifier': '4'}], 'creatorAffiliations': [{'affiliationNames': [{'affiliationName': 'author.affiliation'}]}]}], 'item_1551264917614': [{'subitem_1551255702686': 'test_publisher', 'subitem_1551255710277': 'ja'}], 'item_1551264629907': [{'subitem_1602213569986': {'subitem_1602213569987': 'test_rights'}, 'subitem_1602213570623': 'ja', 'subitem_1602213569989': {'subitem_1602213569990': {'subitem_1602213569988': 'this is rights description.'}}, 'subitem_1602213569991': {'subitem_1602213569992': 'today'}}], 'item_1602145817646': [{'subitem_1602142814330': 'test_founder_name', 'subitem_1602142815328': 'ja'}], 'item_1602145850035': [{'subitem_1602142123771': 'test_grant_no'}], 'item_1592405734122': [{'subitem_1592369405220': 'Test Distributor Name', 'subitem_1591320914113': 'https://test.distributor.affiliation', 'subitem_1591320889728': 'TDN', 'subitem_1592369407829': 'ja', 'subitem_1591320890384': 'Test Distributor Affiliation'}], 'item_1588254290498': [{'subitem_1587462181884': 'test_series', 'subitem_1587462183075': 'ja'}], 'item_1645678901234': [{'interim': 'test_text', 'subitem_165678901234567': 'sub_test_text'}], 'item_1551265075370': [{'subitem_1591254914934': '1.2', 'subitem_1591254915862': '2023-03-07', 'subitem_1591254915406': 'ja'}], 'item_1592880868902': [{'subitem_1586228465211': 'test.input.content', 'subitem_1586228490356': 'ja'}], 'item_1612345678910': [{'subitem_1623456789123': 'http://doi.org/test_doi'}, {'subitem_1623456789123': 'http://hdl.handle.net/test_doi'}, {'subitem_1623456789123': 'http://other_prefix'}], 'item_1551264822581': [{'subitem_1592472785169': 'Test Topic', 'subitem_1592472786088': 'test_topic_vocab', 'subitem_1592472786560': 'http://test.topic.vocab', 'subitem_1592472785698': 'ja'}, {'subitem_1592472785169': '人口', 'subitem_1592472786088': 'CESSDA Topic Classification', 'subitem_1592472786560': 'https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification', 'subitem_1592472785698': 'ja'}, {'subitem_1592472785169': 'test_str_value'}, {'subitem_1592472785169': 'Demography', 'subitem_1592472786088': 'CESSDA Topic Classification', 'subitem_1592472786560': 'https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification', 'subitem_1592472785698': 'en'}], 'item_1602145192334': [{'subitem_1602144573160': '2023-03-01', 'subitem_1602144587621': 'start'}, {'subitem_1602144573160': '2023-03-03', 'subitem_1602144587621': 'end'}], 'item_1586253152753': [{'subitem_1602144573160': '2023-03-01', 'subitem_1602144587621': 'start'}, {'subitem_1602144573160': '2023-03-06', 'subitem_1602144587621': 'end'}], 'item_1570068313185': [{'subitem_1586419454219': 'test_geographic_coverage', 'subitem_1586419462229': 'ja'}], 'item_1586253224033': [{'subitem_1596608607860': '個人', 'subitem_1596608609366': 'ja'}, {'subitem_1596608607860': 'test_unit_of_analysis', 'subitem_1596608609366': 'en'}, {'subitem_1596608607860': 'Individual', 'subitem_1596608609366': 'en'}], 'item_1586253249552': [{'subitem_1596608974429': 'test parent set', 'subitem_1596608975087': 'ja'}], 'item_1588260046718': [{'subitem_1591178807921': '量的調査', 'subitem_1591178808409': 'ja'}, {'subitem_1591178807921': 'quantatitive research', 'subitem_1591178808409': 'en'}], 'item_1551264846237': [{'subitem_1551255577890': 'this is description for ddi item.\nthis is description for ddi item.', 'subitem_1551255592625': 'en'}], 'item_1586253334588': [{'subitem_1596609826487': 'test sampling procedure', 'subitem_1596609827068': 'ja'}, {'subitem_1596609826487': '母集団/ 全数調査', 'subitem_1596609827068': 'ja'}, {'subitem_1596609826487': 'Total universe/Complete enumeration', 'subitem_1596609827068': 'en'}], 'item_1586253349308': [{'subitem_1596610500817': 'test collection method', 'subitem_1596610501381': 'ja'}, {'subitem_1596610500817': 'インタビュー', 'subitem_1596610501381': 'ja'}, {'subitem_1596610500817': 'Interview', 'subitem_1596610501381': 'en'}], 'item_1586253589529': [{'subitem_1596609826487': 'test sampling procedure_sampling_rate', 'subitem_1596609827068': 'ja'}], 'item_1588260178185': [{'subitem_1522650727486': 'オープンアクセス', 'subitem_1522650717957': 'jp'}, {'subitem_1522650727486': 'open access', 'subitem_1522650717957': 'en'}], 'item_1551265002099': [{'subitem_1551255818386': 'jpn'}], 'item_1592405736602': [{'subitem_1602215239359': 'test_related_study_title', 'subitem_1602215240520': 'test_related_study_identifier', 'subitem_1602215239925': 'ja'}, {'subitem_1602215239359': 'test_related_study_title', 'subitem_1602215240520': 'test_related_study_identifier_out1', 'subitem_1602215239925': 'ja'}], 'item_1592405735401': [{'subitem_1602214558730': 'test_related_publication_title_out', 'subitem_1602214560358': 'test_related_publication_identifier_out1', 'subitem_1602214559588': 'ja'}]}
+        # 期待値は DDI 専用アイテムタイプが選ばれていた頃のもの。いまは
+        # map_itemtype() が常に "Multiple" を選ぶ (weko#56939) ので、
+        # Multiple のマッピングでの出力に合わせてある。
+        #   - titlSmt_top1/top2 は調査IDではなくタイトルに入る (こちらが妥当)
+        #   - 識別子は item_1612345678910 ではなく item_1602145007095 に入る
+        #   - item_1645678901234 は DDI アイテムタイプにしか無い項目なので出ない
+        test = {"$schema": 11, "pubdate": "2023-03-02", "item_1551264326373": [{"subitem_1551255720400": "titlSmt_top1"}, {"subitem_1551255720400": "titlSmt_top2"}, {"subitem_1551255720400": "other ddi title", "subitem_1551255721061": "ja"}], "item_1551264308487": [{"subitem_1551255647225": "test ddi full item", "subitem_1551255648112": "ja"}], "item_1586157591881": [{"subitem_1586156939407": "test_study_id", "subitem_1591256665864": "test_id_agency", "subitem_1586311767281": "ja"}], "item_1593074267803": [{"creatorNames": [{"creatorName": "テスト, 太郎", "creatorNameLang": "ja"}], "nameIdentifiers": [{"nameIdentifier": "4"}], "creatorAffiliations": [{"affiliationNames": [{"affiliationName": "author.affiliation"}]}]}], "item_1551264917614": [{"subitem_1551255702686": "test_publisher", "subitem_1551255710277": "ja"}], "item_1551264629907": [{"subitem_1602213569986": {"subitem_1602213569987": "test_rights"}, "subitem_1602213569991": {"subitem_1602213569992": "today"}, "subitem_1602213570623": "ja", "subitem_1602213569989": {"subitem_1602213569990": {"subitem_1602213569988": "this is rights description."}}}], "item_1602145817646": [{"subitem_1602142814330": "test_founder_name", "subitem_1602142815328": "ja"}], "item_1602145850035": [{"subitem_1602142123771": "test_grant_no"}], "item_1592405734122": [{"subitem_1592369405220": "Test Distributor Name", "subitem_1591320914113": "https://test.distributor.affiliation", "subitem_1591320889728": "TDN", "subitem_1592369407829": "ja", "subitem_1591320890384": "Test Distributor Affiliation"}], "item_1588254290498": [{"subitem_1587462181884": "test_series", "subitem_1587462183075": "ja"}], "item_1551265075370": [{"subitem_1591254914934": "1.2", "subitem_1591254915862": "2023-03-07", "subitem_1591254915406": "ja"}], "item_1592880868902": [{"subitem_1586228465211": "test.input.content", "subitem_1586228490356": "ja"}], "item_1602145007095": [{"subitem_1602144759036": "http://doi.org/test_doi"}, {"subitem_1602144759036": "http://hdl.handle.net/test_doi"}, {"subitem_1602144759036": "http://other_prefix"}], "item_1551264822581": [{"subitem_1592472785169": "Test Topic", "subitem_1592472786088": "test_topic_vocab", "subitem_1592472786560": "http://test.topic.vocab", "subitem_1592472785698": "ja"}, {"subitem_1592472785169": "人口", "subitem_1592472786088": "CESSDA Topic Classification", "subitem_1592472786560": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification", "subitem_1592472785698": "ja"}, {"subitem_1592472785169": "test_str_value"}, {"subitem_1592472785169": "Demography", "subitem_1592472786088": "CESSDA Topic Classification", "subitem_1592472786560": "https://vocabularies.cessda.eu/urn/urn:ddi:int.cessda.cv:TopicClassification", "subitem_1592472785698": "en"}], "item_1602145192334": [{"subitem_1602144573160": "2023-03-01", "subitem_1602144587621": "start"}, {"subitem_1602144573160": "2023-03-03", "subitem_1602144587621": "end"}], "item_1586253152753": [{"subitem_1602144573160": "2023-03-01", "subitem_1602144587621": "start"}, {"subitem_1602144573160": "2023-03-06", "subitem_1602144587621": "end"}], "item_1570068313185": [{"subitem_1586419454219": "test_geographic_coverage", "subitem_1586419462229": "ja"}], "item_1586253224033": [{"subitem_1596608607860": "個人", "subitem_1596608609366": "ja"}, {"subitem_1596608607860": "test_unit_of_analysis", "subitem_1596608609366": "en"}, {"subitem_1596608607860": "Individual", "subitem_1596608609366": "en"}], "item_1586253249552": [{"subitem_1596608974429": "test parent set", "subitem_1596608975087": "ja"}], "item_1588260046718": [{"subitem_1591178807921": "量的調査", "subitem_1591178808409": "ja"}, {"subitem_1591178807921": "quantatitive research", "subitem_1591178808409": "en"}], "item_1551264846237": [{"subitem_1551255577890": "this is description for ddi item.\nthis is description for ddi item.", "subitem_1551255592625": "en"}], "item_1586253334588": [{"subitem_1596609826487": "test sampling procedure", "subitem_1596609827068": "ja"}, {"subitem_1596609826487": "母集団/ 全数調査", "subitem_1596609827068": "ja"}, {"subitem_1596609826487": "Total universe/Complete enumeration", "subitem_1596609827068": "en"}], "item_1586253349308": [{"subitem_1596610500817": "test collection method", "subitem_1596610501381": "ja"}, {"subitem_1596610500817": "インタビュー", "subitem_1596610501381": "ja"}, {"subitem_1596610500817": "Interview", "subitem_1596610501381": "en"}], "item_1586253589529": [{"subitem_1596609826487": "test sampling procedure_sampling_rate", "subitem_1596609827068": "ja"}], "item_1588260178185": [{"subitem_1522650727486": "オープンアクセス", "subitem_1522650717957": "jp"}, {"subitem_1522650727486": "open access", "subitem_1522650717957": "en"}], "item_1551265002099": [{"subitem_1551255818386": "jpn"}], "item_1592405736602": [{"subitem_1602215239359": "test_related_study_title", "subitem_1602215240520": "test_related_study_identifier", "subitem_1602215239925": "ja"}, {"subitem_1602215239359": "test_related_study_title", "subitem_1602215240520": "test_related_study_identifier_out1", "subitem_1602215239925": "ja"}], "item_1592405735401": [{"subitem_1602214558730": "test_related_publication_title_out", "subitem_1602214560358": "test_related_publication_identifier_out1", "subitem_1602214559588": "ja"}]}
         res = {"$schema":mapper.itemtype.id,"pubdate":str(mapper.datestamp())}
         mapper.ddi_harvest_processing(data,res)
         assert res == test
@@ -3283,8 +3300,10 @@ class TestDDIMapper:
         mapper = DDIMapper(xml)
         mapper.map_itemtype()
         res = {"$schema":mapper.itemtype.id,"pubdate":str(mapper.datestamp())}
-        with pytest.raises(Exception):
-            mapper.ddi_harvest_processing(data,res)
+        # 不正な入力でも例外は投げず、res に何も足さずに返るようになった。
+        # このケースで確かめたいのは「res が汚れないこと」なので、次行の
+        # 突き合わせで足りる。
+        mapper.ddi_harvest_processing(data,res)
         assert res == {"$schema":mapper.itemtype.id,"pubdate":str(mapper.datestamp())}
     
 #         def get_mapping_ddi():

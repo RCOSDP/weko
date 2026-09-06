@@ -620,16 +620,6 @@ class TestWekoDeposit:
 
     # def delete(self, force=True, pid=None):
     # .tox/c1/bin/pytest --cov=weko_deposit tests/test_api.py::TestWekoDeposit::test_delete -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
-    # .0 のドラフトは親レコードとバケットを共有する
-    # (conftest の RecordsBuckets.create が両方を同じ bucket に繋ぐ)。
-    # WekoDeposit.delete() は自分の RecordsBuckets 行だけ消してから
-    # bucket.remove() するので、まだ参照が残っていて FK 違反になる。
-    # 詳細は issues.md A-15。
-    @pytest.mark.xfail(
-        raises=IntegrityError,
-        reason="ドラフトとバケットを共有しているとバケット削除が FK 違反になる "
-               "(issues.md A-15)",
-    )
     def test_delete(sel,app,db,location,es_records):
         indexer, records = es_records
         record = records[0]

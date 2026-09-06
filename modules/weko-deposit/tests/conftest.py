@@ -712,13 +712,21 @@ def es_records(app, db, location, db_itemtype, db_oaischema):
             from invenio_files_rest.models import Bucket
             from invenio_records_files.models import RecordsBuckets
             import base64
+            # レコードとその .0 ドラフトは別のバケットを持つ。
+            # invenio_records_files の files プロパティは RecordsBuckets 行が
+            # 無ければ _create_bucket() で新しいバケットを作って紐づけるし、
+            # publish 時は invenio_deposit が snapshot() で別バケットを作る。
+            # 1つのバケットを両方に繋ぐ経路は製品側に無く、そうすると
+            # WekoDeposit.delete() のバケット削除が外部キー違反になる。
             bucket = Bucket.create()
             record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
-            record_buckets_0 = RecordsBuckets.create(record=record_0.model, bucket=bucket)
+            bucket_0 = Bucket.create()
+            record_buckets_0 = RecordsBuckets.create(record=record_0.model, bucket=bucket_0)
             stream = BytesIO(b'Hello, World')
             record.files['hello.txt'] = stream
             record_0.files['hello.txt'] = stream
             obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt',stream=stream)
+            ObjectVersion.create(bucket=bucket_0.id, key='hello.txt',stream=BytesIO(b'Hello, World'))
             record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             record_0['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             deposit = aWekoDeposit(record, record.model)

@@ -44,14 +44,9 @@ from invenio_oaiharvester.tasks import create_indexes, event_counter, \
 
 MULTIPLE_ITEMTYPE_XFAIL = pytest.mark.xfail(
     reason=(
-        "The mapper no longer chooses the item type from the record: "
-        "BaseMapper.map_itemtype() always selects the one named 'Multiple' "
-        "(weko#56939). The 'Multiple' fixture item type "
-        "(tests/data/itemtype_multiple_mapping.json) carries only "
-        "jpcoar_mapping, so a record written in another vocabulary maps to "
-        "nothing and the harvest fails. Making these meaningful again means "
-        "giving that item type the missing mappings, which is fixture data "
-        "the module does not have."
+        "map_itemtype() always selects the 'Multiple' item type (weko#56939), "
+        "and the mapping it produces for these records is empty, so the task "
+        "reports a failure. Not fixable from the test side. See issues.md A-9."
     ),
 )
 
