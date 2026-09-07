@@ -892,6 +892,76 @@ def test_check_created_id_proxy_posting(app, users, proxy_posting, position,
         app.config["WEKO_ITEMS_UI_PROXY_POSTING"] = original
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_record_edit_permission_required_id_sources -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("call_kwargs,ctx_kwargs,expected", [
+    # URL ルート経由 (/records/soft_delete/<recid>) は kwargs で届く
+    ({"kwargs": {"recid": "1"}}, {}, "1"),
+    # Python から位置引数で直接呼ぶ経路 (prepare_delete_item など)。
+    # ボディのキーは pid_value なので、位置引数から拾えないと 400 になる
+    ({"args": ("1",)}, {"json": {"pid_value": "1"}}, "1"),
+    # 位置引数の del_ver_ も剥がしてから引く
+    ({"args": ("del_ver_1",)}, {"json": {"pid_value": "1"}}, "1"),
+    # フォーム経由 (replace_file / get_file_place)
+    ({}, {"data": {"recid": "1"}}, "1"),
+    # JSON ボディ経由 (copy_bucket)
+    ({}, {"json": {"recid": "1"}}, "1"),
+    # クエリ文字列経由
+    ({}, {"query_string": {"recid": "1"}}, "1"),
+])
+def test_record_edit_permission_required_id_sources(
+        app, users, call_kwargs, ctx_kwargs, expected):
+    """recid の解決元。位置引数を落とすと画面からの削除が全部 400 になる。"""
+    from weko_records_ui.permissions import record_edit_permission_required
+
+    seen = []
+
+    @record_edit_permission_required(strip_prefix="del_ver_")
+    def view(recid=None):
+        seen.append(recid)
+        return "ok"
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with patch("weko_records_ui.permissions.check_created_id_by_recid",
+                   return_value=True) as mock_check:
+            with app.test_request_context("/", method="POST", **ctx_kwargs):
+                assert view(*call_kwargs.get("args", ()),
+                            **call_kwargs.get("kwargs", {})) == "ok"
+
+    # 権限判定には prefix を剥がした id を渡す
+    mock_check.assert_called_once_with(expected)
+    # ビュー本体には受け取ったままの値を渡す (剥がすのはビューの仕事)
+    assert len(seen) == 1
+
+
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_record_edit_permission_required_aborts -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize("authenticated,permitted,recid,expected_code", [
+    (False, True, "1", 401),    # 未認証
+    (True, True, None, 400),    # どこにも id が無い
+    (True, False, "1", 403),    # 権限なし
+])
+def test_record_edit_permission_required_aborts(
+        app, users, authenticated, permitted, recid, expected_code):
+    """id が取れないときだけ 400。権限で弾くのは 403、未認証は 401。"""
+    from werkzeug.exceptions import HTTPException
+    from weko_records_ui.permissions import record_edit_permission_required
+
+    @record_edit_permission_required()
+    def view(recid=None):
+        return "ok"
+
+    user = users[2]["obj"] if authenticated else None
+    args = (recid,) if recid is not None else ()
+
+    with patch("flask_login.utils._get_user", return_value=user):
+        with patch("weko_records_ui.permissions.check_created_id_by_recid",
+                   return_value=permitted):
+            with app.test_request_context("/", method="POST"):
+                with pytest.raises(HTTPException) as exc:
+                    view(*args)
+
+    assert exc.value.code == expected_code
+
+
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_created_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize("index,status",[
     (0,False),

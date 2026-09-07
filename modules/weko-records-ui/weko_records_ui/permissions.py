@@ -23,6 +23,7 @@
 from datetime import datetime as dt
 from datetime import timedelta, timezone
 from functools import wraps
+import inspect
 import traceback
 from typing import List, Optional
 
@@ -524,9 +525,11 @@ def check_created_id_by_recid(recid):
 def record_edit_permission_required(param='recid', strip_prefix=None):
     """Require edit permission on the record identified by ``param``.
 
-    The record id is resolved from the view args first, then the request body
-    (form or JSON) and finally the query string, so the same decorator covers
-    ``/records/soft_delete/<recid>`` and POSTs that carry ``pid`` in the form.
+    The record id is resolved from the view args first (keyword *and*
+    positional, so that in-process calls to the view keep working), then the
+    request body (form or JSON) and finally the query string, so the same
+    decorator covers ``/records/soft_delete/<recid>`` and POSTs that carry
+    ``pid`` in the form.
 
     The check itself is :func:`check_created_id`: the creator, a shared user,
     a Community Administrator of the record's community, or a super user.
@@ -549,6 +552,18 @@ def record_edit_permission_required(param='recid', strip_prefix=None):
                 abort(401)
 
             recid = kwargs.get(param)
+            if recid is None and args:
+                # ビュー関数を HTTP 経由ではなく Python から直接呼ぶ経路が
+                # ある (weko_items_ui.views.prepare_delete_item と
+                # weko_workflow.utils.prepare_delete_workflow が
+                # soft_delete(del_value) と位置引数で呼ぶ)。
+                # そこでは kwargs もリクエストボディも param を持たないため、
+                # シグネチャに束ねて位置引数からも取り出す。
+                try:
+                    bound = inspect.signature(f).bind_partial(*args, **kwargs)
+                    recid = bound.arguments.get(param)
+                except TypeError as e:
+                    current_app.logger.error(e)
             if recid is None:
                 recid = request.form.get(param)
             if recid is None and request.mimetype == 'application/json':

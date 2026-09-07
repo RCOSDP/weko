@@ -1372,6 +1372,52 @@ def test_soft_delete_exception(client, records, users):
                     assert res.json == expected_response
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_called_in_process -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "del_value, expected_recid",
+    [
+        ("1", "1"),                # 通常の削除
+        ("del_ver_1", "1"),        # バージョン削除
+    ],
+)
+def test_soft_delete_called_in_process(app, records, users, del_value,
+                                       expected_recid):
+    """soft_delete ビューを Python から位置引数で呼ぶ経路を守る。
+
+    画面の削除ボタンは POST /items/prepare_delete_item に
+    {"pid_value": ...} を投げ、weko_items_ui.views.prepare_delete_item が
+    ``from weko_records_ui.views import soft_delete`` して
+    ``soft_delete(del_value)`` と *位置引数* で呼ぶ
+    (weko_workflow.utils.prepare_delete_workflow も同じ)。
+
+    このとき kwargs は空で、リクエストボディのキーも recid ではなく
+    pid_value なので、record_edit_permission_required が recid を
+    見つけられずに abort(400) していた (v2.0.4 の回帰)。
+    リクエストは views.py:1362 の try の外なので、素の 400 が返って
+    削除が誰も実行できなくなる。
+    """
+    from weko_records_ui.views import soft_delete
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with app.test_request_context(
+            "/items/prepare_delete_item",
+            method="POST",
+            json={"pid_value": expected_recid},
+        ):
+            with patch("weko_records_ui.views.soft_delete_imp") as mock_imp, \
+                 patch("weko_records_ui.views.delete_version") as mock_ver, \
+                 patch("weko_records_ui.views.call_external_system"):
+                res = soft_delete(del_value)
+
+            assert res.status_code == 200
+            if del_value.startswith("del_ver_"):
+                mock_ver.assert_called_once_with(expected_recid)
+                mock_imp.assert_not_called()
+            else:
+                mock_imp.assert_called_once_with(expected_recid)
+                mock_ver.assert_not_called()
+
+
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_restore_acl_guest(client, records):
