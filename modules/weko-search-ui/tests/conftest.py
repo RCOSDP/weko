@@ -4372,15 +4372,21 @@ def make_itemtype(app,db):
             is_deleted=False,
         )
 
+        with db.session.begin_nested():
+            db.session.add(item_type)
+
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。item_type を先に入れて flush で親行を確定させてから mapping を
+        # 足す (fk_item_type_mapping_item_type_id_item_type)。
         if "mapping" in datas:
             item_type_mapping = dict()
             with open(datas["mapping"], "r") as f:
                 item_type_mapping = json.load(f)
             item_type_mapping = ItemTypeMapping(id=id, item_type_id=id, mapping=item_type_mapping)
-            db.session.add(item_type_mapping)
+            with db.session.begin_nested():
+                db.session.add(item_type_mapping)
             result["item_type_mapping"] = item_type_mapping
-        with db.session.begin_nested():
-            db.session.add(item_type)
 
         db.session.commit()
         result["item_type_name"] = item_type_name
@@ -4689,6 +4695,11 @@ def db_itemtype_jpcoar(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_multiple_name)
         db.session.add(item_type_multiple)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_multiple_mapping)
     db.session.commit()
 

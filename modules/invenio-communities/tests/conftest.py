@@ -92,6 +92,13 @@ def base_app(instance_path, request):
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
         CELERY_RESULT_BACKEND="cache",
         COMMUNITIES_MAIL_ENABLED=False,
+        # get_search_setting() が invenio-cache 経由でキャッシュを引くように
+        # なったため、キャッシュ先を明示しないと flask-caching の既定の
+        # localhost:6379 に繋ぎに行って ConnectionError で落ちる。
+        # 他モジュールの conftest と同じく CI の redis サービスを指す。
+        CACHE_TYPE="redis",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
         SECRET_KEY='CHANGE_ME',
         SECURITY_PASSWORD_SALT='CHANGE_ME_ALSO',
         # SQLALCHEMY_DATABASE_URI=os.environ.get(

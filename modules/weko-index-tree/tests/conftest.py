@@ -505,10 +505,15 @@ def db(app):
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
-    _now = datetime.now()
-    _p_start = _now.date().replace(day=1)
+    # weko_logging.models._create_current_month_partition が
+    # UserActivityLog.__table__ の after_create で当月分を
+    # user_activity_logs_%Y%m という名前で既に作っている。ここで別名を
+    # 付けると同じ範囲を指す2つ目のパーティションになり
+    # "would overlap partition" で弾かれるので、名前と基準時刻を本番に
+    # 合わせて IF NOT EXISTS を効かせる。
+    _p_start = datetime.utcnow().date().replace(day=1)
     _p_end = (_p_start + timedelta(days=31)).replace(day=1)
-    _p_name = "user_activity_logs_{}_{:02d}".format(_now.year, _now.month)
+    _p_name = "user_activity_logs_{}".format(_p_start.strftime('%Y%m'))
     db_.session.execute(
         "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
         "FOR VALUES FROM ('{start}') TO ('{end}');".format(

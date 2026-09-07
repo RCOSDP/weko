@@ -6456,11 +6456,16 @@ def users_storage_info(db, users):
 @pytest.fixture()
 def user_activity_log_partition_table(app, db):
     """Create user activity log partition."""
-    # Create partition for current month
-    now = datetime.now()
-    start = now.date().replace(day=1)
+    # Create partition for current month.
+    # weko_logging.models._create_current_month_partition が
+    # UserActivityLog.__table__ の after_create で当月分を
+    # user_activity_logs_%Y%m という名前で既に作っている。ここで別名を
+    # 付けると同じ範囲を指す2つ目のパーティションになり
+    # "would overlap partition" で弾かれるので、名前と基準時刻を本番に
+    # 合わせて IF NOT EXISTS を効かせる。
+    start = datetime.utcnow().date().replace(day=1)
     end = (start + timedelta(days=31)).replace(day=1)
-    partition_name = f"user_activity_logs_{now.year}_{now.month:02d}"
+    partition_name = f"user_activity_logs_{start:%Y%m}"
     create_partition_sql = f"""
         CREATE TABLE IF NOT EXISTS {partition_name}
         PARTITION OF user_activity_logs

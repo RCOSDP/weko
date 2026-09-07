@@ -343,10 +343,15 @@ def db(app):
     # Without a partition covering the current date, any activity logging
     # during a test fails with "no partition of relation ... found". Create
     # the current-month partition so tests that trigger logging can run.
-    _now = datetime.now()
-    _p_start = _now.date().replace(day=1)
+    # weko_logging.models._create_current_month_partition が
+    # UserActivityLog.__table__ の after_create で当月分を
+    # user_activity_logs_%Y%m という名前で既に作っている。ここで別名を
+    # 付けると同じ範囲を指す2つ目のパーティションになり
+    # "would overlap partition" で弾かれるので、名前と基準時刻を本番に
+    # 合わせて IF NOT EXISTS を効かせる。
+    _p_start = datetime.utcnow().date().replace(day=1)
     _p_end = (_p_start + timedelta(days=31)).replace(day=1)
-    _p_name = "user_activity_logs_{}_{:02d}".format(_now.year, _now.month)
+    _p_name = "user_activity_logs_{}".format(_p_start.strftime('%Y%m'))
     db_.session.execute(
         "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
         "FOR VALUES FROM ('{start}') TO ('{end}');".format(
@@ -747,6 +752,11 @@ def db_itemtype2(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -789,6 +799,11 @@ def db_itemtype3(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -831,6 +846,11 @@ def db_itemtype4(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -873,6 +893,11 @@ def db_itemtype5(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -915,6 +940,11 @@ def db_itemtype6(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -957,6 +987,11 @@ def db_itemtype(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -22585,6 +22620,11 @@ def db_itemtype_15(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}

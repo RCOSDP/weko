@@ -636,6 +636,11 @@ def db_itemtype(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
     db.session.commit()
     db.session.refresh(item_type)
