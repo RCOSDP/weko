@@ -93,9 +93,11 @@ def base_app(instance_path, request):
         CELERY_RESULT_BACKEND="cache",
         COMMUNITIES_MAIL_ENABLED=False,
         # get_search_setting() が invenio-cache 経由でキャッシュを引くように
-        # なったため、キャッシュ先を明示しないと flask-caching の既定の
-        # localhost:6379 に繋ぎに行って ConnectionError で落ちる。
-        # 他モジュールの conftest と同じく CI の redis サービスを指す。
+        # なったため、キャッシュ先を明示しないと localhost:6379 に繋ぎに
+        # 行って ConnectionError で落ちる。flask-caching の redis バック
+        # エンドは CACHE_REDIS_URL を HOST より優先し、invenio-cache の
+        # 既定値が redis://localhost:6379/0 なので URL の指定が要る。
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
         CACHE_TYPE="redis",
         CACHE_REDIS_DB=0,
         CACHE_REDIS_HOST="redis",
