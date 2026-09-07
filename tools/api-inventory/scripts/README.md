@@ -52,10 +52,43 @@ cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
 判定ルールを変えた、テストを追加した、といったとき。
 
 ```bash
+python3 tools/api-inventory/scripts/add_inproc_callers.py  # in-process 呼び出し元を付与
 python3 tools/api-inventory/scripts/test_coverage.py    # テスト4観点を判定
 python3 tools/api-inventory/scripts/prioritize.py       # 優先度・整理対象を付与
 python3 tools/api-inventory/scripts/build_checklist.py  # 24列版を再生成
 ```
+
+## ★認可を足す前に in-process の呼び出し元を見る (issue62807)
+
+台帳は Flask のルートを単位にしている。だが WEKO3 には、ビュー関数を
+HTTP を通さず別モジュールから直接呼ぶ「第二の入口」がある。
+この入口は台帳のどの列にも現れないため、**ルート単位で認可を足していく
+作業では素通りする**。
+
+issue62807 がその実例。v2.0.4 で `soft_delete` に
+`record_edit_permission_required` を足したが、このデコレータは recid を
+kwargs / request.form / JSON body / query string からしか探していなかった。
+画面の削除は `POST /items/prepare_delete_item` に `{"pid_value": ...}` を投げ、
+`weko_items_ui.views.prepare_delete_item` が
+``soft_delete(del_value)`` と **位置引数** でビューを直接呼ぶ。
+kwargs は空、ボディのキーも recid ではないので id が取れず abort(400)。
+権限判定より前で落ちるため、作成者でも管理者でも削除できなくなった。
+
+台帳上この行は `auth_required=要` / `test_gap=-` で、穴が無いように見えていた。
+`inproc_callers` 列はこの死角を可視化するために足した。
+
+```bash
+# 単体で確認する(列を書かずに一覧だけ見る)
+WEKO_ROOT=/home/mhaya/wekov2 python3 tools/api-inventory/scripts/audit_inprocess_views.py
+
+# CI から回すときは件数だけ(ログ・artifact・PRコメントは誰でも読める)
+python3 .../audit_inprocess_views.py --summary-only --fail-on-high
+```
+
+`risk=HIGH` は「認可デコレータ付きのビューを、位置引数で in-process 呼び出し
+している」もの。デコレータは呼び出し元のリクエストコンテキストで動くので、
+**リクエストから値を読むデコレータをこの種のビューに付けてはいけない**。
+付けるなら、位置引数からも値を解決できることを確かめる。
 
 ## ケース2: 台帳に行を追加する
 
@@ -545,6 +578,8 @@ git push origin main --follow-tags
 | `_ensure_profile.py` / `_read_profile.py` / `_targets.py` / `_report.py` | — | `measure.sh` の内部ヘルパ |
 | `remeasure.sh` | — | 非推奨。`measure.sh` に統合(案内のみ) |
 | `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
+| `audit_inprocess_views.py` | 実装ソース(AST) | 何も書かない(in-process 呼び出しを報告するだけ) |
+| `add_inproc_callers.py` | full.tsv + `audit_inprocess_views.py` | full.tsv の `inproc_callers`(**空欄/TODO セルのみ**) |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
 (冪等)。24列版は full.tsv から完全に再現できることを確認済み。
