@@ -1074,7 +1074,7 @@ def test_item_type_edit_history(app, db, user):
 # class Mapping(RecordBase):
 #     def create(cls, item_type_id=None, mapping=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_create(app, db):
+def test_mapping_create(app, db, item_type):
     with patch("weko_records.api.before_record_insert") as mock_before_record_insert, \
             patch("weko_records.api.after_record_insert") as mock_after_record_insert:
         mapping = Mapping.create_or_update()
@@ -1124,7 +1124,7 @@ def test_mapping_create(app, db):
 # class Mapping(RecordBase):
 #     def get_record(cls, item_type_id, with_deleted=False):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_get_record(app, db):
+def test_mapping_get_record(app, db, item_type, item_type2):
     Mapping.create_or_update(1, {'mapping': 'test'})
     Mapping.create_or_update(2)
 
@@ -1170,7 +1170,7 @@ def test_patch_Mapping(app):
 # class Mapping(RecordBase):
 #     def commit(self, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_commit -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_commit(app, db):
+def test_mapping_commit(app, db, item_type, item_type2, item_type3):
     mapping1 = Mapping.create_or_update(1)
     mapping2 = Mapping.create_or_update(2)
 
@@ -1187,7 +1187,7 @@ def test_mapping_commit(app, db):
 # class Mapping(RecordBase):
 #     def delete(self, force=False):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_delete(app, db):
+def test_mapping_delete(app, db, item_type, item_type2, item_type3):
     mapping1 = Mapping.create_or_update(1)
     mapping2 = Mapping.create_or_update(2)
     mapping3 = Mapping.create_or_update(3)
@@ -1209,7 +1209,7 @@ def test_mapping_delete(app, db):
 # class Mapping(RecordBase):
 #     def revert(self, revision_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_revert -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_revert(app, db):
+def test_mapping_revert(app, db, item_type, item_type2):
     mapping1 = Mapping.create_or_update(1)
     mapping2 = Mapping.create_or_update(2)
 
@@ -1246,7 +1246,7 @@ def test_revisions_Mapping(app):
 # class Mapping(RecordBase):
 #     def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_get_mapping_by_item_type_ids -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_get_mapping_by_item_type_ids(app, db):
+def test_mapping_get_mapping_by_item_type_ids(app, db, item_type, item_type2):
     Mapping.create_or_update(1)
     Mapping.create_or_update(2)
 

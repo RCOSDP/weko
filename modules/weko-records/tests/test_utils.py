@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
-from datetime import datetime
+from datetime import date, datetime, timedelta
 # from tkinter import W
 import pytest
 import copy
@@ -2808,54 +2808,53 @@ def test_replace_fqdn_of_file_metadata(app):
     replace_fqdn_of_file_metadata(_file_metadata_list2)
     assert _file_metadata_list2==[{'url': {'url': 'https://localhost/a'}, 'version_id': '1'}, {'url': {'url': 'https://localhost/b'}, 'version_id': '1'}]
 
-import datetime
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_embargo_rights -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_check_embargo_rights():
     # Do nothing except for 'embargoed access'
-    result = check_embargo_rights("open_access", datetime.date.today(), [])
+    result = check_embargo_rights("open_access", date.today(), [])
     assert result == (False, None)
 
     # If there is at least one 'open_restricted', return 'restricted access'
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = [("open_restricted", None), ("open_access", None)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "restricted access")
 
     # If there is a future date in 'open_date', do nothing
-    today = datetime.date.today()
-    future = today + datetime.timedelta(days=1)
+    today = date.today()
+    future = today + timedelta(days=1)
     accessrole_date = [("open_date", future)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (False, None)
 
     # If there is at least one 'open_login', return 'restricted access'
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = [("open_login", None)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "restricted access")
 
     # If all are 'open_access', return 'open access'
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = [("open_access", None), ("open_access", None)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "open access")
 
     # If all are 'open_date' and the date is in the past, return 'open access'
-    today = datetime.date.today()
-    past = today - datetime.timedelta(days=1)
+    today = date.today()
+    past = today - timedelta(days=1)
     accessrole_date = [("open_date", past), ("open_date", past)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "open access")
 
     # If 'open_access' and 'open_date' (past) are mixed, return 'open access'
-    today = datetime.date.today()
-    past = today - datetime.timedelta(days=1)
+    today = date.today()
+    past = today - timedelta(days=1)
     accessrole_date = [("open_access", None), ("open_date", past)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "open access")
 
     # If accessrole_date is empty, do nothing
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = []
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (False, None)
