@@ -6159,8 +6159,15 @@ def fix_aggregations_accessrights(data):
             "restricted access",
         ]
     )
-    aggs = data['aggregations']
+    # weko#XXXXX: the feature-flag check must come before accessing
+    # data['aggregations'] -- a plain search response (e.g. a request that
+    # doesn't ask for facets) has no 'aggregations' key at all, and this
+    # unconditionally raised KeyError even when the feature is disabled
+    # (the default), breaking the basic /api/records/ endpoint entirely.
     if not ACCESSRIGHTS_FIX_ENABLED:
+        return data
+    aggs = data.get('aggregations')
+    if aggs is None:
         return data
 
     # Get mapping for accessRights facets
