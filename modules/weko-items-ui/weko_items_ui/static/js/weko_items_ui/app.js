@@ -2141,8 +2141,19 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                 } else {
                   if (data.results[subKey]) {
                     $rootScope.recordsVM.invenioRecordsModel[key][subKey] = String(data.results[subKey]);
-                    // Set read only for user information property
-                    $scope.setFormReadOnly(subKey);
+                    // weko#XXXXX: marking the form field readonly synchronously,
+                    // in the same tick the model value is first assigned, races
+                    // schema-form's initial widget linking for select-type
+                    // subitems (e.g. subitem_position): the <select> can end up
+                    // rendered without its option pre-selected even though the
+                    // model itself holds the correct value. Other readonly
+                    // fixups in this file (e.g. setFormReadOnly for the title
+                    // key) likewise defer their actual DOM-level effect until
+                    // after initial render; do the same here.
+                    setTimeout(function () {
+                      $scope.setFormReadOnly(subKey);
+                      $scope.$applyAsync();
+                    }, 3000);
                   }
                 }
               }
@@ -2183,7 +2194,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           let isExisted = false;
           for (let key in model) {
             if (model.hasOwnProperty(key) && model[key].length > 0) {
-              let title = model[key][0]['subitem_item_title'];
+              let title = model[key][0]['subitem_restricted_access_item_title'];
               if (title){
                 $scope.item_tile_key = key
                 let activity_id= title.match(/A-[0-9]{8}-[0-9]{5}/g);
@@ -2194,7 +2205,7 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               if (title && $("#auto_fill_title").val() !== '""') {
                 $scope.setFormReadOnly(key);
                 setTimeout(function () {
-                  $("input[name='subitem_item_title'], select[name='subitem_item_title_language']").attr("disabled", "disabled");
+                  $("input[name='subitem_restricted_access_item_title'], select[name='subitem_restricted_access_item_title_language']").attr("disabled", "disabled");
                 }, 3000);
                 isExisted = true;
                 break;
@@ -2219,6 +2230,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
           }
 	        let userName = $('#auto_fill_subitem_fullname').val();
 	        titleData = JSON.parse(titleData);
+          if (typeof titleData === "string") {
+            if (!titleData) {
+              return;
+            }
+            try {
+              titleData = JSON.parse(titleData);
+            } catch (e) {
+              return;
+            }
+          }
           if (!userName) {
             if (guestEmail) {
               userName = guestEmail.split("@")[0];
@@ -2226,21 +2247,24 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
               userName = JSON.parse(userInfoData).results["subitem_displayname"];
             }
           }
-          let titleSubKey = "subitem_item_title";
-          let titleLanguageKey = "subitem_item_title_language";
+          let titleSubKey = "subitem_restricted_access_item_title";
+          let titleLanguageKey = "subitem_restricted_access_item_title_language";
           let recordsVM = $rootScope["recordsVM"];
           Object.entries(recordsVM["invenioRecordsSchema"].properties).forEach(
             function ([key, value]) {
               if (value && value.type === "array" && value.items) {
                 if (value.items.properties && value.items.properties.hasOwnProperty(titleSubKey)) {
+                  let hasLanguageKey = value.items.properties.hasOwnProperty(titleLanguageKey);
                   $scope.item_tile_key = key;
                   let enTitle = {};
                   let jaTitle = {};
                   // TitleData and Username are mandatory, dataType either way
                   enTitle[titleSubKey] = dataType ? [dataType, titleData['en'], userName].join(" - ") : [titleData['en'], userName].join(" - ");
-                  enTitle[titleLanguageKey] = "en";
                   jaTitle[titleSubKey] = dataType ? [dataType, titleData['ja'], userName].join(" - ") : [titleData['ja'], userName].join(" - ");
-                  jaTitle[titleLanguageKey] = "ja";
+                  if (hasLanguageKey) {
+                    enTitle[titleLanguageKey] = "en";
+                    jaTitle[titleLanguageKey] = "ja";
+                  }
                   recordsVM["invenioRecordsModel"][key] = [jaTitle, enTitle];
                 }
               }
@@ -2441,7 +2465,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                   if (property == 'subitem_restricted_access_item_title') {
                     item_title_key = key
                   }
-                  $scope.disableElement(key, property)
+                  // weko#XXXXX: same race as autoFillProfileInfo() -- marking
+                  // the field readonly synchronously, in the same tick the
+                  // value is first assigned, can leave a select-type widget
+                  // (e.g. subitem_position) rendered without its option
+                  // pre-selected even though the model holds the correct
+                  // value. Defer, matching the fix applied there.
+                  setTimeout(function () {
+                    $scope.disableElement(key, property);
+                    $scope.$applyAsync();
+                  }, 3000);
                   break;
                 }
               }
@@ -5266,8 +5299,8 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         let defaultTitleEn = titleData['en'] + userName;
         let defaultTitleJa = titleData['ja'] + userName;
 
-        let titleSubKey = "subitem_item_title";
-        let titleLanguageKey = "subitem_item_title_language";
+        let titleSubKey = "subitem_restricted_access_item_title";
+        let titleLanguageKey = "subitem_restricted_access_item_title_language";
         let selectedUsageApplicationIDs = []
 
         let model = $rootScope["recordsVM"].invenioRecordsModel;
