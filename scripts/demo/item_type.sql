@@ -303,8 +303,8 @@ SELECT pg_catalog.setval('public.item_type_id_seq', 40000, true);
 SELECT pg_catalog.setval('public.item_type_mapping_id_seq', 40000, true);
 SELECT pg_catalog.setval('public.item_type_name_id_seq', 40000, true);
 SELECT pg_catalog.setval('public.item_type_property_id_seq', 40000, true);
-SELECT pg_catalog.setval('public.pidstore_recid_recid_seq', 2000000, true);
 SELECT pg_catalog.setval('public.jsonld_mappings_id_seq', 40000, true);
+SELECT pg_catalog.setval('public.pidstore_recid_recid_seq', 2000000, true);
 SELECT pg_catalog.setval('public.transaction_id_seq', 37, true);
 
 COMMIT;
