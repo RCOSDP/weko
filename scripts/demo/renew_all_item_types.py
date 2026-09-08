@@ -6,6 +6,10 @@ import properties
 import traceback
 import argparse
 
+args = None  # 【大商大向けパッチ、fix/v2.0.3_jgssより移植】main()がupdate_jpcoar_2_0.py等から
+             # 直接importして呼ばれる場合(`if __name__ == '__main__'`を経由しない)、この
+             # モジュールレベル変数が定義されずNameErrorになるのを防ぐ。
+
 def main():
     try:
         _renew_type = args.renew_type if args else ''

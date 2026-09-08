@@ -167,9 +167,14 @@ def main():
                 flag_modified(_mapping, 'mapping')
                 db.session.merge(_mapping)
                 fixed_mapping_ids.append(_mapping.id)
-                new_mapping = Mapping.create(item_type_id=itemType.id,
+                # 【大商大向けパッチ、fix/v2.0.3_jgssより移植・develop_v2.1.0向けに更新】
+                # 直上のmerge()の直後に無条件でMapping.create()を呼んでいたため、同一
+                # item_type_idの行が重複INSERTされ続けるバグがあった(本番で最大53件重複)。
+                # weko_itemtypes_ui/admin.py・update_itemtype_full.pyは既にこの本体側で
+                # 新設されたMapping.create_or_update()を使うよう修正済みのため、本ファイルも
+                # 同じメソッドに揃える(単純に冗長な二重書き込みを削除するだけで足りる)。
+                Mapping.create_or_update(item_type_id=itemType.id,
                             mapping=_mapping.mapping)
-                fixed_mapping_ids.append(new_mapping.model.id)
                 current_app.logger.info("session merged.")
 
             db.session.commit()

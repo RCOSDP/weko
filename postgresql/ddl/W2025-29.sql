@@ -69,6 +69,24 @@ CREATE TABLE IF NOT EXISTS mail_templates (
         ON UPDATE CASCADE
 );
 
+-- 【大商大向けパッチ、fix/v2.0.3_jgssより移植】v0.9.21起点で長期運用してきた環境では、上の
+-- CREATE TABLE IF NOT EXISTS が「テーブルは既に存在するため何もしない」となり、
+-- 既存のmail_templatesに主キー制約が無いまま放置される。その状態で次の
+-- mail_template_usersがmail_templates(id)への外部キーを張ろうとすると、
+-- 「there is no unique constraint matching given keys for referenced table
+-- "mail_templates"」エラーでこのファイル全体（単一トランザクション）が失敗する。
+-- 事前に重複idが無いことを確認済みであることを前提に、主キーが無ければここで追加する。
+--   事前確認: SELECT id, count(*) FROM mail_templates GROUP BY id HAVING count(*) > 1;
+IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conrelid = 'mail_templates'::regclass AND contype = 'p'
+) THEN
+    ALTER TABLE mail_templates ADD CONSTRAINT pk_mail_templates PRIMARY KEY (id);
+    RAISE NOTICE 'mail_templates: added missing primary key constraint';
+ELSE
+    RAISE NOTICE 'mail_templates: primary key constraint already present, skipping';
+END IF;
+
 -- modules/invenio-mail/invenio_mail/alembic/b1495e98969b_create_mailtemplateusers.py
 PERFORM 1 FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace WHERE n.nspname = current_schema() AND t.typname = 'mailtype';
 IF NOT FOUND THEN
