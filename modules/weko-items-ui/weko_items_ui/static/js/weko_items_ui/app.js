@@ -2875,7 +2875,16 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
         $scope.updateNumFiles();
         $scope.editModeHandle();
         $scope.autoFillInstitutionPosition();
-        $scope.setOnChangeEvent($scope.searchForm("pubdate"), $scope.accessRoleChange);
+        // JGSS: 'fix 52935' (a497dbf9f) wired accessRoleChange() to fire on every
+        // change of the item-level "pubdate" field. Since accessRoleChange()'s
+        // reset logic (and its broken multi-file for..in loop) can end up
+        // clobbering a file's own embargo date (accessrole 'open_date') whenever
+        // pubdate is touched/auto-filled during registration, this silently
+        // discards restricted-access files' intended future release date.
+        // jgss-pre never had this wiring (accessRoleChange only ran once at
+        // form init). Disabled here pending an upstream fix; see
+        // docs/v2.0.3_code_modifications.md item 15.
+        // $scope.setOnChangeEvent($scope.searchForm("pubdate"), $scope.accessRoleChange);
         let usage_type = $("#auto_fill_usage_data_usage_type").val();
         // Auto fill for Usage Application & Usage Report
         if (usage_type === 'Report') {
