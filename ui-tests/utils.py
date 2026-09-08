@@ -65,38 +65,51 @@ def ensure_index_open_access(page: Page, base_url: str, index_name: str, visible
 
     time.sleep(2)  # Wait for the checkbox state to change
 
-    # Prepare dialog handler before clicking Send
-    dialog_handled = False
-    dialog_message = ""
-
-    def handle_dialog(dialog):
-        nonlocal dialog_handled, dialog_message
-        dialog_message = dialog.message
-        dialog.accept()
-        dialog_handled = True
-
-    page.on("dialog", handle_dialog)
+    # The result is reported as an in-page Bootstrap alert, not a browser
+    # dialog. weko_index_tree's Angular component renders <div id="alerts">
+    # and appends to it:
+    #
+    #     addAlert = function (msg, type) {
+    #       if (type === undefined) type = "danger";
+    #       $("#alerts").append('<div class="alert alert-' + type + '" id="">'
+    #         + '<button type="button" class="close" data-dismiss="alert">'
+    #         + '&times;</button>' + msg + '</div>');
+    #     }
+    #
+    # A successful update passes type="success"; every error path falls back to
+    # the default "danger". page.on("dialog") only fires for alert(), confirm(),
+    # prompt() and beforeunload, so waiting on it here always timed out - the
+    # application never calls any of them.
+    #
+    # This helper runs twice per test (setup and teardown) and #alerts is only
+    # ever appended to, so clear it first to be sure we read the new alert.
+    page.evaluate(
+        "() => { const el = document.querySelector('#alerts');"
+        " if (el) el.innerHTML = ''; }"
+    )
 
     # Save the changes
     page.get_by_role("button", name="Send").click()
 
-    # Wait for alert to appear and be handled with timeout
-    start_time = time.time()
-    timeout_ms = 10000  # 10 seconds timeout
+    expect(page.locator("#alerts .alert").first).to_be_visible(timeout=timeout)
 
-    while not dialog_handled:
-        if (time.time() - start_time) * 1000 > timeout_ms:
-            break
-        page.wait_for_timeout(100)
+    # Surface the server's own message rather than a bare assertion failure.
+    errors = page.locator("#alerts .alert-danger")
+    if errors.count() > 0:
+        raise AssertionError(
+            "Index update failed: "
+            + " / ".join(
+                errors.nth(i).inner_text().strip().lstrip("×").strip()
+                for i in range(errors.count())
+            )
+        )
 
-    # Verify the dialog message
-    if dialog_handled:
-        assert "Index is updated successfully." in dialog_message, f"Expected 'Index is updated successfully.' in dialog message, got: {dialog_message}"
-    else:
-        raise TimeoutError(f"Dialog did not appear within {timeout_ms}ms")
-
-    # Remove dialog handler
-    page.remove_listener("dialog", handle_dialog)
+    success = page.locator("#alerts .alert-success").first
+    expect(success).to_be_visible(timeout=timeout)
+    message = success.inner_text().strip().lstrip("×").strip()
+    assert "Index is updated successfully." in message, (
+        f"Expected 'Index is updated successfully.' in the alert, got: {message!r}"
+    )
 
     page.wait_for_load_state("networkidle")
 
