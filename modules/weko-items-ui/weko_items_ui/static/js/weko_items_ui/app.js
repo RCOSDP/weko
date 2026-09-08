@@ -2128,7 +2128,13 @@ function validateThumbnails(rootScope, scope, itemSizeCheckFlg, files) {
                         var institutionInfo = {
                           [affiliatedInstitutionName]: value.subitem_affiliated_institution_name
                         };
-                        if (currentInvenioRecordsSubSchema.items.properties.subitem_affiliated_institution_position.type == "select") {
+                        // JGSS: the JSON schema always has type "string" here;
+                        // "select" is the UI *format*, not the schema type, so
+                        // this check never matched and the EN->JA translation
+                        // (e.g. "Member" -> "会員", needed since the enum is
+                        // Japanese-only) never ran, leaving the select widget
+                        // unable to match the raw profile value.
+                        if (currentInvenioRecordsSubSchema.items.properties.subitem_affiliated_institution_position.format == "select") {
                           let institutionPosition = $scope.translationsInstitutePosition(value.subitem_affiliated_institution_position);
                           institutionInfo[affiliatedInstitutionPosition] = institutionPosition;
                         } else {
