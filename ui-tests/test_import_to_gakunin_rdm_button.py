@@ -37,7 +37,7 @@ class TestImportToGakuninRDMButton:
         """Path to test file for upload."""
         return create_temp_zip_file()
 
-    def test_import_to_gakunin_rdm_button_enabled(self, page: Page, base_url: str, index_name: str, test_file_path: str):
+    def test_import_to_gakunin_rdm_button_enabled(self, page: Page, base_url: str, index_name: str, test_file_path: str, gakunin_rdm_url: str):
         """Test that Import to GakuNin RDM button is enabled after creating an item with application/rdm-project format."""
         try:
             page.goto(base_url)
@@ -57,8 +57,8 @@ class TestImportToGakuninRDMButton:
             # Validate URL structure using urlparse
             parsed_url = urlparse(href_attr)
 
-            # Check scheme + host is https://rdm.nii.ac.jp
-            expected_base = "https://rdm.nii.ac.jp"
+            # Check scheme + host matches the configured GakuNin RDM
+            expected_base = gakunin_rdm_url
             actual_base = f"{parsed_url.scheme}://{parsed_url.netloc}"
             assert actual_base == expected_base, f"URL base should be {expected_base}, got {actual_base}"
 
