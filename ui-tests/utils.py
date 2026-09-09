@@ -136,7 +136,7 @@ def create_item(page: Page, index_name: str, file_path: str, title: str, format_
     # system_file, and its render option carries "hidden": true, so it is
     # never shown on the registration form.
     #
-    # invenio_deposit's fieldset decorator renders each section as
+    # invenio_deposit's decorators render each section as
     #     <div class="panel-heading">
     #       <a ng-click="collapsed = !collapsed" class="panel-toggle">
     #         {{ form.title }} ...
@@ -144,7 +144,21 @@ def create_item(page: Page, index_name: str, file_path: str, title: str, format_
     # get_by_role("link", ...) does not match it. Scope to the heading and
     # match the title exactly instead - a substring match would also hit
     # "File Information".
-    page.locator(".panel-heading").get_by_text("File", exact=True).click()
+    #
+    # "File" is an array field, and that produces two nested panels with the
+    # same title: the array decorator draws one for the array itself, then
+    # renders every element through <sf-decorator form="copyWithIndex($index)">,
+    # which carries the same title. Both start collapsed
+    # (ng-init="collapsed = form.required !== true", and File is Optional), so
+    # both have to be opened before Format is reachable. Click them in document
+    # order - the array panel comes first, and the element panel only becomes
+    # clickable once the array panel is open.
+    file_headings = page.locator(".panel-heading").get_by_text("File", exact=True)
+    expect(file_headings.first).to_be_visible(timeout=30000)
+    for i in range(file_headings.count()):
+        heading = file_headings.nth(i)
+        expect(heading).to_be_visible(timeout=30000)
+        heading.click()
 
     format_field = page.get_by_label("Format", exact=True)
     expect(format_field).to_be_visible(timeout=30000)
