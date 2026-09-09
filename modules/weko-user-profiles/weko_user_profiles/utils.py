@@ -69,8 +69,45 @@ def get_user_profile_info(user_id):
             if not enable_custom or profile_setting.get('university', {}).get('visible', True) else ''
         result['subitem_affiliated_division/department'] = user_info.department \
             if not enable_custom or profile_setting.get('department', {}).get('visible', True) else ''
-        result['subitem_position'] = user_info.position \
-            if not enable_custom or profile_setting.get('position', {}).get('visible', True) else ''
+        # weko#XXXXX: WEKO_USERPROFILES_POSITION_LIST* stores the value in
+        # English; only the display label is localized via gettext, and
+        # that translation depends on the *current request's* resolved
+        # locale (session / I18N_USER_LANG_ATTR / Accept-Language), which
+        # is not reliably Japanese even for users whose own profile
+        # language is "ja" (I18N_USER_LANG_ATTR here is bound to a
+        # "prefered_language" attribute, not userprofile.language).
+        # Item types with a Japanese-only enum for subitem_position
+        # (e.g. JGSS-style USER_INFORMATION property) reject the raw
+        # English value -- or an untranslated one -- on required-field
+        # validation / silently fail to pre-select in the form widget.
+        # Use a fixed, locale-independent mapping to the same Japanese
+        # labels already shipped in this module's own .po catalog
+        # (weko_user_profiles/translations/ja/LC_MESSAGES/messages.po),
+        # so the auto-filled value always matches the item type's enum
+        # regardless of the request's resolved locale.
+        _POSITION_EN_TO_JA = {
+            'Professor': '教授',
+            'Assistant Professor': '准教授',
+            'Full-time Instructor': '専任講師',
+            'Assistant Teacher': '助教',
+            'Full-time Researcher': '常勤研究員',
+            'Others (Input Detail)': 'その他（具体的に入力）',
+            'JSPS Research Fellowship for Young Scientists (PD, SPD etc.)':
+                '日本学術振興会特別研究員(PD, SPD等)',
+            'JSPS Research Fellowship for Young Scientists (DC1, DC2)':
+                '日本学術振興会特別研究員(DC1, DC2)',
+            'Doctoral Course (Doctoral Program)': '博士課程(博士後期課程)',
+            'Master Course (Master Program)': '修士課程(博士前期課程)',
+            'Fellow Researcher': '研究生',
+            'Listener': '聴講生',
+            'Student': '学部生',
+        }
+        if not enable_custom or profile_setting.get('position', {}).get('visible', True):
+            result['subitem_position'] = \
+                _POSITION_EN_TO_JA.get(user_info.position, user_info.position) \
+                if user_info.position else ''
+        else:
+            result['subitem_position'] = ''
         result['subitem_position(others)'] = user_info.item1 \
             if not enable_custom or profile_setting.get('item1', {}).get('visible', True) else ''
         result['subitem_phone_number'] = user_info.item2 \
