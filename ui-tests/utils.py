@@ -145,25 +145,39 @@ def create_item(page: Page, index_name: str, file_path: str, title: str, format_
     # match the title exactly instead - a substring match would also hit
     # "File Information".
     #
-    # "File" is an array field, and that produces two nested panels with the
-    # same title: the array decorator draws one for the array itself, then
-    # renders every element through <sf-decorator form="copyWithIndex($index)">,
-    # which carries the same title. Both start collapsed
-    # (ng-init="collapsed = form.required !== true", and File is Optional), so
-    # both have to be opened before Format is reachable. Click them in document
-    # order - the array panel comes first, and the element panel only becomes
-    # clickable once the array panel is open.
+    # "File" is an array field, so it renders as nested panels that all carry
+    # the same title: the array decorator draws one for the array itself, then
+    # renders every element through <sf-decorator form="copyWithIndex($index)">.
+    # An inner panel only becomes reachable once its parent is open, and how
+    # many levels start collapsed depends on the data, so open them a level at
+    # a time rather than assuming a fixed number.
+    #
+    # Each heading carries both chevrons and toggles them with ng-show /
+    # ng-hide, so a visible .glyphicon-chevron-right means that panel is still
+    # collapsed. Only click those - clicking an open one would close it again.
+    format_field = page.get_by_label("Format", exact=True)
     file_headings = page.locator(".panel-heading").get_by_text("File", exact=True)
     expect(file_headings.first).to_be_visible(timeout=30000)
-    for i in range(file_headings.count()):
-        heading = file_headings.nth(i)
-        expect(heading).to_be_visible(timeout=30000)
-        heading.click()
 
-    format_field = page.get_by_label("Format", exact=True)
-    expect(format_field).to_be_visible(timeout=30000)
-    format_field.click()
-    format_field.fill(format_type)
+    for _ in range(4):
+        if format_field.count() > 0 and format_field.first.is_visible():
+            break
+        opened = False
+        for i in range(file_headings.count()):
+            heading = file_headings.nth(i)
+            if not heading.is_visible():
+                continue
+            collapsed = heading.locator(".glyphicon-chevron-right")
+            if collapsed.count() == 0 or not collapsed.first.is_visible():
+                continue
+            heading.click()
+            opened = True
+        if not opened:
+            break
+
+    expect(format_field.first).to_be_visible(timeout=30000)
+    format_field.first.click()
+    format_field.first.fill(format_type)
     page.locator("label").filter(has_text="Preview").click()
     page.locator("select[name=\"item_30002_title0\\.0\\.subitem_title_language\"]").select_option("string:ja")
     page.locator("select[name=\"item_30002_resource_type13\\.resourcetype\"]").select_option("string:conference paper")
