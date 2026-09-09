@@ -128,9 +128,28 @@ def create_item(page: Page, index_name: str, file_path: str, title: str, format_
     page.get_by_role("textbox", name="Title*").click()
     page.get_by_role("textbox", name="Title*").fill(title)
 
-    page.get_by_text("File Information").click()
-    page.get_by_label("Format", exact=True).click()
-    page.get_by_label("Format", exact=True).fill(format_type)
+    # Expand the file metadata section.
+    #
+    # The section to open is the item type's "File" field (key
+    # item_30002_file35), which holds Format, Preview, Access and so on.
+    # "File Information" is a different section: it is the item type's
+    # system_file, and its render option carries "hidden": true, so it is
+    # never shown on the registration form.
+    #
+    # invenio_deposit's fieldset decorator renders each section as
+    #     <div class="panel-heading">
+    #       <a ng-click="collapsed = !collapsed" class="panel-toggle">
+    #         {{ form.title }} ...
+    # The anchor has no href, so it carries no ARIA link role and
+    # get_by_role("link", ...) does not match it. Scope to the heading and
+    # match the title exactly instead - a substring match would also hit
+    # "File Information".
+    page.locator(".panel-heading").get_by_text("File", exact=True).click()
+
+    format_field = page.get_by_label("Format", exact=True)
+    expect(format_field).to_be_visible(timeout=30000)
+    format_field.click()
+    format_field.fill(format_type)
     page.locator("label").filter(has_text="Preview").click()
     page.locator("select[name=\"item_30002_title0\\.0\\.subitem_title_language\"]").select_option("string:ja")
     page.locator("select[name=\"item_30002_resource_type13\\.resourcetype\"]").select_option("string:conference paper")
