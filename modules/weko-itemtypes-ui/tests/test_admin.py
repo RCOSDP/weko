@@ -418,7 +418,7 @@ class TestItemTypeMetaDataView:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
             "exported item type dict gained/lost a key against the expected "
-            "value. See docs/v2.1.0-test-reconciliation.md."
+            "value. See docs/v2.1.0-test-reconciliation.textile."
         ),
     )
 #     def export(self,item_type_id):

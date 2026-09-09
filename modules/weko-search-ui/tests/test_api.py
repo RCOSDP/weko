@@ -264,7 +264,7 @@ def test_get_search_detail_keyword_cache(i18n_app, users, db, redis_connect):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "returned condition list is empty (0) where the test expects 3 "
-        "entries. See docs/v2.1.0-test-reconciliation.md."
+        "entries. See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def get_search_detail_keyword(str):

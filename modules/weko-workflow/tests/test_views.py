@@ -3053,7 +3053,7 @@ def test_next_action_usage_application(client, db, users, db_register_usage_appl
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "process_send_approval_mails is no longer called when "
         "restricted_access's display_request_form is True (all 7 "
-        "parameters). See docs/v2.1.0-test-reconciliation.md."
+        "parameters). See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_next_action_for_request_mail -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp

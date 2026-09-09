@@ -51,7 +51,7 @@ class TestImportToGakuninRDMButton:
             "same defect is why invenio-records-rest's test_default_permissions "
             "now answers 401. GakuNin RDM fetches the file anonymously, so this "
             "test cannot pass until weko_index_tree.utils is fixed. See "
-            "docs/v2.1.0-test-reconciliation.md."
+            "docs/v2.1.0-test-reconciliation.textile."
         ),
     )
     def test_import_to_gakunin_rdm_button_enabled(self, page: Page, base_url: str, index_name: str, test_file_path: str, gakunin_rdm_url: str):

@@ -24,7 +24,7 @@ from tests.helpers import record_url
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "endpoint answers 401 where the test expects 200. "
         "AUTHORISATION-RELATED: confirm the default permission factory is "
-        "still the intended one. See docs/v2.1.0-test-reconciliation.md."
+        "still the intended one. See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 def test_default_permissions(app, default_permissions, indexed_10records, 

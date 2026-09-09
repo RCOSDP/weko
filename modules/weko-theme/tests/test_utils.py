@@ -84,7 +84,7 @@ def test_has_widget_design(i18n_app, users, client_request_args, communities):
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "get_init_display_setting()'s result no longer carries 'index_id', "
         "so the test dies with KeyError: 'index_id'. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # class MainScreenInitDisplaySetting:

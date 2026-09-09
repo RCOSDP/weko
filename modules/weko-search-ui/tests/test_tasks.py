@@ -179,7 +179,7 @@ def test_check_rocrate_import_items_task(i18n_app, users, mocker):
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "import_item() returns {'success': False, 'start_date': ..., "
         "'error_id': 'Internal server error'} where the test expects None. "
-        "See docs/v2.1.0-test-reconciliation.md."
+        "See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def import_item(item, request_info):

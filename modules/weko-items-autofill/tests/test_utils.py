@@ -95,7 +95,7 @@ def test_cached_api_json(app):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "get_item_id()'s result differs from the expected mapping. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def get_item_id(item_type_id):
@@ -2227,7 +2227,7 @@ def test_get_wekoid_record_data(app, client, users, records, itemtypes):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "researchmap record data differs from the expected list at index 7. "
-        "See docs/v2.1.0-test-reconciliation.md."
+        "See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def get_researchmapid_record_data(parmalink, achievement_type ,achievement_id ,item_type_id) -> list:

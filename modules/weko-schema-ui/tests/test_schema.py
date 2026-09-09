@@ -573,7 +573,7 @@ class TestSchemaTree:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
             "generated jpcoar XML differs from the expected document. See "
-            "docs/v2.1.0-test-reconciliation.md."
+            "docs/v2.1.0-test-reconciliation.textile."
         ),
     )
     # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_create_xml -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp

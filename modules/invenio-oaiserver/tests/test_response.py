@@ -156,7 +156,7 @@ def test_is_draft_workflow():
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "OAI response carries no identifier where "
         "['oai:weko3.example.org:00000009'] is expected. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def getrecord

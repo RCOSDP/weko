@@ -1301,7 +1301,7 @@ class TestIndexManagementAPI:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: index "
             "deletion answers 400 ('Failed to delete index.') where the test "
-            "expects 500. See docs/v2.1.0-test-reconciliation.md."
+            "expects 500. See docs/v2.1.0-test-reconciliation.textile."
         ),
     )
     # .tox/c1/bin/pytest --cov=weko_index_tree tests/test_rest.py::TestIndexManagementAPI::test_delete_v1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_index_tree/.tox/c1/tmp --full-trace

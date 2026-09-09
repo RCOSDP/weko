@@ -24,7 +24,7 @@ from invenio_accounts.testutils import login_user_via_session
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "search response has no 'aggregations' key (KeyError). See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_search.py::test_json_result_serializer -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
@@ -54,7 +54,7 @@ def test_json_result_serializer(app, indexed_10records,
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "search response has no 'aggregations' key (KeyError). See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_search.py::test_page_size -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp
@@ -73,7 +73,7 @@ def test_page_size(app,indexed_10records,search_url,admin_settings):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "search response has no 'aggregations' key (KeyError). See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=invenio_records_rest tests/test_views_search.py::test_page_size_without_size_in_request -vv -s -v --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records-rest/.tox/c1/tmp

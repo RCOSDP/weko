@@ -1097,7 +1097,7 @@ def test_status_document_files_info_none(app, mocker):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "status document differs from the expected one. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def _get_status_workflow_document(activity, recid):
@@ -1229,7 +1229,7 @@ def test__get_status_workflow_document(app, records):
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "query runs against a dropped schema and fails with "
         "ProgrammingError: relation 'workflow_activity' does not exist. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_status_workflow_document_files_info_none -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp

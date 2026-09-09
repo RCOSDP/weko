@@ -1847,7 +1847,7 @@ def test_create_tsv(app, records):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "delete_version() raises PIDResolveRESTError (500, 'PID could not "
-        "be resolved'). See docs/v2.1.0-test-reconciliation.md."
+        "be resolved'). See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_delete_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

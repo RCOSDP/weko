@@ -1455,7 +1455,7 @@ def test_dbsession_clean(app, db):
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "arXiv branch now answers {'error': '', 'items': '', 'result': []} "
         "instead of {'error': "'entry'", 'items': '', 'result': ''}. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_workspace tests/test_views.py::test_get_auto_fill_record_data_arXivapi -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-weko_workspace/.tox/c1/tmp

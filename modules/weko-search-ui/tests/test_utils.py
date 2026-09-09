@@ -1210,7 +1210,7 @@ def test_handle_check_duplicate_record(app):
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "query runs against a dropped schema and fails with "
         "ProgrammingError: relation 'pidstore_pid' does not exist. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def handle_check_exist_record(list_record) -> list:

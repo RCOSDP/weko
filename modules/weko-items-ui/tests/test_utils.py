@@ -6072,7 +6072,7 @@ def test_recursive_update_schema_form_with_condition(app,db_itemtype):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "md5 of the packaged file differs from the expected digest. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # def package_export_file(item_type_data):
@@ -8137,7 +8137,7 @@ def test_make_stats_file_issue33432(app, users,db_itemtype, db_records,db_itemty
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "make_stats_file()'s column list differs from the expected one. See "
-        "docs/v2.1.0-test-reconciliation.md."
+        "docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_make_stats_file_issue36234 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -10932,7 +10932,7 @@ def test_get_ignore_item(db_itemtype):
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "make_stats_file_with_permission()'s column list differs from the "
-        "expected one. See docs/v2.1.0-test-reconciliation.md."
+        "expected one. See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_make_stats_file_with_permission -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -11067,7 +11067,7 @@ def test_make_stats_file_with_permission(app, users,db,db_itemtype,db_itemtype2,
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
         "make_stats_file_with_permission()'s column list differs from the "
-        "expected one. See docs/v2.1.0-test-reconciliation.md."
+        "expected one. See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_make_stats_file_with_permission_issue33432 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp

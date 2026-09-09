@@ -1105,7 +1105,7 @@ def test_SiteLicenseSendMailSettingsView_index(client, db, users,site_license,mo
     reason=(
         "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
         "settings path is '/tmp/file' where the test expects '/var/tmp'. "
-        "See docs/v2.1.0-test-reconciliation.md."
+        "See docs/v2.1.0-test-reconciliation.textile."
     ),
 )
 #class FilePreviewSettingsView(BaseView):
@@ -1245,7 +1245,7 @@ class TestItemExportSettingsView:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
             "current settings answer False where the test expects True. See "
-            "docs/v2.1.0-test-reconciliation.md."
+            "docs/v2.1.0-test-reconciliation.textile."
         ),
     )
 #    def _get_current_settings(self):
@@ -1945,7 +1945,7 @@ class TestsReindexElasticSearchView:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
             "reindex answers 400 where the test expects 500. See "
-            "docs/v2.1.0-test-reconciliation.md."
+            "docs/v2.1.0-test-reconciliation.textile."
         ),
     )
     def test_ReindexElasticSearchView_reindex_return2(self, client,users,mocker,admin_settings):
@@ -1968,7 +1968,7 @@ class TestsReindexElasticSearchView:
                                     "reconciled yet: check_reindex_is_running "
                                     "answers isError=True for sysadmin where the "
                                     "test expects False. See "
-                                    "docs/v2.1.0-test-reconciliation.md."
+                                    "docs/v2.1.0-test-reconciliation.textile."
                                 ),
                             )),# sysadmin
                             (1,False,403),# repoadmin
@@ -1992,7 +1992,7 @@ class TestsReindexElasticSearchView:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
             "check_reindex_is_running answers isError=True where the test "
-            "expects False. See docs/v2.1.0-test-reconciliation.md."
+            "expects False. See docs/v2.1.0-test-reconciliation.textile."
         ),
     )
     def test_ReindexElasticSearchView_check_reindex_is_running_running(self, client,users,admin_settings):
@@ -2036,7 +2036,7 @@ class TestSwordAPISettingsView:
         reason=(
             "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
             "SWORD settings dict differs for both 'TSV/CSV' and 'XML'. See "
-            "docs/v2.1.0-test-reconciliation.md."
+            "docs/v2.1.0-test-reconciliation.textile."
         ),
     )
     def test_index(self, client, users, db, admin_settings, mocker):
