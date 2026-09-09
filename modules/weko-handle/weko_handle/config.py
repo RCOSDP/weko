@@ -44,3 +44,20 @@ WEKO_HANDLE_ARK_TIMEOUT = 30
 
 
 
+
+WEKO_HANDLE_ARK_API_KEY = None
+""" API key for ARK server.
+
+When set, the login request to WEKO_HANDLE_ARK_LOGIN_URL is skipped and
+the key is sent with every mint request instead.
+"""
+
+WEKO_HANDLE_ARK_API_KEY_HEADER = 'Authorization'
+""" Header name the ARK API key is sent in.
+
+Use 'X-API-Key' together with an empty WEKO_HANDLE_ARK_API_KEY_PREFIX for
+servers expecting a bare key header.
+"""
+
+WEKO_HANDLE_ARK_API_KEY_PREFIX = 'Bearer '
+""" Prefix prepended to the ARK API key. Set to '' to send a bare key."""

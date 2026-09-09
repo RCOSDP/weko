@@ -353,14 +353,18 @@ def is_ark_registration_allowed():
     if not current_app.config.get('WEKO_HANDLE_ALLOW_REGISTER_ARK'):
         return False
 
-    required_settings = (
-        'WEKO_HANDLE_ARK_LOGIN_URL',
-        'WEKO_HANDLE_ARK_LOGIN_USER',
-        'WEKO_HANDLE_ARK_LOGIN_PASSWD',
+    required_settings = [
         'WEKO_HANDLE_ARK_MINT_URL',
         'WEKO_HANDLE_ARK_NAAN',
         'WEKO_HANDLE_ARK_SHOULDER',
-    )
+    ]
+    if not current_app.config.get('WEKO_HANDLE_ARK_API_KEY'):
+        # Without an API key the mint request needs a token from the login.
+        required_settings += [
+            'WEKO_HANDLE_ARK_LOGIN_URL',
+            'WEKO_HANDLE_ARK_LOGIN_USER',
+            'WEKO_HANDLE_ARK_LOGIN_PASSWD',
+        ]
     missing = [key for key in required_settings
                if not current_app.config.get(key)]
     if missing:
@@ -369,6 +373,44 @@ def is_ark_registration_allowed():
                 ', '.join(missing)))
         return False
     return True
+
+
+def _ark_auth_header():
+    """Build the authorization header for the ARK mint request.
+
+    Uses the configured API key when one is set, and otherwise falls back to
+    the user/password login that returns a short lived token.
+
+    :return: header dict, or None when the credentials could not be obtained
+    """
+    api_key = current_app.config.get('WEKO_HANDLE_ARK_API_KEY')
+    if api_key:
+        header = current_app.config.get(
+            'WEKO_HANDLE_ARK_API_KEY_HEADER') or 'Authorization'
+        prefix = current_app.config.get('WEKO_HANDLE_ARK_API_KEY_PREFIX') or ''
+        return {header: '{0}{1}'.format(prefix, api_key)}
+
+    res = requests.post(
+        current_app.config.get('WEKO_HANDLE_ARK_LOGIN_URL'),
+        headers={'Content-Type': 'application/json',
+                 'accept': 'application/json'},
+        json={
+            'query': current_app.config.get('WEKO_HANDLE_ARK_LOGIN_USER'),
+            'password': current_app.config.get(
+                'WEKO_HANDLE_ARK_LOGIN_PASSWD'),
+        },
+        timeout=current_app.config.get('WEKO_HANDLE_ARK_TIMEOUT'))
+    if not res:
+        current_app.logger.error(
+            'ARK login failed: {0} {1}'.format(res.status_code, res.text))
+        return None
+
+    token = res.json().get('token')
+    if not token:
+        current_app.logger.error('ARK login response has no token.')
+        return None
+
+    return {'Authorization': 'Bearer {}'.format(token)}
 
 
 def mint_ark(record_url):
@@ -380,34 +422,17 @@ def mint_ark(record_url):
     :param record_url: URL the minted ARK has to resolve to
     :return ark: minted ARK value, or None when it could not be minted
     """
-    login_url = current_app.config.get('WEKO_HANDLE_ARK_LOGIN_URL')
     mint_url = current_app.config.get('WEKO_HANDLE_ARK_MINT_URL')
     timeout = current_app.config.get('WEKO_HANDLE_ARK_TIMEOUT')
 
     try:
-        res = requests.post(
-            login_url,
-            headers={'Content-Type': 'application/json',
-                     'accept': 'application/json'},
-            json={
-                'query': current_app.config.get('WEKO_HANDLE_ARK_LOGIN_USER'),
-                'password': current_app.config.get(
-                    'WEKO_HANDLE_ARK_LOGIN_PASSWD'),
-            },
-            timeout=timeout)
-        if not res:
-            current_app.logger.error(
-                'ARK login failed: {0} {1}'.format(res.status_code, res.text))
-            return None
-
-        token = res.json().get('token')
-        if not token:
-            current_app.logger.error('ARK login response has no token.')
+        headers = _ark_auth_header()
+        if headers is None:
             return None
 
         res = requests.post(
             mint_url,
-            headers={'Authorization': 'Bearer {}'.format(token)},
+            headers=headers,
             json={
                 'naan': current_app.config.get('WEKO_HANDLE_ARK_NAAN'),
                 'shoulder': current_app.config.get(

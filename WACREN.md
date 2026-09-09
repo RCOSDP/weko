@@ -143,11 +143,18 @@ DOI / CNRI(Handle) に加えて **ARK** を第三の永続識別子として登�
 | `WEKO_HANDLE_ARK_NAAN` | `None` | NAAN |
 | `WEKO_HANDLE_ARK_SHOULDER` | `None` | Shoulder |
 | `WEKO_HANDLE_ARK_TIMEOUT` | `30` | リクエストタイムアウト（秒） |
+| `WEKO_HANDLE_ARK_API_KEY` | `None` | API key。設定するとログインを省略 |
+| `WEKO_HANDLE_ARK_API_KEY_HEADER` | `'Authorization'` | API key を載せるヘッダ名 |
+| `WEKO_HANDLE_ARK_API_KEY_PREFIX` | `'Bearer '` | API key の前置詞。空文字で生のキー |
 
 **実装 (`modules/weko-workflow/weko_workflow/utils.py`)** — 新規関数 5 つ
 
-- `is_ark_registration_allowed()` — 有効化フラグと必須設定 6 項目が揃っているかを検査。
+- `is_ark_registration_allowed()` — 有効化フラグと必須設定が揃っているかを検査。
+  必須は `MINT_URL` / `NAAN` / `SHOULDER` の 3 項目で、`API_KEY` 未設定時のみ
+  `LOGIN_URL` / `LOGIN_USER` / `LOGIN_PASSWD` も要求する。
   不足があれば `ERROR` ログを出して `False`（「未設定」を「無効」と誤認させない設計）。
+- `_ark_auth_header()` — mint 用の認証ヘッダを組み立てる。`API_KEY` があれば
+  それを設定どおりのヘッダに載せ、無ければ従来のログインでトークンを取得する。
 - `mint_ark(record_url)` — ログイン → トークン取得 → mint の 2 段階 API 呼び出し。
   **すべての失敗を握りつぶして `None` を返す**ため、ARK サーバ障害がアイテム登録自体を止めない。
 - `_register_ark_pidstore(item_uuid, ark)` — `IdentifierHandle(item_uuid).register_pidstore('ark', ark)` で PID 登録。
