@@ -9,6 +9,13 @@ Every screenshot below was taken by the Playwright capture in
 application actually shows rather than a drawing of them. To reproduce or
 refresh them, see [Reproducing this manual](#reproducing-this-manual).
 
+> **The screenshots still show the old label.** The grant used to be called
+> `JaLC CrossRef DOI` and is now `Crossref DOI`, because the DOI goes to
+> Crossref directly and not through JaLC. The text below uses the current
+> label; images `02`, `03`, `04`, `09` and `10` predate the rename and are
+> otherwise unchanged. Re-running the capture in [`e2e/`](./e2e/) refreshes
+> them.
+
 - Applies to: `feature/nii_WACREN_crossref_doi` (implementation commit
   `23af9ad4`)
 - Related design notes: [`WACREN_crossref.md`](../../WACREN_crossref.md),

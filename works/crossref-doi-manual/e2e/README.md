@@ -104,6 +104,12 @@ item view reached from the activity (`13-granted-identifier.png`). Once record
 pages render again, a step for the landing page belongs at the end of
 `test_crossref_doi_manual.py`.
 
+The images in `../images` also predate the rename of the grant from
+`JaLC CrossRef DOI` to `Crossref DOI`, so they show the old label. The tests
+themselves need no change: the grant is checked by `value='2'`, the option is
+selected by its value `jalc_crossref_doi` and the prefix box by its id, none
+of which the rename touched. A capture run refreshes the images.
+
 ## Deposits the stub received
 
 `crossref_stub.py` writes every deposit it is sent to `deposits/`, which is
