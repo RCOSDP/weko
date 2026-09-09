@@ -1,19 +1,6 @@
-// weko#XXXXX: item_edit.html only renders the hidden label inputs below
-// (and the "none-contents-approval" mount point) when
-// is_no_content_item_application (admin_settings.restricted_access.
-// item_application.item_application_enable) is true, but this script is
-// always loaded regardless of that flag. Reading .value off a
-// nonexistent element used to throw immediately at script load time,
-// aborting the whole page's JS execution (breaking unrelated widgets on
-// the same page, e.g. autofilled select inputs). Guard against the
-// elements being absent and skip mounting the component entirely when
-// the feature is disabled.
-const _noFileApprovalCheckboxLabelEl = document.getElementById('no_file_approval_checkbox_label')
-const _noFileApprovalLabelEl = document.getElementById('no_file_approval_label')
-const _termsAndConditionsLabelEl = document.getElementById('terms_and_conditions_label')
-const ENABLE_NO_FILE_APPROVAL_CHECKBOX_LABEL = _noFileApprovalCheckboxLabelEl ? _noFileApprovalCheckboxLabelEl.value : ''
-const NO_FILE_APPROVAL_LABEL = _noFileApprovalLabelEl ? _noFileApprovalLabelEl.value : ''
-const TERMS_AND_CONDITIONS_LABEL = _termsAndConditionsLabelEl ? _termsAndConditionsLabelEl.value : ''
+const ENABLE_NO_FILE_APPROVAL_CHECKBOX_LABEL =  document.getElementById('no_file_approval_checkbox_label').value
+const NO_FILE_APPROVAL_LABEL = document.getElementById('no_file_approval_label').value
+const TERMS_AND_CONDITIONS_LABEL = document.getElementById('terms_and_conditions_label').value
 
 class NoneContentsApproval extends React.Component{
     constructor(props){
@@ -114,10 +101,7 @@ class NoneContentsApproval extends React.Component{
     }
 }
 
-const _noneContentsApprovalMount = document.getElementById('none-contents-approval')
-if (_noneContentsApprovalMount) {
-    ReactDOM.render(
-        <NoneContentsApproval/>,
-        _noneContentsApprovalMount
-    )
-}
+ReactDOM.render(
+    <NoneContentsApproval/>,
+    document.getElementById('none-contents-approval')
+)
