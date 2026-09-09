@@ -1,5 +1,5 @@
 # coding:utf-8
-"""Definition of 2rd language property."""
+"""Definition of 2nd language property."""
 from .property_func import get_property_schema, get_property_form, set_post_data
 from . import property_config as config
 

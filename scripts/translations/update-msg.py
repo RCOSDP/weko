@@ -167,7 +167,7 @@ def print_result(result, weko_path):
                          'ERROR', 'MESSAGE (C)', 'DATA'])
         writer.writerows(output_err_data_to_file)
     print('')
-    print('All error informations in {}/replace_msg_error.csv'.format(weko_path))
+    print('All error information in {}/replace_msg_error.csv'.format(weko_path))
 
 
 if __name__ == "__main__":

@@ -330,12 +330,12 @@ def main():
                     db.session.commit()
                     print(
                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                        'Update propery {}({}) to db is success.'.format(prop.name, prop.id))
+                        'Update property {}({}) to db is success.'.format(prop.name, prop.id))
                 except Exception as e:
                     db.session.rollback()
                     print(
                         datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
-                        'Update propery {}({}) to db is fail.'.format(prop.name, prop.id),
+                        'Update property {}({}) to db is fail.'.format(prop.name, prop.id),
                         e)
         except Exception as ex:
             print(

@@ -118,7 +118,7 @@ def main():
                         _render["table_row"].append(_prop_id)
                         if _prop_id in _mapping.mapping and _mapping.mapping[_prop_id] and "=" not in _mapping.mapping[_prop_id]:
                             _mapping.mapping[_prop_id] = pickle.loads(pickle.dumps(_render["table_row_map"]["mapping"][_prop_id],-1))
-                        print("property cus_{} has been registerd.".format(id))
+                        print("property cus_{} has been registered.".format(id))
 
                 if len(cur_prop_ids) > 0:
                     from weko_itemtypes_ui.utils import (
@@ -155,7 +155,7 @@ def main():
         db.session.commit()
         
         
-        print("session commited.")
+        print("session committed.")
     except Exception as e:
         print(traceback.format_exc())
         db.session.rollback()
