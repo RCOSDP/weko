@@ -113,6 +113,18 @@ def ensure_index_open_access(page: Page, base_url: str, index_name: str, visible
 
     page.wait_for_load_state("networkidle")
 
+    # Confirm the setting actually changed. This helper promises to *ensure*
+    # the state, so a success alert is not enough on its own - reload the page
+    # and read the checkbox back. Without this, a save that quietly kept the
+    # index private only shows up much later, as an unrelated-looking failure
+    # when an anonymous request gets the login page instead of the file.
+    page.goto(f"{base_url.rstrip('/')}/admin/indexedit/", timeout=timeout)
+    page.wait_for_load_state("networkidle")
+    page.get_by_text(index_name).click()
+    expect(page.locator("#rss_display").first).to_be_checked(
+        checked=visible, timeout=timeout
+    )
+
 
 def create_item(page: Page, index_name: str, file_path: str, title: str, format_type: str = "application/zip") -> None:
     """
