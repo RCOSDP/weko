@@ -1147,8 +1147,8 @@ class IdentifierSettingView(ModelView):
     form_edit_rules = form_create_rules
 
     column_labels = dict(repository=_('Repository'), jalc_doi=_('JaLC DOI'),
-                         jalc_crossref_doi=_('JaLC CrossRef DOI'),
-                         jalc_datacite_doi=_('JaLC DataCite DOI'),
+                         jalc_crossref_doi=_('Crossref DOI'),
+                         jalc_datacite_doi=_('DataCite DOI'),
                          ndl_jalc_doi=_('NDL JaLC DOI'),
                          suffix=_('Semi-automatic Suffix')
                          )

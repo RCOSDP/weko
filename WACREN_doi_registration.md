@@ -76,8 +76,8 @@ Crossref と DataCite の両方に対応するにあたり、以下を独立に�
 | --- | --- | --- | --- |
 | `0` | Not Grant | — | 対象外 |
 | `1` | JaLC DOI | JaLC | **将来対応**（インターフェースのみ用意） |
-| `2` | JaLC CrossRef DOI | Crossref | **対応** |
-| `3` | JaLC DataCite DOI | DataCite | **対応** |
+| `2` | Crossref DOI | Crossref | **対応** |
+| `3` | DataCite DOI | DataCite | **対応** |
 | `4` | NDL JaLC DOI | NDL 経由 JaLC | **将来対応** |
 
 > ⚠️ **重要**: `saving_doi_pidstore()` は `doi_select=1`（JaLC）と `doi_select=4`（NDL JaLC）の

@@ -26,7 +26,7 @@ $(document).ready(function () {
   const moveRight = $('#moveRight');
   const moveLeft = $('#moveLeft');
 
-  let labels = ['JaLC DOI', 'JaLC CrossRef DOI', 'JaLC DataCite DOI', 'NDL JaLC DOI'];
+  let labels = ['JaLC DOI', 'Crossref DOI', 'DataCite DOI', 'NDL JaLC DOI'];
   let targets = ['jalc_doi', 'jalc_crossref_doi', 'jalc_datacite_doi', 'ndl_jalc_doi'];
 
   for (let index = 0; index < targets.length; index++) {

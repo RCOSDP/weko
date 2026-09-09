@@ -245,8 +245,8 @@ def base_app(instance_path):
         WEKO_IMPORT_DOI_TYPE = ["JaLC", "Crossref", "DataCite", "NDL JaLC"],
         IDENTIFIER_GRANT_LIST = [(0, 'Not Grant', ''),
                          (1, 'JaLC DOI', 'https://doi.org'),
-                         (2, 'JaLC CrossRef DOI', 'https://doi.org'),
-                         (3, 'JaLC DataCite DOI', 'https://doi.org'),
+                         (2, 'Crossref DOI', 'https://doi.org'),
+                         (3, 'DataCite DOI', 'https://doi.org'),
                          (4, 'NDL JaLC DOI', 'https://doi.org')
                          ],
         WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY = "Community Administrator",

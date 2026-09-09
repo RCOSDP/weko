@@ -557,14 +557,14 @@ pending ──deposit成功──> submitted ──poll──> success
 ```
 管理画面「DOI 識別子付与」（weko-admin: IdentifierSettingView）
    → doi_identifier テーブル（weko_admin.models.Identifier）
-        jalc_crossref_doi : プレフィックス（「JaLC CrossRef DOI」欄・例 10.1234）
+        jalc_crossref_doi : プレフィックス（「Crossref DOI」欄・例 10.1234）
         suffix            : 半自動サフィックス
         jalc_crossref_flag: Crossref DOI 付与の有効/無効
              │
              ▼  weko_workflow/utils.py:5222（get_identifier_setting 経由）
    _jalc_cr_doi_link = 'https://doi.org/{jalc_crossref_doi}/{サフィックス部}'
              │
-             ▼  識別子付与アクションで表示し、ユーザが「JaLC CrossRef DOI」を選択
+             ▼  識別子付与アクションで表示し、ユーザが「Crossref DOI」を選択
              ▼  承認時 saving_doi_pidstore()   utils.py:186-192
    doi_register_val = '{プレフィックス}/{サフィックス}'   ← ホスト部を落としただけ
    doi_register_typ = 'Crossref'
@@ -581,7 +581,7 @@ pending ──deposit成功──> submitted ──poll──> success
 インポート経由（`weko_search_ui/utils.py:3554, 3595`）も同じプレフィックスを使い、
 同じ `saving_doi_pidstore()` を通るため、扱いは同一。
 
-**エージェンシーの選択はプレフィックスではなく `doi_select`（`'2'` = JaLC CrossRef DOI）で行う**
+**エージェンシーの選択はプレフィックスではなく `doi_select`（`'2'` = Crossref DOI）で行う**
 （[`WACREN_doi_registration.md` §5](./WACREN_doi_registration.md)）。プレフィックスの値は判定に使わない。
 
 #### 注意点

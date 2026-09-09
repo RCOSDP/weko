@@ -123,11 +123,11 @@ msgid "JaLC DOI"
 msgstr ""
 
 #: weko_admin/admin.py:932
-msgid "JaLC CrossRef DOI"
+msgid "Crossref DOI"
 msgstr ""
 
 #: weko_admin/admin.py:933
-msgid "JaLC DataCite DOI"
+msgid "DataCite DOI"
 msgstr ""
 
 #: weko_admin/admin.py:934

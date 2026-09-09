@@ -106,10 +106,10 @@ is enabled.
 Open the row with the pencil icon. Two things have to be done here, in this
 order:
 
-1. In **Enable/Disable**, select `JaLC CrossRef DOI` in the *Disable* list and
+1. In **Enable/Disable**, select `Crossref DOI` in the *Disable* list and
    move it to *Enable* with the `>` button. The prefix box stays read only
    until you do.
-2. Enter your Crossref prefix in **JaLC CrossRef DOI**. Every Crossref DOI
+2. Enter your Crossref prefix in **Crossref DOI**. Every Crossref DOI
    this repository grants is built from it. The screenshot uses `10.5555`,
    the prefix Crossref documents for examples.
 
@@ -168,12 +168,12 @@ Nothing to do for a DOI. Next.
 ## Step 5 — Grant the Crossref DOI
 
 The **Identifier Grant** step offers the agencies enabled in step 2, each with
-the DOI it would grant. Only `Not Grant` and `JaLC CrossRef DOI` are offered
+the DOI it would grant. Only `Not Grant` and `Crossref DOI` are offered
 here because Crossref is the only agency enabled.
 
 ![The Identifier Grant step](images/09-identifier-grant.png)
 
-Select **JaLC CrossRef DOI**. The DOI beside it — prefix from step 2, suffix
+Select **Crossref DOI**. The DOI beside it — prefix from step 2, suffix
 built from the item — is the DOI that will be registered.
 
 ![Crossref selected](images/10-identifier-grant-crossref.png)
