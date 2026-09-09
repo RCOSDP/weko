@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collections import OrderedDict
-from datetime import datetime
+from datetime import date, datetime, timedelta
 # from tkinter import W
 import pytest
 import copy
@@ -321,7 +321,6 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         def dumps(self):
             return item_type_mapping
     mocker.patch("weko_records.utils.Mapping.get_record",return_value=MockMapping())
-    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
 
     # weko_shared_ids!=[], shared_user_ids=[], exist control_number
     data3={
@@ -352,7 +351,6 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
 
     # weko_shared_ids!=-1, shared_user_ids!=[], sm.get is not none
     class MockSM:
-        mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
         search_conditions=WEKO_ADMIN_MANAGEMENT_OPTIONS
     with patch("weko_records.utils.sm.get",return_value=MockSM()):
         data4={
@@ -374,7 +372,6 @@ def test_json_loader2(app, db, item_type, item_type2, item_type3, item_type_mapp
         assert dc == OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[2]),('owner', 1),('owners',[1])])
         assert jrc == {'item_6': ['item_6_1_v'], 'item_5': ['item_5'], 'creator1': {'nameIdentifier': ['1234', '5678']}, 'item_3': ['item_3_1_v'], 'item_4': ['item_4_1_v'], 'control_number': '1', '_oai': {'id': '1'}, '_item_metadata': OrderedDict([('item_1', {'attribute_name': 'Publish Date', 'attribute_value': '2023-08-08'}), ('item_1', {'attribute_name': 'item_1', 'attribute_value': 'item_1_v'}), ('item_2', {'attribute_name': 'item_2', 'attribute_value': 'item_2_v'}), ('item_3', {'attribute_name': 'item_3', 'attribute_type': 'creator', 'attribute_value_mlt': [{'item_3_1': 'item_3_1_v'}]}), ('item_4', {'attribute_name': 'item_4', 'attribute_value_mlt': [{'item_4_1': 'item_4_1_v'}]}), ('item_5', {'attribute_name': 'item_5', 'attribute_type': 'file', 'attribute_value_mlt': [{'filename': 'item_5'}]}), ('item_6', {'attribute_name': 'item_6', 'attribute_value_mlt': [{'item_6_1': 'item_6_1_v'}]}), ('item_7', {'attribute_name': 'item_7', 'attribute_value_mlt': [{}, {'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '1234'}]}]}), ('item_8', {'attribute_name': 'item_8', 'attribute_value_mlt': [{'nameIdentifiers': [{'nameIdentifierScheme': 'WEKO', 'nameIdentifier': '5678'}]}]}), ('item_title', 'test_item2'), ('item_type_id', '4'), ('control_number', '1'), ('author_link', ['1234', '5678']),('weko_shared_ids',[2]),('owner', 1),('owners',[1])]), 'itemtype': 'test10', 'publish_date': None, 'author_link': ['1234', '5678'],'weko_creator_id': '1','weko_shared_ids': [2]}
         assert is_edit == True
-        mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1234","5678"])
     with patch("weko_records.utils.COPY_NEW_FIELD",False):
         with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
             data5={
@@ -963,9 +960,10 @@ def test_get_author_link(app,mocker):
             }]
         }
     ]
-    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["1"])
+    # get_author_link takes the nameIdentifier as it stands; it no longer
+    # looks a pk id up through weko_authors.
     ret = get_author_link(author_link, value_list)
-    assert ['1'] == author_link
+    assert ['v1'] == author_link
 
     author_link = []
     value_dict = {
@@ -974,9 +972,8 @@ def test_get_author_link(app,mocker):
                 "nameIdentifier": 'v2'
                 }]
     }
-    mocker.patch("weko_authors.api.WekoAuthors.get_pk_id_by_weko_id", side_effect=["2"])
     ret = get_author_link(author_link,  value_dict)
-    assert ['2'] == author_link
+    assert ['v2'] == author_link
 
     author_link = []
     value_str = 'v2'
@@ -2811,54 +2808,53 @@ def test_replace_fqdn_of_file_metadata(app):
     replace_fqdn_of_file_metadata(_file_metadata_list2)
     assert _file_metadata_list2==[{'url': {'url': 'https://localhost/a'}, 'version_id': '1'}, {'url': {'url': 'https://localhost/b'}, 'version_id': '1'}]
 
-import datetime
 # .tox/c1/bin/pytest --cov=weko_records tests/test_utils.py::test_check_embargo_rights -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
 def test_check_embargo_rights():
     # Do nothing except for 'embargoed access'
-    result = check_embargo_rights("open_access", datetime.date.today(), [])
+    result = check_embargo_rights("open_access", date.today(), [])
     assert result == (False, None)
 
     # If there is at least one 'open_restricted', return 'restricted access'
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = [("open_restricted", None), ("open_access", None)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "restricted access")
 
     # If there is a future date in 'open_date', do nothing
-    today = datetime.date.today()
-    future = today + datetime.timedelta(days=1)
+    today = date.today()
+    future = today + timedelta(days=1)
     accessrole_date = [("open_date", future)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (False, None)
 
     # If there is at least one 'open_login', return 'restricted access'
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = [("open_login", None)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "restricted access")
 
     # If all are 'open_access', return 'open access'
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = [("open_access", None), ("open_access", None)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "open access")
 
     # If all are 'open_date' and the date is in the past, return 'open access'
-    today = datetime.date.today()
-    past = today - datetime.timedelta(days=1)
+    today = date.today()
+    past = today - timedelta(days=1)
     accessrole_date = [("open_date", past), ("open_date", past)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "open access")
 
     # If 'open_access' and 'open_date' (past) are mixed, return 'open access'
-    today = datetime.date.today()
-    past = today - datetime.timedelta(days=1)
+    today = date.today()
+    past = today - timedelta(days=1)
     accessrole_date = [("open_access", None), ("open_date", past)]
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (True, "open access")
 
     # If accessrole_date is empty, do nothing
-    today = datetime.date.today()
+    today = date.today()
     accessrole_date = []
     result = check_embargo_rights("embargoed access", today, accessrole_date)
     assert result == (False, None)

@@ -846,7 +846,8 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type)
         db.session.add(item_type_property)
-    mappin = Mapping.create(
+    # Mapping.create は v2.1.0 で create_or_update に改名された。
+    mappin = Mapping.create_or_update(
         item_type.id,
         mapping = json_data("data/item_type/item_type_mapping.json")
     )

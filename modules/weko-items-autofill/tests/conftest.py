@@ -310,6 +310,11 @@ def itemtypes(db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
     
     item_type_name2 = ItemTypeName(
@@ -330,6 +335,11 @@ def itemtypes(db):
     with db.session.begin_nested():
         db.session.add(item_type_name2)
         db.session.add(item_type2)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping2)
     itemtype_name15 = ItemTypeName(id=3,name='テストアイテムタイプ3',
                                   has_site_license=True,
@@ -353,9 +363,14 @@ def itemtypes(db):
 
     with db.session.begin_nested():
         db.session.add(item_type15)
-        db.session.add(item_type_mapping3)
         db.session.add(itemtype_name_for_error)
         db.session.add(item_type_for_error)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
+        db.session.add(item_type_mapping3)
         db.session.add(item_type_mapping_for_error)
         
     db.session.commit()

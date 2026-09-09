@@ -1,5 +1,7 @@
 import pytest
 import os
+import re
+from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 
@@ -7,6 +9,32 @@ from playwright.sync_api import sync_playwright
 def base_url():
     """Base URL for the WEKO application."""
     return os.getenv("WEKO_BASE_URL", "https://weko3.example.org")
+
+
+@pytest.fixture(scope="session")
+def gakunin_rdm_url():
+    """Base URL of the GakuNin RDM instance the application links to.
+
+    Do not hardcode this. weko_records_ui's module default is
+    https://rdm.nii.ac.jp, but the deployed instance overrides it:
+    scripts/entrypoint_web.sh renders scripts/instance.cfg into the instance
+    config, and that sets https://rcos.rdm.nii.ac.jp. Reading the configured
+    value keeps the test checking the real contract - that the button points
+    at whatever GakuNin RDM this instance is configured for - instead of
+    breaking whenever the deployment is pointed somewhere else.
+    """
+    configured = os.getenv("WEKO_GAKUNIN_RDM_URL")
+    if configured:
+        return configured.rstrip("/")
+
+    cfg = Path(__file__).resolve().parent.parent / "scripts" / "instance.cfg"
+    match = re.search(
+        r"""^\s*WEKO_RECORDS_UI_GAKUNIN_RDM_URL\s*=\s*["']([^"']+)["']""",
+        cfg.read_text(encoding="utf-8"),
+        re.MULTILINE,
+    )
+    assert match, f"WEKO_RECORDS_UI_GAKUNIN_RDM_URL not found in {cfg}"
+    return match.group(1).rstrip("/")
 
 
 @pytest.fixture(scope="session")

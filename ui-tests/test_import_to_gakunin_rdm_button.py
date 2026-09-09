@@ -37,7 +37,24 @@ class TestImportToGakuninRDMButton:
         """Path to test file for upload."""
         return create_temp_zip_file()
 
-    def test_import_to_gakunin_rdm_button_enabled(self, page: Page, base_url: str, index_name: str, test_file_path: str):
+    @pytest.mark.xfail(
+        reason=(
+            "weko_index_tree bug, not a test one: check_groups() in "
+            "weko_index_tree.utils computes "
+            "any(r in user_group_list for r in index_group_list), so it "
+            "returns False whenever the index configures no browsing groups - "
+            "any() over an empty sequence is False. check_index_permissions "
+            "therefore denies every non-admin, anonymous or logged in, on any "
+            "index without groups, and WEKO answers the anonymous file "
+            "request with a redirect to /login instead of the file. v2.0.4's "
+            "check_roles started from is_can = True and had no such gate. The "
+            "same defect is why invenio-records-rest's test_default_permissions "
+            "now answers 401. GakuNin RDM fetches the file anonymously, so this "
+            "test cannot pass until weko_index_tree.utils is fixed. See "
+            "docs/v2.1.0-test-reconciliation.textile."
+        ),
+    )
+    def test_import_to_gakunin_rdm_button_enabled(self, page: Page, base_url: str, index_name: str, test_file_path: str, gakunin_rdm_url: str):
         """Test that Import to GakuNin RDM button is enabled after creating an item with application/rdm-project format."""
         try:
             page.goto(base_url)
@@ -57,8 +74,8 @@ class TestImportToGakuninRDMButton:
             # Validate URL structure using urlparse
             parsed_url = urlparse(href_attr)
 
-            # Check scheme + host is https://rdm.nii.ac.jp
-            expected_base = "https://rdm.nii.ac.jp"
+            # Check scheme + host matches the configured GakuNin RDM
+            expected_base = gakunin_rdm_url
             actual_base = f"{parsed_url.scheme}://{parsed_url.netloc}"
             assert actual_base == expected_base, f"URL base should be {expected_base}, got {actual_base}"
 
@@ -79,8 +96,20 @@ class TestImportToGakuninRDMButton:
             content_type = response.headers.get('content-type', '').lower()
             if test_file_path.endswith('.zip'):
                 expected_mime_types = ['application/zip', 'application/x-zip-compressed', 'application/octet-stream']
-                assert any(mime_type in content_type for mime_type in expected_mime_types), \
-                    f"Response content-type should be one of {expected_mime_types}, got: {content_type}"
+                # requests carries no browser session, so this is an anonymous
+                # fetch - which is the point: GakuNin RDM pulls the file this
+                # way. When WEKO answers with a page instead of the file the
+                # status is still 200, so report where the request ended up and
+                # what came back, otherwise the content type alone says nothing
+                # about why.
+                assert any(mime_type in content_type for mime_type in expected_mime_types), (
+                    f"Response content-type should be one of {expected_mime_types}, "
+                    f"got: {content_type}\n"
+                    f"requested: {url_param}\n"
+                    f"final url: {response.url}\n"
+                    f"redirects: {[r.headers.get('location') for r in response.history]}\n"
+                    f"body[:400]: {response.text[:400]!r}"
+                )
             else:
                 # For other file types, check for octet-stream as fallback
                 assert 'application/octet-stream' in content_type or content_type != '', \

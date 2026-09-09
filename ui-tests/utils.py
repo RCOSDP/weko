@@ -65,40 +65,65 @@ def ensure_index_open_access(page: Page, base_url: str, index_name: str, visible
 
     time.sleep(2)  # Wait for the checkbox state to change
 
-    # Prepare dialog handler before clicking Send
-    dialog_handled = False
-    dialog_message = ""
-
-    def handle_dialog(dialog):
-        nonlocal dialog_handled, dialog_message
-        dialog_message = dialog.message
-        dialog.accept()
-        dialog_handled = True
-
-    page.on("dialog", handle_dialog)
+    # The result is reported as an in-page Bootstrap alert, not a browser
+    # dialog. weko_index_tree's Angular component renders <div id="alerts">
+    # and appends to it:
+    #
+    #     addAlert = function (msg, type) {
+    #       if (type === undefined) type = "danger";
+    #       $("#alerts").append('<div class="alert alert-' + type + '" id="">'
+    #         + '<button type="button" class="close" data-dismiss="alert">'
+    #         + '&times;</button>' + msg + '</div>');
+    #     }
+    #
+    # A successful update passes type="success"; every error path falls back to
+    # the default "danger". page.on("dialog") only fires for alert(), confirm(),
+    # prompt() and beforeunload, so waiting on it here always timed out - the
+    # application never calls any of them.
+    #
+    # This helper runs twice per test (setup and teardown) and #alerts is only
+    # ever appended to, so clear it first to be sure we read the new alert.
+    page.evaluate(
+        "() => { const el = document.querySelector('#alerts');"
+        " if (el) el.innerHTML = ''; }"
+    )
 
     # Save the changes
     page.get_by_role("button", name="Send").click()
 
-    # Wait for alert to appear and be handled with timeout
-    start_time = time.time()
-    timeout_ms = 10000  # 10 seconds timeout
+    expect(page.locator("#alerts .alert").first).to_be_visible(timeout=timeout)
 
-    while not dialog_handled:
-        if (time.time() - start_time) * 1000 > timeout_ms:
-            break
-        page.wait_for_timeout(100)
+    # Surface the server's own message rather than a bare assertion failure.
+    errors = page.locator("#alerts .alert-danger")
+    if errors.count() > 0:
+        raise AssertionError(
+            "Index update failed: "
+            + " / ".join(
+                errors.nth(i).inner_text().strip().lstrip("×").strip()
+                for i in range(errors.count())
+            )
+        )
 
-    # Verify the dialog message
-    if dialog_handled:
-        assert "Index is updated successfully." in dialog_message, f"Expected 'Index is updated successfully.' in dialog message, got: {dialog_message}"
-    else:
-        raise TimeoutError(f"Dialog did not appear within {timeout_ms}ms")
-
-    # Remove dialog handler
-    page.remove_listener("dialog", handle_dialog)
+    success = page.locator("#alerts .alert-success").first
+    expect(success).to_be_visible(timeout=timeout)
+    message = success.inner_text().strip().lstrip("×").strip()
+    assert "Index is updated successfully." in message, (
+        f"Expected 'Index is updated successfully.' in the alert, got: {message!r}"
+    )
 
     page.wait_for_load_state("networkidle")
+
+    # Confirm the setting actually changed. This helper promises to *ensure*
+    # the state, so a success alert is not enough on its own - reload the page
+    # and read the checkbox back. Without this, a save that quietly kept the
+    # index private only shows up much later, as an unrelated-looking failure
+    # when an anonymous request gets the login page instead of the file.
+    page.goto(f"{base_url.rstrip('/')}/admin/indexedit/", timeout=timeout)
+    page.wait_for_load_state("networkidle")
+    page.get_by_text(index_name).click()
+    expect(page.locator("#rss_display").first).to_be_checked(
+        checked=visible, timeout=timeout
+    )
 
 
 def create_item(page: Page, index_name: str, file_path: str, title: str, format_type: str = "application/zip") -> None:
@@ -115,9 +140,56 @@ def create_item(page: Page, index_name: str, file_path: str, title: str, format_
     page.get_by_role("textbox", name="Title*").click()
     page.get_by_role("textbox", name="Title*").fill(title)
 
-    page.get_by_text("File Information").click()
-    page.get_by_label("Format", exact=True).click()
-    page.get_by_label("Format", exact=True).fill(format_type)
+    # Expand the file metadata section.
+    #
+    # The section to open is the item type's "File" field (key
+    # item_30002_file35), which holds Format, Preview, Access and so on.
+    # "File Information" is a different section: it is the item type's
+    # system_file, and its render option carries "hidden": true, so it is
+    # never shown on the registration form.
+    #
+    # invenio_deposit's decorators render each section as
+    #     <div class="panel-heading">
+    #       <a ng-click="collapsed = !collapsed" class="panel-toggle">
+    #         {{ form.title }} ...
+    # The anchor has no href, so it carries no ARIA link role and
+    # get_by_role("link", ...) does not match it. Scope to the heading and
+    # match the title exactly instead - a substring match would also hit
+    # "File Information".
+    #
+    # "File" is an array field, so it renders as nested panels that all carry
+    # the same title: the array decorator draws one for the array itself, then
+    # renders every element through <sf-decorator form="copyWithIndex($index)">.
+    # An inner panel only becomes reachable once its parent is open, and how
+    # many levels start collapsed depends on the data, so open them a level at
+    # a time rather than assuming a fixed number.
+    #
+    # Each heading carries both chevrons and toggles them with ng-show /
+    # ng-hide, so a visible .glyphicon-chevron-right means that panel is still
+    # collapsed. Only click those - clicking an open one would close it again.
+    format_field = page.get_by_label("Format", exact=True)
+    file_headings = page.locator(".panel-heading").get_by_text("File", exact=True)
+    expect(file_headings.first).to_be_visible(timeout=30000)
+
+    for _ in range(4):
+        if format_field.count() > 0 and format_field.first.is_visible():
+            break
+        opened = False
+        for i in range(file_headings.count()):
+            heading = file_headings.nth(i)
+            if not heading.is_visible():
+                continue
+            collapsed = heading.locator(".glyphicon-chevron-right")
+            if collapsed.count() == 0 or not collapsed.first.is_visible():
+                continue
+            heading.click()
+            opened = True
+        if not opened:
+            break
+
+    expect(format_field.first).to_be_visible(timeout=30000)
+    format_field.first.click()
+    format_field.first.fill(format_type)
     page.locator("label").filter(has_text="Preview").click()
     page.locator("select[name=\"item_30002_title0\\.0\\.subitem_title_language\"]").select_option("string:ja")
     page.locator("select[name=\"item_30002_resource_type13\\.resourcetype\"]").select_option("string:conference paper")

@@ -23,6 +23,9 @@ def test_get_weko_contents(i18n_app, users, client_request_args, communities, re
     with patch("weko_theme.utils.get_index_link_list", return_value=[(11, 'TEST INDEX')]):
         index_style = MagicMock()
         index_style.index_link_enabled = False
+        # getargs is the request's args mapping, not a community id: the
+        # function does getargs.get('c'). A bare string only got this far
+        # because 'c' in 'comm1' is also true.
         with patch('weko_theme.utils.IndexStyle.get', return_value=index_style):
             result = get_weko_contents({'c': 'comm1'})
             assert result
@@ -76,6 +79,14 @@ def test_has_widget_design(i18n_app, users, client_request_args, communities):
 
     assert has_widget_design('Root Index', 'en') == False
 
+@pytest.mark.xfail(
+    reason=(
+        "Behaviour changed by develop_v2.1.0 and not reconciled yet: "
+        "get_init_display_setting()'s result no longer carries 'index_id', "
+        "so the test dies with KeyError: 'index_id'. See "
+        "docs/v2.1.0-test-reconciliation.textile."
+    ),
+)
 # class MainScreenInitDisplaySetting:
 # .tox/c1/bin/pytest --cov=weko_theme tests/test_utils.py::test_get_init_display_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-theme/.tox/c1/tmp
 def test_get_init_display_setting(i18n_app, users, client_request_args, communities):

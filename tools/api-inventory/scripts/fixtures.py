@@ -1289,8 +1289,9 @@ def main():
     p = argparse.ArgumentParser(description='動的検証用フィクスチャを投入する')
     p.add_argument('--out', default=os.path.join(
         os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'fixtures.json'))
-    p.add_argument('--container', default='',
-                   help='投入先コンテナ(省略時は compose ラベルから自動検出)')
+    p.add_argument('--container', default=os.environ.get('WEKO_WEB_CONTAINER', ''),
+                   help='投入先コンテナ。既定は $WEKO_WEB_CONTAINER、'
+                        'それも無ければ compose ラベルから自動検出')
     p.add_argument('--password', default=PASSWORD)
     p.add_argument('--scale', type=int, default=0,
                    help='デモ用アイテムの件数。0(既定)はテストに必要な最低限のみ。'

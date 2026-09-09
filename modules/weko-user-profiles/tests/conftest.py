@@ -82,6 +82,11 @@ def base_app(instance_path):
         WEKO_ADMIN_PROFILE_SETTING_TEMPLATE = 'weko_admin/admin/profiles_settings.html',
         TESTING=True,
         WTF_CSRF_ENABLED=False,
+        # invenio_accounts.config turns registration off, so the
+        # security.register endpoint is not registered and the sign_up test
+        # helper cannot build its URL.
+        SECURITY_REGISTERABLE=True,
+        SECURITY_SEND_REGISTER_EMAIL=False,
         WEKO_USERPROFILES_CUSTOMIZE_ENABLED=False,
         WEKO_USERPROFILES_DEFAULT_FIELDS_SETTINGS = {
             "fullname": {"order": 1, "visible": False, "label_name": "氏名", "format": "text"},

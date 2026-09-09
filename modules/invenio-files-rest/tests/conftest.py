@@ -109,6 +109,16 @@ def app(base_app):
     InvenioFilesREST(base_app)
     base_app.register_blueprint(blueprint)
 
+    # views.dbsession_clean is a blueprint teardown that calls
+    # db.session.remove() after every request. In the app that is right; in a
+    # test it detaches every instance the fixtures handed out, so reading
+    # bucket.id after the first request raises DetachedInstanceError. Drop it
+    # here and let the db fixture close the session at the end of the test.
+    for name, funcs in base_app.teardown_request_funcs.items():
+        base_app.teardown_request_funcs[name] = [
+            f for f in funcs if f.__name__ != 'dbsession_clean'
+        ]
+
     with base_app.app_context():
         yield base_app
 
@@ -364,7 +374,11 @@ def permissions(db, bucket):
             user=users['objects']))
     db.session.commit()
 
-    yield users
+    # The commit expires these instances, and the first request that runs
+    # tears the session down and detaches them, so reading user.id later
+    # raises DetachedInstanceError. Hand out the ids instead; login_user
+    # takes either.
+    yield {name: (user.id if user else None) for name, user in users.items()}
 
 
 @pytest.yield_fixture()

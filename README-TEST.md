@@ -1,5 +1,91 @@
 # Running tests locally
 
+## CI と同じ経路で回す（推奨）
+
+```shell
+scripts/ci/run-local.sh weko-records      # 1モジュール
+scripts/ci/run-local.sh --all             # マトリクス全部
+scripts/ci/run-local.sh --list            # 対象モジュール一覧
+```
+
+GitHub Actions の Unit Tests ジョブと**同じ部品**を呼びます。
+
+| | ローカル | CI |
+|---|---|---|
+| compose | `docker-compose2.yml:docker-compose.ci.yml` | 同左 |
+| 起動サービス | postgresql / elasticsearch / redis / rabbitmq のみ | 同左 |
+| 起動待ち | `scripts/ci/wait-for-services.sh` | 同左 |
+| テスト実行 | `scripts/ci/run-module-tests.sh`（= tox） | 同左 |
+| モジュール一覧 | `.github/workflows/unit-tests.yml` の matrix | 同左 |
+| イメージ | 同じ入力ファイルのハッシュでタグ付け、無ければビルド | 同じ入力で GHCR から pull |
+
+分岐しているのはイメージの入手方法だけです。CI と完全に同一のイメージで
+確かめたいときは `WEKO_IMAGE` / `WEKO_ES_IMAGE` で明示してください。
+
+### ローカルだけで回すと踏む罠
+
+**別の回し方をすると、テストは正常なのに落ちます。** 実測した2件:
+
+- **手元の無関係な `weko-web` イメージを流用した** → イメージに焼き付いた古い
+  egg-info の entry_point（`weko_theme.bundles:js_preview_widget`。現行の
+  `setup.py` には無い）を `invenio_assets` が読みにいって **191件が ImportError**。
+  CI は `ci-images.yml` が `modules/*/setup.py` を含むハッシュでタグを決めるので、
+  `setup.py` が変われば作り直され発生しません。
+  `run-local.sh` は起動直後に entry_point の健全性を確認して落とします。
+- **invenio の venv で直接 `pytest` を叩いた** → `pytest-mock` / `mock` が無く
+  `fixture 'mocker' not found`。CI は tox が `requirements2.txt` から入れます。
+
+また、別の WEKO スタックを動かしたままだとポート（29201 / 26301 / 24301）が
+衝突し、最悪そちらのサービスを掴みます。`run-local.sh` は起動前に検出します。
+
+### CI との唯一の差: Elasticsearch の bootstrap check
+
+`run-local.sh` は `scripts/ci/compose.local.yml` を重ねて、Elasticsearch を
+`discovery.type=single-node` で起動します。**AMD(x86_64)でも ARM でも同じ**で、
+アーキテクチャによる分岐はしません。
+
+ES 6.8 は非ループバックアドレスに bind した時点で bootstrap check（本番運用向けの
+検査）を強制しますが、これは**ホストのカーネルと sysctl に依存する**ため、
+開発機では環境しだいで落ちます。確認できたものだけでも:
+
+- **ARM**: seccomp の実装が x86_64 専用で、`seccomp unavailable:
+  CONFIG_SECCOMP not compiled into kernel` を投げて起動しない
+- **`vm.max_map_count` が 262144 未満のホスト**: `max_map_count` の検査で落ちる
+
+`discovery.type=single-node` にすると bootstrap check 自体が省かれます。ES は
+テストが使う単一ノードなので意味は変わりません（リポジトリの
+`docker-compose.arm64.yml` も同じ扱いです）。
+
+アーキで分岐しないのは、分岐すると「片方の CPU でしか再現しない失敗」を自分で
+作ることになり、ローカルと CI を揃えるという目的に反するためです。調整点は
+`install.sh` と同じく `COMPOSE_FILE` ひとつに寄せています。
+
+CI（GitHub Actions）はこのオーバレイを読みません。**最終的な合否は CI で確認して
+ください。**
+
+なお `Dockerfile.arm64` / `elasticsearch/Dockerfile.arm64` は使いません。
+nodesource の `setup_4.x` が消えており現在はビルドできないためで、
+標準の `Dockerfile` / `elasticsearch/Dockerfile` は aarch64 でもビルドできます。
+
+### モジュールを増やしたとき
+
+`.github/workflows/unit-tests.yml` の `matrix.module` が唯一の正です。
+`tests/` と `tox.ini` を持つのに未登録のモジュールがあると、CI の
+`matrix-check` ジョブが落とします（ジョブが立たない＝赤くもならない、という
+静かな漏れを防ぐため）。手元では次で確認できます。
+
+```shell
+scripts/ci/matrix.sh check
+```
+
+---
+
+## 以下は旧手順（CI とは別経路。参考）
+
+> Python 3.5 の venv を自前で組む手順です。**CI とは Python も依存も tox の
+> 有無も違う**ため、ここで通っても CI で通る保証はありません。結果を CI と
+> 突き合わせたいときは上の `run-local.sh` を使ってください。
+
 ## Running with venv
 
 ### Install python 3.5.x

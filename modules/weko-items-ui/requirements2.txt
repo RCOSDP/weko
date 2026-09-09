@@ -289,3 +289,4 @@ xmltodict==0.12.0
 zipp==3.6.0
 zope.interface==5.5.2
 responses
+pypdfium2==4.30.0
