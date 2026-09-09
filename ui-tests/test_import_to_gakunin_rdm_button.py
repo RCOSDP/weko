@@ -79,8 +79,20 @@ class TestImportToGakuninRDMButton:
             content_type = response.headers.get('content-type', '').lower()
             if test_file_path.endswith('.zip'):
                 expected_mime_types = ['application/zip', 'application/x-zip-compressed', 'application/octet-stream']
-                assert any(mime_type in content_type for mime_type in expected_mime_types), \
-                    f"Response content-type should be one of {expected_mime_types}, got: {content_type}"
+                # requests carries no browser session, so this is an anonymous
+                # fetch - which is the point: GakuNin RDM pulls the file this
+                # way. When WEKO answers with a page instead of the file the
+                # status is still 200, so report where the request ended up and
+                # what came back, otherwise the content type alone says nothing
+                # about why.
+                assert any(mime_type in content_type for mime_type in expected_mime_types), (
+                    f"Response content-type should be one of {expected_mime_types}, "
+                    f"got: {content_type}\n"
+                    f"requested: {url_param}\n"
+                    f"final url: {response.url}\n"
+                    f"redirects: {[r.headers.get('location') for r in response.history]}\n"
+                    f"body[:400]: {response.text[:400]!r}"
+                )
             else:
                 # For other file types, check for octet-stream as fallback
                 assert 'application/octet-stream' in content_type or content_type != '', \
