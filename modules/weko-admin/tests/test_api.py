@@ -71,6 +71,9 @@ def test_is_crawler(client,log_crawler_list,restricted_ip_addr,mocker):
     mocker.patch("weko_admin.api.RedisConnection.connection",return_value=mock_redis)
     mock_res=Response()
     mock_res._content = b"122.1.91.145\n122.1.91.146"
+    # _is_crawler ignores the body unless the response says 200, and
+    # requests.Response starts with status_code None.
+    mock_res.status_code = 200
     with patch("weko_admin.api.requests.get",return_value=mock_res):
         user_info={"user_agent":"","ip_address":""}
         result = _is_crawler(user_info)
@@ -87,6 +90,7 @@ def test_is_crawler(client,log_crawler_list,restricted_ip_addr,mocker):
     
     mock_res=Response()
     mock_res._content = b""
+    mock_res.status_code = 200
     with patch("weko_admin.api.requests.get", return_value=mock_res):
         with patch("weko_admin.api.RedisConnection", side_effect=RedisError):
             result = _is_crawler(user_info)

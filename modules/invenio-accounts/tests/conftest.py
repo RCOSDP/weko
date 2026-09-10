@@ -31,6 +31,7 @@ from invenio_i18n import InvenioI18N
 from simplekv.memory.redisstore import RedisStore
 from sqlalchemy_utils.functions import create_database, database_exists, \
     drop_database
+from weko_accounts.config import WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
 from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 
 from invenio_accounts import InvenioAccounts
@@ -72,6 +73,7 @@ def _app_factory(config=None):
         ACCOUNTS_JWT_ALOGORITHM = 'HS256',
         ACCOUNTS_JWT_SECRET_KEY = 'None',
         WEKO_PERMISSION_SUPER_ROLE_USER = WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
     )
 
     # Set key value session store to use Redis when running on TravisCI.
@@ -121,6 +123,30 @@ def base_app(request):
 def app(request):
     """Flask application fixture with Invenio Accounts."""
     app = _app_factory()
+    app.config.update(ACCOUNTS_USERINFO_HEADERS=True)
+    InvenioAccess(app)
+    InvenioAccounts(app)
+
+    from invenio_accounts.views.settings import blueprint
+    app.register_blueprint(blueprint)
+
+    _database_setup(app, request)
+    yield app
+
+
+@pytest.yield_fixture()
+def recoverable_app(request):
+    """Flask application with the "forgot password" flow turned on.
+
+    invenio_accounts.config sets ``SECURITY_RECOVERABLE = False`` and
+    ``SECURITY_REGISTERABLE = False``, so the ``security.forgot_password`` /
+    ``security.reset_password`` / ``security.register`` endpoints are not
+    registered on the default app fixture: ``url_for_security`` raises
+    BuildError for them, and the forgot-password page carries no "Sign Up"
+    link. Tests that exercise the flow need both switched on.
+    """
+    app = _app_factory(dict(SECURITY_RECOVERABLE=True,
+                            SECURITY_REGISTERABLE=True))
     app.config.update(ACCOUNTS_USERINFO_HEADERS=True)
     InvenioAccess(app)
     InvenioAccounts(app)

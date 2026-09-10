@@ -38,12 +38,13 @@ from flask_admin import expose
 from flask_login import current_user
 from invenio_accounts.models import Role
 from invenio_db import db
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, not_
 from weko_index_tree.models import Index
 from wtforms.validators import ValidationError, Length
 from wtforms import FileField, RadioField, StringField
 from wtforms.utils import unset_value
 from invenio_i18n.ext import current_i18n
+from weko_accounts.api import map_role_condition, map_group_condition
 from weko_gridlayout.services import WidgetDesignPageServices
 from weko_handle.api import Handle
 from weko_workflow.config import WEKO_SERVER_CNRI_HOST_LINK
@@ -83,6 +84,11 @@ class CommunityModelView(ModelView):
     column_searchable_list = ('id', 'title', 'description')
     edit_template = "invenio_communities/admin/edit.html"
 
+    column_formatters = {
+        'owner': lambda v, c, m, p: m.owner_display,
+        'owner.name': lambda v, c, m, p: m.owner_display
+    }
+
     @expose('/new/', methods=['GET', 'POST'])
     def create_view(self):
         """Create a new model.
@@ -99,7 +105,7 @@ class CommunityModelView(ModelView):
         if(request.method == 'POST'):
             try:
                 form_data = request.form.to_dict()
-                
+
                 # Validate community ID
                 self.validate_community_id(form_data['id'])
                 # Validate title length
@@ -224,7 +230,7 @@ class CommunityModelView(ModelView):
         form.id.data = model.id or ''
         form.cnri.data = model.cnri or ''
         form.title.data = model.title or ''
-        form.owner.data = model.owner or ''
+        form.owner.data = model.owner_display or ''
         form.index.data = model.index or ''
         form.group.data = model.group or ''
         form.description.data = model.description or ''
@@ -555,9 +561,15 @@ class CommunityModelView(ModelView):
         "title": {
             "validators": [Length(max=255)]
         },
+        'owner': {
+            'allow_blank': False,
+            'query_factory': lambda: db.session.query(Role).filter(
+                not_(map_role_condition())).all(),
+        },
         'group': {
             'allow_blank': False,
-            'query_factory': lambda: db.session.query(Role).filter(Role.name.like("%_groups_%")).all()
+            'query_factory': lambda: db.session.query(Role).filter(
+                map_group_condition()).all()
         }
     }
     form_extra_fields = {

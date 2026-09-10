@@ -20,7 +20,6 @@
 
 """Module tests."""
 
-from re import T
 import uuid
 import pytest
 from datetime import datetime, timedelta
@@ -39,7 +38,9 @@ from invenio_pidstore.models import PersistentIdentifier
 from weko_records.api import FeedbackMailList, RequestMailList, ItemApplication, FilesMetadata, ItemLink, \
     ItemsMetadata, ItemTypeEditHistory, ItemTypeNames, ItemTypeProps, \
     ItemTypes, Mapping, JsonldMapping, SiteLicense, RecordBase, WekoRecord
-from weko_records.models import ItemReference, ItemTypeJsonldMapping, ItemTypeName, ItemTypeProperty, ItemType
+from weko_records.models import ItemReference, ItemTypeMapping, ItemTypeJsonldMapping, ItemTypeName, ItemTypeProperty, ItemType
+from jsonschema.validators import Draft4Validator
+from datetime import datetime, timedelta
 
 # class RecordBase(dict):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_recordbase -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
@@ -918,11 +919,13 @@ class TestItemTypes:
 
         with patch('weko_records.api.db.session.merge', return_value=""):
             with patch('weko_records.api.db.session.commit', return_value=""):
-                result = ItemTypes.reload(item_type_id)
+                # mapping_dict maps property id -> mapping; an empty one means
+                # "no replacement mapping supplied for any property".
+                result = ItemTypes.reload(item_type_id, {})
                 assert result["msg"] == "Fix ItemType({}) mapping".format(item_type_id)
                 assert result["code"] == 0
 
-                result = ItemTypes.reload(item_type_id, specified_list=[1000])
+                result = ItemTypes.reload(item_type_id, {}, specified_list=[1000])
                 assert result["msg"] == "Update ItemType({})".format(item_type_id)
                 assert result["code"] == 0
 
@@ -1071,23 +1074,59 @@ def test_item_type_edit_history(app, db, user):
 # class Mapping(RecordBase):
 #     def create(cls, item_type_id=None, mapping=None):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_create -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_create(app, db):
-    mapping = Mapping.create()
-    assert mapping.id==1
-    assert mapping.model.item_type_id==None
-    assert mapping.model.mapping=={}
+def test_mapping_create(app, db, item_type):
+    with patch("weko_records.api.before_record_insert") as mock_before_record_insert, \
+            patch("weko_records.api.after_record_insert") as mock_after_record_insert:
+        mapping = Mapping.create_or_update()
+        db.session.commit()
+        obj = ItemTypeMapping.query.first()
+        assert obj.id == 1
+        assert obj.item_type_id == None
+        assert obj.mapping == {}
+        mock_before_record_insert.send.assert_called_once()
+        mock_after_record_insert.send.assert_called_once()
 
-    mapping = Mapping.create(1, {'mapping': 'test'})
-    assert mapping.id==2
-    assert mapping.model.item_type_id==1
-    assert mapping.model.mapping=={'mapping': 'test'}
+    with patch("weko_records.api.before_record_insert") as mock_before_record_insert, \
+            patch("weko_records.api.after_record_insert") as mock_after_record_insert:
+        mapping = Mapping.create_or_update(1, {'mapping': 'create'})
+        db.session.commit()
+        obj = ItemTypeMapping.query.filter_by(item_type_id=1).first()
+        assert obj.id == 2
+        assert obj.item_type_id == 1
+        assert obj.mapping == {'mapping': 'create'}
+        assert obj.version_id == 1
+        mock_before_record_insert.send.assert_called_once()
+        mock_after_record_insert.send.assert_called_once()
+
+    with patch("weko_records.api.before_record_update") as mock_before_record_update, \
+            patch("weko_records.api.after_record_update") as mock_after_record_update:
+        Mapping.create_or_update(1, {'mapping': 'update'})
+        db.session.commit()
+        obj = ItemTypeMapping.query.filter_by(item_type_id=1).one()
+        assert obj.id == 2
+        assert obj.item_type_id == 1
+        assert obj.mapping == {'mapping': 'update'}
+        assert obj.version_id == 2
+        mock_before_record_update.send.assert_called_once()
+        mock_after_record_update.send.assert_called_once()
+
+        versions = obj.versions.all()
+        assert len(versions) == 2
+        assert versions[0].id == obj.id
+        assert versions[0].item_type_id == 1
+        assert versions[0].mapping == {'mapping': 'create'}
+        assert versions[0].version_id == 1
+        assert versions[1].id == obj.id
+        assert versions[1].item_type_id == 1
+        assert versions[1].mapping == {'mapping': 'update'}
+        assert versions[1].version_id == 2
 
 # class Mapping(RecordBase):
 #     def get_record(cls, item_type_id, with_deleted=False):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_get_record -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_get_record(app, db):
-    Mapping.create(1, {'mapping': 'test'})
-    Mapping.create(2)
+def test_mapping_get_record(app, db, item_type, item_type2):
+    Mapping.create_or_update(1, {'mapping': 'test'})
+    Mapping.create_or_update(2)
 
     mapping = Mapping.get_record(0)
     assert mapping==None
@@ -1131,9 +1170,9 @@ def test_patch_Mapping(app):
 # class Mapping(RecordBase):
 #     def commit(self, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_commit -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_commit(app, db):
-    mapping1 = Mapping.create(1)
-    mapping2 = Mapping.create(2)
+def test_mapping_commit(app, db, item_type, item_type2, item_type3):
+    mapping1 = Mapping.create_or_update(1)
+    mapping2 = Mapping.create_or_update(2)
 
     mapping1.model = None
     with pytest.raises(Exception) as e:
@@ -1148,41 +1187,50 @@ def test_mapping_commit(app, db):
 # class Mapping(RecordBase):
 #     def delete(self, force=False):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_delete -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_delete(app, db):
-    mapping1 = Mapping.create(1)
-    mapping2 = Mapping.create(2)
-    mapping3 = Mapping.create(3)
+def test_mapping_delete(app, db, item_type, item_type2, item_type3):
+    # create_or_update() は新規のとき transient な ItemTypeMapping に対して
+    # db.session.merge() を呼ぶ。merge は「コピー」を session に入れるので、
+    # 戻り値の .model は DB の行とは別の、永続化されていないオブジェクトのまま
+    # になる。そのまま delete() に渡すと merge がもう一度 INSERT を試み、
+    # uq_item_type_mapping_item_type_id に抵触する。DB 上の行を取り直す。
+    mapping1 = Mapping.create_or_update(1)
+    Mapping.create_or_update(2, {'mapping': 'test2'})
+    Mapping.create_or_update(3, {'mapping': 'test3'})
 
     mapping1.model = None
     with pytest.raises(Exception) as e:
-        Mapping.delete(mapping1)
+        mapping1.delete()
     assert e.type==MissingModelError
 
-    mapping2 = Mapping.delete(mapping2, False)
+    mapping2 = Mapping.get_record(2).delete(force=False)
     assert mapping2.id==2
     assert mapping2.model.item_type_id==2
-    assert mapping2.model.mapping=={}
+    # ItemTypeMapping に json 列は無いので、delete(force=False) の
+    # self.model.json = None は mapping を消さない。
+    assert mapping2.model.mapping=={'mapping': 'test2'}
 
-    # need to fix
-    mapping3 = Mapping.delete(mapping3, True)
-    assert mapping2=={}
+    mapping3 = Mapping.get_record(3).delete(force=True)
+    assert mapping3=={'mapping': 'test3'}
+    assert Mapping.get_record(3) is None
 
 # class Mapping(RecordBase):
 #     def revert(self, revision_id):
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_revert -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_revert(app, db):
-    mapping1 = Mapping.create(1)
-    mapping2 = Mapping.create(2)
+def test_mapping_revert(app, db, item_type, item_type2):
+    mapping1 = Mapping.create_or_update(1)
+    mapping2 = Mapping.create_or_update(2)
 
     mapping1.model = None
     with pytest.raises(Exception) as e:
         Mapping.revert(mapping1, 0)
     assert e.type==MissingModelError
 
-    # need to fix
+    # create_or_update() の戻り値の .model は永続化されていない
+    # (delete のコメント参照)。versions が空なので revisions[0] は
+    # IndexError になる。
     with pytest.raises(Exception) as e:
         Mapping.revert(mapping2, 0)
-    assert e.type==AttributeError
+    assert e.type==IndexError
 
 # class Mapping(RecordBase):
 #     def revisions(self):
@@ -1207,9 +1255,9 @@ def test_revisions_Mapping(app):
 # class Mapping(RecordBase):
 #     def get_mapping_by_item_type_ids(cls, item_type_ids: list) -> list:
 # .tox/c1/bin/pytest --cov=weko_records tests/test_api.py::test_mapping_get_mapping_by_item_type_ids -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/weko-records/.tox/c1/tmp
-def test_mapping_get_mapping_by_item_type_ids(app, db):
-    Mapping.create(1)
-    Mapping.create(2)
+def test_mapping_get_mapping_by_item_type_ids(app, db, item_type, item_type2):
+    Mapping.create_or_update(1)
+    Mapping.create_or_update(2)
 
     mappings = Mapping.get_mapping_by_item_type_ids([0])
     assert len(mappings)==0

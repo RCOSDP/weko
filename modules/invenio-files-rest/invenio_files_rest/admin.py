@@ -31,6 +31,7 @@ from wtforms.fields import StringField, SelectField, IntegerField
 from wtforms.fields import BooleanField
 from wtforms.validators import ValidationError, NumberRange, Length, Optional
 from wtforms.widgets import PasswordInput
+from invenio_files_rest.utils import update_location_size
 
 from .models import Bucket, FileInstance, Location, MultipartObject, \
     ObjectVersion, slug_pattern
@@ -162,8 +163,8 @@ class LocationModelView(ModelView):
         """Override get_query to filter locations based on user roles."""
         query = super(LocationModelView, self).get_query()
         user_role_names = {role.name for role in current_user.roles}
-        if not self._system_role in user_role_names:
-            # Non-system admins should not see default locations.
+        if not (self._system_role in user_role_names or self._repoadmin_role in user_role_names):
+            # Non-system or Non-repository admins should not see default locations.
             query = query.filter_by(default=False)
         return query
 
@@ -317,19 +318,19 @@ class LocationModelView(ModelView):
     @property
     def can_create(self):
         """Check permission for creating."""
-        return {self._system_role, self._repoadmin_role} & \
+        return {self._system_role} & \
             set([role.name for role in current_user.roles])
 
     @property
     def can_edit(self):
         """Check permission for Editing."""
-        return {self._system_role, self._repoadmin_role} & \
+        return {self._system_role} & \
             set([role.name for role in current_user.roles])
 
     @property
     def can_delete(self):
         """Check permission for Deleting."""
-        return {self._system_role, self._repoadmin_role} & \
+        return {self._system_role} & \
             set([role.name for role in current_user.roles])
 
 
@@ -434,7 +435,7 @@ class FileInstanceModelView(ModelView):
     filter_converter = FilterConverter()
     can_create = False
     can_edit = False
-    can_delete = False
+    can_delete = True
     can_view_details = True
     column_formatters = dict(
         objects=link('Objects', lambda o: url_for(
@@ -482,6 +483,27 @@ class FileInstanceModelView(ModelView):
             current_app.logger.exception(str(exc))  # pragma: no cover
             flash(_('Failed to run fixity checks.'),
                   'error')  # pragma: no cover
+    
+    def delete_model(self, model):
+        if not hasattr(model, 'uri') or not hasattr(model, 'id'):
+            raise AttributeError('Model has no attribute uri or id')
+        
+        if not model.uri or not model.id:
+            raise ValueError('Invalid uri or id')
+        
+        if os.path.exists(model.uri):
+            os.remove(model.uri)
+            result = super().delete_model(model)
+            update_location_size()
+            return result
+        else:
+            file = FileInstance.query.filter_by(id=model.id).one_or_none()
+            if file is not None:
+                result = super().delete_model(model)
+                update_location_size()
+                return result
+            else:
+                raise FileNotFoundError('File not found. The file does not exist or was already deleted.')
 
 
 class MultipartObjectModelView(ModelView):

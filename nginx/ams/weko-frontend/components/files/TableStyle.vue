@@ -173,6 +173,7 @@
 </template>
 
 <script lang="ts" setup>
+import amsAlert from '~/assets/data/amsAlert.json';
 /* ///////////////////////////////////
 // props
 /////////////////////////////////// */
@@ -218,15 +219,16 @@ const showCommentOpenFlag = ref(true);
 const fileSize: any = Object.prototype.hasOwnProperty.call(props.file, appConfig.roCrate.root.file.size)
   ? props.file[appConfig.roCrate.root.file.size][0]
   : null;
-const licenseType: any = Array.isArray(props.file[appConfig.roCrate.root.file.licenseType])
-  ? props.file[appConfig.roCrate.root.file.licenseType][0]
-  : props.file[appConfig.roCrate.root.file.licenseType];
-const fileURL: any = Array.isArray(props.file[appConfig.roCrate.root.file.url])
-  ? props.file[appConfig.roCrate.root.file.url][0]
-  : props.file[appConfig.roCrate.root.file.url];
-const fileComment: any = Array.isArray(props.file[appConfig.roCrate.root.file.comment])
-  ? props.file[appConfig.roCrate.root.file.comment][0]
-  : props.file[appConfig.roCrate.root.file.comment];
+const licenseType: any = setFileInfo(props.file[appConfig.roCrate.root.file.licenseType]);
+const fileURL: any = setFileInfo(props.file[appConfig.roCrate.root.file.url]);
+const fileComment: any = setFileInfo(props.file[appConfig.roCrate.root.file.comment]);
+const alertData = ref({
+  msgid: '',
+  msgstr: '',
+  position: '',
+  width: 'w-full',
+  loglevel: 'info'
+});
 
 /* ///////////////////////////////////
 // function
@@ -240,6 +242,7 @@ function getDownloadNumber() {
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'] + '/stats', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -270,38 +273,38 @@ function getDownloadNumber() {
  */
 function setLicenseIcon() {
   if (licenseType === appConfig.cc.zero) {
-    licenseImg.value = '/img/license/cc-zero.svg';
+    licenseImg.value = appConfig.amsImage + '/license/cc-zero.svg';
     licenseLink = local === 'ja' ? appConfig.cc.link.zero_ja : appConfig.cc.link.zero;
   } else if (licenseType === appConfig.cc.by_3 || licenseType === appConfig.cc.by_4) {
-    licenseImg.value = '/img/license/by.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_3 ? appConfig.cc.link.by_3_ja : appConfig.cc.link.by_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_3 ? appConfig.cc.link.by_3 : appConfig.cc.link.by_4;
     }
   } else if (licenseType === appConfig.cc.by_sa_3 || licenseType === appConfig.cc.by_sa_4) {
-    licenseImg.value = '/img/license/by-sa.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-sa.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3_ja : appConfig.cc.link.by_sa_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_sa_3 ? appConfig.cc.link.by_sa_3 : appConfig.cc.link.by_sa_4;
     }
   } else if (licenseType === appConfig.cc.by_nd_3 || licenseType === appConfig.cc.by_nd_4) {
-    licenseImg.value = '/img/license/by-nd.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nd.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3_ja : appConfig.cc.link.by_nd_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_nd_3 ? appConfig.cc.link.by_nd_3 : appConfig.cc.link.by_nd_4;
     }
   } else if (licenseType === appConfig.cc.by_nc_3 || licenseType === appConfig.cc.by_nc_4) {
-    licenseImg.value = '/img/license/by-nc.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nc.svg';
     if (local === 'ja') {
       licenseLink = licenseType === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3_ja : appConfig.cc.link.by_nc_4_ja;
     } else {
       licenseLink = licenseType === appConfig.cc.by_nc_3 ? appConfig.cc.link.by_nc_3 : appConfig.cc.link.by_nc_4;
     }
   } else if (licenseType === appConfig.cc.by_nc_sa_3 || licenseType === appConfig.cc.by_nc_sa_4) {
-    licenseImg.value = '/img/license/by-nc-sa.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nc-sa.svg';
     if (local === 'ja') {
       licenseLink =
         licenseType === appConfig.cc.by_nc_sa_3 ? appConfig.cc.link.by_nc_sa_3_ja : appConfig.cc.link.by_nc_sa_4_ja;
@@ -310,7 +313,7 @@ function setLicenseIcon() {
         licenseType === appConfig.cc.by_nc_sa_3 ? appConfig.cc.link.by_nc_sa_3 : appConfig.cc.link.by_nc_sa_4;
     }
   } else if (licenseType === appConfig.cc.by_nc_nd_3 || licenseType === appConfig.cc.by_nc_nd_4) {
-    licenseImg.value = '/img/license/by-nc-nd.svg';
+    licenseImg.value = appConfig.amsImage + '/license/by-nc-nd.svg';
     if (local === 'ja') {
       licenseLink =
         licenseType === appConfig.cc.by_nc_nd_3 ? appConfig.cc.link.by_nc_nd_3_ja : appConfig.cc.link.by_nc_nd_4_ja;
@@ -334,6 +337,7 @@ function download() {
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -354,11 +358,13 @@ function download() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.download');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_FETCH;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }
@@ -371,6 +377,7 @@ function preview() {
   $fetch(appConfig.wekoApi + '/records/' + useRoute().query.number + '/files/' + props.file['@id'], {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',
@@ -390,11 +397,13 @@ function preview() {
     },
     onResponseError({ response }) {
       statusCode = response.status;
-      emits('error', response.status, 'message.error.preview');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_PREVIEW;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   }).catch(() => {
     if (statusCode === 0) {
-      emits('error', 0, 'message.error.fetch');
+      alertData.value = amsAlert.TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW;
+      emits('error', alertData.value.msgid, alertData.value.msgstr);
     }
   });
 }
@@ -414,7 +423,6 @@ function getDisplayMaxLength(item: String) {
   if (checkEn(item)) {
     itemLength = 40;
   }
-
   return itemLength;
 }
 
@@ -428,6 +436,17 @@ function checkEn(name: any) {
     name = name.replace(/[α-ω]/g, '');
   }
   return /^[ -~]+$/.test(name);
+}
+
+/**
+ * マッピング済みのファイル情報を取得する
+ * マッピングされていない場合は空文字を返す
+ * @param info ファイル情報（ライセンス、格納場所、コメント）
+ * @returns ファイル情報
+ */
+function setFileInfo(info: any) {
+  const returnInfo = Array.isArray(info) ? info[0] : info;
+  return returnInfo || '';
 }
 
 /* ///////////////////////////////////

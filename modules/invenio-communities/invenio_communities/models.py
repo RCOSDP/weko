@@ -40,6 +40,7 @@ from sqlalchemy.orm.exc import FlushError
 from sqlalchemy_utils.models import Timestamp
 from sqlalchemy_utils.types import UUIDType
 from weko_index_tree.models import Index
+from weko_accounts.api import create_fqdn_from_entity_id, is_map_sysadm_role
 
 from .errors import CommunitiesError, InclusionRequestExistsError, \
     InclusionRequestExpiryTimeError, InclusionRequestMissingError, \
@@ -582,6 +583,37 @@ class Community(db.Model, Timestamp):
         return hashlib.sha1('{0}__{1}'.format(
             self.id, self.updated).encode('utf-8')).hexdigest()
 
+    @property
+    def owner_display(self):
+        """
+        Get the display name of the community owner.
+
+        This property returns a user-friendly owner name for the community.
+        If the owner's name contains a role keyword defined in the system configuration,
+        it replaces the suffix with a mapped display name for clarity.
+        Otherwise, it returns the owner's name as-is.
+
+        Returns:
+            str: Display name of the community owner.
+        """
+        if self.owner and hasattr(self.owner, 'name'):
+            owner_name = self.owner.name
+            pattern = current_app.config.get(
+                'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+            idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
+            if not bool(pattern and idp_entity_id):
+                return owner_name
+            prefix = pattern.get("prefix")
+            role_key = pattern.get("role_keyword")
+            role_mapping = pattern.get("role_mapping")
+            fqdn = create_fqdn_from_entity_id()
+            if is_map_sysadm_role(owner_name):
+                return current_app.config['WEKO_ADMIN_PERMISSION_ROLE_SYSTEM']
+            for suffix, display_name in role_mapping.items():
+                expected_owner_name = f'{prefix}_{fqdn}_{role_key}_{suffix}'
+                if owner_name == expected_owner_name:
+                    return display_name
+            return owner_name
 
 class FeaturedCommunity(db.Model, Timestamp):
     """Represent a featured community."""

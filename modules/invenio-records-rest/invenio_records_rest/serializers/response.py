@@ -14,7 +14,6 @@ Responsible for creating a HTTP response given the output of a serializer.
 from __future__ import absolute_import, print_function
 
 import asyncio
-from concurrent.futures.thread import ThreadPoolExecutor
 
 from flask import current_app, abort
 from weko_admin.models import AdminSettings
@@ -112,13 +111,16 @@ def search_responsify(serializer, mimetype):
             except RuntimeError:
                 asyncio.set_event_loop(asyncio.SelectorEventLoop())
                 loop = asyncio.get_event_loop()
-            with ThreadPoolExecutor(max_workers=10):
-                task = asyncio.gather(
-                    __format_item_list(
-                        search_result['hits']['hits']
-                    )
+            # sort_meta_data_by_options() is declared async but does no
+            # awaiting work, so the hits are formatted sequentially on the
+            # event loop. The ThreadPoolExecutor that used to wrap this call
+            # was created but never used to submit anything, so it is removed.
+            task = asyncio.gather(
+                __format_item_list(
+                    search_result['hits']['hits']
                 )
-                loop.run_until_complete(task)
+            )
+            loop.run_until_complete(task)
         response = current_app.response_class(
             serializer.serialize_search(pid_fetcher, search_result,
                                         links=links,

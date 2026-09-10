@@ -73,7 +73,7 @@ from invenio_search import RecordsSearch
 
 from sqlalchemy import func as _func
 from sqlalchemy.exc import SQLAlchemyError
-from weko_admin.models import AdminSettings, SessionLifetime
+from weko_admin.models import AdminSettings, SessionLifetime, FacetSearchSetting
 from weko_admin.utils import get_redis_cache, reset_redis_cache, get_restricted_access
 from weko_admin.api import TempDirInfo
 from weko_authors.models import AuthorsAffiliationSettings, AuthorsPrefixSettings
@@ -574,7 +574,7 @@ def check_tsv_import_items(
 
         list_record = handle_check_exist_record(list_record)
         handle_item_title(list_record)
-        
+
         list_record = handle_check_date(list_record)
         handle_check_id(list_record)
 
@@ -594,7 +594,7 @@ def check_tsv_import_items(
 
         handle_check_authors_prefix(list_record)
         handle_check_authors_affiliation(list_record)
-        
+
         if not is_gakuninrdm:
             handle_check_cnri(list_record)
             handle_check_doi_indexes(list_record)
@@ -768,7 +768,7 @@ def unpackage_import_file(data_path: str, file_name: str, file_format: str, forc
             record["uri"] = None
 
     current_app.logger.debug('list_record2: {}'.format(list_record))
-    
+
     handle_set_change_identifier_flag(list_record, is_change_identifier)
     handle_fill_system_item(list_record)
 
@@ -930,7 +930,9 @@ def check_jsonld_import_items(
 
         with open(f"{data_path}/{json_name}", "r") as f:
             json_ld = json.load(f)
-        item_metadatas, _fromat = mapper.to_item_metadata(json_ld)
+        mapper.data_path = data_path
+        mapper.mapping_id = mapping_id
+        item_metadatas, x = mapper.to_item_metadata(json_ld)
         list_record = [
             {
                 "$schema": f"/items/jsonschema/{item_type.id}",
@@ -1262,7 +1264,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                     current_app.logger.debug(
                         "duplication_item_ids: {}".format(duplication_item_ids)
                     )
-                    
+
                     if duplication_item_ids:
                         msg = _("The following metadata keys are duplicated." "<br/>{}")
                         raise Exception(
@@ -1283,7 +1285,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                         current_app.logger.debug(
                             "not_consistent_list: {}".format(not_consistent_list)
                         )
-                        
+
                         if not_consistent_list:
                             msg = _(
                                 "The item does not consistent with the "
@@ -1302,7 +1304,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                         current_app.logger.debug(
                             "item_path_not_existed: {}".format(item_path_not_existed)
                         )
-                        
+
 
                 elif (num == 4 or num == 5) and data_row[0].startswith("#"):
                     continue
@@ -1310,7 +1312,7 @@ def read_stats_file(file_path: str, file_name: str, file_format: str) -> dict:
                     data_parse_metadata = parse_to_json_form(
                         zip(item_path, data_row), item_path_not_existed
                     )
-                    
+
                     if not data_parse_metadata:
                         raise Exception(
                             {"error_msg": _("Cannot read {} file correctly.".format(file_format.upper()))}
@@ -1446,6 +1448,8 @@ def handle_validate_item_import(list_record, schema) -> list:
     v2 = Draft4Validator(schema) if schema else None
     for record in list_record:
         errors = record.get("errors") or []
+        new_warnings = []
+        warnings = record.get("warnings") or []
         record_id = record.get("id")
         if record_id and (
             not represents_int(record_id) or re.search(r"([０-９])", record_id)
@@ -1457,19 +1461,46 @@ def handle_validate_item_import(list_record, schema) -> list:
         if record.get("metadata"):
             if v2:
                 a = v2.iter_errors(record.get("metadata"))
+                for error in a:
+                    if (
+                        error.validator == "type"
+                        and error.validator_value == "string"
+                        and isinstance(error.instance, int)
+                    ):
+                        target = record["metadata"]
+                        path_list = list(error.path)
+                        for key in path_list[:-1]:
+                            target = target[key]
+                        last_key = path_list[-1]
+                        target[last_key] = str(target[last_key])
+                        target_path = ".".join([str(p) for p in path_list[:-2]])
+                        new_warnings.append(
+                            _("Replace value of %(target_path)s from %(old_value)s to '%(new_value)s'.",
+                                target_path=target_path, old_value=target[last_key], new_value=str(target[last_key])
+                            )
+                        )
+                b = v2.iter_errors(record.get("metadata"))
                 if current_i18n.language == "ja":
                     _errors = []
-                    for error in a:
+                    for error in b:
                         _errors.append(handle_convert_validate_msg_to_jp(error.message))
                     errors = errors + _errors
                 else:
-                    errors = errors + [error.message for error in a]
+                    errors = errors + [error.message for error in b]
             else:
                 errors = errors = errors + [_("Specified item type does not exist.")]
 
-        item_error = dict(**record)
-        item_error["errors"] = errors if len(errors) else None
-        result.append(item_error)
+        records = dict(**record)
+        records["errors"] = errors if len(errors) else None
+        if len(new_warnings) > 0:
+            warnings.append(
+                _("Specified %(type)s is different from existing %(existing_type)s.",
+                    type="type:integer", existing_type="type:string"
+                )
+            )
+            warnings.extend(new_warnings)
+            records["warnings"] = warnings
+        result.append(records)
 
     return result
 
@@ -1561,7 +1592,17 @@ def handle_check_exist_record(list_record) -> list:
         item = dict(**item, **{"status": "new"})
         # current_app.logger.debug("item:{}".format(item))
         errors = item.get("errors") or []
+        recid = request.view_args.get("recid")
         item_id = item.get("id")
+        if item_id is None and recid is not None:
+            item["id"] = recid
+            item_id = recid
+        system_url = (
+            request.host_url + "records/" + str(item_id)
+            if item_id is not None else None
+        )
+        if item.get("uri") is None and system_url is not None:
+            item["uri"] = system_url
         # current_app.logger.debug("item_id:{}".format(item_id))
         if item_id and item_id is not "":
             system_url = request.host_url + "records/" + str(item_id)
@@ -2280,15 +2321,7 @@ def import_items_to_system(
                 remarks=tb_info[0],
                 request_info=request_info,
             )
-            error_id = None
-            if (
-                ex.args
-                and len(ex.args)
-                and isinstance(ex.args[0], dict)
-                and ex.args[0].get("error_id")
-            ):
-                error_id = ex.args[0].get("error_id")
-
+            error_id = "sqlalchemy error: {}".format(type(ex).__name__)
             return {"success": False, "error_id": error_id}
         except ConnectionError as ex:
             current_app.logger.error("elasticsearch  error: %s", ex)
@@ -2354,15 +2387,7 @@ def import_items_to_system(
                 remarks=tb_info[0],
                 request_info=request_info,
             )
-            error_id = None
-            if (
-                ex.args
-                and len(ex.args)
-                and isinstance(ex.args[0], dict)
-                and ex.args[0].get("error_id")
-            ):
-                error_id = ex.args[0].get("error_id")
-
+            error_id = "redis error: {}".format(type(ex).__name__)
             return {"success": False, "error_id": error_id}
         except Exception as ex:
             current_app.logger.error("Unexpected error: %s", ex)
@@ -2387,15 +2412,7 @@ def import_items_to_system(
                 remarks=tb_info[0],
                 request_info=request_info,
             )
-            error_id = None
-            if (
-                ex.args
-                and len(ex.args)
-                and isinstance(ex.args[0], dict)
-                and ex.args[0].get("error_id")
-            ):
-                error_id = ex.args[0].get("error_id")
-
+            error_id = "Unexpected error: {}".format(type(ex).__name__)
             return {"success": False, "error_id": error_id}
     return {"success": True, "recid": item["id"]}
 
@@ -6121,3 +6138,59 @@ def check_provide_in_system(key, item):
                 is_provide_exist[idx] = False
                 break
     return all(is_provide_exist)
+
+def fix_aggregations_accessrights(data):
+    """
+    Refactor accessrights aggregation in search result for compliance.
+    Args:
+        data (dict): Aggregation result from search response.
+    Returns:
+        dict: Modified aggregation result.
+    """
+    ACCESSRIGHTS_FIX_ENABLED = current_app.config.get(
+        "WEKO_SEARCH_FIX_ACCESSRIGHTS", False
+    )
+    ACCESS_RIGHTS_CHOICES = current_app.config.get(
+        "WEKO_ACCESS_RIGHTS_CHOICES",
+        [
+            "embargoed access",
+            "metadata only access",
+            "open access",
+            "restricted access",
+        ]
+    )
+    aggs = data['aggregations']
+    if not ACCESSRIGHTS_FIX_ENABLED:
+        return data
+
+    # Get mapping for accessRights facets
+    mapping = FacetSearchSetting.get_activated_facets_mapping()
+    accessrights_keys = [
+        k for k, v in mapping.items() if v == "accessRights"
+    ]
+    if "new_accessRights" not in aggs or not accessrights_keys:
+        return data
+
+    new_accessrights = aggs["new_accessRights"]
+    buckets_dict = new_accessrights.get("buckets", {})
+    if not any(
+        right in buckets_dict for right in ACCESS_RIGHTS_CHOICES
+    ):
+        return data
+
+    buckets = []
+    for right in ACCESS_RIGHTS_CHOICES:
+        value = buckets_dict.get(right)
+        if not value:
+            continue
+        doc_count = value.get("doc_count", 0)
+        if doc_count == 0:
+            continue
+        buckets.append({"key": right, "doc_count": doc_count})
+    if buckets:
+        for key in accessrights_keys:
+            if key in aggs:
+                aggs[key]["buckets"] = buckets
+        aggs.pop("new_accessRights", None)
+    data['aggregations'] = aggs
+    return data

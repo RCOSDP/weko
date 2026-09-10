@@ -274,6 +274,12 @@ class ItemTypeMapping(db.Model, Timestamp):
 
     __tablename__ = 'item_type_mapping'
 
+    __table_args__ = (
+        db.Index(
+            "idx_mapping_item_type_mapping", "mapping", postgresql_using="gin"
+        ),
+    )
+
     id = db.Column(
         db.Integer(),
         primary_key=True,
@@ -281,7 +287,11 @@ class ItemTypeMapping(db.Model, Timestamp):
     )
     """Record identifier."""
 
-    item_type_id = db.Column(db.Integer)
+    item_type_id = db.Column(
+        db.Integer,
+        db.ForeignKey(ItemType.id, ondelete='CASCADE'),
+        unique=True,
+    )
     """ID of item type."""
 
     mapping = db.Column(

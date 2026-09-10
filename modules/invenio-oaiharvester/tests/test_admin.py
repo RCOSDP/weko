@@ -516,8 +516,10 @@ def test_index_query(app, db, users, mocker):
     with app.app_context():
         index1 = Index(id=1, position=1)
         index2 = Index(id=2, position=2)
+        index3 = Index(id=3, position=3, is_deleted=True)
         db.session.add(index1)
         db.session.add(index2)
+        db.session.add(index3)
         db.session.commit()
 
         # super role user
@@ -527,6 +529,7 @@ def test_index_query(app, db, users, mocker):
         assert len(result) == 2
         assert index1 in result
         assert index2 in result
+        assert index3 not in result
 
         # community role user with repository
         repository = Community(root_node_id=index1.id)
@@ -538,6 +541,30 @@ def test_index_query(app, db, users, mocker):
         assert len(result) == 1
         assert index1 in result
 
+        # community role user with repository
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[index1.id, index3.id])
+        result = index_query()
+        assert len(result) == 1
+        assert index1 in result
+        assert index3 not in result
+
+        index4 = Index(id=4, position=1, parent=1)
+        index5 = Index(id=5, position=1, parent=4)
+        db.session.add(index4)
+        db.session.add(index5)
+        db.session.commit()
+
+        repository2 = Community(root_node_id=index4.id)
+
+        mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[repository, repository2])
+        mocker.patch("weko_index_tree.api.Indexes.get_child_list_recursive", return_value=[index1.id, index3.id, index4.id, index5.id])
+        result = index_query()
+        assert len(result) == 3
+        assert index1 in result
+        assert index3 not in result
+        assert index4 in result
+        assert index5 in result
+        
         # community role user with no repository
         mocker.patch("invenio_communities.models.Community.get_repositories_by_user",return_value=[])
         result = index_query()

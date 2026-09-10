@@ -629,7 +629,7 @@ def item_type(app, db):
     )
 
 @pytest.fixture()
-def item_type_mapping(app, db):
+def item_type_mapping(app, db, item_type):
     _mapping = {
         'item_1': {
             'jpcoar_mapping': {
@@ -639,7 +639,10 @@ def item_type_mapping(app, db):
             }
         }
     }
-    return Mapping.create(1, _mapping)
+    # item_type_id は ForeignKey になったので、参照先の ItemType を先に
+    # 作る fixture を要求する。id は autoincrement なので、引数の順が
+    # そのまま 1, 2, 3 になる。
+    return Mapping.create_or_update(1, _mapping)
 
 @pytest.fixture()
 def item_type2(app, db):
@@ -691,7 +694,7 @@ def item_type2(app, db):
     )
 
 @pytest.fixture()
-def item_type_mapping2(app, db):
+def item_type_mapping2(app, db, item_type, item_type2):
     _mapping = {
         'item_1': {
             'jpcoar_mapping': {
@@ -706,7 +709,10 @@ def item_type_mapping2(app, db):
             }
         }
     }
-    return Mapping.create(2, _mapping)
+    # item_type_id は ForeignKey になったので、参照先の ItemType を先に
+    # 作る fixture を要求する。id は autoincrement なので、引数の順が
+    # そのまま 1, 2, 3 になる。
+    return Mapping.create_or_update(2, _mapping)
 
 @pytest.fixture()
 def item_type3(app, db):
@@ -748,7 +754,7 @@ def item_type3(app, db):
     )
 
 @pytest.fixture()
-def item_type_mapping3(app, db):
+def item_type_mapping3(app, db, item_type, item_type2, item_type3):
     _mapping = {
         "pubdate": {
             "lom_mapping": "",
@@ -766,7 +772,11 @@ def item_type_mapping3(app, db):
             "display_lang_type": ""
         }
     }
-    return Mapping.create(3, _mapping)
+    # item_type_id は ForeignKey になったので、参照先の ItemType を先に
+    # 作る fixture を要求する。id は autoincrement なので、引数の順が
+    # そのまま 1, 2, 3 になる。
+    # Mapping.create は v2.1.0 で create_or_update に改名された。
+    return Mapping.create_or_update(3, _mapping)
 
 @pytest.fixture()
 def item_type_property(app, db):
@@ -987,7 +997,7 @@ def item_type_mapping_with_form(app, db, item_type_with_form):
             }
         }
     }
-    return Mapping.create(item_type_with_form.id, _mapping)
+    return Mapping.create_or_update(item_type_with_form.id, _mapping)
 
 
 @pytest.fixture()
@@ -1456,6 +1466,11 @@ def simple_item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
         db.session.add(item_type_property)
     db.session.commit()

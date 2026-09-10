@@ -3,6 +3,9 @@ const weko = 'ams-dev.ir.rcos.nii.ac.jp';
 export default defineAppConfig({
   wekoOrigin: 'https://' + weko,
   wekoApi: 'https://' + weko + '/api/v1',
+  amsImage: '/img/ams',
+  amsPath: '/ams',
+  amsApi: '/api/ams',
   export: {
     jpcoar:
       'https://' + weko + '/oai?verb=GetRecord&metadataPrefix=jpcoar_1.0&identifier=oai:ams-dev.ir.rcos.nii.ac.jp:',
@@ -24,27 +27,24 @@ export default defineAppConfig({
       releaseRange: 'accessMode',
       // 公開日
       releaseDate: 'dateCreated',
-      // 作成日
+      // メタデータ作成日
       createDate: 'dateCreated',
-      // 更新日
+      // メタデータ更新日
       updateDate: 'reviews',
-      // タイトル
+      // データセットの名称
       title: 'subjectOf',
-      // 分野
+      // データセットの分野
       field: 'genre',
-      // 作成者氏名
+      // データ作成者氏名
       authorName: 'creator',
-      // 作成者所属
+      // データ作成者所属
       authorAffiliation: 'creativeWorkStatus',
-      // ヒト/動物/その他
+      // 取得データの対象種別
       target: 'character',
       // アクセス権
       accessMode: 'accessMode',
       // キーワード
       keywords: 'keywords',
-      // プロジェクトID
-      // TODO: valueはマッピング整理後に修正予定
-      projectId: 'text',
       // ファイル情報
       file: {
         // 格納場所
@@ -97,6 +97,10 @@ export default defineAppConfig({
       }
     }
   },
+  grdm: {
+    url: '',
+    relationType: 'isVersionOf'
+  },
   /** CC license setting */
   cc: {
     /**
@@ -147,5 +151,23 @@ export default defineAppConfig({
       by_nc_nd_4: 'https://creativecommons.org/licenses/by-nc-nd/4.0/',
       by_nc_nd_4_ja: 'https://creativecommons.org/licenses/by-nc-nd/4.0/deed.ja'
     }
+  },
+  /**
+   * 閲覧権限が必要なアイテム詳細画面からログイン画面へ遷移するまでの時間設定
+   */
+  transitionTimeMs: 10000, // ミリ秒
+  /**
+   * フロントのShibboleth Login設定
+   */
+  shibLogin: {
+    // 本番環境
+    dsURL: 'https://ds.gakunin.nii.ac.jp/WAYF',
+    orthrosURL: 'https://core.orthros.gakunin.nii.ac.jp/idp',
+    // テスト環境
+    // dsURL: 'https://test-ds.gakunin.nii.ac.jp/WAYF',
+    // orthrosURL: 'https://core-stg.orthros.gakunin.nii.ac.jp/idp',
+    entityID: 'https://' + weko + '/shibboleth',
+    handlerURL: 'https://' + weko + '/Shibboleth.sso',
+    returnURL: 'https://' + weko + '/secure/login.py?next=ams'
   }
 });

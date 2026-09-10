@@ -6,6 +6,7 @@ import pytest
 import uuid
 from mock import patch,Mock
 from flask import json, url_for, make_response, current_app
+from invenio_accounts.models import Role
 from invenio_accounts.testutils import login_user_via_session as login
 from werkzeug.exceptions import InternalServerError ,Forbidden
 from weko_workflow.admin import FlowSettingView,WorkFlowSettingView
@@ -184,6 +185,28 @@ class TestFlowSettingView:
             res =  client.get(url)
             assert res.status_code == 404
 
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_flow_detail_roles_filter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_flow_detail_roles_filter(self, client, db, users, mocker):
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+        user = users[1]['obj']
+        db.session.add(user)
+        role1 = Role(name="Contributor_test", description=None)
+        role2 = Role(name="jc_test_example_com_ro_contributor", description=None)
+        role3 = Role(name="jc_test_example_com_gr_yyy", description=None)
+        db.session.add_all([role1, role2, role3])
+        db.session.commit()
+
+        login(client=client, email=users[1]['email'])
+        with patch("flask.templating._render", return_value=b"") as mock_render:
+            response = client.get('/admin/flowsetting/0')
+            args, kwargs = mock_render.call_args
+            context = args[1]
+            filtered_role_names = [role.name for role in context['roles']]
+            assert "jc_test_example_com_ro_contributor" not in filtered_role_names
+            assert "jc_test_example_com_gr_yyy" in filtered_role_names
+            assert "Contributor_test" in filtered_role_names
 
 #     def get_specified_properties():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestFlowSettingView::test_get_specified_properties -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -431,9 +454,9 @@ class TestFlowSettingView:
                 assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
 
                 current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-                
+
                 assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
-            
+
             current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = False)
 
             #repoadmin
@@ -451,7 +474,7 @@ class TestFlowSettingView:
                 assert FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
 
                 current_app.config.update(WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG = True)
-                
+
                 assert not FlowSettingView._check_auth(workflow_open_restricted[1]["flow"].flow_id)
 
 
@@ -480,6 +503,37 @@ class TestWorkFlowSettingView:
         url = url_for('workflowsetting.index',_external=True)
         res =  client.get(url)
         assert res.status_code == status_code
+
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_index_role_filtering -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_index_role_filtering(self, client, db, app, mocker, users):
+        role1 = Role(name="test_role", description=None)
+        role2 = Role(name="jc_test_example_com_ro_contributor", description=None)
+        role3 = Role(name="jc_test_example_com_gr_yyy", description=None)
+        db.session.add_all([role1, role2, role3])
+        db.session.commit()
+
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+        wf_mock = mocker.MagicMock()
+        wf_mock.id = 1
+        wf_mock.index_tree_id = None
+        mocker.patch("weko_workflow.admin.WorkFlow.get_workflow_list", return_value=[wf_mock])
+        mocker.patch("weko_workflow.admin.Index.get_index_by_id", return_value=None)
+
+        from invenio_accounts.testutils import login_user_via_session
+        login_user_via_session(client, email=users[2]['email'])
+
+        mock_render = mocker.patch("flask.templating._render", return_value=b"")
+        url = "/admin/workflowsetting/"
+        res = client.get(url)
+        assert res.status_code == 200
+        args, kwargs = mock_render.call_args
+        context = args[1]
+        display_names = context['workflows'][0].display.replace(',<br>', ',').split(',')
+        assert "jc_test_example_com_ro_cont" not in display_names
+        assert "test_role" in display_names
+        assert "jc_test_example_com_gr_yyy" in display_names
 
     #     def workflow_detail(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -687,7 +741,7 @@ class TestWorkFlowSettingView:
         url = '/admin/workflowsetting/{}'.format(0)
         with patch("flask.templating._render", return_value=""):
             res =  client.put(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
-            assert res.status_code == status_code  
+            assert res.status_code == status_code
 
             res = client.post(url, data=json.dumps(data), headers=[('Content-Type', 'application/json')])
         assert res.status_code == 200
@@ -702,7 +756,7 @@ class TestWorkFlowSettingView:
         wflow : WorkFlow = workflow["workflow"]
         url = url_for('workflowsetting.update_workflow',workflow_id=wflow.flows_id,_external=True)
         with patch("flask.templating._render", return_value=""):
-            res =  client.post(url 
+            res =  client.post(url
                                 , headers=[('Content-Type', 'application/json')
                                             ,('Accept', 'application/json')]
                                 , data=json.dumps({'id': wflow.id,'flow_id': define.id
@@ -711,9 +765,9 @@ class TestWorkFlowSettingView:
             assert res.status_code == 200
             wf : WorkFlow = db.session.query(WorkFlow).filter_by(id = wflow.id).one_or_none()
             assert wf.open_restricted == False
-            
+
             url = url_for('workflowsetting.update_workflow',workflow_id='0',_external=True)
-            res =  client.post(url 
+            res =  client.post(url
                                     , headers=[('Content-Type', 'application/json')
                                                 ,('Accept', 'application/json')]
                                     , data=json.dumps({'id': wflow.id,'flow_id': define.id
@@ -722,6 +776,29 @@ class TestWorkFlowSettingView:
                                                     ,'is_gakuninrdm' : False})
                                     )
 
+    # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_workflow_detail_roles_filter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+    def test_workflow_detail_roles_filter(self, client, db, users, mocker):
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+
+        user = users[1]['obj']
+        db.session.add(user)
+        role1 = Role(name="Contributor_test", description=None)
+        role2 = Role(name="jc_test_example_com_ro_cont", description=None)
+        role3 = Role(name="jc_test_example_com_gr_yyy", description=None)
+        db.session.add_all([role1, role2, role3])
+        db.session.commit()
+
+        login(client=client, email=users[1]['email'])
+        with patch("flask.templating._render", return_value=b"") as mock_render:
+            response = client.get('/admin/workflowsetting/0')
+            args, kwargs = mock_render.call_args
+            context = args[1]
+            filtered_role_names = [role.name for role in context['display_list']]
+            assert "jc_test_example_com_ro_cont" not in filtered_role_names
+            assert "jc_test_example_com_gr_yyy" in filtered_role_names
+            assert "Contributor_test" in filtered_role_names
 
     #  def delete_workflow(self, workflow_id='0'):
     # .tox/c1/bin/pytest --cov=weko_workflow tests/test_admin.py::TestWorkFlowSettingView::test_delete_workflow_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -915,7 +992,7 @@ class TestWorkSpaceWorkFlowSettingView:
         data = {
             "workFlow_select_flg":"1",
             "submit":"set_workspace_workflow_setting_form"
-        
+
         }
         mock_render = mocker.patch("weko_workflow.admin.WorkSpaceWorkFlowSettingView.render",return_value=make_response())
         from flask import abort, current_app, jsonify, flash, request
@@ -925,7 +1002,7 @@ class TestWorkSpaceWorkFlowSettingView:
         data = {
             "registrationRadio":"1",
             "submit":"set_workspace_workflow_setting_form"
-        
+
         }
         mock_render = mocker.patch("weko_workflow.admin.WorkSpaceWorkFlowSettingView.render",return_value=make_response())
         from flask import abort, current_app, jsonify, flash, request
@@ -935,7 +1012,7 @@ class TestWorkSpaceWorkFlowSettingView:
         data = {
             "registrationRadio":"1",
             "submit":"set_workspace_workflow_setting_form"
-        
+
         }
         mock_render = mocker.patch("weko_workflow.admin.WorkSpaceWorkFlowSettingView.render",return_value=make_response())
         from flask import abort, current_app, jsonify, flash, request

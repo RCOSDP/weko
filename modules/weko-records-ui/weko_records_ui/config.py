@@ -830,3 +830,12 @@ WEKO_RECORDS_UI_GAKUNIN_RDM_URL = "https://rdm.nii.ac.jp"
 
 WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED = False
 """Enable user storage modification feature."""
+
+WEKO_RECORDS_UI_GOOGLE_XML_CACHE_TTL = 300
+"""Cache lifetime (seconds) for the JPCOAR OAI-PMH XML rebuilt on the item
+landing page to generate the Google Scholar / Dataset meta tags.
+
+The XML depends only on the record (not on the user), and the cache key
+includes the record revision so an edit invalidates it immediately; the TTL
+is a backstop for changes not reflected in the record revision (e.g. item
+type mapping edits). Set to 0 to disable expiration."""

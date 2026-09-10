@@ -27,7 +27,7 @@ import xml.etree.ElementTree as ET
 from collections import OrderedDict
 
 import pytz
-from flask import current_app, json, Flask
+from flask import current_app, g, has_app_context, json, Flask
 from flask_security import current_user
 from invenio_i18n.ext import current_i18n
 from invenio_pidstore import current_pidstore
@@ -279,6 +279,42 @@ def json_loader(data, pid, owner_id=None, with_deleted=False, replace_field=True
         else:
             dc.update(dict(owner=int(owner_id)))
             dc.update(dict(owners=[int(owner_id)]))
+
+        if current_app.config.get("WEKO_SEARCH_FIX_ACCESSRIGHTS", False):
+            update_embargo_rights(jrc["_item_metadata"])
+
+            from weko_records.serializers.utils import get_mapping
+            mapping = get_mapping(item_type_id, "jpcoar_mapping")
+            access_path = mapping.get("accessRights.@value")
+            def _get_nested_value(data, path):
+                keys = path.split('.')
+                key = keys[0]
+                rest = '.'.join(keys[1:])
+                if isinstance(data, dict):
+                    if key in data:
+                        if rest:
+                            return _get_nested_value(data[key], rest)
+                        else:
+                            return data[key]
+                    elif 'attribute_value_mlt' in data:
+                        for item in data['attribute_value_mlt']:
+                            found = _get_nested_value(item, '.'.join(keys))
+                            if found is not None:
+                                return found
+                        return None
+                    else:
+                        return None
+                elif isinstance(data, list):
+                    for item in data:
+                        found = _get_nested_value(item, '.'.join(keys))
+                        if found is not None:
+                            return found
+                    return None
+                else:
+                    return None
+            access_right = _get_nested_value(jrc["_item_metadata"], access_path) if access_path else None
+            if access_right:
+                jrc["accessRights"] = [access_right]
 
     del ojson, mjson, item
     return dc, jrc, is_edit
@@ -1544,15 +1580,32 @@ async def sort_meta_data_by_options(
         # selected title
         from weko_items_ui.utils import get_hide_list_by_schema_form
 
-        item_type = ItemTypes.get_by_id(item_type_id)
-        hide_list = []
-        if item_type:
-            solst, meta_options = get_options_and_order_list(
-                item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
-            hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+        # Item-type derived data (item type, option/order lists, hide list and
+        # JPCOAR mapping) depends only on item_type_id and is read-only for the
+        # rest of this function. A search results page renders many hits that
+        # share the same item type, so memoize these per request (flask.g,
+        # cleared each request) to avoid recomputing them for every hit.
+        _it_cache = None
+        if has_app_context():
+            _it_cache = getattr(g, '_sort_meta_item_type_cache', None)
+            if _it_cache is None:
+                _it_cache = g._sort_meta_item_type_cache = {}
+        if _it_cache is not None and item_type_id in _it_cache:
+            item_type, solst, meta_options, hide_list, item_map = \
+                _it_cache[item_type_id]
         else:
-            solst, meta_options = get_options_and_order_list(item_type_id)
-        item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+            item_type = ItemTypes.get_by_id(item_type_id)
+            hide_list = []
+            if item_type:
+                solst, meta_options = get_options_and_order_list(
+                    item_type_id, item_type_data=ItemTypes(item_type.schema, model=item_type))
+                hide_list = get_hide_list_by_schema_form(schemaform=item_type.render.get('table_row_map', {}).get('form', []))
+            else:
+                solst, meta_options = get_options_and_order_list(item_type_id)
+            item_map = get_mapping(item_type_id, "jpcoar_mapping", item_type=item_type)
+            if _it_cache is not None:
+                _it_cache[item_type_id] = \
+                    (item_type, solst, meta_options, hide_list, item_map)
         title_value_key = 'title.@value'
         title_lang_key = 'title.@attributes.xml:lang'
         title_languages = []
@@ -1588,6 +1641,14 @@ async def sort_meta_data_by_options(
             return
 
         solst_dict_array = convert_data_to_dict(solst)
+        # Index solst_dict_array by key once (first occurrence wins) so the
+        # value-matching loop below can look entries up in O(1) instead of
+        # rescanning the whole list for every metadata item of every field.
+        solst_dict_by_key = {}
+        for _s in solst_dict_array:
+            _s_key = _s.get("key")
+            if _s_key is not None and _s_key not in solst_dict_by_key:
+                solst_dict_by_key[_s_key] = _s
         files_info = []
         creator_info = None
         thumbnail = None
@@ -1669,29 +1730,33 @@ async def sort_meta_data_by_options(
                 mlt = append_parent_key(key, mlt)
                 meta_data = get_all_items2(mlt, solst)
                 for m in meta_data:
-                    for s in solst_dict_array:
-                        s_key = s.get("key")
-
-                        tmp = m.get(s_key)
-                        if tmp:
-                            s["value"] = (
-                                tmp
-                                if not s["value"]
-                                else "{}{} {}".format(
-                                    s["value"],
-                                    current_app.config.get(
-                                        "WEKO_RECORDS_SYSTEM_COMMA", ""
-                                    ),
-                                    tmp,
-                                )
+                    # Each meta_data entry is a single-key {key: value} dict;
+                    # look the matching solst entry up directly instead of
+                    # scanning the whole solst_dict_array.
+                    for s_key, tmp in m.items():
+                        if not tmp:
+                            continue
+                        s = solst_dict_by_key.get(s_key)
+                        if s is None:
+                            continue
+                        s["value"] = (
+                            tmp
+                            if not s["value"]
+                            else "{}{} {}".format(
+                                s["value"],
+                                current_app.config.get(
+                                    "WEKO_RECORDS_SYSTEM_COMMA", ""
+                                ),
+                                tmp,
                             )
-                            s["parent_option"] = {
-                                "required": option.get("required"),
-                                "show_list": option.get("showlist"),
-                                "specify_newline": option.get("crtf"),
-                                "hide": option.get("hidden"),
-                            }
-                            break
+                        )
+                        s["parent_option"] = {
+                            "required": option.get("required"),
+                            "show_list": option.get("showlist"),
+                            "specify_newline": option.get("crtf"),
+                            "hide": option.get("hidden"),
+                        }
+                        break
 
         # Format data to display on item list
         items = get_comment(
@@ -2864,3 +2929,173 @@ def replace_fqdn_of_file_metadata(file_metadata_lst: list, file_url: list = None
                 file["url"]["url"] = replace_fqdn(file["url"]["url"])
             elif isinstance(file_url, list):
                 file_url.append(file["url"]["url"])
+
+def check_embargo_rights(access_right: str, today, accessrole_date: list = []):
+    """
+    Determines whether the accessrights value needs to be updated based on
+    the mapped item values and file information, and what value it should be
+    changed to.
+    Args:
+        access_right (str): The value mapped to the item's accessRight.
+        today (date): The current date.
+        accessrole_date (list): List of (accessrole, date) tuples for
+            registered files.
+    Returns:
+        is_update_required (bool): Whether an update is required.
+        change_value (str): The value after the update.
+    """
+    # Do nothing if not 'embargoed access'
+    if access_right != "embargoed access":
+        return False, None
+
+    # 1. If there is at least one 'open_restricted', set to 'restricted access'
+    if any(
+        role == "open_restricted" for role, _ in accessrole_date
+    ):
+        return True, "restricted access"
+
+    # 2. If there is at least one 'open_date' with a future date, no update required
+    if any(
+        role == "open_date" and date and today and date > today
+        for role, date in accessrole_date
+    ):
+        return False, None
+
+    # 3. If there is at least one 'open_login', set to 'restricted access'
+    if any(
+        role == "open_login" for role, _ in accessrole_date
+    ):
+        return True, "restricted access"
+
+    # 4. If all are 'open_access' or 'open_date' with date <= today,
+    #    set to 'open access'
+    if accessrole_date and all(
+        (role == "open_access") or
+        (role == "open_date" and date and today and date <= today)
+        for role, date in accessrole_date
+    ):
+        return True, "open access"
+
+    return False, None
+
+def update_embargo_rights(metadata: dict) -> None:
+    """
+    Update accessrights value in item metadata in-place.
+    Args:
+        metadata (dict): Item metadata to update.
+    Returns:
+        None (modifies metadata in-place)
+    """
+    # Skip if config disables accessrights fix
+    if not current_app.config.get("WEKO_SEARCH_FIX_ACCESSRIGHTS", False):
+        return
+
+    item_type_id = metadata.get("item_type_id")
+    if not item_type_id:
+        return
+
+    from weko_records.serializers.utils import get_mapping
+    mapping = get_mapping(item_type_id, "jpcoar_mapping")
+    access_path = mapping.get("accessRights.@value")
+    if not access_path:
+        return
+
+    if access_path.endswith("subitem_access_right"):
+        access_uri_path = (
+            access_path[:-len("subitem_access_right")] +
+            "subitem_access_right_uri"
+        )
+    else:
+        access_uri_path = None
+
+    def _get_nested_value(data, path):
+        keys = path.split('.')
+        key = keys[0]
+        rest = '.'.join(keys[1:])
+        if isinstance(data, dict):
+            if key in data:
+                if rest:
+                    return _get_nested_value(data[key], rest)
+                else:
+                    return data[key]
+            elif 'attribute_value_mlt' in data:
+                for item in data['attribute_value_mlt']:
+                    found = _get_nested_value(item, '.'.join(keys))
+                    if found is not None:
+                        return found
+                return None
+            else:
+                return None
+        elif isinstance(data, list):
+            for item in data:
+                found = _get_nested_value(item, '.'.join(keys))
+                if found is not None:
+                    return found
+            return None
+        else:
+            return None
+
+    access_right_value = _get_nested_value(metadata, access_path)
+    if not access_right_value:
+        return
+
+    from datetime import datetime
+    accessrole_date = []
+    today = datetime.now().date()
+
+    for v in metadata.values():
+        if (
+            isinstance(v, dict) and v.get("attribute_type") == "file"
+        ):
+            mlt = v.get("attribute_value_mlt", [])
+            for data in mlt:
+                date_val = None
+                accessrole_val = data.get("accessrole")
+                if (
+                    "date" in data and
+                    isinstance(data["date"], list) and
+                    data["date"]
+                ):
+                    date_val = data["date"][0].get("dateValue")
+                    if date_val:
+                        if re.match(r"^\d{4}-\d{2}-\d{2}$", date_val):
+                            date_val = datetime.strptime(date_val, "%Y-%m-%d").date()
+                        else:
+                            date_val = None
+                if accessrole_val:
+                    accessrole_date.append((accessrole_val, date_val))
+
+    from .utils import check_embargo_rights
+    is_update, change_value = check_embargo_rights(
+        access_right_value, today, accessrole_date
+    )
+
+    access_right_type_uri = current_app.config.get("ACCESS_RIGHT_TYPE_URI", {})
+    access_right_type_uri_value = access_right_type_uri.get(change_value, "")
+
+    def _set_nested_value(data, path, value):
+        keys = path.split('.')
+        key = keys[0]
+        rest = '.'.join(keys[1:])
+        if isinstance(data, list):
+            for item in data:
+                _set_nested_value(item, path, value)
+            return
+        if len(keys) == 1:
+            if isinstance(data, dict) and key in data:
+                data[key] = value
+            if isinstance(data, dict) and 'attribute_value_mlt' in data:
+                for item in data['attribute_value_mlt']:
+                    _set_nested_value(item, key, value)
+        else:
+            if isinstance(data, dict):
+                if key in data:
+                    _set_nested_value(data[key], rest, value)
+                if 'attribute_value_mlt' in data:
+                    for item in data['attribute_value_mlt']:
+                        _set_nested_value(item, rest, value)
+
+    if is_update and change_value:
+        _set_nested_value(metadata, access_path, change_value)
+        if access_uri_path and access_right_type_uri_value:
+            _set_nested_value(metadata, access_uri_path, access_right_type_uri_value)

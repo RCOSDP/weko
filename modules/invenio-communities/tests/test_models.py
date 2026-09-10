@@ -29,8 +29,10 @@ from __future__ import absolute_import, print_function
 import os
 import pytest
 from datetime import datetime, timedelta
+from flask import current_app
 from invenio_records.api import Record
 from unittest.mock import patch
+from invenio_accounts.models import Role
 from invenio_oaiserver.models import OAISet
 
 from invenio_communities.models import Community,InclusionRequest
@@ -374,3 +376,104 @@ class TestCommunity:
 #         db.DateTime, nullable=False, default=datetime.utcnow)
 #     @classmethod
 #     def get_featured_or_none(cls, start_date=None):
+
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::test_owner_display -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_owner_display(app, mocker):
+    with app.app_context():
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': 'https://test-example.com/shib'
+        })
+
+        pattern = current_app.config.get(
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+        prefix = pattern.get("prefix")
+        role_key = pattern.get("role_keyword")
+        repoid = "test_example_com"
+
+        comm = Community()
+        # If owner_name contains role_keyword and is mapped by role_mapping
+        ower_role_name = f"{prefix}_{repoid}_{role_key}_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == "Repository Administrator"
+
+        # If owner_name matches sysadm_group
+        ower_role_name = pattern.get("sysadm_group")
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == "System Administrator"
+
+        # If owner_name contains role_keyword but is not found in role_mapping
+        ower_role_name = f"{prefix}_{repoid}_{role_key}_unkwown"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        ower_role_name = f"{prefix}_{repoid}_gr_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        ower_role_name = f"{prefix}_test!example!com_{role_key}_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        ower_role_name = f"ng_{repoid}_{role_key}_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        # If owner_name does not contain role_keyword
+        owner = Role(name="admin")
+        comm.owner = owner
+        assert comm.owner_display == "admin"
+
+        # If owner is None
+        comm.owner = None
+        assert comm.owner_display is None
+
+
+# .tox/c1/bin/pytest --cov=invenio_communities tests/test_models.py::test_owner_display_no_repoid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-communities/.tox/c1/tmp
+def test_owner_display_no_repoid(app, mocker):
+    with app.app_context():
+        mocker.patch.dict(current_app.config, {
+            'WEKO_ACCOUNTS_IDP_ENTITY_ID': ''
+        })
+
+        pattern = current_app.config.get(
+            'WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT')
+        prefix = pattern.get("prefix")
+        role_key = pattern.get("role_keyword")
+        repoid = "test_example_com"
+
+        comm = Community()
+        # If owner_name contains role_keyword and is mapped by role_mapping
+        ower_role_name = f"{prefix}_{repoid}_{role_key}_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        # If owner_name matches sysadm_group
+        ower_role_name = pattern.get("sysadm_group")
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+        # If owner_name contains role_keyword but is not found in role_mapping
+        ower_role_name = f"{prefix}_{repoid}_{role_key}_unkwown"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        ower_role_name = f"{prefix}_{repoid}_gr_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        ower_role_name = f"{prefix}_test!example!com_{role_key}_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        ower_role_name = f"ng_{repoid}_{role_key}_radm"
+        comm.owner = Role(name=ower_role_name)
+        assert comm.owner_display == ower_role_name
+
+        # If owner_name does not contain role_keyword
+        owner = Role(name="admin")
+        comm.owner = owner
+        assert comm.owner_display == "admin"
+
+        # If owner is None
+        comm.owner = None
+        assert comm.owner_display is None

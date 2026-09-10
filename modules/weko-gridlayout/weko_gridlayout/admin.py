@@ -40,6 +40,9 @@ from invenio_communities.models import Community
 from jinja2 import contextfunction
 from sqlalchemy import func
 from wtforms.fields import StringField
+from weko_theme.utils import get_design_layout, \
+    get_weko_contents, has_widget_design
+from invenio_i18n.ext import current_i18n
 
 from . import config
 from .models import WidgetItem, WidgetMultiLangData
@@ -55,6 +58,23 @@ class WidgetDesign(BaseView):
         return self.render(
             current_app.config["WEKO_GRIDLAYOUT_ADMIN_WIDGET_DESIGN"]
         )
+
+    @expose('/preview/')
+    def preview_view(self):
+        # For preview page, always use main layout
+        page, render_widgets = get_design_layout(
+            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'])
+        render_header_footer = has_widget_design(
+            current_app.config['WEKO_THEME_DEFAULT_COMMUNITY'],
+            current_i18n.language)
+        page = None
+
+        return self.render(
+            current_app.config["WEKO_THEME_PREVIEW_WIDGET_DESIGN"],
+            page=page,
+            render_widgets=render_widgets,
+            render_header_footer=render_header_footer,
+            **get_weko_contents(request.args))
 
 
 class WidgetSettingView(ModelView):

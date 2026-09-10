@@ -39,7 +39,7 @@ module.exports = {
         notoSans: ['"Noto Sans JP"']
       },
       backgroundImage: {
-        MainBg: "url('/img/kv.jpg')"
+        MainBg: "url('/img/ams/kv.jpg')"
       },
       padding: {
         6.5: '25px',

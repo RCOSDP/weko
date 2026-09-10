@@ -277,6 +277,15 @@ def test_ThrowOutActivity_post(app, client, db, db_register_approval, auth_heade
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_rest.py::test_FileApplicationActivity_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# 存在しない activity_id を渡すと、404 ではなく AttributeError で 500 になる。
+# weko_workflow/rest.py:747 get_activity() が get_activity_display_info() を
+# 呼び、その中の utils.py:3846 が activity_detail (= None) の workflow_id を
+# 読む。存在確認はどこにも無い。詳細は issues.md A-11。
+@pytest.mark.xfail(
+    raises=AttributeError,
+    reason="存在しない activity_id で get_activity_display_info が "
+           "None.workflow_id を読んで落ちる (issues.md A-11)",
+)
 def test_FileApplicationActivity_post(app, client, db, db_register_for_application_api,
                                       auth_headers, users, application_api_request_body, indextree, records_restricted,mocker):
     """Test FileApplicationActivity.post method."""

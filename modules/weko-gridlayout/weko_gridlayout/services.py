@@ -501,6 +501,60 @@ class WidgetDesignServices:
 
         return result
 
+    @classmethod
+    def get_widget_item_list(cls, repository_id):
+        """Get Widget Item list.
+
+        :param repository_id: Identifier of the repository.
+        :return: Widget Item list.
+        """
+        result = {
+            "data": {},
+            "error": ""
+        }
+        try:
+            with db.session.no_autoflush:
+                widget_item_list = WidgetItem.query.filter_by(
+                    repository_id=str(repository_id), is_enabled=True,
+                    is_deleted=False
+                ).all()
+            current_lang = current_i18n.language
+            if isinstance(widget_item_list, list):
+                for widget_item in widget_item_list:
+                    data = dict()
+                    data_display = dict()
+                    widget_item_data = \
+                        WidgetItemServices.get_widget_data_by_widget_id(
+                            widget_item.widget_id)
+                    settings = widget_item_data.get('settings')
+                    settings["widget_id"] = widget_item_data.get('widget_id')
+                    settings["id"] = widget_item_data.get('repository_id')
+                    settings["type"] = widget_item_data.get('widget_type')
+                    if settings.get('type') == WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE:
+                        today = date.today().strftime("%Y-%m-%d")
+                        settings['created_date'] = today
+                    languages = settings.get("multiLangSetting")
+                    if (isinstance(languages, dict)
+                            and current_lang is not None):
+                        if languages.get(current_lang):
+                            data_display = languages[current_lang]
+                        elif languages.get('en'):
+                            data_display = languages['en']
+                        else:
+                            data_display["label"] = \
+                                WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+                    else:
+                        data_display["label"] = \
+                            WEKO_GRIDLAYOUT_DEFAULT_WIDGET_LABEL
+                    settings["multiLangSetting"] = data_display
+                    settings["name"] = data_display.get('label')
+                    data["widget-settings"] = settings
+                    result["data"][str(widget_item_data.get('widget_id'))] = data
+        except Exception as e:
+            result["error"] = str(e)
+
+        return result
+
     # TODO: Change to allow specifying which model to retrieve from
     @classmethod
     def get_widget_preview(cls, repository_id, default_language,

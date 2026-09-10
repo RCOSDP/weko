@@ -16,12 +16,15 @@ def test_ext(app):
     WekoSchemaREST()
 
 
+# POST/PUT now need schema-access (weko_schema_ui.permissions), which the
+# users fixture grants to Repository Administrator only; System Administrator
+# passes through superuser-access.
 user_post_results1 = [
-    (0, 201),
-    (1, 201),
-    (2, 201),
-    (3, 201),
-    (4, 201),
+    (0, 403),  # contributor
+    (1, 201),  # repoadmin
+    (2, 201),  # sysadmin
+    (3, 403),  # comadmin
+    (4, 403),  # generaluser
 ]
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_schemas_post_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 @pytest.mark.parametrize('id, status_code', user_post_results1)
@@ -38,8 +41,12 @@ def test_SchemaFilesResource_schemas_post_guest(client_rest, users):
     res = client_rest.post('/schemas/',
                            data=json.dumps({}),
                            content_type='application/json')
-    assert res.status_code == 201
+    assert res.status_code == 401
 
+
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_schemas_post_unsupported_media_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_schemas_post_unsupported_media_type(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])
     res = client_rest.post('/schemas/',
                            data=json.dumps({}),
                            content_type='application/xml')
@@ -64,15 +71,16 @@ class MockSchemaConverter():
         return dict()
 
 user_post_results2 = [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+    (0, 403),  # contributor
+    (1, 200),  # repoadmin
+    (2, 200),  # sysadmin
+    (3, 403),  # comadmin
+    (4, 403),  # generaluser
 ]
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_shcemaspid_post_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 @pytest.mark.parametrize('id, status_code', user_post_results2)
 def test_SchemaFilesResource_shcemaspid_post_login(client_rest, users, id, status_code):
+    login_user_via_session(client=client_rest, email=users[id]['email'])
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -113,8 +121,9 @@ def test_SchemaFilesResource_get_guest(client_rest, users):
                 assert res.status_code == 405
 
 
-# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_fail1_post_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_SchemaFilesResource_fail1_post_guest(client_rest2, users):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_fail1_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_fail1_post(client_rest2, users):
+    login_user_via_session(client=client_rest2, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -137,8 +146,9 @@ def test_SchemaFilesResource_fail1_post_guest(client_rest2, users):
                 assert res.status_code == 400
 
 
-# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test1_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_SchemaFilesResource_post_test1_guest(client_rest, users):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test1 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_post_test1(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -160,8 +170,9 @@ def test_SchemaFilesResource_post_test1_guest(client_rest, users):
                 assert res.status_code == 400
 
 
-# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test2_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_SchemaFilesResource_post_test2_guest(client_rest, users):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_post_test2(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -183,8 +194,9 @@ def test_SchemaFilesResource_post_test2_guest(client_rest, users):
                 assert res.status_code == 200
 
 
-# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test3_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_SchemaFilesResource_post_test3_guest(client_rest, users):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_post_test3(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -207,8 +219,9 @@ def test_SchemaFilesResource_post_test3_guest(client_rest, users):
                 assert res.status_code == 200
 
 
-# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test4_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_SchemaFilesResource_post_test4_guest(client_rest, users):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test4 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_post_test4(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -231,8 +244,9 @@ def test_SchemaFilesResource_post_test4_guest(client_rest, users):
                 assert res.status_code == 400
 
 
-# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test5_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
-def test_SchemaFilesResource_post_test5_guest(client_rest, users):
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_post_test5 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_post_test5(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -258,6 +272,15 @@ def test_SchemaFilesResource_post_test5_guest(client_rest, users):
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_shcemaspid_post_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 def test_SchemaFilesResource_shcemaspid_post_guest(client_rest, users):
+    res = client_rest.post('/schemas/111',
+                           data=json.dumps({}),
+                           content_type='application/json')
+    assert res.status_code == 401
+
+
+# .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_shcemaspid_post_twice -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+def test_SchemaFilesResource_shcemaspid_post_twice(client_rest, users):
+    login_user_via_session(client=client_rest, email=users[1]['email'])  # repoadmin
     xsd_location_folder=current_app.config[
         'WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER']. \
         format(current_app.instance_path)
@@ -294,11 +317,11 @@ class MockPyFSFileStorage:
 
 
 user_put_results = [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
+    (0, 403),  # contributor
+    (1, 200),  # repoadmin
+    (2, 200),  # sysadmin
+    (3, 403),  # comadmin
+    (4, 403),  # generaluser
 ]
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_put_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 @pytest.mark.parametrize('id, status_code', user_put_results)
@@ -312,7 +335,7 @@ def test_SchemaFilesResource_put_login(client_rest, users, id, status_code):
         assert res.status_code == status_code
 
 user_put_results = [
-    (0, 200),
+    (1, 400),  # repoadmin: the only role in this fixture with schema-access
 ]
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_rest.py::test_SchemaFilesResource_put_login_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
 @pytest.mark.parametrize('id, status_code', user_put_results)
@@ -334,4 +357,4 @@ def test_SchemaFilesResource_put_guest(client_rest, users):
         res = client_rest.put('/schemas/put/111/test.zip',
                               data=json.dumps({}),
                               content_type='application/json')
-        assert res.status_code == 200
+        assert res.status_code == 401

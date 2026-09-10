@@ -562,6 +562,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_ID = [
     ".cnri",
     ".doi_ra",
     ".doi",
+    ".bulk_doi",
     ".edit_mode",
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
@@ -575,6 +576,7 @@ WEKO_EXPORT_TEMPLATE_BASIC_NAME = [
     ".CNRI",
     ".DOI_RA",
     ".DOI",
+    ".BULK_DOI",
     "Keep/Upgrade Version",
 ]
 WEKO_EXPORT_TEMPLATE_BASIC_OPTION = [
@@ -757,6 +759,12 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
 
+WEKO_SEARCH_UI_IMPORT_REPLACE_RULES = {}
+"""Strings to be replaced during item import."""
+
+WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP = {}
+"""Mapping of jsonld_mappings table 'id' to replacement rule keys."""
+
 CELERY_RESULT_PERSISTENT = True
 """ If set to True, result messages will be persistent. This means the messages will not be lost after a broker restart. The default is for the results to be transient."""
 CELERY_TASK_TRACK_STARTED=True
@@ -780,3 +788,19 @@ ROCRATE_METADATA_FILE = "data/ro-crate-metadata.json"
 
 ROCRATE_METADATA_WK_CONTEXT_V1 = "http://purl.org/wk/v1/wk-context.jsonld"
 """ Metadata context file name for RO-Crate+Bagit. """
+
+WEKO_ACCESS_RIGHTS_CHOICES = [ "embargoed access", "metadata only access", "open access", "restricted access"]
+
+WEKO_SEARCH_FIX_ACCESSRIGHTS = False
+""" If true, the value of accessrights will be modified. """
+
+WEKO_SEARCH_DETAIL_KEYWORD_CACHE_TTL = 300
+"""Cache lifetime (seconds) for get_search_detail_keyword() results.
+
+The detail-search conditions depend on the current language, the user's index
+visibility (admin flag + role ids + group ids, since the index checkboxes are
+pruned per user) and the search-condition settings; all of these are part of
+the cache key, so users never share another user's index visibility and a
+settings change is reflected immediately. Item types / indexes change
+infrequently and are bounded by the TTL. Set to 0 to disable expiration or a
+small value to reduce staleness."""

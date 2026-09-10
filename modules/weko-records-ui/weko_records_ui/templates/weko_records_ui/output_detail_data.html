@@ -83,7 +83,7 @@
             {% if parrent_name %}
                 {%- set labels = parrent_name.split('.') -%}
                 {%- if labels|length == 1 -%}
-                    {{ child_data(parrent_name, '', level) }}
+                    {{ child_data(parrent_name, '　', level) }}
                 {%- else -%}
                     {%- set displayflag = False -%}
                 {%- endif -%}
@@ -118,7 +118,7 @@
                 <td><a href="{{content | encode_filename }}">{{ content | escape_str }}</a></td>
             {%- elif content|url_to_link -%}
                 <td><a href="{{content}}" target='_blank'>{{ content | escape_str }}</a></td>
-	          {%- else -%}
+            {%- else -%}
                 <td class="multiple-line">{{ content | escape_str }}</td>
             {%- endif -%}
         {% endautoescape %}

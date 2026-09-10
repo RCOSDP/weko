@@ -28,6 +28,8 @@ from invenio_search import RecordsSearch
 from weko_index_tree.api import Indexes
 from weko_schema_ui.models import PublishStatus
 from weko_search_ui.utils import execute_search_with_pagination
+from invenio_oaiserver.query import range_query
+from datetime import datetime, timedelta
 
 from .config import WEKO_ROOT_INDEX
 
@@ -262,14 +264,31 @@ def item_changes_search_factory(search,
                         "path": list_path
                     }
                 }
-                post_filter['bool']['must'].append({
-                    "range": {
-                        "_updated": {
-                            "lte": _date_until,
-                            "gte": _date_from
+                if current_app.config.get('WEKO_SEARCH_FIX_ACCESSRIGHTS', False):
+                    if len(_date_until) == 19 and 'T' in _date_until:
+                        _date_until = (
+                            datetime.strptime(_date_until, '%Y-%m-%dT%H:%M:%S')
+                            - timedelta(seconds=1)
+                        )
+                        _date_until = _date_until.isoformat()
+                    elif len(_date_until) == 10:
+                        _date_until = (
+                            datetime.strptime(_date_until, '%Y-%m-%d')
+                            - timedelta(seconds=1)
+                        )
+                        _date_until = _date_until.isoformat()
+                    rq = range_query(_date_from, _date_until)
+                    if rq is not None:
+                        post_filter['bool']['must'].append(rq.to_dict())
+                else:
+                    post_filter['bool']['must'].append({
+                        "range": {
+                            "_updated": {
+                                "lte": _date_until,
+                                "gte": _date_from
+                            }
                         }
-                    }
-                })
+                    })
             # create search query
             try:
                 query_q = json.dumps(query_q).replace("@index", q)
@@ -285,14 +304,32 @@ def item_changes_search_factory(search,
                         "path": list_path
                     }
                 })
-                post_filter['bool']['must'].append({
-                    "range": {
-                        "_updated": {
-                            "lte": _date_until,
-                            "gte": _date_from
+                if current_app.config.get('WEKO_SEARCH_FIX_ACCESSRIGHTS', False):
+                    if len(_date_until) == 19 and 'T' in _date_until:
+                        _date_until = (
+                            datetime.strptime(_date_until, '%Y-%m-%dT%H:%M:%S')
+                            - timedelta(seconds=1)
+                        )
+                        _date_until = _date_until.isoformat()
+                    elif len(_date_until) == 10:
+                        _date_until = (
+                            datetime.strptime(_date_until, '%Y-%m-%d')
+                            - timedelta(seconds=1)
+                        )
+                        _date_until = _date_until.isoformat()
+                    rq = range_query(_date_from, _date_until)
+                    if rq is not None:
+                        post_filter['bool']['must'].append(rq.to_dict())
+                else:
+                    post_filter['bool']['must'].append({
+                        "range": {
+                            "_updated": {
+                                "lte": _date_until,
+                                "gte": _date_from
+                            }
                         }
-                    }
-                })
+                    })
+
             # create search query
             wild_card = []
             child_list = Indexes.get_child_list(q)
@@ -320,7 +357,6 @@ def item_changes_search_factory(search,
 
     # create a index search query
     query_q = _get_index_search_query(date_from, date_until)
-
     try:
         search.update_from_dict(query_q)
     except SyntaxError:

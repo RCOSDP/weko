@@ -42,6 +42,7 @@ from invenio_db import db
 from invenio_i18n.ext import current_i18n
 from invenio_indexer.api import RecordIndexer
 
+from weko_accounts.api import is_map_managed_name, is_map_role
 from weko_groups.api import Group
 from weko_redis.redis import RedisConnection
 from weko_handle.api import Handle
@@ -109,12 +110,12 @@ class Indexes(object):
             data["recursive_coverpage_check"] = False
 
             group_list = ""
-            groups = Group.query.all()
+            groups = cls.get_account_group()
             for group in groups:
                 if not group_list:
-                    group_list = str(group.id)
+                    group_list = str(group["id"])
                 else:
-                    group_list = group_list + "," + str(group.id)
+                    group_list = group_list + "," + str(group["id"])
 
             data["browsing_group"] = group_list
             data["contribute_group"] = group_list
@@ -837,7 +838,7 @@ class Indexes(object):
     @classmethod
     def filter_roles(cls, roles):
         """Filter roles to gakunin_map group roles, gakunin_map general roles, other roles.
-        
+
         Args:
             roles (list): List of role dictionaries to be filtered.
         Returns:
@@ -854,18 +855,10 @@ class Indexes(object):
         gakunin_map_general_groups = []
         other_roles = []
 
-        gakunin_map_pattern = current_app.config.get(
-            "WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT", {}
-        )
-
-        gakunin_map_prefix = gakunin_map_pattern.get("prefix", "jc")
-        role_keyword = gakunin_map_pattern.get("role_keyword", "ro")
-
         for role in roles:
             role_name = role.get("name", "")
-            role_info = {"id": role.get("id"), "name": role_name}
-            if role_name.startswith(gakunin_map_prefix):
-                if f"_{role_keyword}_" in role_name:
+            if is_map_managed_name(role_name):
+                if is_map_role(role_name):
                     # gakunin_map group role
                     gakunin_map_role_groups.append(role)
                 else:
@@ -886,10 +879,11 @@ class Indexes(object):
                 while role:
                     tmp = role.pop(0)
                     if tmp["name"] not in current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']:
-                        if str(tmp["id"]) in allow:
-                            alw.append(tmp)
-                        else:
-                            deny.append(tmp)
+                        if not is_map_role(tmp["name"]):
+                            if str(tmp["id"]) in allow:
+                                alw.append(tmp)
+                            else:
+                                deny.append(tmp)
             return alw, deny
 
         def _get_group_allow_deny(allow_group_id=[], groups=[]):
@@ -898,11 +892,10 @@ class Indexes(object):
             if not groups:
                 return allow, deny
             for group in groups:
-                if str(group.id) in allow_group_id:
-                    allow.append({'id': str(group.id), 'name': group.name})
+                if str(group["id"]) in allow_group_id:
+                    allow.append({'id': str(group["id"]), 'name': group["name"]})
                 else:
-                    deny.append({'id': str(group.id), 'name': group.name})
-
+                    deny.append({'id': str(group["id"]), 'name': group["name"]})
             return allow, deny
 
         def _get_filter_gakunin_map_groups_allow_deny(filtered_role_ids=[], filtered_roles=[]):
@@ -946,7 +939,7 @@ class Indexes(object):
         if index["public_date"]:
             index["public_date"] = index["public_date"].strftime('%Y%m%d')
 
-        group_list = Group.query.all()
+        group_list = cls.get_account_group()
         #browsing_groupとcontribute_groupの値を取得して、browsing_groupとcontribute_groupの辞書の値を保持します。
         allow_browsing_group_ids = index["browsing_group"].split(',') \
             if len(index["browsing_group"]) else []
@@ -1073,6 +1066,33 @@ class Indexes(object):
             return
 
     @classmethod
+    def get_account_group(cls):
+        """
+        Retrieve the list of groups to which the current user belongs.
+
+        Returns:
+            list: A list of dictionaries, each representing a group with its attributes.
+                  The list also includes a dictionary for the "No Group" (id: -89).
+        """
+        def _get_dict(x):
+            dt = dict()
+            for k, v in x.__dict__.items():
+                if not k.startswith('_') and "description" not in k:
+                    if not v:
+                        v = ""
+                    if isinstance(v, int) or isinstance(v, str):
+                        dt[k] = v
+            return dt
+
+        try:
+            with db.session.no_autoflush:
+                group = Group.query.all()
+            return list(map(_get_dict, group)) \
+                + [{"id": -89, "name": "No Group"}]
+        except SQLAlchemyError:
+            return
+
+    @classmethod
     def get_path_list(cls, node_lst, with_deleted=False):
         """
         Get index tree info.
@@ -1189,10 +1209,14 @@ class Indexes(object):
 
             recursive_p = recursive_p.union_all(union_query_p)
             path_index_searchs = db.session.query(recursive_p).filter_by(
-                pid=0).one()
+                pid=0).one_or_none()
+            if path_index_searchs is None:
+                return None
             return path_index_searchs.path
 
         path_index_searchs = recursive_p()
+        if path_index_searchs is None:
+            return []
 
         query_t = db.session.query(
             Index.parent.label("pid"),
@@ -2185,21 +2209,21 @@ class Indexes(object):
     @classmethod
     def bind_roles_including_permission(cls, roles, permission):
         """Bind roles including permissions.
-        
+
         Args:
             roles (list): List of roles.
             permission (bool): Permission of default browsing or contribute.
-        
+
         Returns:
             list: List of roles what binded.
         """
         bind_roles = []
         for role in roles:
-            if role.get('name').startswith('jc_') and not permission:
+            if is_map_managed_name(role.get('name')) and not permission:
                 continue
             bind_roles.append(role)
         return bind_roles
-    
+
     @classmethod
     def update_browsing_roles_groups(cls, current_index, index_setting,
                                      update_browsing_role, update_browsing_groups):
@@ -2214,7 +2238,7 @@ class Indexes(object):
         # if not update browsing roles and groups
         if not update_browsing_role and not update_browsing_groups:
             return
-        
+
         browsing_roles = set(
             current_index.browsing_role.split(",") if current_index.browsing_role else []
         )
@@ -2270,18 +2294,18 @@ class Indexes(object):
         # if not update contribute roles and groups
         if not update_contribute_role and not update_contribute_groups:
             return
-        
+
         contribute_roles = set(
             current_index.contribute_role.split(",") if current_index.contribute_role else []
         )
         contribute_groups = set(
             current_index.contribute_group.split(",") if current_index.contribute_group else []
         )
-        
+
         # if update contribute roles
         if update_contribute_role:
             contribute_roles = set(index_setting.get('contribute_role_ids', []))
-        
+
         # if update contribute groups
         if update_contribute_groups:
             contribute_roles = contribute_roles.union(

@@ -88,7 +88,6 @@ def main():
                 _render = pickle.loads(pickle.dumps(itemType.render, -1))
                 _mapping = (
                     ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == itemType.id)
-                    .order_by(desc(ItemTypeMapping.created))
                     .first()
                 )
                 for id in cur_prop_ids:
@@ -148,7 +147,7 @@ def main():
 
                     flag_modified(_mapping, 'mapping')
                     db.session.merge(_mapping)
-                    Mapping.create(item_type_id=itemType.id,
+                    Mapping.create_or_update(item_type_id=itemType.id,
                                mapping=_mapping.mapping)
                     print("session merged.")
 

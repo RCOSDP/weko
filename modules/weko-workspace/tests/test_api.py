@@ -1,10 +1,11 @@
 import pytest
 from mock import patch
+from collections import OrderedDict
 from requests.cookies import RequestsCookieJar
 from requests.exceptions import RequestException
 from requests.models import Response
 
-from weko_workspace.api import JamasURL, CiNiiURL, JALCURL, DATACITEURL
+from weko_workspace.api import JamasURL, CiNiiURL, JALCURL, DATACITEURL, arXivURL
 
 
 # class JamasURL:
@@ -468,5 +469,87 @@ class TestDATACITEURL:
         # raise Exception
         with patch("weko_workspace.api.DATACITEURL._do_http_request",side_effect=Exception("request error")):
             result = datacite.get_data()
+            assert result == {"response":"","error":"request error"}
+
+# class arXivURL:
+class TestarXivURL:
+#     def __init__(self, naid, timeout=None, http_proxy=None, https_proxy=None):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test__init__ -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+    def test__init__(self):
+        # not doi
+        with pytest.raises(ValueError) as e:
+            arXiv = arXivURL(None)
+            assert str(e) == "DOI is required."
+        
+        # not exist timeout,http_proxy,https_proxy
+        arXiv = arXivURL("10.5109/16119")
+        assert arXiv._doi == "10.5109/16119"
+        assert arXiv._timeout == 5
+        assert arXiv._proxy == {"http":"","https":""}
+        
+        # exist timeout,http_proxy,https_proxy
+        arXiv = arXivURL("10.5109/16119",timeout=10,http_proxy="test_http_proxy",https_proxy="test_https_proxy")
+        assert arXiv._doi == "10.5109/16119"
+        assert arXiv._timeout == 10
+        assert arXiv._proxy == {"http":"test_http_proxy","https":"test_https_proxy"}
+        
+
+#     def _create_endpoint(self):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_create_endpoint -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+    def test_create_endpoint(self):
+        arXiv = arXivURL("10.5109/16119")
+        result = arXiv._create_endpoint()
+        assert result == "10.5109/16119"
+
+
+#     def _create_url(self):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_create_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+    def test_create_url(self):
+        arXiv = arXivURL("10.5109/16119")
+        result = arXiv._create_url()
+        assert result == "https://export.arxiv.org/api/query?search_query=doi:10.5109/16119"
+
+
+#     def url(self):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+    def test_url(self):
+        arXiv = arXivURL("10.5109/16119")
+        result = arXiv.url
+        assert result == "https://export.arxiv.org/api/query?search_query=doi:10.5109/16119"
+
+
+#     def _do_http_request(self):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_do_http_request -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+    def test_do_http_request(self,mocker):
+        mock_get = mocker.patch("weko_workspace.api.requests.get")
+        arXiv = arXivURL("10.5109/16119",timeout=5,http_proxy="test_http_proxy",https_proxy="test_https_proxy")
+        arXiv._do_http_request()
+        mock_get.assert_called_once_with(
+            "https://export.arxiv.org/api/query?search_query=doi:10.5109/16119",
+            timeout=5,
+            proxies={"http": "test_http_proxy", "https": "test_https_proxy"}
+        )
+
+
+#     def get_data(self):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_get_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+    def test_get_data(self, app):
+        arXiv = arXivURL("10.5109/16119")
+        res = Response()
+        res._content = b'<feed><entry><id>id</id></entry></feed>'
+        res.status_code = 200
+        
+        with patch("weko_workspace.api.arXivURL._do_http_request",return_value=res):
+            result = arXiv.get_data()
+            assert result == {"response":OrderedDict([('feed', OrderedDict([('entry', OrderedDict([('id', 'id')]))]))]),"error":""}
+        # statuscode != 200
+        res.status_code = 400
+        with patch("weko_workspace.api.arXivURL._do_http_request",return_value=res):
+            result = arXiv.get_data()
+            assert result == {"response":"","error":""}
+        
+        # raise Exception
+        with patch("weko_workspace.api.arXivURL._do_http_request",side_effect=Exception("request error")):
+            result = arXiv.get_data()
             assert result == {"response":"","error":"request error"}
 

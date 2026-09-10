@@ -65,3 +65,10 @@ ranking_read_scope = Scope(
     help_text=_('Allow read ranking.'),
 )
 """Scope to protect ranking."""
+
+item_bulk_process_scope = Scope(
+    id_='item:bulkprocess',
+    group='item',
+    help_text=_('Allow bulk process item.'),
+)
+"""Scope to bulk process item."""

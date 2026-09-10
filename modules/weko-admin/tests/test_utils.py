@@ -2,7 +2,7 @@ import csv
 import uuid
 from mock import patch
 from datetime import datetime, timedelta
-from flask import current_app, Markup
+from flask import current_app, Markup, Flask
 from io import StringIO
 import pytest
 import json
@@ -111,12 +111,49 @@ def test_allowed_file():
 # def get_search_setting():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_search_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_get_search_setting(app,search_management):
+    from weko_admin.utils import delete_search_setting_cache
+    delete_search_setting_cache()
     with patch("weko_admin.utils.SearchManagement.get",return_value=None):
         result = get_search_setting()
         assert result == WEKO_ADMIN_MANAGEMENT_OPTIONS
 
+    # the two calls observe different underlying state, so invalidate the
+    # short-TTL cache between them (update() does this in real usage).
+    delete_search_setting_cache()
     result = get_search_setting()
     assert result=={"init_disp_setting":{"init_disp_index":"","init_disp_index_disp_method":"0","init_disp_screen_setting":"0"}}
+
+
+def test_get_search_setting_cache(app, search_management):
+    """D: get_search_setting is served from a short-TTL cache (2nd call does not
+    hit SearchManagement), delete_search_setting_cache() invalidates it, and a
+    returned copy cannot corrupt the cache."""
+    from weko_admin.utils import delete_search_setting_cache
+    from weko_admin.models import SearchManagement
+    delete_search_setting_cache()
+
+    with patch("weko_admin.utils.SearchManagement.get",
+               wraps=SearchManagement.get) as m_get:
+        # 1st call populates the cache
+        r1 = get_search_setting()
+        n1 = m_get.call_count
+        assert n1 >= 1
+        # 2nd call is served from cache -> SearchManagement.get not called again
+        r2 = get_search_setting()
+        assert m_get.call_count == n1
+    assert r1 == r2
+
+    # returned value is a copy: mutating it must not corrupt the cache
+    r2["_injected"] = 1
+    r3 = get_search_setting()
+    assert "_injected" not in r3
+
+    # invalidation forces a rebuild (SearchManagement.get called again)
+    delete_search_setting_cache()
+    with patch("weko_admin.utils.SearchManagement.get", return_value=None) as m_none:
+        r4 = get_search_setting()
+        assert m_none.called
+    assert r4 == WEKO_ADMIN_MANAGEMENT_OPTIONS
 
 # def get_admin_lang_setting():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_get_admin_lang_setting -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -138,13 +175,18 @@ def test_update_admin_lang_setting(language_setting):
     admin_lang_settings = [
         {"lang_code":"en","lang_name":"English2","is_registered":False,"sequence":10},
     ]
-    result = update_admin_lang_setting(admin_lang_settings)
-    assert result == "success"
-    assert AdminLangSettings.query.filter_by(lang_code="en").one().lang_name == "English2"
+    # update_admin_lang_setting returns nothing and does not swallow errors;
+    # what it does is write the rows.
+    assert update_admin_lang_setting(admin_lang_settings) is None
+    updated = AdminLangSettings.query.filter_by(lang_code="en").one()
+    assert updated.lang_name == "English2"
+    assert updated.is_registered is False
+    assert updated.sequence == 10
 
     with patch("weko_admin.utils.AdminLangSettings.update_lang",side_effect=Exception("test_error")):
-        result = update_admin_lang_setting(admin_lang_settings)
-        assert result=="test_error"
+        with pytest.raises(Exception) as e:
+            update_admin_lang_setting(admin_lang_settings)
+        assert str(e.value) == "test_error"
 
 
 # def get_selected_language():
@@ -461,8 +503,9 @@ def test_write_report_file_rows(db,users):
     output = StringIO()
     writer = csv.writer(output,delimiter=",",lineterminator="\n")
     write_report_file_rows(writer,record,"file_using_per_user")
+    # user 1 has the profile created just above, so its display name shows up.
     assert output.getvalue() == ",Guest,10,5\n"\
-                                "user@test.org,,10,5\n"
+                                "user@test.org,test smith,10,5\n"
 
     # filetype is top_page_access
     record = [{"host":"test_host","ip":"123.456.789","count":"10"}]
@@ -1927,7 +1970,7 @@ def test_update_restricted_access(admin_settings,mocker):
     result = update_restricted_access(data)
     mock_called.assert_not_called()
     mock_called.reset_mock()
-    
+
     data = {
         "edit_mail_templates_enable": False
     }
@@ -2171,6 +2214,252 @@ def test_create_facet_search_query(facet_search_settings):
     assert has_permission == test_has_permission
     assert no_permission == test_no_permission
 
+class DummyFacet:
+    def __init__(self, name_en, mapping, aggregations):
+        self.name_en = name_en
+        self.mapping = mapping
+        self.aggregations = aggregations
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_create_aggregations_branch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_create_aggregations_branch(mocker):
+    ACCESS_RIGHTS_QUERY_TEMPLATE = {
+        "open access": {
+            "bool": {
+                "should": [
+                    {"term": {"accessRights": "open access"}},
+                    {
+                        "bool": {
+                            "must": [
+                                {"term": {"accessRights": "embargoed access"}},
+                                {"nested": {"path": "content", "query": {"exists": {"field": "content.accessrole.raw"}}}},
+                                {
+                                    "bool": {
+                                        "must_not": [
+                                            {
+                                                "nested": {
+                                                    "path": "content",
+                                                    "query": {
+                                                        "bool": {
+                                                            "must_not": [
+                                                                {"term": {"content.accessrole.raw": "open_access"}},
+                                                                {
+                                                                    "bool": {
+                                                                        "must": [
+                                                                            {"term": {"content.accessrole.raw": "open_date"}},
+                                                                            {"range": {"content.date.dateValue.raw": {"lte": "@date"}}}
+                                                                        ]
+                                                                    }
+                                                                }
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "embargoed access": {
+            "bool": {
+                "must": [
+                    {"term": {"accessRights": "embargoed access"}},
+                    {
+                        "bool": {
+                            "should": [
+                                {
+                                    "nested": {
+                                        "path": "content",
+                                        "query": {
+                                            "bool": {
+                                                "must": [
+                                                    {"term": {"content.accessrole.raw": "open_date"}},
+                                                    {"range": {"content.date.dateValue.raw": {"gt": "@date"}}}
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                {
+                                    "bool": {
+                                        "must": [
+                                            {"nested": {
+                                                "path": "content",
+                                                "query": {"term": {"content.accessrole.raw": "open_no"}}
+                                            }}
+                                        ],
+                                        "must_not": [
+                                            {"nested": {
+                                                "path": "content",
+                                                "query": {"term": {"content.accessrole.raw": "open_login"}}
+                                            }}
+                                        ]
+                                    }
+                                },
+                                {
+                                    "bool": {
+                                        "must_not": [
+                                            {"nested": {
+                                                "path": "content",
+                                                "query": {"exists": {"field": "content.accessrole.raw"}}
+                                            }}
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "must_not": [
+                    {
+                        "nested": {
+                            "path": "content",
+                            "query": {"term": {"content.accessrole.raw": "open_restricted"}}
+                        }
+                    }
+                ]
+            }
+        },
+        "restricted access": {
+            "bool": {
+                "should": [
+                    {"term": {"accessRights": "restricted access"}},
+                    {
+                        "bool": {
+                            "must": [
+                                {"term": {"accessRights": "embargoed access"}},
+                                {
+                                    "nested": {
+                                        "path": "content",
+                                        "query": {
+                                            "term": {"content.accessrole.raw": "open_login"}
+                                        }
+                                    }
+                                },
+                                {
+                                    "bool": {
+                                        "must_not": [
+                                            {
+                                                "nested": {
+                                                    "path": "content",
+                                                    "query": {
+                                                        "bool": {
+                                                            "must": [
+                                                                {"term": {"content.accessrole.raw": "open_date"}},
+                                                                {"range": {"content.date.dateValue.raw": {"gt": "@date"}}}
+                                                            ]
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "bool": {
+                            "must": [
+                                {"term": {"accessRights": "embargoed access"}},
+                                {
+                                    "nested": {
+                                        "path": "content",
+                                        "query": {
+                                            "term": {"content.accessrole.raw": "open_restricted"}
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "metadata only access": {
+            "bool": {
+                "must": [
+                    {"term": {"accessRights": "metadata only access"}}
+                ]
+            }
+        }
+    }
+    # 1. ACCESSRIGHTS_FIX_ENABLED=False
+    app = Flask(__name__)
+    app.config["SEARCH_UI_SEARCH_INDEX"] = "testidx"
+    app.config["WEKO_SEARCH_FIX_ACCESSRIGHTS"] = False
+    mocker.patch("weko_admin.models.FacetSearchSetting.get_activated_facets", return_value=[DummyFacet("type", "type", [])])
+    with app.app_context():
+        has_permission, no_permission = create_facet_search_query()
+        aggs = has_permission["testidx"]["aggs"]
+        assert "new_accessRights" not in aggs
+
+    # 2. ACCESSRIGHTS_FIX_ENABLED=True, no accessRights facet
+    app = Flask(__name__)
+    app.config["SEARCH_UI_SEARCH_INDEX"] = "testidx"
+    app.config["WEKO_SEARCH_FIX_ACCESSRIGHTS"] = True
+    mocker.patch("weko_admin.models.FacetSearchSetting.get_activated_facets", return_value=[DummyFacet("type", "type", [])])
+    with app.app_context():
+        has_permission, no_permission = create_facet_search_query()
+        aggs = has_permission["testidx"]["aggs"]
+        assert "new_accessRights" not in aggs
+
+    # 3. ACCESSRIGHTS_FIX_ENABLED=True, with accessRights facet
+    app = Flask(__name__)
+    app.config["SEARCH_UI_SEARCH_INDEX"] = "testidx"
+    app.config["WEKO_SEARCH_FIX_ACCESSRIGHTS"] = True
+    app.config["WEKO_ACCESS_RIGHTS_CHOICES"] = [
+        "open access", "embargoed access", "restricted access", "metadata only access"
+    ]
+    mocker.patch("weko_admin.models.FacetSearchSetting.get_activated_facets", return_value=[
+        DummyFacet("accessRights", "accessRights", [
+            {"agg_mapping": "publish_status", "agg_value": 0}
+        ])
+    ])
+    with app.app_context():
+        has_permission, no_permission = create_facet_search_query()
+        aggs = has_permission["testidx"]["aggs"]
+        assert "new_accessRights" in aggs
+        filters = aggs["new_accessRights"]["filters"]["filters"]
+        for access_type in app.config["WEKO_ACCESS_RIGHTS_CHOICES"]:
+            assert access_type in filters
+            assert "bool" in filters[access_type]
+            import copy
+            for access_type in app.config["WEKO_ACCESS_RIGHTS_CHOICES"]:
+                template = copy.deepcopy(ACCESS_RIGHTS_QUERY_TEMPLATE[access_type])
+                actual_bool = filters[access_type]["bool"]
+                # Replace @date in the template with today's date
+                def replace_date(obj, today):
+                    if isinstance(obj, dict):
+                        for k, v in obj.items():
+                            if isinstance(v, str) and v == "@date":
+                                obj[k] = today
+                            else:
+                                replace_date(v, today)
+                    elif isinstance(obj, list):
+                        for v in obj:
+                            replace_date(v, today)
+                today = datetime.now().strftime("%Y-%m-%d")
+                replace_date(template, today)
+                # After the publish_status term condition, check if the template structure matches
+                must_list = actual_bool.get("must", [])
+                access_query = must_list[2] if len(must_list) > 2 else must_list[-1]
+                assert access_query == template
+
+    # When facet mapping includes “fields.raw”
+    app = Flask(__name__)
+    app.config["SEARCH_UI_SEARCH_INDEX"] = "testidx"
+    mocker.patch("weko_admin.models.FacetSearchSetting.get_activated_facets", return_value=[
+        DummyFacet("raw_test", "test.fields.raw", [])
+    ])
+    with app.app_context():
+        has_permission, no_permission = create_facet_search_query()
+        post_filters = has_permission["testidx"]["post_filters"]
+        assert post_filters["raw_test"] == "test.raw"
 
 # def store_facet_search_query_in_redis():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_utils.py::test_store_facet_search_query_in_redis -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
@@ -2189,7 +2478,12 @@ def test_store_facet_search_query_in_redis(mocker):
             'aggs': {'Data Language': {'aggs': {'Data Language': {'terms': {'field': 'language','size': 1000}}},
                                         'filter': {'bool': {'must': [{'term': {'publish_status': '0'}}]}}},
                     'Data Type': {'aggs': {'Data Type': {'terms': {'field': 'description.value','size': 1000}}},
-                                'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}}},
+                                'filter': {'bool': {'must': [{'term': {'description.descriptionType': 'Other'}},{'term': {'publish_status': '0'}}]}}},
+                    'Time Period(s)': {'aggs': {'Time Period(s)': {'terms':{'field': 'temporal','size':1000}}},
+                                 'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}},
+                    'raw_test': {'aggs': {'raw_test': {'terms':{'field': 'fields.raw','size':1000}}},
+                                 'filter':{'bool':{'must':[{'term':{'publish_status':'0'}}]}}}
+                    },
                    'post_filters': {'Data Language': 'language',
                                     'Data Type': 'description.value'}},
     }

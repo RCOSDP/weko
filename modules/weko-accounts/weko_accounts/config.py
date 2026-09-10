@@ -65,6 +65,8 @@ WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL = 180
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.py'
 """Login proxy URL."""
 
+WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL = '{}ams/login'
+
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (False, 'shib_eppn'),
     # 'SHIB_ATTR_LOGIN_ID': (False, 'shib_uid'),
@@ -242,8 +244,9 @@ WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "role_mapping":{
         "radm":"Repository Administrator",
         "cadm":"Community Administrator",
-        "cont":"Contributor",
-    }
+        "cont":"Contributor"
+    },
+    "group_keyword":"gr"
 }
 """Patterns for Gakunin group names."""
 

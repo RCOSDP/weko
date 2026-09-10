@@ -152,13 +152,14 @@ def check_rocrate_import_items_task(
 @shared_task(ignore_results=False)
 def import_item(item, request_info):
     """Import Item."""
+    start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
-        start_date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         result = import_items_to_system(item, request_info) or dict()
         result["start_date"] = start_date
         return result
-    except Exception:
+    except Exception as ex:
         current_app.logger.error(traceback.format_exc())
+        return {"success": False, "start_date": start_date, "error_id": 'Internal server error'}
 
 
 @shared_task

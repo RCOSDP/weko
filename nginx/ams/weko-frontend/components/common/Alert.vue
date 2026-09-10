@@ -92,7 +92,12 @@
           stroke-width="2"
           d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <span>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
+      <span v-if="message == 'message.error.oauthError'">
+        {{ $t('message.error.oauthError', { time: transitionSecond }) }}
+        <a :href="loginPage" class="link">{{ loginPage }}</a>
+        {{ code ? ' (' + code + ')' : '' }}
+      </span>
+      <span v-else>{{ $t(message) + (code ? ' (' + code + ')' : '') }}</span>
       <button
         type="button"
         class="ml-auto -mx-1.5 -my-1.5 rounded-lg p-1.5 inline-flex items-center justify-center h-8 w-8"
@@ -118,32 +123,18 @@
 // props
 /////////////////////////////////// */
 
-defineProps({
-  // トースト種別
+const props = defineProps({
+  // トースト種別(loglevel)
   // {info:インフォーメーション , success:成功 , warning:警告 , error:エラー}
-  type: {
-    type: String,
-    default: 'info'
-  },
-  // トーストに表示するメッセージ
-  message: {
-    type: String,
-    default: ''
-  },
-  // エラーコード
-  code: {
-    type: Number,
-    default: 0
-  },
   // 表示位置(https://daisyui.com/components/toast/)
-  position: {
-    type: String,
-    default: ''
-  },
-  // width(css)
-  width: {
-    type: String,
-    default: 'w-full'
+  alert: {
+    default: () => ({
+      msgid: '',
+      msgstr: '',
+      position: '',
+      width: 'w-full',
+      loglevel: 'info'
+    })
   }
 });
 
@@ -152,4 +143,8 @@ defineProps({
 /////////////////////////////////// */
 
 const emits = defineEmits(['clickClose']);
+const appConf = useAppConfig();
+const transitionSecond = appConf.transitionTimeMs / 1000;
+const loginPage = window.location.origin + `${appConf.amsPath ?? ''}/login?source=detail`;
+const { msgid: code, msgstr: message, position, width, loglevel: type } = toRefs(props.alert);
 </script>

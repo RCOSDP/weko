@@ -179,6 +179,7 @@ from weko_workflow.views import workflow_blueprint as weko_workflow_blueprint
 from werkzeug.local import LocalProxy
 
 from tests.helpers import create_record, json_data
+from weko_accounts.unauthorized import install as install_unauthorized_handler
 from weko_schema_ui import WekoSchemaUI
 from weko_schema_ui.config import (
     WEKO_SCHEMA_DDI_SCHEMA_NAME,
@@ -302,6 +303,12 @@ def base_app(instance_path):
     WekoSchemaUI(app_)
     WekoDeposit(app_)
     WekoDepositREST(app_)
+    # The schema REST endpoints live on the API app in production, where
+    # WekoAccountsREST installs this handler. Without it flask_login answers
+    # an unauthorized call with a 302 *return value*, which
+    # ContentNegotiatedMethodView then unpacks as (pid, record) and dies with
+    # "view() missing 1 required positional argument: 'record'".
+    install_unauthorized_handler(app_, api_only=True)
     # app_.register_blueprint(weko_schema_ui_blueprint)
     app_.register_blueprint(weko_records_ui_blueprint)
     app_.register_blueprint(invenio_files_rest_blueprint)  # invenio_files_rest
@@ -312,6 +319,109 @@ def base_app(instance_path):
 
     return app_
 
+@pytest.fixture()
+def base_app2(instance_path):
+    app_ = Flask(
+        "testapp",
+        instance_path=instance_path,
+        static_folder=join(instance_path, "static"),
+    )
+    app_.url_map.converters["pid"] = PIDConverter
+    WEKO_INDEX_TREE_REST_ENDPOINTS = copy.deepcopy(_WEKO_INDEX_TREE_REST_ENDPOINTS)
+    WEKO_INDEX_TREE_REST_ENDPOINTS["tid"]["index_route"] = "/tree/index/<int:index_id>"
+    WEKO_DEPOSIT_REST_ENDPOINTS = copy.deepcopy(DEPOSIT_REST_ENDPOINTS)
+    WEKO_DEPOSIT_REST_ENDPOINTS["depid"]["rdc_route"] = "/deposits/redirect/<{0}:pid_value>".format(_PID)
+    WEKO_DEPOSIT_REST_ENDPOINTS["depid"]["pub_route"] = "/deposits/publish/<{0}:pid_value>".format(_PID)
+    app_.config.update(
+        SECRET_KEY="SECRET_KEY",
+        SERVER_NAME="test_server",
+        TESTING=True,
+        SQLALCHEMY_DATABASE_URI=os.getenv('SQLALCHEMY_DATABASE_URI',
+                                           'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        CACHE_REDIS_URL=os.environ.get("CACHE_REDIS_URL", "redis://redis:6379/0"),
+        CACHE_TYPE="redis",
+        CACHE_REDIS_DB=0,
+        CACHE_REDIS_HOST="redis",
+        REDIS_PORT="6379",
+        WEKO_SCHEMA_CACHE_PREFIX="cache_{schema_name}",
+        RECORDS_UI_ENDPOINTS=RECORDS_UI_ENDPOINTS,
+        RECORDS_UI_EXPORT_FORMATS=RECORDS_UI_EXPORT_FORMATS,
+        WEKO_RECORDS_UI_CITES_REST_ENDPOINTS=WEKO_RECORDS_UI_CITES_REST_ENDPOINTS,
+        WEKO_PERMISSION_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+            "Contributor",
+            "General",
+            "Community Administrator",
+        ],
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            "System Administrator",
+            "Repository Administrator",
+        ],
+        THEME_SITEURL = 'https://localhost',
+        WEKO_SCHEMA_REST_XSD_LOCATION_FOLDER="{0}/data/xsd/",
+        BASE_EDIT_TEMPLATE="weko_theme/edit.html",
+        WEKO_SCHEMA_UI_ADMIN_LIST="weko_schema_ui/admin/list.html",
+        WEKO_SCHEMA_UI_ADMIN_UPLOAD="weko_schema_ui/admin/upload.html",
+        INDEXER_DEFAULT_INDEX="{}-weko-item-v1.0.0".format("test"),
+        SEARCH_UI_SEARCH_INDEX="{}-weko-item-v1.0.0".format("test"),
+        INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
+        INDEXER_DEFAULT_DOC_TYPE="item-v1.0.0",
+        INDEXER_FILE_DOC_TYPE="content",
+        SEARCH_ELASTIC_HOSTS="elasticsearch",
+        SEARCH_INDEX_PREFIX="test-",
+        WEKO_BUCKET_QUOTA_SIZE=50 * 1024 * 1024 * 1024,
+        WEKO_MAX_FILE_SIZE=50 * 1024 * 1024 * 1024,
+        INDEX_IMG="indextree/36466818-image.jpg",
+        WEKO_SEARCH_MAX_RESULT=WEKO_SEARCH_MAX_RESULT,
+        WEKO_DEPOSIT_REST_ENDPOINTS=WEKO_DEPOSIT_REST_ENDPOINTS,
+        WEKO_INDEX_TREE_UPATED=True,
+        WEKO_INDEX_TREE_REST_ENDPOINTS=WEKO_INDEX_TREE_REST_ENDPOINTS,
+        I18N_LANGUAGES=[("ja", "Japanese"), ("en", "English")],
+        WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME=WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME,
+        WEKO_SCHEMA_DDI_SCHEMA_NAME=WEKO_SCHEMA_DDI_SCHEMA_NAME,
+        OAISERVER_XSL_URL=None,
+        RESOURCE_TYPE_URI=RESOURCE_TYPE_URI,
+        WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE=None,
+        WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE=None,
+    )
+    InvenioAccounts(app_)
+    InvenioAssets(app_)
+    InvenioAccess(app_)
+    InvenioAdmin(app_)
+    InvenioDB(app_)
+    InvenioCache(app_)
+    InvenioOAuth2Server(app_)
+    InvenioPIDStore(app_)
+    InvenioPIDRelations(app_)
+    InvenioSearch(app_)
+    InvenioOAIServer(app_)
+    InvenioSearchUI(app_)
+    InvenioDeposit(app_)
+    InvenioFilesREST(app_)
+    InvenioIndexer(app_)
+    InvenioRecords(app_)
+    InvenioRecordsUI(app_)
+    InvenioRecordsREST(app_)
+    Babel(app_)
+    Menu(app_)
+    WekoRecords(app_)
+    WekoItemsUI(app_)
+    WekoRecordsUI(app_)
+    WekoAdmin(app_)
+    WekoSearchUI(app_)
+    WekoIndexTree(app_)
+    WekoIndexTreeREST(app_)
+    WekoLoggingUserActivity(app_)
+    WekoSchemaUI(app_)
+    WekoDeposit(app_)
+    WekoDepositREST(app_)
+    app_.register_blueprint(weko_records_ui_blueprint)
+    app_.register_blueprint(invenio_files_rest_blueprint)
+    app_.register_blueprint(invenio_oaiserver_blueprint)
+    current_assets = LocalProxy(lambda: app_.extensions["invenio-assets"])
+    current_assets.collect.collect()
+    return app_
 
 @pytest.yield_fixture()
 def app(base_app):
@@ -667,6 +777,11 @@ def db_itemtype(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type}
@@ -709,6 +824,11 @@ def db_itemtype_jdcat(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type}
@@ -894,6 +1014,11 @@ def itemtypes(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {
@@ -2283,3 +2408,295 @@ def make_record(db, indexer, i, filepath, filename, mimetype):
         "mimetype": mimetype,
         "obj": obj,
     }
+
+@pytest.fixture()
+def record_jpcoar_v1():
+    record = [
+        {
+            "metadata": {
+                "item_type_id": 1,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"},
+                                {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_v1_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 2,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_v1_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 3,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+                        }
+                    ],
+                    "jpcoar_v1_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 4,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789"},
+                                {"nameIdentifier": "123456"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_v1_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 5,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"},
+                                {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 6,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_v1_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+    return record
+
+@pytest.fixture()
+def record_jpcoar_v2():
+    record = [
+        {
+            "metadata": {
+                "item_type_id": 1,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"},
+                                {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 2,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 3,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+                        }
+                    ],
+                    "jpcoar_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 4,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789"},
+                                {"nameIdentifier": "123456"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 5,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"},
+                                {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+                            ]
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            "metadata": {
+                "item_type_id": 6,
+                "creator": {
+                    "attribute_value_mlt": [
+                        {
+                            "creatornames": [
+                                {"creatorname": "Taro Yamada"}
+                            ],
+                            "nameIdentifiers": [
+                                {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"}
+                            ]
+                        }
+                    ],
+                    "jpcoar_mapping": {
+                        "creatornames": {
+                            "@value": "creatornames.creatorname",
+                            "@attributes": {
+                                "xml:lang": "creatornames.lang"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    ]
+    return record

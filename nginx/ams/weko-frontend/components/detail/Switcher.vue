@@ -52,6 +52,7 @@ const props = defineProps({
     default: 0
   }
 });
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // emits
@@ -68,7 +69,7 @@ const emits = defineEmits(['clickPrev', 'clickNext']);
  */
 function throughDblClick() {
   if (location.pathname !== '/search') {
-    navigateTo('/search');
+    navigateTo(`${appConf.amsPath ?? ''}/search`);
   }
 }
 </script>

@@ -734,6 +734,30 @@ class TestAdminSettings:
             result = AdminSettings.get("storage_check_settings",True)
             assert result == None
 
+    def test_get_cache(self, admin_settings):
+        """B: AdminSettings.get is served from a short-TTL cache; the returned
+        value is a copy (mutation-safe); update() invalidates the entry."""
+        from weko_admin.models import _admin_settings_cache_key
+        from invenio_cache import current_cache
+        current_cache.delete(_admin_settings_cache_key("storage_check_settings"))
+
+        with patch("weko_admin.models.AdminSettings.query") as m_query:
+            m_query.filter_by.side_effect = AssertionError("DB hit on cached read")
+            # prime the cache directly to isolate the read path
+            current_cache.set(_admin_settings_cache_key("storage_check_settings"),
+                              {"day": 0, "cycle": "weekly", "threshold_rate": 80})
+            r1 = AdminSettings.get("storage_check_settings", False)
+            assert r1 == {"day": 0, "cycle": "weekly", "threshold_rate": 80}
+            # returned value is a copy: mutating it must not corrupt the cache
+            r1["injected"] = 1
+            r2 = AdminSettings.get("storage_check_settings", False)
+            assert "injected" not in r2
+
+        # update() invalidates -> next get rebuilds from DB with the new value
+        AdminSettings.update(name="storage_check_settings", settings={"day": 5})
+        r3 = AdminSettings.get("storage_check_settings", False)
+        assert r3 == {"day": 5}
+
 #    def update(cls, name, settings, id=None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_models.py::TestAdminSettings::test_update -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
     def test_update(self,admin_settings):

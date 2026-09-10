@@ -4046,11 +4046,11 @@ def edit_item_direct_after_login(pid_value):
     item_uuid = latest_pid.object_uuid
     post_workflow = activity.get_workflow_activity_by_item_id(item_uuid)
 
-    if post_workflow:
-        is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
-        if is_begin_edit:
-            return render_template("weko_theme/error.html",
-                    error="This Item is being edited."), 400
+    
+    is_begin_edit = check_item_is_being_edit(recid, post_workflow, activity)
+    if is_begin_edit:
+        return render_template("weko_theme/error.html",
+                error="This Item is being edited."), 400
 
     post_activity = '{"workflow_id": 0, "flow_id": 0, ' \
         '"itemtype_id": 0, "community": 0, "post_workflow": 0}'

@@ -133,5 +133,32 @@
     "test_item15":{
         "jpcoar_mapping":{"volume": { "@value": "test15_subitem1" } }
     },
+    "test_item16":{
+        "jpcoar_mapping":{
+            "relation":{
+                "@attributes": {"relationType": "subitem_relation_type"},
+                "relatedIdentifier": {
+                    "@value": "test16_subitem1.test16_subitem2",
+                    "@attributes": {
+                      "identifierType": "test16_subitem1.test16_subitem3"
+                    }
+                }
+            }
+        }
+    },
+    "test_item17":{
+        "jpcoar_mapping":{
+            "relation":{
+                "@attributes": {"": ""},
+                "relatedIdentifier": {
+                    "@value": "test16_subitem1.test16_subitem2",
+                    "@attributes": {
+                      "identifierType": "test16_subitem1.test16_subitem3"
+                    }
+                }
+            }
+        }
+    },
+    
     "test_itemxx":""
 }

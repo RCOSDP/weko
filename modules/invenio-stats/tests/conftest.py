@@ -234,6 +234,31 @@ def instance_path():
     shutil.rmtree(path)
 
 
+@pytest.fixture(autouse=True)
+def quorum_stats_queues():
+    """Declare the stats queues the way the consumer does.
+
+    The kombu build this project pins hardcodes
+    ``queue_arguments={'x-queue-type': 'quorum'}`` in compat.Consumer
+    (kombu/compat.py:118), while invenio_queues declares its queues with no
+    arguments at all, i.e. with the vhost default. RabbitMQ then answers the
+    second of the two declares with
+    "PRECONDITION_FAILED - inequivalent arg 'x-queue-type' for queue
+    'stats-file-download'". Line the declaration up with the consumer so the
+    two agree.
+    """
+    import invenio_queues.queue as invenio_queues_queue
+
+    original_queue = invenio_queues_queue.Q
+
+    def quorum_queue(*args, **kwargs):
+        kwargs.setdefault('queue_arguments', {'x-queue-type': 'quorum'})
+        return original_queue(*args, **kwargs)
+
+    with patch.object(invenio_queues_queue, 'Q', quorum_queue):
+        yield
+
+
 @pytest.fixture()
 def base_app(instance_path, mock_gethostbyaddr):
     """Flask application fixture without InvenioStats."""
@@ -272,6 +297,12 @@ def base_app(instance_path, mock_gethostbyaddr):
         OAUTH2SERVER_TOKEN_PERSONAL_SALT_LEN=60,
         OAUTH2_CACHE_TYPE="simple",
         SEARCH_INDEX_PREFIX='test-',
+        # invenio_stats.utils classifies a row's user role against these.
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            'System Administrator',
+            'Repository Administrator',
+        ],
+        WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         STATS_MQ_EXCHANGE=Exchange(
             'test_events',
             type='direct',
@@ -457,6 +488,10 @@ def role_users(app, db):
 @pytest.yield_fixture()
 def db(app):
     """Setup database."""
+    # invenio_stats.utils reads Community, and the model has to be imported
+    # before create_all() for its table to be part of the metadata.
+    from invenio_communities.models import Community  # noqa: F401
+
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()

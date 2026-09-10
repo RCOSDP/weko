@@ -22,6 +22,8 @@ const GET_SYSTEM_LANG_URL = '/api/admin/get_system_lang';
 const SAVE_WIDGET_LAYOUT_SETTING_URL = "/api/admin/save_widget_layout_setting";
 const LOAD_WIDGET_DESIGN_SETTING_URL = "/api/admin/load_widget_design_setting";
 const LOAD_WIDGET_DESIGN_PAGE_SETTING_URL = '/api/admin/load_widget_design_page_setting/';
+const WIDGET_DESIGN_PREVIEW_URL = '/admin/widgetdesign/preview/';
+const GET_WIDGET_DETAIL = '/api/admin/get_widget_item_list'
 
 let windowObjectReference = null;
 let previousUrl; /* global variable that will store the
@@ -870,8 +872,12 @@ class ButtonLayout extends React.Component {
       "margin-left": "-15px"
 
     };
+    this.previewStyle = {
+      "margin-right": "10px"
+    };
     this.handleSave = this.handleSave.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
+    this.handlePreview = this.handlePreview.bind(this);
   }
 
   handleSave() {
@@ -913,6 +919,86 @@ class ButtonLayout extends React.Component {
     });
   }
 
+  handlePreview() {
+    console.log(this.props.repositoryId)
+    $.ajax({
+      url: GET_WIDGET_DETAIL,
+      type: 'GET',
+      dataType: "json",
+      contentType: 'application/json',
+      data: {
+        repository_id: this.props.repositoryId
+      },
+      success: function (res) {
+        let widgetDetails = res.data
+        this.serializedData = _.map($('.grid-stack > .grid-stack-item:visible'), function (el) {
+          el = $(el);
+          let node = el.data('_gridstack_node');
+          let id = el.data("id");
+          let type = el.data("type");
+          let widget_id = el.data("widget_id");
+          let created_date = el.data("created_date");
+          if (!id) {
+            return;
+          } else if (MAIN_CONTENT_TYPE === type) {
+            isHasMainContent = true;
+          }
+
+          let settingWidgetDetail = {}
+          if (widget_id) {
+            const widgetDetail = widgetDetails[widget_id]["widget-settings"]
+            settingWidgetDetail = {
+              ...widgetDetail
+            }
+          }
+
+          let result = {
+            x: node.x,
+            y: node.y,
+            width: node.width,
+            height: node.height,
+            ...settingWidgetDetail
+          };
+          if (created_date) {
+            result.created_date = created_date;
+          }
+          return result;
+        }, this);
+        var widgetDesignData = this.serializedData.filter(function (el) {
+          return el != null;
+        });
+        let repositoryId = document.getElementById("repository-id").value;
+        let pageListSelectElement = document.getElementById("pages-list-select");
+        let pageId = "0";
+        let isMainLayout = true;
+        if (pageListSelectElement && pageListSelectElement.options) {
+          pageId = pageListSelectElement.value;
+          let option = pageListSelectElement.options[pageListSelectElement.selectedIndex];
+          if (option.dataset) {
+            isMainLayout = (String(option.dataset.isMainLayout) === "true");
+          }
+        }
+        if (String(repositoryId) === "0") {
+          alertModal("Please select the Repository.");
+          return false;
+        } else if (!widgetDesignData) {
+          //alert('Please add Widget to Preview panel.');
+          alertModal("Please add Widget to Preview panel.");
+          return false;
+        }
+
+        localStorage.setItem("widget_setting_data", JSON.stringify({
+          "widget-settings": widgetDesignData,
+          error: ""
+        }));
+        window.open(WIDGET_DESIGN_PREVIEW_URL, '_blank');
+      },
+      error: function (error) {
+        console.log(error);
+      }
+    });
+  }
+
   render() {
     return (
       <div className="form-group col-xs-10">
@@ -920,6 +1006,12 @@ class ButtonLayout extends React.Component {
           style={this.style} onClick={this.handleSave}>
           <span className="glyphicon glyphicon-saved" aria-hidden="true" />
           &nbsp;Save
+        </button>
+        <button id="preview-widget"
+          className="form-group btn btn-success action-button"
+          style={this.previewStyle} onClick={this.handlePreview}>
+          <span className="glyphicon glyphicon-eye-open" aria-hidden="true" />
+          Preview
         </button>
         <button id="clear-grid"
           className="form-group btn btn-info cancel-button"
@@ -1300,7 +1392,7 @@ $(function () {
 });
 
 /**
- * Handle disable Save and Cancel button.
+ * Handle disable Save and Cancel and Preview button.
  */
 function disableButton() {
   let repositoryId = document.getElementById("repository-id").value;
@@ -1309,12 +1401,15 @@ function disableButton() {
   }
   let saveGrid = document.getElementById("save-grid");
   let clearGrid = document.getElementById("clear-grid");
+  let PreviewWidget = document.getElementById("preview-widget");
   if (String(repositoryId) === "0") {
     saveGrid.setAttribute('disabled', 'disabled');
     clearGrid.setAttribute('disabled', 'disabled');
+    PreviewWidget.setAttribute('disabled', 'disabled');
   } else {
     saveGrid.removeAttribute('disabled');
     clearGrid.removeAttribute('disabled');
+    PreviewWidget.removeAttribute('disabled');
   }
 }
 

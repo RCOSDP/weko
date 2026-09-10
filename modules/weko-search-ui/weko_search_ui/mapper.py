@@ -11,6 +11,9 @@
 import os
 import re
 import json
+import chardet
+import mimetypes
+from pypdfium2 import PdfiumError
 import itertools
 import xmltodict
 import traceback
@@ -22,12 +25,14 @@ from rocrate.model.contextentity import ContextEntity
 from urllib.parse import urlparse
 
 from flask import current_app, url_for
+from flask_babelex import lazy_gettext as _
 
 from invenio_pidstore.models import PersistentIdentifier
 from weko_records.api import (
     Mapping, ItemTypes, FeedbackMailList, RequestMailList, ItemLink
 )
 from weko_records.serializers.utils import get_full_mapping
+from weko_deposit.utils import extract_text_from_pdf, extract_text_with_tika
 
 from .config import ROCRATE_METADATA_FILE, ROCRATE_METADATA_WK_CONTEXT_V1
 
@@ -1376,6 +1381,114 @@ class JsonLdMapper(JsonMapper):
 
         return errors if errors else None
 
+    def apply_import_replace_rules(self, metadata, info):
+        """
+        Apply import replacement rules to metadata.
+        Args:
+            metadata (dict): Metadata to apply replacement rules to.
+            info (dict): System information dictionary to log warnings.
+        Returns:
+            metadata (dict): Metadata after applying replacement rules.
+            info (dict): Updated system information with warnings.
+        """
+        warning_list = []
+        try:
+            mapping_id = self.mapping_id
+
+            rules = current_app.config.get(
+                "WEKO_SEARCH_UI_IMPORT_REPLACE_RULES", {})
+            rule_map = current_app.config.get(
+                "WEKO_SEARCH_UI_IMPORT_REPLACE_RULE_MAP", {})
+            if not (
+                isinstance(rules, dict) and
+                isinstance(rule_map, dict)
+               ):
+                raise ValueError(
+                    _("The type of the jsonld mapping replacement rule is invalid."))
+
+            rule_keys = rule_map.get(str(mapping_id), [])
+            if not isinstance(rule_keys, list):
+                raise ValueError(
+                    _("The type of the jsonld mapping replacement rule is invalid."))
+
+            for rule_id in rule_keys:
+                if rule_id not in rules:
+                    warning_list.append(
+                        _("Required replacement rule: '%(rule_id)s' is missing.",\
+                        rule_id=rule_id))
+                    continue
+
+                rule = rules.get(rule_id, None)
+                if not isinstance(rule, dict):
+                    warning_list.append(
+                        _("Replacement rule: '%(rule_id)s' is invalid.",
+                        rule_id=rule_id))
+                    continue
+
+                from_str = rule.get("from", None)
+                to_str = rule.get("to", None)
+                target_path_list = rule.get("target_path", [])
+
+                if not(
+                    isinstance(from_str, str) and
+                    from_str != "" and
+                    isinstance(to_str, str) and
+                    isinstance(target_path_list, list)
+                ):
+                    warning_list.append(
+                        _("Replacement rule: '%(rule_id)s' is invalid.",
+                        rule_id=rule_id))
+                    continue
+
+                is_regex = rule.get("is_regex", False)
+                if not isinstance(is_regex, bool):
+                    warning_list.append(
+                        _("Replacement rule: '%(rule_id)s' - 'is_regex' is "
+                        "not boolean. Treated as False.",
+                        rule_id=rule_id))
+                    is_regex = False
+
+                try:
+                    for path_key in target_path_list:
+                        for meta_key in list(metadata.keys()):
+                            meta_key_no_index = re.sub(r'\[\d+\]', '', meta_key)
+                            if meta_key_no_index == path_key:
+                                metadata_value = metadata[meta_key]
+                                if is_regex:
+                                    metadata[path_key] = \
+                                    re.sub(from_str, lambda m: to_str,
+                                            metadata_value)
+                                else:
+                                    metadata[path_key] = \
+                                    metadata_value.replace(from_str, to_str)
+                except re.error as e:
+                    warning_list.append(_("Replacement rule: '%(rule_id)s' - "
+                                          "regex error: %(error)s",\
+                                           rule_id=rule_id, error=str(e)))
+
+            if warning_list:
+                raise ValueError(warning_list)
+            return metadata, info
+
+        except Exception as e:
+            info_warnings = info.get("warnings", [])
+            if isinstance(e, ValueError) and isinstance(e.args[0], list):
+                for warn in e.args[0]:
+                    if 'is_regex' in warn:
+                        warning_message = str(warn)
+                    else:
+                        warning_message = str(_(
+                            "Replacement failed.: %(warn)s", warn=warn))
+                    current_app.logger.warning(warning_message)
+                    info_warnings.append(warning_message)
+            else:
+                warning_message = str(_(
+                    "Replacement failed.: %(warning)s", warning=e))
+                current_app.logger.warning(warning_message)
+                info_warnings.append(warning_message)
+            info["warnings"] = info_warnings
+            return metadata, info
+
     def to_item_metadata(self, json_ld):
         """Map to item type metadata.
 
@@ -1453,6 +1566,10 @@ class JsonLdMapper(JsonMapper):
             ],
             "warnings": [],
         }
+
+        # Execute replacement process for metadata
+        metadata, system_info = \
+        self.apply_import_replace_rules(metadata, system_info)
 
         missing_metadata = {}
 
@@ -1571,8 +1688,7 @@ class JsonLdMapper(JsonMapper):
         # }
         return mapped_metadata, system_info
 
-    @classmethod
-    def _deconstruct_json_ld(cls, json_ld):
+    def _deconstruct_json_ld(self, json_ld):
         """Deconstruct json-ld.
 
         Deconstructing json-ld metadata values ​​one by one
@@ -1682,10 +1798,11 @@ class JsonLdMapper(JsonMapper):
                 list_extracted = [ extracted ]
         else:
             list_extracted = [ extracted ]
+        self.extract_extended_metadata(list_extracted)
 
         list_deconstructed = []
         for extracted in list_extracted:
-            metadata = cls._deconstruct_dict(extracted)
+            metadata = self._deconstruct_dict(extracted)
             system_info = {}
             system_info.update(
                 {"id": metadata.pop("identifier")}
@@ -1729,6 +1846,8 @@ class JsonLdMapper(JsonMapper):
             ]
             system_info["save_as_is"] = extracted.get("wk:saveAsIs", False)
             system_info["metadata_replace"] = extracted.get("wk:metadataReplace", False)
+            system_info["researchmap_linkage"] = extracted.get(
+                "wk:researchmapLinkage", False)
 
             for relation in extracted.get("jpcoar:relation", []):
                 relation_id = relation.get("jpcoar:relatedIdentifier") or {}
@@ -1862,6 +1981,91 @@ class JsonLdMapper(JsonMapper):
 
         return settable_path
 
+
+    def extract_extended_metadata(self, list_extracted):
+        """
+        Store the content of files with wk:extendedMetadata set to True in extended_metadata,
+        and remove files with wk:extendedMetadata set to True from hasPart.
+
+        Args:
+            list_extracted (list): List of extracted metadata dictionaries.
+        Returns:
+            list: The updated list of extracted metadata with extended metadata merged.
+        """
+        for extracted in list_extracted:
+            extracted.pop('extended_metadata', None)
+            if 'hasPart' not in extracted:
+                continue
+            file_indices = [
+                idx for idx, item in enumerate(extracted['hasPart'])
+                if item.get('wk:extendedMetadata') is True
+            ]
+            if not file_indices:
+                continue
+            extended_metadatas = {}
+            extracted['extended_metadata'] = {}
+            for idx in reversed(file_indices):
+                filename = extracted['hasPart'].pop(idx).get('@id')
+                content = self.extract_text_from_files(filename)
+                extended_metadatas[filename] = content
+            extracted['extended_metadata']['value'] = json.dumps(
+                extended_metadatas, ensure_ascii=False)
+        return list_extracted
+
+    def extract_text_from_files(self, filename):
+        """
+        Extract text content from the specified file,
+        only if the file is of a specific MIME type.
+        Args:
+            filename (str): The name of the file to extract text from.
+
+        Returns:
+            str: The extracted text content from the file.
+        """
+        data_path = self.data_path
+        try:
+            file_path = os.path.join(data_path, filename)
+            if not os.path.isfile(file_path):
+                raise FileNotFoundError
+            data = ""
+            mimetype = mimetypes.guess_type(filename)[0]
+            file_size_limit = current_app.config['WEKO_DEPOSIT_FILESIZE_LIMIT']
+            # List of text-based MIME types allowed for text extraction and processing.
+            text_mimetypes = current_app.config["WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES"]
+            # All mimetypes subject to text extraction (including text_mimetypes)
+            extract_mimetypes = current_app.config["WEKO_MIMETYPE_WHITELIST_FOR_ES"]
+            if mimetype not in extract_mimetypes:
+                return data
+
+            # Extract content from file
+            current_app.logger.debug(f"extracting content from {filename}")
+            if mimetype in text_mimetypes:
+                with open(file_path, "rb") as fp:
+                    data = fp.read(file_size_limit)
+                inf = chardet.detect(data)
+                if inf["encoding"] is None:
+                    raise ValueError(
+                        f"Failed to load text file: {filename}")
+                data = data.decode(inf["encoding"], errors="replace")
+            elif mimetype == 'application/pdf':
+                data = extract_text_from_pdf(file_path, file_size_limit)
+            else:
+                try:
+                    data = extract_text_with_tika(file_path, file_size_limit)
+                except Exception as e:
+                    current_app.logger.error(e)
+                    traceback.print_exc()
+                    raise ValueError(
+                        f"Failed to load document: {filename}") from e
+        except FileNotFoundError as e:
+            current_app.logger.error(e)
+            traceback.print_exc()
+            raise FileNotFoundError(f"File Not Found: {filename}") from e
+        except PdfiumError as e:
+            current_app.logger.error(e)
+            traceback.print_exc()
+            raise PdfiumError(f"Failed to load PDF file: {filename}") from e
+        return data
 
     def to_rocrate_metadata(
         self, record_metadata=None, tsv_row_metadata=None, **kwargs
@@ -2337,6 +2541,9 @@ class JsonLdMapper(JsonMapper):
         # wk:metadaAutoFill
         rocrate.root_dataset["wk:metadataAutoFill"] = False
 
+        # wk:researchmapLinkage
+        rocrate.root_dataset["wk:researchmapLinkage"] = False
+
         return rocrate
 
 
@@ -2461,4 +2668,3 @@ def tokenize_jsonpath(json_path):
             index = None
         tokens.append((element, index, current_path))
     return tokens
-

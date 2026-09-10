@@ -38,11 +38,10 @@ const register_with = document.getElementById("register_with").value;
 const start_date = document.getElementById("start_date").value;
 const end_date = document.getElementById("end_date").value;
 const importResult = document.getElementById("import_result").value;
-const end = document.getElementById("end").value;
 const statusLabel = document.getElementById("status").value;
 const done = document.getElementById("done").value;
-const processing = document.getElementById("processing").value;
-const waiting = document.getElementById("waiting").value;
+const to_do = document.getElementById("to_do").value;
+const doing = document.getElementById("doing").value;
 const result_label = document.getElementById("result").value;
 const succses = document.getElementById("succses").value;
 const next = document.getElementById("next").value;
@@ -86,34 +85,29 @@ function showErrorMsg(msg) {
     '&times;</button>' + msg + '</div>');
 }
 
-function getTaskResult(task_result) {
-  if (!task_result) return '';
-  if (task_result.success) return succses;
-
-  const errorMessages = {
-    is_duplicated_doi,
-    is_withdraw_doi,
-    item_is_deleted,
-    item_is_being_edit,
-    failed_to_update_elasticsearch
-  };
-  const msg = errorMessages[task_result.error_id] || '';
-  return msg === '' ? '' : error + ': ' + msg;
-}
-
-function getTaskStatusLabel(taskStatus) {
-  if (!taskStatus) return '';
-  switch (taskStatus) {
-    case "PENDING":
-      return waiting;
-    case "STARTED":
-      return processing;
-    case "SUCCESS":
-      return done;
-    case "FAILURE":
-      return "FAILURE";
-    default:
-      return '';
+function getResultErrorMsg(error_id) {
+  let msg = '';
+  switch (error_id) {
+    case 'is_duplicated_doi':
+      msg = is_duplicated_doi;
+      break;
+    case 'is_withdraw_doi':
+      msg = is_withdraw_doi;
+      break;
+    case 'item_is_deleted':
+      msg = item_is_deleted;
+      break;
+    case 'item_is_being_edit':
+      msg = item_is_being_edit;
+      break;
+    case 'failed_to_update_elasticsearch':
+      msg = failed_to_update_elasticsearch;
+      break;
+  }
+  if (msg === '') {
+    return error_id;
+  } else {
+    return 'Error msg : ' + msg;
   }
 }
 
@@ -146,7 +140,9 @@ class MainLayout extends React.Component {
       is_import: true,
       import_status: false,
       isShowMessage: false,
-      isChecking: false
+      isChecking: false,
+      success_count: 0,
+      fail_count: 0
     }
     this.handleChangeTab = this.handleChangeTab.bind(this)
     this.handleCheck = this.handleCheck.bind(this)
@@ -338,7 +334,9 @@ class MainLayout extends React.Component {
       .done((res) => {
 
         that.setState({
-          tasks: res.result
+          tasks: res.result,
+          success_count: res.success_count,
+          fail_count: res.fail_count
         })
         if (res.status === 'done') {
           that.setState({
@@ -356,7 +354,7 @@ class MainLayout extends React.Component {
   }
 
   render() {
-    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking } = this.state;
+    const { tab, tabs, list_record, is_import, tasks, import_status, isShowMessage, isChecking, success_count, fail_count } = this.state;
     return (
       <div>
         <ul className="nav nav-tabs">
@@ -389,6 +387,8 @@ class MainLayout extends React.Component {
               tasks={tasks || []}
               getStatus={this.getStatus}
               import_status={import_status}
+              success_count={success_count}
+              fail_count={fail_count}
             />
           }
 
@@ -833,6 +833,8 @@ class CheckComponent extends React.Component {
     this.handleGenerateData = this.handleGenerateData.bind(this)
     this.generateTitle = this.generateTitle.bind(this)
     this.handleDownload = this.handleDownload.bind(this)
+    this.handleOnInputChanged = this.handleOnInputChanged.bind(this)
+    this.handleOnInputBlur = this.handleOnInputBlur.bind(this)
   }
 
   componentWillReceiveProps(nextProps, prevProps) {
@@ -935,6 +937,44 @@ class CheckComponent extends React.Component {
     });
   }
 
+  handleOnInputChanged(e) {
+    // The input values are temporarily stored in the state, and list_record is not modified.
+    const value = e.target.value;
+    let name = e.target.name;
+    if (name === "list_doi") {
+      name = "bulk_doi";
+    }
+    const key = e.target.getAttribute("data-key");
+    this.setState(prevState => {
+      const temp_inputs = { ...(prevState.temp_inputs || {}) };
+      if (typeof key !== "undefined") {
+        if (!temp_inputs[key]) temp_inputs[key] = {};
+        temp_inputs[key][name] = value;
+      }
+      return { temp_inputs };
+    });
+  }
+
+  handleOnInputBlur(e) {
+    //　When the input loses focus, the value is reflected in list_record and temp_inputs is cleared.
+    const value = e.target.value;
+    let name = e.target.name;
+    if (name === "list_doi") {
+      name = "bulk_doi";
+    }
+    const key = e.target.getAttribute("data-key");
+    this.setState(prevState => {
+      const list_record = [...prevState.list_record];
+      if (typeof key !== "undefined" && list_record[key]) {
+        list_record[key][name] = value;
+      }
+      // temp_inputsもクリア
+      const temp_inputs = { ...(prevState.temp_inputs || {}) };
+      if (temp_inputs[key]) delete temp_inputs[key];
+      return { list_record, temp_inputs };
+    });
+  }
+
   render() {
     const { total, list_record, update_item, new_item, check_error, warning_item } = this.state
     const { is_import, isShowMessage } = this.props
@@ -1020,7 +1060,22 @@ class CheckComponent extends React.Component {
                         </td>
                         <td>
                           <div class="form-inline">
-                            <input class="form-control" type="text" name="list_doi" disabled={item.errors && item.errors.length > 0} />
+                            <input
+                              className="form-control"
+                              type="text"
+                              name="list_doi"
+                              value={
+                                (this.state.temp_inputs &&
+                                  this.state.temp_inputs[key] &&
+                                  this.state.temp_inputs[key].bulk_doi) ||
+                                item.bulk_doi ||
+                                undefined
+                              }
+                              data-key={key}
+                              onChange={this.handleOnInputChanged}
+                              onBlur={this.handleOnInputBlur}
+                              disabled={item.errors && item.errors.length > 0}
+                            />
                           </div>
                         </td>
                         <td>
@@ -1068,8 +1123,15 @@ class ResultComponent extends React.Component {
         [start_date]: item.start_date ? item.start_date : '',
         [end_date]: item.end_date ? item.end_date : '',
         [item_id]: item.item_id || '',
-        [statusLabel]: getTaskStatusLabel(item.task_status),
-        [importResult]: getTaskResult(item.task_result)
+        [statusLabel]: item.task_result ? (item.task_result.success ? succses : (item.task_status && item.task_status === "STARTED") ? "Started" : "Error") : "Start",
+        [importResult]: item.task_status ? 
+            item.task_status === "PENDING" ? to_do : 
+            item.task_status === "STARTED" ? doing : 
+            (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done : 
+            (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) : 
+            item.task_status === "FAILURE" ? "FAILURE" : 
+          '' : 
+          ''
       }
     })
     const data = {
@@ -1111,7 +1173,7 @@ class ResultComponent extends React.Component {
   }
 
   render() {
-    const { tasks, import_status } = this.props
+    const { tasks, import_status, success_count, fail_count } = this.props
     return (
       <div className="result_container row">
         <div className="col-md-12 text-align-right">
@@ -1122,6 +1184,10 @@ class ResultComponent extends React.Component {
           >
             <span className="glyphicon glyphicon-cloud-download icon"></span>{download}
           </button>
+        </div>
+        <div className="col-md-12 m-t-20">
+          <strong>Success : </strong> {success_count}
+          <strong>, Fail : </strong> {fail_count}
         </div>
         <div className="col-md-12 m-t-20">
           <table class="table table-striped table-bordered">
@@ -1144,10 +1210,21 @@ class ResultComponent extends React.Component {
                       <td>{item.start_date ? item.start_date : ''}</td>
                       <td>{item.end_date ? item.end_date : ''}</td>
                       <td><a href={item.item_id ? "/records/" + item.item_id : ''} target="_blank">
-                          {item.item_id || ''}</a>
+                        {item.item_id || ''}</a>
                       </td>
-                      <td>{getTaskStatusLabel(item.task_status)}</td>
-                      <td>{getTaskResult(item.task_result)}</td>
+                      <td>
+                        {item.task_result ? (item.task_result.success ? succses : (item.task_status && item.task_status === "STARTED") ? "Started" : <strong>Error</strong>) : "Start"}
+                      </td>
+                      <td>
+                        {item.task_status ? 
+                          item.task_status === "PENDING" ? to_do : 
+                          item.task_status === "STARTED" ? doing : 
+                          (item.task_status === "SUCCESS" && item.task_result && item.task_result.success) ? done : 
+                          (item.task_status === "SUCCESS" && item.task_result && !item.task_result.success) ? getResultErrorMsg(item.task_result.error_id) : 
+                          item.task_status === "FAILURE" ? "FAILURE" : 
+                        '' : 
+                        ''}
+                      </td>
                     </tr>
                   )
                 })

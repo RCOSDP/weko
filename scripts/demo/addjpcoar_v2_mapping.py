@@ -33,7 +33,6 @@ def main():
                 # itemtypemappingはversion_idがあるにもかかわらず、idが優先される。
                 item_type_mapping = (
                     ItemTypeMapping.query.filter(ItemTypeMapping.item_type_id == _id)
-                    .order_by(desc(ItemTypeMapping.created))
                     .first()
                 )
                 if item_type_mapping is not None:

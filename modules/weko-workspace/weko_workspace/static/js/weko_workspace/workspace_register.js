@@ -6,6 +6,7 @@ require([
   $("#metaDataSelectJalc").prop('disabled', true);
   $("#metaDataSelectCinii").prop('disabled', true);
   $("#metaDataSelectDataCite").prop('disabled', true);
+  $("#metaDataSelectarXiv").prop('disabled', true);
   $('#weko_id_hidden').hide();
   $("#item-type-lists").change(function (ev) {
     window.location.href = '/items/' + $(this).val();
@@ -512,6 +513,7 @@ function toObject(arr) {
       $scope.ciniiDataEmpty = false;
       $scope.jalcDataEmpty = false;
       $scope.datacitDataEmpty = false;
+      $scope.arXivDataEmpty = false;
 
       $scope.identifiers = 'nameIdentifiers'
       $scope.identifier_mapping = 'nameIdentifier'
@@ -2455,7 +2457,7 @@ function toObject(arr) {
       }
 
       $scope.checkBothDataEmpty = function () {
-        if ($scope.crossrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty) {
+        if ($scope.crossrefDataEmpty && $scope.ciniiDataEmpty && $scope.jalcDataEmpty && $scope.datacitDataEmpty && $scope.arXivDataEmpty) {
           alert("No metadata was found that matches the DOI!");
         }
       }
@@ -2465,8 +2467,9 @@ function toObject(arr) {
         res_cinii_data = this.setRecordDataFromCINIIApi(param_api);
         res_jalc_data = this.setRecordDataFromJalcApi(param_api);
         res_datacite_data = this.setRecordDataFromDataciteApi(param_api);
+        res_arXiv_data = this.setRecordDataFromarXivApi(param_api);
 
-        Promise.all([res_crossref_data, res_cinii_data, res_jalc_data, res_datacite_data]).then(function (responses) {
+        Promise.all([res_crossref_data, res_cinii_data, res_jalc_data, res_datacite_data, res_arXiv_data]).then(function (responses) {
           $scope.checkBothDataEmpty();
         });
 
@@ -2844,6 +2847,77 @@ function toObject(arr) {
         );
       }
       
+      $scope.setRecordDataFromarXivApi = function (param_api) {
+        let request = {
+          url: '/api/workspaceAPI/get_auto_fill_record_data_arXivapi',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          data: JSON.stringify(param_api)
+        };
+        
+        $scope.arXivDataEmpty = true;
+        $("#arXiv_box").addClass("select_site_disabled");
+        $("#metaDataSelectarXiv").prop('disabled', true);
+        return InvenioRecordsAPI.request(request).then(
+          function success(response) {
+            let data = response.data;
+
+            if (data.error) {
+              $scope.enableAutofillButton();
+              $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+            } else if (!$.isEmptyObject(data.result)) {
+              $scope.clearAllField();
+              $("#arXiv_box").removeClass("select_site_disabled");
+              $("#metaDataSelectarXiv").prop('disabled', false);
+              $("#metaDataSelectarXiv").val(JSON.stringify(data.result));
+              $scope.arXivDataEmpty = false;
+            } else {
+              $scope.enableAutofillButton();
+              $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
+            }
+          },
+          function error(response) {
+            $scope.enableAutofillButton();
+            $scope.setAutoFillErrorMessage("Cannot connect to server!");
+          }
+        );
+      }
+      
+       $scope.setRecordDataFromarXivSelectedApi = function (param_api) {
+        let request = {
+          url: '/api/workspaceAPI/get_auto_fill_record_data_arXivapi',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          method: "POST",
+          data: JSON.stringify(param_api)
+        };
+        
+        InvenioRecordsAPI.request(request).then(
+          function success(response) {
+            let data = response.data;
+            if (data.error) {
+              $scope.enableAutofillButton();
+              $scope.setAutoFillErrorMessage("An error have occurred!\nDetail: " + data.error);
+            } else if (!$.isEmptyObject(data.result)) {
+              $scope.clearAllField();
+              $("#metaDataSelectarXiv").prop('disabled', false);
+              $("#metaDataSelectarXiv").val(JSON.stringify(data.result));
+              $scope.setRecordDataCallBack(data);
+
+            } else {
+              $scope.enableAutofillButton();
+              $scope.setAutoFillErrorMessage($("#autofill_error_doi").val());
+            }
+          },
+          function error(response) {
+            $scope.enableAutofillButton();
+            $scope.setAutoFillErrorMessage("Cannot connect to server!");
+          }
+        );
+      }
       
       $scope.metaDataSelectAPI = function () {
         if ($scope.selectedMetaData === 'CrossRefMetaData') {
@@ -2880,6 +2954,14 @@ function toObject(arr) {
             item_type_id: itemTypeId
           }
           this.setRecordDataFromDataciteSelectedApi(param_api);
+        } else if ($scope.selectedMetaData === 'arXivMetaData') {
+          let value = $('#doiInput').val();
+          let itemTypeId = $("#autofill_item_type_id").val();
+          let param_api = {
+            search_data: $.trim(value),
+            item_type_id: itemTypeId
+          }
+          this.setRecordDataFromarXivSelectedApi(param_api);
         }
       }
 

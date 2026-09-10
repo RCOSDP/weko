@@ -1,0 +1,2839 @@
+diff --git a/modules/invenio-files-rest/invenio_files_rest/storage/pyfs.py b/modules/invenio-files-rest/invenio_files_rest/storage/pyfs.py
+index db7014e807..ca1ccef55b 100644
+--- a/modules/invenio-files-rest/invenio_files_rest/storage/pyfs.py
++++ b/modules/invenio-files-rest/invenio_files_rest/storage/pyfs.py
+@@ -18,6 +18,7 @@
+ from flask import current_app
+ from fs.opener import opener
+ from fs.path import basename, dirname
++from sqlalchemy import String, and_, func, literal, or_
+ 
+ from ..helpers import make_path
+ from .base import FileStorage, StorageError
+@@ -205,7 +206,6 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
+     from ..models import Location
+     assert fileinstance or (fileurl and size)
+     location = None
+-    locationList = Location.all()
+ 
+     if fileinstance:
+         # FIXME: Code here should be refactored since it assumes a lot on the
+@@ -228,13 +228,37 @@ def pyfs_storage_factory(fileinstance=None, default_location=None,
+                 current_app.config['FILES_REST_STORAGE_PATH_SPLIT_LENGTH'],
+             )
+ 
+-        location = next((loc for loc in locationList if str(loc.uri) == str(default_location)), None)
++        if default_location:
++            location = Location.query.filter(Location.uri == str(default_location)).first()
+ 
+     if location is None:
+-        location = next((loc for loc in locationList if str(loc.uri) in str(fileurl)), None)
+-        if location is None:
+-            # if not match fileurl with location, then get default location
+-            location = next((loc for loc in locationList if loc.default == True), None)
++        # Match ``Location.uri`` as a path prefix of ``fileurl``, not as a
++        # plain text prefix: a boundary is required right after the URI so
++        # that e.g. the location ``s3://bucket-a`` never matches a file
++        # stored in ``s3://bucket-a2``. Selecting the wrong location would
++        # hand out the wrong (S3) credentials for the file.
++        fileurl_expr = literal(str(fileurl), String)
++        uri_length = func.length(Location.uri)
++        location = Location.query.filter(
++            and_(
++                func.substr(fileurl_expr, 1, uri_length) == Location.uri,
++                or_(
++                    # fileurl is exactly the location URI
++                    func.length(fileurl_expr) == uri_length,
++                    # the location URI already ends with a separator
++                    func.substr(Location.uri, uri_length, 1) == '/',
++                    # the character right after the URI is a separator
++                    func.substr(fileurl_expr, uri_length + 1, 1) == '/',
++                ),
++            )
++        ).order_by(uri_length.desc()).first()
++
++    if location is None:
++        # if not match fileurl with location, then get default location
++        location = Location.query.filter_by(default=True).first()
++
++    if location is None:
++        current_app.logger.warning('No location matched. fileurl={}'.format(fileurl))
+ 
+     return filestorage_class(
+         fileurl, size=size, modified=modified, clean_dir=clean_dir, location=location)
+diff --git a/modules/invenio-files-rest/tests/test_storage.py b/modules/invenio-files-rest/tests/test_storage.py
+index 4bb51439e4..de97bb8c79 100644
+--- a/modules/invenio-files-rest/tests/test_storage.py
++++ b/modules/invenio-files-rest/tests/test_storage.py
+@@ -17,13 +17,16 @@
+ 
+ import pytest
+ from fs.errors import DirectoryNotEmptyError, ResourceNotFoundError
+-from mock import patch
++from unittest.mock import patch
+ from six import BytesIO
++from sqlalchemy import event
+ 
+ from invenio_files_rest.errors import FileSizeError, StorageError, \
+     UnexpectedFileSizeError
+ from invenio_files_rest.limiters import FileSizeLimit
+-from invenio_files_rest.storage import FileStorage, PyFSFileStorage
++from invenio_files_rest.models import Location
++from invenio_files_rest.storage import FileStorage, PyFSFileStorage, \
++    pyfs_storage_factory
+ 
+ 
+ def test_storage_interface():
+@@ -348,3 +351,273 @@ def test_non_unicode_filename(app, pyfs):
+             'żółć.txt', mimetype='text/plain', checksum=checksum)
+         assert res.status_code == 200
+         assert res.headers['Content-Disposition'] == 'inline'
++
++
++def _add_location(db, name, uri, default=False):
++    """Add a location row and commit it.
++
++    ``Location.name`` is validated against ``^[a-z][a-z0-9-]+$``
++    (``invenio_files_rest/models.py``), so names must be two characters or
++    longer, start with a lower-case letter and contain only lower-case
++    alphanumerics and dashes.
++    """
++    loc = Location(name=name, uri=uri, default=default)
++    db.session.add(loc)
++    db.session.commit()
++    return loc
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_prefix_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_prefix_match(app, db, dummy_location):
++    """Test that a location whose URI prefixes the fileurl is selected."""
++    _add_location(db, 'loc-a', 's3://bucket-a')
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-a/ab/cd/ef/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name == 'loc-a'
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_longest_prefix_wins -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_longest_prefix_wins(app, db, dummy_location):
++    """Test that the longest matching location URI wins.
++
++    The shorter URI is inserted first on purpose: without the
++    ``ORDER BY length(uri) DESC`` clause PostgreSQL returns rows in physical
++    (insert) order, so dropping the ordering makes this test fail.
++    """
++    _add_location(db, 'loc-a', 's3://bucket-a')
++    _add_location(db, 'loc-b', 's3://bucket-a/sub')
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-a/sub/ab/cd/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name == 'loc-b'
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_no_partial_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_no_partial_match(app, db, dummy_location):
++    """Test that a location URI matches only at the start of the fileurl.
++
++    ``/mnt/other`` appears in the fileurl but not as a prefix, so it must not
++    be selected and the default location must be used instead.
++    """
++    _add_location(db, 'loc-x', '/mnt/other')
++
++    storage = pyfs_storage_factory(fileurl='/mnt/data/backup/mnt/other/ab/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name != 'loc-x'
++    assert storage.location.id == dummy_location.id
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_uri_underscore_not_wildcard -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_uri_underscore_not_wildcard(
++        app, db, dummy_location):
++    """Test that an underscore in a location URI is not a LIKE wildcard."""
++    _add_location(db, 'loc-us', 's3://weko_bucket')
++
++    storage = pyfs_storage_factory(fileurl='s3://wekoxbucket/ab/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name != 'loc-us'
++    assert storage.location.id == dummy_location.id
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_default_fallback -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_default_fallback(app, db, dummy_location):
++    """Test the fallback to the default location when nothing matches."""
++    storage = pyfs_storage_factory(fileurl='s3://nowhere/ab/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.id == dummy_location.id
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_no_location_logs_warning -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_no_location_logs_warning(app, db, mocker):
++    """Test that a warning is logged when no location can be resolved.
++
++    No location fixture is requested on purpose: with a default location
++    present the fallback would succeed and no warning would be emitted.
++    """
++    warning_mock = mocker.patch.object(app.logger, 'warning')
++
++    storage = pyfs_storage_factory(fileurl='s3://nowhere/ab/data', size=1)
++
++    assert storage.location is None
++    warning_mock.assert_called_once()
++    assert 's3://nowhere/ab/data' in warning_mock.call_args[0][0]
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_default_location_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_default_location_match(
++        app, db, dummy_location, mocker):
++    """Test that an explicit default_location takes precedence.
++
++    ``loc-a`` prefixes the fileurl and would win the prefix lookup, so it also
++    proves that the prefix lookup is not executed once the URI of
++    ``default_location`` has been resolved.
++    """
++    _add_location(db, 'loc-a', 's3://bucket-a')
++
++    fileinstance = mocker.MagicMock()
++    fileinstance.size = 1
++    fileinstance.updated = None
++    fileinstance.uri = 's3://bucket-a/ab/data'
++
++    storage = pyfs_storage_factory(
++        fileinstance=fileinstance, default_location=dummy_location.uri)
++
++    assert storage.location is not None
++    assert storage.location.name != 'loc-a'
++    assert storage.location.id == dummy_location.id
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_skips_query_when_no_default_location -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_skips_query_when_no_default_location(
++        app, db, mocker):
++    """Test that no query is issued when default_location is not given.
++
++    ``loc-none`` has the literal URI ``'None'``: without the guard the lookup
++    would compare against ``str(None)`` and select it.
++    """
++    _add_location(db, 'loc-a', 's3://bucket-a')
++    _add_location(db, 'loc-none', 'None')
++
++    fileinstance = mocker.MagicMock()
++    fileinstance.size = 1
++    fileinstance.updated = None
++    fileinstance.uri = 's3://bucket-a/ab/data'
++
++    statements = []
++
++    def _record(conn, cursor, statement, parameters, context, executemany):
++        statements.append(statement)
++
++    event.listen(db.engine, 'before_cursor_execute', _record)
++    try:
++        storage = pyfs_storage_factory(fileinstance=fileinstance)
++    finally:
++        event.remove(db.engine, 'before_cursor_execute', _record)
++
++    assert storage.location is not None
++    assert storage.location.name != 'loc-none'
++    assert storage.location.name == 'loc-a'
++    assert len(statements) == 1
++    assert 'substr' in statements[0].lower()
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_no_full_scan -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_no_full_scan(app, db, dummy_location, mocker):
++    """Test that the whole location table is never loaded into memory."""
++    _add_location(db, 'loc-a', 's3://bucket-a')
++    mock_all = mocker.patch('invenio_files_rest.models.Location.all')
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-a/ab/data', size=1)
++
++    mock_all.assert_not_called()
++    assert storage.location is not None
++    assert storage.location.name == 'loc-a'
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_passes_args_to_filestorage_class -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_passes_args_to_filestorage_class(app, db, dummy_location, mocker):
++    """Test the arguments handed over to the file storage class."""
++    loc_a = _add_location(db, 'loc-a', 's3://bucket-a')
++    fake_class = mocker.MagicMock()
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-a/ab/data', size=1, filestorage_class=fake_class)
++
++    fake_class.assert_called_once_with('s3://bucket-a/ab/data', size=1, modified=None, clean_dir=True, location=loc_a)
++    assert fake_class.call_args[1]['location'].name == 'loc-a'
++    assert storage is fake_class.return_value
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_similar_bucket_name_not_matched -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_similar_bucket_name_not_matched(
++        app, db, dummy_location):
++    """Test that a location URI only matches on a path boundary.
++
++    ``s3://bucket-a`` is a plain text prefix of ``s3://bucket-a2/...`` but not
++    a path prefix of it. Without the boundary condition ``loc-a`` would be
++    selected and would supply the S3 credentials of the wrong account for a
++    file that actually lives in another bucket.
++    """
++    _add_location(db, 'loc-a', 's3://bucket-a')
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-a2/ab/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name != 'loc-a'
++    assert storage.location.id == dummy_location.id
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_uri_with_trailing_slash -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_uri_with_trailing_slash(app, db, dummy_location):
++    """Test that a location URI already ending with ``/`` still matches.
++
++    The boundary must not be required twice: for ``s3://bucket-b/`` the
++    separator is part of the URI itself, so the character following it is a
++    regular path character and the location must still be selected.
++    """
++    _add_location(db, 'loc-b', 's3://bucket-b/')
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-b/ab/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name == 'loc-b'
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_similar_bucket_names_coexist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_similar_bucket_names_coexist(
++        app, db, dummy_location):
++    """Test that similarly named buckets each resolve to their own location.
++
++    Both ``s3://bucket-a`` and ``s3://bucket-a2`` are registered, so a purely
++    textual prefix match would resolve both file URLs to ``loc-a`` and mix up
++    the credentials of the two buckets.
++    """
++    _add_location(db, 'loc-a', 's3://bucket-a')
++    _add_location(db, 'loc-a2', 's3://bucket-a2')
++
++    storage_a = pyfs_storage_factory(fileurl='s3://bucket-a/ab/data', size=1)
++    storage_a2 = pyfs_storage_factory(fileurl='s3://bucket-a2/ab/data', size=1)
++
++    assert storage_a.location is not None
++    assert storage_a.location.name == 'loc-a'
++    assert storage_a2.location is not None
++    assert storage_a2.location.name == 'loc-a2'
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_local_path_boundary -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_local_path_boundary(app, db, dummy_location):
++    """Test that the boundary also applies to local file system locations.
++
++    ``/mnt/data`` must not swallow files stored below ``/mnt/data2``, which
++    may be a completely different mount point.
++    """
++    _add_location(db, 'loc-data', '/mnt/data')
++    _add_location(db, 'loc-data2', '/mnt/data2')
++
++    storage = pyfs_storage_factory(fileurl='/mnt/data2/ab/data', size=1)
++    storage_other = pyfs_storage_factory(fileurl='/mnt/database/ab/data', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name == 'loc-data2'
++    assert storage_other.location is not None
++    assert storage_other.location.id == dummy_location.id
++
++
++# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_storage.py::test_pyfs_storage_factory_exact_uri_match -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
++def test_pyfs_storage_factory_exact_uri_match(app, db, dummy_location):
++    """Test that a fileurl equal to the location URI still matches.
++
++    There is no character left after the URI to carry the separator, so the
++    boundary check has to accept an exact match as well.
++    """
++    _add_location(db, 'loc-a', 's3://bucket-a')
++
++    storage = pyfs_storage_factory(fileurl='s3://bucket-a', size=1)
++
++    assert storage.location is not None
++    assert storage.location.name == 'loc-a'
+diff --git a/modules/weko-records-ui/tests/conftest.py b/modules/weko-records-ui/tests/conftest.py
+index 55819effdb..064527ba95 100644
+--- a/modules/weko-records-ui/tests/conftest.py
++++ b/modules/weko-records-ui/tests/conftest.py
+@@ -79,7 +79,7 @@
+ from invenio_search_ui import InvenioSearchUI
+ from invenio_theme import InvenioTheme
+ from six import BytesIO
+-from sqlalchemy_utils.functions import create_database, database_exists
++from sqlalchemy_utils.functions import create_database, database_exists, drop_database
+ from weko_admin import WekoAdmin
+ from weko_admin.models import SessionLifetime
+ from weko_admin.models import AdminSettings
+@@ -380,8 +380,9 @@ def esindex(app):
+ @pytest.yield_fixture()
+ def db(app):
+     """Database fixture."""
+-    if not database_exists(str(db_.engine.url)):
+-        create_database(str(db_.engine.url))
++    if database_exists(str(db_.engine.url)):
++        drop_database(str(db_.engine.url))
++    create_database(str(db_.engine.url))
+     db_.create_all()
+     yield db_
+     db_.session.remove()
+diff --git a/modules/weko-records-ui/tests/test_api.py b/modules/weko-records-ui/tests/test_api.py
+index 092a2992f0..dd2335fed0 100644
+--- a/modules/weko-records-ui/tests/test_api.py
++++ b/modules/weko-records-ui/tests/test_api.py
+@@ -925,8 +925,8 @@ def test_create_storage_bucket_success_default_region(mocker):
+     mock_s3_client.put_public_access_block.assert_called_once_with(
+         Bucket="test-bucket",
+         PublicAccessBlockConfiguration={
+-            'BlockPublicAcls': False,
+-            'IgnorePublicAcls': False,
++            'BlockPublicAcls': True,
++            'IgnorePublicAcls': True,
+             'BlockPublicPolicy': False,
+             'RestrictPublicBuckets': False
+         })
+@@ -939,7 +939,7 @@ def test_create_storage_bucket_success_default_region(mocker):
+                     "Sid": "Public",
+                     "Effect": "Allow",
+                     "Principal": "*",
+-                    "Action": ["s3:*"],
++                    "Action": ["s3:GetObject"],
+                     "Resource": "arn:aws:s3:::test-bucket/*"
+                 }
+             ]
+@@ -961,8 +961,18 @@ def test_create_storage_bucket_success_non_default_region(mocker):
+         Bucket="test-bucket",
+         CreateBucketConfiguration={'LocationConstraint': "ap-northeast-1"}
+     )
+-    mock_s3_client.put_public_access_block.assert_called_once()
++    mock_s3_client.put_public_access_block.assert_called_once_with(
++        Bucket="test-bucket",
++        PublicAccessBlockConfiguration={
++            'BlockPublicAcls': True,
++            'IgnorePublicAcls': True,
++            'BlockPublicPolicy': False,
++            'RestrictPublicBuckets': False
++        })
+     mock_s3_client.put_bucket_policy.assert_called_once()
++    policy = json.loads(
++        mock_s3_client.put_bucket_policy.call_args[1]["Policy"])
++    assert policy["Statement"][0]["Action"] == ["s3:GetObject"]
+ 
+ 
+ # def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
+@@ -979,6 +989,9 @@ def test_create_storage_bucket_success_non_aws_endpoint(mocker):
+     mock_s3_client.create_bucket.assert_called_once_with(Bucket="test-bucket")
+     mock_s3_client.put_public_access_block.assert_not_called()
+     mock_s3_client.put_bucket_policy.assert_called_once()
++    policy = json.loads(
++        mock_s3_client.put_bucket_policy.call_args[1]["Policy"])
++    assert policy["Statement"][0]["Action"] == ["s3:GetObject"]
+ 
+ 
+ # def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
+diff --git a/modules/weko-records-ui/tests/test_views.py b/modules/weko-records-ui/tests/test_views.py
+index 3384266728..4e8721d592 100644
+--- a/modules/weko-records-ui/tests/test_views.py
++++ b/modules/weko-records-ui/tests/test_views.py
+@@ -8,6 +8,7 @@
+ from flask_security.utils import login_user
+ from flask_babelex import gettext as _
+ from invenio_accounts.testutils import login_user_via_session
++from invenio_pidstore.errors import PIDDoesNotExistError
+ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
+ from io import BytesIO
+ from mock import patch
+@@ -47,11 +48,24 @@
+     get_workflow_detail,
+     preview_able,
+     get_bucket_list,
++    _validate_storage_api_request,
+ )
+ from weko_records_ui.utils import create_download_url
+ from .helpers import login
+ 
+ 
++@pytest.fixture(autouse=True)
++def mock_user_activity_log_handler(mocker):
++    """Mock the user activity audit logger.
++
++    The audit logger writes into the partitioned ``user_activity_logs``
++    table, whose partitions are not created in the test database. Mock the
++    handler so that audit logging never touches the database.
++    """
++    return mocker.patch(
++        "weko_logging.handler.UserActivityLogHandler.emit", return_value=None)
++
++
+ # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+ 
+ # def record_from_pid(pid_value):
+@@ -1623,6 +1637,106 @@ def test_publish(app, client, records):
+                             publish(record.pid, record_1_b)
+                             mock_external.assert_called_with(old_record=record_1_c, new_record=record_0_c)
+ 
++
++_COPY_BUCKET_PAYLOAD = {
++    'pid': '1',
++    'filename': 'helloworld.pdf',
++    'bucket_id': '1',
++    'checked': 'True',
++    'bucket_name': 'name',
++}
++
++_GET_FILE_PLACE_PAYLOAD = {
++    'pid': '1',
++    'bucket_id': '1',
++    'file_name': 'helloworld.pdf',
++}
++
++_REPLACE_FILE_S3_PAYLOAD = {
++    'return_file_place': 'S3',
++    'pid': '1',
++    'bucket_id': '1',
++    'file_name': 'helloworld.pdf',
++    'file_size': 100,
++    'file_checksum': '86266081366d3c950c1cb31fbd9e1c38e4834fa52b568753ce28c87bc31252cd',
++    'new_bucket_id': '1',
++    'new_version_id': '1',
++}
++
++
++def _setup_storage_api(app, client, users, enabled=True, do_login=True):
++    """Set up the common preconditions of the storage API tests."""
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = enabled
++    if do_login:
++        login(client, obj=users[0]["obj"])
++
++
++def _call_get_bucket_list(client):
++    """Call the get_bucket_list API."""
++    return client.get(url_for("weko_records_ui.get_bucket_list"))
++
++
++def _call_copy_bucket(client, payload=None):
++    """Call the copy_bucket API."""
++    return client.post(
++        url_for("weko_records_ui.copy_bucket"),
++        data=json.dumps(payload if payload is not None else _COPY_BUCKET_PAYLOAD),
++        content_type='application/json',
++    )
++
++
++def _call_get_file_place(client, payload=None):
++    """Call the get_file_place API."""
++    return client.post(url_for("weko_records_ui.get_file_place"), data=dict(payload if payload is not None else _GET_FILE_PLACE_PAYLOAD))
++
++
++def _call_replace_file_s3(client, payload=None):
++    """Call the replace_file API with the S3 branch."""
++    return client.post(url_for("weko_records_ui.replace_file"), data=dict(payload if payload is not None else _REPLACE_FILE_S3_PAYLOAD))
++
++
++def _call_replace_file_local(client):
++    """Call the replace_file API with the local (else) branch."""
++    data = dict(_REPLACE_FILE_S3_PAYLOAD)
++    data['return_file_place'] = 'local'
++    data['file'] = FileStorage(stream=BytesIO(b'Hello, World!'), filename='helloworld.pdf', content_type='application/pdf')
++    return client.post(url_for("weko_records_ui.replace_file"), data=data)
++
++
++def _mock_validation_passed(mocker):
++    """Mock ``_validate_storage_api_request`` so that validation passes."""
++    return mocker.patch("weko_records_ui.views._validate_storage_api_request",return_value=None)
++
++
++def _mock_validation_denied(mocker):
++    """Mock ``_validate_storage_api_request`` so that it denies the request."""
++    return mocker.patch("weko_records_ui.views._validate_storage_api_request", return_value=(jsonify({'error': 'denied'}), 403))
++
++
++def _mock_storage_backends(mocker):
++    """Mock every backend the storage APIs delegate to.
++
++    ``get_s3_bucket_list`` / ``copy_bucket_to_s3`` / ``get_file_place_info`` /
++    ``replace_file_bucket`` all talk to S3 (boto3) and to the database, so they
++    are mocked unconditionally in every storage API test. The rejection tests
++    additionally assert that they are never reached, which both keeps the unit
++    tests hermetic and proves that the guard short-circuits before any storage
++    access happens.
++    """
++    return {
++        'get_s3_bucket_list': mocker.patch("weko_records_ui.views.get_s3_bucket_list"),
++        'copy_bucket_to_s3': mocker.patch("weko_records_ui.views.copy_bucket_to_s3"),
++        'get_file_place_info': mocker.patch("weko_records_ui.views.get_file_place_info"),
++        'replace_file_bucket': mocker.patch("weko_records_ui.views.replace_file_bucket"),
++    }
++
++
++def _assert_no_storage_access(backends):
++    """Assert that none of the storage backends have been called."""
++    for mock in backends.values():
++        mock.assert_not_called()
++
++
+ # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+ def test_get_bucket_list(app, records, users, client):
+     # ビュー関数を直接呼ぶとデコレータを通らないため client 経由にした
+@@ -1634,6 +1748,28 @@ def test_get_bucket_list(app, records, users, client):
+         assert client.get(url).status_code == 400
+ 
+ 
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_bucket_list_success(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.get_s3_bucket_list", return_value=[])
++
++    res = _call_get_bucket_list(client)
++
++    assert res.status_code == 200
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_bucket_list_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.get_s3_bucket_list", side_effect=Exception)
++
++    res = _call_get_bucket_list(client)
++
++    assert res.status_code == 400
++
++
+ # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+ def test_get_bucket_list_acl_guest(app, records, users, client):
+     """Lists the caller's own S3 buckets, so it needs a caller.
+@@ -1644,6 +1780,7 @@ def test_get_bucket_list_acl_guest(app, records, users, client):
+     res = client.get(url_for("weko_records_ui.get_bucket_list"))
+     assert res.status_code == 302
+ 
++
+ # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+ def test_copy_bucket(app,records,users, client):
+ 
+@@ -1676,6 +1813,29 @@ def test_copy_bucket(app,records,users, client):
+         )
+         assert res.status_code == 400
+ 
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_success(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.copy_bucket_to_s3", return_value={})
++
++    res = _call_copy_bucket(client)
++
++    assert res.status_code == 200
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.copy_bucket_to_s3", side_effect=Exception)
++
++    res = _call_copy_bucket(client)
++
++    assert res.status_code == 400
++
++
+ # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+ def test_copy_bucket_acl_guest(app, records, users, client):
+     """Anonymous requests get 401 JSON rather than the login page.
+@@ -1767,6 +1927,32 @@ def test_get_file_place(app,records,users, client):
+         )
+         assert res.status_code == 400
+ 
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_success(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch(
++        "weko_records_ui.views.get_file_place_info",
++        return_value=('file_place', 'uri', 'new_bucket_id', 'new_version_id'))
++
++    res = _call_get_file_place(client)
++
++    assert res.status_code == 200
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.get_file_place_info",
++                 side_effect=Exception)
++
++    res = _call_get_file_place(client)
++
++    assert res.status_code == 400
++
++
+ # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+ def test_get_file_place_acl_guest(app, records, users, client):
+     """Anonymous requests are sent to the login screen."""
+@@ -1980,3 +2166,595 @@ def test_replace_file(app,records,users, client):
+             },
+         )
+         assert res.status_code == 400
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_s3_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_s3_success(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.replace_file_bucket", return_value={})
++
++    res = _call_replace_file_s3(client)
++
++    assert res.status_code == 200
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_s3_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_s3_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.replace_file_bucket",
++                 side_effect=Exception)
++
++    res = _call_replace_file_s3(client)
++
++    assert res.status_code == 400
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_local_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_local_success(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.replace_file_bucket", return_value={})
++
++    res = _call_replace_file_local(client)
++
++    assert res.status_code == 200
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_local_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_local_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.replace_file_bucket",
++                 side_effect=Exception)
++
++    res = _call_replace_file_local(client)
++
++    assert res.status_code == 400
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_bucket_list_requires_login(app, users, client, mocker):
++    _setup_storage_api(app, client, users, do_login=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_get_bucket_list(client)
++
++    assert res.status_code == 302
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_requires_login(app, users, client, mocker):
++    _setup_storage_api(app, client, users, do_login=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_copy_bucket(client)
++
++    assert res.status_code == 302
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_requires_login(app, users, client, mocker):
++    _setup_storage_api(app, client, users, do_login=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_get_file_place(client)
++
++    assert res.status_code == 302
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_requires_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_requires_login(app, users, client, mocker):
++    _setup_storage_api(app, client, users, do_login=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_replace_file_s3(client)
++
++    assert res.status_code == 302
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_bucket_list_denied_when_disabled(app, users, client, mocker):
++    _setup_storage_api(app, client, users, enabled=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_get_bucket_list(client)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_denied_when_disabled(app, users, client, mocker):
++    _setup_storage_api(app, client, users, enabled=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_copy_bucket(client)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_denied_when_disabled(app, users, client, mocker):
++    _setup_storage_api(app, client, users, enabled=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_get_file_place(client)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_when_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_denied_when_disabled(app, users, client, mocker):
++    _setup_storage_api(app, client, users, enabled=False)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_replace_file_s3(client)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_returns_validation_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_denied(mocker)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_copy_bucket(client)
++
++    assert res.status_code == 403
++    backends['copy_bucket_to_s3'].assert_not_called()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_returns_validation_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_denied(mocker)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_get_file_place(client)
++
++    assert res.status_code == 403
++    backends['get_file_place_info'].assert_not_called()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_returns_validation_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_returns_validation_error(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    _mock_validation_denied(mocker)
++    backends = _mock_storage_backends(mocker)
++
++    res = _call_replace_file_s3(client)
++
++    assert res.status_code == 403
++    backends['replace_file_bucket'].assert_not_called()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_passes_validation_params -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_passes_validation_params(app, users, client, mocker):
++    """The JSON body must reach the validator under the right keyword names.
++
++    ``copy_bucket`` reads the file name from the JSON key ``filename`` but
++    passes it to the validator as ``file_name``. Distinct values are used for
++    every field so that a swapped or renamed key is detected.
++    """
++    _setup_storage_api(app, client, users)
++    mock_validate = _mock_validation_passed(mocker)
++    backends = _mock_storage_backends(mocker)
++    backends['copy_bucket_to_s3'].return_value = {}
++    payload = dict(_COPY_BUCKET_PAYLOAD, pid='11', bucket_id='22', filename='target.pdf')
++
++    res = _call_copy_bucket(client, payload)
++
++    assert res.status_code == 200
++    mock_validate.assert_called_once_with(
++        pid='11', bucket_id='22', file_name='target.pdf')
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_passes_validation_params -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_passes_validation_params(app, users, client, mocker):
++    """The form fields must reach the validator under the right keyword names.
++
++    Distinct values are used for every field so that a swapped or renamed
++    form key is detected.
++    """
++    _setup_storage_api(app, client, users)
++    mock_validate = _mock_validation_passed(mocker)
++    backends = _mock_storage_backends(mocker)
++    backends['get_file_place_info'].return_value = (
++        'file_place', 'uri', 'new_bucket_id', 'new_version_id')
++    payload = dict(_GET_FILE_PLACE_PAYLOAD, pid='11', bucket_id='22', file_name='target.pdf')
++
++    res = _call_get_file_place(client, payload)
++
++    assert res.status_code == 200
++    mock_validate.assert_called_once_with(
++        pid='11', bucket_id='22', file_name='target.pdf')
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_passes_new_bucket_params_s3 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_passes_new_bucket_params_s3(app, users, client, mocker):
++    _setup_storage_api(app, client, users)
++    mock_validate = _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.replace_file_bucket", return_value={})
++
++    res = _call_replace_file_s3(client)
++
++    assert res.status_code == 200
++    mock_validate.assert_called_once_with(pid='1', bucket_id='1', file_name='helloworld.pdf', new_bucket_id='1', new_version_id='1')
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_passes_new_bucket_params_local -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_passes_new_bucket_params_local(app, users, client,
++                                                     mocker):
++    _setup_storage_api(app, client, users)
++    mock_validate = _mock_validation_passed(mocker)
++    mocker.patch("weko_records_ui.views.replace_file_bucket", return_value={})
++
++    res = _call_replace_file_local(client)
++
++    assert res.status_code == 200
++    mock_validate.assert_called_once_with(pid='1', bucket_id='1', file_name='helloworld.pdf', new_bucket_id=None, new_version_id=None)
++
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_bucket_denied_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_copy_bucket_denied_without_pid(app, users, client, mocker):
++    """``pid`` is attacker controlled, so omitting it must not bypass the checks.
++
++    ``copy_bucket`` reads ``pid`` from the JSON body, and
++    ``copy_bucket_to_s3`` locates the file from ``bucket_id`` / ``filename``
++    alone. Without this guard any logged in user could copy somebody else's
++    file into their own S3 bucket simply by leaving ``pid`` out.
++    """
++    _setup_storage_api(app, client, users)
++    backends = _mock_storage_backends(mocker)
++    payload = dict(_COPY_BUCKET_PAYLOAD)
++    del payload['pid']
++
++    res = _call_copy_bucket(client, payload)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_file_place_denied_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_file_place_denied_without_pid(app, users, client, mocker):
++    """A request without ``pid`` must be rejected instead of being trusted."""
++    _setup_storage_api(app, client, users)
++    backends = _mock_storage_backends(mocker)
++    payload = dict(_GET_FILE_PLACE_PAYLOAD)
++    del payload['pid']
++
++    res = _call_get_file_place(client, payload)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_denied_without_pid(app, users, client, mocker):
++    """A request without ``pid`` must be rejected instead of being trusted."""
++    _setup_storage_api(app, client, users)
++    backends = _mock_storage_backends(mocker)
++    payload = dict(_REPLACE_FILE_S3_PAYLOAD)
++    del payload['pid']
++
++    res = _call_replace_file_s3(client, payload)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_bucket_list_allowed_without_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_get_bucket_list_allowed_without_pid(app, users, client, mocker):
++    """``get_bucket_list`` keeps working without ``pid``.
++
++    It does not operate on a single record, so it opts out of the record based
++    checks explicitly. The real validator is used here (it is not mocked) so
++    that making ``pid`` mandatory cannot silently break this API.
++    """
++    _setup_storage_api(app, client, users)
++    mocker.patch("weko_records_ui.views.get_s3_bucket_list", return_value=[])
++
++    res = _call_get_bucket_list(client)
++
++    assert res.status_code == 200
++    assert res.get_json() == []
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_without_new_version_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_denied_without_new_version_id(app, users, client, mocker):
++    """``new_bucket_id`` without ``new_version_id`` must be rejected at the entrance.
++
++    Otherwise ``ObjectVersion.get()`` silently falls back to the head version,
++    the request passes validation and ``None`` ends up stored as the file's
++    ``version_id`` in the record metadata.
++    """
++    _setup_storage_api(app, client, users)
++    _mock_validation_dependencies(mocker, deposit_bucket='1')
++    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = None
++    backends = _mock_storage_backends(mocker)
++    payload = dict(_REPLACE_FILE_S3_PAYLOAD)
++    del payload['new_version_id']
++
++    res = _call_replace_file_s3(client, payload)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_replace_file_denied_without_new_bucket_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test_replace_file_denied_without_new_bucket_id(app, users, client, mocker):
++    """``new_version_id`` without ``new_bucket_id`` must be rejected as well."""
++    _setup_storage_api(app, client, users)
++    _mock_validation_dependencies(mocker, deposit_bucket='1')
++    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = None
++    backends = _mock_storage_backends(mocker)
++    payload = dict(_REPLACE_FILE_S3_PAYLOAD)
++    del payload['new_bucket_id']
++
++    res = _call_replace_file_s3(client, payload)
++
++    assert res.status_code == 403
++    assert 'error' in res.get_json()
++    _assert_no_storage_access(backends)
++
++
++def _mock_validation_dependencies(mocker, deposit_bucket='aaa'):
++    """Mock the dependencies of ``_validate_storage_api_request``.
++
++    The mocks let the ownership check and the base recid check pass, so that
++    each test only has to override the branch it wants to exercise.
++    """
++    pid_obj = mocker.MagicMock()
++    mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value={'_buckets': {'deposit': deposit_bucket}})
++    mocker.patch("weko_records_ui.views.check_created_id", return_value=True)
++    mocker.patch("weko_records_ui.views.PersistentIdentifier.get",  return_value=pid_obj)
++    mocker.patch("weko_records_ui.views.get_record_without_version", return_value=pid_obj)
++    return pid_obj
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_disabled -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_disabled(app):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = False
++    with app.test_request_context():
++        result = _validate_storage_api_request(
++            pid='1', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_feature_flag_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_feature_flag_only(app):
++    """``feature_flag_only=True`` stops right after the feature flag check.
++
++    This is the only way to skip the record based checks, and it is used by
++    ``get_bucket_list``, which does not operate on a single record.
++    """
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    with app.test_request_context():
++        result = _validate_storage_api_request(feature_flag_only=True)
++    assert result is None
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_no_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_no_pid(app, mocker):
++    """Omitting ``pid`` must not skip the record based checks.
++
++    ``pid`` comes from the request body, so a caller could otherwise disable
++    the ownership, base recid and bucket checks simply by leaving it out.
++    """
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mock_get_record = mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid")
++    with app.test_request_context():
++        result = _validate_storage_api_request()
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++    mock_get_record.assert_not_called()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_empty_pid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_empty_pid(app, mocker):
++    """An empty ``pid`` string is rejected just like a missing one."""
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mock_get_record = mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid")
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++    mock_get_record.assert_not_called()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_denied_message_is_shared -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_denied_message_is_shared(app, mocker):
++    """Every rejection reason must be indistinguishable in the response.
++
++    The missing pid rejection reuses the existing permission message so that
++    the response never reveals which check failed.
++    """
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value={'_buckets': {'deposit': 'aaa'}})
++    mocker.patch("weko_records_ui.views.check_created_id", return_value=False)
++    with app.test_request_context():
++        no_permission = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
++        no_pid = _validate_storage_api_request()
++    assert no_pid[1] == no_permission[1] == 403
++    assert no_pid[0].get_json() == no_permission[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_no_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_no_permission(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value={'_buckets': {'deposit': 'aaa'}})
++    mocker.patch("weko_records_ui.views.check_created_id", return_value=False)
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_not_base_recid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_not_base_recid(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", return_value={'_buckets': {'deposit': 'aaa'}})
++    mocker.patch("weko_records_ui.views.check_created_id", return_value=True)
++    mocker.patch("weko_records_ui.views.PersistentIdentifier.get", return_value=mocker.MagicMock())
++    mocker.patch("weko_records_ui.views.get_record_without_version", return_value=mocker.MagicMock())
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_bucket_mismatch -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_bucket_mismatch(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='bbb', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_object_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_object_not_found(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=None)
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_invalid_new_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_invalid_new_version(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mocker.patch("weko_records_ui.views.ObjectVersion.get",
++                 side_effect=[mocker.MagicMock(), None])
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id='1')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_bucket_attached -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_new_bucket_attached(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mocker.patch("weko_records_ui.views.ObjectVersion.get",
++                 return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = \
++        mocker.MagicMock()
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id='1')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_bucket_without_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_new_bucket_without_version(app, mocker):
++    """``new_bucket_id`` without ``new_version_id`` must be rejected.
++
++    ``ObjectVersion.get()`` deliberately falls back to the head version when
++    ``version_id`` is falsy, so the query alone would accept the request and
++    the missing version id would later be written into the record metadata.
++    """
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mock_object_version = mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = None
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id=None)
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++    assert mock_object_version.call_count == 1
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_bucket_with_empty_version -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_new_bucket_with_empty_version(app, mocker):
++    """An empty ``new_version_id`` string is rejected just like a missing one."""
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = None
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id='bbb', new_version_id='')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_new_version_without_bucket -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_new_version_without_bucket(app, mocker):
++    """``new_version_id`` without ``new_bucket_id`` must be rejected too."""
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mock_object_version = mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = None
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf', new_bucket_id=None, new_version_id='1')
++    assert result[1] == 403
++    assert 'error' in result[0].get_json()
++    assert mock_object_version.call_count == 1
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_pid_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_pid_not_found(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", side_effect=PIDDoesNotExistError('recid', '999'))
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='999', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 403
++    assert result[1] != 404
++    assert 'error' in result[0].get_json()
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_unexpected_error -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_unexpected_error(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    mocker.patch("weko_records_ui.views.WekoRecord.get_record_by_pid", side_effect=Exception('boom'))
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf')
++    assert result[1] == 400
++    assert result[0].get_json()['error'] == 'boom'
++
++
++# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test__validate_storage_api_request_success -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
++def test__validate_storage_api_request_success(app, mocker):
++    app.config['WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED'] = True
++    _mock_validation_dependencies(mocker)
++    mocker.patch("weko_records_ui.views.ObjectVersion.get", return_value=mocker.MagicMock())
++    mock_records_buckets = mocker.patch("weko_records_ui.views.RecordsBuckets")
++    mock_records_buckets.query.filter_by.return_value.first.return_value = None
++    with app.test_request_context():
++        result = _validate_storage_api_request(pid='1', bucket_id='aaa', file_name='helloworld.pdf',new_bucket_id='bbb', new_version_id='1')
++    assert result is None
+diff --git a/modules/weko-records-ui/weko_records_ui/api.py b/modules/weko-records-ui/weko_records_ui/api.py
+index 03bbf3f68c..7d6a3d4d1f 100644
+--- a/modules/weko-records-ui/weko_records_ui/api.py
++++ b/modules/weko-records-ui/weko_records_ui/api.py
+@@ -509,8 +509,8 @@ def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
+             s3_client.put_public_access_block(
+                 Bucket=bucket_name,
+                 PublicAccessBlockConfiguration={
+-                    'BlockPublicAcls': False,
+-                    'IgnorePublicAcls': False,
++                    'BlockPublicAcls': True,
++                    'IgnorePublicAcls': True,
+                     'BlockPublicPolicy': False,
+                     'RestrictPublicBuckets': False
+                 }
+@@ -523,7 +523,7 @@ def create_storage_bucket(s3_client, endpoint_url, region_name, bucket_name):
+                     "Sid": "Public",
+                     "Effect": "Allow",
+                     "Principal": "*",
+-                    "Action": ["s3:*"],
++                    "Action": ["s3:GetObject"],
+                     "Resource": f"arn:aws:s3:::{bucket_name}/*"
+                 }
+             ]
+diff --git a/modules/weko-records-ui/weko_records_ui/static/js/weko_records_ui/bucket.js b/modules/weko-records-ui/weko_records_ui/static/js/weko_records_ui/bucket.js
+index 20a7546c68..18c7d7c341 100644
+--- a/modules/weko-records-ui/weko_records_ui/static/js/weko_records_ui/bucket.js
++++ b/modules/weko-records-ui/weko_records_ui/static/js/weko_records_ui/bucket.js
+@@ -1,3 +1,21 @@
++async function parseJsonResponse(res) {
++  if (res.redirected) {
++    // Session expired: fetch followed the redirect to the login page.
++    window.location.href = res.url;
++    // Never settles, so the caller's .then()/.catch() will not run.
++    return new Promise(function () {});
++  }
++  const contentType = res.headers.get('Content-Type') || '';
++  if (contentType.indexOf('application/json') === -1) {
++    throw new Error(res.status + ' ' + res.statusText);
++  }
++  const data = await res.json();
++  if (!res.ok) {
++    throw new Error(data.error);
++  }
++  return data;
++}
++
+ async function openBucketCopyModal() {
+   $('#bucket_copy_modal').modal('show');
+   $('#modal-guide').hide();
+@@ -10,14 +28,7 @@ async function openBucketCopyModal() {
+ 
+   url ="/records/get_bucket_list";
+   await fetch(url ,{method:'GET' ,headers:{'Content-Type':'application/json'} ,credentials:"include"})
+-  .then(res => {
+-    if (!res.ok) {
+-      return res.json().then(errorData => {
+-          throw new Error(errorData.error);
+-      });
+-    }
+-    return res.json();
+-  })
++  .then(parseJsonResponse)
+   .then((result) => {
+     $('.options-list').empty();
+     result.forEach(function(bucket_name) {
+@@ -101,14 +112,7 @@ async function copyFileToBucket() {
+   }
+   url ="/records/copy_bucket";
+   await fetch(url ,{method:'POST' ,headers:{'Content-Type':'application/json'} ,credentials:"include", body: JSON.stringify(form)})
+-  .then(res => {
+-    if (!res.ok) {
+-      return res.json().then(errorData => {
+-          throw new Error(errorData.error);
+-      });
+-    }
+-    return res.json();
+-  })
++  .then(parseJsonResponse)
+   .then(result => {
+     $('#modal-result-message').text(copy_success_message);
+     $('#modal-result-uri').text(result);
+@@ -156,14 +160,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
+     url ="/records/get_file_place";
+ 
+     await fetch(url ,{method:'POST', credentials:"include", body: formData})
+-    .then(res => {
+-      if (!res.ok) {
+-        return res.json().then(errorData => {
+-            throw new Error(errorData.error);
+-        });
+-      }
+-      return res.json();
+-    })
++    .then(parseJsonResponse)
+     .then(result => {
+       console.log(result);
+       return_file_place = result.file_place
+@@ -197,14 +194,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
+       formData_second.append('new_version_id', return_version_id);
+ 
+       await fetch(url ,{method:'POST', credentials:"include", body: formData_second})
+-      .then(res => {
+-        if (!res.ok) {
+-          return res.json().then(errorData => {
+-              throw new Error(errorData.error);
+-          });
+-        }
+-        return res.json();
+-      })
++      .then(parseJsonResponse)
+       .then(result => {
+         alert(file_replacement_successful_message);
+         window.location = record_url;
+@@ -224,14 +214,7 @@ document.getElementById('fileInput').addEventListener('change', async function(e
+       formData_second.append('file_size', file.size);
+ 
+       await fetch(url ,{method:'POST', credentials:"include", body: formData_second})
+-      .then(res => {
+-        if (!res.ok) {
+-          return res.json().then(errorData => {
+-              throw new Error(errorData.error);
+-          });
+-        }
+-        return res.json();
+-      })
++      .then(parseJsonResponse)
+       .then(result => {
+         alert(file_replacement_successful_message);
+         window.location = record_url;
+diff --git a/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.mo b/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.mo
+index ceaa2b7c87..98a693579a 100644
+Binary files a/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.mo and b/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.mo differ
+diff --git a/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.po b/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.po
+index e10a237902..e9df92e690 100644
+--- a/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.po
++++ b/modules/weko-records-ui/weko_records_ui/translations/en/LC_MESSAGES/messages.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
+ "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+-"POT-Creation-Date: 2025-12-24 10:03+0900\n"
++"POT-Creation-Date: 2026-08-26 17:56+0900\n"
+ "PO-Revision-Date: 2018-04-12 18:06+0900\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language: en\n"
+@@ -19,7 +19,7 @@ msgstr ""
+ "Content-Transfer-Encoding: 8bit\n"
+ "Generated-By: Babel 2.5.1\n"
+ 
+-#: tests/test_utils.py:717 weko_records_ui/api.py:678 weko_records_ui/fd.py:650
++#: tests/test_utils.py:717 weko_records_ui/api.py:691 weko_records_ui/fd.py:650
+ #: weko_records_ui/fd.py:728 weko_records_ui/utils.py:1214
+ msgid "Unexpected error occurred."
+ msgstr ""
+@@ -28,7 +28,7 @@ msgstr ""
+ msgid "Failed to send mail."
+ msgstr ""
+ 
+-#: tests/test_views.py:1342 weko_records_ui/views.py:1261
++#: tests/test_views.py:1342 weko_records_ui/views.py:1264
+ msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+ msgstr "Cannot delete because it is being edited."
+ 
+@@ -63,51 +63,51 @@ msgstr ""
+ msgid "Bulk Update"
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:220
++#: weko_records_ui/api.py:221
+ msgid "Not authenticated user."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:224 weko_records_ui/api.py:227
+-#: weko_records_ui/api.py:289
++#: weko_records_ui/api.py:225 weko_records_ui/api.py:228
++#: weko_records_ui/api.py:290
+ msgid "S3 setting none. Please check your profile."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:246
++#: weko_records_ui/api.py:247
+ msgid "Getting Bucket List failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:325
++#: weko_records_ui/api.py:326
+ msgid "Getting region failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:363 weko_records_ui/api.py:454
++#: weko_records_ui/api.py:374 weko_records_ui/api.py:467
+ msgid "Uploading file failed."
+ msgstr ""
+ "Uploading file failed. Please make sure you have write permissions or "
+ "that the bucket is writable."
+ 
+-#: weko_records_ui/api.py:403 weko_records_ui/api.py:660
++#: weko_records_ui/api.py:414 weko_records_ui/api.py:673
+ msgid "The source bucket or file cannot be found."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:418
++#: weko_records_ui/api.py:429
+ msgid "The source file cannot be found."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:450
++#: weko_records_ui/api.py:463
+ msgid "The source file size exceeds the limit for cross-service copy."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:476
++#: weko_records_ui/api.py:489
+ msgid "Bucket already exists."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:525
++#: weko_records_ui/api.py:538
+ msgid "Creating Bucket failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:551 weko_records_ui/api.py:711
+-#: weko_records_ui/api.py:712
++#: weko_records_ui/api.py:564 weko_records_ui/api.py:724
++#: weko_records_ui/api.py:725
+ msgid "Cannot update because the corresponding item is being edited."
+ msgstr ""
+ 
+@@ -300,7 +300,7 @@ msgstr ""
+ msgid "The provided token is invalid."
+ msgstr ""
+ 
+-#: weko_records_ui/utils.py:2338
++#: weko_records_ui/utils.py:2338 weko_records_ui/views.py:1492
+ msgid "This feature is currently disabled."
+ msgstr ""
+ 
+@@ -312,28 +312,32 @@ msgstr ""
+ msgid "This URL has been deactivated."
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:914
++#: weko_records_ui/views.py:917
+ msgid "Secret URL generated successfully"
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:923
++#: weko_records_ui/views.py:926
+ msgid ", please check your email inbox"
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:925
++#: weko_records_ui/views.py:928
+ msgid ""
+ ", but there was an error while sending the email. To use the URL, please "
+ "refresh the page and copy it from the issued URL list"
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:928
++#: weko_records_ui/views.py:931
+ msgid "."
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:1158
++#: weko_records_ui/views.py:1161
+ msgid "PDF cover page settings have been updated."
+ msgstr "Updated PDF cover settings"
+ 
++#: weko_records_ui/views.py:1498
++msgid "You do not have permission to perform this operation."
++msgstr ""
++
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:47
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:60
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:72
+@@ -507,8 +511,8 @@ msgid "Edit"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/body_contents.html:411
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:272
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:319
+ msgid "Delete"
+ msgstr ""
+ 
+@@ -599,201 +603,201 @@ msgid "No title"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:68
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:257
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:304
+ msgid "Action"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:132
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:133
+ msgid "Replace the file content"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:133
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:134
+ msgid "Copy file to open bucket"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:157
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:248
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:159
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:250
+ msgid "Secret URL"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:170
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:172
+ msgid "Plagarism Check"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+ msgid "Link Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:204
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:209
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:215
+ msgid "Item has not been filled in."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:205
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+ msgid "URL Expiry Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:210
+ msgid "Max Expiry Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:211
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
+ msgid "Download Limit"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:214
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:216
+ msgid "Max Download Count"
+ msgstr "Max Download Limit"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:218
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
+ msgid "Create Secret URL"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:221
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:223
+ msgid "Send Email"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:251
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+ msgid "Label Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:252
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:299
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
+ msgid "Create Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
+ msgid "Expiration Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:256
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:303
+ #, fuzzy
+ msgid "Download Count"
+ msgstr "Max Download Limit"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:275
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:322
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:277
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:324
+ msgid "Copy"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:283
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:330
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
+ msgid "message_del_check"
+ msgstr ""
+ "If you delete this URL, it will no longer be available. Are you sure you "
+ "want to delete it?"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:284
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:331
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:286
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:333
+ msgid "message_del_success"
+ msgstr "URL has been removed"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:287
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:334
+ msgid "message_copy_success"
+ msgstr "URL has been copied to the clipboard"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:295
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:297
+ msgid "Onetime URL"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:298
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
+ msgid "User Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:338
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:367
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:340
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
+ msgid "Version"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/box/stats.html:5
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:339
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:341
+ msgid "Stats"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:346
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
+ msgid ""
+ "Copy Success. Take note of URL. This URL cannot be confirmed again once "
+ "the screen is closed. If you have created a new bucket, please check that"
+ " the bucket is set to public."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:347
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
+ msgid "Please select the same named file as the original file."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:350
+ msgid "File replacement successful."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:351
+ msgid "Replacing file failed."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:353
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:355
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:375
+ msgid "Show"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:354
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:356
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:375
+ msgid "Hide"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:368
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
+ msgid "Date Modified"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
+ msgid "Object File Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
+ msgid "File Size"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
+ msgid "File Hash Value"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:374
+ msgid "Contributor Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:394
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:396
+ msgid "Downloads"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:402
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:404
+ msgid "Plays"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:412
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:414
+ msgid "See details"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:453
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
+ msgid "Chose bucket or input creating bucket name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:457
+ msgid "Bucket"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:465
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:467
+ msgid "New Creating Bucket Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:479
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:481
+ msgid "Execution"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:483
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:485
+ msgid "Close"
+ msgstr ""
+ 
+diff --git a/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.mo b/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.mo
+index a433d4e84f..14b168d062 100644
+Binary files a/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.mo and b/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.mo differ
+diff --git a/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.po b/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.po
+index 0fc92c5d76..1de52aeb33 100644
+--- a/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.po
++++ b/modules/weko-records-ui/weko_records_ui/translations/ja/LC_MESSAGES/messages.po
+@@ -8,7 +8,7 @@ msgid ""
+ msgstr ""
+ "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
+ "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+-"POT-Creation-Date: 2025-12-24 10:03+0900\n"
++"POT-Creation-Date: 2026-08-26 17:56+0900\n"
+ "PO-Revision-Date: 2021-02-02 03:25+0000\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language: ja\n"
+@@ -19,7 +19,7 @@ msgstr ""
+ "Content-Transfer-Encoding: 8bit\n"
+ "Generated-By: Babel 2.5.1\n"
+ 
+-#: tests/test_utils.py:717 weko_records_ui/api.py:678 weko_records_ui/fd.py:650
++#: tests/test_utils.py:717 weko_records_ui/api.py:691 weko_records_ui/fd.py:650
+ #: weko_records_ui/fd.py:728 weko_records_ui/utils.py:1214
+ msgid "Unexpected error occurred."
+ msgstr "予期しないエラーが発生しました"
+@@ -28,7 +28,7 @@ msgstr "予期しないエラーが発生しました"
+ msgid "Failed to send mail."
+ msgstr ""
+ 
+-#: tests/test_views.py:1342 weko_records_ui/views.py:1261
++#: tests/test_views.py:1342 weko_records_ui/views.py:1264
+ msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+ msgstr "該当アイテムは編集中のため、削除できません。"
+ 
+@@ -62,50 +62,50 @@ msgstr ""
+ msgid "Bulk Update"
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:220
++#: weko_records_ui/api.py:221
+ msgid "Not authenticated user."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:224 weko_records_ui/api.py:227
+-#: weko_records_ui/api.py:289
++#: weko_records_ui/api.py:225 weko_records_ui/api.py:228
++#: weko_records_ui/api.py:290
+ msgid "S3 setting none. Please check your profile."
+ msgstr "S3に関する設定がありません。あなたのプロフィールを確認してください。"
+ 
+-#: weko_records_ui/api.py:246
++#: weko_records_ui/api.py:247
+ msgid "Getting Bucket List failed."
+ msgstr "バケットリストの取得に失敗しました。"
+ 
+-#: weko_records_ui/api.py:325
++#: weko_records_ui/api.py:326
+ msgid "Getting region failed."
+ msgstr "リージョンの取得に失敗しました。"
+ 
+-#: weko_records_ui/api.py:363 weko_records_ui/api.py:454
++#: weko_records_ui/api.py:374 weko_records_ui/api.py:467
+ msgid "Uploading file failed."
+ msgstr "ファイルのアップロードに失敗しました。書き込み権限や書き込み可能なバケットであることを確認してください。"
+ 
+-#: weko_records_ui/api.py:403 weko_records_ui/api.py:660
++#: weko_records_ui/api.py:414 weko_records_ui/api.py:673
+ #, fuzzy
+ msgid "The source bucket or file cannot be found."
+ msgstr "コピー元のファイル、バケットが見つかりません。"
+ 
+-#: weko_records_ui/api.py:418
++#: weko_records_ui/api.py:429
+ msgid "The source file cannot be found."
+ msgstr "コピー元のファイルが見つかりません。"
+ 
+-#: weko_records_ui/api.py:450
++#: weko_records_ui/api.py:463
+ msgid "The source file size exceeds the limit for cross-service copy."
+ msgstr "S3互換サービス間でファイルコピー可能なサイズを超過しています"
+ 
+-#: weko_records_ui/api.py:476
++#: weko_records_ui/api.py:489
+ msgid "Bucket already exists."
+ msgstr "指定されたバケットはすでに存在しています。"
+ 
+-#: weko_records_ui/api.py:525
++#: weko_records_ui/api.py:538
+ msgid "Creating Bucket failed."
+ msgstr "バケットの作成に失敗しました。"
+ 
+-#: weko_records_ui/api.py:551 weko_records_ui/api.py:711
+-#: weko_records_ui/api.py:712
++#: weko_records_ui/api.py:564 weko_records_ui/api.py:724
++#: weko_records_ui/api.py:725
+ msgid "Cannot update because the corresponding item is being edited."
+ msgstr "該当アイテムが編集中のため更新できません。"
+ 
+@@ -298,7 +298,7 @@ msgstr ""
+ msgid "The provided token is invalid."
+ msgstr "トークンが無効です。"
+ 
+-#: weko_records_ui/utils.py:2338
++#: weko_records_ui/utils.py:2338 weko_records_ui/views.py:1492
+ msgid "This feature is currently disabled."
+ msgstr "この機能は現在ご利用頂けません。"
+ 
+@@ -310,28 +310,32 @@ msgstr "このファイルは現在ダウンロードできません。"
+ msgid "This URL has been deactivated."
+ msgstr "このURLは削除されました。"
+ 
+-#: weko_records_ui/views.py:914
++#: weko_records_ui/views.py:917
+ msgid "Secret URL generated successfully"
+ msgstr "シークレットURLの作成に成功しました"
+ 
+-#: weko_records_ui/views.py:923
++#: weko_records_ui/views.py:926
+ msgid ", please check your email inbox"
+ msgstr "。メールをご確認ください"
+ 
+-#: weko_records_ui/views.py:925
++#: weko_records_ui/views.py:928
+ msgid ""
+ ", but there was an error while sending the email. To use the URL, please "
+ "refresh the page and copy it from the issued URL list"
+ msgstr "が、メール送信エラーが発生しました。ページを更新し、URL一覧表からご利用ください"
+ 
+-#: weko_records_ui/views.py:928
++#: weko_records_ui/views.py:931
+ msgid "."
+ msgstr "。"
+ 
+-#: weko_records_ui/views.py:1158
++#: weko_records_ui/views.py:1161
+ msgid "PDF cover page settings have been updated."
+ msgstr ""
+ 
++#: weko_records_ui/views.py:1498
++msgid "You do not have permission to perform this operation."
++msgstr "この操作を行う権限がありません。"
++
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:47
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:60
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:72
+@@ -503,8 +507,8 @@ msgid "Edit"
+ msgstr "編集"
+ 
+ #: weko_records_ui/templates/weko_records_ui/body_contents.html:411
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:272
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:319
+ msgid "Delete"
+ msgstr "削除"
+ 
+@@ -595,198 +599,198 @@ msgid "No title"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:68
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:257
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:304
+ msgid "Action"
+ msgstr "アクション"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:132
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:133
+ msgid "Replace the file content"
+ msgstr "ファイルを置き換え"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:133
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:134
+ msgid "Copy file to open bucket"
+ msgstr "公開バケットにファイルをコピー"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:157
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:248
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:159
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:250
+ msgid "Secret URL"
+ msgstr "シークレットURL"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:170
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:172
+ msgid "Plagarism Check"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+ msgid "Link Name"
+ msgstr "リンク名"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:204
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:209
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:215
+ msgid "Item has not been filled in."
+ msgstr "項目が未入力です"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:205
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+ msgid "URL Expiry Date"
+ msgstr "URL有効期限"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:210
+ msgid "Max Expiry Date"
+ msgstr "有効期限上限"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:211
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
+ msgid "Download Limit"
+ msgstr "ダウンロード回数"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:214
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:216
+ msgid "Max Download Count"
+ msgstr "ダウンロード回数上限"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:218
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
+ msgid "Create Secret URL"
+ msgstr "シークレットURL作成"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:221
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:223
+ msgid "Send Email"
+ msgstr "メール通知"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:251
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+ msgid "Label Name"
+ msgstr "リンク名"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:252
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:299
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
+ msgid "Create Date"
+ msgstr "作成日時"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
+ msgid "Expiration Date"
+ msgstr "DL期限"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:256
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:303
+ msgid "Download Count"
+ msgstr "DL回数"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:275
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:322
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:277
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:324
+ msgid "Copy"
+ msgstr "コピー"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:283
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:330
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
+ msgid "message_del_check"
+ msgstr "このURLを削除すると、利用できなくなります。本当に削除しますか？"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:284
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:331
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:286
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:333
+ msgid "message_del_success"
+ msgstr "URLが削除されました"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:287
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:334
+ msgid "message_copy_success"
+ msgstr "URLがクリップボードにコピーされました"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:295
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:297
+ msgid "Onetime URL"
+ msgstr "ワンタイムURL"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:298
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
+ msgid "User Name"
+ msgstr "ユーザー名"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:338
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:367
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:340
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
+ msgid "Version"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/box/stats.html:5
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:339
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:341
+ msgid "Stats"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:346
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
+ msgid ""
+ "Copy Success. Take note of URL. This URL cannot be confirmed again once "
+ "the screen is closed. If you have created a new bucket, please check that"
+ " the bucket is set to public."
+ msgstr "コピーに成功しました。URLを控えてください。この画面を閉じるとURLを再確認することはできません。バケットを新規作成した場合、該当のバケットが公開設定になっているかご確認ください。"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:347
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
+ msgid "Please select the same named file as the original file."
+ msgstr "元のファイルと同じ名前のファイルを選択してください。"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:350
+ msgid "File replacement successful."
+ msgstr "ファイルの置き換えに成功しました。"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:351
+ msgid "Replacing file failed."
+ msgstr "ファイルの置き換えに失敗しました。"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:353
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:355
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:375
+ msgid "Show"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:354
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:356
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:375
+ msgid "Hide"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:368
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
+ msgid "Date Modified"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
+ msgid "Object File Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
+ msgid "File Size"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
+ msgid "File Hash Value"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:374
+ msgid "Contributor Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:394
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:396
+ msgid "Downloads"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:402
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:404
+ msgid "Plays"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:412
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:414
+ msgid "See details"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:453
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
+ msgid "Chose bucket or input creating bucket name"
+ msgstr "バケット名を選択するか、新規に作成するバケット名を入力してください。"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:457
+ msgid "Bucket"
+ msgstr "バケット"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:465
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:467
+ msgid "New Creating Bucket Name"
+ msgstr "新規作成バケット名"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:479
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:481
+ msgid "Execution"
+ msgstr "実行"
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:483
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:485
+ msgid "Close"
+ msgstr "閉じる"
+ 
+diff --git a/modules/weko-records-ui/weko_records_ui/translations/messages.pot b/modules/weko-records-ui/weko_records_ui/translations/messages.pot
+index a70b0ed986..107b67c58f 100644
+--- a/modules/weko-records-ui/weko_records_ui/translations/messages.pot
++++ b/modules/weko-records-ui/weko_records_ui/translations/messages.pot
+@@ -1,15 +1,15 @@
+ # Translations template for weko-records-ui.
+-# Copyright (C) 2025 National Institute of Informatics
++# Copyright (C) 2026 National Institute of Informatics
+ # This file is distributed under the same license as the weko-records-ui
+ # project.
+-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
++# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+ #
+ #, fuzzy
+ msgid ""
+ msgstr ""
+ "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
+ "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
+-"POT-Creation-Date: 2025-12-24 10:03+0900\n"
++"POT-Creation-Date: 2026-08-26 17:56+0900\n"
+ "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+ "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+ "Language-Team: LANGUAGE <LL@li.org>\n"
+@@ -18,7 +18,7 @@ msgstr ""
+ "Content-Transfer-Encoding: 8bit\n"
+ "Generated-By: Babel 2.5.1\n"
+ 
+-#: tests/test_utils.py:717 weko_records_ui/api.py:678 weko_records_ui/fd.py:650
++#: tests/test_utils.py:717 weko_records_ui/api.py:691 weko_records_ui/fd.py:650
+ #: weko_records_ui/fd.py:728 weko_records_ui/utils.py:1214
+ msgid "Unexpected error occurred."
+ msgstr ""
+@@ -27,7 +27,7 @@ msgstr ""
+ msgid "Failed to send mail."
+ msgstr ""
+ 
+-#: tests/test_views.py:1342 weko_records_ui/views.py:1261
++#: tests/test_views.py:1342 weko_records_ui/views.py:1264
+ msgid "MSG_WEKO_RECORDS_UI_IS_EDITING_TRUE"
+ msgstr ""
+ 
+@@ -61,49 +61,49 @@ msgstr ""
+ msgid "Bulk Update"
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:220
++#: weko_records_ui/api.py:221
+ msgid "Not authenticated user."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:224 weko_records_ui/api.py:227
+-#: weko_records_ui/api.py:289
++#: weko_records_ui/api.py:225 weko_records_ui/api.py:228
++#: weko_records_ui/api.py:290
+ msgid "S3 setting none. Please check your profile."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:246
++#: weko_records_ui/api.py:247
+ msgid "Getting Bucket List failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:325
++#: weko_records_ui/api.py:326
+ msgid "Getting region failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:363 weko_records_ui/api.py:454
++#: weko_records_ui/api.py:374 weko_records_ui/api.py:467
+ msgid "Uploading file failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:403 weko_records_ui/api.py:660
++#: weko_records_ui/api.py:414 weko_records_ui/api.py:673
+ msgid "The source bucket or file cannot be found."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:418
++#: weko_records_ui/api.py:429
+ msgid "The source file cannot be found."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:450
++#: weko_records_ui/api.py:463
+ msgid "The source file size exceeds the limit for cross-service copy."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:476
++#: weko_records_ui/api.py:489
+ msgid "Bucket already exists."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:525
++#: weko_records_ui/api.py:538
+ msgid "Creating Bucket failed."
+ msgstr ""
+ 
+-#: weko_records_ui/api.py:551 weko_records_ui/api.py:711
+-#: weko_records_ui/api.py:712
++#: weko_records_ui/api.py:564 weko_records_ui/api.py:724
++#: weko_records_ui/api.py:725
+ msgid "Cannot update because the corresponding item is being edited."
+ msgstr ""
+ 
+@@ -296,7 +296,7 @@ msgstr ""
+ msgid "The provided token is invalid."
+ msgstr ""
+ 
+-#: weko_records_ui/utils.py:2338
++#: weko_records_ui/utils.py:2338 weko_records_ui/views.py:1492
+ msgid "This feature is currently disabled."
+ msgstr ""
+ 
+@@ -308,28 +308,32 @@ msgstr ""
+ msgid "This URL has been deactivated."
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:914
++#: weko_records_ui/views.py:917
+ msgid "Secret URL generated successfully"
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:923
++#: weko_records_ui/views.py:926
+ msgid ", please check your email inbox"
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:925
++#: weko_records_ui/views.py:928
+ msgid ""
+ ", but there was an error while sending the email. To use the URL, please "
+ "refresh the page and copy it from the issued URL list"
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:928
++#: weko_records_ui/views.py:931
+ msgid "."
+ msgstr ""
+ 
+-#: weko_records_ui/views.py:1158
++#: weko_records_ui/views.py:1161
+ msgid "PDF cover page settings have been updated."
+ msgstr ""
+ 
++#: weko_records_ui/views.py:1498
++msgid "You do not have permission to perform this operation."
++msgstr ""
++
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:47
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:60
+ #: weko_records_ui/templates/weko_records_ui/_macros.html:72
+@@ -501,8 +505,8 @@ msgid "Edit"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/body_contents.html:411
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:270
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:317
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:272
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:319
+ msgid "Delete"
+ msgstr ""
+ 
+@@ -593,198 +597,198 @@ msgid "No title"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/file_details_contents.html:68
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:257
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:304
+ msgid "Action"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:132
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:133
+ msgid "Replace the file content"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:133
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:134
+ msgid "Copy file to open bucket"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:157
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:248
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:159
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:250
+ msgid "Secret URL"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:170
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:172
+ msgid "Plagarism Check"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:200
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+ msgid "Link Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:202
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:204
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:209
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:215
+ msgid "Item has not been filled in."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:205
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:207
+ msgid "URL Expiry Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:208
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:210
+ msgid "Max Expiry Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:211
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:213
+ msgid "Download Limit"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:214
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:216
+ msgid "Max Download Count"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:218
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:220
+ msgid "Create Secret URL"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:221
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:223
+ msgid "Send Email"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:251
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+ msgid "Label Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:252
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:299
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
+ msgid "Create Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:253
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:255
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:302
+ msgid "Expiration Date"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:254
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:301
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:256
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:303
+ msgid "Download Count"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:275
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:322
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:277
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:324
+ msgid "Copy"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:283
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:330
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
+ msgid "message_del_check"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:284
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:331
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:286
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:333
+ msgid "message_del_success"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:285
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:332
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:287
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:334
+ msgid "message_copy_success"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:295
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:297
+ msgid "Onetime URL"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:298
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:300
+ msgid "User Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:338
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:367
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:340
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
+ msgid "Version"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/box/stats.html:5
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:339
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:341
+ msgid "Stats"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:346
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
+ msgid ""
+ "Copy Success. Take note of URL. This URL cannot be confirmed again once "
+ "the screen is closed. If you have created a new bucket, please check that"
+ " the bucket is set to public."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:347
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
+ msgid "Please select the same named file as the original file."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:348
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:350
+ msgid "File replacement successful."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:349
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:351
+ msgid "Replacing file failed."
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:353
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:355
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:375
+ msgid "Show"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:354
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:356
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:375
+ msgid "Hide"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:368
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
+ msgid "Date Modified"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:369
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
+ msgid "Object File Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:370
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
+ msgid "File Size"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:371
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:373
+ msgid "File Hash Value"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:372
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:374
+ msgid "Contributor Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:394
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:396
+ msgid "Downloads"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:402
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:404
+ msgid "Plays"
+ msgstr ""
+ 
+ #: weko_records_ui/templates/weko_records_ui/box/stats.html:29
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:412
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:414
+ msgid "See details"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:453
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
+ msgid "Chose bucket or input creating bucket name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:455
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:457
+ msgid "Bucket"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:465
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:467
+ msgid "New Creating Bucket Name"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:479
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:481
+ msgid "Execution"
+ msgstr ""
+ 
+-#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:483
++#: weko_records_ui/templates/weko_records_ui/file_details_contents.html:485
+ msgid "Close"
+ msgstr ""
+ 
+diff --git a/modules/weko-records-ui/weko_records_ui/views.py b/modules/weko-records-ui/weko_records_ui/views.py
+index 2bd15555ec..6845f17382 100644
+--- a/modules/weko-records-ui/weko_records_ui/views.py
++++ b/modules/weko-records-ui/weko_records_ui/views.py
+@@ -46,6 +46,7 @@
+ from invenio_pidrelations.contrib.versioning import PIDVersioning
+ from invenio_pidstore.errors import PIDDoesNotExistError
+ from invenio_pidstore.models import PersistentIdentifier, PIDStatus
++from invenio_records_files.models import RecordsBuckets
+ from invenio_records_ui.signals import record_viewed
+ from invenio_files_rest.signals import file_downloaded
+ from invenio_records_ui.utils import obj_or_import_string
+@@ -1480,9 +1481,102 @@ def dbsession_clean(exception):
+     db.session.remove()
+ 
+ 
++def _validate_storage_api_request(pid=None, bucket_id=None, file_name=None,
++                                  new_bucket_id=None, new_version_id=None,
++                                  feature_flag_only=False):
++    """Validate a request for the institutional storage APIs.
++
++    The record based checks (ownership, base recid, bucket and object) are
++    mandatory by default: a request without ``pid`` is rejected. Only the APIs
++    that do not operate on a single record (currently ``get_bucket_list``) may
++    opt out by passing ``feature_flag_only=True``, which stops right after the
++    feature flag check.
++
++    Returns None when the request is valid, otherwise a Flask response tuple
++    that the caller can return as-is.
++    """
++    user_id = current_user.get_id()
++    if not current_app.config.get(
++            'WEKO_RECORDS_UI_USER_STORAGE_MODIFICATION_ENABLED', False):
++        current_app.logger.info(
++            'Storage modification is disabled. api={}, user_id={}'.format(
++                request.path, user_id))
++        return jsonify({'error': _('This feature is currently disabled.')}), 403
++
++    if feature_flag_only:
++        return None
++
++    denied = jsonify(
++        {'error': _('You do not have permission to perform this operation.')}), 403
++
++    if not pid:
++        current_app.logger.warning(
++            'Storage API denied. reason=missing_pid, api={}, user_id={}'.format(
++                request.path, user_id))
++        return denied
++
++    try:
++        record = WekoRecord.get_record_by_pid(pid)
++        if not check_created_id(record):
++            current_app.logger.warning(
++                'Storage API denied. reason=no_permission, api={}, user_id={}, '
++                'pid={}'.format(request.path, user_id, pid))
++            return denied
++
++        pid_obj = PersistentIdentifier.get('recid', pid)
++        if pid_obj != get_record_without_version(pid_obj):
++            current_app.logger.warning(
++                'Storage API denied. reason=not_base_recid, api={}, user_id={}, '
++                'pid={}'.format(request.path, user_id, pid))
++            return denied
++
++        if str(record.get('_buckets', {}).get('deposit')) != str(bucket_id):
++            current_app.logger.warning(
++                'Storage API denied. reason=bucket_mismatch, api={}, user_id={}, '
++                'pid={}, bucket_id={}'.format(
++                    request.path, user_id, pid, bucket_id))
++            return denied
++
++        if ObjectVersion.get(bucket=bucket_id, key=file_name) is None:
++            current_app.logger.warning(
++                'Storage API denied. reason=object_not_found, api={}, user_id={}, '
++                'pid={}, bucket_id={}, file_name={}'.format(
++                    request.path, user_id, pid, bucket_id, file_name))
++            return denied
++
++        if new_bucket_id or new_version_id:
++            if not (new_bucket_id and new_version_id) \
++                    or ObjectVersion.get(bucket=new_bucket_id, key=file_name,
++                                         version_id=new_version_id) is None \
++                    or RecordsBuckets.query.filter_by(
++                        bucket_id=new_bucket_id).first() is not None:
++                current_app.logger.warning(
++                    'Storage API denied. reason=invalid_new_bucket, api={}, '
++                    'user_id={}, pid={}, new_bucket_id={}, new_version_id={}'.format(
++                        request.path, user_id, pid, new_bucket_id, new_version_id))
++                return denied
++    except (PIDDoesNotExistError, NoResultFound):
++        current_app.logger.warning(
++            'Storage API denied. reason=pid_not_found, api={}, user_id={}, '
++            'pid={}'.format(request.path, user_id, pid))
++        return denied
++    except Exception as e:
++        current_app.logger.error(
++            'Unexpected error while validating storage API request. '
++            'api={}, user_id={}, pid={}'.format(request.path, user_id, pid))
++        current_app.logger.error(traceback.format_exc())
++        return jsonify({'error': str(e)}), 400
++
++    return None
++
++
+ @blueprint.route("/records/get_bucket_list", methods=['GET'])
+ @login_required
+ def get_bucket_list():
++    error = _validate_storage_api_request(feature_flag_only=True)
++    if error:
++        return error
++
+     try:
+         bucket_list = get_s3_bucket_list()
+         return jsonify(bucket_list)
+@@ -1500,6 +1594,12 @@ def copy_bucket():
+     bucket_id = data.get('bucket_id')
+     checked = data.get('checked')
+     bucket_name = data.get('bucket_name')
++
++    error = _validate_storage_api_request(
++        pid=pid, bucket_id=bucket_id, file_name=filename)
++    if error:
++        return error
++
+     try:
+         uri = copy_bucket_to_s3(pid, filename, bucket_id, checked=checked, bucket_name=bucket_name)
+         return jsonify(uri)
+@@ -1517,6 +1617,11 @@ def get_file_place():
+     bucket_id = request.form.get('bucket_id')
+     file_name = request.form.get('file_name')
+ 
++    error = _validate_storage_api_request(
++        pid=pid, bucket_id=bucket_id, file_name=file_name)
++    if error:
++        return error
++
+     try:
+         file_place, uri, new_bucket_id, new_version_id = get_file_place_info(pid, bucket_id, file_name)
+         result = {
+@@ -1535,16 +1640,24 @@ def get_file_place():
+ @record_edit_permission_required(param='pid')
+ def replace_file():
+     return_file_place = request.form.get('return_file_place')
++    pid = request.form.get('pid')
++    bucket_id = request.form.get('bucket_id')
++    file_name = request.form.get('file_name')
++    new_bucket_id = request.form.get('new_bucket_id') \
++        if return_file_place == 'S3' else None
++    new_version_id = request.form.get('new_version_id') \
++        if return_file_place == 'S3' else None
++
++    error = _validate_storage_api_request(
++        pid=pid, bucket_id=bucket_id, file_name=file_name,
++        new_bucket_id=new_bucket_id, new_version_id=new_version_id)
++    if error:
++        return error
+ 
+     if (return_file_place == 'S3'):
+ 
+-        pid = request.form.get('pid')
+-        bucket_id = request.form.get('bucket_id')
+-        file_name = request.form.get('file_name')
+         file_size = int(request.form.get('file_size'))
+         file_checksum = request.form.get('file_checksum')
+-        new_bucket_id = request.form.get('new_bucket_id')
+-        new_version_id = request.form.get('new_version_id')
+         try:
+             result = replace_file_bucket(pid, bucket_id, file_name=file_name,
+                                       file_size=file_size, new_bucket_id=new_bucket_id,
+@@ -1556,10 +1669,7 @@ def replace_file():
+             return jsonify({'error': str(e)}), 400
+ 
+     else:
+-        pid = request.form.get('pid')
+-        bucket_id = request.form.get('bucket_id')
+         file = request.files['file']
+-        file_name = request.form.get('file_name')
+         file_size = int(request.form.get('file_size'))
+ 
+         try:

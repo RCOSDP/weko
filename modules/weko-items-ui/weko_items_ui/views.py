@@ -24,12 +24,18 @@ import json
 import requests
 import sys
 import traceback
+import shutil
+import os
+import zipfile
+import time
+import tempfile
+
 from copy import deepcopy
 from datetime import date, datetime, timedelta
 
 from flask import (
     Blueprint, abort, current_app, flash, jsonify, redirect,
-    render_template, request, session, url_for
+    render_template, request, session, url_for, Response
 )
 from flask_babelex import gettext as _
 from flask_login import login_required
@@ -42,6 +48,8 @@ from werkzeug.exceptions import BadRequest
 
 from invenio_db import db
 from invenio_i18n.ext import current_i18n
+from invenio_oauth2server.decorators import require_oauth_scopes
+from invenio_oauth2server.provider import oauth2
 from invenio_pidrelations.contrib.versioning import PIDVersioning
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_pidstore.resolver import Resolver
@@ -49,6 +57,7 @@ from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_records_ui.signals import record_viewed
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
+from urllib.parse import unquote
 from weko_accounts.utils import login_required_customize
 from weko_admin.models import AdminSettings, RankingSettings
 from weko_deposit.api import WekoRecord
@@ -61,6 +70,7 @@ from weko_records.api import ItemTypes
 from weko_records_ui.external import get_oa_token
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.permissions import check_file_download_permission
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
 from weko_redis.redis import RedisConnection
 from weko_schema_ui.models import PublishStatus
 from weko_workflow.api import GetCommunity, WorkActivity, WorkFlow as WorkFlows
@@ -87,6 +97,15 @@ from .utils import (
 from .config import WEKO_ITEMS_UI_FORM_TEMPLATE,WEKO_ITEMS_UI_ERROR_TEMPLATE
 from weko_theme.config import WEKO_THEME_DEFAULT_COMMUNITY
 
+from .scopes import item_bulk_process_scope
+from weko_logging.activity_logger import UserActivityLogger
+from weko_search_ui.tasks import check_import_items_task, import_item
+from weko_search_ui.utils import (
+    create_flow_define,
+    handle_workflow, handle_metadata_by_doi
+)
+from weko_accounts.utils import limiter, roles_required
+from werkzeug.http import parse_options_header
 
 blueprint = Blueprint(
     'weko_items_ui',
@@ -97,7 +116,7 @@ blueprint = Blueprint(
 )
 
 blueprint_api = Blueprint(
-        'weko_items_ui_api',
+    'weko_items_ui_api',
     __name__,
     template_folder='templates',
     static_folder='static',
@@ -1748,3 +1767,405 @@ def dbsession_clean(exception):
         except:
             db.session.rollback()
     db.session.remove()
+
+@blueprint_api.errorhandler(401)
+def handle_unauthorized_error(error):
+    if request.endpoint and \
+    (request.endpoint.endswith("register_bulk_import_task") or \
+    request.endpoint.endswith("get_bulk_import_task_status")):
+        return Response(json.dumps({
+            "result": "NG",
+            "error": [ "Authentication is required." ]
+        }), content_type="application/json; charset=utf-8", status=401)
+    return error
+
+@blueprint_api.errorhandler(403)
+def handle_forbidden_error(error):
+    if request.endpoint and \
+    (request.endpoint.endswith("register_bulk_import_task") or \
+    request.endpoint.endswith("get_bulk_import_task_status")):
+        return Response(json.dumps({
+            "result": "NG",
+            "error": [ "Permission required." ]
+        }), content_type="application/json; charset=utf-8", status=403)
+    return error
+
+@blueprint_api.route("/import-task", methods=["POST"])
+@oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(item_bulk_process_scope.id)
+@roles_required(WEKO_PERMISSION_SUPER_ROLE_USER)
+def register_bulk_import_task():
+    """
+    Register a bulk import task.
+
+    This function handles the registration of a bulk import task.
+    It validates the uploaded file,
+    checks if it is a valid ZIP file, and processes the file asynchronously
+        using Celery tasks.
+    The function supports two modes: "check" (validation only) and "import"
+        (actual import).
+
+    Key Features:
+    - Validates the Content-Disposition header and uploaded file.
+    - Saves the uploaded file to a temporary location.
+    - Checks if the file is a valid ZIP file.
+    - Executes a Celery task to validate or import the file.
+    - Stores task information in Redis for tracking and retrieval.
+
+    Request Parameters:
+    - Content-Disposition (header): Specifies the filename of the uploaded file.
+    - mode (query parameter): Specifies the operation mode ("import" or "check").
+    - is_change_identifier (query parameter): Indicates whether to change
+        identifiers (true/false).
+
+    Response:
+    - 200: Task successfully registered or validated.
+    - 400: Invalid input, such as missing filename or invalid ZIP file.
+    - 404: File not found in the request body.
+    - 500: Internal server error.
+
+    Raises:
+    - ValueError: If the Celery task fails.
+    - TimeoutError: If the task times out during execution.
+    """
+    try:
+        # Retrieve the filename from the Content-Disposition header
+        content_disposition, content_disposition_options = parse_options_header(
+            request.headers.get("Content-Disposition") or ""
+        )
+        filename = content_disposition_options.get("filename", None)
+        if (content_disposition != "attachment" or filename is None):
+            return Response(json.dumps({
+                    "result": "NG",
+                    "error": [ "Cannot get filename by Content-Disposition." ]
+                }), content_type="application/json; charset=utf-8", status=400)
+
+        file = request.files.get("file")
+        if file is None:
+            return Response(json.dumps({
+                    "result": "NG",
+                    "error": [ f"Not found {filename} in request body." ]
+                }), content_type="application/json; charset=utf-8", status=400)
+
+        mode = request.args.get("mode", "import").lower()
+        if mode not in ["import", "check"]:
+            mode = "import"
+
+        # check only mode flag
+        is_check_only = True if mode == "check" else False
+        # identifier change mode
+        raw_value = request.args.get("is_change_identifier", "false")
+        decoded_value = unquote(raw_value)
+        is_change_identifier = decoded_value.strip('"').lower() == "true"
+
+        # Save the uploaded file to a temporary location
+        temp_dir = tempfile.mkdtemp()
+        temp_file_path = os.path.join(temp_dir, file.filename)
+        file.stream.seek(0)
+        with open(temp_file_path, "wb") as f:
+            shutil.copyfileobj(file.stream, f)
+
+        # Check if the uploaded file is a valid ZIP file
+        if not zipfile.is_zipfile(temp_file_path):
+            shutil.rmtree(temp_dir)
+            return Response(json.dumps({
+                    "result": "NG",
+                    "error": [ "Uploaded file is not a valid ZIP file." ]
+                }), content_type="application/json; charset=utf-8", status=400)
+
+        # Asynchronously execute the check_import_items_task with Celery
+        task = check_import_items_task.apply_async(
+            args=[
+                temp_file_path,
+                is_change_identifier,
+                request.host_url,
+                current_i18n.language,
+                {"is_gakuninrdm": False},
+                {"can_edit_indexes": [0]}
+            ]
+        )
+        summary_result = {}
+        timeout = current_app.config["WEKO_ITEMS_UI_BULK_IMPORT_TIMEOUT"]
+        start_time = time.perf_counter()
+        # Wait for the check to complete and return the summary (with timeout limit)
+        while (time.perf_counter() - start_time) < timeout:
+            celery_task = check_import_items_task.AsyncResult(task.id)
+            if celery_task.status == "SUCCESS":
+                result = celery_task.result if isinstance(
+                    celery_task.result, dict) else {}
+                list_record = result.get("list_record", [])
+                total = 0
+                new_item = 0
+                update_item = 0
+                errors = []
+                warnings = []
+                check_error = 0
+                warning_count = 0
+                status = "SUCCESS"
+
+                if result.get("error"):
+                    return Response(
+                        json.dumps({
+                            "result": "NG",
+                            "error": [ result.get("error") ]
+                        }), content_type="application/json; charset=utf-8",
+                        status=400)
+                elif len(list_record) > 0:
+                    total = len(list_record)
+                    for item in list_record:
+                        if item.get("errors"):
+                            check_error += 1
+                            errors.extend(item.get("errors"))
+                            status = "ERROR"
+                        elif item.get("warnings"):
+                            warning_count += len(item.get("warnings"))
+                            warnings.extend(item.get("warnings"))
+                            status = "WARNING"
+
+                        if item.get("status") == "new":
+                            new_item += 1
+                        elif item.get("status") in ("keep", "upgrade"):
+                            update_item += 1
+
+                    summary_result = {
+                        "can_import": check_error == 0,
+                        "check_status": status,
+                        "expire": "",
+                        "error_details": [],
+                        "warning_details": [],
+                        "summary": {
+                            "total": total,
+                            "new_item": new_item,
+                            "update_item": update_item,
+                            "check_error": check_error,
+                            "warning": warning_count,
+                        },
+                        "tasks": [],
+                        "task_id": ""
+                    }
+
+                if check_error > 0:
+                    summary_result["error_details"] = errors
+                elif "error_details" in summary_result:
+                    del summary_result["error_details"]
+
+                if warning_count > 0:
+                    summary_result["warning_details"] = warnings
+                elif "warning_details" in summary_result:
+                    del summary_result["warning_details"]
+
+                break
+
+            elif celery_task.status in ("FAILURE", "REVOKED"):
+                summary_result = {
+                    "can_import": False,
+                    "check_status": "ERROR",
+                    "error_details": ["Check task failed."],
+                    "summary": {},
+                    "tasks": [],
+                    "task_id": ""
+                }
+                raise ValueError(summary_result)
+            time.sleep(0) # NOTE: CPU負荷軽減
+        else:
+            summary_result = {
+                "can_import": False,
+                "check_status": "TIMEOUT",
+                "error_details": ["Check task timeout."],
+                "summary": {},
+                "tasks": [],
+                "task_id": ""
+            }
+            raise TimeoutError(summary_result)
+
+        # Store the result in Redis with an expiration time
+        user_id = current_user.get_id() if current_user else -1
+        expire_time = current_app.config['WEKO_ITEMS_UI_EXPIRE_TIME']
+        task_data = {
+            "user_id": user_id,
+            "created": datetime.now().isoformat(),
+            "expire": (datetime.now() + timedelta(
+                hours=expire_time)).strftime('%Y-%m-%d %H:%M:%S'),
+            "status": summary_result.get("check_status"),
+            "result": result,
+            "tasks": [],
+            "import_started": False,
+            "is_check_only": is_check_only,
+        }
+        summary_result["expire"] = task_data["expire"]
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(
+            db=current_app.config['CACHE_REDIS_DB'], kv=True)
+        datastore.put(task.id, json.dumps(task_data).encode("utf-8"))
+        datastore.redis.expire(task.id, int(expire_time * 3600)) # 小数点以下切り捨て
+
+        # Check mode ends here
+        if is_check_only:
+            summary_result["task_id"] = task.id
+            status_code = 200 if summary_result["can_import"] else 400
+            return Response(
+                json.dumps(summary_result, ensure_ascii=False, indent=2),
+                content_type="application/json; charset=utf-8",
+                status=status_code)
+
+        # can_import is True when check is successful without error, then start import task
+        if summary_result["can_import"] and mode == "import":
+            task_data["import_started"] = True
+            data_path = result.get("data_path")
+            list_doi = [item.get("bulk_doi") for item in list_record]
+            request_info = {
+                "remote_addr": request.remote_addr,
+                "referrer": request.referrer,
+                "hostname": request.host,
+                "user_id": user_id,
+                "action": "IMPORT",
+            }
+            request_info.update(UserActivityLogger.get_summary_from_request())
+            tasks = []
+            for idx, item in enumerate(list_record):
+                item["root_path"] = data_path + "/data"
+                create_flow_define()
+                handle_workflow(item)
+                # Metadata completion based on DOI if DOI exists in the input data
+                if list_doi and len(list_doi) > idx and list_doi[idx]:
+                    metadata_doi = handle_metadata_by_doi(item, list_doi[idx])
+                    item["metadata"] = metadata_doi
+                # Asynchronously execute the import task with Celery
+                result_task = import_item.apply_async(
+                    args=[item, request_info])
+                tasks.append({
+                    "item_task_id": result_task.id,
+                    "task_status": "PENDING",
+                    "task_result": {}
+                })
+            task_data["tasks"] = tasks
+
+            ttl_before = datastore.redis.ttl(task.id)
+            datastore.put(task.id, json.dumps(task_data).encode("utf-8"))
+            datastore.redis.expire(task.id, ttl_before)
+
+        summary_result["task_id"] = task.id
+        summary_result["tasks"] = task_data["tasks"]
+        return Response(
+            json.dumps(summary_result, ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8",
+            status=200 if summary_result["can_import"] else 400)
+    except ValueError as ve:
+        return Response(json.dumps(ve.args[0], ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=400)
+    except TimeoutError as te:
+        return Response(json.dumps(te.args[0], ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=400)
+    except Exception:
+        return Response(json.dumps(
+            {
+                "result": "NG",
+                "error": [ "Internal Server Error" ]
+            }, ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=500)
+
+@blueprint_api.route("/import-task/get_bulk_import_task_status/<task_id>",
+                     methods=["GET"])
+@oauth2.require_oauth()
+@limiter.limit("")
+@require_oauth_scopes(item_bulk_process_scope.id)
+def get_bulk_import_task_status(task_id):
+    """
+    Get the status of a bulk import task.
+    This function retrieves the status of a bulk import task from Redis and
+        returns it as a JSON response.
+    Request Parameters:
+        - task_id (str): The ID of the bulk import task to check.
+    Response:
+        - 200: Successfully retrieved the task status.
+        - 400: Invalid task ID or task check failed.
+        - 403: Permission denied to access the task.
+        - 404: Task not found.
+    Raises:
+        - Exception: If there is an error while
+            retrieving the task status.
+    """
+    try:
+        redis_connection = RedisConnection()
+        datastore = redis_connection.connection(
+            db=current_app.config['CACHE_REDIS_DB'], kv=True)
+        try:
+            task_json = datastore.get(task_id)
+        except Exception:
+            task_json = None
+        if not task_json:
+            return Response(json.dumps({
+                    "result": "NG",
+                    "error": [ "Task not found." ]
+                }, ensure_ascii=False, indent=2),
+                content_type="application/json; charset=utf-8", status=404)
+        try:
+            task_data = json.loads(task_json)
+        except Exception:
+            return Response(json.dumps({
+                "result": "NG",
+                "error": ["Task data decode error."]
+            }, ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=400)
+
+        # check user permission
+        user_id = None
+        if current_user and current_user.is_authenticated:
+            user_id = current_user.get_id()
+        task_user_id = str(task_data.get("user_id"))
+        if str(user_id) != task_user_id:
+            return Response(json.dumps({
+                "result": "NG",
+                "error": ["Permission denied."]
+            }, ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=403)
+
+        # update the status of each import task
+        if ("tasks" in task_data) and len(task_data["tasks"]) > 0:
+            for task in task_data["tasks"]:
+                if "item_task_id" in task:
+                    try:
+                        import_result = import_item.AsyncResult(
+                            task["item_task_id"])
+                        task["task_status"] = import_result.status
+                        task_data["status"] = import_result.status
+                        task["task_result"] = import_result.result \
+                        if isinstance(import_result.result, dict) else {}
+                    except Exception as e:
+                        raise Exception(e)
+
+        # save updated task information to Redis
+        ttl_before = datastore.redis.ttl(task_id)
+        datastore.put(task_id, json.dumps(task_data).encode("utf-8"))
+        datastore.redis.expire(task_id, ttl_before)
+
+        status = task_data["status"]
+        result = task_data["result"]
+        result_error = result.get("error", [])
+        if status != "ERROR":
+            return Response(json.dumps({
+                "can_import": True,
+                "check_status": status,
+                "expire": task_data.get("expire"),
+                "tasks": task_data.get("tasks"),
+                "task_id": task_id,
+            }, ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=200)
+        else:
+            return Response(json.dumps({
+                "can_import": False,
+                "check_status": status,
+                "expire": task_data.get("expire"),
+                "error_details": result_error,
+                "tasks": task_data.get("tasks"),
+                "task_id": task_id,
+            }, ensure_ascii=False, indent=2),
+            content_type="application/json; charset=utf-8", status=400)
+
+    except Exception as error:
+        return Response(json.dumps({
+            "result": "NG",
+            "error": [f"Task check failed.: {error}"]
+        }, ensure_ascii=False, indent=2),
+        content_type="application/json; charset=utf-8", status=400)

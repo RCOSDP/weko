@@ -33,6 +33,8 @@ from flask_babelex import get_locale
 from flask_babelex import gettext as _
 from flask_babelex import to_user_timezone, to_utc
 from flask_login import current_user
+from sqlalchemy import not_
+from invenio_accounts.models import Role
 from invenio_cache import current_cache
 from invenio_communities.models import Community
 from invenio_db import db
@@ -40,6 +42,7 @@ from invenio_i18n.ext import current_i18n
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_search import RecordsSearch
 from simplekv.memory.redisstore import RedisStore
+from weko_accounts.api import map_role_condition, map_group_condition
 from weko_admin.utils import is_exists_key_in_redis
 from weko_groups.models import Group
 from weko_logging.activity_logger import UserActivityLogger
@@ -126,7 +129,6 @@ def can_user_access_index(lst):
         bool: True if the user has access, False otherwise.
     """
     from weko_records_ui.utils import is_future
-
     result, roles = get_user_roles(is_super_role=True)
 
     groups = get_user_groups()
@@ -307,36 +309,118 @@ def get_user_groups():
     groups = Group.query_by_user(current_user, eager=False)
     for group in groups:
         grps.append(group.id)
-
     return grps
 
+def check_index_permission_by_role_and_group(user_role, roles, user_group, groups):
+    """
+    Check if a user has permission to access an index based on roles and groups.
 
-def check_roles(user_role, roles):
-    """Check roles."""
-    is_can = True
-    if isinstance(roles, str):
-        roles = roles.split(',')
-    if not user_role[0]:
-        if current_user.is_authenticated:
-            self_role = user_role[1] or ['-98']
-            for role in self_role:
-                if str(role) not in (roles or []):
-                    is_can = False
-                    break
-        elif roles and "-99" not in roles:
-            is_can = False
-    return is_can
+    Args:
+        user_role (tuple): A tuple where the first element is a boolean indicating
+            if the user has administrator privileges, and the second element is a list
+            of role IDs assigned to the user.
+        roles (list or str): A list of role IDs (or a comma-separated string of IDs)
+            that are permitted to access the index.
+        user_group (list): A list of group IDs to which the user belongs.
+        groups (list or str): A list of group IDs (or a comma-separated string of IDs)
+            that are permitted to access the index.
+
+    Returns:
+        bool: True if the user has permission to access the index, False otherwise.
+    """
+    # Administrator users are always granted access.
+    if user_role[0]:
+        return True
+
+    user_roles = [str(r) for r in user_role[1]] if user_role[1] else []
+    user_group_list = [str(g) for g in user_group]
+
+    role_list = sorted(roles if isinstance(roles, list)
+                       else (roles.split(',') if roles else []))
+    index_group_list = sorted(groups if isinstance(groups, list)
+                       else (groups.split(',') if groups else []))
+
+    user_role_list, user_role_group = get_user_roles_and_groups(user_roles)
+    index_role_list, index_role_group = get_user_roles_and_groups(role_list)
+
+    return check_roles(user_role_list, index_role_list) and \
+        check_groups(user_group_list, index_group_list,
+                     user_role_group, index_role_group)
 
 
-def check_groups(user_group, groups):
-    """Check groups."""
-    is_can = False
+def get_user_roles_and_groups(roles):
+    """Split role IDs into regular roles and role-groups.
+
+    Args:
+        roles (list[str]): Role IDs to classify.
+
+    Returns:
+        tuple[list[str], list[str]]: A pair containing regular role IDs and
+        role-group IDs, respectively. Guest and authenticated
+        user role IDs are treated as regular roles.
+    """
+    role_without_map_role = Role.query.filter(not_(map_role_condition())).all()
+    role_groups = Role.query.filter(map_group_condition()).all()
+
+    role_without_map_role = [str(role.id) for role in role_without_map_role]
+    # Guest, Authenticated User
+    role_without_map_role.extend(['-98', '-99'])
+    role_groups = [str(role.id) for role in role_groups]
+    role_list = []
+    group_list = []
+    for role in roles:
+        if role in role_without_map_role and role not in role_groups:
+            role_list.append(role)
+        if role in role_without_map_role and role in role_groups:
+            group_list.append(role)
+    return role_list, group_list
+
+
+def check_roles(user_role_list, index_role_list):
+    """
+    Determine whether the user has access permission based on role IDs.
+
+    Args:
+        user_role_list (list): List of role IDs (as strings) assigned to the user.
+        index_role_list (list): List of role IDs (as strings) configured for the index.
+
+    Returns:
+        bool: True if at least one role ID in user_role_list matches an ID in index_role_list, otherwise False.
+    """
     if current_user.is_authenticated:
-        group = [x for x in user_group if str(x) in (groups or [])]
-        if group:
-            is_can = True
+        # Authenticated User
+        user_role_list.append('-98')
+    else:
+        # Guest
+        user_role_list.append('-99')
+    return any(r in index_role_list for r in user_role_list)
 
-    return is_can
+
+def check_groups(user_group_list, index_group_list,
+                 user_role_group, index_role_group):
+    """
+    Determine whether the user has access permission based on group and role group IDs.
+
+    Args:
+        user_group (list): List of group IDs (as strings) to which the user belongs.
+        index_group_list (list): List of group IDs (as strings) configured for the index.
+        user_role_group (list): List of role group IDs (as strings) assigned to the user.
+        index_role_group (list): List of role group IDs (as strings) configured for the index.
+
+    Returns:
+        bool: True if at least one group ID in user_group matches index_group_list,
+              or at least one role group ID in user_role_group matches index_role_group.
+              Otherwise, returns False.
+    """
+    # append "No Group"
+    if current_user.is_authenticated and not user_group_list and not user_role_group:
+        user_group_list.append('-89')
+    elif not current_user.is_authenticated:
+        user_group_list.append('-89')
+
+    group_perm = any(r in user_group_list for r in index_group_list)
+    role_group_perm = any(r in user_role_group for r in index_role_group)
+    return group_perm or role_group_perm
 
 
 def filter_index_list_by_role(index_list):
@@ -348,8 +432,9 @@ def filter_index_list_by_role(index_list):
         if roles[0]:
             can_view = True
         else:
-            if check_roles(roles, index_data.browsing_role) \
-                    or check_groups(groups, index_data.browsing_group):
+            if check_index_permission_by_role_and_group(
+                roles, index_data.browsing_role,
+                groups, index_data.browsing_group):
                 if index_data.public_state \
                         and (index_data.public_date is None
                              or not is_future(index_data.public_date)):
@@ -392,9 +477,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
 
                 # browsing role and group check
                 if browsing_role:
-                    if check_roles(roles, brw_role) \
-                            or check_groups(groups, brw_group):
-
+                    if check_index_permission_by_role_and_group(
+                        roles, brw_role, groups, brw_group):
                         if public_state and \
                                 (public_date is None
                                  or not is_future(public_date)):
@@ -408,8 +492,8 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         tree.pop(i)
                 # contribute role and group check
                 else:
-                    if check_roles(roles, contribute_role) or \
-                            check_groups(groups, contribute_group):
+                    if check_index_permission_by_role_and_group(
+                        roles, contribute_role, groups, contribute_group):
                         lst['disabled'] = False
 
                         plst = plst or []
@@ -424,7 +508,6 @@ def reduce_index_by_role(tree, roles, groups, browsing_role=True, plst=None):
                         reduce_index_by_role(
                             children, roles, groups, False, plst)
                         i += 1
-
                     else:
                         children.clear()
                         tree.pop(i)
@@ -793,7 +876,7 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
         """
         from weko_records_ui.utils import is_future
         in_admin_view_scope = False
-        role_names = [role.name for role in current_user.roles] 
+        role_names = [role.name for role in current_user.roles]
         if roles[0]:
             # In case admin role.
             in_admin_view_scope = True
@@ -803,8 +886,9 @@ def check_index_permissions(record=None, index_id=None, index_path_list=None,
 
         is_content_public = False
         if index_data.public_state:
-            check_user_role = check_roles(roles, index_data.browsing_role) or \
-                check_groups(groups, index_data.browsing_group)
+            check_user_role = check_index_permission_by_role_and_group(
+                roles, index_data.browsing_role,
+                groups, index_data.browsing_group)
             check_public_date = \
                 not is_future(index_data.public_date) \
                 if index_data.public_date else True
@@ -959,18 +1043,14 @@ def __get_redis_store():
     return redis_connection.connection(db=current_app.config['CACHE_REDIS_DB'], kv = True)
 
 
-def lock_all_child_index(index_id: str, value: str):
+def lock_all_child_index(index_id: str, value: str, locked_key: list):
     """Lock index.
 
     Args:
         index_id (str): index identifier.
         value (str): Lock value.
-
-    Returns:
-        bool: True if the index is locked.
-
+        locked_key (list): locked key list.
     """
-    locked_key = []
     try:
         from .api import Indexes
         redis_store = __get_redis_store()
@@ -982,8 +1062,6 @@ def lock_all_child_index(index_id: str, value: str):
             locked_key.append(key_prefix + str(c_index.cid))
     except Exception as e:
         current_app.logger.error('Could not lock index:', e)
-        return False, locked_key
-    return True, locked_key
 
 
 def unlock_index(index_key):
@@ -1003,25 +1081,23 @@ def unlock_index(index_key):
         current_app.logger.error('Could not unlock index:', e)
 
 
-def validate_before_delete_index(index_id):
+def validate_before_delete_index(index_id, locked_key, errors):
     """Validate index data before deleting the index.
 
     Args:
         index_id (str|int): Index identifier.
+        locked_key (list): Locked key list.
+        errors (list): Error list.
 
     Returns:
         (boolean, list, list): unlock flag and error list and locked keys list
 
     """
-    is_unlock = False
-    locked_key = []
-    errors = []
     if is_index_locked(index_id):
         errors.append(
             _('Index Delete is in progress on another device.'))
     else:
-        is_unlock, locked_key = lock_all_child_index(index_id,
-                                                     str(current_user.get_id()))
+        lock_all_child_index(index_id, str(current_user.get_id()), locked_key)
         if check_doi_in_index(index_id):
             errors.append(
                 _('The index cannot be deleted because there is'
@@ -1032,8 +1108,6 @@ def validate_before_delete_index(index_id):
         elif check_has_any_harvest_settings_in_index_is_locked(index_id):
             errors.append(_('The index cannot be deleted becase '
                             'the index in harvester settings.'))
-
-    return is_unlock, errors, locked_key
 
 
 def is_index_locked(index_id):
@@ -1071,12 +1145,11 @@ def perform_delete_index(index_id, record_class, action: str):
         tuple(str, list): delete message and error list
 
     """
-    is_unlock = True
     locked_key = []
     errors = []
     try:
         msg = ''
-        is_unlock, errors, locked_key = validate_before_delete_index(index_id)
+        validate_before_delete_index(index_id, locked_key, errors)
         if len(errors) == 0:
             res = record_class.get_self_path(index_id)
             if not res:
@@ -1098,6 +1171,10 @@ def perform_delete_index(index_id, record_class, action: str):
             operation="INDEX_DELETE",
             target_key=index_id
         )
+    except IndexDeletedRESTError:
+        db.session.rollback()
+        msg = f'Index with ID {index_id} does not exist.'
+        errors.append(msg)
     except Exception as e:
         db.session.rollback()
         current_app.logger.error(
@@ -1113,8 +1190,9 @@ def perform_delete_index(index_id, record_class, action: str):
             remarks=tb_info[0]
         )
         msg = 'Failed to delete index.'
+        errors.append(msg)
     finally:
-        if is_unlock:
+        if locked_key:
             unlock_index(locked_key)
     return msg, errors
 

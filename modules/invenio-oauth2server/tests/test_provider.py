@@ -136,7 +136,7 @@ def test_invalid_authorize_requests(provider_fixture):
                 assert error_url in next_url
 
                 r = client.get(next_url, query_string=data)
-                assert 'invalid_request' in str(r.data)
+                assert 'an error in the authentication request' in str(r.data)
 
                 # Invalid redirect uri
                 r = client.get(url_for(
@@ -150,6 +150,27 @@ def test_invalid_authorize_requests(provider_fixture):
                 next_url, data = parse_redirect(r.location)
                 assert data['error'] == 'invalid_request'
                 assert error_url in next_url
+
+            for client_id in ['no-scopes']:
+                response_type = 'code'
+                error_url = url_for('invenio_oauth2server.errors',
+                                    _external=True)
+                # Missing scope
+                r = client.get(
+                    url_for('invenio_oauth2server.authorize'),
+                    data={
+                        'redirect_uri': redirect_uri,
+                        'response_type': response_type,
+                        'client_id': client_id,
+                    })
+                next_url, data = parse_redirect(r.location)
+                assert r.status_code == 302
+                assert data['error'] == 'invalid_scope'
+                assert url_for('invenio_oauth2server.errors') in next_url
+
+            r = client.get(
+                url_for('invenio_oauth2server.errors'))
+            assert r.status_code == 400
 
 
 def test_refresh_flow(provider_fixture):

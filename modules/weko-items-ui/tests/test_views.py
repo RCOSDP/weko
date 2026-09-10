@@ -1,7 +1,6 @@
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 import json
 from collections import OrderedDict
-from unittest.mock import MagicMock
 import uuid
 import requests
 from unittest.mock import patch, MagicMock
@@ -14,12 +13,14 @@ from flask import json, url_for, make_response
 from jinja2.exceptions import TemplateNotFound
 
 from invenio_accounts.testutils import login_user_via_session
+from invenio_oauth2server.provider import oauth2
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_communities.models import Community
 from weko_redis.redis import RedisConnection
 from weko_deposit.api import WekoDeposit, WekoRecord
 from weko_workflow.api import WorkActivity
 from weko_workflow.models import Activity, WorkFlow
+from werkzeug.datastructures import FileStorage
 
 from weko_items_ui.views import (
     check_ranking_show,
@@ -20708,14 +20709,17 @@ def test_default_view_method(app, db_records):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_to_links_js -v -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_to_links_js(app, db_records):
     depid, recid, parent, doi, record, item = db_records[0]
-    assert to_links_js(depid) == {
-        'self': '/api/deposits/items/1',
-        'ret': '/items/',
-        'index': '/api/deposits/redirect/1',
-        'r': '/items/index/1',
-        'iframe_tree': '/items/iframe/index/1',
-        'iframe_tree_upgrade': '/items/iframe/index/1.2'
-    }
+    # url_for() falls back to SERVER_NAME and returns an absolute URL when
+    # there is no request context; in the app this always runs inside one.
+    with app.test_request_context():
+        assert to_links_js(depid) == {
+            'self': '/api/deposits/items/1',
+            'ret': '/items/',
+            'index': '/api/deposits/redirect/1',
+            'r': '/items/index/1',
+            'iframe_tree': '/items/iframe/index/1',
+            'iframe_tree_upgrade': '/items/iframe/index/1.2'
+        }
 
 
 # def index_upload():
@@ -21323,7 +21327,7 @@ def test_prepare_edit_item_guest(client_api, users):
         data=json.dumps({}),
         content_type="application/json",
     )
-    assert res.status_code == 302
+    assert res.status_code == 401
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_prepare_edit_item_login_1 -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -21673,7 +21677,7 @@ def test_validate_guest(client_api, users):
     url = url_for("weko_items_ui_api.validate", _external=True)
     with patch("weko_items_ui.views.validate_form_input_data", return_value=""):
         res = client_api.post(url, data=json.dumps({}), content_type="application/json")
-        assert res.status_code == 302
+        assert res.status_code == 401
 
 
 # def check_validation_error_msg(activity_id):
@@ -21685,7 +21689,7 @@ def test_check_validation_error_msg_acl_nologin(client_api, db_sessionlifetime):
         external=True,
     )
     res = client_api.get(url)
-    assert res.status_code == 302
+    assert res.status_code == 401
 
 
 # def corresponding_activity_list():
@@ -21735,7 +21739,7 @@ def test_session_validate_acl_nologin(app, client, db_sessionlifetime):
 def test_check_record_doi_acl_nologin(client_api, db_sessionlifetime):
     url = url_for("weko_items_ui_api.check_record_doi", pid_value="1", _external=True)
     res = client_api.get(url)
-    assert res.status_code == 302
+    assert res.status_code == 401
 
 
 # def check_record_doi_indexes(pid_value='0'):
@@ -21745,7 +21749,7 @@ def test_check_record_doi_indexes_acl_nologin(client_api, db_sessionlifetime):
         "weko_items_ui_api.check_record_doi_indexes", pid_value=0, _external=True
     )
     res = client_api.get(url)
-    assert res.status_code == 302
+    assert res.status_code == 401
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_check_record_doi_indexes_acl -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
@@ -21942,3 +21946,564 @@ def test_get_userinfo_by_emails(
     )
     res = client_api.get(url)
     assert res.json == []
+
+# def register_bulk_import_task
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_register_bulk_import_task -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_register_bulk_import_task(app, client_api, users, tokens, make_zip,
+                                   mocker, db_workflow):
+    url = url_for("weko_items_ui_api.register_bulk_import_task", mode="import",
+                  is_change_identifier=False, _external=True)
+    login_user_via_session(client=client_api, email=users[1]["email"])
+    token = tokens[0]["token"].access_token
+
+    # ヘッダー不備 Content-Disposition不備
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'invalid; filename="payload.zip"'
+    }
+    res = client_api.post(url, data={"file": None}, headers=headers,
+                          content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert res.json == {
+        "result": "NG", "error": ["Cannot get filename by Content-Disposition."]}
+
+    # ヘッダー不備 filenameなし
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment;'
+    }
+    res = client_api.post(url, data={"file": None},
+                          headers=headers, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert res.json == {
+        "result": "NG", "error": ["Cannot get filename by Content-Disposition."]}
+
+    # 指定したファイルが存在しない
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="invalid.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename=None, stream=zip_file)
+    res = client_api.post(url, data={"file": file_storage},
+                          headers=headers, content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert res.json == {"result": "NG", "error": [
+        "Not found invalid.zip in request body."]}
+
+    # 指定したファイルがzipファイルでない
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="invalid.txt"'
+    }
+    with mocker.patch("weko_items_ui.views.zipfile.is_zipfile", return_value=False):
+        zip_file = make_zip()
+        file_storage = FileStorage(filename="invalid.txt", stream=zip_file)
+        res = client_api.post(
+            url, data={"file": file_storage}, headers=headers,
+            content_type="multipart/form-data")
+        assert res.status_code == 400
+        assert res.json == {"result": "NG", "error": [
+            "Uploaded file is not a valid ZIP file."]}
+
+    # チェックモード 正常系
+    url = url_for("weko_items_ui_api.register_bulk_import_task",
+                  mode="check", is_change_identifier=False, _external=True)
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = False
+    app.config["WEKO_ITEMS_UI_BULK_IMPORT_TIMEOUT"] = 5
+    mocker.patch("weko_items_ui.views.zipfile.is_zipfile", return_value=True)
+    mocker.patch("weko_items_ui.views.oauth2", oauth2)
+    mock_task = MagicMock()
+    mock_task.id = "mock_task_id"
+    mocker.patch("weko_search_ui.tasks.check_import_items_task.apply_async",
+                 return_value=mock_task)
+    mock_async_result = MagicMock()
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result = {
+        "list_record": [
+            {"id": None, "errors": None, "warnings": [], "status": "new"}
+        ],
+        "data_path": "/var/tmp/weko_import"
+    }
+    mocker.patch("weko_search_ui.tasks.check_import_items_task.AsyncResult",
+                 return_value=mock_async_result)
+    mock_import_task = MagicMock()
+    mock_import_task.id = "mock_import_task_id"
+    mock_import_apply = mocker.patch(
+        "weko_search_ui.tasks.import_item.apply_async",
+        return_value=mock_import_task)
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    if response_data is not None:
+        response_data.pop("expire", None)
+    mock_import_apply.assert_not_called()
+    assert res.status_code == 200
+    assert res.json["check_status"] == "SUCCESS"
+
+    # チェックモード 正常系 ワーニングあり
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result =  {
+        "list_record": [
+            {"id": None, "errors": None, "warnings": ["warning_message"],
+                "status": "new"},
+        ],
+        "data_path": "/var/tmp/weko_import",
+    }
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    if response_data is not None:
+        response_data.pop("expire", None)
+    mock_import_apply.assert_not_called()
+    assert res.status_code == 200
+    assert res.json["warning_details"] == ["warning_message"]
+
+    # チェックモード 異常系 エラーあり
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result =  {
+        "list_record": [
+            {"id": None, "errors": ["error_message"], "warnings": [],
+                "status": "new"},
+        ],
+        "data_path": "/var/tmp/weko_import",
+    }
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    if response_data is not None:
+        response_data.pop("expire", None)
+    mock_import_apply.assert_not_called()
+    assert res.status_code == 400
+    assert res.json["error_details"] == ["error_message"]
+
+    # mode誤り インポートモード正常系
+    url = url_for("weko_items_ui_api.register_bulk_import_task",
+                  mode="other_mode", is_change_identifier=False, _external=True)
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result = {
+        "list_record": [
+            {"id": None, "errors": None, "warnings": [], "status": "new"}
+        ],
+        "data_path": "/var/tmp/weko_import"
+    }
+    mock_import_task = MagicMock()
+    mock_import_task.id = "mock_import_task_id"
+    mock_import_apply = mocker.patch(
+        "weko_search_ui.tasks.import_item.apply_async",
+        return_value=mock_import_task)
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    response_data.pop("expire", None)
+    mock_import_apply.assert_called()
+    assert res.status_code == 200
+    assert res.json["tasks"] == [
+            {
+                "item_task_id": "mock_import_task_id",
+                "task_status": "PENDING",
+                "task_result": {}
+            }
+        ]
+
+    # インポートモード 正常系,メタデータ補完
+    url = url_for("weko_items_ui_api.register_bulk_import_task",
+                  mode="import", is_change_identifier=False, _external=True)
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mocker_metadata_doi = mocker.patch(
+        "weko_items_ui.views.handle_metadata_by_doi",
+        return_value={
+            "title": "Mocked Title",
+            "authors": [{"name": "Mock Author", "affiliation": "Mock University"}],
+            "publication_date": "2023-01-01",
+            "journal": "Mock Journal",
+            "doi": "10.1234/mock.doi"
+        }
+    )
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result = {
+        "list_record": [
+            {"id": None, "metadata": {}, "errors": None, "warnings": [],
+             "bulk_doi": ["10.1234/mock.doi"], "status": "new"},
+            {"id": "2000002", "errors": None, "warnings": [], "status": "keep"},
+            {"id": "2000003", "errors": None, "warnings": [], "status": "upgrade"}
+        ],
+        "data_path": "/var/tmp/weko_import"
+    }
+    mock_import_task = MagicMock()
+    mock_import_task.id = "mock_import_task_id"
+    mock_import_apply = mocker.patch(
+        "weko_search_ui.tasks.import_item.apply_async",
+        return_value=mock_import_task)
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    response_data.pop("expire", None)
+    mocker_metadata_doi.assert_called()
+    mock_import_apply.assert_called()
+    assert res.status_code == 200
+    assert res.json["check_status"] == "SUCCESS"
+
+    # インポートモード 異常系,result不備
+    url = url_for("weko_items_ui_api.register_bulk_import_task",
+                  mode="import", is_change_identifier=False, _external=True)
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result = {
+        "error": "not list_record"
+    }
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    assert res.status_code == 400
+    assert res.json["error"] == ["not list_record"]
+
+    # インポートモード 異常系
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mock_async_result.status = "FAILURE"
+    mock_async_result.result = "FAILURE"
+    mock_import_task = MagicMock()
+    mock_import_task.id = "mock_import_task_id"
+    mock_import_apply = mocker.patch(
+        "weko_search_ui.tasks.import_item.apply_async",
+        return_value=mock_import_task)
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    response_data.pop("expire", None)
+    mock_import_apply.assert_not_called()
+    assert res.status_code == 400
+    assert res.json["error_details"] == ["Check task failed."]
+
+    # インポートモード タイムアウト
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    app.config["WEKO_ITEMS_UI_BULK_IMPORT_TIMEOUT"] = 3
+    mock_async_result.status = ""
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    response_data.pop("expire", None)
+    mock_import_apply.assert_not_called()
+    assert res.status_code == 400
+    assert res.json["error_details"] == ["Check task timeout."]
+
+    # 500エラー
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    mocker.patch("weko_items_ui.views.zipfile.is_zipfile", return_value=True)
+    mocker.patch("weko_items_ui.views.oauth2", oauth2)
+    mocker.patch("weko_items_ui.views.check_import_items_task.apply_async",
+                 side_effect=Exception("Celery task error"))
+    mock_async_result.status = "SUCCESS"
+    mock_async_result.result = {
+        "list_record": [
+                {"id": None, "errors": ["Internal Server Error"],
+                "warnings": [], "status": "new"}
+            ],
+            "data_path": "/var/tmp/weko_import"
+        }
+    res = client_api.post(url, data={"file": file_storage}, headers=headers,
+                          content_type="multipart/form-data")
+    response_data = res.json
+    response_data.pop("expire", None)
+    mock_import_apply.assert_not_called()
+    assert res.status_code == 500
+    assert res.json == {"result": "NG", "error": ["Internal Server Error"]}
+
+def test_register_bulk_import_task_no_login(client_api, users):
+    url = url_for("weko_items_ui_api.register_bulk_import_task",
+                  mode="import", is_change_identifier=False, _external=True)
+
+    res = client_api.post(url, data={"file": None}, headers=None,
+                          content_type="multipart/form-data")
+    assert res.status_code == 401
+    assert res.json == {"error": ["Authentication is required."], "result": "NG"}
+
+def test_register_bulk_import_task_no_permission(client_api, users, tokens):
+    url = url_for("weko_items_ui_api.register_bulk_import_task", mode="import",
+                  is_change_identifier=False, _external=True)
+
+    login_user_via_session(client=client_api, email=users[3]["email"])
+    token = tokens[0]["token"].access_token
+    headers = {
+        "Authorization": "Bearer {}".format(token),
+        "Content-Disposition": 'attachment; filename="payload.zip"'
+    }
+    res = client_api.post(url, data={"file": None}, headers=headers,
+                          content_type="multipart/form-data")
+    assert res.status_code == 403
+    assert res.json == {"error": ["Permission required."], "result": "NG"}
+
+@pytest.mark.parametrize(
+    "is_change_identifier_param, expected_value",
+    [
+        ("true", True),
+        ("True", True),
+        ("false", False),
+        ("False", False),
+        ("invalid", False),
+        (None, False),
+    ],
+)
+def test_register_bulk_import_is_change_identifier(
+    client_api, users, tokens, is_change_identifier_param, expected_value,
+    mocker, make_zip):
+    mock_apply_async = mocker.patch(
+        "weko_items_ui.views.check_import_items_task.apply_async")
+    mocker.patch("weko_items_ui.views.zipfile.is_zipfile",
+                 return_value=True)
+    mocker.patch("weko_items_ui.views.oauth2", oauth2)
+
+    url = url_for(
+        "weko_items_ui_api.register_bulk_import_task",
+        mode="import",
+        is_change_identifier=is_change_identifier_param,
+        _external=True,
+    )
+
+    login_user_via_session(client=client_api, email=users[1]["email"])
+    token = tokens[0]["token"].access_token
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Disposition": 'attachment; filename="payload.zip"',
+    }
+    zip_file = make_zip()
+    file_storage = FileStorage(filename="payload.zip", stream=zip_file)
+    client_api.post(
+        url, data={"file": file_storage}, headers=headers,
+        content_type="multipart/form-data"
+    )
+    called_args_tuple = mock_apply_async.call_args[1]
+    actual_is_change_identifier = called_args_tuple["args"][1]
+
+    mock_apply_async.assert_called_once()
+    assert isinstance(actual_is_change_identifier, bool)
+    assert actual_is_change_identifier == expected_value
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_bulk_import_task_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "task_id, task_data, user_id, expected_status, expected_response",
+    [
+        # 異常系: トークンが無効
+        (
+            "invalid_token",
+            None,
+            "1",
+            401,
+            {"result": "NG", "error": ["Authentication is required."]},
+        ),
+        # 正常系: タスクが存在し、ユーザーが一致する場合
+        (
+            "valid_task_id",
+            {
+                "user_id": "1",
+                "status": "SUCCESS",
+                "result": {"error": []},
+                "tasks": [{
+                    "item_task_id": "item_task_id",
+                    "task_status": "STARTED",
+                    "task_result": {}
+                }],
+                "expire": "2026-03-06 12:00:00",
+            },
+            "1",
+            200,
+            {
+                "can_import": True,
+                "check_status": "SUCCESS",
+                "expire": "2026-03-06 12:00:00",
+                "tasks": [{
+                    "item_task_id": "item_task_id",
+                    "task_status": "SUCCESS",
+                    "task_result": {}
+                }],
+                "task_id": "valid_task_id",
+            },
+        ),
+        # 異常系: 例外エラー
+        (
+            "valid_task_id",
+            {
+                "user_id": "1",
+                "status": "PENDING",
+                "result": {"error": []},
+                "tasks": [{
+                    "item_task_id": "item_task_id",
+                    "task_status": "PENDING",
+                    "task_result": {}
+                }],
+                "expire": "2026-03-06 12:00:00",
+            },
+            "1",
+            400,
+            {
+
+                "result": "NG",
+                "error": [
+                    "Task check failed.: 'DisabledBackend' object has no "
+                    "attribute '_get_task_meta_for'"],
+            },
+        ),
+        # 異常系: タスクが存在しない場合
+        (
+            "invalid_task_id",
+            None,
+            "1",
+            404,
+            {"result": "NG", "error": ["Task not found."]},
+        ),
+        # 異常系: タスクデータのデコードエラー
+        (
+            "valid_task_id",
+            "invalid_json",
+            "1",
+            400,
+            {"result": "NG", "error": ["Task data decode error."]},
+        ),
+        # 異常系: ユーザーIDが一致しない場合
+        (
+            "valid_task_id",
+            {
+                "user_id": "2",
+                "status": "SUCCESS",
+                "result": {"error": []},
+                "tasks": [],
+                "expire": "2026-03-06 12:00:00",
+            },
+            "1",
+            403,
+            {"result": "NG", "error": ["Permission denied."]},
+        ),
+        # 異常系: タスクのステータスがエラーの場合
+        (
+            "valid_task_id",
+            {
+                "user_id": "1",
+                "status": "ERROR",
+                "result": {"error": ["Some error occurred."]},
+                "tasks": [],
+                "expire": "2026-03-06 12:00:00",
+            },
+            "1",
+            400,
+            {
+                "can_import": False,
+                "check_status": "ERROR",
+                "expire": "2026-03-06 12:00:00",
+                "error_details": ["Some error occurred."],
+                "tasks": [],
+                "task_id": "valid_task_id",
+            },
+        ),
+    ],
+)
+def test_get_bulk_import_task_status(
+    client_api, tokens, users, mocker, task_id, task_data, user_id,
+    expected_status, expected_response):
+    login_user_via_session(client=client_api, email=users[0]["email"])
+    token = None
+    if task_id != "invalid_token":
+        token = tokens[0]["token"].access_token
+
+    headers = {
+        "Authorization": f"Bearer {token}",
+    }
+
+    # Redisのモック
+    mock_redis = MagicMock()
+    if task_id =="invalid_task_id":
+        mock_redis.get.side_effect = Exception("Simulated Redis exception")
+    elif task_data is None:
+        mock_redis.get.return_value = None
+    elif task_data == "invalid_json":
+        mock_redis.get.return_value = b"invalid_json"
+    else:
+        mock_redis.get.return_value = json.dumps(task_data).encode("utf-8")
+
+    if task_id != "failed_task_id":
+        if expected_status == 200:
+            mock_async_result = MagicMock()
+            mock_async_result.status = "SUCCESS"
+            mock_async_result.result = {}
+            mocker.patch("weko_items_ui.views.import_item.AsyncResult",
+                         return_value=mock_async_result)
+        else:
+            mocker.patch(
+                "weko_items_ui.views.import_item.AsyncResult",
+                side_effect=AttributeError(
+                    "'DisabledBackend' object has no attribute '_get_task_meta_for'")
+            )
+
+        with patch("weko_items_ui.views.RedisConnection") as mock_redis_conn, patch(
+            "flask_login.utils._get_user",
+            return_value=MagicMock(get_id=lambda: user_id)
+        ):
+            mock_redis_conn.return_value.connection.return_value = mock_redis
+            url = url_for(
+                "weko_items_ui_api.get_bulk_import_task_status",
+                task_id=task_id, _external=True,
+            )
+            response = client_api.get(url, headers=headers)
+
+            assert response.status_code == expected_status
+            assert response.json == expected_response
+    else:
+        with patch("weko_items_ui.views.RedisConnection") as mock_redis_conn:
+            mock_redis_conn.return_value.connection.return_value = mock_redis
+            # テスト対象のURLを生成
+            url = url_for(
+                "weko_items_ui_api.get_bulk_import_task_status",
+                task_id=task_id, _external=True,
+            )
+            with patch("flask_login.utils._get_user", side_effect=Exception("exception_error")):
+                try:
+                    response = client_api.get(url, headers=headers)
+                except Exception as e:
+                    assert str(e) == "exception_error"

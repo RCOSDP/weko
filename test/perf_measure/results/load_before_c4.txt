@@ -1,0 +1,19 @@
+# concurrent load test (search REST API)
+{
+  "label": "before_c4",
+  "concurrency": 4,
+  "total": 400,
+  "size": 100,
+  "ok": 400,
+  "bad": 0,
+  "wall_s": "603.03",
+  "throughput_rps": "0.66",
+  "p50_ms": 5844,
+  "p90_ms": 6633,
+  "p95_ms": 7080,
+  "p99_ms": 11528,
+  "min_ms": 3748,
+  "max_ms": 14690,
+  "mean_ms": "6001.1"
+}
+label=before_c4 conc=4 n=400/400 wall=603.03s rps=0.66 p50=5844 p90=6633 p95=7080 p99=11528 max=14690 mean=6001.1ms

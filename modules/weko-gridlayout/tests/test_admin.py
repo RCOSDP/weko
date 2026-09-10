@@ -148,10 +148,12 @@ def test_sort_url(app, client, admin_view, view_instance,
             index_view_url = url_for("widgetitem.index_view")
             res = client.get(index_view_url)
             assert res.status_code == 200
-            if not desc and invert and not sort_desc:
-                assert view.desc == 1
-            else:
-                assert view.desc == desc
+            # desc / invert are parameters of the sort_url() closure inside
+            # index_view (weko_gridlayout/admin.py:147). Setting them on the
+            # view has no effect on it, so they come back untouched; what this
+            # case really covers is index_view rendering for each sort_desc.
+            assert view.desc == desc
+            assert view.invert == invert
 
 
 @pytest.mark.parametrize("page_size",
@@ -212,9 +214,37 @@ def test_index_WidgetDesign(i18n_app, view_instance):
         pass
 
 
+# WidgetDesign.preview_view
+def test_preview_view_WidgetDesign(i18n_app, view_instance):
+    test = WidgetDesign()
+    test.admin = MagicMock()
+    i18n_app.config["WEKO_THEME_DEFAULT_COMMUNITY"] = "0"
+    i18n_app.config["WEKO_THEME_PREVIEW_WIDGET_DESIGN"] = (
+        "weko_theme/preview_widget_design.html"
+    )
+    return_data = {
+        "community_id": "",
+        "detail_condition": "",
+        "width": "3",
+        "height": "",
+        "index_link_list": [],
+        "index_link_enabled": False,
+        "community": None,
+        "display_facet_search": False,
+        "display_index_tree": True,
+        "display_community": True,
+    }
+    with patch("weko_gridlayout.admin.get_weko_contents", return_value=return_data):
+        with patch("flask_admin.base.render_template", return_value="dummy"):
+            assert test.preview_view()
+
+
 # WidgetSettingView.index_view ~ ERROR
-def test_index_view_WidgetSettingView(i18n_app, view_instance):
-    assert view_instance.index_view() != None
+def test_index_view_WidgetSettingView(client, admin_view):
+    # index_view builds URLs relative to the current blueprint, so it has to
+    # be reached through its own route rather than called directly.
+    res = client.get(url_for("widgetitem.index_view"))
+    assert res.status_code == 200
 
 
 # WidgetSettingView.create_view ~ ERROR

@@ -187,6 +187,17 @@
                                 <br>DataCite MetaData
                               </label>
                             </div>
+                            <div id="arXiv_box" class="select_site_box select_site_disabled">
+                              <label style="text-align: center;">
+                                <input type="radio" 
+                                ng-model="selectedMetaData" 
+                                ng-change="metaDataSelectAPI(selectedMetaData)"
+                                name="metaDataSelect" 
+                                id="metaDataSelectarXiv" 
+                                value="arXivMetaData">
+                                <br>arXiv MetaData
+                              </label>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -369,7 +380,7 @@
                       <div class="modal-footer">
                         <button type="button" class="btn btn-info cancel-button" data-dismiss="modal" onclick="$('#metadata_input_check_modal').css('display', ''); return false;">
                           <span class="glyphicon glyphicon-remove"></span>
-                              {{_('Cancel')}}
+                              {{_('Close')}}
                         </button>
                       </div>
                     </div>
@@ -407,7 +418,7 @@
         </div>
         <div class="modal-footer">
           <div class="col text-center">
-            <button type="button" class="btn btn-danger" id="confirm_regist">
+            <button type="button" class="btn btn-success" id="confirm_regist">
               OK
             </button>
           </div>
@@ -433,7 +444,7 @@
         </div>
         <div class="modal-footer">
           <div class="col text-center">
-            <button type="button" class="btn btn-danger" id="confirm_index" ng-click="itemCancel()">
+            <button type="button" class="btn btn-success" id="confirm_index" ng-click="itemCancel()">
               OK
             </button>
           </div>

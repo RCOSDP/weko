@@ -14,6 +14,7 @@ import shutil
 from datetime import datetime, timedelta
 import sys
 import traceback
+import json
 
 from flask import Blueprint, current_app, jsonify, request, url_for, abort, Response
 from flask_login import current_user
@@ -31,6 +32,8 @@ from invenio_oaiserver.api import OaiIdentify
 from invenio_oauth2server.decorators import require_oauth_scopes
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from invenio_oauth2server.provider import oauth2
+from invenio_pidstore.resolver import Resolver
+from werkzeug.utils import import_string
 
 from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
@@ -313,10 +316,12 @@ def post_service_document():
     # Validate items in the check result
     for item in check_result.get("list_record") or [{}]:
         if not item or item.get("errors"):
+            warning = item.get("warnings", []) if item else []
             error_msg = (
                 ", ".join(item.get("errors"))
                 if item and item.get("errors") else "item_missing"
             )
+            error_msg += f", 'warnings': [{', '.join(warning)}]" if warning else ""
             current_app.logger.error(f"Error in check_import_items: {error_msg}")
             raise WekoSwordserverException(
                 f"Item check error: {error_msg}",
@@ -388,6 +393,8 @@ def post_service_document():
                 )
 
         elif register_type == "Workflow":
+            item["metadata"]["researchmap"] = item.get(
+                "researchmap_linkage", False)
             url, recid, action , error = import_items_to_activity(
                 item, request_info=request_info
             )
@@ -398,12 +405,17 @@ def post_service_document():
     warns = []
     activity_id = None
     recid = None
+    recids = []
+    activity_ids = []
     action = None
     # Process and register items
     for item in check_result["list_record"]:
         item["root_path"] = os.path.join(data_path, "data")
         try:
             activity_id, recid, action, error = process_item(item, request_info)
+            recids.append(recid)
+            activity_ids.append(activity_id)
+
             if error:
                 warns.append((activity_id, recid, error))
             if file_format == "JSON":
@@ -452,11 +464,22 @@ def post_service_document():
         .format(request.oauth.client.name, recid)
     )
     if register_type == "Direct":
-        response = jsonify(_get_status_document(recid)), 201
+        if len(recids) > 1:
+            response = jsonify(_get_status_multi_document(recids, None, register_type)), 201
+        else:
+            recid = recids[0]
+            response = jsonify(_get_status_document(recid)), 201
     else:
-        response = jsonify(
-            _get_status_workflow_document(activity_id, recid)
-        ), 201 if action == "end_action" else 202
+        if len(activity_ids) > 1:
+            response = jsonify(
+                _get_status_multi_document(recids, activity_ids, register_type)
+            ), 201 if action == "end_action" else 202
+        else:
+            activity_id = activity_ids[0]
+            recid = recids[0]
+            response = jsonify(
+                _get_status_workflow_document(activity_id, recid)
+            ), 201 if action == "end_action" else 202
 
     return response
 
@@ -624,10 +647,12 @@ def put_object(recid):
     # only first item
     item = (check_result.get("list_record") or [{}])[0]
     if not item or item.get("errors"):
+        warning = item.get("warnings", []) if item else []
         error_msg = (
             ", ".join(item.get("errors"))
             if item and item.get("errors") else "item_missing"
         )
+        error_msg += f", 'warnings': [{', '.join(warning)}]" if warning else ""
         current_app.logger.error(f"Error in check_import_items: {error_msg}")
         raise WekoSwordserverException(
             f"Item check error: {error_msg}",
@@ -705,6 +730,8 @@ def put_object(recid):
         response = jsonify(_get_status_document(recid)), 200
 
     elif register_type == "Workflow":
+        item["metadata"]["researchmap"] = item.get(
+            "researchmap_linkage", False)
         url, _, action, error = import_items_to_activity(
             item, request_info=request_info
         )
@@ -797,8 +824,6 @@ def _get_status_document(recid):
     """
 
     # Get record
-    from invenio_pidstore.resolver import Resolver
-    from werkzeug.utils import import_string
     record_class = import_string("weko_deposit.api:WekoRecord")
     try:
         resolver = Resolver(pid_type="recid", object_type="rec",
@@ -818,6 +843,9 @@ def _get_status_document(recid):
         permalink = record["system_identifier_doi"][
             "attribute_value_mlt"][0][
             "subitem_systemidt_identifier"]
+
+    # Get file info
+    files_info = _get_file_info(record, record_uri)
 
     """
     Set raw data to StatusDocument
@@ -865,6 +893,10 @@ def _get_status_document(recid):
             },
         ]
     }
+    if files_info is not None:
+        for _, file_info in files_info.items():
+            raw_data["links"].append(file_info)
+
     if permalink:
         raw_data["links"].append({
                 "@id" : permalink,
@@ -874,6 +906,138 @@ def _get_status_document(recid):
 
     statusDocument = StatusDocument(raw=raw_data)
 
+    return statusDocument.data
+
+def _get_status_multi_document(recids, activity_ids, register_type="Direct"):
+    """Generate a Status Document for multiple records.
+
+    Args:
+        recids (list): List of item identifiers (recid).
+        activity_ids (list): List of activity identifiers.
+        register_type (str): Type of registration, either "Direct" or "Workflow".
+
+    Returns:
+        dict: A Status Document.
+    """
+    from weko_records.models import ItemReference
+
+    record_class = import_string("weko_deposit.api:WekoRecord")
+    records = []
+    for recid in recids:
+        resolver = Resolver(pid_type="recid", object_type="rec",
+                            getter=record_class.get_record)
+        pid, record = resolver.resolve(recid)
+        records.append({recid: record})
+
+    all_links = []
+    last_record = None
+    last_recid = recids[-1]
+    for record_val in records:
+        recid = next(iter(record_val))
+        record = record_val[recid]
+        record_uri = "{}records/{}".format(request.url_root, recid)
+
+        permalink = get_record_permalink(record)
+        if (
+            not permalink
+            and record.get("system_identifier_doi")
+            and record.get("system_identifier_doi").get("attribute_value_mlt")[0]
+        ):
+            permalink = record["system_identifier_doi"][
+                "attribute_value_mlt"][0]["subitem_systemidt_identifier"]
+
+        files_info = _get_file_info(record, record_uri)
+
+        inverse_refs = ItemReference.get_dst_references(recid)
+        logs = []
+        for ref in inverse_refs:
+            src_pid = ref.src_item_pid
+            if not float(src_pid).is_integer():
+                continue
+            if str(int(src_pid)) not in [str(int(float(r))) for r in recids]:
+                continue
+            src_uri = "{}records/{}".format(request.url_root, src_pid)
+            ref_type = ref.reference_type
+            logs.append({"type": ref_type, "url": src_uri})
+
+        # Add record URI to links
+        all_links.append({
+            "@id": record_uri,
+            "rel": ["alternate"],
+            "contentType": "text/html"
+        })
+
+        if logs:
+            all_links[-1]["log"] = json.dumps(logs)
+
+        # Add file links
+        if files_info is not None:
+            for _, file_info in files_info.items():
+                all_links.append(file_info)
+
+        if permalink:
+            all_links.append({
+                "@id": permalink,
+                "rel": ["alternate"],
+                "contentType": "text/html"
+            })
+
+        if recid == last_recid:
+            last_record = record
+
+    if register_type == "Workflow":
+        for activity_id in activity_ids:
+            all_links.append({
+                "@id": url_for(
+                    "weko_workflow.display_activity",
+                    activity_id=activity_id,
+                    _external=True
+                ),
+                "rel": ["alternate"],
+                "contentType": "text/html"
+            })
+    raw_data = {
+        "@context": constants.JSON_LD_CONTEXT,
+        "@type": constants.DocumentType.Status[0],
+        "@id": url_for(
+            "weko_swordserver.get_status_document",
+            recid=last_recid,
+            _external=True
+        ),
+        "actions": {
+            "getMetadata": False,
+            "getFiles": False,
+            "appendMetadata": False,
+            "appendFiles": False,
+            "replaceMetadata": False,
+            "replaceFiles": False,
+            "deleteMetadata": False,
+            "deleteFiles": False,
+            "deleteObject": True,
+        },
+        "fileSet": {},
+        "metadata": {},
+        "service": url_for("weko_swordserver.get_service_document"),
+        "links": _sort_links_for_status(all_links)
+    }
+
+    if register_type == "Workflow":
+        raw_data["state"] = [
+            {
+                "@id": SwordState.inWorkflow,
+                "description": ""
+            }
+        ]
+    else:
+        raw_data["eTag"] = str(last_record.revision_id)
+        raw_data["state"] = [
+            {
+                "@id": SwordState.ingested,
+                "description": ""
+            }
+        ]
+
+    statusDocument = StatusDocument(raw=raw_data)
     return statusDocument.data
 
 def _get_status_workflow_document(activity_id, recid):
@@ -889,13 +1053,49 @@ def _get_status_workflow_document(activity_id, recid):
         # "@context"
         # "@type"
     """
+    record_class = import_string("weko_deposit.api:WekoRecord")
+    try:
+        resolver = Resolver(pid_type="recid", object_type="rec",
+                        getter=record_class.get_record)
+        pid, record = resolver.resolve(recid)
+    except Exception:
+        raise WekoSwordserverException("Item not found. (recid={})".format(recid), ErrorType.NotFound)
     if not activity_id:
         raise WekoSwordserverException("Activity created, but not found.", ErrorType.NotFound)
 
     # Get record uri
-    record_url = ""
-    if recid:
-        record_url = url_for("weko_swordserver.get_status_document", recid=recid, _external=True)
+    record_url = url_for("weko_swordserver.get_status_document", recid=recid, _external=True)
+    links_record_url = "{}records/{}".format(request.url_root, recid)
+    # Get file info
+    files_info = None
+    from weko_workflow.models import Activity
+    activity = Activity.query.filter_by(activity_id=activity_id).first()
+    if activity and activity.temp_data:
+        decoded = activity.temp_data.encode().decode('unicode_escape')
+        temp_data = json.loads(decoded)
+        files = temp_data.get("files")
+        files_info = {}
+        if files:
+            for file in files:
+                label = file.get("filename")
+                host_name = os.environ.get("INVENIO_WEB_HOST_NAME")
+                url = f"https://{host_name}/record/{recid}/files/{label}"
+                content_type = file.get("mimetype")
+                file_rel = (
+                    current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"]
+                    + current_app.config["WEKO_SWORDSERVER_FILE_SET_FILE"]
+                )
+                if label:
+                    files_info[label] = {
+                        "@id": url,
+                        "contentType": content_type,
+                        "rel": [file_rel],
+                        "derivedFrom": links_record_url
+                    }
+        if not files_info:
+            files_info = None
+    else:
+        files_info = _get_file_info(record, links_record_url)
 
     raw_data = {
         "@id": record_url,
@@ -933,12 +1133,69 @@ def _get_status_workflow_document(activity_id, recid):
                 "rel" : ["alternate"],
                 "contentType" : "text/html"
             },
+            {
+                "@id" : links_record_url,
+                "rel" : ["alternate"],
+                "contentType" : "text/html"
+            }
         ]
     }
-
+    if files_info is not None:
+        for _, file_info in files_info.items():
+            raw_data["links"].append(file_info)
     statusDocument = StatusDocument(raw=raw_data)
 
     return statusDocument.data
+
+def _get_file_info(record, record_url):
+    files_info = {}
+    file_rel = (
+        current_app.config["WEKO_SWORDSERVER_SWORD_VERSION"]
+        + current_app.config["WEKO_SWORDSERVER_FILE_SET_FILE"]
+    )
+    for _, attr_val in record.items():
+        if isinstance(attr_val, dict) and attr_val.get("attribute_type", None) == "file":
+            file_mlt = attr_val.get("attribute_value_mlt")
+            for file in file_mlt:
+                url_info = file.get("url", None)
+                url = url_info.get("url") if isinstance(url_info, dict) else None
+                label = url_info.get("label", None) if isinstance(url_info, dict) else None
+                content_type = file.get("mimetype") or file.get("format")
+                if url and label:
+                    files_info[label] = {
+                        "@id": url,
+                        "contentType": content_type,
+                        "rel": [file_rel],
+                        "derivedFrom": record_url
+                    }
+    return files_info
+
+def _sort_links_for_status(links):
+    import re
+    def link_key(link):
+        link_id = link.get("@id", "")
+        rel = link.get("rel", [])
+        # 1. Workflow activity link
+        if "/workflow/activity/detail/" in link_id:
+            group = 0
+            m = re.search(r'/workflow/activity/detail/[^-]+-\d+-0*(\d+)', link_id)
+            order = int(m.group(1)) if m else 0
+        # 2. Record HTML link
+        elif "/records/" in link_id and "alternate" in rel:
+            group = 1
+            m = re.search(r'/records/(\d+)', link_id)
+            order = int(m.group(1)) if m else 0
+        # 3. File link
+        elif "fileSetFile" in "".join(rel):
+            group = 2
+            derived = link.get("derivedFrom", "")
+            m = re.search(r'/records/(\d+)', derived)
+            order = int(m.group(1)) if m else 0
+        else:
+            group = 3
+            order = 0
+        return (group, order)
+    return sorted(links, key=link_key)
 
 @blueprint.route("/deposit/<recid>", methods=["DELETE"])
 @oauth2.require_oauth()

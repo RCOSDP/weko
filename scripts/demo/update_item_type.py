@@ -196,7 +196,7 @@ def main():
             _id = it.id
             # mapping
             try:
-                itMapping = ItemTypeMapping.query.filter_by(item_type_id=_id).order_by(desc(ItemTypeMapping.created)).first()
+                itMapping = ItemTypeMapping.query.filter_by(item_type_id=_id).first()
                 if itMapping:
                     _mapping = pickle.loads(pickle.dumps(itMapping.mapping, -1))
                     

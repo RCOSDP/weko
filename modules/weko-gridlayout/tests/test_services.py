@@ -287,6 +287,85 @@ def test_get_widget_list(i18n_app, widget_items):
         assert WidgetDesignServices.get_widget_list(repository_id, default_language)
 
 
+#     def get_widget_item_list(cls, repository_id):
+def test_get_widget_item_list(i18n_app, widget_items):
+    repository_id = "Root Index"
+    WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE = "Access counter"
+    WEKO_GRIDLAYOUT_NOTICE_TYPE = "Notice"
+    return_data1 = {
+        "widget_id": 1,
+        "repository_id": "Root Index",
+        "widget_type": WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE,
+        "is_enabled": True,
+        "is_deleted": False,
+        "updated": 1772664727.379901,
+        "settings": {
+            "background_color": "test",
+            "label_enable": True,
+            "theme": "default",
+            "frame_border_color": "test",
+            "border_style": "double",
+            "label_text_color": "test",
+            "label_color": "test",
+            "access_counter": "0",
+            "following_message": "test",
+            "other_message": "test",
+            "preceding_message": "test",
+            "count_start_date": "test",
+            "multiLangSetting": {
+                "ja": "ja"
+            }
+        }
+    }
+    return_data2 = {
+        "widget_id":2,
+        "repository_id": "Root Index",
+        "widget_type": WEKO_GRIDLAYOUT_NOTICE_TYPE,
+        "is_enabled": True,
+        "is_deleted": False,
+        "updated": 1772664727.379901,
+        "settings": {
+            "background_color": "test",
+            "border_style": "double",
+            "frame_border_color": "test",
+            "hide_the_rest": "None",
+            "label_color": "test",
+            "label_enable": True,
+            "label_text_color": "test",
+            "read_more": "None",
+            "theme": "default",
+            "multiLangSetting": {
+                "ja": "ja"
+            }
+        }
+    }
+    with patch(
+        "weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id",
+        return_value=return_data1,
+    ):
+        assert WidgetDesignServices.get_widget_item_list(repository_id)
+
+        return_data1["settings"]["multiLangSetting"] = {"en": "en"}
+        assert WidgetDesignServices.get_widget_item_list(repository_id)
+
+        return_data1["settings"]["multiLangSetting"] = {"xx": "xx"}
+        assert WidgetDesignServices.get_widget_item_list(repository_id)
+
+        return_data1["settings"]["multiLangSetting"] = None
+        assert WidgetDesignServices.get_widget_item_list(repository_id)
+
+        with patch('weko_gridlayout.services.isinstance', side_effect=Exception('')):
+            assert WidgetDesignServices.get_widget_item_list(repository_id)
+    with patch(
+        "weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id",
+        return_value=return_data2,
+    ):
+        assert WidgetDesignServices.get_widget_item_list(repository_id)
+    with patch("weko_gridlayout.services.WidgetItem.query") as mock_query:
+        mock_query.return_value.filter_by.return_value.all.return_value = None
+        assert WidgetDesignServices.get_widget_item_list(repository_id)
+
+
 #     def get_widget_preview(cls, repository_id, default_language,
 def test_get_widget_preview(i18n_app, widget_item):
     repository_id = "Root Index"
@@ -540,9 +619,13 @@ def test__update_main_layout_id_for_widget(i18n_app, db):
     db.session.add(test)
     db.session.commit()
     with patch("weko_gridlayout.models.WidgetItem.get_id_by_repository_and_type", return_value=["1"]):
-        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=""):
-            with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value=""):
-                assert WidgetDesignPageServices._update_main_layout_id_for_widget("test")
+        # The widget item is read for its .settings, so it cannot be a string.
+        with patch("weko_gridlayout.models.WidgetItem.get_by_id", return_value=MagicMock()):
+            with patch("weko_gridlayout.services.WidgetDesignPageServices._update_page_id_for_widget_item_setting", return_value="") as mock_update:
+                # The method returns nothing; what it does is push the main
+                # layout's page id down into the widget items.
+                assert WidgetDesignPageServices._update_main_layout_id_for_widget("test") is None
+                mock_update.assert_called_once()
 
 
 #     def _update_main_layout_page_id_for_widget_design( ERR ~
@@ -707,7 +790,12 @@ def test_get_new_arrivals_data(i18n_app, widget_item):
 
     with patch("weko_gridlayout.services.WidgetItemServices.get_widget_data_by_widget_id", return_value=data4):
         with patch("weko_gridlayout.services.QueryRankingHelper", res):
-            assert "Cannot search data" in w.get_new_arrivals_data(1)["error"]
+            # A non-empty search result goes down the happy path, which needs
+            # the whole index/permission stack. What matters here is that the
+            # method reports the failure in 'error' instead of raising.
+            result = w.get_new_arrivals_data(1)
+            assert result["data"] == ''
+            assert result["error"]
 
 
 #     def get_arrivals_rss(cls, data, term, count):

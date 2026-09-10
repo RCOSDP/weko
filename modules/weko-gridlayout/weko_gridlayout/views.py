@@ -327,6 +327,15 @@ def delete_widget_item():
     return jsonify(WidgetItemServices.delete_by_id(data.get('data_id')))
 
 
+@blueprint_api.route('/get_widget_item_list', methods=['GET'])
+@login_required
+def get_widget_item_list():
+    """Get Widget Item List."""
+    repository_id = request.args.get('repository_id')
+    results = WidgetDesignServices.get_widget_item_list(repository_id)
+    return jsonify(results)
+
+
 @blueprint_api.route('/get_account_role', methods=['GET'])
 @login_required
 def get_account_role():

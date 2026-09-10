@@ -137,7 +137,13 @@ from weko_accounts import WekoAccounts
 from weko_deposit.api import WekoDeposit
 from weko_deposit.api import WekoDeposit as aWekoDeposit
 from weko_deposit.api import WekoIndexer, WekoRecord
-from weko_deposit.config import WEKO_BUCKET_QUOTA_SIZE, WEKO_MAX_FILE_SIZE
+from weko_deposit.config import (
+    WEKO_BUCKET_QUOTA_SIZE,
+    WEKO_MAX_FILE_SIZE,
+    WEKO_DEPOSIT_FILESIZE_LIMIT,
+    WEKO_MIMETYPE_WHITELIST_FOR_ES,
+    WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES
+)
 from weko_groups import WekoGroups
 from weko_index_tree import WekoIndexTree, WekoIndexTreeREST
 from weko_index_tree.api import Indexes
@@ -692,6 +698,9 @@ def base_app(instance_path, search_class, request):
         WEKO_SEARCH_UI_BULK_EXPORT_RETRY = 5,
         WEKO_SEARCH_UI_BULK_EXPORT_LIMIT = 100,
         RECORDS_UI_ENDPOINTS = RECORDS_UI_ENDPOINTS,
+        WEKO_DEPOSIT_FILESIZE_LIMIT = WEKO_DEPOSIT_FILESIZE_LIMIT,
+        WEKO_MIMETYPE_WHITELIST_FOR_ES = WEKO_MIMETYPE_WHITELIST_FOR_ES,
+        WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES = WEKO_DEPOSIT_TEXTMIMETYPE_WHITELIST_FOR_ES,
         WEKO_SCHEMA_JPCOAR_V2_RESOURCE_TYPE_REPLACE={
             "periodical": "journal",
             "interview": "other",
@@ -1670,7 +1679,7 @@ def item_type2(app, db):
 
 @pytest.fixture()
 def item_type_mapping2(app, db, item_type2):
-    return Mapping.create(item_type2.model.id, {})
+    return Mapping.create_or_update(item_type2.model.id, {})
 
 
 @pytest.fixture()
@@ -4363,15 +4372,21 @@ def make_itemtype(app,db):
             is_deleted=False,
         )
 
+        with db.session.begin_nested():
+            db.session.add(item_type)
+
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。item_type を先に入れて flush で親行を確定させてから mapping を
+        # 足す (fk_item_type_mapping_item_type_id_item_type)。
         if "mapping" in datas:
             item_type_mapping = dict()
             with open(datas["mapping"], "r") as f:
                 item_type_mapping = json.load(f)
             item_type_mapping = ItemTypeMapping(id=id, item_type_id=id, mapping=item_type_mapping)
-            db.session.add(item_type_mapping)
+            with db.session.begin_nested():
+                db.session.add(item_type_mapping)
             result["item_type_mapping"] = item_type_mapping
-        with db.session.begin_nested():
-            db.session.add(item_type)
 
         db.session.commit()
         result["item_type_name"] = item_type_name
@@ -4393,7 +4408,12 @@ def create_export_all_data(db):
     for meta in item_meta_data_list:
         meta.item_type_id = 1
         db.session.merge(meta)
-    for i in range(1000, 1110):
+    # make_record は1件ごとに DB と Elasticsearch に書くので、CI の I/O では
+    # 1件あたり十数秒かかる。110件だとフィクスチャだけで 30 分を超え、
+    # weko-search-ui [6/6] がタイムアウトしていた。
+    # test_export_all が実際に書き出すのは item_id_range="1" の1件だけで、
+    # 残りは背景データなので 10 件で足りる。
+    for i in range(1000, 1010):
         make_record(db, indexer, i, filepath, filename, mimetype, '')
 
 @pytest.fixture
@@ -4675,6 +4695,11 @@ def db_itemtype_jpcoar(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_multiple_name)
         db.session.add(item_type_multiple)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_multiple_mapping)
     db.session.commit()
 

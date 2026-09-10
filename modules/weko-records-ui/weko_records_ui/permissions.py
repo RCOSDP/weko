@@ -297,11 +297,12 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
                                 is_billing_can = check_user_group_permission(fjson.get('groups'))
                             else:
                                 is_billing_can = True
-                        if not is_billing_can:
-                            # site license permission check
-                            is_billing_can = site_license_check(item_type)
 
                     is_can = is_login_user and is_role_can and is_billing_can
+
+                    # Grant download permission if user is site license user
+                    if not is_can:
+                        is_can = site_license_check(item_type)
 
             #  can not access
             elif 'open_no' in acsrole:
@@ -321,6 +322,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
                         is_can = False
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
+                # Grant download permission if user is site license user
+                if not is_can:
+                    is_can = site_license_check(item_type)
         except BaseException:
             abort(500)
         return is_can

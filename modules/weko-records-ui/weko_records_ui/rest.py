@@ -67,6 +67,11 @@ from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, Date
     InvalidTokenError, InvalidWorkflowError, ModeNotFoundRESTError, PermissionError, \
     RecordsNotFoundRESTError, RequiredItemNotExistError, VersionNotFoundRESTError
 from .permissions import page_permission_factory, file_permission_factory
+from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, \
+    InvalidRequestError, VersionNotFoundRESTError, InternalServerError, \
+    RecordsNotFoundRESTError, PermissionError, DateFormatRESTError, \
+    FilesNotFoundRESTError, ModeNotFoundRESTError, RequiredItemNotExistError, \
+    AuthenticationRequiredError
 from .scopes import file_read_scope
 from .views import escape_str, get_usage_workflow
 
@@ -711,7 +716,10 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
             # Check Permission
             if not page_permission_factory(record).can():
-                raise PermissionError()
+                if current_user.is_authenticated:
+                    raise PermissionError()
+                else:
+                    raise AuthenticationRequiredError()
 
             # Convert RO-Crate format
             from .utils import RoCrateConverter
@@ -756,8 +764,10 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
 
             return res
 
-        except (PermissionError, SameContentException) as e:
-            raise e
+        except (PermissionError,
+                SameContentException,
+                AuthenticationRequiredError) as e:
+                raise e
 
         except PIDDoesNotExistError:
             raise RecordsNotFoundRESTError()
