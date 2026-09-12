@@ -110,10 +110,41 @@ export WEKO_HOST_HEADER=weko3.example.org
 export INV=tools/api-inventory/scripts
 ```
 
-**実機の場所（コンテナ名・URL・Host）を既定から変えているなら、この 3 つを必ず設定する。**
-台帳ツールは初回に `$WEKO_API_INVENTORY_DIR/measure_profile.json` を作るとき、この 3 つを既定値として書き込む。
+#### 自分の環境の値を調べる
+
+**上の既定値をそのまま使えるとは限らない。** compose のプロジェクト名は
+**チェックアウトしたディレクトリ名**になるので、`~/wekov2` に clone していればコンテナは
+`weko-web-1` ではなく `wekov2-web-1` になる。公開ポートも compose ファイル次第で変わる。
+
+```bash
+docker ps --format '{{.Names}}  {{.Ports}}' | grep -E 'web|nginx'
+```
+
+```text
+wekov2-nginx-1  0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp     ← 443 なので https://localhost
+wekov2-web-1    0.0.0.0:5001->5000/tcp                        ← これが WEKO_WEB_CONTAINER
+```
+
+この例なら次のようになる。**`preflight.sh` は正しい値を見つけて `export` 行の形で出すので、
+分からなければ先に流してよい**（§2-6）。
+
+```bash
+export WEKO_WEB_CONTAINER=wekov2-web-1
+export WEKO_BASE_URL=https://localhost
+```
+
+#### `measure_profile.json` との関係
+
+台帳ツールは初回に `$WEKO_API_INVENTORY_DIR/measure_profile.json` を作るとき、上の 3 つを既定値として書き込む。
 **作られたあとは JSON が正**で、環境変数を変えても既存のファイルは書き換わらない
 （測定条件を変えたいときは JSON を直す。`tools/api-inventory/scripts/README.md`）。
+
+**すでに間違った値で作られている場合は JSON を直す。** 環境変数だけ直しても `measure.sh` は
+古い値を使い続け、「トップページが 000」で止まる。
+
+```bash
+grep -E 'web_container|base_url' "$WEKO_API_INVENTORY_DIR/measure_profile.json"
+```
 
 毎回打つのが面倒なら前の 2 つを `~/.bashrc` に書いてよい。
 **`INV` は相対パスなので、`~/weko` の中で作業しているときしか使えない。**
@@ -501,6 +532,7 @@ git push origin v2.1.0
 |---|---|---|
 | `no python application found` / `AttributeError: module ... has no attribute` | egg-info の再生成漏れ | 手順 2 をやり直す。再生成前後で件数が変わらないことを確認するまで確定させない |
 | 切り替えたのに旧バージョンの経路が生きている | uwsgi が古いコードのまま | 手順 2 の再起動と確認コマンド |
+| `measure.sh` が「トップページが 000」で止まる | 接続できていない。プロファイルの `base_url` / `web_container` が実機と違う | §2-4 で実際の値を調べ、`measure_profile.json` を直す。コードの新旧とは無関係なので egg-info を作り直しても直らない |
 | `reconcile.py` の件数が減らない | 台帳の行の追加漏れ、または `impl_file` の記載誤り | `reconcile.py`（`--gate` なし）で A/B/C/D/E の内訳を読む。詳細は `tools/api-inventory/ci/README.md` §4 |
 | 測定結果が「ほぼ全部遮断」 | 書き込み系を叩いて自分のセッションを消した | 手順 6 の 2 つの確認。`--refresh-fixtures` で張り直して測り直す |
 | ゲートが落ちて先へ進めない | G1〜G9 / reconcile A〜E | `docs/RULE.md` §3-3 の原則に従う。**G3/G4/G8/G9 の例外は RCOS 公開基盤チームリーダの承認が要る** |

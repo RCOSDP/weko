@@ -110,14 +110,37 @@ HOSTHDR="${WEKO_HOST_HEADER:-weko3.example.org}"
 if command -v docker >/dev/null 2>&1; then
   if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$WEB"; then
     ok "実機コンテナが動いている（$WEB）"
-    code=$(curl -sk -o /dev/null -w '%{http_code}' -H "Host: $HOSTHDR" "$BASEURL/" 2>/dev/null || echo 000)
-    if [ "$code" = "200" ]; then
-      ok "トップページが 200（$BASEURL / Host: $HOSTHDR）"
+  else
+    # compose のプロジェクト名はチェックアウト先のディレクトリ名になるため、
+    # コンテナ名は weko-web-1 とは限らない。動いているものから候補を出す。
+    cand=$(docker ps --format '{{.Names}}' 2>/dev/null | grep -E -- '-web-1$|^web$|web' | head -1 || true)
+    if [ -n "$cand" ]; then
+      ng "実機コンテナ $WEB が動いていない（動いているのは $cand）" "export WEKO_WEB_CONTAINER=$cand"
     else
-      caut "トップページが $code（200 でない）" "起動直後なら待つ。続くなら docker logs $WEB を見る"
+      ng "実機コンテナ $WEB が動いていない" "./install.sh で起動する（別名なら export WEKO_WEB_CONTAINER=...）"
+    fi
+  fi
+
+  # curl は接続失敗でも '000' を出力して非ゼロで終わる。|| echo で足すと二重になる。
+  code=$(curl -sk --max-time 10 -o /dev/null -w '%{http_code}' -H "Host: $HOSTHDR" "$BASEURL/" 2>/dev/null || true)
+  [ -n "$code" ] || code=000
+  if [ "$code" = "200" ]; then
+    ok "トップページが 200（$BASEURL / Host: $HOSTHDR）"
+  elif [ "$code" = "000" ]; then
+    # 接続できていない。URL が実機と違う可能性が高いので、候補を当たって出す。
+    found=""
+    for u in https://localhost https://localhost:8443 http://localhost http://localhost:8080; do
+      [ "$u" = "$BASEURL" ] && continue
+      c=$(curl -sk --max-time 5 -o /dev/null -w '%{http_code}' -H "Host: $HOSTHDR" "$u/" 2>/dev/null || true)
+      [ "$c" = "200" ] && { found="$u"; break; }
+    done
+    if [ -n "$found" ]; then
+      ng "$BASEURL/ に接続できない（$found なら 200）" "export WEKO_BASE_URL=$found"
+    else
+      ng "$BASEURL/ に接続できない（code=000）" "実機が起動しているか、公開ポートを確認する: docker ps --format '{{.Names}}  {{.Ports}}'"
     fi
   else
-    ng "実機コンテナ $WEB が動いていない" "./install.sh で起動する（別名なら export WEKO_WEB_CONTAINER=...）"
+    caut "トップページが $code（200 でない）" "起動直後なら待つ。続くなら docker logs $WEB を見る"
   fi
 fi
 

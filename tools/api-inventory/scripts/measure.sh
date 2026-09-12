@@ -53,6 +53,18 @@ if [ -z "$SKIP_VERIFY" ]; then
   # snapshot.py は毎回新プロセスなので即反映されるが、probe は uwsgi を叩くため
   # egg-info の再生成と restart をしないと別バージョンを測ることになる。
   code="$(curl -sk --max-time 20 -o /dev/null -w '%{http_code}' -H "Host: $HOSTHDR" "$BASE/" || true)"
+  if [ "$code" = "000" ]; then
+    # 接続そのものができていない。コードの新旧ではなく、測定条件が実機と違う。
+    say "  ★$BASE/ に接続できません(code=000)。プロファイルの値が実機と合っていません。"
+    say "     いま動いているコンテナと公開ポート:"
+    if command -v docker >/dev/null 2>&1; then
+      docker ps --format '       {{.Names}}  {{.Ports}}' 2>/dev/null | grep -E 'web|nginx' || say "       (該当なし。実機が起動していない)"
+    fi
+    say "     合う値を $PROFILE の base_url / web_container に書くこと。"
+    say "     compose のプロジェクト名はチェックアウト先のディレクトリ名になるので、"
+    say "     コンテナ名は weko-web-1 とは限らない(例 wekov2-web-1)。"
+    exit 1
+  fi
   if [ "$code" != "200" ]; then
     say "  ★トップページが $code。egg-info を再生成して web を再起動してください。"
     say "     docker exec $WEB_CONTAINER bash -lc 'cd /code && for d in modules/*/; do (cd \"\$d\" && python setup.py -q egg_info); done'"
