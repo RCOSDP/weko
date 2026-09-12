@@ -97,14 +97,23 @@ git clone https://github.com/RCOSDP/weko-secret.git  ~/weko-secret
 |---|---|---|
 | `WEKO_API_INVENTORY_DIR` | **なし（必須）** | 台帳とベースラインの置き場所。台帳スクリプトは全部これを見る |
 | `WEKO_WEB_CONTAINER` | `weko-web-1` | 実測で 500 が出たとき `docker logs` を引く先 |
+| `WEKO_BASE_URL` | `https://localhost:8443` | 実機を叩くときの URL。到達確認と実測の宛先 |
+| `WEKO_HOST_HEADER` | `weko3.example.org` | 実機に送る `Host` ヘッダ。`docker-compose.yml` の `INVENIO_WEB_HOST_NAME` に合わせる |
 | `INV` | — | `tools/api-inventory/scripts` の打鍵を短くするだけ。本書のコマンドはこれを使う |
 | `WEKO_PUBLIC_REPO` / `WEKO_PRIVATE_REPO` | `RCOSDP/weko` / `RCOSDP/weko-secret` | 変える必要はほぼ無い（`open-pr.sh` が読む） |
 
 ```bash
 export WEKO_API_INVENTORY_DIR=~/weko-secret
 export WEKO_WEB_CONTAINER=weko-web-1
+export WEKO_BASE_URL=https://localhost:8443
+export WEKO_HOST_HEADER=weko3.example.org
 export INV=tools/api-inventory/scripts
 ```
+
+**実機の場所（コンテナ名・URL・Host）を既定から変えているなら、この 3 つを必ず設定する。**
+台帳ツールは初回に `$WEKO_API_INVENTORY_DIR/measure_profile.json` を作るとき、この 3 つを既定値として書き込む。
+**作られたあとは JSON が正**で、環境変数を変えても既存のファイルは書き換わらない
+（測定条件を変えたいときは JSON を直す。`tools/api-inventory/scripts/README.md`）。
 
 毎回打つのが面倒なら前の 2 つを `~/.bashrc` に書いてよい。
 **`INV` は相対パスなので、`~/weko` の中で作業しているときしか使えない。**
@@ -119,8 +128,8 @@ cd ~/weko
 起動したことを 2 つで確かめる。
 
 ```bash
-docker ps --format '{{.Names}}' | grep weko-web
-curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' https://localhost:8443/   # 200
+docker ps --format '{{.Names}}' | grep -x "$WEKO_WEB_CONTAINER"    # 名前が出れば起動している
+curl -sk -o /dev/null -w '%{http_code}\n' -H "Host: $WEKO_HOST_HEADER" "$WEKO_BASE_URL/"   # 200
 ```
 
 **ベースラインは必ずこの `install.sh` 環境から作る**（`docs/RULE.md` §3-1）。
@@ -161,10 +170,8 @@ tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで�
    公開側のコードと台帳は**別の PR**になる。
 
    ```bash
-   export WEKO_API_INVENTORY_DIR=~/weko-secret
    ./install.sh                                    # ベースラインは install.sh 環境で作る
-   python3 tools/api-inventory/scripts/snapshot.py \
-     --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
+   python3 $INV/snapshot.py --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
    # → private 側の同名ブランチで commit する（PR は手順 4 の --inventory で出る）
    ```
 4. **PR を出す。**
@@ -272,8 +279,8 @@ docker restart "$WEKO_WEB_CONTAINER"
 **確認（必須）**: そのバージョンにしか無い／無くなった経路を 1 つ叩き、期待どおりのコードが返ること。
 
 ```bash
-curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
-  https://localhost:8443/api/admin/get_widget_item_list
+curl -sk -o /dev/null -w '%{http_code}\n' -H "Host: $WEKO_HOST_HEADER" \
+  "$WEKO_BASE_URL/api/admin/get_widget_item_list"
 # 旧バージョンへ戻したなら 404 になるはず。500 が返るなら古いコードがまだ生きている
 ```
 

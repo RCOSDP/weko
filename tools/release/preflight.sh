@@ -105,12 +105,14 @@ fi
 
 # --- 4. 実機 ---
 WEB="${WEKO_WEB_CONTAINER:-weko-web-1}"
+BASEURL="${WEKO_BASE_URL:-https://localhost:8443}"
+HOSTHDR="${WEKO_HOST_HEADER:-weko3.example.org}"
 if command -v docker >/dev/null 2>&1; then
   if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$WEB"; then
     ok "実機コンテナが動いている（$WEB）"
-    code=$(curl -sk -o /dev/null -w '%{http_code}' -H 'Host: weko3.example.org' https://localhost:8443/ 2>/dev/null || echo 000)
+    code=$(curl -sk -o /dev/null -w '%{http_code}' -H "Host: $HOSTHDR" "$BASEURL/" 2>/dev/null || echo 000)
     if [ "$code" = "200" ]; then
-      ok "トップページが 200"
+      ok "トップページが 200（$BASEURL / Host: $HOSTHDR）"
     else
       caut "トップページが $code（200 でない）" "起動直後なら待つ。続くなら docker logs $WEB を見る"
     fi

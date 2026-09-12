@@ -16,6 +16,8 @@ tools/release/open-pr.sh   --base develop_v2.1.0 --run --inventory
 ```
 
 環境変数: `WEKO_API_INVENTORY_DIR`（private リポジトリのパス。必須）、
-`WEKO_WEB_CONTAINER`（既定 `weko-web-1`）、`WEKO_PUBLIC_REPO` / `WEKO_PRIVATE_REPO`（既定 `RCOSDP/weko` / `RCOSDP/weko-secret`）。
+`WEKO_WEB_CONTAINER`（既定 `weko-web-1`）、
+`WEKO_BASE_URL` / `WEKO_HOST_HEADER`（既定 `https://localhost:8443` / `weko3.example.org`）、
+`WEKO_PUBLIC_REPO` / `WEKO_PRIVATE_REPO`（既定 `RCOSDP/weko` / `RCOSDP/weko-secret`）。
 
 **判断はしない。** ゲートが落ちたときにどうするか、台帳をどう直すかは人が決める（`docs/RULE.md` §3-3）。
