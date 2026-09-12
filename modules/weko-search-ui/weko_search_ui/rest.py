@@ -59,7 +59,7 @@ from webargs import fields
 from webargs.flaskparser import use_kwargs
 from weko_accounts.utils import limiter
 from weko_admin.models import SearchManagement as sm
-from weko_admin.utils import get_facet_search_query
+from weko_admin.utils import get_facet_search_query, sanitize_html_string
 from werkzeug.http import generate_etag
 from werkzeug.exceptions import NotFound
 from weko_index_tree.api import Indexes
@@ -344,9 +344,10 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
                         agp[k]["date_range"] = dict()
                         comment = p.comment
-                        agp[k]["comment"] = (comment,)
+                        sanitized_comment = sanitize_html_string(comment)
+                        agp[k]["comment"] = (sanitized_comment,)
                         result = agp.pop(k)
-                        result["comment"] = comment
+                        result["comment"] = sanitized_comment
                         current_idx = result
                         for _path in is_perm_paths:
                             if (
@@ -366,13 +367,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                 index_id = p.cid
                 index_info = Indexes.get_index(index_id=index_id)
                 rss_status = index_info.rss_status
+                comment = p.comment
+                sanitized_comment = sanitize_html_string(comment)
                 nd = {
                     "doc_count": 0,
                     "key": p.path,
                     "name": p.name if p.name and lang == "ja" else p.name_en,
                     "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                     "rss_status": rss_status,
-                    "comment": p.comment,
+                    "comment": sanitized_comment,
                     "image_name": index_info.image_name,
                     "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
                     "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
@@ -392,14 +395,15 @@ class IndexSearchResource(ContentNegotiatedMethodView):
             for p in paths:
                 m = 0
                 current_idx = {}
+                comment = p.comment
+                sanitized_comment = sanitize_html_string(comment)
                 for k in range(len(agp)):
                     if p.path == agp[k].get("key"):
                         agp[k]["name"] = p.name if p.name and lang == "ja" else p.name_en
                         agp[k]["date_range"] = dict()
-                        comment = p.comment
-                        agp[k]["comment"] = (comment,)
+                        agp[k]["comment"] = (sanitized_comment,)
                         result = agp.pop(k)
-                        result["comment"] = comment
+                        result["comment"] = sanitized_comment
                         current_idx = result
                         m = 1
                         break
@@ -413,7 +417,7 @@ class IndexSearchResource(ContentNegotiatedMethodView):
                         "name": p.name if p.name and lang == "ja" else p.name_en,
                         "date_range": {"pub_cnt": 0, "un_pub_cnt": 0},
                         "rss_status": rss_status,
-                        "comment": p.comment,
+                        "comment": sanitized_comment,
                         "image_name": index_info.image_name,
                         "image_width": current_app.config['CHILD_INDEX_THUMBNAIL_WIDTH'],
                         "image_height": current_app.config['CHILD_INDEX_THUMBNAIL_HEIGHT'],
