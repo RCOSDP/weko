@@ -10,9 +10,10 @@
 | やりたいこと | どこ |
 |---|---|
 | いま自分がどの段階にいるか確かめる | §1 全体像 |
-| PR を出す | §2 |
-| リリースする（棚卸しとタグ） | §3 |
-| 始める前に前提がそろっているか見る | `tools/release/preflight.sh` |
+| 事前準備（ソフトのインストール・環境変数・実機の起動） | §2 |
+| PR を出す | §3 |
+| リリースする（棚卸しとタグ） | §4 |
+| 始める前に前提がそろっているか見る | §2-6 `tools/release/preflight.sh` |
 | ルール・用語・決定の記録 | `docs/RULE.md` |
 | 台帳そのものの作り方、CI の設置 | `tools/api-inventory/scripts/README.md` / `ci/README.md` |
 
@@ -24,39 +25,129 @@
 
 | 段階 | やること | 書いてある場所 |
 |---|---|---|
+| 0. 環境をそろえる | ソフトのインストール・環境変数・実機の起動（最初の 1 回だけ） | §2 |
 | 1. リリースラインを切る | `develop_v2.x.y` を作り、**private 側にも同名ブランチを作る** | `docs/RULE.md` 規則 2-2 |
-| 2. 開発ブランチを作る | 作業ブランチを切る（台帳を触るなら private 側も同名で） | §2 手順 1 |
-| 3. PR を出す前 | テストを通す・台帳を更新する・`preflight.sh` | §2 手順 2-3 |
-| 4. PR を出す | public 側と、台帳を触ったなら private 側の 2 本 | §2 手順 4-7 |
+| 2. 開発ブランチを作る | 作業ブランチを切る（台帳を触るなら private 側も同名で） | §3 手順 1 |
+| 3. PR を出す前 | テストを通す・台帳を更新する・`preflight.sh` | §3 手順 2-3 |
+| 4. PR を出す | public 側と、台帳を触ったなら private 側の 2 本 | §3 手順 4-7 |
 | 5. レビュー〜マージ | 全指摘への反応、マージ条件 | `docs/RULE.md` §5-2 / §5-4 |
-| 6. **リリース（棚卸しとタグ）** | 全経路の棚卸し・CHANGELOG・両リポジトリに同名タグ | **§3** |
-| 7. リリース後 | 保留したものの引き継ぎ | §3 の最後 |
+| 6. **リリース（棚卸しとタグ）** | 全経路の棚卸し・CHANGELOG・両リポジトリに同名タグ | **§4** |
+| 7. リリース後 | 保留したものの引き継ぎ | §4 の最後 |
 
-段階 1・6 はリリースのたびに 1 回、段階 2〜5 は PR のたびに毎回回る。
+段階 0 は最初の 1 回だけ、段階 1・6 はリリースのたびに 1 回、段階 2〜5 は PR のたびに毎回回る。
 
 ---
 
-## 2. PR を出す手順
+## 2. 事前準備（最初に 1 回だけ）
 
-初めて出す人はここだけ順に追えばよい。**レビューとマージのルールは `docs/RULE.md` §5。**
+**新しい端末で作業を始めるときは、まずこの節を通す。** ここでそろえたものは §3（PR）と §4（リリース）の両方で使う。
+一度そろえたら、次からは 2-6 の確認コマンドだけでよい。
 
-### 前提: `gh`（GitHub CLI）を入れておく
+### 2-1. 必要なソフトウェア
 
-PR の作成・CI の確認・レビュー依頼は **`gh` を使う**。ブラウザでもできるが、
-手順書にコマンドで残せるほうが間違いが少ないので、こちらを標準とする。
+| ソフト | 何に使うか | 確認コマンド |
+|---|---|---|
+| `git` | ソースとブランチの操作 | `git --version` |
+| `gh`（GitHub CLI） | PR の作成・CI の確認・レビュー依頼 | `gh --version` |
+| `docker` / `docker compose` | 実機（WEKO3 スタック）の起動と操作 | `docker ps` |
+| `python3` | 台帳スクリプト（`tools/api-inventory/scripts/*.py`） | `python3 -V` |
+| `curl` | 経路の到達確認 | `curl --version` |
+
+**PR まわりは `gh` を標準とする。** ブラウザでもできるが、手順書にコマンドで残せるほうが間違いが少ない。
 
 ```bash
-# RHEL / Rocky / AlmaLinux
+# gh — RHEL / Rocky / AlmaLinux
 sudo dnf install -y gh
-# Ubuntu / Debian
+# gh — Ubuntu / Debian
 sudo apt install -y gh
-# 入らない場合は公式手順: https://github.com/cli/cli#installation
+# 入らないときは公式手順: https://github.com/cli/cli#installation
+```
 
+`docker` はディストリの公式手順で入れる。**`sudo` なしで `docker ps` が通ること**を確認する
+（通らなければ `sudo usermod -aG docker $USER` のあと、ログインし直す）。
+
+### 2-2. `gh` を認証する
+
+```bash
 gh auth login      # GitHub.com / HTTPS / ブラウザ認証 でよい
 gh auth status     # ✓ Logged in to github.com と出れば完了
 ```
 
-### 手順
+**`RCOSDP/weko`（public）と `RCOSDP/weko-secret`（private）の両方にアクセスできること。**
+private 側が見えないなら、push 権限を管理者に依頼する。台帳を触る作業はそこが無いと進まない。
+
+### 2-3. リポジトリを 2 つ用意する
+
+| リポジトリ | 中身 | 公開範囲 |
+|---|---|---|
+| `RCOSDP/weko` | コード・ツール・CI の定義 | **public** |
+| `RCOSDP/weko-secret` | 台帳（`weko3_api_list*.tsv`）とベースライン（`api_snapshot.json`） | private |
+
+```bash
+git clone https://github.com/RCOSDP/weko.git         ~/weko
+git clone https://github.com/RCOSDP/weko-secret.git  ~/weko-secret
+```
+
+**private 側を public リポジトリの中に置かない。** 誤って commit する事故を防ぐため、
+必ず別の場所に clone する（`docs/RULE.md` §1）。
+
+### 2-4. 環境変数を設定する
+
+| 変数 | 既定 | 何のためか |
+|---|---|---|
+| `WEKO_API_INVENTORY_DIR` | **なし（必須）** | 台帳とベースラインの置き場所。台帳スクリプトは全部これを見る |
+| `WEKO_WEB_CONTAINER` | `weko-web-1` | 実測で 500 が出たとき `docker logs` を引く先 |
+| `INV` | — | `tools/api-inventory/scripts` の打鍵を短くするだけ。本書のコマンドはこれを使う |
+| `WEKO_PUBLIC_REPO` / `WEKO_PRIVATE_REPO` | `RCOSDP/weko` / `RCOSDP/weko-secret` | 変える必要はほぼ無い（`open-pr.sh` が読む） |
+
+```bash
+export WEKO_API_INVENTORY_DIR=~/weko-secret
+export WEKO_WEB_CONTAINER=weko-web-1
+export INV=tools/api-inventory/scripts
+```
+
+毎回打つのが面倒なら前の 2 つを `~/.bashrc` に書いてよい。
+**`INV` は相対パスなので、`~/weko` の中で作業しているときしか使えない。**
+
+### 2-5. 実機を起動する
+
+```bash
+cd ~/weko
+./install.sh          # 数十分かかる。CI と同じ手順で作られる
+```
+
+起動したことを 2 つで確かめる。
+
+```bash
+docker ps --format '{{.Names}}' | grep weko-web
+curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' https://localhost:8443/   # 200
+```
+
+**ベースラインは必ずこの `install.sh` 環境から作る**（`docs/RULE.md` §3-1）。
+手元で適当に組んだ docker 環境で作ると、依存パッケージの版差で警告が出続け、本当の依存更新に気づけなくなる。
+
+### 2-6. そろったことを機械に確認させる
+
+```bash
+tools/release/preflight.sh --base develop_v2.1.0
+```
+
+gh の認証・台帳の置き場所・public と private のブランチ対応・実機の応答までまとめて見る。
+**❌ が 1 つも無くなってから §3 / §4 へ進む。** ❌ の行には直し方が出る。
+
+```text
+[ OK ] gh が認証済み（mhaya）
+[ NG ] WEKO_API_INVENTORY_DIR が未設定
+    → git clone https://github.com/RCOSDP/weko-secret.git ~/weko-secret && export WEKO_API_INVENTORY_DIR=~/weko-secret
+```
+
+---
+
+## 3. PR を出す手順
+
+初めて出す人はここだけ順に追えばよい。**レビューとマージのルールは `docs/RULE.md` §5。**
+
+**前提は §2 で済ませてあること**（`gh` の認証・環境変数・実機）。まだなら §2 へ戻る。
 
 ```bash
 tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで直してから始める
@@ -118,7 +209,7 @@ tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで�
 | Claude のレビューを回し直す | PR に `@claude` とコメントする |
 
 
-## 3. リリース手順
+## 4. リリース手順
 
 > **この手順は 3 つの README から集めてある。** 年に数回しか回らない作業で、
 > 初めての人が README を渡り歩くと確実に事故るため、ここに 1 本化した。
@@ -130,30 +221,18 @@ tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで�
 **所要は約 1.5 時間**（手順 7 の既存行の再レビューを除く。v2.0.3 → v2.1.0・478 コミットでの実績）。
 **初めて回すなら、レビュアを 1 人つけて手順 3・4・10 の結果を見てもらうこと。**
 
-### 事前に用意するもの
+### 始める前に
+
+**環境は §2 でそろえてあること。** 加えてこの作業には次の 2 つが要る。
 
 | | 内容 |
 |---|---|
-| 権限 | private リポジトリ `RCOSDP/weko-secret` への push 権限 |
-| ツール | `gh`（インストールと認証は §2 の前提）、`docker`、`python3` |
-| 環境 | WEKO3 の docker スタックが動いていること（`./install.sh` 済み） |
+| 権限 | private リポジトリ `RCOSDP/weko-secret` への **push 権限**（読むだけでは回らない） |
 | 知識 | 用語（台帳・ベースライン・ゲート）は `docs/RULE.md` §8 を先に読む |
 
 ```bash
-# private 側（台帳とベースラインの置き場所）
-git clone https://github.com/RCOSDP/weko-secret.git ~/weko-secret
-export WEKO_API_INVENTORY_DIR=~/weko-secret
-export WEKO_WEB_CONTAINER=weko-web-1     # 500 の切り分けで docker logs を見る先
-
-# public 側（作業ディレクトリ。以降のコマンドは全部ここで打つ）
-cd /path/to/weko
-export INV=tools/api-inventory/scripts   # 以降 $INV で参照する
-```
-
-**前提がそろっているかは機械に確認させる。** ❌ が 1 つも無くなってから手順 1 へ進む。
-
-```bash
-tools/release/preflight.sh --base develop_v2.1.0
+cd ~/weko                                          # 以降のコマンドは全部ここで打つ
+tools/release/preflight.sh --base develop_v2.1.0   # ❌ が 1 つも無くなってから手順 0 へ
 ```
 
 以下、例として **前タグ `v2.0.4` → 新タグ `v2.1.0`** を使う。自分のバージョンに読み替えること。
