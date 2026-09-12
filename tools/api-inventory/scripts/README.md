@@ -242,7 +242,7 @@ cd tools/api-inventory/scripts
 
 ```bash
 git checkout <対象>
-docker exec weko-web-1 bash -lc 'cd /code && for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
+docker exec weko-web-1 bash -lc 'source ~/.virtualenvs/invenio/bin/activate; cd /code; for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
 docker restart weko-web-1
 # v2.0.3 に戻したなら v2.1.0 で足された経路が 404 になるはず
 curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
@@ -333,12 +333,17 @@ python3 .../snapshot.py --out /tmp/snap_new.json   # 12秒
 > 実績: 再起動なしで `endpoints=865` を取得できた(v2.0.3 は 860)。
 > `install.sh` を回すと数十分かかるが、**url_map の取得だけなら不要**。
 
+**この再生成は、コンテナのユーザ(invenio)がリポジトリに書けるときしか通らない。**
+ホスト側が別 uid の所有だと `PermissionError: './.eggs'` でほぼ全モジュールが失敗する。
+その環境では近道をあきらめて `install.sh` で作り直すこと
+(確認: `docker exec <web> bash -c 'test -w /code/modules/weko-theme && echo writable'`)。
+
 **egg-info の再生成は必須**。ルートは entry_points 経由で登録されるので、
 モジュール構成や entry_points が変わったバージョンでは、
 古い egg-info が存在しない属性を指してアプリが起動しなくなる。
 
 ```bash
-docker exec weko-web-1 bash -lc 'cd /code && for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
+docker exec weko-web-1 bash -lc 'source ~/.virtualenvs/invenio/bin/activate; cd /code; for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
 docker restart weko-web-1
 ```
 

@@ -4,19 +4,22 @@
 #   tools/release/open-pr.sh --base develop_v2.1.0                 # 何をするか表示するだけ
 #   tools/release/open-pr.sh --base develop_v2.1.0 --run           # 実際に PR を作る
 #   tools/release/open-pr.sh --base develop_v2.1.0 --inventory --run   # private 側の台帳 PR も作る
+#   tools/release/open-pr.sh --base develop_v2.1.0 --inventory-base main --inventory --run
+#                                                  # 台帳 PR だけ main へ向ける(リリース時)
 #
 # 既定は表示だけ（dry-run）。--run を付けたときだけ push と PR 作成を行う。
 # 手順の説明は docs/OPERATIONS.md §3。ルールは docs/RULE.md。
 
 set -uo pipefail
 
-BASE=""; RUN=0; INVENTORY=0; TITLE=""
+BASE=""; INV_BASE=""; RUN=0; INVENTORY=0; TITLE=""
 PUB_REPO="${WEKO_PUBLIC_REPO:-RCOSDP/weko}"
 PRIV_REPO="${WEKO_PRIVATE_REPO:-RCOSDP/weko-secret}"
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --base)      BASE="${2-}"; shift 2 ;;
+    --inventory-base) INV_BASE="${2-}"; shift 2 ;;
     --title)     TITLE="${2-}"; shift 2 ;;
     --inventory) INVENTORY=1; shift ;;
     --run)       RUN=1; shift ;;
@@ -39,6 +42,9 @@ BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null) || die "git リポジト�
 [ "$BRANCH" != "$BASE" ] || die "作業ブランチと base が同じ（$BRANCH）" "作業ブランチを切る"
 
 [ -n "$TITLE" ] || TITLE=$(git log -1 --pretty=%s)
+# 台帳側の base は既定で public と同じ。リリースのように private が main へ向かう
+# ときだけ --inventory-base で分ける(docs/RULE.md 規則 2-2)。
+[ -n "$INV_BASE" ] || INV_BASE="$BASE"
 
 # public 側にデータが紛れていないか（§1）
 leaked=$(git status --porcelain | awk '{print $NF}' | grep -E '(\.tsv|api_snapshot\.json|measure_report\.md|fixtures\.json)$' || true)
@@ -79,10 +85,10 @@ if [ "$INVENTORY" = 1 ]; then
   say
   say "== private 側（台帳）の PR =="
   say "  リポジトリ: $PRIV_REPO"
-  say "  $BRANCH → $BASE"
+  say "  $BRANCH → $INV_BASE"
   say
   run git -C "$PRIV" push -u origin "$BRANCH"
-  run gh pr create --repo "$PRIV_REPO" --base "$BASE" --head "$BRANCH" \
+  run gh pr create --repo "$PRIV_REPO" --base "$INV_BASE" --head "$BRANCH" \
     --title "台帳: $TITLE" \
     --body "$PUB_REPO の $BRANCH に対応する台帳更新。マージ順は問わない（同名ブランチを CI が見る）。"
 fi

@@ -156,6 +156,11 @@ cd ~/weko
 ./install.sh          # 数十分かかる。CI と同じ手順で作られる
 ```
 
+> **`install.sh` は作り直しであって、起動ではない。** 冒頭で `docker compose down -v` を実行するため、
+> **DB・アップロード済みファイル・設定を含むボリュームが全部消える。** イメージも `--no-cache` で
+> ビルドし直す。既に動いている環境で「とりあえず流す」ことは絶対にしない。
+> 起動しているだけで中身を残したいなら `docker compose up -d` を使う。
+
 起動したことを 2 つで確かめる。
 
 ```bash
@@ -216,8 +221,8 @@ tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで�
    手で出すなら次と同じこと。
 
    ```bash
-   git push -u origin <ブランチ>
-   gh pr create --base develop_v2.1.0 --title "<タイトル>" --body-file .github/pull_request_template.md
+   git push -u origin "$(git branch --show-current)"
+   gh pr create --base develop_v2.1.0 --title "PR のタイトル" --body-file .github/pull_request_template.md
    ```
 
 5. **PR テンプレートのチェックボックスを埋める。**
@@ -234,7 +239,7 @@ tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで�
 7. **レビューを依頼する。**
 
    ```bash
-   gh pr edit --add-reviewer <github-id>
+   gh pr edit --add-reviewer REVIEWER    # REVIEWER はレビュアの GitHub ID
    ```
 
 8. **指摘に反応を残す**（`docs/RULE.md` §5-2）。**マージの条件は `docs/RULE.md` §5-4。**
@@ -282,7 +287,10 @@ tools/release/preflight.sh --base develop_v2.1.0   # ❌ が 1 つも無くな�
 `docs/RULE.md` 規則 2-1 / 2-2。**これを飛ばすと CI が既定ブランチの台帳と比べ、出る件数が当てにならなくなる。**
 
 ```bash
-git -C "$WEKO_API_INVENTORY_DIR" switch -c develop_v2.1.0 origin/main
+# 既にあるならそれに乗る。無ければ main から作る
+git -C "$WEKO_API_INVENTORY_DIR" switch develop_v2.1.0 2>/dev/null \
+  || git -C "$WEKO_API_INVENTORY_DIR" switch -c develop_v2.1.0 origin/main
+git -C "$WEKO_API_INVENTORY_DIR" status --short --branch | head -1
 ```
 
 ブランチ名は **public 側の対象ブランチと完全に同じ**にする。以降の private 側の作業は全部このブランチ上で行う。
@@ -294,18 +302,53 @@ git -C "$WEKO_API_INVENTORY_DIR" switch -c develop_v2.1.0 origin/main
 
 ```bash
 git switch develop_v2.1.0
-ls $INV/snapshot.py || git checkout <ツールのあるブランチ> -- tools/api-inventory .github/workflows/api-inventory-drift.yml
+TOOLS_FROM=develop_v2.0.4     # ツールが入っているブランチに読み替える
+ls $INV/snapshot.py || git checkout "$TOOLS_FROM" -- tools/api-inventory .github/workflows/api-inventory-drift.yml
 ```
 
 ### 手順 2. 実機を新バージョンに合わせる
 
 ブランチを切り替えただけでは**稼働中の uwsgi は古いコードのまま**で、
-「測っているつもりのバージョンと違うものを測る」ことになる。egg-info を作り直して再起動する。
+「測っているつもりのバージョンと違うものを測る」ことになる。
+
+**原則は手順 3 の `install.sh` に任せる。** ボリュームごと作り直すので、この問題は起きない。
+手順 3 を回すなら、ここで読むのは下の「確認」と Alembic だけでよい。
+
+<details>
+<summary><b>install.sh を省いて近道する場合（egg-info の再生成）</b></summary>
+
+`snapshot.py` は毎回新しいプロセスなのでブランチ切り替えだけで追随するが、
+**`probe_ci.py` は稼働中の uwsgi を叩く**ため、entry_points が変わったバージョンでは
+egg-info を作り直さないとアプリが起動しなくなる。
+
+**この近道には「コンテナのユーザがリポジトリに書けること」が要る。** 先に確かめる。
 
 ```bash
-docker exec "$WEKO_WEB_CONTAINER" bash -lc 'cd /code && for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
+docker exec "$WEKO_WEB_CONTAINER" bash -c 'test -w /code/modules/weko-theme && echo writable || echo "NOT writable"'
+```
+
+`NOT writable` なら**この近道は使えない**（手順 3 の `install.sh` を回すこと）。
+コンテナは `invenio`(uid 1000) で動く一方、ホストのリポジトリは別 uid の所有なので、
+`setup.py` が作業用の `.eggs` を作れず `PermissionError: './.eggs'` で落ちる。
+**50/51 モジュールが失敗する**ため、途中まで再生成された中途半端な状態になりやすい。
+
+```bash
+# ★ venv を activate すること。付けないとコンテナ既定の python(システム側)で走る
+docker exec "$WEKO_WEB_CONTAINER" bash -lc \
+  'source ~/.virtualenvs/invenio/bin/activate; cd /code; for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
 docker restart "$WEKO_WEB_CONTAINER"
 ```
+
+再生成の前後で **egg-info の数が変わらないこと**を確認してから先へ進む。
+
+```bash
+docker exec "$WEKO_WEB_CONTAINER" bash -c 'ls -d /code/modules/*/*.egg-info | wc -l'
+```
+
+`docker exec -u root` でも通るが、`.eggs` がホスト側に **root 所有**で残り、
+以後ホストから消すのに `sudo` が要る。使うなら後片付けまで込みで判断すること。
+
+</details>
 
 **確認（必須）**: そのバージョンにしか無い／無くなった経路を 1 つ叩き、期待どおりのコードが返ること。
 
@@ -319,17 +362,23 @@ curl -sk -o /dev/null -w '%{http_code}\n' -H "Host: $WEKO_HOST_HEADER" \
 **認可の穴と区別がつかなくなる。**
 
 ```bash
-docker compose exec web invenio alembic current | tail -5
+docker exec "$WEKO_WEB_CONTAINER" invenio alembic current | tail -5
 git log --oneline v2.0.4..HEAD -- '*/alembic/*'     # 追加リビジョンを洗い、適用済みか確かめる
 ```
+
+> `docker compose exec web` でも同じだが、compose ファイルとプロジェクト名の組み合わせに依存する
+> （`install.sh` は `docker-compose2.yml` を使う）。**コンテナ名で直に叩くほうが確実。**
 
 ### 手順 3. ベースラインを作り直す
 
 **ベースラインは必ず `install.sh` で作った環境から生成する。** 手元の docker 環境で作ると
 依存パッケージの版差で W6 が出続け、本当の依存更新に気づけなくなる。
 
+**`install.sh` は `down -v` でボリュームを消してから作り直す**（§2-5）。
+**測定用の使い捨て環境で回すこと。** 残したいデータがある環境で流してはいけない。
+
 ```bash
-./install.sh                                          # 数十分かかる
+./install.sh                                          # 数十分かかる。データは消える
 python3 $INV/snapshot.py --out /tmp/snap_new.json
 python3 $INV/diff_snapshot.py "$WEKO_API_INVENTORY_DIR/api_snapshot.json" /tmp/snap_new.json
 ```
@@ -387,7 +436,7 @@ $INV/measure.sh --nos 927,928,929,930,931     # 手順 5 で足した no を指�
 ```
 
 **既定で書き込み系も測る**（`measure_profile.json` の `allow_writes` が `true`）。実機のデータが
-書き換わるので、**使い捨て環境で回すか、終わったら `./install.sh` で作り直すこと。**
+書き換わるので、**使い捨て環境で回すこと。** 作り直すなら `./install.sh`（ボリュームごと消える。§2-5）。
 
 測り終えたら、結果をそのまま信じずに次を確認する。**静かに壊れるのはこの 2 つ。**
 
@@ -444,8 +493,12 @@ python3 $INV/reconcile.py --gate         # exit 0 を確認する
 **確認**: `release_tag` 列に今回のタグが 1 行も出てこなかったら、先頭 2 本を回し忘れている。
 
 ```bash
-grep -c 'v2.1.0' "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
+awk -F'\t' 'NR==1{for(i=1;i<=NF;i++) if($i=="release_tag") c=i; next}
+            c && $c ~ /v2\.1\.0/ {n++} END{print n+0}' \
+    "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 ```
+
+`release_tag` 列だけを数える。`grep -c` だと `notes` や `uri` に同じ文字列があるだけで数が合ってしまう。
 
 ### 手順 9. CHANGELOG を確定する（public 側）
 
@@ -474,12 +527,13 @@ git status --short           # tools/api-inventory/ 配下に *.tsv / api_snapsh
 ```
 
 private 側を commit して PR を出す（`docs/RULE.md` 規則 2-2 の実例と同じ形：同名ブランチ → `main` へ PR）。
+**public 側の base は `develop_v2.1.0`、private 側の base は `main`** なので `--inventory-base` で分ける。
 
 ```bash
 cd "$WEKO_API_INVENTORY_DIR"
 git add -A && git commit -m "chore: WEKO3 v2.1.0 時点の棚卸し"
 cd -
-tools/release/open-pr.sh --base develop_v2.1.0 --run --inventory
+tools/release/open-pr.sh --base develop_v2.1.0 --inventory-base main --run --inventory
 gh pr checks --watch
 ```
 
