@@ -315,8 +315,14 @@ cp /tmp/snap_new.json "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
 ### 手順 4. 台帳の差分を 0 にする
 
 ```bash
-python3 $INV/reconcile.py                    # A（実機にあるが台帳に無い）を洗い出す
-python3 $INV/add_row.py --append --no <新規の endpoint>   # 自動で埋まるのは 26 列だけ
+python3 $INV/reconcile.py                    # A（実機にあるが台帳に無い）に endpoint 名が出る
+
+# 出た endpoint を 1 件ずつ追加する。まず表示して中身を見る（--append が無ければ書き込まない）
+python3 $INV/add_row.py --endpoint api:weko_admin.get_widget_item_list
+python3 $INV/add_row.py --endpoint api:weko_admin.get_widget_item_list --append
+# endpoint 名が分からなければ URI の一部でも引ける
+python3 $INV/add_row.py --uri /api/items/import-task --append
+
 python3 $INV/reconcile.py --gate             # 「✅ 一致(0件)」になるまで繰り返す
 ```
 
@@ -328,7 +334,8 @@ v2.1.0 ではベンダ資料が新規 23 件としていたが、ソースに存
 
 ### 手順 5. 新規行を埋める
 
-機械付与 → 実装読解の順。機械付与は**空欄／TODO セルしか触らない**ので既存値は壊れない。
+`add_row.py` が埋めるのは機械的に決まる 26 列だけで、残りは `TODO` が入っている。
+機械付与 → 実装読解の順で潰す。機械付与は**空欄／TODO セルしか触らない**ので既存値は壊れない。
 
 ```bash
 for s in add_cols add_ssrf_redirect add_idempotency add_dataop4 add_authmech add_reqinfo; do

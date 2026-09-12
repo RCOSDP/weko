@@ -386,7 +386,7 @@ git log --oneline <前回タグ>..HEAD -- '*/alembic/*'   # 追加リビジョ�
 python3 .../diff_snapshot.py "$WEKO_API_INVENTORY_DIR/api_snapshot.json" /tmp/snap_new.json
 cp /tmp/snap_new.json "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
 python3 .../reconcile.py            # A(未収載) を洗い出す
-python3 .../add_row.py --append --no <新規のendpoint>   # 自動26列だけ埋まる
+python3 .../add_row.py --endpoint <新規のendpoint> --append   # 自動26列だけ埋まる
 python3 .../reconcile.py --gate     # 0件になるまで繰り返す
 ```
 
