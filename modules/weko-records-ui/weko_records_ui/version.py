@@ -17,7 +17,7 @@
 # along with WEKO3; if not, write to the
 # Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston,
 # MA 02111-1307, USA.
-
+#
 """Version information for weko-records-ui.
 
 This file is imported by ``weko_records_ui.__init__``,

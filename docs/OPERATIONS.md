@@ -1,303 +1,419 @@
-# WEKO3 運用ルール
+# WEKO3 作業手順
 
 > **素案 / DRAFT** — チームレビュー前。
-> 2026-09-01 に §9 の未決 5 件を決定し、本文に反映済み（決定の記録は §9）。
+> **ルール（なぜそうするか・何を守るか）は `docs/RULE.md`。本書は手順だけを書く。**
 
-## 0. この文書の位置づけ
+## 0. この文書の使い方
 
-| 文書 | 書いてあること |
+上から順に実行すれば終わる形で書いてある。**判断に迷ったら手を止めて `docs/RULE.md` を見る。**
+
+| やりたいこと | どこ |
 |---|---|
-| `AGENTS.md` | コード規約・環境・テストの流儀 |
-| **本書** | **日々守るべき運用ルール**（誰が・いつ・何をするか） |
-| `tools/api-inventory/ci/README.md` | API 台帳 CI の設置手順・トラブルシュート |
-| `tools/api-inventory/scripts/README.md` | 台帳そのものの作り方（Phase 1-9） |
-| `tools/claude-review/README.md` | Claude PR レビューのスクリプト構成と実行順 |
-
-本書は**手順書ではなくルール**。手順は上の各 README を見る。
-迷ったときに「どうすべきか」を決める根拠がここにある。
-
-対象は `RCOSDP/weko` の開発・レビュー・リリースに関わる全員。
+| いま自分がどの段階にいるか確かめる | §1 全体像 |
+| PR を出す | §2 |
+| リリースする（棚卸しとタグ） | §3 |
+| 始める前に前提がそろっているか見る | `tools/release/preflight.sh` |
+| ルール・用語・決定の記録 | `docs/RULE.md` |
+| 台帳そのものの作り方、CI の設置 | `tools/api-inventory/scripts/README.md` / `ci/README.md` |
 
 ---
 
-## 1. 大前提: このリポジトリは public
+## 1. 全体像
 
-`RCOSDP/weko` は public。**Actions のログ・artifact・PR コメントも誰でも読める。**
-このリポジトリの運用ルールのほぼ全部が、ここから導かれている。
+**どこに何が書いてあるか。** 自分がいま何段階目にいるかを確かめてから読むこと。
 
-| 置いてよい場所 | 内容 |
-|---|---|
-| `RCOSDP/weko`（public） | コード、ツール、CI の定義。**データは 1 件も置かない** |
-| `RCOSDP/weko-secret`（private） | API 台帳 TSV、`api_snapshot.json`、`reconcile_*`、調査記録 |
+| 段階 | やること | 書いてある場所 |
+|---|---|---|
+| 1. リリースラインを切る | `develop_v2.x.y` を作り、**private 側にも同名ブランチを作る** | `docs/RULE.md` 規則 2-2 |
+| 2. 開発ブランチを作る | 作業ブランチを切る（台帳を触るなら private 側も同名で） | §2 手順 1 |
+| 3. PR を出す前 | テストを通す・台帳を更新する・`preflight.sh` | §2 手順 2-3 |
+| 4. PR を出す | public 側と、台帳を触ったなら private 側の 2 本 | §2 手順 4-7 |
+| 5. レビュー〜マージ | 全指摘への反応、マージ条件 | `docs/RULE.md` §5-2 / §5-4 |
+| 6. **リリース（棚卸しとタグ）** | 全経路の棚卸し・CHANGELOG・両リポジトリに同名タグ | **§3** |
+| 7. リリース後 | 保留したものの引き継ぎ | §3 の最後 |
 
-### 禁止事項
-
-- **台帳・ベースライン・調査記録を public リポジトリに commit しない。**
-  台帳は「どの経路を・どう叩けば・何が取れるか」と実証結果を持つ。攻撃手順書に近い。
-- **CI に明細を出させない。** 件数だけを出す（`--summary-only`）。URI・endpoint 名は出さない。
-- **`fixtures.json` を commit しない。** OAuth アクセストークンと平文パスワードを含む。
-
-`tools/api-inventory/.gitignore` が `*.tsv` などを無視しているが、
-**これは保険であって設計ではない。データを公開領域に置かないことが設計。**
-`git status` に `tools/api-inventory/` 配下の `*.tsv` や `api_snapshot.json` が現れたら、
-置き場所を間違えている。
+段階 1・6 はリリースのたびに 1 回、段階 2〜5 は PR のたびに毎回回る。
 
 ---
 
-## 2. ブランチとタグの対応規則
+## 2. PR を出す手順
 
-台帳とベースラインは **WEKO3 のブランチごとに内容が違う**。
-`develop_v2.0.4` のコードを `main` の台帳と突き合わせれば、
-ブランチ間の経路差がそのまま差分として出る。件数が常に非ゼロになれば、誰も読まなくなる。
+初めて出す人はここだけ順に追えばよい。**レビューとマージのルールは `docs/RULE.md` §5。**
 
-### 規則 2-1: private 側には weko と同名のブランチを作る
+### 前提: `gh`（GitHub CLI）を入れておく
 
-```text
-RCOSDP/weko          fix/issue62569 ──PR──> develop_v2.0.4
-                          │ 同名で対応させる
-RCOSDP/weko-secret   fix/issue62569 ──PR──> develop_v2.0.4
-```
-
-台帳を触らない変更なら private 側にブランチを作らなくてよい（base 解決に落ちる）。
-
-CI は **PR の head → base → 既定ブランチ**の順に private 側の同名ブランチを探す。
-head を先に見るのは、公開側のコード PR と private 側の台帳 PR を**並行してレビューでき、
-マージ順に依存させない**ため。
-
-### 規則 2-2: 新しいリリースラインを切ったら、private 側にも同名ブランチを作る
-
-対応ブランチが無くても CI は止まらないが、**出る件数は当てにならない。**
-警告付きの PR コメントを「PASS だった」と読まないこと。
-FAIL にしていないのは、対応ブランチの無いリリースラインで全 PR が止まるのを避けるため。
-
-実例（2026-09-01）: `RCOSDP/weko` の `release_v2.0.4` に合わせて、
-`RCOSDP/weko-secret` にも `release_v2.0.4` を作り `main` へ PR した
-（weko-secret PR #2）。マージ後に `v2.0.4` タグを打っている。
-
-### 規則 2-3: バージョンタグは両リポジトリで同名にする
-
-WEKO3 に `v2.0.3` を打ったら、private 側にも `v2.0.3` を打つ。
-タグメッセージには対象コミットの完全な SHA と、その時点の台帳規模・突き合わせ結果を残す。
-
-タグを打たずに台帳だけ更新すると、**過去のバージョンに対する調査結果を後から参照できない。**
-インシデント調査や監査で「その時点でどうだったか」を問われたときに答えられなくなる。
-
----
-
-## 3. API 台帳の運用
-
-### 3-1. 更新義務
-
-**API を変更した PR では、private 側の `api_snapshot.json` を更新する。**
-
-公開側のコード変更と private 側のベースライン更新は**別の PR になる**。
-データを公開領域に置かない代償で、ここだけ手順が 2 つに分かれる。
+PR の作成・CI の確認・レビュー依頼は **`gh` を使う**。ブラウザでもできるが、
+手順書にコマンドで残せるほうが間違いが少ないので、こちらを標準とする。
 
 ```bash
-# API を変更した作業ブランチで
-./install.sh
-python3 tools/api-inventory/scripts/snapshot.py \
-  --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
-# → private 側で同名ブランチを切って commit / PR
+# RHEL / Rocky / AlmaLinux
+sudo dnf install -y gh
+# Ubuntu / Debian
+sudo apt install -y gh
+# 入らない場合は公式手順: https://github.com/cli/cli#installation
+
+gh auth login      # GitHub.com / HTTPS / ブラウザ認証 でよい
+gh auth status     # ✓ Logged in to github.com と出れば完了
 ```
 
-**ベースラインは `install.sh` で作った環境から生成する。** 手元の docker 環境で作ると
+### 手順
+
+```bash
+tools/release/preflight.sh --base develop_v2.1.0   # ❌ が無くなるまで直してから始める
+```
+
+1. **作業ブランチを切る。** 名前は既存に合わせる（`fix/issue62764` / `hotfix/issue62807` /
+   `feature/<名前>`）。base は原則 `develop_v2.x.y`。
+   **台帳を触るなら、private 側にも同名のブランチを切る**（`docs/RULE.md` 規則 2-1）。
+2. **commit する。** `git status` に `*.tsv` / `api_snapshot.json` が出ていないことを確認する（`docs/RULE.md` §1）。
+3. **API を変えたなら、先に private 側の台帳を更新する**（`docs/RULE.md` §3-1）。
+   公開側のコードと台帳は**別の PR**になる。
+
+   ```bash
+   export WEKO_API_INVENTORY_DIR=~/weko-secret
+   ./install.sh                                    # ベースラインは install.sh 環境で作る
+   python3 tools/api-inventory/scripts/snapshot.py \
+     --out "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
+   # → private 側の同名ブランチで commit する（PR は手順 4 の --inventory で出る）
+   ```
+4. **PR を出す。**
+
+   ```bash
+   tools/release/open-pr.sh --base develop_v2.1.0                      # まず表示だけ（何も起きない）
+   tools/release/open-pr.sh --base develop_v2.1.0 --run                # public 側の PR を作る
+   tools/release/open-pr.sh --base develop_v2.1.0 --run --inventory    # private 側の台帳 PR も一緒に
+   ```
+
+   手で出すなら次と同じこと。
+
+   ```bash
+   git push -u origin <ブランチ>
+   gh pr create --base develop_v2.1.0 --title "<タイトル>" --body-file .github/pull_request_template.md
+   ```
+
+5. **PR テンプレートのチェックボックスを埋める。**
+   特に「🤖 0. CI 自動チェック (API Inventory Drift)」。埋めずに出さない。
+6. **CI を待つ。**
+
+   ```bash
+   gh pr checks --watch      # Unit Tests / UI Tests / API Inventory Drift
+   gh pr view --web          # コメントを読む
+   ```
+
+   **`API Inventory Drift` のコメントは、件数より先に冒頭のブランチ名を見る**（`docs/RULE.md` 規則 2-2）。
+   警告が出ている PR の件数は当てにならない。
+7. **レビューを依頼する。**
+
+   ```bash
+   gh pr edit --add-reviewer <github-id>
+   ```
+
+8. **指摘に反応を残す**（`docs/RULE.md` §5-2）。**マージの条件は `docs/RULE.md` §5-4。**
+
+| やりたいこと | コマンド |
+|---|---|
+| 自分の PR を一覧する | `gh pr list --author "@me"` |
+| CI の失敗ログを見る | `gh run view --log-failed` |
+| 指摘を直して push した後の再確認 | `gh pr checks --watch` |
+| Claude のレビューを回し直す | PR に `@claude` とコメントする |
+
+
+## 3. リリース手順
+
+> **この手順は 3 つの README から集めてある。** 年に数回しか回らない作業で、
+> 初めての人が README を渡り歩くと確実に事故るため、ここに 1 本化した。
+>
+> **この節を直したら `tools/api-inventory/scripts/README.md`（ケース3）と
+> `tools/api-inventory/ci/README.md`（§3b・§3c）も直すこと。** 内容が二重にあるので、
+> 片方だけ直すとずれる。判断の背景と失敗の実例はそちらにある。
+
+**所要は約 1.5 時間**（手順 7 の既存行の再レビューを除く。v2.0.3 → v2.1.0・478 コミットでの実績）。
+**初めて回すなら、レビュアを 1 人つけて手順 3・4・10 の結果を見てもらうこと。**
+
+### 事前に用意するもの
+
+| | 内容 |
+|---|---|
+| 権限 | private リポジトリ `RCOSDP/weko-secret` への push 権限 |
+| ツール | `gh`（インストールと認証は §2 の前提）、`docker`、`python3` |
+| 環境 | WEKO3 の docker スタックが動いていること（`./install.sh` 済み） |
+| 知識 | 用語（台帳・ベースライン・ゲート）は `docs/RULE.md` §8 を先に読む |
+
+```bash
+# private 側（台帳とベースラインの置き場所）
+git clone https://github.com/RCOSDP/weko-secret.git ~/weko-secret
+export WEKO_API_INVENTORY_DIR=~/weko-secret
+export WEKO_WEB_CONTAINER=weko-web-1     # 500 の切り分けで docker logs を見る先
+
+# public 側（作業ディレクトリ。以降のコマンドは全部ここで打つ）
+cd /path/to/weko
+export INV=tools/api-inventory/scripts   # 以降 $INV で参照する
+```
+
+**前提がそろっているかは機械に確認させる。** ❌ が 1 つも無くなってから手順 1 へ進む。
+
+```bash
+tools/release/preflight.sh --base develop_v2.1.0
+```
+
+以下、例として **前タグ `v2.0.4` → 新タグ `v2.1.0`** を使う。自分のバージョンに読み替えること。
+
+---
+
+### 手順 0. private 側に同名ブランチを作る
+
+`docs/RULE.md` 規則 2-1 / 2-2。**これを飛ばすと CI が既定ブランチの台帳と比べ、出る件数が当てにならなくなる。**
+
+```bash
+git -C "$WEKO_API_INVENTORY_DIR" switch -c develop_v2.1.0 origin/main
+```
+
+ブランチ名は **public 側の対象ブランチと完全に同じ**にする。以降の private 側の作業は全部このブランチ上で行う。
+
+### 手順 1. 対象ブランチにツールがあることを確認する
+
+**ここで最初に詰まる。** `tools/api-inventory/` は**ツールを入れたブランチにしか存在しない**ので、
+対象ブランチへ切り替えるとスクリプトごと消えることがある。
+
+```bash
+git switch develop_v2.1.0
+ls $INV/snapshot.py || git checkout <ツールのあるブランチ> -- tools/api-inventory .github/workflows/api-inventory-drift.yml
+```
+
+### 手順 2. 実機を新バージョンに合わせる
+
+ブランチを切り替えただけでは**稼働中の uwsgi は古いコードのまま**で、
+「測っているつもりのバージョンと違うものを測る」ことになる。egg-info を作り直して再起動する。
+
+```bash
+docker exec "$WEKO_WEB_CONTAINER" bash -lc 'cd /code && for d in modules/*/; do (cd "$d" && python setup.py -q egg_info); done'
+docker restart "$WEKO_WEB_CONTAINER"
+```
+
+**確認（必須）**: そのバージョンにしか無い／無くなった経路を 1 つ叩き、期待どおりのコードが返ること。
+
+```bash
+curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
+  https://localhost:8443/api/admin/get_widget_item_list
+# 旧バージョンへ戻したなら 404 になるはず。500 が返るなら古いコードがまだ生きている
+```
+
+続けて **Alembic の適用状況**を見る。スキーマが古いと手順 6 の probe が 500 を返し、
+**認可の穴と区別がつかなくなる。**
+
+```bash
+docker compose exec web invenio alembic current | tail -5
+git log --oneline v2.0.4..HEAD -- '*/alembic/*'     # 追加リビジョンを洗い、適用済みか確かめる
+```
+
+### 手順 3. ベースラインを作り直す
+
+**ベースラインは必ず `install.sh` で作った環境から生成する。** 手元の docker 環境で作ると
 依存パッケージの版差で W6 が出続け、本当の依存更新に気づけなくなる。
 
-### 3-1a. 台帳更新 PR のレビュー担当
+```bash
+./install.sh                                          # 数十分かかる
+python3 $INV/snapshot.py --out /tmp/snap_new.json
+python3 $INV/diff_snapshot.py "$WEKO_API_INVENTORY_DIR/api_snapshot.json" /tmp/snap_new.json
+```
 
-**public 側のコード PR と同じ人がレビューする。** セキュリティ観点の担当を別に立てない。
+差分（ADDED / REMOVED）を読んで納得してから置き換える。**読まずに上書きしない。**
 
-リソース制約による判断であり、望ましい形ではない。同じ人が両方を見る以上、
-**ゲートと 2 本の PR に分かれた構成が唯一の歯止めになる。**
-§3-3 の「原則やり直し」を運用で緩めないこと。緩めた時点で歯止めが無くなる。
+```bash
+cp /tmp/snap_new.json "$WEKO_API_INVENTORY_DIR/api_snapshot.json"
+```
 
-### 3-2. CI の役割と、レビュアの役割
+> 途中で何度も試したいだけなら `install.sh` は要らない（`snapshot.py` は毎回新しいプロセスで動くため
+> ブランチ切り替えだけで通る）。ただし**最後に確定させる 1 本は `install.sh` 環境で取り直す。**
 
-| | 役割 |
-|---|---|
-| **CI** | 「ベースラインを更新せずに API を変えること」を防ぐ。それだけ |
-| **レビュア** | 変更の妥当性を判断する。**private 側の `git diff` を見る** |
+### 手順 4. 台帳の差分を 0 にする
 
-ベースラインを更新すれば差分は 0 になる。
-**CI が緑なのは「台帳を更新した」という意味であって、「変更が妥当」という意味ではない。**
-どの経路が増えたか・認証がどう変わったかは、private リポジトリの diff にしか出ない。
+```bash
+python3 $INV/reconcile.py                    # A（実機にあるが台帳に無い）を洗い出す
+python3 $INV/add_row.py --append --no <新規の endpoint>   # 自動で埋まるのは 26 列だけ
+python3 $INV/reconcile.py --gate             # 「✅ 一致(0件)」になるまで繰り返す
+```
 
-### 3-3. ゲートが落ちたとき
+消えた経路（B）は `reconcile_allow.json` に**理由付きで**登録する。理由なしの登録は禁止（`docs/RULE.md` §3-3）。
 
-詳細は `tools/api-inventory/ci/README.md` §4。運用上の要点だけ:
+**外部調査と件数が合わないときは、まず相手の環境を疑う。**
+v2.1.0 ではベンダ資料が新規 23 件としていたが、ソースに存在したのは 5 件だけだった。
+残り 18 件は `modules/` ではなく site-packages 側の pip パッケージの版差が原因で、grep しても 1 件も出なかった。
 
-| ゲート | 原則 |
-|---|---|
-| G1 / G2（認証デコレータの欠落・削除） | 意図的な公開なら**台帳に根拠を書いたうえで**ベースライン更新 |
-| G3 / G4（認証のコメントアウト、config が危険側） | **原則やり直し。** 残すならコード中に理由を明記 |
-| G8 / G9（未認証で書き込み系に到達、認可の回帰） | **原則やり直し** |
-| reconcile B（台帳にあるが実機に無い） | `reconcile_allow.json` に**理由付きで**登録。理由なしの登録は禁止 |
+### 手順 5. 新規行を埋める
 
-**「とりあえず allow に入れて通す」を防ぐため、`reconcile_allow.json` は理由の文字列が必須。
-レビューで理由を読むこと。**
+機械付与 → 実装読解の順。機械付与は**空欄／TODO セルしか触らない**ので既存値は壊れない。
 
-#### 例外の承認者
+```bash
+for s in add_cols add_ssrf_redirect add_idempotency add_dataop4 add_authmech add_reqinfo; do
+  python3 $INV/$s.py
+done
+```
 
-**G3 / G4 / G8 / G9 の「原則やり直し」に対する例外は、RCOS 公開基盤チームリーダが承認する。**
+残る列は実装を読んで手で埋める（`summary` / `response*` / `status_codes` / `exceptions` / `roles` /
+`access_variance` / `data_store` / `side_effects` / `config_deps` / `category_tags` / `notes` / `sec_*` 5 列）。
+v2.1.0 実績で 5 行あたり機械付与 3 分＋手作業 20 分。
 
-- 承認は PR 上に記録を残す。口頭・チャットでの承認は無効
-- 承認の記録には、なぜ安全と判断したかの根拠を書く
-- 承認されたものは台帳側にも根拠を残す（次のバージョンで同じ議論を繰り返さないため）
+### 手順 6. 実測する
 
-承認者を定義しない「原則やり直し」は、実務では必ず形骸化する。
+**入口は `measure.sh` だけ。** 個別スクリプトを直接叩くと条件がずれてバージョン間で比較できなくなる。
 
-WARN（W1〜W6）はゲートを通すが、レビューでは見る。
+```bash
+$INV/measure.sh --nos 927,928,929,930,931     # 手順 5 で足した no を指定。全行なら引数なし
+```
 
----
+**既定で書き込み系も測る**（`measure_profile.json` の `allow_writes` が `true`）。実機のデータが
+書き換わるので、**使い捨て環境で回すか、終わったら `./install.sh` で作り直すこと。**
 
-## 4. CI の構成
+測り終えたら、結果をそのまま信じずに次を確認する。**静かに壊れるのはこの 2 つ。**
 
-| ワークフロー | いつ走る | 出すもの | 出さないもの |
-|---|---|---|---|
-| `api-inventory-drift` | PR / 手動 | 件数のみ、台帳ブランチ名 | URI・endpoint 名・台帳の中身 |
-| `claude-pr-review` | PR / レビュー投稿時 / `@claude`（※） | 指摘と修正案 | — |
-| `unit-tests` / `ui-tests` | PR | テスト結果 | — |
-| `ci-images` | 呼び出し元から | ビルド済みイメージ | — |
+- 全識別子で「遮断」になっている行の割合 — 管理系が多い母集団で **8 割を超えたらセッション切れを疑う**
+- `sysadmin` の到達率 — 管理系エンドポイントなら高いはず。低すぎるなら測定が壊れている
 
-※ `claude-pr-review` を**レビュー投稿と `@claude` で起動できるのは、
-`author_association` が OWNER / MEMBER / COLLABORATOR の人だけ**
-（CodeRabbit のレビューだけは例外として許可。裁定対象がそれ自身のため）。
-public リポジトリなので、この条件が無いと無関係のアカウントが
-30 分ジョブ・Claude 2 パスを何度でも起動でき、サブスクリプションの
-トークンを消費できてしまう。
+個々の判定でも次は疑ってかかる。
 
-### 秘密情報
-
-| Secret | 用途 |
-|---|---|
-| `API_INVENTORY_REPO` | 台帳の取得元 private リポジトリ |
-| `API_INVENTORY_SSH_KEY` | weko-secret の **read-only deploy key** |
-| `CLAUDE_CODE_AUTH_TOKEN` | Claude サブスクリプションの長期トークン |
-
-- deploy key を使うのは、対象が 1 リポジトリに構造的に限定され、読み取り専用で、
-  個人アカウントに紐づかないため（PAT より事故時の影響が小さい）。
-- **Secret は fork からの PR には渡らない。** `pull_request` イベントは GitHub が
-  fork PR に Secret を渡さない。`issue_comment` は base 側の文脈で走るため Secret が
-  使える状態でジョブが始まるが、`claude-pr-review.yml` は最初のステップ
-  （`Resolve PR`）で head repo を API で確かめ、fork ならそこで打ち切る。
-  Secret を step の env に置くのはその後（`Check token`）。この順序を崩すと
-  この節の保証が成り立たなくなるので、ステップを入れ替えないこと。
-- 未設定ならジョブは何もせずスキップする。
-
----
-
-## 5. PR レビューの運用
-
-### 5-1. レビューの層
-
-| 層 | 誰 | 見るもの |
+| 出力 | 実態 | どうするか |
 |---|---|---|
-| 1 | CodeRabbit | 差分全般 |
-| 2 | Claude PR Review | **他レビューを裏取りして裁定**し、誰も挙げていない問題を補う（導入中） |
-| 3 | 人間のレビュア | 上 2 つの裁定を判断する。API 台帳の diff を見る |
+| `到達(転送)` | 「拒否して一覧へ戻した」かもしれない | 併記された転送先 URL を見る。迷ったら DB で副作用の有無を確かめる |
+| `502` → 判定不能 | nginx の一過性エラー | 手で 2 回叩いて確定させる |
+| 単発の意外な結果 | 直前の行が環境を壊した可能性 | **その行だけ単独で測り直す** |
 
-### 5-2. 自動レビューの扱い
+### 手順 7. 既存行への影響を洗う
 
-- **無条件に信じない。** CodeRabbit も Claude も誤検知を出す。
-- **無条件に無視しない。** 特に認可・破壊的操作・入力検証の指摘は、
-  誤検知より見逃しのほうが高くつく。
-- 反論するときは**スレッドに理由を書く。** 書かずに resolve しない。
+**必ず `refresh_impl.py` を先に流す。** 台帳の `impl_line` はバージョンアップで関数がずれても
+更新されず、`changed_rows.py` は行番号で突き合わせるため、**ずれたまま流すと対象行を取り違える。**
 
-#### 自動レビューの指摘はマージのブロック条件ではない。ただし無視もしない
+```bash
+python3 $INV/refresh_impl.py                  # まず差分だけ見る
+python3 $INV/refresh_impl.py --write          # 納得したら書き戻す
+python3 $INV/changed_rows.py v2.0.4 HEAD --out /tmp/rerun.txt
+```
 
-自動レビューの指摘は、必ずしも対応が必要なものばかりではない。
-一方で**対応必要性の強い情報**であり、放置してよいものでもない。
+> v2.1.0 実績: 直さずに流すと対象 41 行、直してから流すと 31 行。
+> 差は「変わっていないのに拾われた 12 行」と「変わったのに漏れた 2 行」。
 
-**規則: すべての指摘に、何らかの反応を残す。**
+**出力末尾の 2 つの報告を必ず読む。** ここが自動化できない部分で、実際に穴が見つかっている。
 
-| 判断 | 残すもの |
-|---|---|
-| 直す | 修正コミット |
-| 直さない | **理由をスレッドに書いてから** resolve する |
-| 判断が付かない | スレッドを開いたまま、判断できない理由を書く |
+- 「台帳のエンドポイントではないが変更されたヘルパ関数」— `grep` で呼び出し元を辿る
+- 認可ヘルパの変更（`permission` / `role` / `group` / `auth` / `can_` / `check_` を含む関数）
 
-無反応のまま resolve する、あるいは放置してマージする、のどちらも不可。
+> v2.1.0 実績: `weko_index_tree/utils.py` の `check_index_permission_by_role_and_group` が
+> 索引の閲覧判定を `check_roles OR check_groups` から **AND** に変えていた。
+> このファイルには台帳行が無いため、行単位の報告には一切出てこなかった。
 
-### 5-3. スレッドを resolve する前に
+**時間が取れないときは、既存行の再レビューを次サイクルに回してよい。**
+その場合は**保留した旨を台帳と PR に必ず記録する**（記録しなければ、やったのか忘れたのか区別がつかなくなる）。
 
-**「解決済み」は「修正済み」ではない。**
-返信なしで resolve されたスレッドは、直したのか判断を放棄したのか区別がつかない。
+### 手順 8. 再計算してゲートを通す
 
-- 直したなら resolve してよい
-- 直さないと決めたなら、**理由を書いてから** resolve する
-- 議論の途中なら resolve しない
+```bash
+python3 $INV/refresh_impl.py --write     # impl_line を新バージョンのソースへ追随させる
+python3 $INV/enrich_git.py   --write     # last_commit / date / subject / release_tag
+python3 $INV/test_coverage.py
+python3 $INV/prioritize.py
+python3 $INV/build_checklist.py
+python3 $INV/reconcile.py --gate         # exit 0 を確認する
+```
 
-### 5-4. マージの条件
+順序に意味がある（`prioritize.py` は `test_coverage.py` の結果を読む）。上から順に流すこと。
 
-- `unit-tests` / `ui-tests` が緑
-- `api-inventory-drift` が緑、**かつ**台帳ブランチ名の警告が出ていない
-- **すべてのレビュー指摘に反応が残っている**（修正済み、または理由つきで却下済み）。
-  判断が付かず開いたままのスレッドがあるなら、それを承知でマージするかどうかを
-  PR 上で明示すること
-- API を変えたなら private 側の台帳 PR がレビュー済み
-- G3/G4/G8/G9 の例外を使うなら、RCOS 公開基盤チームリーダの承認が PR 上にある
+**確認**: `release_tag` 列に今回のタグが 1 行も出てこなかったら、先頭 2 本を回し忘れている。
+
+```bash
+grep -c 'v2.1.0' "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
+```
+
+### 手順 9. CHANGELOG を確定する（public 側）
+
+`CHANGELOG.md` / `CHANGELOG_ja.md` の `## [Unreleased]` に積んだ項目を、
+**今回のバージョンの見出しへ移す**（[Keep a Changelog](http://keepachangelog.com/) 形式）。
+
+```markdown
+## [Unreleased]
+### 新機能
+### 既存機能の変更
+...
+
+# [v2.1.0] 2026-09-11
+### 新機能
+- （Unreleased から移した項目）
+```
+
+`## [Unreleased]` の空の見出しは**残す**（次のリリースで使う）。日本語版と英語版の両方を直す。
+
+### 手順 10. PR を出し、マージし、両リポジトリに同名タグを打つ
+
+**先に public 側にデータが紛れ込んでいないことを確認する。**
+
+```bash
+git status --short           # tools/api-inventory/ 配下に *.tsv / api_snapshot.json が出たら置き場所の間違い
+```
+
+private 側を commit して PR を出す（`docs/RULE.md` 規則 2-2 の実例と同じ形：同名ブランチ → `main` へ PR）。
+
+```bash
+cd "$WEKO_API_INVENTORY_DIR"
+git add -A && git commit -m "chore: WEKO3 v2.1.0 時点の棚卸し"
+cd -
+tools/release/open-pr.sh --base develop_v2.1.0 --run --inventory
+gh pr checks --watch
+```
+
+**マージしてから**、両リポジトリに**同名のタグ**を打つ（`docs/RULE.md` 規則 2-3）。
+
+```bash
+# public 側
+git tag -a v2.1.0 -m "WEKO3 v2.1.0"
+git push origin v2.1.0
+
+# private 側（メッセージに対象コミットの完全な SHA と台帳規模を残す）
+cd "$WEKO_API_INVENTORY_DIR"
+git switch main && git pull
+git tag -a v2.1.0 -m "WEKO3 v2.1.0 (RCOSDP/weko <完全な40桁SHA>) 時点の API インベントリ
+
+対象: RCOSDP/weko <完全な40桁SHA> (tag v2.1.0)
+台帳: <行数>行 / 経路 URI <数> / 実機との突き合わせ差分 0"
+git push origin v2.1.0
+```
+
+**タグを打たずに台帳だけ更新すると、「そのバージョンの時点でどうだったか」を後から参照できなくなる。**
+インシデント調査や監査で必ず問われる。
 
 ---
 
-## 6. 棚卸しとリリース
+### 終わったことの確認
 
-### 頻度
+全部 ✅ になって完了。1 つでも欠けていたら、その手順に戻る。
 
-**全経路の棚卸しは WEKO バージョンアップ時に行う。** 定期（月次・四半期など）の棚卸しは設けない。
-日々の変更は `api-inventory-drift` の CI が拾うため、そこで漏れたものをバージョンアップ時に回収する。
+- [ ] private 側に public と同名のブランチがある（手順 0）
+- [ ] ベースラインを `install.sh` 環境で取り直した（手順 3）
+- [ ] `reconcile.py --gate` が exit 0（手順 4・8）
+- [ ] 新規行の実測が済んでいる。または保留を記録した（手順 6）
+- [ ] `changed_rows.py` のヘルパ報告と認可ヘルパ報告を読んだ。または保留を記録した（手順 7）
+- [ ] `release_tag` に今回のタグが入っている（手順 8）
+- [ ] CHANGELOG の `[Unreleased]` を今回のバージョンへ移した（手順 9）
+- [ ] public 側に `*.tsv` / `api_snapshot.json` を commit していない（手順 10）
+- [ ] 両リポジトリに同名のタグを打って push した（手順 10）
 
-### リリース時の手順（要点）
+### リリース後にやること
 
-1. private 側に WEKO3 と同名のブランチを作る
-2. 新バージョンで `install.sh` → `snapshot.py` でベースラインを作り直す
-3. `reconcile.py` の差分を 0 にする（新規経路を台帳に追加、消えた経路を整理）
-4. `changed_rows.py` が出す行を Phase 2-3 で再確認する
-5. private 側を commit し、**WEKO3 と同名のタグを打つ**
+- **保留したものを次サイクルへ引き継ぐ。** 手順 6・7 で後回しにした行、`xfail` で受け止めたテスト
+  （例: `docs/v2.1.0-test-reconciliation.textile`）を、次のリリースラインの課題として残す。
+- **次のリリースラインを切ったら、private 側にも同名ブランチを作る**（`docs/RULE.md` 規則 2-2）。ここを忘れると、
+  そのライン上の全 PR で台帳ブランチ名の警告が出続ける。
 
----
+### 困ったとき
 
-## 7. やってはいけないこと（チェックリスト）
-
-- [ ] 台帳・ベースライン・調査記録を public リポジトリに commit する
-- [ ] `fixtures.json` を commit する
-- [ ] CI に URI や endpoint 名を出させる
-- [ ] `reconcile_allow.json` に理由なしで登録する
-- [ ] 台帳ブランチ名の警告が出ている PR を「PASS」と読む
-- [ ] API を変えてベースラインを更新しない
-- [ ] ベースラインを `install.sh` 以外の環境で作る
-- [ ] レビュースレッドを理由を書かずに resolve する
-- [ ] 自動レビューの指摘を無反応のまま放置してマージする
-- [ ] G3/G4/G8/G9 の例外を、チームリーダの承認記録なしに通す
-- [ ] 新しいリリースラインを切って private 側に同名ブランチを作らない
-- [ ] タグを打たずに台帳だけ更新する
-
----
-
-## 8. 用語
-
-| 語 | 意味 |
-|---|---|
-| **台帳** | `weko3_api_list_full.tsv`(57列) / `weko3_api_list.tsv`(24列)。API の棚卸し結果 |
-| **ベースライン** | `api_snapshot.json`。実機の `url_map` から取った経路のスナップショット |
-| **private リポジトリ** | `RCOSDP/weko-secret`。台帳とベースラインの置き場所 |
-| **ゲート** | CI を FAIL させる条件（G1-G9、reconcile A-E） |
-| **プロファイル** | config による blueprint 登録の分岐に対応した測定条件。比較は同一プロファイル同士で行う |
-
----
-
-## 9. 決定の記録
-
-| 決定日 | 項目 | 決定 |
+| 症状 | 原因 | 対処 |
 |---|---|---|
-| 2026-09-01 | 台帳更新 PR のレビュー担当 | public 側と同じ人。別担当を立てるリソースが無い（§3-1a） |
-| 2026-09-01 | G3/G4/G8/G9 の例外承認者 | RCOS 公開基盤チームリーダ。PR 上に根拠つきで記録（§3-3） |
-| 2026-09-01 | 自動レビュー指摘の位置づけ | マージのブロック条件にはしない。ただし対応必要性の強い情報として、全指摘に何らかの反応を残す（§5-2） |
-| 2026-09-01 | 棚卸しの頻度 | WEKO バージョンアップ時。定期棚卸しは設けない（§6） |
-| 2026-09-01 | 本書の置き場所 | `docs/OPERATIONS.md` |
+| `no python application found` / `AttributeError: module ... has no attribute` | egg-info の再生成漏れ | 手順 2 をやり直す。再生成前後で件数が変わらないことを確認するまで確定させない |
+| 切り替えたのに旧バージョンの経路が生きている | uwsgi が古いコードのまま | 手順 2 の再起動と確認コマンド |
+| `reconcile.py` の件数が減らない | 台帳の行の追加漏れ、または `impl_file` の記載誤り | `reconcile.py`（`--gate` なし）で A/B/C/D/E の内訳を読む。詳細は `tools/api-inventory/ci/README.md` §4 |
+| 測定結果が「ほぼ全部遮断」 | 書き込み系を叩いて自分のセッションを消した | 手順 6 の 2 つの確認。`--refresh-fixtures` で張り直して測り直す |
+| ゲートが落ちて先へ進めない | G1〜G9 / reconcile A〜E | `docs/RULE.md` §3-3 の原則に従う。**G3/G4/G8/G9 の例外は RCOS 公開基盤チームリーダの承認が要る** |
+| 台帳の数字が外部資料と合わない | 相手の環境差（pip パッケージの版など） | 手順 4。まずソースを grep して実在を確かめる |
 
-### 積み残し
+判断に迷ったら止めて聞くこと。**「とりあえず allow に入れて通す」「期待値を実挙動に書き換える」は禁止。**
+背景と失敗の実例は `tools/api-inventory/scripts/README.md`（ケース3）に全部残してある。
 
-- private リポジトリ（`RCOSDP/weko-secret`）側にも本書を置くかどうかは未決。
-  現状は public 側のみ。
-- `claude-pr-review` は導入中。数 PR 運用したうえで、§5-2 の扱いを見直す余地がある。
+---
