@@ -23,6 +23,14 @@ from conftest import SCRIPTS
 DOC = os.path.join(SCRIPTS, 'README.md')
 TEXT = open(DOC, encoding='utf-8').read()
 
+# 運用ルール。リポジトリのルート直下にある(ツールだけ取り出した環境には無い)。
+RULE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(SCRIPTS))),
+                    'docs', 'RULE.md')
+RULE_TEXT = open(RULE, encoding='utf-8').read() if os.path.isfile(RULE) else None
+
+needs_rule = pytest.mark.skipif(
+    RULE_TEXT is None, reason='docs/RULE.md が無い(ツールだけ取り出した環境)')
+
 # 台帳の列名として出てくるが、実際には24列版・中間生成物の名前であるもの。
 # schema.FULL_COLUMNS に無くても誤りではない。
 NOT_FULL_COLUMNS = set(schema.CHECKLIST_COLUMNS) | {
@@ -145,3 +153,41 @@ def test_公開してはいけないものの注意が残っている():
     assert 'public' in TEXT
     assert 'WEKO_API_INVENTORY_DIR' in TEXT
     assert '--summary-only' in TEXT
+
+
+# --- 運用ルール(docs/RULE.md) ---------------------------------------------
+
+@needs_rule
+def test_運用ルールの台帳の列数がschemaと一致する():
+    """`docs/RULE.md` §8 も台帳の列数を書いており、手順書と同じ理由で静かに腐る。
+    実際 57列 / 24列 と書いたまま、実体は 63列 / 32列 になっていた。
+
+    列数は「その台帳がどの世代のものか」の目印として引用されるので、
+    古い数字が残っていると、読んだ人が別世代の台帳を思い浮かべる。
+    """
+    pat = r'weko3_api_list%s\.tsv`?\s*`?\((\d+)列\)'
+    full = {int(n) for n in re.findall(pat % '_full', RULE_TEXT)}
+    chk = {int(n) for n in re.findall(pat % '', RULE_TEXT)} - full
+    assert full, 'RULE.md に詳細版の列数の記述が無い'
+    assert full == {len(schema.FULL_COLUMNS)}, \
+        f'RULE.md の詳細版の列数 {sorted(full)} が実際の {len(schema.FULL_COLUMNS)} と違う'
+    assert chk == {len(schema.CHECKLIST_COLUMNS)}, \
+        f'RULE.md のチェックリスト版の列数 {sorted(chk)} が実際の {len(schema.CHECKLIST_COLUMNS)} と違う'
+
+
+@needs_rule
+def test_運用ルールが列定義の正をschemaだと書いている():
+    """列数を README・RULE・ツールがそれぞれ持っていたのが腐った原因。
+    どれが正かを本文に書いておかないと、また各自が持つ。"""
+    assert 'schema.py' in RULE_TEXT, \
+        'RULE.md が列定義の唯一の正(schema.py)を指していない'
+
+
+@needs_rule
+def test_運用ルールがpublicとprivateの切り分け基準を書いている():
+    """ツールのコードは public に置いてよいが、その docstring やテストの
+    フィクスチャに所見を書けば所見を公開したことになる。この線が本文から
+    消えると、ファイル単位の禁止事項だけが残って同じ事故が起きる。"""
+    for phrase in ('攻撃が再現できる', 'どう探すか', 'どこが該当するか'):
+        assert phrase in RULE_TEXT, \
+            f'RULE.md から public/private の切り分け基準が消えている: {phrase!r}'
