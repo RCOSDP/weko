@@ -597,6 +597,7 @@ git push origin main --follow-tags
 | `snapshot.py` | 実機 url_map + ソース | `api_snapshot.json` |
 | `reconcile.py` | snapshot + full.tsv | 何も書かない(差分を報告するだけ) |
 | `detect_routes.py` | ソース(AST)+ full.tsv | 何も書かない(ソース由来の経路と台帳の差を報告するだけ) |
+| `audit_authz.py` | full.tsv + ソース(AST) | 何も書かない(入口より**深い**認可の欠陥を報告するだけ) |
 | `refresh_impl.py` | full.tsv + 実装ソース(AST) | full.tsv の `impl_line`(`--write` 時のみ) |
 | `enrich_git.py` | full.tsv + `git log -L` / `git tag --contains` | full.tsv の `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`(`--write` 時のみ)。**`refresh_impl.py` の後に回す** |
 | `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 + 変更ヘルパ関数の報告 |
@@ -728,6 +729,48 @@ docker exec weko-web-1 bash -lc 'source ~/.virtualenvs/invenio/bin/activate; cd 
 | `add_idempotency.py` | idempotency(冪等性) |
 | `add_dataop4.py` | data_op(取得/作成/更新/**論理削除/物理削除**。旧 data_op_detail を統合済み) |
 | `add_authmech.py` | auth_mechanism(decorator/config-factory/modelview), bola_risk |
+| `audit_authz.py` | 列は書かない。識別子突合の欠落 / 認可入力汚染 / 認可ヘルパの fan-in を報告 |
+
+### 入口より深い認可を見る — `audit_authz.py`
+
+上の表のスクリプトは**エンドポイントの入口**を見る。「デコレータが付いているか」
+「認可らしき関数を呼んでいるか」までは機械で分かるが、**呼んだ先が何を検証して
+いるか**は見ていない。エンドポイントが1000本ある以上、全部の呼び出し先を人手で
+追うのは無理なので、これは意図した割り切りだった。
+
+その割り切りは実際に穴になった。認可の判断が入口から数段先のヘルパに置かれて
+いると、入口の近くを読んだだけでは「認可している」ようにしか見えない。呼び出しが
+確かに在るからである。**呼び出しの存在は、その呼び出しが何を保証しているかを
+何も語らない。** 具体的な事例は非公開側の調査記録にある。
+
+`audit_authz.py` は「認可らしき呼び出しが**在るか**」ではなく、
+**その認可が何と何を結び付けているか**を見る。
+
+```bash
+python3 tools/api-inventory/scripts/audit_authz.py                 # 3つの検知のサマリ
+python3 tools/api-inventory/scripts/audit_authz.py --helpers       # 精査すべきヘルパの順番
+python3 tools/api-inventory/scripts/audit_authz.py --id-binding    # 識別子突合の欠落(明細)
+python3 tools/api-inventory/scripts/audit_authz.py --authz-input   # 認可入力汚染(明細)
+python3 tools/api-inventory/scripts/audit_authz.py --gate          # 検知があれば exit 1
+python3 tools/api-inventory/scripts/audit_authz.py --summary-only  # 件数のみ(public CI 用)
+```
+
+| 検知 | 何を見るか |
+|---|---|
+| A. 識別子突合の欠落 | トークンや発行済みURLの行IDで対象を引きながら、引いた対象の `record_id` / `file_name` と、URL パスで指定された対象を照合していない |
+| B. 認可入力汚染 | 認可判定関数が判断材料に読んでいるフィールドを、別のエンドポイントがリクエストボディで書き換えられる |
+| C. 認可ヘルパの fan-in | エンドポイントから到達する認可ヘルパを、参照本数の多い順に並べる |
+
+**C は指摘ではなく精査の順番**を出す。1048 本のエンドポイントを個別に追うのは
+無理でも、そこから到達する認可ヘルパは数十本に収束する。参照本数の多い順に
+ヘルパ側をレビューすれば、同じ工数で覆う範囲が変わる。「深い処理まで追う時間が
+無い」に対する答えはここにある。
+
+A・B はヒューリスティックで、**偽陽性を許して取りこぼしを減らす**側に振ってある
+(`detect_routes.py` と同じ思想)。出力は指摘ではなく**確認待ちの行列**で、
+確認した結果を `sec_pattern` / `sec_detail` に書くことで消える。
+呼び出しを辿る段数は `--depth`(既定3)。段数を1にすると入口しか見ないので、
+今回の欠陥は拾えない。
 
 ### 認証・認可の参照辞書(手動で維持)
 - ロール: System/Repository/Community Administrator, Contributor, General
@@ -803,11 +846,11 @@ security_flags(CSRF/BOLA/SSRF等8観点を該当のみ), last_change(commit系4�
 ## 観点の網羅性(OWASP API Security Top 10 対応)
 | OWASP API(2023) | 対応列 |
 |---|---|
-| API1 BOLA | bola_risk / security_finding:所有者チェック欠落 |
+| API1 BOLA | bola_risk / sec_pattern:所有者チェック欠落・識別子突合欠落 / `audit_authz.py --id-binding` |
 | API2 Broken Auth | auth / dynamic_verified |
 | API3 Property-Level Auth | access_variance |
 | API4 Resource Consumption | security_flags:RESLIMIT |
-| API5 Function-Level Auth | roles_scope / security_finding:権限過小 |
+| API5 Function-Level Auth | roles_scope / sec_pattern:権限過小・認可入力汚染 / `audit_authz.py --authz-input` |
 | API6 Business Flow | security_flags:IDEMP |
 | API7 SSRF | security_flags:SSRF |
 | API8 Misconfiguration | security_flags:CSRF / config_deps |
@@ -821,6 +864,14 @@ security_flags(CSRF/BOLA/SSRF等8観点を該当のみ), last_change(commit系4�
 4. `data_op`が`物理削除`(不可逆)の新規エンドポイントは特に注意
 
 ## 既知の限界
+- `audit_authz.py` が見るのは「認可の根拠と操作対象の結び付き」と「認可判定の入力」
+  の2点だけ。**取得条件による除外**(削除済み・非公開インデックス・公開状態・
+  `accessrole` によるフィルタ)は見ない。OAI-PMH やエクスポートのシリアライザで
+  制限公開ファイルが除外されていない、といった欠落はここでは拾えないので、
+  `access_variance` 列を「レコード単位の除外」と「フィールド/ファイル単位のマスク」
+  の両方について埋めて追うこと。
+- `audit_authz.py` の A・B は偽陽性を含む。確認して `sec_pattern` に書けば消える。
+  `--gate` を CI に置くときは、確認済みの行を許可リスト化して差分だけを見ること。
 - SSRF検出は関数本体＋1段ヘルパまで。route→Celery→utils の間接SSRFは triggers_task で追跡。
 - ModelView 253件は代表実測。全個別測定ではない。
 - 動的検証はテストデータ依存。完全な end-to-end(ワークフロー経由の正規deposit)は一部のみ。
