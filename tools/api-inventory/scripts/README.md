@@ -321,6 +321,13 @@ git checkout develop_v2.0.4 -- tools/api-inventory .github/workflows/api-invento
 mkdir -p /tmp/inv && git archive develop_v2.0.4 tools/api-inventory | tar -x -C /tmp/inv
 ```
 
+**ツールを対象ブランチ本体へ入れてあるなら、この工程は要らない。** 先に確かめる。
+
+```bash
+git branch --contains <ツールを入れたコミット> | grep <対象ブランチ>
+ls tools/api-inventory/scripts/schema.py        # 対象ブランチに居る状態で
+```
+
 ### 1. url_map を取る — `snapshot.py` だけなら `install.sh` は要らない
 
 Docker がホストのリポジトリを `/code` にマウントしている構成なら、
@@ -374,6 +381,45 @@ curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' \
 > egg-info を再生成して `docker restart weko-web-1` した後に `404` になり、
 > ここで初めて v2.0.3 を測れる状態になった。
 
+### 1-c. 実機に到達できることを確かめる(nginx と測定条件)
+
+`probe_ci.py` は **nginx 越しに**叩く。web コンテナを直接叩くことはできない
+(uwsgi プロトコル)。ここが合っていないと `measure.sh` が `code=000` で止まる。
+
+つまずくのは決まってこの3点。
+
+| 症状 | 原因 | 対処 |
+|---|---|---|
+| `code=000` | nginx が起動していない | `docker compose up -d nginx` |
+| nginx が起動しない | ホストの 80/443 を別のものが使っている | ポートを remap する(下記) |
+| プロファイルの `web_container` が居ない | compose のプロジェクト名は**チェックアウト先のディレクトリ名**になる | 実機の名前を見て `measure_profile.json` を直す |
+
+```bash
+# 何が動いていて、どのポートを使っているか
+docker ps --format '{{.Names}}\t{{.Ports}}' | grep -E 'web|nginx'
+
+# 80/443 が埋まっているなら override で逃がす
+cat > docker-compose.override.yml <<'YML'
+services:
+  nginx:
+    ports: ["8443:443"]
+YML
+docker compose up -d nginx
+
+# 到達確認。200 が返るまで先へ進まない
+curl -sk -o /dev/null -w '%{http_code}\n' -H 'Host: weko3.example.org' https://localhost:8443/
+```
+
+> 実績: 別プロジェクトのコンテナがホストの 80/443 を占有していて、nginx が
+> そもそも起動していなかった。さらに `measure_profile.json` の `web_container` が
+> `weko-web-1` のままで、実機は `wekov2-web-1`(チェックアウト先が `wekov2/`)
+> だった。**両方直すまで1行も測れない。**
+
+`measure_profile.json` を直すと**プロファイルのハッシュが変わる**。ハッシュは
+`measure_report.md` に載り「2回の測定が同一条件だったか」の判定に使われるので、
+**何をなぜ変えたかをコミットメッセージに残す**こと。コンテナ名や URL のように
+測定条件の意味が変わらない修正でも、ハッシュは変わる。
+
 ### 2. Alembic マイグレーションを確認する(★実測の前に必須)
 
 ```bash
@@ -386,6 +432,12 @@ git log --oneline <前回タグ>..HEAD -- '*/alembic/*'   # 追加リビジョ�
 > 認可の穴と区別がつかなくなる。
 > 実績: 追加リビジョンは 2件(`33c2a0cb8f5f`, `e0dd9fb514cf`)で、いずれも適用済み。
 > 制約(`fk/uq_item_type_mapping_item_type_id`)が実DBにあることまで確認した。
+>
+> 別の実績(v2.0.4 → develop_v2.1.0): `*/alembic/*` は 49 ファイル動いていたが、
+> 大半が `*_initial.py` → `*_create_*_branch.py` の改名で、新規モジュール
+> (`weko_workspace` / `weko_notifications`)のブランチ追加を含めて
+> **全ブランチが head** だった。`alembic current` の出力に新モジュールの
+> ブランチ名が並ぶかどうかが、当たりを付ける目印になる。
 
 ### 3. 差分を確定し、台帳を 0 差分にする
 
