@@ -22,7 +22,7 @@
 > 成果物TSV/MDは一つ上の階層(`../weko3_api_list.tsv` 等)にある。
 
 
-`weko3_api_list.tsv`(32列・チェックリスト版)と `weko3_api_list_full.tsv`(62列・詳細版)を
+`weko3_api_list.tsv`(32列・チェックリスト版)と `weko3_api_list_full.tsv`(63列・詳細版)を
 **バージョンアップのたびに再生成**するための手順とスクリプト一式。
 
 # 台帳の更新手順(まずここを読む)
@@ -49,7 +49,8 @@ cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
 - **git 由来の列は放っておくと古びる。** `impl_line` と
   `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag` は
   ソースが変われば実態とずれるが、上の3本では更新されない。
-  **実装に手が入ったら `refresh_impl.py --write` → `enrich_git.py --write` を回すこと**
+  **実装に手が入ったら `refresh_impl.py --write` → `enrich_git.py --write`
+  → `refresh_callers.py --write` を回すこと**
   (v2.0.3 → v2.0.4 では、この2本が手順に無かったために台帳の release_tag が
   v2.0.3 生成時のまま据え置かれ、issue62569 で認可を足した30行が
   「v0.1.0b1 で最後に変更」と表示され続けた)。
@@ -66,7 +67,7 @@ python3 tools/api-inventory/scripts/build_checklist.py  # 32列版を再生成
 
 ## ケース2: 台帳に行を追加する
 
-`reconcile.py` が「A. インベントリ未収載」を出したとき。62列を手で並べる必要はない。
+`reconcile.py` が「A. インベントリ未収載」を出したとき。63列を手で並べる必要はない。
 
 ```bash
 # 1) 何が未収載かを確認する
@@ -84,7 +85,7 @@ python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo --a
 vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
 # 5) 列数の検算
-awk -F'\t' 'NR>1 && NF!=62{print "行"NR" 列数="NF}' \
+awk -F'\t' 'NR>1 && NF!=63{print "行"NR" 列数="NF}' \
   "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
 # 6) 派生列を再計算 → 32列版を再生成 → 突き合わせ
@@ -171,11 +172,12 @@ python3 tools/api-inventory/scripts/detect_routes.py --cross-check --gate   # �
 ## ケース2b: 既存行を修正する
 
 ```bash
-vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"   # 本体列(1-57)だけを直す
+vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"   # 本体列(1-54)だけを直す
 
-# 実装(modules/*.py)にも手が入っているなら、先にこの2本 ★順序が重要
-python3 tools/api-inventory/scripts/refresh_impl.py --write   # impl_line を引き直す
-python3 tools/api-inventory/scripts/enrich_git.py   --write   # last_commit / release_tag
+# 実装(modules/*.py)にも手が入っているなら、先にこの3本 ★順序が重要
+python3 tools/api-inventory/scripts/refresh_impl.py --write     # impl_line を引き直す
+python3 tools/api-inventory/scripts/enrich_git.py   --write     # last_commit / release_tag
+python3 tools/api-inventory/scripts/refresh_callers.py --write  # inproc_callers
 
 python3 tools/api-inventory/scripts/test_coverage.py
 python3 tools/api-inventory/scripts/prioritize.py
@@ -550,8 +552,9 @@ python3 .../changed_rows.py <前回タグ> HEAD --out /tmp/rerun.txt
 ### 7. 再計算してゲートを通す
 
 ```bash
-python3 .../refresh_impl.py --write  # impl_line を新バージョンのソースへ追随させる
-python3 .../enrich_git.py   --write  # last_commit / date / subject / release_tag
+python3 .../refresh_impl.py --write     # impl_line を新バージョンのソースへ追随させる
+python3 .../enrich_git.py   --write     # last_commit / date / subject / release_tag
+python3 .../refresh_callers.py --write  # inproc_callers(ファイル:行番号なので必ずずれる)
 python3 .../test_coverage.py
 python3 .../prioritize.py
 python3 .../build_checklist.py
@@ -600,9 +603,10 @@ git push origin main --follow-tags
 | `audit_authz.py` | full.tsv + ソース(AST) | 何も書かない(入口より**深い**認可の欠陥を報告するだけ) |
 | `refresh_impl.py` | full.tsv + 実装ソース(AST) | full.tsv の `impl_line`(`--write` 時のみ) |
 | `enrich_git.py` | full.tsv + `git log -L` / `git tag --contains` | full.tsv の `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`(`--write` 時のみ)。**`refresh_impl.py` の後に回す** |
+| `refresh_callers.py` | full.tsv + ソース(AST) | full.tsv の `inproc_callers`(`--write` 時のみ)。**`refresh_impl.py` の後に回す**(記録するのが `ファイル:行番号` なのでバージョンでずれる) |
 | `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 + 変更ヘルパ関数の報告 |
-| `test_coverage.py` | full.tsv + テストコード | full.tsv の 57-61列 |
-| `prioritize.py` | full.tsv | full.tsv の 55-56, 62列 + 末尾列順の正規化 |
+| `test_coverage.py` | full.tsv + テストコード | full.tsv の 58-62列 |
+| `prioritize.py` | full.tsv | full.tsv の 56-57, 63列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
 | `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ / `--overwrite` で差し替え、`--keep-history` で旧値を ` ‖ 旧: ` として残す) |
@@ -784,6 +788,7 @@ python3 tools/api-inventory/scripts/refresh_impl.py --write        # 先に impl
 python3 tools/api-inventory/scripts/enrich_git.py                  # 差分の確認だけ
 python3 tools/api-inventory/scripts/enrich_git.py   --write        # 台帳へ書き戻す
 python3 tools/api-inventory/scripts/enrich_git.py --tsv body.tsv --out body_enriched.tsv
+python3 tools/api-inventory/scripts/refresh_callers.py --write      # 最後に inproc_callers
 ```
 `git log -L <開始>,<終了>:<file>` で**実装関数の行範囲**の最終コミットを取得(ファイル単位より正確)。
 `git tag --sort=creatordate --contains <sha>` で導入リリースタグ。どのタグにも入っていなければ
@@ -792,6 +797,36 @@ framework 自動生成 / site-packages)は `-`。
 
 対象は列名で引く(`last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`)。
 解析対象リポジトリは `WEKO_ROOT`、台帳は `WEKO_API_INVENTORY_DIR`。
+
+### 呼び出し元の付与 — `refresh_callers.py`
+
+```bash
+python3 tools/api-inventory/scripts/refresh_callers.py            # 差分の確認だけ
+python3 tools/api-inventory/scripts/refresh_callers.py --write    # 台帳へ書き戻す
+```
+
+HTTP 経路として登録された関数を、**同じプロセスの Python コードが直接呼んで
+いるか**を `inproc_callers` に書く。経路を塞いだときに何が道連れになるかの判断材料。
+同名の関数が複数モジュールにあるので、import を辿って解決する
+(`soft_delete` は v2.0.4 時点で3箇所に定義があり、呼び出し元は関数ローカルで
+`from weko_records_ui.views import soft_delete` している)。
+
+**★`なし` は「未使用」という意味ではない。** 呼び出し元は3系統あり、台帳が
+持っているのは1系統目だけである。
+
+| 系統 | 台帳 |
+|---|---|
+| 1. プロセス内の Python コード | `inproc_callers` |
+| 2. ブラウザの JS | 持っていない |
+| 3. 外部クライアント | 持っていない |
+
+2 を見落として遮断判断に進むと機能が止まる。2026-08-26 の nginx 遮断では
+「実呼び出しなし」と分類した3経路を塞いだ結果、ウィジェットのファイル
+アップロードとファイル置換が停止した。いずれも JS から叩かれていた。
+**この列だけで「未使用」を判定しないこと。** `prioritize.py` の「整理対象」判定にも
+意図的に接続していない。2・3 系統目の列は、必要になった時点で足す。
+
+---
 
 ## Phase 3: 動的検証(実測で裏取り) ★静的だけでは不正確
 
@@ -836,7 +871,7 @@ python3 tools/api-inventory/merge.py out/ merged.tsv       # 分割TSVを結合�
 
 ## Phase 5: チェックリスト版(32列)を生成
 ```bash
-python3 tools/api-inventory/scripts/build_checklist.py     # 62列 full → 32列 に統合
+python3 tools/api-inventory/scripts/build_checklist.py     # 63列 full → 32列 に統合
 ```
 派生列を統合: impl(func+file+line), auth(required+method+mechanism),
 security_flags(CSRF/BOLA/SSRF等8観点を該当のみ), last_change(commit系4列) 等。

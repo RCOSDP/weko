@@ -247,3 +247,11 @@ def test_判定に使う語彙はschemaが持つ():
     assert prioritize.AUTHZ_SCOPE_PATTERNS is schema.AUTHZ_SCOPE_PATTERNS
     assert prioritize.ID_BINDING_PATTERN in schema.AUTHZ_SCOPE_PATTERNS
 
+
+def test_prioritizeはinproc_callersを読まない():
+    """`inproc_callers` の `なし` は「プロセス内に呼び出し元が無い」であって
+    「未使用」ではない。整理対象の判定に単独で効かせると、ブラウザの JS から
+    だけ叩かれている経路を「非利用」と誤って落とす。2026-08-26 の nginx 遮断で
+    実際に起きた誤りなので、接続していないことをテストで固定する。"""
+    import inspect
+    assert 'inproc_callers' not in inspect.getsource(prioritize)

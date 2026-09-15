@@ -37,9 +37,11 @@ FULL_COLUMNS = [
     'csrf_protection', 'input_validation', 'audit_logged', 'triggers_task',
     'resource_limit', 'redirect_target', 'ssrf_surface', 'idempotency',
     'auth_mechanism', 'bola_risk',
-    # 優先度 (55-56) — prioritize.py が上書きする
+    # 呼び出し元 (55) — refresh_callers.py が上書きする
+    'inproc_callers',
+    # 優先度 (56-57) — prioritize.py が上書きする
     'priority', 'priority_reason',
-    # テスト観点と整理 (57-62) — test_coverage.py / prioritize.py が上書きする
+    # テスト観点と整理 (58-63) — test_coverage.py / prioritize.py が上書きする
     'test_normal', 'test_abnormal', 'test_boundary', 'test_exception',
     'test_gap', 'cleanup',
 ]
@@ -106,6 +108,18 @@ SEC_PATTERNS = [
 
 SEC_PATTERN_SEP = ' || '
 
+# `inproc_callers`(プロセス内の呼び出し元)。`refresh_callers.py` が付ける。
+#
+# **`なし` は「未使用」ではない。** 呼び出し元は3系統あり、台帳が持つのは
+# 1系統目だけである(プロセス内の Python / ブラウザの JS / 外部クライアント)。
+# JS からの呼び出しを見落として遮断判断に進むと機能が止まる。2026-08-26 の
+# nginx 遮断では「実呼び出しなし」とした3経路を塞ぎ、ウィジェットの
+# ファイルアップロードとファイル置換が停止した。この列だけで「未使用」を
+# 判定しないこと。
+INPROC_NONE = 'なし'           # 調査済み・プロセス内に呼び出し元なし
+INPROC_UNKNOWN = '未調査'      # 調べていない(実ファイルを持たない行・解決不能な行)
+INPROC_KINDS = ['位置引数', 'キーワード引数', '参照のみ', 'メソッド呼び出し']
+
 
 def sec_pattern_kinds(value):
     """`sec_pattern` セルを接頭辞のリストにする。`-` と空欄は空リスト。"""
@@ -136,7 +150,7 @@ TEST_MARKS = ['○', '-', '?']
 TEST_ASPECTS = [('test_normal', '正常値'), ('test_abnormal', '異常値'),
                 ('test_boundary', '境界値'), ('test_exception', '例外処理')]
 
-assert len(FULL_COLUMNS) == 62
+assert len(FULL_COLUMNS) == 63
 assert len(CHECKLIST_COLUMNS) == 32
 assert len(set(FULL_COLUMNS)) == len(FULL_COLUMNS)
 assert len(set(CHECKLIST_COLUMNS)) == len(CHECKLIST_COLUMNS)
