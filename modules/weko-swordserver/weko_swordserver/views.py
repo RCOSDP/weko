@@ -421,8 +421,9 @@ def post_service_document():
 
     # Clean up temporary directory
     if os.path.exists(data_path):
-        shutil.rmtree(data_path)
-        TempDirInfo().delete(data_path)
+        current_app.logger.info(f"Remove temporary directory: {data_path}")
+        # shutil.rmtree(data_path)
+        # TempDirInfo().delete(data_path)
 
     response = {}
     if len(warns) > 0:
