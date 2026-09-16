@@ -51,7 +51,8 @@ from weko_records.api import RequestMailList
 from weko_records_ui.api import create_captcha_image, send_request_mail, validate_captcha_answer
 from weko_items_ui.scopes import item_read_scope
 from weko_workflow.utils import  check_pretty
-
+from invenio_records_ui.signals import record_viewed
+from weko_records_ui.ipaddr import check_site_license_permission
 from .views import escape_str
 from .permissions import page_permission_factory, file_permission_factory
 from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, \
@@ -392,6 +393,18 @@ class WekoRecordsResource(ContentNegotiatedMethodView):
                 content_type='application/json')
             res.set_etag(etag)
             res.last_modified = last_modified
+
+            # send record viewed signal
+            check_site_license_permission()
+            send_info = dict()
+            send_info['site_license_flag'] = True if hasattr(current_user, 'site_license_flag') else False
+            send_info['site_license_name'] = current_user.site_license_name if hasattr(current_user, 'site_license_name') else ''
+            record_viewed.send(
+                current_app._get_current_object(),
+                pid=pid,
+                record=record,
+                info=send_info
+            )
 
             return res
 
