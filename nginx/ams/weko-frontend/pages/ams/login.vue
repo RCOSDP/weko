@@ -352,9 +352,17 @@ onMounted(() => {
         window.wayf_additional_idps = [
           {
             'entityID': '${shibLogin.orthrosURL}',
-            'name': 'Orthros-Test',
-            'search': ['${shibLogin.orthrosURL}', 'Orthros-Test']
+            'name': 'Orthros',
+            'search': ['${shibLogin.orthrosURL}', 'Orthros']
           },
+          {name:"GakuNin RDM IdP",
+            entityID:"https://idp.rdm.nii.ac.jp/idp/shibboleth",
+            SAML1SSOurl:"https://idp.rdm.nii.ac.jp/idp/profile/Shibboleth/SSO"}
+        ];
+        window.wayf_additional_idps =[
+        {name:"GakuNin RDM IdP",
+            entityID:"https://idp.rdm.nii.ac.jp/idp/shibboleth",
+            SAML1SSOurl:"https://idp.rdm.nii.ac.jp/idp/profile/Shibboleth/SSO"}
         ];
         window.wayf_URL = '${shibLogin.dsURL}';
         window.wayf_sp_entityID = '${shibLogin.entityID}';

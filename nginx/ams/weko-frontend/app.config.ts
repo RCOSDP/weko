@@ -1,4 +1,4 @@
-const weko = 'changeme';
+const weko = 'ms2db.ir.rcos.nii.ac.jp';
 
 export default defineAppConfig({
   wekoOrigin: 'https://' + weko,
