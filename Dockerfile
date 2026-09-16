@@ -45,6 +45,14 @@ ENV SEARCH_INDEX_PREFIX=tenant1
 ENV INVENIO_DB_POOL_CLASS=QueuePool
 
 FROM stage_1 AS stage_2
+# Debian buster is EOL: repoint apt sources to archive.debian.org
+# so `apt-get update` doesn't 404 against the removed mirrors.
+RUN sed -i \
+    -e 's|deb.debian.org/debian |archive.debian.org/debian |g' \
+    -e 's|security.debian.org/debian-security|archive.debian.org/debian-security|g' \
+    -e '/buster-updates/d' \
+    /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
 # Install Weko web node pre-requisites:
 COPY scripts/provision-web.sh /tmp/
 RUN /tmp/provision-web.sh
