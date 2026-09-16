@@ -366,12 +366,23 @@ services:
   nginx:
     restart: "always"
     build: ./nginx
+    # bind mount した startup.sh は実行ビットが立たないため bash 経由で起動する。
+    # (イメージ内の CMD ["/usr/local/startup.sh"] を置き換え)
+    command: ["/bin/bash", "/usr/local/startup.sh"]
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - static_data:/home/invenio/.virtualenvs/invenio/var/instance/static
       - data_data:/home/invenio/.virtualenvs/invenio/var/instance/data
+      - /usr/local/etc/shibboleth/cert:/etc/shibboleth/cert
+      - /usr/local/etc/shibboleth/metadata:/etc/shibboleth/metadata
+      # 以下4つはイメージ再ビルドを避けるための設定差し替え。
+      # 変更時は docker compose up -d nginx で反映される。
+      - ./nginx/ecosystem.config.js:/usr/local/ecosystem.config.js:ro
+      - ./nginx/startup.sh:/usr/local/startup.sh:ro
+      - ./nginx/supervisord.conf:/etc/supervisor/supervisord.conf:ro
+      - ./nginx/weko-ams.conf:/etc/nginx/conf.d/weko.conf:ro
 #      - letsencrypt_etc:/etc/letsencrypt
 #      - letsencrypt_html:/var/www/html
     links:
@@ -380,9 +391,21 @@ services:
     deploy:
       resources:
         limits:
-          memory: 300m
+          # 300m では Nuxt SSR 4本 + shibd + php-fpm + nginx が上限に張り付き、
+          # cgroup の確保失敗で Node が SIGSEGV していた。
+          memory: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/ -o /dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
     environment:
       - NODE_TLS_REJECT_UNAUTHORIZED=0
+      # Node はコンテナの cgroup 制限を認識せず、ホストの物理メモリ(15GB)から
+      # ヒープ上限を 2096MB と判断して GC を遅らせる。これが SIGSEGV の原因。
+      # 明示的に上限を与えて V8 に早期 GC させる。
+      - NODE_OPTIONS=--max-old-space-size=256
     extra_hosts:
       - ms2db.ir.rcos.nii.ac.jp:127.0.0.1
 
