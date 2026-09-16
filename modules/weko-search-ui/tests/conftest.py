@@ -707,7 +707,9 @@ def base_app(instance_path, search_class, request):
             "internal report": "other",
             "report part": "other",
             "conference object": "conference output",
-        }
+        },
+        WEKO_SEARCH_UI_CELERY_STATUS_CACHE_TTL = 60,
+        WEKO_SEARCH_UI_CELERY_STATUS = "weko_search_ui_celery_status"
     )
     app_.url_map.converters["pid"] = PIDConverter
     app_.config["RECORDS_REST_ENDPOINTS"]["recid"]["search_class"] = search_class

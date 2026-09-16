@@ -6,6 +6,7 @@ import pathlib
 import pytest
 import unittest
 from flask import current_app
+from redis import RedisError
 from unittest.mock import patch, MagicMock
 from flask_login import current_user
 
@@ -422,11 +423,41 @@ def test_is_import_running(i18n_app):
 # def check_celery_is_run():
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_tasks.py::test_check_celery_is_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
 def test_check_celery_is_run(i18n_app):
-    with patch("celery.task.control.inspect.ping",return_value={'hostname': True}):
-        assert check_celery_is_run()==True
+    cache_key = "weko_search_ui_celery_status"
+    datastore = MagicMock()
 
-    with patch("celery.task.control.inspect.ping",return_value={}):
-        assert check_celery_is_run()==False
+    is_task = True
+    with patch("weko_search_ui.tasks.get_redis_cache", return_value=None), \
+            patch("weko_search_ui.tasks.RedisConnection") as redis_connection, \
+            patch("weko_search_ui.tasks.inspect") as celery_inspect:
+        redis_connection.return_value.connection.return_value = datastore
+
+        celery_inspect.return_value.ping.return_value = {"hostname": True}
+        assert check_celery_is_run(is_task=is_task) is True
+        datastore.put.assert_called_once_with(cache_key, b"1", 60)
+
+        datastore.put.reset_mock()
+        celery_inspect.return_value.ping.return_value = {}
+        assert check_celery_is_run(is_task=is_task) is False
+        datastore.put.assert_called_once_with(cache_key, b"0", 60)
+
+        datastore.put.reset_mock()
+        datastore.put.side_effect = RedisError("Redis error")
+        celery_inspect.return_value.ping.return_value = {"hostname": True}
+        with patch("weko_search_ui.tasks.current_app.logger.error") as mock_error:
+            assert check_celery_is_run(is_task=is_task) is True
+            datastore.put.assert_called_once_with(cache_key, b"1", 60)
+            assert "Redis error" in str(mock_error.call_args)
+
+    with patch("weko_search_ui.tasks.get_redis_cache", return_value="1"):
+        assert check_celery_is_run(is_task=is_task) == True
+    with patch("weko_search_ui.tasks.get_redis_cache", return_value="0"):
+        assert check_celery_is_run(is_task=is_task) == False
+
+    is_task = False
+    with patch("weko_search_ui.tasks.inspect") as celery_inspect:
+        celery_inspect.return_value.ping.return_value = {}
+        assert check_celery_is_run(is_task=is_task) is False
 
 
 class TestCheckSessionLifetime(unittest.TestCase):
