@@ -57,13 +57,13 @@ ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
 RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.4/fpm/php-fpm.conf
 RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.4/fpm/pool.d/www.conf
 
-RUN mkdir -p /etc/shibboleth/cert
+# RUN mkdir -p /etc/shibboleth/cert
 # ADD ./gakunin-test-signer-2020.cer /etc/shibboleth/cert/gakunin-test-signer-2020.cer
 RUN mkdir  /etc/shibboleth/keys
 ADD ./keys/shib.crt /etc/shibboleth/keys/server.crt
 ADD ./keys/shib.key /etc/shibboleth/keys/server.key
 ADD ./idp-metadata.xml /etc/shibboleth/idp-metadata.xml
-RUN mkdir -p /etc/shibboleth/metadata
+# RUN mkdir -p /etc/shibboleth/metadata
 # ADD ./orthros-idp-metadata.xml /etc/shibboleth/metadata/orthros-idp-metadata.xml
 # ADD ./orthrosstg-idp-metadata.xml /etc/shibboleth/metadata/orthrosstg-idp-metadata.xml
 # ADD ./sptestcgidp-metadata.xml /etc/shibboleth/metadata/sptestcgidp-metadata.xml

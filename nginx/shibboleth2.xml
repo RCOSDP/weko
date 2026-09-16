@@ -35,11 +35,11 @@
     <Errors supportContact="root@localhost" helpLocation="/about.html"
       styleSheet="/shibboleth/main.css" />
     <MetadataProvider type="XML" validate="true"
-      url="https://metadata.gakunin.nii.ac.jp/gakunin-test-metadata.xml"
+      url="https://metadata.gakunin.nii.ac.jp/gakunin-metadata.xml"
       backingFilePath="federation-metadata.xml" maxRefreshDelay="7200">
       <MetadataFilter type="RequireValidUntil" maxValidityInterval="1296000" />
       <MetadataFilter type="Signature"
-        certificate="/etc/shibboleth/cert/gakunin-test-signer-2020.cer" verifyBackup="false" />
+        certificate="/etc/shibboleth/cert/gakunin-signer-2017.cer" verifyBackup="false" />
       <DiscoveryFilter type="Blacklist" matcher="EntityAttributes" trimTags="true"
         attributeName="http://macedir.org/entity-category"
         attributeNameFormat="urn:oasis:names:tc:SAML:2.0:attrname-format:uri"
@@ -49,12 +49,23 @@
       <TransportOption provider="CURL" option="10065">/etc/ssl/certs/ca-certificates.crt</TransportOption>
     </MetadataProvider>
     <!-- <MetadataProvider type="XML" path="/etc/shibboleth/metadata/orthros-idp-metadata.xml"/> -->
-    <MetadataProvider type="XML" path="/etc/shibboleth/metadata/orthrosstg-idp-metadata.xml"/>
-    <MetadataProvider type="XML" path="/etc/shibboleth/metadata/sptestcgidp-metadata.xml"/>
+    <!-- <MetadataProvider type="XML" path="/etc/shibboleth/metadata/orthrosstg-idp-metadata.xml"/> -->
+    <!-- <MetadataProvider type="XML" path="/etc/shibboleth/metadata/sptestcgidp-metadata.xml"/> -->
+    <MetadataProvider type="XML" validate="true"
+        url="https://core.orthros.gakunin.nii.ac.jp/metadata/orthros-idp-metadata.xml"
+        backingFilePath="orthros-metadata.xml" maxRefreshDelay="7200">
+      <!-- 自動更新メタデータの検証用証明書設定 -->
+      <MetadataFilter type="Signature" certificate="/etc/shibboleth/cert/orthros-signer-2025.cer" verifyBackup="false"/>
+      <!-- HTTPSサイトの証明書検証を有効化（メタデータのダウンロード時に利用） -->
+      <TransportOption provider="CURL" option="64">1</TransportOption>
+      <TransportOption provider="CURL" option="81">2</TransportOption>
+      <TransportOption provider="CURL" option="10065">/etc/ssl/certs/ca-certificates.crt</TransportOption>        
+    </MetadataProvider>
+    <MetadataProvider type="XML" path="/etc/shibboleth/metadata/cgidp-metadata.xml"/>
     <AttributeExtractor type="XML" validate="true" reloadChanges="false" path="attribute-map.xml" />
     <AttributeResolver type="SimpleAggregation" attributeId="eppn"
       format="urn:oid:1.3.6.1.4.1.5923.1.1.1.6">
-      <Entity>https://sptest.cg.gakunin.jp/idp/shibboleth</Entity>
+      <Entity>https://sp.cg.gakunin.jp/idp/shibboleth</Entity>
       <saml2:Attribute
         xmlns:saml2="urn:oasis:names:tc:SAML:2.0:assertion"
         Name="urn:oid:1.3.6.1.4.1.5923.1.5.1.1"
