@@ -603,10 +603,20 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             search_obj = self.search_class()
             search = search_obj.with_preference_param().params(version=True)
 
+            # Count only mode.
+            # Returns the number of registered items regardless of the index
+            # browsing permission, for the statistics on the top page.
+            # No item metadata is returned: the size is forced to 0 and the
+            # facet aggregations are not executed. The caller also cannot
+            # narrow the count down, otherwise it would become an oracle for
+            # the metadata of items in a non browsable index. See
+            # WEKO_SEARCH_COUNT_ONLY_ALLOWED_PARAMS.
+            count_only = request.values.get('count_only') == 'true'
+
             # Pagenation Setting
             page = request.values.get('page', type=int)
             cursor = request.values.get('cursor')
-            size = request.values.get('size', 20, type=int)
+            size = 0 if count_only else request.values.get('size', 20, type=int)
             if not page and cursor:
                 cursor = cursor.split(',')
                 search._extra.update(dict(search_after=cursor))
@@ -629,7 +639,9 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             }
 
             # Query Generate
-            search, qs_kwargs = self.search_factory(self, search, additional_params=additional_params)
+            search, qs_kwargs = self.search_factory(
+                self, search, additional_params=additional_params,
+                count_only=count_only)
 
             # search only if mapping exists
             if len(item_type_ids) == 0:
@@ -663,11 +675,17 @@ class IndexSearchResourceAPI(ContentNegotiatedMethodView):
             search._sort = sort_query
 
             # Facet Setting
-            facets = get_facet_search_query(has_permission=False)
-            search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
-            aggs = facets.get(search_index, {}).get('aggs', {})
-            for name, agg in aggs.items():
-                search.aggs[name] = agg
+            if count_only:
+                # Drop every aggregation, including the ones already added by
+                # default_facets_factory, so that no metadata of items in a
+                # non browsable index leaks through the facet buckets.
+                search.aggs._params = {'aggs': {}}
+            else:
+                facets = get_facet_search_query(has_permission=False)
+                search_index = current_app.config['SEARCH_UI_SEARCH_INDEX']
+                aggs = facets.get(search_index, {}).get('aggs', {})
+                for name, agg in aggs.items():
+                    search.aggs[name] = agg
 
             # Execute search
             search_results = search.execute()
