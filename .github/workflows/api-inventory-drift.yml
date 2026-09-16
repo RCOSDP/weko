@@ -106,6 +106,18 @@ jobs:
         with:
           python-version: '3.11'
 
+      # ソース(AST)と台帳だけで済むので、コンテナを立てる前に流す。
+      # ビュー関数が HTTP を通らず別モジュールから直接呼ばれる「第二の入口」は
+      # ルート単位の台帳に現れず、認可を足す作業で素通りする(issue62807)。
+      # 台帳の inproc_callers に無い呼び出し元が現れたら止める。
+      - name: Check in-process view callers
+        if: steps.cfg.outputs.enabled == 'true'
+        env:
+          WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+        run: |
+          python3 tools/api-inventory/scripts/add_inproc_callers.py \
+            --check --summary-only --gate
+
       - name: Start WEKO containers
         if: steps.cfg.outputs.enabled == 'true'
         run: |
