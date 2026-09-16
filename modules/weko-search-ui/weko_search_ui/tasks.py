@@ -38,6 +38,7 @@ from flask_babelex import gettext as _
 from weko_admin.api import TempDirInfo
 from weko_admin.utils import get_redis_cache, reset_redis_cache
 from weko_redis.redis import RedisConnection
+from redis import RedisError
 from invenio_db import db
 
 from .utils import (
@@ -315,12 +316,42 @@ def is_import_running():
                 return "is_import_running"
 
 
-def check_celery_is_run():
+def check_celery_is_run(is_task=False):
     """Check celery is running, or not."""
-    if not inspect(timeout=current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)).ping():
-        return False
-    else:
-        return True
+    cache_key = current_app.config.get("WEKO_SEARCH_UI_CELERY_STATUS", "weko_search_ui_celery_status")
+    cache_ttl = int(current_app.config.get(
+        "WEKO_SEARCH_UI_CELERY_STATUS_CACHE_TTL", 60
+    ))
+
+    cached_status = get_redis_cache(cache_key)
+    if cached_status and is_task:
+        if cached_status == "1":
+            return True
+        elif cached_status == "0":
+            return False
+
+    is_running = bool(
+        inspect(
+            timeout=current_app.config.get("CELERY_GET_STATUS_TIMEOUT", 3.0)
+        ).ping()
+    )
+    if is_task:
+        try:
+            redis_connection = RedisConnection()
+            datastore = redis_connection.connection(
+                db=current_app.config["CACHE_REDIS_DB"], kv=True
+            )
+            datastore.put(
+                cache_key,
+                ("1" if is_running else "0").encode("utf-8"),
+                cache_ttl,
+            )
+        except RedisError as ex:
+            current_app.logger.error(
+                "Could not cache Celery status; returning the ping result: %s",
+                ex,
+            )
+    return is_running
 
 def check_session_lifetime():
     """Check session lifetime."""
