@@ -169,6 +169,7 @@ from .utils import (
     process_send_approval_mails,
     process_send_notification_mail,
     process_send_reminder_mail,
+    register_ark,
     register_hdl,
     save_activity_data,
     saving_doi_pidstore,
