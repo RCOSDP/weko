@@ -56,13 +56,9 @@ js_dependencies_ckeditor = NpmBundle(
     'node_modules/rr-ng-ckeditor/ng-ckeditor.js',
     'node_modules/angular-schema-form-ckeditor/bootstrap-ckeditor.js',
     npm={
-        # Original repo (webcanvas/angular-schema-form-ckeditor) was deleted
-        # from GitHub; this fork carries the exact same commit. Use a
-        # tarball URL (not a git+commit ref) since npm's shallow git clone
-        # can't reach a commit outside the fork's default branch tip.
         'angular-schema-form-ckeditor':
-            'https://github.com/nvdnkpr/angular-schema-form-ckeditor'
-            '/archive/b213fa934759a18b1436e23bfcbd9f0f730f1296.tar.gz',
+            'https://github.com/webcanvas/angular-schema-form-ckeditor'
+            '.git#b213fa934759a18b1436e23bfcbd9f0f730f1296',
         'ckeditor': '~4.5.10',
         'rr-ng-ckeditor': '~0.2.1',
     }

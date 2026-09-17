@@ -96,9 +96,3 @@ test/data
 test/import.zip
 test/dummyfile/import.zip
 test/dummyfile/data
-
-# JGSS本番データ復元の作業ファイル（サイズ大・個人情報含むため追跡しない）
-/after_restore.dump
-/after_restore_jgssdds.dump
-/es_snapshot_restore/
-/es_snapshot_restore_new/

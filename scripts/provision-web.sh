@@ -65,16 +65,7 @@ provision_web_common_ubuntu14 () {
 
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-begin
     if [[ ! -f /etc/apt/sources.list.d/nodesource.list ]]; then
-        # NodeSource's Node.js 4.x repo is EOL: its own setup script runs
-        # `apt-get update` internally and that fails because the repo's GPG
-        # signature can no longer be verified (key not served anymore), so
-        # allow this one command to fail (it still writes the sources.list.d
-        # file before erroring out) rather than aborting the whole build.
-        curl -sL https://deb.nodesource.com/setup_4.x | $sudo bash - || true
-        # Trust this single, already-EOL repo explicitly rather than
-        # weakening apt verification globally, then refresh package lists.
-        $sudo sed -i 's/\[signed-by=[^]]*\]/[trusted=yes]/' /etc/apt/sources.list.d/nodesource.list
-        $sudo apt-get -y update
+        curl -sL https://deb.nodesource.com/setup_4.x | $sudo bash -
     fi
     # sphinxdoc-add-nodejs-external-repository-ubuntu14-end
 
@@ -162,10 +153,7 @@ setup_npm_and_css_js_filters () {
 
     # sphinxdoc-install-npm-and-css-js-filters-begin
     # $sudo su -c "npm install -g npm"
-    # Pin transitive deps of node-sass@3.8.0 (via request -> tough-cookie -> psl)
-    # to old, ES5-only versions: newer psl/tough-cookie releases use syntax
-    # (e.g. spread operator) that Node.js 4.x's runtime cannot parse.
-    $sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js psl@1.1.31 tough-cookie@2.3.4"
+    $sudo su -c "npm install -g node-sass@3.8.0 clean-css@3.4.12 requirejs uglify-js"
     # sphinxdoc-install-npm-and-css-js-filters-end
 
 }

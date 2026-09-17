@@ -20,9 +20,7 @@
 
 # Use Elasticsearch 6.
 #FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.2.2
-# Pinned to 6.8.23 to match the version the JGSS ES snapshot backup was
-# created with (a snapshot cannot be restored onto an older ES node).
-FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.23
+FROM docker.elastic.co/elasticsearch/elasticsearch-oss:6.8.22
 WORKDIR /usr/share/elasticsearch
 ARG ELASTICSEARCH_S3_ACCESS_KEY
 ARG ELASTICSEARCH_S3_SECRET_KEY
