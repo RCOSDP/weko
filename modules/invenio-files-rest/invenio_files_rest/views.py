@@ -594,7 +594,8 @@ class ObjectResource(ContentNegotiatedMethodView):
         :returns: A :class:`invenio_files_rest.models.ObjectVersion` instance.
         """
         from invenio_records_files.models import RecordsBuckets
-        from weko_records_ui.permissions import check_file_download_permission
+        from weko_records_ui.permissions import check_file_download_permission, \
+            is_privileged_file_access
 
         from invenio_files_rest.models import as_bucket_id
 
@@ -611,8 +612,13 @@ class ObjectResource(ContentNegotiatedMethodView):
                     is_this_version = item.get('version_id') == version_id
                     is_preview = item.get('displaytype') == 'preview'
                     if is_this_version and is_preview:
-                        file_access_permission = \
-                            check_file_download_permission(rm.json, item)
+                        accessrole = item.get('accessrole') or ''
+                        if 'open_restricted' in accessrole and \
+                                not is_privileged_file_access(rm.json):
+                            file_access_permission = False
+                        else:
+                            file_access_permission = \
+                                check_file_download_permission(rm.json, item)
                         flag = True
                         break
             if flag:

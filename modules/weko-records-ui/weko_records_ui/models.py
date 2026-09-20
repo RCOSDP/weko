@@ -400,5 +400,34 @@ class FileOnetimeDownload(db.Model, Timestamp):
         )
         return query.order_by(desc(cls.id)).all()
 
+    @classmethod
+    def consume_one(cls, id):
+        """Atomically decrement download_count by 1 if quota remains.
+
+        Uses a conditional UPDATE (WHERE download_count > 0) so concurrent
+        requests cannot both succeed in decrementing past zero.
+
+        :param id: FileOnetimeDownload.id
+        :return: True if a row was updated (quota consumed), False otherwise
+        """
+        try:
+            updated_rows = db.session.query(cls).filter(
+                cls.id == id,
+                cls.download_count > 0,
+            ).update(
+                {cls.download_count: cls.download_count - 1},
+                synchronize_session=False,
+            )
+            db.session.commit()
+        except Exception as ex:
+            db.session.rollback()
+            current_app.logger.error(
+                'consume_one(id=%s) failed with an exception: %s', id, ex)
+            return False
+        if updated_rows == 0:
+            current_app.logger.info(
+                'consume_one(id=%s) found no remaining quota', id)
+        return updated_rows > 0
+
 
 __all__ = ('PDFCoverPageSettings', 'FilePermission', 'FileOnetimeDownload')

@@ -41,16 +41,16 @@ from weko_user_profiles.models import UserProfile
 from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
-from .models import PDFCoverPageSettings
+from .models import FileOnetimeDownload, PDFCoverPageSettings
 from .pdf import make_combined_pdf
 from .permissions import check_original_pdf_download_permission, \
-    file_permission_factory
+    file_permission_factory, is_privileged_file_access
 from .utils import check_and_create_usage_report, \
     check_and_send_usage_report, get_billing_file_download_permission, \
     get_groups_price, get_min_price_billing_file_download, \
-    get_onetime_download, is_billing_item, parse_one_time_download_token, \
-    update_onetime_download, validate_download_record, \
-    validate_onetime_download_token
+    get_onetime_download, get_valid_onetime_download, is_billing_item, \
+    parse_one_time_download_token, update_onetime_download, \
+    validate_download_record, validate_onetime_download_token
 
 
 def weko_view_method(pid, record, template=None, **kwargs):
@@ -227,6 +227,32 @@ def file_ui(
         if not current_user.is_authenticated:
             return _redirect_method(has_next=True)
         abort(403)
+
+    accessrole = fileobj.get('accessrole') or ''
+    is_open_restricted_file = 'open_restricted' in accessrole
+    is_privileged = is_privileged_file_access(record)
+
+    # Preview is banned entirely for open_restricted files for
+    # non-privileged users: previewing must not consume onetime-download
+    # quota, and there is no way to preview without effectively serving
+    # the content, so the safe choice is to disallow preview outright.
+    if is_preview and is_open_restricted_file and not is_privileged:
+        abort(403)
+
+    if not is_preview and is_open_restricted_file and not is_privileged:
+        if current_user.is_authenticated and \
+                getattr(current_user, 'email', None):
+            try:
+                onetime = get_valid_onetime_download(
+                    fileobj.get('filename'), record.get('recid'),
+                    current_user.email)
+            except Exception as ex:
+                current_app.logger.error(
+                    'get_valid_onetime_download failed: %s', ex)
+                onetime = None
+            if onetime is None or \
+                    not FileOnetimeDownload.consume_one(onetime.id):
+                abort(403)
 
     # Check and create usage report
     if not is_preview:

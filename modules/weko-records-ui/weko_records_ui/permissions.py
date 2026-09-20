@@ -35,7 +35,7 @@ from weko_records.api import ItemTypes
 from weko_workflow.api import WorkActivity
 
 from .ipaddr import check_site_license_permission
-from .models import FilePermission
+from .models import FileOnetimeDownload, FilePermission
 
 action_detail_page_access = action_factory('detail-page-access')
 detail_page_permission = Permission(action_detail_page_access)
@@ -79,6 +79,31 @@ def file_permission_factory(record, *args, **kwargs):
         return check_file_download_permission(record, fjson)
 
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
+
+
+def is_privileged_file_access(record):
+    """Check whether current_user has unconditional (privileged) access.
+
+    Privileged means: the record's owner, its weko_shared_id user, or a
+    user holding one of the super/community roles. This check is
+    independent of accessrole/onetime-download quota and is shared by
+    both check_file_download_permission() and the preview-ban checks in
+    fd.py / invenio_files_rest/views.py, so the notion of "privileged"
+    stays in one place.
+    """
+    if not current_user.is_authenticated:
+        return False
+    user_id_list = [int(record['owner'])] if record.get('owner') else []
+    if record.get('weko_shared_id'):
+        user_id_list.append(record.get('weko_shared_id'))
+    if current_user.id in user_id_list:
+        return True
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
+        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    for role in list(current_user.roles or []):
+        if role.name in supers:
+            return True
+    return False
 
 
 def check_file_download_permission(record, fjson, is_display_file_info=False):
@@ -137,18 +162,10 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
             user_id_list.append(record.get('weko_shared_id'))
         created_user_email_list = get_email_list_by_ids(user_id_list)
 
-        # Registered user
-        if current_user and \
-                current_user.is_authenticated and \
-                current_user.id in user_id_list:
+        # Privileged users (owner / shared user / super or community role)
+        # always have access, regardless of accessrole.
+        if is_privileged_file_access(record):
             return is_can
-
-        # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-        for role in list(current_user.roles or []):
-            if role.name in supers:
-                return is_can
 
         try:
             # can access
@@ -244,14 +261,13 @@ def check_file_download_permission(record, fjson, is_display_file_info=False):
 
 def check_open_restricted_permission(record, fjson):
     """Check 'open_restricted' file permission."""
-    record_id = record.get('recid')
-    file_name = fjson.get('filename')
-    list_permission = __get_file_permission(record_id, file_name)
-    if list_permission:
-        permission = list_permission[0]
-        return check_permission_period(permission)
-    else:
+    from .utils import get_valid_onetime_download
+    if not current_user.is_authenticated or \
+            not getattr(current_user, 'email', None):
         return False
+    return get_valid_onetime_download(
+        fjson.get('filename'), record.get('recid'),
+        current_user.email) is not None
 
 
 def is_open_restricted(file_data):

@@ -1010,6 +1010,31 @@ def get_onetime_download(file_name: str, record_id: str,
         return None
 
 
+def get_valid_onetime_download(file_name: str, record_id: str,
+                               user_mail: str):
+    """Get the newest usable (unexpired, quota remaining) onetime download.
+
+    Unlike get_onetime_download(), which returns the newest grant
+    regardless of remaining quota/expiration, this skips
+    exhausted/expired grants so callers get an actually-usable grant.
+
+    @param file_name:
+    @param record_id:
+    @param user_mail:
+    @return: the FileOnetimeDownload instance, or None
+    """
+    from datetime import datetime, timedelta
+    candidates = FileOnetimeDownload.find(
+        file_name=file_name, record_id=record_id, user_mail=user_mail)
+    now = datetime.utcnow()
+    for candidate in candidates:  # find() returns newest-first (desc(id))
+        if candidate.download_count > 0 and \
+                now < candidate.created + timedelta(
+                    days=candidate.expiration_date):
+            return candidate
+    return None
+
+
 def create_onetime_download_url(
     activity_id: str, file_name: str, record_id: str, user_mail: str,
     is_guest: bool = False
