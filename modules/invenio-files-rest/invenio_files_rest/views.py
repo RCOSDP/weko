@@ -603,6 +603,10 @@ class ObjectResource(ContentNegotiatedMethodView):
         bucket_id = as_bucket_id(bucket)
         rb = RecordsBuckets.query.filter_by(bucket_id=bucket_id).first()
         rm = RecordMetadata.query.filter_by(id=rb.record_id).first()
+        # is_privileged_file_access() only depends on rm.json (the record),
+        # never on the individual file item, so it is computed once here
+        # rather than once per matching item below.
+        is_privileged = is_privileged_file_access(rm.json)
         # Check and file_access_permission of file in this record metadata.
         file_access_permission = False
         flag = False
@@ -611,10 +615,8 @@ class ObjectResource(ContentNegotiatedMethodView):
                 for item in v.get('attribute_value_mlt', []):
                     if item.get('version_id') != version_id:
                         continue
-                    is_preview = item.get('displaytype') == 'preview'
                     accessrole = item.get('accessrole') or ''
-                    if 'open_restricted' in accessrole and \
-                            not is_privileged_file_access(rm.json):
+                    if 'open_restricted' in accessrole and not is_privileged:
                         # Must be a hard abort, not merely setting
                         # file_access_permission=False: the latter falls
                         # through to check_object_permission() ->
@@ -622,19 +624,28 @@ class ObjectResource(ContentNegotiatedMethodView):
                         # access to anyone holding a guest_token session
                         # (is_guest_login_can_access_file) regardless of
                         # approval/quota/privilege, defeating this ban.
-                        # This check applies regardless of is_preview:
-                        # closing only the preview branch previously left
-                        # the ordinary (non-preview) REST API download of
-                        # the same open_restricted file exposed to the
-                        # identical guest_token bypass, since that branch
-                        # never called check_file_download_permission at
-                        # all and fell through to the generic object-read
-                        # permission instead.
+                        # This check applies regardless of displaytype
+                        # ('preview' or not): closing only the preview
+                        # branch previously left the ordinary (non-preview)
+                        # REST API download of the same open_restricted
+                        # file exposed to the identical guest_token bypass,
+                        # since that branch never called
+                        # check_file_download_permission at all and fell
+                        # through to the generic object-read permission
+                        # instead.
+                        #
+                        # Evaluated for every item whose version_id matches
+                        # (not just the first one found): if a single
+                        # version_id were ever shared by more than one
+                        # metadata item in attribute_value_mlt, stopping at
+                        # the first match could skip a later
+                        # open_restricted item and let this bypass back in.
                         abort(403)
-                    if is_preview:
-                        file_access_permission = \
-                            check_file_download_permission(rm.json, item)
-                        flag = True
+                    if item.get('displaytype') != 'preview':
+                        continue
+                    file_access_permission = \
+                        check_file_download_permission(rm.json, item)
+                    flag = True
                     break
             if flag:
                 break
