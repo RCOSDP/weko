@@ -607,47 +607,50 @@ class ObjectResource(ContentNegotiatedMethodView):
         # never on the individual file item, so it is computed once here
         # rather than once per matching item below.
         is_privileged = is_privileged_file_access(rm.json)
+
+        # Collect every file metadata item whose version_id matches the
+        # requested object, across all 'file'-type attributes. There is
+        # normally exactly one such item, but this does not assume that:
+        # earlier revisions of this function picked a single item (the
+        # first match, or the first 'preview'-displaytype match) and
+        # applied the open_restricted/guest_token ban only to that one
+        # item, which left a structural gap whenever more than one
+        # metadata item happened to share a version_id (whichever item
+        # the ban's own break/continue control flow skipped went
+        # unchecked). Gathering all matches first and running the ban
+        # over the full list, independently of which item (if any) is
+        # later used to compute file_access_permission, closes that
+        # class of gap by construction rather than patching one ordering
+        # at a time.
+        matching_items = [
+            item
+            for k, v in rm.json.items()
+            if isinstance(v, dict) and v.get('attribute_type') == 'file'
+            for item in v.get('attribute_value_mlt', [])
+            if item.get('version_id') == version_id
+        ]
+
+        if not is_privileged and any(
+            'open_restricted' in (item.get('accessrole') or '')
+            for item in matching_items
+        ):
+            # Must be a hard abort, not merely setting
+            # file_access_permission=False: the latter falls through to
+            # check_object_permission() -> check_permission(), which
+            # silently allows access to anyone holding a guest_token
+            # session (is_guest_login_can_access_file) regardless of
+            # approval/quota/privilege, defeating this ban. Applies
+            # regardless of displaytype ('preview' or not): the actual
+            # download route must be banned exactly like the preview
+            # route, since both ultimately serve the same file content.
+            abort(403)
+
         # Check and file_access_permission of file in this record metadata.
         file_access_permission = False
-        flag = False
-        for k, v in rm.json.items():
-            if isinstance(v, dict) and v.get('attribute_type') == 'file':
-                for item in v.get('attribute_value_mlt', []):
-                    if item.get('version_id') != version_id:
-                        continue
-                    accessrole = item.get('accessrole') or ''
-                    if 'open_restricted' in accessrole and not is_privileged:
-                        # Must be a hard abort, not merely setting
-                        # file_access_permission=False: the latter falls
-                        # through to check_object_permission() ->
-                        # check_permission(), which silently allows
-                        # access to anyone holding a guest_token session
-                        # (is_guest_login_can_access_file) regardless of
-                        # approval/quota/privilege, defeating this ban.
-                        # This check applies regardless of displaytype
-                        # ('preview' or not): closing only the preview
-                        # branch previously left the ordinary (non-preview)
-                        # REST API download of the same open_restricted
-                        # file exposed to the identical guest_token bypass,
-                        # since that branch never called
-                        # check_file_download_permission at all and fell
-                        # through to the generic object-read permission
-                        # instead.
-                        #
-                        # Evaluated for every item whose version_id matches
-                        # (not just the first one found): if a single
-                        # version_id were ever shared by more than one
-                        # metadata item in attribute_value_mlt, stopping at
-                        # the first match could skip a later
-                        # open_restricted item and let this bypass back in.
-                        abort(403)
-                    if item.get('displaytype') != 'preview':
-                        continue
-                    file_access_permission = \
-                        check_file_download_permission(rm.json, item)
-                    flag = True
-                    break
-            if flag:
+        for item in matching_items:
+            if item.get('displaytype') == 'preview':
+                file_access_permission = \
+                    check_file_download_permission(rm.json, item)
                 break
         # Get and check exists of current bucket info.
         obj = ObjectVersion.get(bucket, key, version_id=version_id)
