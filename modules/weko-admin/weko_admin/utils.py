@@ -30,6 +30,7 @@ from datetime import datetime, timedelta
 from io import BytesIO, StringIO
 from typing import Dict, Optional, Tuple, Union
 
+import bleach
 import requests
 from flask import current_app, request
 from flask_babelex import gettext as __
@@ -2835,3 +2836,30 @@ def _elasticsearch_remake_item_index(index_name):
     current_app.logger.info(' END elasticsearch import from records_metadata')
 
     return returnlist
+
+def sanitize_html_string(
+        value,
+        allow_tags=[],
+        allow_attributes={},
+        strip=True
+    ):
+    """bleachを使用してHTMLをサニタイズする
+
+    Args:
+        value (str): HTML文字列
+        allow_tags (list): 許可するHTMLタグのリスト
+        allow_attributes (dict): 許可するHTML属性の辞書
+        strip (bool): サニタイズ後にタグを削除するかどうか
+
+    Returns:
+        str: サニタイズされたHTML文字列
+    """
+
+    if isinstance(value, str):
+        value = bleach.clean(
+            value,
+            tags=allow_tags,
+            attributes=allow_attributes,
+            strip=strip
+        ).strip()
+    return value
