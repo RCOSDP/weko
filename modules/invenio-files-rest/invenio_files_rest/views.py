@@ -615,10 +615,16 @@ class ObjectResource(ContentNegotiatedMethodView):
                         accessrole = item.get('accessrole') or ''
                         if 'open_restricted' in accessrole and \
                                 not is_privileged_file_access(rm.json):
-                            file_access_permission = False
-                        else:
-                            file_access_permission = \
-                                check_file_download_permission(rm.json, item)
+                            # Must be a hard abort, not merely setting
+                            # file_access_permission=False: the latter falls
+                            # through to check_object_permission() ->
+                            # check_permission(), which silently allows
+                            # access to anyone holding a guest_token session
+                            # (is_guest_login_can_access_file) regardless of
+                            # approval/quota/privilege, defeating this ban.
+                            abort(403)
+                        file_access_permission = \
+                            check_file_download_permission(rm.json, item)
                         flag = True
                         break
             if flag:
