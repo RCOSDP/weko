@@ -609,24 +609,33 @@ class ObjectResource(ContentNegotiatedMethodView):
         for k, v in rm.json.items():
             if isinstance(v, dict) and v.get('attribute_type') == 'file':
                 for item in v.get('attribute_value_mlt', []):
-                    is_this_version = item.get('version_id') == version_id
+                    if item.get('version_id') != version_id:
+                        continue
                     is_preview = item.get('displaytype') == 'preview'
-                    if is_this_version and is_preview:
-                        accessrole = item.get('accessrole') or ''
-                        if 'open_restricted' in accessrole and \
-                                not is_privileged_file_access(rm.json):
-                            # Must be a hard abort, not merely setting
-                            # file_access_permission=False: the latter falls
-                            # through to check_object_permission() ->
-                            # check_permission(), which silently allows
-                            # access to anyone holding a guest_token session
-                            # (is_guest_login_can_access_file) regardless of
-                            # approval/quota/privilege, defeating this ban.
-                            abort(403)
+                    accessrole = item.get('accessrole') or ''
+                    if 'open_restricted' in accessrole and \
+                            not is_privileged_file_access(rm.json):
+                        # Must be a hard abort, not merely setting
+                        # file_access_permission=False: the latter falls
+                        # through to check_object_permission() ->
+                        # check_permission(), which silently allows
+                        # access to anyone holding a guest_token session
+                        # (is_guest_login_can_access_file) regardless of
+                        # approval/quota/privilege, defeating this ban.
+                        # This check applies regardless of is_preview:
+                        # closing only the preview branch previously left
+                        # the ordinary (non-preview) REST API download of
+                        # the same open_restricted file exposed to the
+                        # identical guest_token bypass, since that branch
+                        # never called check_file_download_permission at
+                        # all and fell through to the generic object-read
+                        # permission instead.
+                        abort(403)
+                    if is_preview:
                         file_access_permission = \
                             check_file_download_permission(rm.json, item)
                         flag = True
-                        break
+                    break
             if flag:
                 break
         # Get and check exists of current bucket info.
