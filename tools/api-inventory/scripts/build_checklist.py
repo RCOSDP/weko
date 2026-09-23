@@ -30,10 +30,14 @@ for c in data:
     data_op = g(c,"data_op")
     data_store = g(c,"data_store")
     side = j([g(c,"side_effects"), ("task:"+g(c,"triggers_task")) if g(c,"triggers_task") else ""])
-    # security_finding: sec_pattern中心にexposed/detail/evidenceを要約
+    # security_finding: sec_pattern中心にexposed/detail/evidenceを要約。
+    # 対応状況(fix_ticket)も畳み込む。32列版はチェックリストとして読むものなので、
+    # 「指摘がある」と「まだ起票していない」が同じ欄で見えるようにする。
     sf_parts=[g(c,"sec_pattern")]
     if g(c,"sec_exposed"): sf_parts.append("露出:"+g(c,"sec_exposed"))
     if g(c,"sec_evidence"): sf_parts.append(g(c,"sec_evidence"))
+    ticket=g(c,"fix_ticket")
+    if ticket and ticket != "-": sf_parts.append("対応:"+ticket)
     security_finding=j(sf_parts, " ; ")
     # security_flags: 7観点を該当のみ集約
     flags=[]

@@ -22,7 +22,7 @@
 > 成果物TSV/MDは一つ上の階層(`../weko3_api_list.tsv` 等)にある。
 
 
-`weko3_api_list.tsv`(32列・チェックリスト版)と `weko3_api_list_full.tsv`(63列・詳細版)を
+`weko3_api_list.tsv`(32列・チェックリスト版)と `weko3_api_list_full.tsv`(64列・詳細版)を
 **バージョンアップのたびに再生成**するための手順とスクリプト一式。
 
 # 台帳の更新手順(まずここを読む)
@@ -102,7 +102,7 @@ python3 tools/api-inventory/scripts/refresh_callers.py --summary-only --gate
 
 ## ケース2: 台帳に行を追加する
 
-`reconcile.py` が「A. インベントリ未収載」を出したとき。63列を手で並べる必要はない。
+`reconcile.py` が「A. インベントリ未収載」を出したとき。64列を手で並べる必要はない。
 
 ```bash
 # 1) 何が未収載かを確認する
@@ -120,7 +120,7 @@ python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo --a
 vi "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
 # 5) 列数の検算
-awk -F'\t' 'NR>1 && NF!=63{print "行"NR" 列数="NF}' \
+awk -F'\t' 'NR>1 && NF!=64{print "行"NR" 列数="NF}' \
   "$WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv"
 
 # 6) 派生列を再計算 → 32列版を再生成 → 突き合わせ
@@ -692,8 +692,8 @@ git push origin main --follow-tags
 | `enrich_git.py` | full.tsv + `git log -L` / `git tag --contains` | full.tsv の `last_commit` / `last_commit_date` / `last_commit_subject` / `release_tag`(`--write` 時のみ)。**`refresh_impl.py` の後に回す** |
 | `refresh_callers.py` | full.tsv + ソース(AST) | full.tsv の `inproc_callers`(`--write` 時のみ)。**`refresh_impl.py` の後に回す**(記録するのが `ファイル:行番号` なのでバージョンでずれる) |
 | `changed_rows.py` | git diff + full.tsv | 再確認対象の `no` 一覧 + 変更ヘルパ関数の報告 |
-| `test_coverage.py` | full.tsv + テストコード | full.tsv の 58-62列 |
-| `prioritize.py` | full.tsv | full.tsv の 56-57, 63列 + 末尾列順の正規化 |
+| `test_coverage.py` | full.tsv + テストコード | full.tsv の 59-63列 |
+| `prioritize.py` | full.tsv | full.tsv の 57-58, 64列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
 | `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
 | `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ / `--overwrite` で差し替え、`--keep-history` で旧値を ` ‖ 旧: ` として残す) |
@@ -902,6 +902,41 @@ factory が B で None に潰されていれば行に印を付ける。**この2
 判定はヒューリスティックで、出力は指摘ではなく確認待ちの行列。確認した結果を台帳の
 `sec_pattern` / `sec_exposed` に書くことで消える。public な CI では `--summary-only`。
 
+### 未解消の指摘を忘れない(`open_findings.py`)
+
+所見は private 側にしか書けない(`docs/RULE.md` §1)。そのぶん**未修正の指摘が
+台帳の中だけで滞留し、台帳を開く人が減った時点で忘れられる**。
+`api-inventory-drift` のゲートは「台帳を更新せずに API を変えること」を止めるが、
+「台帳に書いたまま直さないこと」は止めない。そこを埋めるのがこのスクリプト。
+
+台帳の `fix_ticket`(56列)を読み、**チケット番号と件数だけ**を出す。
+番号には分析が含まれないので public な CI に出せる。経路名・関数名・所見の本文は
+一切出さない。
+
+| 値 | 意味 |
+|---|---|
+| `-` | 指摘が無い行 |
+| `未起票` | 指摘はあるが、まだチケットを立てていない |
+| `issueNNNNN` | 起票済み・未解消 |
+| `解消済み(issueNNNNN)` | 修正済み。値は消さずに残す(`sec_exposed` と同じ規約) |
+
+**番号だけを書き、説明を添えないこと。** 「issue62810 ファイル配信の認可漏れ」と
+書いた時点で、それは番号ではなく所見になる。**番号を脆弱な実装ファイルの近くに
+書かないこと。** 番号の集積はそれ自体が弱点の地図になるので、番号は台帳に集約し、
+public には一覧としてだけ出す。
+
+```bash
+python3 tools/api-inventory/scripts/open_findings.py                 # 優先度別の内訳と番号
+python3 tools/api-inventory/scripts/open_findings.py --summary-only  # 件数と番号だけ
+python3 tools/api-inventory/scripts/open_findings.py --gate          # CI 用
+```
+
+ゲートは2つ。**A: 記入漏れ** — `schema.FIX_REQUIRED_PRIORITIES` の行で `fix_ticket`
+が空か語彙外なら落とす(所見を書いたのに起票し忘れるのを止める)。
+**B: 未起票の増加** — `未起票` の件数がベースライン(private 側の `fix_baseline.json`)を
+超えたら落とす。**減らすのは自由、増やすにはベースラインの更新が要る**というラチェットで、
+対応を先送りするたびに積み上がるのを防ぐ。上げるときは、なぜ起票できないのかを PR に書くこと。
+
 ### 認証・認可の参照辞書(手動で維持)
 - ロール: System/Repository/Community Administrator, Contributor, General
 - スコープ: `*/scopes.py`(item:read, file:read, index:*, author:*, oa_status:update等)
@@ -997,7 +1032,7 @@ python3 tools/api-inventory/merge.py out/ merged.tsv       # 分割TSVを結合�
 
 ## Phase 5: チェックリスト版(32列)を生成
 ```bash
-python3 tools/api-inventory/scripts/build_checklist.py     # 63列 full → 32列 に統合
+python3 tools/api-inventory/scripts/build_checklist.py     # 64列 full → 32列 に統合
 ```
 派生列を統合: impl(func+file+line), auth(required+method+mechanism),
 security_flags(CSRF/BOLA/SSRF等8観点を該当のみ), last_change(commit系4列) 等。

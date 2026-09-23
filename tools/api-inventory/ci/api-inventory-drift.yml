@@ -125,6 +125,17 @@ jobs:
           python3 tools/api-inventory/scripts/refresh_callers.py \
             --summary-only --gate
 
+      # 所見は private 側にしか書けないぶん、未修正が台帳の中だけで滞留して
+      # 忘れられる。ここが出すのは**チケット番号と件数だけ**で、経路名も所見も
+      # 出さない(docs/RULE.md §1)。記入漏れと、未起票の増加で落とす。
+      - name: Check open findings
+        if: steps.cfg.outputs.enabled == 'true'
+        env:
+          WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+        run: |
+          python3 tools/api-inventory/scripts/open_findings.py \
+            --summary-only --gate
+
       - name: Start WEKO containers
         if: steps.cfg.outputs.enabled == 'true'
         run: |

@@ -13,8 +13,9 @@
 
 列名だけなので public リポジトリに置いてよい(所見・実証結果は含まない)。
 """
+import re
 
-# 詳細版 weko3_api_list_full.tsv の 62列。
+# 詳細版 weko3_api_list_full.tsv の 64列。
 FULL_COLUMNS = [
     # 経路の同定 (1-15)
     'no', 'module', 'api_type', 'app', 'method', 'uri', 'path_params',
@@ -39,9 +40,11 @@ FULL_COLUMNS = [
     'auth_mechanism', 'bola_risk',
     # 呼び出し元 (55) — refresh_callers.py が上書きする
     'inproc_callers',
-    # 優先度 (56-57) — prioritize.py が上書きする
+    # 対応状況 (56) — 未修正を台帳の中だけで抱え込まないための列
+    'fix_ticket',
+    # 優先度 (57-58) — prioritize.py が上書きする
     'priority', 'priority_reason',
-    # テスト観点と整理 (58-63) — test_coverage.py / prioritize.py が上書きする
+    # テスト観点と整理 (59-64) — test_coverage.py / prioritize.py が上書きする
     'test_normal', 'test_abnormal', 'test_boundary', 'test_exception',
     'test_gap', 'cleanup',
 ]
@@ -150,7 +153,43 @@ TEST_MARKS = ['○', '-', '?']
 TEST_ASPECTS = [('test_normal', '正常値'), ('test_abnormal', '異常値'),
                 ('test_boundary', '境界値'), ('test_exception', '例外処理')]
 
-assert len(FULL_COLUMNS) == 63
+# `fix_ticket`(56列) の語彙。
+#
+# 未修正の指摘を台帳の中だけで抱えると、台帳を読む人が減った時点で忘れられる。
+# かといって所見を public に書けば攻撃手順書になる(docs/RULE.md §1)。
+# **番号だけなら分析を含まない**ので、件数と番号の一覧は公開 CI に出してよい。
+# 経路名・関数名・所見の本文は出さない。番号を脆弱な実装ファイルの近くに
+# 書かないこと。番号の集積はそれ自体が弱点の地図になる。番号は台帳に集約し、
+# public には一覧としてだけ出す。
+FIX_NONE = '-'                                        # 指摘が無い行
+FIX_UNTRIAGED = '未起票'                               # 指摘はあるが未起票
+FIX_TICKET_RE = re.compile(r'^issue\d+$')             # 起票済み・未解消
+FIX_SOLVED_RE = re.compile(r'^解消済み\(issue\d+\)$')  # 修正済み。値は消さず残す
+
+# チケットを必ず立てる優先度。ここを緩めると「台帳に書いて忘れる」に戻る。
+FIX_REQUIRED_PRIORITIES = ('P1',)
+
+
+def fix_ticket_kind(value):
+    """`fix_ticket` セルを区分に畳む。語彙外は None を返す。"""
+    v = (value or '').strip()
+    if v in ('', FIX_NONE):
+        return 'なし'
+    if v == FIX_UNTRIAGED:
+        return '未起票'
+    if FIX_TICKET_RE.match(v):
+        return '起票済み'
+    if FIX_SOLVED_RE.match(v):
+        return '解消済み'
+    return None
+
+
+def fix_tickets_in(value):
+    """セルからチケット番号だけを取り出す。public に出してよいのはここだけ。"""
+    return FIX_TICKET_RE.findall((value or '').strip()) or \
+        re.findall(r'issue\d+', (value or '').strip())
+
+assert len(FULL_COLUMNS) == 64
 assert len(CHECKLIST_COLUMNS) == 32
 assert len(set(FULL_COLUMNS)) == len(FULL_COLUMNS)
 assert len(set(CHECKLIST_COLUMNS)) == len(CHECKLIST_COLUMNS)
