@@ -72,10 +72,10 @@ def test_ベースライン内なら通る(tmp_path):
 
 def test_起票すれば未起票が減って通る(tmp_path):
     """起票は前に進む操作。ベースラインを触らずに緑になる。"""
-    tsv = ledger(tmp_path, [row('1', ticket='issue62810'), row('2')])
+    tsv = ledger(tmp_path, [row('1', ticket='issue90001'), row('2')])
     p = run('open_findings.py', '--full', tsv, '--baseline',
             baseline(tmp_path, {'P1': 1}), '--gate', expect=0)
-    assert 'issue62810' in p.stdout
+    assert 'issue90001' in p.stdout
 
 
 def test_ベースラインが無ければ増加は見ない(tmp_path):
@@ -135,17 +135,17 @@ def test_summary_onlyはURIもendpoint名も出さない(tmp_path):
 
 def test_チケット番号は出す(tmp_path):
     """番号には分析が含まれないので出してよい。出さないと忘れ防止にならない。"""
-    tsv = ledger(tmp_path, [row('1', ticket='issue62810'),
-                            row('2', ticket='issue62811')])
+    tsv = ledger(tmp_path, [row('1', ticket='issue90001'),
+                            row('2', ticket='issue90002')])
     p = run('open_findings.py', '--full', tsv, '--baseline',
             baseline(tmp_path, {}), '--summary-only', expect=0)
-    assert 'issue62810' in p.stdout and 'issue62811' in p.stdout
+    assert 'issue90001' in p.stdout and 'issue90002' in p.stdout
 
 
 def test_語彙の区分(tmp_path):
-    assert of.schema.fix_ticket_kind('issue62810') == '起票済み'
+    assert of.schema.fix_ticket_kind('issue90001') == '起票済み'
     assert of.schema.fix_ticket_kind('解消済み(issue62569)') == '解消済み'
     assert of.schema.fix_ticket_kind('未起票') == '未起票'
     assert of.schema.fix_ticket_kind('-') == 'なし'
-    assert of.schema.fix_ticket_kind('issue62810 ファイル配信の認可漏れ') is None, \
+    assert of.schema.fix_ticket_kind('issueNNNNN ○○の認可漏れ') is None, \
         '説明を添えた値を通すと、番号だけという約束が崩れる'
