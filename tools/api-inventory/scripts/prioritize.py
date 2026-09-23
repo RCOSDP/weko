@@ -7,11 +7,17 @@
 
   P1            無認証で既存のファイル実体を上書き/削除できる(データ破壊)、または
                 状態変更系(POST/PUT/DELETE/PATCH)なのに認証・権限チェックが一切ない、
-                または権限チェック機構はあるように見えるが実装上機能していない
-  P2            ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
+                または権限チェック機構はあるように見えるが実装上機能していない、
+                または書き込んだ値が別エンドポイントの認可判定の材料になる
+                (認可入力汚染)、**または参照系でも認証情報・非公開データの実体が
+                無認証で取得できる**
+  P2            認可の根拠(トークン・発行済みURL)と操作対象の識別子を突き合わせて
+                いない(識別子突合欠落。参照系でも認可バイパスなので P3 に落とさない)、
+                ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
                 ゲストトークン等のバイパス、ロールチェックが実質不問、または「不明」。
                 認証が無い状態変更系でも新規作成のみで既存データを壊さないもの。
-                参照系でも露出内容が認証情報または非公開データの実体であるもの
+                参照系で露出内容が認証情報または非公開データの実体だが、
+                取得に認証が要るもの(無認証で取れるなら P1)
   P3            読み取り系(GET/HEAD)で認証・権限チェックが無い、または
                 ログイン必須のみでロール/所有者スコープなし
   P4            意図的な公開設計(static配信・ヘルスチェック・robots.txt・OAI-PMH等)、
@@ -39,6 +45,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import data_path  # noqa: E402
+from schema import (AUTHZ_SCOPE_PATTERNS, AUTHZ_INPUT_PATTERN,  # noqa: E402
+                    ID_BINDING_PATTERN)
 
 WRITE_METHODS = {'POST', 'PUT', 'DELETE', 'PATCH'}
 
@@ -168,8 +176,11 @@ def classify(c, H):
     proven = '★' in dyn
     broken_authz = '実効せず' in finding
     login_only = ('ログインのみで到達' in dyn) or ('低権限ログインで到達' in dyn)
-    scope_missing = any(k in finding for k in (
-        '所有者チェック欠落', '権限過小', '兄弟と不揃い', '読み書き非対称'))
+    scope_missing = any(k in finding for k in AUTHZ_SCOPE_PATTERNS)
+    # 認可の根拠と操作対象の識別子を突き合わせていない / 認可判定の入力を
+    # 書き換えられる。どちらも「認証はしている」ので入口だけ見ると正常に見える。
+    id_binding_missing = ID_BINDING_PATTERN in finding
+    authz_input = AUTHZ_INPUT_PATTERN in finding
     guest_bypass = 'session+guest' in auth or 'guest_token' in finding
     unknown = (dyn.strip() in ('', '-'))
     has_finding = finding.strip() not in ('', '-')
@@ -191,6 +202,15 @@ def classify(c, H):
     if is_write_method and broken_authz and not creates_only:
         return 'P1', f'状態変更系({method})だが権限チェックが実装上機能していない'
 
+    # --- P1: 認可判定の入力そのものを書き換えられる ---
+    # 入口の認可は通っていても、書き込んだ値が**別のエンドポイントの認可判定**の
+    # 材料になる。以降のアクションの認可が丸ごと汚染されるので、単なる
+    # 「範囲が足りない」より重い。新規作成のみでも下げない(壊すのはデータでは
+    # なく認可そのもの)。
+    if is_write_method and authz_input:
+        return 'P1', (f'状態変更系({method})で他エンドポイントの認可判定の入力を'
+                      f'書き換えられる(認可入力汚染)')
+
     # --- P2 ---
     # 認証が無い状態変更系でも、新規作成のみで既存データを壊さないものはここ。
     if is_write_method and (no_auth or unauth_reach or broken_authz) and creates_only:
@@ -206,7 +226,12 @@ def classify(c, H):
 
     # --- 露出内容による引き上げ(参照系でも P1) ---
     # 「読み取り系だから情報漏洩リスクは限定的」は、露出するものが認証情報や
-    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って P1 に上げる。
+    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って上げる。
+    #
+    # **未認証で取れるかどうかで一段変える。** 非公開情報が認証なしで取れるなら、
+    # 攻撃者は何も持たずに済むので P1。認証を経ている(ログインだけ/スコープ不問)
+    # なら、少なくとも有効な資格情報が要るぶん一段下げて P2。この区別が無いと、
+    # 誰でも読める経路と、ログインユーザなら読める経路が同じ棚に並ぶ。
     # 「管理者に集約」のように適切に保護されている行は対象にしない。
     # restricted_content / access_variance は「何が制限されているか」の説明であり、
     # 適切に絞られている旨の記述にも「非公開」が出てくる。露出の根拠には使わない
@@ -220,10 +245,22 @@ def classify(c, H):
     if (not is_write_method) and weak_access:
         cred = [w for w in CREDENTIAL_WORDS if w in exposure]
         body = [w for w in NONPUBLIC_BODY_WORDS if w in exposure or w in store]
-        if cred:
-            return 'P2', f'参照系だが露出内容が認証情報({cred[0]})で、認可が緩い'
-        if body:
-            return 'P2', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
+        kind = (f'認証情報({cred[0]})' if cred
+                else f'非公開データの実体({body[0]})' if body else None)
+        if kind and (no_auth or unauth_reach):
+            why = '認証チェックが無い' if no_auth else '未認証で到達(実測)'
+            return 'P1', f'参照系だが露出内容が{kind}で、{why}'
+        if kind:
+            return 'P2', f'参照系だが露出内容が{kind}で、認可が緩い(認証は要る)'
+
+    # --- P2: 参照系でも、認可の根拠と操作対象が結び付いていない ---
+    # 「読み取り系だから P3」は、実害が認可バイパスである行を埋もれさせる。
+    # 有効なトークン/URL を1つ持っていれば、対象だけ差し替えて本来アクセス権の
+    # 無いファイルに届く。認証の有無とは独立した欠陥なので、認可が緩いことを
+    # 条件にしない。
+    if id_binding_missing:
+        return 'P2', (f'{method}: 認可の根拠と操作対象の識別子を突合していない'
+                      f'(有効な資格1つで他リソースに到達しうる)')
 
     # --- 対象外: admin-access 相当で保護され、指摘も実証も無い ---
     if (not has_finding) and (not proven) and (

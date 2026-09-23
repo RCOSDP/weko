@@ -4,6 +4,7 @@ import ast,re,os
 import os as _os, sys as _sys
 _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from paths import data_path as _data_path
+from audit_authz import id_binding as _id_binding
 
 # 入出力: 既定は $WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv を in-place 更新。
 # 以前は R+"weko3_api_list.tsv"(24列版)を読み書きしており、いま実行すると
@@ -106,15 +107,38 @@ def col_mech(c):
 
 # --- bola_risk: object-level認可(所有者/対象単位チェック)が実装にあるか ---
 OWNER=re.compile(r"created_by|check_created_id|owner|current_user\.(id|get_id)|weko_shared|can_edit|is_himself|has_permission|check_authority|activity_login_user|check_index_permission|permission_factory|need_record_permission|get_or_404|filter_by\([^)]*user")
+
+# 対象を指す識別子は URI パスだけに現れるとは限らない。body/query で対象を
+# 決める経路を「リソースID無し」で落とすと、その行は object-level 認可の
+# 検査対象から丸ごと外れる。実際にこの穴から見落としが出ている。
+ID_IN_PARAM=re.compile(r"(^|[;,\s])(pid_value|recid|record_id|item_id|activity_id"
+                       r"|bucket_id|group_id|index_id|community_id|file_name"
+                       r"|filename|object_version|version_id)\b")
+
+def _resource_id_source(c):
+    """対象を指す識別子がどこから来るか。パス / body / query / 無し。"""
+    if re.search(r"<[^>]*(pid_value|recid|id|identifier|bucket_id|activity_id|group_id|key)", _col(c,"uri")):
+        return "path"
+    for col,label in (("body_params","body"),("query_params","query")):
+        if ID_IN_PARAM.search(_col(c,col) or ""):
+            return label
+    return ""
+
 def col_bola(c,seg):
-    m=(_col(c,"method") or "GET").split(",")[0]
-    # パスにリソースID(<...pid/id/recid...>)があるか
-    has_id=bool(re.search(r"<[^>]*(pid_value|recid|id|identifier|bucket_id|activity_id|group_id|key)", _col(c,"uri")))
-    if not has_id: return "N/A(リソースID無し)"
+    src=_resource_id_source(c)
+    if not src: return "N/A(リソースID無し)"
     if "ModelView" in _col(c,"api_type"): return "admin-role-tableのみ(オブジェクト単位判定なし=管理者は全件)"
-    if OWNER.search(seg): return "object-level認可あり(所有者/対象単位)"
+    if OWNER.search(seg):
+        # 所有者チェックらしき呼び出しが「在る」ことと、それが「効いている」ことは別。
+        # 対象をトークンや発行済みURLの行IDから引いておきながら、引いた対象と
+        # リクエストの識別子を突き合わせていない実装は、呼び出しの有無では
+        # 見分けがつかない。突合が見えない行は「認可あり」と断じない。
+        if _id_binding(seg)=="missing":
+            return "★object-level認可なし(要確認・所有者チェックはあるが識別子の突合が見えない)"
+        return "object-level認可あり(所有者/対象単位)"
     # sec_patternに所有者チェック欠落があれば実証済み
     if "所有者チェック欠落" in _col(c,"sec_pattern"): return "★object-level認可なし(BOLA・実証済)"
+    if src!="path": return f"★object-level認可なし(要確認・{src}指定の対象に所有者チェックが見えない)"
     return "★object-level認可なし(要確認・ID直指定で他リソース操作の懸念)"
 
 mech_c=collections.Counter() if False else {}

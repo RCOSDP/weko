@@ -73,10 +73,30 @@ def test_到達可否が未測定の状態変更系はP2():
     assert p == 'P2' and '未測定' in why
 
 
-def test_参照系でも露出が認証情報で認可が緩ければP2():
+def test_非公開情報が無認証で取れるならP1():
+    """何も持たない相手に渡ってしまう経路は、書き込み系と同じ棚に置く。"""
     p, why = cls(method='GET', auth_required='不要', data_op='取得',
                  sec_pattern='認証不要で参照可', sec_exposed='client_secret')
-    assert p == 'P2' and '認証情報' in why
+    assert p == 'P1' and '認証情報' in why and '認証チェックが無い' in why
+
+
+def test_実測で未認証到達なら認証必須の設計でもP1():
+    """設計上は認証必須でも、実測で未認証が届くなら守られていない。"""
+    p, why = cls(method='GET', auth_required='要', data_op='取得',
+                 sec_pattern='情報露出:露出:非公開業務データ',
+                 sec_exposed='非公開アイテムのメタデータ',
+                 dynamic_verified='[実測] 未認証で到達 | anon=200(到達)')
+    assert p == 'P1' and '未認証で到達' in why
+
+
+def test_同じ露出でも認証が要るなら一段下げてP2():
+    """有効な資格情報が要るぶん一段下げる。P1 と同じ棚に並べると、
+    誰でも読める経路が埋もれる。"""
+    p, why = cls(method='GET', auth_required='要', data_op='取得',
+                 sec_pattern='情報露出:露出:非公開業務データ',
+                 sec_exposed='非公開アイテムのメタデータ',
+                 dynamic_verified='[実測] ログインのみで到達')
+    assert p == 'P2' and '認証は要る' in why
 
 
 def test_露出の記述だけでは引き上げない():
@@ -196,3 +216,62 @@ def test_二度流しても結果が変わらない(tmp_path):
     once = open(p, encoding='utf-8').read()
     prioritize.apply_to(p)
     assert open(p, encoding='utf-8').read() == once
+
+
+# --- 認可の「中身」の欠陥(入口より深い層。audit_authz.py と対になる) -------
+
+def test_認可判定の入力を書き換えられる状態変更系はP1():
+    """入口の認可は通っている。壊れるのはデータではなく、以降の認可判定そのもの。
+
+    デコレータは付いているので「認証あり」に見え、従来は P2 に沈んでいた。
+    """
+    p, why = cls(method='POST', auth_required='要', data_op='更新',
+                 sec_pattern='認可不整合:認可入力汚染')
+    assert p == 'P1' and '認可入力汚染' in why
+
+
+def test_認可入力汚染は新規作成しかしなくても下げない():
+    """データを壊さないから軽い、が成り立たない型。壊れるのは認可の前提。"""
+    p, _ = cls(method='POST', auth_required='要', data_op='作成',
+               sec_pattern='認可不整合:認可入力汚染')
+    assert p == 'P1'
+
+
+def test_識別子突合の欠落は参照系でもP2():
+    """「読み取り系だから P3」では、実害が認可バイパスである行が埋もれる。"""
+    p, why = cls(method='GET', auth_required='不要', data_op='取得',
+                 sec_pattern='認可不整合:識別子突合欠落')
+    assert p == 'P2' and '突合' in why
+
+
+def test_識別子突合の欠落は認証があってもP2のまま():
+    """有効な資格を1つ持てば通る欠陥で、認証の有無とは独立している。
+    具体的な権限チェック機構があっても P5 に落とさない。"""
+    p, _ = cls(method='GET', auth_required='要',
+               auth_method='need_record_permission', data_op='取得',
+               sec_pattern='認可不整合:識別子突合欠落')
+    assert p == 'P2'
+
+
+def test_公開設計でも識別子突合の欠落なら見逃さない():
+    """意図的な公開(P4)は「指摘が無いこと」が前提。指摘があれば先に拾う。"""
+    p, _ = cls(method='GET', uri='/api/oai', auth_required='不要', data_op='取得',
+               sec_pattern='認可不整合:識別子突合欠落')
+    assert p == 'P2'
+
+
+def test_判定に使う語彙はschemaが持つ():
+    """prioritize が探す文字列と台帳の語彙が別々に古びないようにする。
+    型を足すときに片方だけ直す事故が、この列では実際に起きている。"""
+    import schema
+    assert prioritize.AUTHZ_SCOPE_PATTERNS is schema.AUTHZ_SCOPE_PATTERNS
+    assert prioritize.ID_BINDING_PATTERN in schema.AUTHZ_SCOPE_PATTERNS
+
+
+def test_prioritizeはinproc_callersを読まない():
+    """`inproc_callers` の `なし` は「プロセス内に呼び出し元が無い」であって
+    「未使用」ではない。整理対象の判定に単独で効かせると、ブラウザの JS から
+    だけ叩かれている経路を「非利用」と誤って落とす。2026-08-26 の nginx 遮断で
+    実際に起きた誤りなので、接続していないことをテストで固定する。"""
+    import inspect
+    assert 'inproc_callers' not in inspect.getsource(prioritize)
