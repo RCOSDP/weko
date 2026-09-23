@@ -240,3 +240,50 @@ def test_列が無い台帳では列の追加を促して止まる(tmp_path, rep
         f.write('\t'.join('-' for _ in hdr) + '\n')
     p = run('refresh_callers.py', '--root', repo.root, '--full', tsv, expect=1)
     assert 'schema.py' in p.stdout + p.stderr
+
+
+# --- CI 用のゲート ---------------------------------------------------------
+
+CALLER_SRC = src('''
+    from weko_demo.views import soft_delete
+
+    def prepare(value):
+        return soft_delete(value)
+''')
+
+
+def _one_row_ledger(tmp_path, repo, recorded='-'):
+    """呼び出し元が1つあるソースと、台帳1行を用意する。"""
+    repo(TARGET, TARGET_SRC)
+    repo(OTHER, CALLER_SRC)
+    row = make_row(impl_func='soft_delete', impl_file=TARGET, impl_line='1',
+                   uri='/secret/path/<id>', endpoint='weko_demo.secret_endpoint',
+                   inproc_callers=recorded)
+    return write_full(tmp_path / 'full.tsv', [row])
+
+
+def test_gateは台帳とソースがずれていれば1で落ちる(tmp_path, repo):
+    """認可を足す PR で、HTTP 以外の入口を持つビューを素通りさせないためのゲート。
+    落ちなくなると、第二の入口を見落としたまま緑で通る。"""
+    tsv = _one_row_ledger(tmp_path, repo)
+    run('refresh_callers.py', '--root', repo.root, '--full', tsv,
+        '--summary-only', '--gate', expect=1)
+
+
+def test_gateは台帳が追いついていれば0で通る(tmp_path, repo):
+    tsv = _one_row_ledger(tmp_path, repo)
+    run('refresh_callers.py', '--root', repo.root, '--full', tsv, '--write',
+        expect=0)
+    run('refresh_callers.py', '--root', repo.root, '--full', tsv,
+        '--summary-only', '--gate', expect=0)
+
+
+def test_summary_onlyは経路名もファイル名も出さない(tmp_path, repo):
+    """public な CI のログ・artifact・PR コメントは誰でも読める。
+    件数だけを出すことを、reconcile / detect_routes と同じくここでも固定する。"""
+    tsv = _one_row_ledger(tmp_path, repo)
+    p = run('refresh_callers.py', '--root', repo.root, '--full', tsv,
+            '--summary-only', '--gate', expect=1)
+    for leaked in ('/secret/path', 'secret_endpoint', 'views.py', 'caller.py',
+                   str(tsv), 'no='):
+        assert leaked not in p.stdout, f'{leaked} が出ている'

@@ -122,8 +122,8 @@ jobs:
         env:
           WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
         run: |
-          python3 tools/api-inventory/scripts/add_inproc_callers.py \
-            --check --summary-only --gate
+          python3 tools/api-inventory/scripts/refresh_callers.py \
+            --summary-only --gate
 
       - name: Start WEKO containers
         if: steps.cfg.outputs.enabled == 'true'

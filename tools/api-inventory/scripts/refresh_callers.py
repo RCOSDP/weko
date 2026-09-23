@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """inproc_callers を現在のソースから引き直す。
 
-    python3 refresh_callers.py            # 差分を表示するだけ
-    python3 refresh_callers.py --write    # 台帳に書き戻す
+    python3 refresh_callers.py                        # 差分を表示するだけ
+    python3 refresh_callers.py --write                # 台帳に書き戻す
+    python3 refresh_callers.py --summary-only --gate  # CI 用。ずれがあれば exit 1
 
 **`refresh_impl.py` の後に回すこと。** 記録するのが `ファイル:行番号` なので、
 バージョンが変われば必ずずれる(`impl_line` と同じ性質)。
@@ -279,6 +280,10 @@ def main():
                    help='既定: $WEKO_API_INVENTORY_DIR/weko3_api_list_full.tsv')
     p.add_argument('--root', default=None, help='解析対象の WEKO3 チェックアウト')
     p.add_argument('--write', action='store_true', help='台帳に書き戻す')
+    p.add_argument('--summary-only', action='store_true',
+                   help='件数だけ出す(public な CI 用。no も経路名もファイル名も出さない)')
+    p.add_argument('--gate', action='store_true',
+                   help='台帳とソースがずれていれば終了コード1')
     a = p.parse_args()
 
     tsv = a.full or data_path('weko3_api_list_full.tsv')
@@ -327,23 +332,35 @@ def main():
             changed.append((r[0], r[col][:40], new[:60]))
             r[col] = new
 
-    print(f'{tsv}: 呼び出し元あり {found} / なし {none_} / 未調査 {unknown} '
-          f'(変更 {len(changed)} 行)')
-    for c in changed[:30]:
-        print(f'  no={c[0]:<5} {c[1] or "(空)"} -> {c[2]}')
-    if len(changed) > 30:
-        print(f'  ... 他 {len(changed) - 30} 件')
-    for u in unresolved[:10]:
-        print(f'  ★impl_func を impl_file 内に見つけられない no={u[0]:<5} {u[1]}  {u[2]}')
-    if len(unresolved) > 10:
-        print(f'  ... 他 {len(unresolved) - 10} 件')
+    if a.summary_only:
+        print(f'inproc_callers: 呼び出し元あり {found} / なし {none_} / '
+              f'未調査 {unknown} / 台帳とのずれ {len(changed)} 行')
+    else:
+        print(f'{tsv}: 呼び出し元あり {found} / なし {none_} / 未調査 {unknown} '
+              f'(変更 {len(changed)} 行)')
+        for c in changed[:30]:
+            print(f'  no={c[0]:<5} {c[1] or "(空)"} -> {c[2]}')
+        if len(changed) > 30:
+            print(f'  ... 他 {len(changed) - 30} 件')
+        for u in unresolved[:10]:
+            print(f'  ★impl_func を impl_file 内に見つけられない no={u[0]:<5} {u[1]}  {u[2]}')
+        if len(unresolved) > 10:
+            print(f'  ... 他 {len(unresolved) - 10} 件')
 
     if a.write and changed:
         open(tsv, 'w', encoding='utf-8').write(
             '\n'.join('\t'.join(x) for x in rows) + '\n')
         print(f'  → {len(changed)} 行の inproc_callers を書き戻した')
-    elif not a.write:
+    elif not a.write and not a.summary_only:
         print('  (--write を付けると書き戻す)')
+
+    # 認可を足す PR で、HTTP 以外の入口を持つビューを素通りさせないためのゲート。
+    # add_inproc_callers.py が持っていた --check --gate の後継。あちらは
+    # 「台帳に無い呼び出し元が現れた」方向だけを見ていたが、こちらは消えた方向も
+    # ずれとして数える。台帳を更新せずにソースを変えたことを止めるのが目的なので、
+    # 向きで区別しない。
+    if a.gate and changed:
+        sys.exit(1)
 
 
 if __name__ == '__main__':

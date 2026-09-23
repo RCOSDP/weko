@@ -60,7 +60,6 @@ cd /path/to/weko          # ツールは WEKO3 リポジトリ側にある
 判定ルールを変えた、テストを追加した、といったとき。
 
 ```bash
-python3 tools/api-inventory/scripts/add_inproc_callers.py  # in-process 呼び出し元を付与
 python3 tools/api-inventory/scripts/test_coverage.py    # テスト4観点を判定
 python3 tools/api-inventory/scripts/prioritize.py       # 優先度・整理対象を付与
 python3 tools/api-inventory/scripts/build_checklist.py  # 32列版を再生成
@@ -86,12 +85,15 @@ kwargs は空、ボディのキーも recid ではないので id が取れず a
 `inproc_callers` 列はこの死角を可視化するために足した。
 
 ```bash
-# 単体で確認する(列を書かずに一覧だけ見る)
-WEKO_ROOT=/home/mhaya/wekov2 python3 tools/api-inventory/scripts/audit_inprocess_views.py
+# 台帳に書かずに、ソースとのずれだけ見る
+WEKO_ROOT=/home/mhaya/wekov2 python3 tools/api-inventory/scripts/refresh_callers.py
 
 # CI から回すときは件数だけ(ログ・artifact・PRコメントは誰でも読める)
-python3 .../audit_inprocess_views.py --summary-only --fail-on-high
+python3 tools/api-inventory/scripts/refresh_callers.py --summary-only --gate
 ```
+
+この列を引き直すのは `refresh_callers.py`。`impl_file:行番号` を記録するので、
+**`refresh_impl.py --write` の後に回すこと。**
 
 `risk=HIGH` は「認可デコレータ付きのビューを、位置引数で in-process 呼び出し
 している」もの。デコレータは呼び出し元のリクエストコンテキストで動くので、
@@ -702,8 +704,6 @@ git push origin main --follow-tags
 | `apply2.py` / `check_reachable.py` / `dump_modelviews.py` | — | Phase 1-3 の使い捨て。パスが決め打ちなので、そのままでは回らない。参考として残してある |
 | `remeasure.sh` | — | 非推奨。`measure.sh` に統合(案内のみ) |
 | `add_cols.py` / `add_ssrf_redirect.py` / `add_idempotency.py` / `add_dataop4.py` / `add_authmech.py` | full.tsv + 実装ソース | full.tsv の**空欄/TODO セルのみ**を機械付与 |
-| `audit_inprocess_views.py` | 実装ソース(AST) | 何も書かない(in-process 呼び出しを報告するだけ) |
-| `add_inproc_callers.py` | full.tsv + `audit_inprocess_views.py` | full.tsv の `inproc_callers`(**空欄/TODO セルのみ**) |
 
 `test_coverage.py` → `prioritize.py` → `build_checklist.py` は**何度流しても結果が変わらない**
 (冪等)。32列版は full.tsv から完全に再現できることを確認済み。
