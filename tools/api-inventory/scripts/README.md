@@ -828,6 +828,45 @@ A・B はヒューリスティックで、**偽陽性を許して取りこぼし
 呼び出しを辿る段数は `--depth`(既定3)。段数を1にすると入口しか見ないので、
 今回の欠陥は拾えない。
 
+### 応答に非公開判定が効いているかを見る(`audit_masking.py`)
+
+上の表は列を**付与する**スクリプト。`audit_masking.py` は列を書かず、
+**確認待ちの行列を出す**。見るのは「誰が入れるか」ではなく「入れた人に何が返るか」で、
+WEKO の非公開が次の6種類に分かれていて**別々の場所で判定される**ことを前提にする。
+
+| 種類 | 判定する関数 |
+|---|---|
+| アイテム非公開・公開日 | `check_publish_status`(publish_status と pubdate の未来日) |
+| インデックス権限 | `check_index_permissions`(public_state / browsing_role / browsing_group / 公開日) |
+| オーナ権限 | `check_created_id` / `hide_meta_data_for_role` |
+| ファイル公開条件 | `hide_by_file`(accessrole=open_no を落とす) / `check_file_download_permission` |
+| アイテムタイプの非公開項目 | `hide_by_itemtype`(option.hidden の項目を落とす) |
+| メールアドレス | `hide_by_email` |
+
+```bash
+export WEKO_ROOT=/path/to/weko
+python3 tools/api-inventory/scripts/audit_masking.py                       # 4検知のサマリ
+python3 tools/api-inventory/scripts/audit_masking.py --serializers         # A: シリアライザ別のマスク表
+python3 tools/api-inventory/scripts/audit_masking.py --factories           # B: None に潰された認可ファクトリ
+python3 tools/api-inventory/scripts/audit_masking.py --rows --method PUT,PATCH,DELETE
+python3 tools/api-inventory/scripts/audit_masking.py --helpers             # D: マスクヘルパの fan-in
+```
+
+**入口の認可と応答のマスクは別物で、片方だけ通っている経路がある。** 同じ対象を返すのに、
+画面側は一式のマスクを通し、API 側は一部しか通さない、という食い違いが起きうる。
+入口で弾けなかった経路がそのまま本文を返せば、隠すはずのものが応答に載る。
+**該当する経路をここに書かないこと**(`docs/RULE.md` §1「判断するのはファイルではなく内容」)。
+出力の明細は private 側で読む。
+
+C は既定で `data_store` がアイテム/ファイルのテーブルを指す行だけを見る(`--all` で広げる)。
+`dynamic_verified` が `測定対象外` の行(到達不能な重複登録)は外す。
+デコレータ経由で届くマスクは `条件付き` として直接呼びと区別し、そのデコレータが読む
+factory が B で None に潰されていれば行に印を付ける。**この2つを突き合わせて初めて
+「何にも守られていない」と言える。**
+
+判定はヒューリスティックで、出力は指摘ではなく確認待ちの行列。確認した結果を台帳の
+`sec_pattern` / `sec_exposed` に書くことで消える。public な CI では `--summary-only`。
+
 ### 認証・認可の参照辞書(手動で維持)
 - ロール: System/Repository/Community Administrator, Contributor, General
 - スコープ: `*/scopes.py`(item:read, file:read, index:*, author:*, oa_status:update等)
