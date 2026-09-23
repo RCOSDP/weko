@@ -73,10 +73,30 @@ def test_到達可否が未測定の状態変更系はP2():
     assert p == 'P2' and '未測定' in why
 
 
-def test_参照系でも露出が認証情報で認可が緩ければP2():
+def test_非公開情報が無認証で取れるならP1():
+    """何も持たない相手に渡ってしまう経路は、書き込み系と同じ棚に置く。"""
     p, why = cls(method='GET', auth_required='不要', data_op='取得',
                  sec_pattern='認証不要で参照可', sec_exposed='client_secret')
-    assert p == 'P2' and '認証情報' in why
+    assert p == 'P1' and '認証情報' in why and '認証チェックが無い' in why
+
+
+def test_実測で未認証到達なら認証必須の設計でもP1():
+    """設計上は認証必須でも、実測で未認証が届くなら守られていない。"""
+    p, why = cls(method='GET', auth_required='要', data_op='取得',
+                 sec_pattern='情報露出:露出:非公開業務データ',
+                 sec_exposed='非公開アイテムのメタデータ',
+                 dynamic_verified='[実測] 未認証で到達 | anon=200(到達)')
+    assert p == 'P1' and '未認証で到達' in why
+
+
+def test_同じ露出でも認証が要るなら一段下げてP2():
+    """有効な資格情報が要るぶん一段下げる。P1 と同じ棚に並べると、
+    誰でも読める経路が埋もれる。"""
+    p, why = cls(method='GET', auth_required='要', data_op='取得',
+                 sec_pattern='情報露出:露出:非公開業務データ',
+                 sec_exposed='非公開アイテムのメタデータ',
+                 dynamic_verified='[実測] ログインのみで到達')
+    assert p == 'P2' and '認証は要る' in why
 
 
 def test_露出の記述だけでは引き上げない():
