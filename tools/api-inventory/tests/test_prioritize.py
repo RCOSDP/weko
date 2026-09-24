@@ -275,3 +275,74 @@ def test_prioritizeはinproc_callersを読まない():
     実際に起きた誤りなので、接続していないことをテストで固定する。"""
     import inspect
     assert 'inproc_callers' not in inspect.getsource(prioritize)
+
+
+# --- 状態変更系の判定 -------------------------------------------------------
+#
+# POST は「状態を変える」の同義ではない。メソッドだけで見ると、読むだけの経路が
+# 「認証なしの状態変更系」として最上位に並び、本当に直すべき行が埋もれる。
+
+def test_読み取りだけのPOSTは状態変更系にしない():
+    """OAI-PMH は仕様上 GET と POST が等価。検索・ルックアップ系の AJAX も同じ。"""
+    p, why = cls(method='GET,POST', auth_required='不要', data_op='取得',
+                 uri='/oai')
+    assert p != 'P1', '読むだけの経路が状態変更系として最上位に来ている'
+    assert '状態変更系' not in why
+
+
+def test_data_opが取得でも副作用があれば状態変更系():
+    """data_op は当てにならない。実際にはアイテムを登録しているのに `取得` と
+    書かれた行があるため、side_effects も併せて見る。"""
+    p, why = cls(method='POST', auth_required='不要', data_op='取得',
+                 side_effects='メール送信(利用申請URL通知)')
+    assert p == 'P1' and '状態変更系' in why
+
+
+def test_副作用の無い読み取りPOSTは露出で判断する():
+    """状態変更系から外れた行は、何が漏れるかで改めて評価されること。"""
+    p, why = cls(method='POST', auth_required='不要', data_op='取得',
+                 sec_pattern='情報露出:露出:非公開業務データ',
+                 sec_exposed='非公開アイテムのメタデータ')
+    assert p == 'P1' and '非公開データの実体' in why
+
+
+# --- 露出内容の区分 ---------------------------------------------------------
+
+def test_個人情報の露出も引き上げる():
+    """氏名・メールアドレスの一覧が漏れる経路を「参照系だから」で沈めない。
+    認証情報・非公開データの実体と同じ棚で扱う。"""
+    p, why = cls(method='POST', auth_required='要', data_op='取得',
+                 sec_pattern='情報露出:露出:個人情報',
+                 sec_exposed='申請者のメールアドレスを含む全アクティビティログ',
+                 dynamic_verified='[実測] ログインのみで到達')
+    assert p == 'P2' and '個人情報' in why
+
+
+def test_個人情報でも無認証なら最上位():
+    p, why = cls(method='GET', auth_required='不要', data_op='取得',
+                 sec_pattern='情報露出:露出:個人情報',
+                 sec_exposed='★PII:氏名/所属')
+    assert p == 'P1' and '個人情報' in why
+
+
+def test_認証情報は個人情報より先に見る():
+    """両方に当たる値(`★PII:email/password_hash` など)は、重いほうを採る。"""
+    p, why = cls(method='GET', auth_required='不要', data_op='取得',
+                 sec_pattern='情報露出:露出:個人情報',
+                 sec_exposed='★PII:email/password_hash')
+    assert p == 'P1' and '認証情報' in why
+
+
+def test_認可の指摘がある行は読み取り扱いでも降格させない():
+    """状態変更系の判定は data_op と side_effects に依るが、どちらも機械で埋まる
+    列で取りこぼす(`/admin/change_list/delete` が `取得` と書かれている等)。
+    人が書いた `認可不整合:...` を、区分の変更で静かに P3 へ沈めない。"""
+    p, why = cls(method='POST', auth_required='要', data_op='取得',
+                 uri='/admin/demo/delete', sec_pattern='認可不整合:所有者チェック欠落')
+    assert p == 'P2' and '認可の指摘がある' in why
+
+
+def test_指摘の無い読み取りPOSTは降格してよい():
+    """降ろしてよいのは「指摘が無く、かつ変更もしない」と言える行だけ。"""
+    p, _ = cls(method='GET,POST', auth_required='不要', data_op='取得', uri='/oai')
+    assert p not in ('P1', 'P2')
