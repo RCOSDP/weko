@@ -522,6 +522,8 @@ python3 $INV/audit_masking.py --rows --method PUT,PATCH,DELETE   # 書き込み�
 
 入口の認可と応答のマスクは別物で、**片方だけ通っている経路がある。**
 `audit_authz.py` は「誰が入れるか」、`audit_masking.py` は「入れた人に何が返るか」を見る。
+**どちらもゲートではない**(CI からは回さない)。詰める強制力は手順 8 の
+`open_findings.py` が持つ。
 件数が多いときは `--method` や `--rows` で絞る。詳しい読み方は
 `tools/api-inventory/scripts/README.md`。
 
@@ -536,11 +538,22 @@ python3 $INV/prioritize.py
 python3 $INV/build_checklist.py
 python3 $INV/reconcile.py --gate          # exit 0 を確認する
 python3 $INV/open_findings.py --gate      # exit 0 を確認する
+python3 $INV/audit_evidence.py --gate     # exit 0 を確認する
 ```
 
 順序に意味がある。`prioritize.py` は `test_coverage.py` の結果を読む。
 `refresh_callers.py` は `impl_line` と同じく `ファイル:行番号` を記録するので、
 **`refresh_impl.py` の後**に回す。上から順に流すこと。
+
+`refresh_callers.py` と `audit_evidence.py` は**解析対象のリビジョンに依存する。**
+`ファイル:行番号` を突き合わせるので、台帳の測定先と違うソースに当てると
+**中身の問題ではなくバージョン違いだけで落ちる。** §2-3 の固定 worktree
+(`~/weko3`)を用意しておくこと。実測では、版を1つ上げるだけで台帳の位置参照
+410 箇所のうち 250 箇所が変更されたファイルを指す。
+
+`audit_evidence.py` が落ちたら、位置参照を新しい行番号に直すか、DB の行では
+ないものを消している等の理由を private 側の `evidence_allow.json` に**理由つきで**
+登録する。理由が空の登録は効かない。
 
 **確認**: `release_tag` 列に今回のタグが 1 行も出てこなかったら、先頭 2 本を回し忘れている。
 
@@ -567,6 +580,11 @@ python3 $INV/open_findings.py             # 記入漏れの no が出る
 |---|---|
 | `issueNNNNN` | 起票した |
 | `未起票` | まだ起票していないと**意識して**決めた |
+
+`open_findings.py` にはもう1つゲートがある。**指摘(`sec_pattern`)があるのに
+`sec_exposed` が空な P1/P2 行**がベースラインを超えると落ちる。露出が無いと
+確認したなら `[露出なし(確認済み:日付)] 理由` と書いて減らす。**空欄は
+「まだ見ていない」としか読めない。**
 
 **番号だけを書き、説明を添えないこと。** 「issueNNNNN ○○の認可漏れ」と書いた時点で
 それは所見であり、public 側の CI に出せなくなる（`docs/RULE.md` §1）。

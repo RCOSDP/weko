@@ -113,14 +113,42 @@ jobs:
         with:
           python-version: '3.11'
 
+      # 台帳は「どのリビジョンを測ったか」とセットでしか意味を持たない
+      # (docs/RULE.md 規則 2-3)。inproc_callers と sec_evidence は
+      # `ファイル:行番号` を持つので、PR の HEAD と突き合わせると
+      # **中身の問題ではなくバージョン違いだけで落ちる**。実測では、版を1つ
+      # 上げるだけで台帳の位置参照 410 箇所のうち 250 箇所が変更ファイルを指す。
+      # 台帳が測ったリビジョンを worktree に出して、そこを解析対象にする。
+      - name: Pin analysis source to the measured revision
+        id: pin
+        if: steps.cfg.outputs.enabled == 'true'
+        run: |
+          set -eu
+          REV=$(python3 -c "import json;print(json.load(open('.api-inventory-data/api_snapshot.json'))['meta'].get('revision') or '')" 2>/dev/null || echo '')
+          if [ -z "$REV" ]; then
+            echo "::warning::台帳に meta.revision がありません。位置参照と inproc_callers の検査をスキップします。スキップを PASS と読まないこと。"
+            echo "weko_root=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git cat-file -e "${REV}^{commit}" 2>/dev/null || git fetch --no-tags origin "$REV" 2>/dev/null || true
+          if git cat-file -e "${REV}^{commit}" 2>/dev/null; then
+            git worktree add --detach .ledger-src "$REV" >/dev/null
+            echo "測定リビジョン ${REV} を .ledger-src に展開した"
+            echo "weko_root=${GITHUB_WORKSPACE}/.ledger-src" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::台帳の測定リビジョン ${REV} をこのリポジトリで解決できません。位置参照と inproc_callers の検査をスキップします。スキップを PASS と読まないこと。"
+            echo "weko_root=" >> "$GITHUB_OUTPUT"
+          fi
+
       # ソース(AST)と台帳だけで済むので、コンテナを立てる前に流す。
       # ビュー関数が HTTP を通らず別モジュールから直接呼ばれる「第二の入口」は
       # ルート単位の台帳に現れず、認可を足す作業で素通りする(issue62807)。
       # 台帳の inproc_callers に無い呼び出し元が現れたら止める。
       - name: Check in-process view callers
-        if: steps.cfg.outputs.enabled == 'true'
+        if: steps.cfg.outputs.enabled == 'true' && steps.pin.outputs.weko_root != ''
         env:
           WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+          WEKO_ROOT: ${{ steps.pin.outputs.weko_root }}
         run: |
           python3 tools/api-inventory/scripts/refresh_callers.py \
             --summary-only --gate
@@ -139,9 +167,10 @@ jobs:
       # 台帳の検査(private 側)は形と語彙しか見ない。sec_evidence の行番号を
       # 実在しない値にしても data_op を誤った値にしても全部通る。ここで突き合わせる。
       - name: Check ledger evidence against source
-        if: steps.cfg.outputs.enabled == 'true'
+        if: steps.cfg.outputs.enabled == 'true' && steps.pin.outputs.weko_root != ''
         env:
           WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+          WEKO_ROOT: ${{ steps.pin.outputs.weko_root }}
         run: |
           python3 tools/api-inventory/scripts/audit_evidence.py \
             --summary-only --gate

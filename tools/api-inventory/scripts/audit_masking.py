@@ -541,7 +541,6 @@ def main():
     p.add_argument('--rows', action='store_true')
     p.add_argument('--helpers', action='store_true')
     p.add_argument('--json', dest='json_out', default=None)
-    p.add_argument('--gate', action='store_true')
     p.add_argument('--summary-only', action='store_true')
     a = p.parse_args()
 
@@ -612,8 +611,6 @@ def main():
                       f, ensure_ascii=False, indent=2)
         print(f'明細を書き出した: {a.json_out}')
 
-    if a.gate and (ser_bad or rows_res):
-        sys.exit(1)
 
 
 if __name__ == '__main__':

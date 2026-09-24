@@ -14,7 +14,7 @@
 (`docs/RULE.md` §1「判断するのはファイルではなく内容」)。
 """
 import audit_masking as am
-from conftest import make_row
+from conftest import make_row, run
 
 
 def _idx(fake_repo, relpath, src):
@@ -264,3 +264,25 @@ def test_summary_onlyはURIもendpoint名も出さない(fake_repo, full_tsv, tm
     assert '/secret/path' not in p.stdout
     assert 'secret_endpoint' not in p.stdout
     assert '1 件' in p.stdout
+
+
+def test_これはゲートではない(tmp_path, fake_repo):
+    """A のシリアライザ表は欠陥一覧ではなく棚卸しで、アイテム4種のマスクに
+    届かないシリアライザは常に存在する(アイテム単位の認可は permission factory の
+    仕事なので、ゼロにはならない)。そこを落第条件にすると**絶対に緑にならない
+    ゲート**になる。実際に一度そう書いてしまったので、戻さないよう固定する。
+
+    行列を詰める強制力は `open_findings.py` のゲート C が持つ。
+    """
+    fake_repo('modules/weko-demo/weko_demo/views.py',
+              'def show(pid):\n    return dumps(record)\n')
+    from conftest import write_full
+    tsv = write_full(tmp_path / 'full.tsv', [
+        make_row(no='1', response='レコードJSON',
+                 data_store='PostgreSQL:records_metadata',
+                 impl_file='modules/weko-demo/weko_demo/views.py', impl_func='show'),
+    ])
+    p = run('audit_masking.py', '--weko-root', fake_repo.root, '--full', tsv,
+            expect=0)
+    assert '本文を返すのにマスクに届かない行' in p.stdout
+    assert '--gate' not in p.stdout
