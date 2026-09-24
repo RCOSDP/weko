@@ -902,6 +902,46 @@ factory が B で None に潰されていれば行に印を付ける。**この2
 判定はヒューリスティックで、出力は指摘ではなく確認待ちの行列。確認した結果を台帳の
 `sec_pattern` / `sec_exposed` に書くことで消える。public な CI では `--summary-only`。
 
+### 台帳の記述がソースと合っているかを見る(`audit_evidence.py`)
+
+台帳の検査(private 側 `tests/`)は**形と語彙しか見ていない**。列数・ヘッダ・採番・
+語彙表に入っているか・派生列が再現するか。**中身が本当かは一本も見ていない。**
+
+実験で確かめた穴がある。次の書き換えはテストもゲートも全部通る。
+
+| 書き換え | 通るか |
+|---|---|
+| `sec_evidence` の行番号を実在しない値にする | **通る** |
+| `data_op` の削除方式を誤った値に戻す | **通る** |
+| `sec_exposed` を嘘の文面にする | **通る**(`open_findings.py` 側のゲート C で受ける) |
+
+`impl_line` には `refresh_impl.py` と突き合わせテストがあるのに、**`sec_evidence` は
+同じ `ファイル:行番号` の形をしているのに検査が無かった。** バージョンが変われば
+必ず腐る。
+
+```bash
+export WEKO_ROOT=/path/to/weko
+python3 tools/api-inventory/scripts/audit_evidence.py              # 2検知のサマリ
+python3 tools/api-inventory/scripts/audit_evidence.py --refs       # A: 位置参照のずれ
+python3 tools/api-inventory/scripts/audit_evidence.py --dataop     # B: data_op と実装の矛盾
+python3 tools/api-inventory/scripts/audit_evidence.py --gate       # CI 用
+```
+
+**A: 位置参照のずれ** — `sec_evidence` と `sec_detail` の `modules/.../foo.py:123` を
+拾い、ファイルが実在し行番号が範囲に収まるかを見る。`rest.py:309-313` のような
+**ファイル名だけの参照は解決できない**ので、落とさずに件数だけ出す。書くときは
+`modules/` から始まるパスにすること。
+
+**B: data_op と実装の矛盾** — `data_op` に削除があるのに実装から削除らしき
+呼び出しに届かない行を出す。逆向き(実装は消しているのに data_op に無い)は見ない。
+副作用として消える実装が多く、主たる操作を何と呼ぶかは人の判断だから。
+
+検知から外すには private 側の `evidence_allow.json` に **理由つきで**登録する
+(`reconcile_allow.json` と同じ規約。理由が空の登録は効かない)。
+
+**限界**: 「何が漏れるか」「その所見が正しいか」は原理的に見られない。ここが見るのは
+「書いてある位置が実在するか」と「書いてある操作が実装にあるか」だけ。
+
 ### 未解消の指摘を忘れない(`open_findings.py`)
 
 所見は private 側にしか書けない(`docs/RULE.md` §1)。そのぶん**未修正の指摘が
@@ -931,11 +971,15 @@ python3 tools/api-inventory/scripts/open_findings.py --summary-only  # 件数と
 python3 tools/api-inventory/scripts/open_findings.py --gate          # CI 用
 ```
 
-ゲートは2つ。**A: 記入漏れ** — `schema.FIX_REQUIRED_PRIORITIES` の行で `fix_ticket`
+ゲートは3つ。**A: 記入漏れ** — `schema.FIX_REQUIRED_PRIORITIES` の行で `fix_ticket`
 が空か語彙外なら落とす(所見を書いたのに起票し忘れるのを止める)。
 **B: 未起票の増加** — `未起票` の件数がベースライン(private 側の `fix_baseline.json`)を
 超えたら落とす。**減らすのは自由、増やすにはベースラインの更新が要る**というラチェットで、
 対応を先送りするたびに積み上がるのを防ぐ。上げるときは、なぜ起票できないのかを PR に書くこと。
+**C: 露出未記入の増加** — 指摘(`sec_pattern`)があるのに `sec_exposed` が空な P1/P2 行が
+ベースラインを超えたら落とす。`認可不整合:...` と書いておきながら何が漏れるかが空、という
+行が実在する。**露出が無いと確認したなら `[露出なし(確認済み:日付)] 理由` と書いて減らす。**
+空欄は「まだ見ていない」としか読めない。
 
 ### 認証・認可の参照辞書(手動で維持)
 - ロール: System/Repository/Community Administrator, Contributor, General

@@ -136,6 +136,16 @@ jobs:
           python3 tools/api-inventory/scripts/open_findings.py \
             --summary-only --gate
 
+      # 台帳の検査(private 側)は形と語彙しか見ない。sec_evidence の行番号を
+      # 実在しない値にしても data_op を誤った値にしても全部通る。ここで突き合わせる。
+      - name: Check ledger evidence against source
+        if: steps.cfg.outputs.enabled == 'true'
+        env:
+          WEKO_API_INVENTORY_DIR: ${{ github.workspace }}/.api-inventory-data
+        run: |
+          python3 tools/api-inventory/scripts/audit_evidence.py \
+            --summary-only --gate
+
       - name: Start WEKO containers
         if: steps.cfg.outputs.enabled == 'true'
         run: |

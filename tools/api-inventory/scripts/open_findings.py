@@ -24,8 +24,13 @@
 |---|---|
 | A. 記入漏れ | `schema.FIX_REQUIRED_PRIORITIES` の行で `fix_ticket` が空・語彙外 |
 | B. 未起票の増加 | `未起票` の件数がベースライン(`fix_baseline.json`)を超えた |
+| C. 露出未記入の増加 | 指摘があるのに `sec_exposed` が空な P1/P2 行が増えた |
 
-A は「所見を書いたのにチケットを立て忘れた」を止める。B はラチェットで、
+C は「指摘は書いたが、何が漏れるかを書いていない」を止める。台帳の検査は形と
+語彙しか見ないので、`sec_exposed` が空でも誰も気付かない。**露出が無いと確認した
+なら `[露出なし(確認済み:日付)] 理由` と書く。** 空欄は「調べていない」と読まれる。
+
+A は「所見を書いたのにチケットを立て忘れた」を止める。B と C はラチェットで、
 **既存の未起票は減らせても増やせない**。B が無いと、対応を先送りするたびに
 未起票が積み上がっても誰も気付かない。ベースラインは private 側に置く
 (件数そのものは公開してよいが、更新は台帳と同じ PR で行うため)。
@@ -55,15 +60,33 @@ def load_ledger(path):
     return [dict(zip(hdr, l.split('\t'))) for l in lines[1:]], hdr
 
 
-def load_baseline(path=None):
-    """未起票のベースライン。無ければ None(ゲート B をスキップする)。"""
+def load_baseline(path=None, key='untriaged'):
+    """ベースラインを読む。無ければ None(該当のゲートをスキップする)。"""
     p = path or data_path(BASELINE, required=False)
     if not p or not os.path.isfile(p):
         return None
     try:
-        return json.load(open(p, encoding='utf-8')).get('untriaged') or {}
+        return json.load(open(p, encoding='utf-8')).get(key) or {}
     except Exception:
         return None
+
+
+def unexposed(rows):
+    """指摘があるのに sec_exposed が空な P1/P2 行を優先度ごとに数える。
+
+    `認可不整合:...` と書いておきながら何が漏れるかが空、という行が実在する。
+    露出が無いなら無いと書く。空欄は「まだ見ていない」としか読めない。
+    """
+    out = collections.defaultdict(list)
+    for r in rows:
+        pri = (r.get('priority') or '-').strip()
+        if pri not in ('P1', 'P2'):
+            continue
+        if (r.get('sec_pattern') or '-').strip() in ('', '-'):
+            continue
+        if (r.get('sec_exposed') or '-').strip() in ('', '-'):
+            out[pri].append(r)
+    return out
 
 
 def classify(rows):
@@ -91,6 +114,24 @@ def tickets_of(rows):
             if t not in out:
                 out.append(t)
     return sorted(out)
+
+
+def report_unexposed(rows, baseline):
+    """C の報告。戻り値は (優先度 -> 件数, ベースライン超過か)。"""
+    ux = unexposed(rows)
+    counts = {p: len(v) for p, v in ux.items()}
+    total = sum(counts.values())
+    br = ' / '.join(f'{p} {n}' for p, n in sorted(counts.items())) or 'なし'
+    print(f'  指摘はあるが露出が未記入: {total} 件 ({br})')
+    over = False
+    if baseline is not None:
+        hi = {p: n - baseline.get(p, 0) for p, n in counts.items()
+              if n > baseline.get(p, 0)}
+        if hi:
+            over = True
+            print('  ★露出未記入がベースラインを超えた: '
+                  + ', '.join(f'{p} +{n}' for p, n in sorted(hi.items())))
+    return counts, over
 
 
 def report(by_kind, invalid, baseline, summary_only):
@@ -148,8 +189,10 @@ def main():
                  'schema.py と列定義 README を直してから追加してください。')
 
     baseline = load_baseline(a.baseline)
+    ux_baseline = load_baseline(a.baseline, key='unexposed')
     by_kind, invalid = classify(rows)
     untriaged = report(by_kind, invalid, baseline, a.summary_only)
+    _ux_counts, ux_over = report_unexposed(rows, ux_baseline)
 
     if a.json_out:
         with open(a.json_out, 'w', encoding='utf-8') as f:
@@ -160,13 +203,14 @@ def main():
                            for k, v in by_kind.items()},
                 'invalid': [{'no': n, 'priority': p, 'why': w}
                             for n, p, w in invalid],
+                'unexposed': _ux_counts,
             }, f, ensure_ascii=False, indent=2)
         print(f'明細を書き出した: {a.json_out}')
 
     if a.gate:
         over = baseline is not None and any(
             len(rs) > baseline.get(p, 0) for p, rs in untriaged.items())
-        if invalid or over:
+        if invalid or over or ux_over:
             sys.exit(1)
 
 

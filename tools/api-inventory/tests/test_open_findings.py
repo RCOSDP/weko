@@ -149,3 +149,59 @@ def test_語彙の区分(tmp_path):
     assert of.schema.fix_ticket_kind('-') == 'なし'
     assert of.schema.fix_ticket_kind('issueNNNNN ○○の認可漏れ') is None, \
         '説明を添えた値を通すと、番号だけという約束が崩れる'
+
+
+# --- ゲート C: 指摘があるのに露出が未記入 -----------------------------------
+#
+# `認可不整合:...` と書いておきながら何が漏れるかが空、という行が実在する。
+# 台帳の検査は形と語彙しか見ないので、空欄でも誰も気付かない。
+
+def _ux(no, priority='P2', pattern='認可不整合:所有者チェック欠落', exposed='-'):
+    return make_row(no=no, priority=priority, fix_ticket='未起票',
+                    sec_pattern=pattern, sec_exposed=exposed)
+
+
+def baseline_ux(tmp_path, untriaged, unexposed, name='b.json'):
+    p = tmp_path / name
+    json.dump({'untriaged': untriaged, 'unexposed': unexposed},
+              open(p, 'w', encoding='utf-8'), ensure_ascii=False)
+    return str(p)
+
+
+def test_指摘があるのに露出が未記入なら数える(tmp_path):
+    tsv = ledger(tmp_path, [_ux('1')])
+    p = run('open_findings.py', '--full', tsv, '--baseline',
+            baseline_ux(tmp_path, {'P2': 9}, {'P2': 9}), expect=0)
+    assert '露出が未記入: 1 件' in p.stdout
+
+
+def test_露出未記入がベースラインを超えたら落ちる(tmp_path):
+    tsv = ledger(tmp_path, [_ux('1'), _ux('2')])
+    p = run('open_findings.py', '--full', tsv, '--baseline',
+            baseline_ux(tmp_path, {'P2': 9}, {'P2': 1}), '--gate', expect=1)
+    assert '露出未記入がベースラインを超えた' in p.stdout
+
+
+def test_露出なしと書けば未記入に数えない(tmp_path):
+    """露出が無いと確認したなら、そう書いて減らす。空欄は「まだ見ていない」。"""
+    tsv = ledger(tmp_path, [_ux('1', exposed='[露出なし(確認済み:2026-09-24)] 本文は返らない')])
+    p = run('open_findings.py', '--full', tsv, '--baseline',
+            baseline_ux(tmp_path, {'P2': 9}, {}), '--gate', expect=0)
+    assert '露出が未記入: 0 件' in p.stdout
+
+
+def test_指摘が無い行は露出未記入に数えない(tmp_path):
+    """指摘が無ければ漏れるものも無い。全 P1/P2 に書かせると行列が読まれなくなる。"""
+    tsv = ledger(tmp_path, [_ux('1', pattern='-')])
+    p = run('open_findings.py', '--full', tsv, '--baseline',
+            baseline_ux(tmp_path, {'P2': 9}, {}), '--gate', expect=0)
+    assert '露出が未記入: 0 件' in p.stdout
+
+
+def test_P3以下は露出未記入に数えない(tmp_path):
+    row = _ux('1', priority='P3')
+    row['fix_ticket'] = '-'      # P3 はチケットを要求しないので、ゲートBを鳴らさない
+    tsv = ledger(tmp_path, [row])
+    p = run('open_findings.py', '--full', tsv, '--baseline',
+            baseline_ux(tmp_path, {}, {}), '--gate', expect=0)
+    assert '露出が未記入: 0 件' in p.stdout
