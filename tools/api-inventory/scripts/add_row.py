@@ -191,7 +191,8 @@ def main():
     # 番号を読んでから両ファイルに書き終えるまでを排他にする。並行して --append を
     # 回すと、同じ最大値を読んで同じ番号を二度払い出してしまうため。ロックは台帳
     # そのものに掛ける(ロック用のファイルを作ると台帳の隣に紛れて commit される)。
-    lock = open(full, 'a') if a.append else None
+    # 'r+' で開く。'a' だと --full の打ち間違いで空の台帳を黙って作ってしまう。
+    lock = open(full, 'r+') if a.append else None
     if lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
 

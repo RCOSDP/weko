@@ -115,3 +115,13 @@ def test_並行して追記しても同じ番号を二度払い出さない(tmp_
     reg_nos = [l.split('\t')[0] for l in
                (tmp_path / 'no_registry.tsv').read_text(encoding='utf-8').rstrip('\n').split('\n')[1:]]
     assert reg_nos == [str(i) for i in range(1, 10)]
+
+
+def test_台帳が無ければ作らずに止まる(tmp_path):
+    """--full の打ち間違いで、空の台帳を黙って作って書き込まない。"""
+    full, snap = _setup(tmp_path, [1])
+    missing = tmp_path / 'typo.tsv'
+    p = run('add_row.py', '--endpoint', 'ui:demo.new', '--append',
+            '--full', missing, '--snapshot', snap, '--weko-root', tmp_path)
+    assert p.returncode != 0
+    assert not missing.exists()
