@@ -759,6 +759,12 @@ WEKO_SEARCH_UI_IMPORT_UNUSE_FILES_URI = "import_unuse_files_uri_{}"
 WEKO_SEARCH_UI_BULK_EXPORT_RETRY_INTERVAL = 1
 """ retry interval(sec) """
 
+WEKO_SEARCH_UI_CELERY_STATUS = "weko_search_ui_celery_status"
+"""Cache key for storing the status of the Celery worker."""
+
+WEKO_SEARCH_UI_CELERY_STATUS_CACHE_TTL = 60
+"""Celery status cache TTL in seconds."""
+
 WEKO_SEARCH_UI_IMPORT_REPLACE_RULES = {}
 """Strings to be replaced during item import."""
 
