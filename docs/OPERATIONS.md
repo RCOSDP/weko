@@ -91,6 +91,16 @@ git clone https://github.com/RCOSDP/weko-secret.git  ~/weko-secret
 **private 側を public リポジトリの中に置かない。** 誤って commit する事故を防ぐため、
 必ず別の場所に clone する（`docs/RULE.md` §1）。
 
+clone したら、private 側で pre-push フックを有効にしておく（clone ごとに 1 回）。
+
+```bash
+git -C ~/weko-secret config core.hooksPath .githooks
+```
+
+**private 側は GitHub Actions を使わない。** private リポジトリは Actions の利用枠の
+制限を受けるため、台帳の検査は手元の `ci/local.sh` で回す運用にしている。このフックが
+push のたびにそれを回し、落ちたら push を止める。Actions で回るのは public 側だけ。
+
 #### 解析対象のソースを測定リビジョンに固定する
 
 台帳は「どのリビジョンを測ったか」とセットでしか意味を持たない（`docs/RULE.md` 規則 2-3）。
@@ -111,10 +121,14 @@ git -C ~/weko worktree add --detach ~/weko3 "$REV"
 向けないこと。** 探索順で古いツールが先に当たる。何も指定しないのが正しい。
 
 ```bash
-cd ~/weko-secret && python3 -m pytest      # 実機も Docker も要らない
+cd ~/weko-secret && ci/local.sh             # 実機も Docker も要らない。約 1 分
 ```
 
-列・語彙・派生列の再現・経路の漏れをまとめて見る。**台帳を触ったら必ず回す。**
+列・語彙・派生列の再現・経路の漏れ・`no` の固定をまとめて見る。**台帳を触ったら必ず回す。**
+push 時にはフックが同じものを回す。`ci/local.sh` はツールを同名ブランチの先頭から、
+解析対象のソースを台帳の測定リビジョンから、それぞれ `~/.cache/weko-secret-ci/` に
+取り出して使うので、この worktree の状態には左右されない。編集中にさっと確かめるだけなら
+`python3 -m pytest`（この worktree を解析対象に使う）でもよい。
 バージョンを上げて台帳の測定先を移したら、この worktree は貼り替える
 （`git -C ~/weko worktree remove ~/weko3` してから作り直す）。
 
@@ -439,6 +453,19 @@ python3 $INV/reconcile.py --gate             # 「✅ 一致(0件)」になる�
 
 消えた経路（B）は `reconcile_allow.json` に**理由付きで**登録する。理由なしの登録は禁止（`docs/RULE.md` §3-3）。
 
+**`no` は台帳の主キー。振り直さない・使い回さない。** 起票（`fix_ticket`）や許可リストが
+番号で行を指しているので、振り直すと黙って別の経路を指す。払い出した番号は private 側の
+`no_registry.tsv` に全部残っている。
+
+- 行を足す: `add_row.py --append` を使う。台帳と `no_registry.tsv` の両方に次の番号で書く。
+- 行を消す: 台帳から消してよいが、**番号は詰めない**。`no_registry.tsv` の行は残し、
+  `status` を `廃止`、`note` に理由を書く。
+- 経路の表記だけが変わった（uri の改名、method の追加など）: 同じ番号のまま書き換え、
+  `no_registry.tsv` の `note` に旧値を書く。
+
+詳しくは `tools/api-inventory/scripts/README.md` のケース2。守れていなければ、private 側の
+検査（`tests/test_no_stability.py`）がリリースタグと `main` の台帳と突き合わせて落とす。
+
 **外部調査と件数が合わないときは、まず相手の環境を疑う。**
 v2.1.0 ではベンダ資料が新規 23 件としていたが、ソースに存在したのは 5 件だけだった。
 残り 18 件は `modules/` ではなく site-packages 側の pip パッケージの版差が原因で、grep しても 1 件も出なかった。
@@ -633,6 +660,10 @@ cd -
 tools/release/open-pr.sh --base develop_v2.1.0 --inventory-base main --run --inventory
 gh pr checks --watch
 ```
+
+private 側の push では pre-push フックが `ci/local.sh` を回す（約 1 分）。落ちたら push は
+止まるので、直してから出し直す。private 側の PR には Actions のチェックが付かないので、
+`gh pr checks` に出るのは public 側だけ。
 
 **マージしてから**、両リポジトリに**同名のタグ**を打つ（`docs/RULE.md` 規則 2-3）。
 
