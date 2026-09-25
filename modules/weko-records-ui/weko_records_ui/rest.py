@@ -650,8 +650,8 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         for key, value in ctx.items():
             setattr(self, key, value)
 
-    # @pass_record
-    # @need_record_permission('read_permission_factory')
+    @require_api_auth(allow_anonymous=True)
+    @require_oauth_scopes(item_read_scope.id)
     def get(self, pid_value, **kwargs):
         """Render citation for record according to style and language."""
         from weko_records.serializers import citeproc_v1
@@ -660,6 +660,8 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         try:
             pid = PersistentIdentifier.get('depid', pid_value)
             record = WekoRecord.get_record(pid.object_uuid)
+            if not page_permission_factory(record).can():
+                raise PermissionError()
             result = citeproc_v1.serialize(pid, record, style=style,
                                            locale=locale)
             result = escape_str(result)
@@ -667,7 +669,7 @@ class WekoRecordsCitesResource(ContentNegotiatedMethodView):
         except Exception:
             current_app.logger.exception(
                 'Citation formatting for record {0} failed.'.format(
-                    str(record.id)))
+                    str(pid_value)))  # record.id ではなく pid_value を参照(UnboundLocalError修正)
             return make_response(jsonify("Not found"), 404)
 
 

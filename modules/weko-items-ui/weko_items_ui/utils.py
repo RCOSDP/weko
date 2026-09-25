@@ -2625,6 +2625,8 @@ def export_items(post_data):
                 include_contents,
                 record_path,
             )
+            if not exported_item:
+                continue  # 権限なしレコードはスキップ
             result['items'].append(exported_item)
 
             item_type_id = exported_item.get('item_type_id')
@@ -2858,6 +2860,14 @@ def _export_item(record_id,
     record = WekoRecord.get_record_by_pid(record_id)
     list_item_role = {}
     if record:
+        roles = get_user_roles()
+        is_allowed = (
+            roles[0]
+            or check_created_id(record)
+            or check_publish_status(record)
+        )
+        if not is_allowed:
+            return {}, {}   # 権限なしレコードはスキップ扱い
         exported_item['record_id'] = record.id
         exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []

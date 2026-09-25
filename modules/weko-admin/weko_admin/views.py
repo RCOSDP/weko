@@ -48,6 +48,7 @@ from .models import AdminSettings
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
     WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+from .permissions import repository_scope_required
 from .models import FacetSearchSetting, SessionLifetime, SiteInfo, AdminSettings
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
@@ -471,6 +472,7 @@ def get_feedback_mail():
 
 
 @blueprint_api.route('/get_send_mail_history', methods=['GET'])
+@repository_scope_required(repository_id_param='repo_id')
 def get_send_mail_history():
     """API allow to get send mail history.
 

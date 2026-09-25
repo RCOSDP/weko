@@ -74,7 +74,8 @@ from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
 from weko_records_ui import WekoRecordsUI
-from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, \
+    WEKO_PERMISSION_ROLE_COMMUNITY
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
@@ -175,6 +176,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS,
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = 'test workflow31001',
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
         WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
     )
     app_.testing = True

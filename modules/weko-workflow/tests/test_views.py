@@ -11,7 +11,7 @@ from mock import patch
 from sqlalchemy.orm.attributes import flag_modified
 from sqlalchemy.orm import joinedload
 
-from flask import json, jsonify, url_for, make_response, current_app
+from flask import json, jsonify, url_for, make_response, current_app, g
 from flask_babelex import gettext as _
 from invenio_db import db
 from sqlalchemy.exc import SQLAlchemyError, StatementError
@@ -36,6 +36,7 @@ from weko_workflow.views import (render_guest_workflow,
                                  display_guest_activity,
                                  display_guest_activity_item_application,
                                  render_guest_workflow)
+from weko_workflow.utils import generate_guest_activity_token_value
 from marshmallow.exceptions import ValidationError
 from weko_records_ui.models import FileOnetimeDownload, FilePermission
 from weko_records.models import ItemMetadata, ItemReference
@@ -366,6 +367,47 @@ def test_new_activity(client, db, users, mocker):
         assert kwargs['community'] is None
 
 
+# no.600/998: new_activity は item-access (Contributor以上) が無いと403になること
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_new_activity_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),  # contributor: has item-access
+    (1, 200),  # repoadmin: has item-access
+    (2, 200),  # sysadmin: superuser-access
+    (3, 200),  # comadmin: has item-access
+    (4, 403),  # generaluser: no item-access (no.600/998 fix)
+    (5, 403),  # originalroleuser: no item-access (no.600/998 fix)
+    (6, 200),  # originalroleuser2: also has repoadmin role -> item-access
+])
+def test_new_activity_acl(client, db, users, mocker, users_index, status_code):
+    login(client=client, email=users[users_index]['email'])
+
+    with patch("weko_workflow.views.WorkFlow.get_workflow_list", return_value=['wf1', 'wf2']), \
+            patch("weko_workflow.views.WorkFlow.get_workflows_by_roles", return_value=['wf1']), \
+            patch("weko_workflow.views.GetCommunity.get_community_by_id") as mock_get_community, \
+            patch("weko_theme.utils.get_design_layout", return_value=('page_obj', 'widgets')), \
+            patch("weko_workflow.utils.exclude_admin_workflow"), \
+            patch("weko_workflow.views.render_template") as mock_render_template:
+
+        mock_community = MagicMock()
+        mock_community.id = 'comm01'
+        mock_get_community.return_value = mock_community
+        mock_render_template.return_value = 'rendered_html'
+
+        url = url_for('weko_workflow.new_activity', c='comm01')
+        res = client.get(url)
+        assert res.status_code == status_code
+        if status_code == 200:
+            mock_render_template.assert_called_once()
+        else:
+            mock_render_template.assert_not_called()
+
+
+def test_new_activity_acl_nologin(client, db):
+    """no.600/998: 未ログインは@login_requiredでログイン画面へリダイレクトされること."""
+    url = url_for('weko_workflow.new_activity')
+    res = client.get(url)
+    assert res.status_code == 302
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_acl_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_init_activity_acl_nologin(client,db_register2):
@@ -689,13 +731,13 @@ def test_list_activity_acl_nologin(client, db, mocker):
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_list_activity_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    (1, 200),
-    (2, 200),
-    (3, 200),
-    (4, 200),
-    (5, 200),
-    (6, 200),
+    (0, 200),  # contributor: has item-access
+    (1, 200),  # repoadmin: has item-access
+    (2, 200),  # sysadmin: superuser-access
+    (3, 200),  # comadmin: has item-access
+    (4, 403),  # generaluser: no item-access (no.602/1000 fix)
+    (5, 403),  # originalroleuser: no item-access (no.602/1000 fix)
+    (6, 200),  # originalroleuser2: also has repoadmin role -> item-access
 ])
 def test_list_activity_acl(client, users, mocker, users_index, status_code):
     class MockActivity:
@@ -715,20 +757,27 @@ def test_list_activity_acl(client, users, mocker, users_index, status_code):
     mock_render = mocker.patch('weko_workflow.views.render_template', return_value=jsonify({}))
     res = client.get(url)
     assert res.status_code == status_code
-    mock_condition.assert_called_with({})
-    mock_activity.assert_called_with(conditions={'con1': 'val1'})
-    mock_layout.assert_called_with('Root Index')
-    mock_render.assert_called_with(
-        'weko_workflow/activity_list.html',
-        page=None,
-        pages=1,
-        name_param='pagesall',
-        size=1,
-        tab='todo',
-        maxpage=1,
-        render_widgets=True,
-        activities=[activity],
-    )
+    if status_code == 200:
+        mock_condition.assert_called_with({})
+        mock_activity.assert_called_with(conditions={'con1': 'val1'})
+        mock_layout.assert_called_with('Root Index')
+        mock_render.assert_called_with(
+            'weko_workflow/activity_list.html',
+            page=None,
+            pages=1,
+            name_param='pagesall',
+            size=1,
+            tab='todo',
+            maxpage=1,
+            render_widgets=True,
+            activities=[activity],
+        )
+    else:
+        # no.602/1000: item-access が無いユーザーは403で拒否され、
+        # 一覧取得ロジックには到達しない
+        mock_condition.assert_not_called()
+        mock_activity.assert_not_called()
+        mock_render.assert_not_called()
 
 # def init_activity_guest():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -806,6 +855,70 @@ def test_init_activity_guest_users(client, users, db_register_1, db_guestactivit
     with patch('weko_workflow.views.send_usage_application_mail_for_guest_user', return_value=False):
         res = client.post(url, json=input)
         assert res.status_code == status_code
+
+
+# no.603/1001: init_activity_guest は不正な形式の guest_mail を拒否すること
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_invalid_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_init_activity_guest_invalid_email(client, db_register2):
+    """no.603/1001: guest_mail が不正な形式の場合は400を返すこと."""
+    url = url_for('weko_workflow.init_activity_guest')
+    input = {'guest_mail': 'not-an-email', 'workflow_id': 1, 'flow_id': 1,
+             'item_type_id': 1, 'record_id': '1', 'guest_item_title': 'test',
+             'file_name': 'test_file'}
+    res = client.post(url, json=input)
+    assert res.status_code == 400
+    data = json.loads(res.data)
+    assert data['msg'] == 'Invalid guest_mail'
+
+
+# no.603/1001: init_activity_guest の workflow_id キー欠如でKeyErrorにならないこと
+# (post_data["workflow_id"] -> post_data.get('workflow_id') 修正の確認)
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_workflow_id_missing_key -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_init_activity_guest_workflow_id_missing_key(client, db_register2, mocker):
+    """no.603/1001: workflow_id キーが無くてもKeyError(500)にならないこと."""
+    url = url_for('weko_workflow.init_activity_guest')
+    input = {'guest_mail': 'test@guest.com'}  # workflow_id キーなし
+    mock_is_terms = mocker.patch(
+        'weko_workflow.views.is_terms_of_use_only', return_value=False)
+    with patch('weko_workflow.views.init_activity_for_guest_user',
+               side_effect=Exception('boom')):
+        res = client.post(url, json=input)
+    assert res.status_code == 200
+    mock_is_terms.assert_called_once_with(None)
+    data = json.loads(res.data)
+    assert data['msg'] == 'Cannot send mail'
+
+
+# no.603/1001: init_activity_guest は同一IPからの短時間の連続リクエストを
+# 5回/分に制限すること
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_init_activity_guest_rate_limit -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_init_activity_guest_rate_limit(client, db_register2):
+    """no.603/1001: 6回目のリクエストは429(レート制限)となること."""
+    url = url_for('weko_workflow.init_activity_guest')
+    input = {'guest_mail': 'test@guest.com', 'workflow_id': 1, 'flow_id': 1,
+             'item_type_id': 1, 'record_id': '1', 'guest_item_title': 'test',
+             'file_name': 'test_file'}
+    with patch("weko_workflow.views.is_terms_of_use_only", return_value=False), \
+            patch('weko_workflow.views.init_activity_for_guest_user',
+                  return_value=(WorkActivity(), 'url')), \
+            patch('weko_workflow.views.db.session.commit'), \
+            patch('weko_workflow.views.send_usage_application_mail_for_guest_user',
+                  return_value=True):
+        for _ in range(5):
+            # NOTE: Flask-Limiter の判定は flask.g のフラグで1リクエストにつき
+            # 1回だけ行われる。本テストスイートの `app` フィクスチャは
+            # テスト全体を単一の app_context 内で実行するため、実際のHTTP
+            # サーバーと異なり client.post() をまたいで flask.g が引き継が
+            # れてしまう。本番のWSGIサーバーでは各リクエストで g がリセット
+            # されるため、ここではそれを模してリクエストごとに明示的にリセ
+            # ットする。
+            g.pop('_rate_limiting_complete', None)
+            res = client.post(url, json=input)
+            assert res.status_code == 200
+        g.pop('_rate_limiting_complete', None)
+        res = client.post(url, json=input)
+        assert res.status_code == 429
+
 
 # def display_guest_activity():
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_guest_activity -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -4330,13 +4443,10 @@ def test_get_feedback_maillist(client, users, db_register_full_action, users_ind
 
 
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    #(1, 200),
-    #(2, 200),
-    #(3, 200),
-    #(4, 200),
-    #(5, 200),
-    #(6, 200),
+    (2, 200),  # sysadmin: no.619/1017 で追加した @check_authority は
+               # 管理者を無条件で許可するため、この関数自体の分岐テストへの
+               # 影響はない。他ロールでのアクセス制御は
+               # test_get_request_maillist_authority で個別に検証する。
 ])
 # def get_request_maillist(activity_id='0')
 #.tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_request_maillist -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -4436,6 +4546,62 @@ def test_get_request_maillist(client, users, users_index, status_code, mocker):
                                 {"email":"user@test.org","author_id":""},
                                 {"email":"contributor@test.org","author_id":""}]
     )
+
+
+# no.619/1017: get_request_maillist に付与した @check_authority(action_idを
+# 取らないため新設したフォールバック分岐)のアクセス制御を検証する。
+# 申請者本人・管理者・共有編集者は許可(200)、無関係な第三者は拒否(403)。
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_request_maillist_authority -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# NOTE: このテストスイートの `app` フィクスチャはテスト全体を単一の
+# app_context 内で実行するため、同一テスト内で login() (DBから都度Userを
+# 取得する) を複数回呼び出すと2回目以降で
+# sqlalchemy.orm.exc.DetachedInstanceError となる(weko_workflow.index等、
+# 本修正と無関係な既存エンドポイントでも同様に再現する、テスト環境固有の
+# 制約)。そのため users_role をパラメータ化し、1テストにつきログインは
+# 1回のみとする。
+@pytest.mark.parametrize('users_role, allowed', [
+    ('owner', True),     # 申請者本人 -> 許可
+    ('admin', True),     # 管理者(System Administrator) -> 許可
+    ('shared', True),    # 共有編集者(shared_user_ids に含まれる) -> 許可
+    ('stranger', False), # 無関係な第三者 -> 拒否
+])
+def test_get_request_maillist_authority(client, db, users, db_register_full_action,
+                                         users_role, allowed):
+    flow_id = db_register_full_action["flow_define"].id
+    owner = users[0]        # contributor: 申請者本人
+    admin = users[2]        # sysadmin: 管理者
+    shared = users[5]       # originalroleuser: 共有編集者
+    stranger = users[4]     # generaluser: 無関係な第三者
+    login_user = {'owner': owner, 'admin': admin, 'shared': shared,
+                  'stranger': stranger}[users_role]
+
+    activity = Activity(
+        activity_id="A-99999999-90001", workflow_id=1, flow_id=flow_id,
+        action_id=1, activity_login_user=owner["id"],
+        activity_update_user=owner["id"], action_order=1,
+        shared_user_ids=[{"user": shared["id"]}],
+        temp_data=json.dumps({"metainfo": {}}),
+        activity_start=datetime.strptime(
+            '2200/01/11 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+    )
+    db.session.add(activity)
+    db.session.commit()
+
+    url = url_for('weko_workflow.get_request_maillist',
+                   activity_id=activity.activity_id)
+
+    with patch('weko_workflow.views.WorkActivity.get_activity_request_mail',
+               return_value=None):
+        login(client=client, email=login_user['email'])
+        res = client.get(url)
+        # check_authority自体はjsonifyのみでstatus未設定のため常に200
+        assert res.status_code == 200
+        data = response_data(res)
+        if allowed:
+            assert data != {"code": 403, "msg": "Authorization required"}
+        else:
+            assert data == {"code": 403, "msg": "Authorization required"}
+
 
 @pytest.mark.parametrize('users_index, status_code', [
     (0, 200),
@@ -4642,6 +4808,87 @@ def test_verify_deletion(client, db, db_register2,db_register_full_action,users)
     res = client.get(url)
     assert res.status_code == 200
     assert json.loads(res.data) == {"code": 200, 'for_delete': False, "is_deleted": True}
+
+
+# no.606/1004: verify_deletion の当事者検証(ログインユーザー)。
+# 申請者本人・管理者は許可(200)、無関係な第三者は拒否(403)。
+# NOTE: このテストスイートの `app` フィクスチャはテスト全体を単一の
+# app_context 内で実行するため、同一テスト内で login() (DBから都度Userを
+# 取得する) を複数回呼び出すと2回目以降で
+# sqlalchemy.orm.exc.DetachedInstanceError となる(weko_workflow.index等、
+# 本修正と無関係な既存エンドポイントでも同様に再現する、テスト環境固有の
+# 制約)。そのため users_index をパラメータ化し、1テストにつきログインは
+# 1回のみとする。
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_verify_deletion_authority -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+@pytest.mark.parametrize('users_index, status_code', [
+    (0, 200),  # contributor: 申請者本人
+    (4, 403),  # generaluser: 無関係な第三者
+])
+def test_verify_deletion_authority(client, db, users, db_register_full_action,
+                                    users_index, status_code):
+    flow_id = db_register_full_action["flow_define"].id
+    owner = users[0]  # contributor: 申請者本人
+
+    activity = Activity(
+        activity_id="A-22000222-00001", workflow_id=1, flow_id=flow_id,
+        action_id=1, activity_login_user=owner["id"],
+        activity_update_user=owner["id"], action_order=1,
+        activity_start=datetime.strptime(
+            '2200/01/11 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+    )
+    db.session.add(activity)
+    db.session.commit()
+
+    url = url_for("weko_workflow.verify_deletion",
+                   activity_id=activity.activity_id)
+
+    login(client=client, email=users[users_index]['email'])
+    res = client.get(url)
+    assert res.status_code == status_code
+    data = json.loads(res.data)
+    if status_code == 200:
+        assert data['code'] == 200
+    else:
+        assert data == {"code": 403, "msg": "Authorization required"}
+
+
+# no.606/1004: verify_deletion の当事者検証(ゲストユーザー)。
+# session['guest_token'] から復元した activity_id とリクエストの
+# activity_id が一致する場合のみ許可すること。
+# .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_verify_deletion_guest_authority -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+def test_verify_deletion_guest_authority(client, db, db_register_full_action):
+    flow_id = db_register_full_action["flow_define"].id
+    activity_id1 = "A-22000222-00002"
+    activity_id2 = "A-22000222-00003"
+    for act_id in (activity_id1, activity_id2):
+        activity = Activity(
+            activity_id=act_id, workflow_id=1, flow_id=flow_id,
+            action_id=1, activity_login_user=1,
+            activity_update_user=1, action_order=1,
+            activity_start=datetime.strptime(
+                '2200/01/11 3:01:53.931', '%Y/%m/%d %H:%M:%S.%f'),
+        )
+        db.session.add(activity)
+    db.session.commit()
+
+    token = generate_guest_activity_token_value(
+        activity_id1, "test_file", datetime.utcnow(), "guest@test.org")
+
+    # トークンに対応する activity_id へのアクセス -> 許可
+    with client.session_transaction() as sess:
+        sess['guest_token'] = token
+    url = url_for("weko_workflow.verify_deletion", activity_id=activity_id1)
+    res = client.get(url)
+    assert res.status_code == 200
+
+    # トークンに対応しない他の activity_id へのアクセス -> 拒否
+    with client.session_transaction() as sess:
+        sess['guest_token'] = token
+    url = url_for("weko_workflow.verify_deletion", activity_id=activity_id2)
+    res = client.get(url)
+    data = json.loads(res.data)
+    assert data == {"code": 403, "msg": "Authorization required"}
+
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_display_activity_nologin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko_workflow/.tox/c1/tmp
 def test_display_activity_nologin(client,db_register2,mocker):

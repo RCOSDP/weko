@@ -7,7 +7,7 @@ from flask_security import url_for_security
 
 from invenio_cache import current_cache
 from invenio_accounts.testutils import login_user_via_session
-from weko_gridlayout.models import WidgetDesignPage,WidgetDesignSetting
+from weko_gridlayout.models import WidgetDesignPage,WidgetDesignSetting,WidgetItem
 
 # The endpoints these cases cover carry @login_required and nothing else
 # (weko_gridlayout/views.py), so every signed-in user reaches them. The 403s
@@ -19,6 +19,24 @@ user_results1 = [
     (2, 200),
     (3, 200),
     (4, 200),
+]
+
+# users indices: 0=contributor, 1=repoadmin, 2=sysadmin, 3=comadmin,
+# 4=generaluser (see conftest.users fixture).
+#
+# load_widget_list_design_setting/save_widget_layout_setting/
+# save_widget_design_page/delete_widget_design_page/delete_widget_item are
+# now protected by weko_admin.permissions.repository_scope_required. These
+# requests carry no repository_id/page_id/data_id in the body, so
+# repository_id cannot be resolved: System/Repository Administrator are
+# still allowed unconditionally, but Contributor/Community Administrator/
+# no-role users are rejected because scope cannot be confirmed.
+user_results_repo_scope_no_target = [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
 ]
 
 
@@ -58,7 +76,7 @@ def test_unlocked_widget_guest(client, users):
         assert res.status_code == 302
 
 
-@pytest.mark.parametrize('id, status_code', user_results1)
+@pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
 def test_save_widget_layout_setting_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     with patch("weko_gridlayout.views.WidgetDesignServices.update_widget_design_setting", return_value={}):
@@ -94,7 +112,7 @@ def test_save_widget_item_guest(client, users):
         assert res.status_code == 302
 
 
-@pytest.mark.parametrize('id, status_code', user_results1)
+@pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
 def test_save_widget_design_page_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     with patch("weko_gridlayout.views.WidgetDesignPageServices.add_or_update_page", return_value={}):
@@ -112,7 +130,7 @@ def test_save_widget_design_page_guest(client, users):
         assert res.status_code == 302
 
 
-@pytest.mark.parametrize('id, status_code', user_results1)
+@pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
 def test_load_widget_list_design_setting_login(client, users, id, status_code):
     from weko_gridlayout import views
     from weko_gridlayout.services import WidgetDesignServices
@@ -144,7 +162,11 @@ def test_load_widget_list_design_setting_issue50978(client, users):
     views.get_default_language = Mock()
     WidgetDesignServices.get_widget_list = Mock(return_value={})
     WidgetDesignServices.get_widget_preview = Mock(return_value={})
-    login_user_via_session(client=client, email=users[3]["email"])
+    # Use a System Administrator here: load_widget_list_design_setting is now
+    # protected by repository_scope_required, and this test targets the
+    # view's own request-body validation (400), not the scope check, so it
+    # must bypass the scope check via the unconditional super-user path.
+    login_user_via_session(client=client, email=users[2]["email"])
 
     # no request data
     res = client.post("/admin/load_widget_list_design_setting")
@@ -291,7 +313,7 @@ def test_load_widget_design_page_issue50978(client, users):
         assert res4.status_code == 400
 
 
-@pytest.mark.parametrize('id, status_code', user_results1)
+@pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
 def test_delete_widget_item_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id", return_value={}):
@@ -311,7 +333,10 @@ def test_delete_widget_item_guest(client, users):
 
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_load_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_delete_widget_item_issue50978(client, users):
-    login_user_via_session(client=client, email=users[3]["email"])
+    # System Administrator: delete_widget_item is now protected by
+    # repository_scope_required and this test targets the view's own
+    # request-body validation (400), so it must bypass the scope check.
+    login_user_via_session(client=client, email=users[2]["email"])
     with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id", return_value={}):
         # no request data. The view reads request.headers['Content-Type']
         # directly, so it needs the header even when there is no body.
@@ -328,7 +353,7 @@ def test_delete_widget_item_issue50978(client, users):
         assert res4.status_code == 400
 
 
-@pytest.mark.parametrize('id, status_code', user_results1)
+@pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
 def test_delete_widget_design_page_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     with patch("weko_gridlayout.views.WidgetDesignPageServices.delete_page", return_value={}):
@@ -348,7 +373,10 @@ def test_delete_widget_design_page_guest(client, users):
 
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_delete_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_delete_widget_design_page_issue50978(client, users):
-    login_user_via_session(client=client, email=users[3]["email"])
+    # System Administrator: delete_widget_design_page is now protected by
+    # repository_scope_required and this test targets the view's own
+    # request-body validation (400), so it must bypass the scope check.
+    login_user_via_session(client=client, email=users[2]["email"])
     with patch("weko_gridlayout.views.WidgetDesignPageServices.delete_page", return_value={}):
         # no request data
         res3 = client.post(
@@ -435,7 +463,10 @@ def test_save_widget_design_page(client, users):
 
 # .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py::test_save_widget_design_page_issue50978 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_save_widget_design_page_issue50978(client, users):
-    login_user_via_session(client=client, email=users[3]["email"])
+    # System Administrator: save_widget_design_page is now protected by
+    # repository_scope_required and this test targets the view's own
+    # request-body validation (400), so it must bypass the scope check.
+    login_user_via_session(client=client, email=users[2]["email"])
     # no request data
     res3 = client.post(
         "/admin/save_widget_design_page",
@@ -878,3 +909,343 @@ def test_unlocked_widget_issue50978(client, users):
             content_type="application/json"
         )
         assert res4.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# repository_scope_required coverage
+#
+# no.283/284/288/289/292: load_widget_list_design_setting,
+# save_widget_layout_setting, save_widget_design_page,
+# delete_widget_design_page and delete_widget_item are now protected by
+# weko_admin.permissions.repository_scope_required so that only
+# System/Repository Administrator or the Community Administrator in charge
+# of the target repository can operate on it.
+#
+# users indices (see conftest.users): 0=contributor, 1=repoadmin,
+# 2=sysadmin, 3=comadmin, 4=generaluser, 7=plain user with no role.
+# ---------------------------------------------------------------------------
+
+IN_SCOPE_COMMUNITY = [MagicMock(id='Root Index')]
+OUT_OF_SCOPE_COMMUNITY = [MagicMock(id='OtherRepo')]
+
+
+# def load_widget_list_design_setting():
+@pytest.mark.parametrize('id, status_code', [(1, 200), (2, 200)])
+def test_load_widget_list_design_setting_scope_super_user(
+        client, users, id, status_code):
+    """System/Repository Administratorは無条件で許可されること。"""
+    from weko_gridlayout.services import WidgetDesignServices
+    WidgetDesignServices.get_widget_list = Mock(return_value={})
+    WidgetDesignServices.get_widget_preview = Mock(return_value={})
+    login_user_via_session(client=client, email=users[id]["email"])
+    res = client.post("/admin/load_widget_list_design_setting",
+                      data=json.dumps({"repository_id": "Root Index"}),
+                      content_type="application/json")
+    assert res.status_code == status_code
+
+
+def test_load_widget_list_design_setting_scope_community_admin_allowed(
+        client, users):
+    """担当コミュニティのCommunity Administratorは許可されること。"""
+    from weko_gridlayout.services import WidgetDesignServices
+    WidgetDesignServices.get_widget_list = Mock(return_value={})
+    WidgetDesignServices.get_widget_preview = Mock(return_value={})
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("invenio_communities.models.Community.get_repositories_by_user",
+              return_value=IN_SCOPE_COMMUNITY):
+        res = client.post("/admin/load_widget_list_design_setting",
+                          data=json.dumps({"repository_id": "Root Index"}),
+                          content_type="application/json")
+    assert res.status_code == 200
+
+
+def test_load_widget_list_design_setting_scope_community_admin_denied(
+        client, users):
+    """担当外コミュニティのCommunity Administratorは拒否されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("invenio_communities.models.Community.get_repositories_by_user",
+              return_value=OUT_OF_SCOPE_COMMUNITY):
+        res = client.post("/admin/load_widget_list_design_setting",
+                          data=json.dumps({"repository_id": "Root Index"}),
+                          content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_load_widget_list_design_setting_scope_no_role(client, users):
+    """ロールなしログインユーザーは拒否されること。"""
+    login_user_via_session(client=client, email=users[4]["email"])
+    res = client.post("/admin/load_widget_list_design_setting",
+                      data=json.dumps({"repository_id": "Root Index"}),
+                      content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_load_widget_list_design_setting_scope_anonymous(client, users):
+    """未ログインの場合はログイン画面へリダイレクトされること(login_requiredが先に働く)。"""
+    res = client.post("/admin/load_widget_list_design_setting",
+                      data=json.dumps({"repository_id": "Root Index"}),
+                      content_type="application/json")
+    assert res.status_code == 302
+
+
+# def save_widget_layout_setting():
+def test_save_widget_layout_setting_scope_community_admin_allowed(
+        client, users):
+    """担当コミュニティのCommunity Administratorは許可されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignServices.update_widget_design_setting",
+              return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                  return_value=IN_SCOPE_COMMUNITY):
+            res = client.post(
+                "/admin/save_widget_layout_setting",
+                data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+                content_type="application/json")
+    assert res.status_code == 200
+
+
+def test_save_widget_layout_setting_scope_community_admin_denied(
+        client, users):
+    """担当外コミュニティのCommunity Administratorは拒否されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("invenio_communities.models.Community.get_repositories_by_user",
+              return_value=OUT_OF_SCOPE_COMMUNITY):
+        res = client.post(
+            "/admin/save_widget_layout_setting",
+            data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+            content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_save_widget_layout_setting_scope_no_role(client, users):
+    """ロールなしログインユーザーは拒否されること。"""
+    login_user_via_session(client=client, email=users[4]["email"])
+    res = client.post(
+        "/admin/save_widget_layout_setting",
+        data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+        content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_save_widget_layout_setting_scope_anonymous(client, users):
+    """未ログインの場合はログイン画面へリダイレクトされること(login_requiredが先に働く)。"""
+    res = client.post(
+        "/admin/save_widget_layout_setting",
+        data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+        content_type="application/json")
+    assert res.status_code == 302
+
+
+def test_save_widget_layout_setting_scope_id_param_prefers_db_value(
+        client, users, db_register):
+    """既存ページ更新時はDB側の所属(repository_id)が優先されること。
+
+    bodyには担当外のOtherRepoが送られているが、page_id=1の実データは
+    'Root Index'に属するため、'Root Index'担当のComadminは許可される。
+    """
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignServices.update_widget_design_setting",
+              return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                  return_value=IN_SCOPE_COMMUNITY):
+            res = client.post(
+                "/admin/save_widget_layout_setting",
+                data=json.dumps({"repository_id": "OtherRepo", "page_id": 1}),
+                content_type="application/json")
+    assert res.status_code == 200
+
+
+def test_save_widget_layout_setting_scope_id_param_not_found(
+        client, users, db_register):
+    """id_paramで指定したページが存在しない場合は404になること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    res = client.post(
+        "/admin/save_widget_layout_setting",
+        data=json.dumps({"repository_id": "Root Index", "page_id": 999}),
+        content_type="application/json")
+    assert res.status_code == 404
+
+
+# def save_widget_design_page():
+def test_save_widget_design_page_scope_community_admin_allowed(
+        client, users):
+    """担当コミュニティのCommunity Administratorは許可されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignPageServices.add_or_update_page",
+              return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                  return_value=IN_SCOPE_COMMUNITY):
+            res = client.post(
+                "/admin/save_widget_design_page",
+                data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+                content_type="application/json")
+    assert res.status_code == 200
+
+
+def test_save_widget_design_page_scope_community_admin_denied(client, users):
+    """担当外コミュニティのCommunity Administratorは拒否されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("invenio_communities.models.Community.get_repositories_by_user",
+              return_value=OUT_OF_SCOPE_COMMUNITY):
+        res = client.post(
+            "/admin/save_widget_design_page",
+            data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+            content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_save_widget_design_page_scope_no_role(client, users):
+    """ロールなしログインユーザーは拒否されること。"""
+    login_user_via_session(client=client, email=users[4]["email"])
+    res = client.post(
+        "/admin/save_widget_design_page",
+        data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+        content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_save_widget_design_page_scope_anonymous(client, users):
+    """未ログインの場合はログイン画面へリダイレクトされること(login_requiredが先に働く)。"""
+    res = client.post(
+        "/admin/save_widget_design_page",
+        data=json.dumps({"repository_id": "Root Index", "page_id": 0}),
+        content_type="application/json")
+    assert res.status_code == 302
+
+
+def test_save_widget_design_page_scope_id_param_prefers_db_value(
+        client, users, db_register):
+    """既存ページ更新時はDB側の所属(repository_id)が優先されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignPageServices.add_or_update_page",
+              return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                  return_value=IN_SCOPE_COMMUNITY):
+            res = client.post(
+                "/admin/save_widget_design_page",
+                data=json.dumps({"repository_id": "OtherRepo", "page_id": 1}),
+                content_type="application/json")
+    assert res.status_code == 200
+
+
+# def delete_widget_design_page():
+def test_delete_widget_design_page_scope_community_admin_allowed(
+        client, users, db_register):
+    """担当コミュニティのCommunity Administratorは許可されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetDesignPageServices.delete_page",
+              return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                  return_value=IN_SCOPE_COMMUNITY):
+            res = client.post(
+                "/admin/delete_widget_design_page",
+                data=json.dumps({"page_id": 1}),
+                content_type="application/json")
+    assert res.status_code == 200
+
+
+def test_delete_widget_design_page_scope_community_admin_denied(
+        client, users, db_register):
+    """担当外コミュニティのCommunity Administratorは拒否されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("invenio_communities.models.Community.get_repositories_by_user",
+              return_value=OUT_OF_SCOPE_COMMUNITY):
+        res = client.post(
+            "/admin/delete_widget_design_page",
+            data=json.dumps({"page_id": 1}),
+            content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_delete_widget_design_page_scope_no_role(client, users, db_register):
+    """ロールなしログインユーザーは拒否されること。"""
+    login_user_via_session(client=client, email=users[4]["email"])
+    res = client.post(
+        "/admin/delete_widget_design_page",
+        data=json.dumps({"page_id": 1}),
+        content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_delete_widget_design_page_scope_anonymous(client, users, db_register):
+    """未ログインの場合はログイン画面へリダイレクトされること(login_requiredが先に働く)。"""
+    res = client.post(
+        "/admin/delete_widget_design_page",
+        data=json.dumps({"page_id": 1}),
+        content_type="application/json")
+    assert res.status_code == 302
+
+
+def test_delete_widget_design_page_scope_id_param_not_found(client, users):
+    """id_paramで指定したページが存在しない場合は404になること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    res = client.post(
+        "/admin/delete_widget_design_page",
+        data=json.dumps({"page_id": 999}),
+        content_type="application/json")
+    assert res.status_code == 404
+
+
+# def delete_widget_item():
+#
+# WidgetItem's primary key column is widget_id, not id. If pk_attr were left
+# at its default ('id'), WidgetItem.query.filter_by(id=...) would raise
+# InvalidRequestError (no such column) and turn into a 500 for a Community
+# Administrator (System/Repository Administrator would never hit this path
+# since they return early). This is the specific regression this decorator
+# application must avoid on this endpoint.
+def test_delete_widget_item_scope_community_admin_allowed_pk_attr(
+        client, users, db_register):
+    """pk_attr='widget_id'が機能し、担当コミュニティ管理者が例外なく200になること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("weko_gridlayout.views.WidgetItemServices.delete_by_id",
+              return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                  return_value=IN_SCOPE_COMMUNITY):
+            res = client.post(
+                "/admin/delete_widget_item",
+                data=json.dumps({"data_id": 1}),
+                content_type="application/json")
+    assert res.status_code == 200
+
+
+def test_delete_widget_item_scope_community_admin_denied(
+        client, users, db_register):
+    """担当外コミュニティのCommunity Administratorは拒否されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    with patch("invenio_communities.models.Community.get_repositories_by_user",
+              return_value=OUT_OF_SCOPE_COMMUNITY):
+        res = client.post(
+            "/admin/delete_widget_item",
+            data=json.dumps({"data_id": 1}),
+            content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_delete_widget_item_scope_no_role(client, users, db_register):
+    """ロールなしログインユーザーは拒否されること。"""
+    login_user_via_session(client=client, email=users[4]["email"])
+    res = client.post(
+        "/admin/delete_widget_item",
+        data=json.dumps({"data_id": 1}),
+        content_type="application/json")
+    assert res.status_code == 403
+
+
+def test_delete_widget_item_scope_anonymous(client, users, db_register):
+    """未ログインの場合はログイン画面へリダイレクトされること(login_requiredが先に働く)。"""
+    res = client.post(
+        "/admin/delete_widget_item",
+        data=json.dumps({"data_id": 1}),
+        content_type="application/json")
+    assert res.status_code == 302
+
+
+def test_delete_widget_item_scope_id_param_not_found(client, users):
+    """id_paramで指定したウィジェットが存在しない場合は404になること。"""
+    login_user_via_session(client=client, email=users[3]["email"])
+    res = client.post(
+        "/admin/delete_widget_item",
+        data=json.dumps({"data_id": 999}),
+        content_type="application/json")
+    assert res.status_code == 404

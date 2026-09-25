@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Blueprint for weko-workflow."""
 
+import base64
 import json
 import re
 import shutil
@@ -13,9 +14,12 @@ from functools import wraps
 from typing import List
 from urllib.parse import urljoin
 
+from email_validator import validate_email, EmailNotValidError
+from flask_limiter.util import get_remote_address
 from weko_admin.models import AdminSettings
 from weko_items_ui.signals import cris_researchmap_linkage_request
 from weko_items_ui.models import CRIS_Institutions, CRISLinkageResult
+from weko_items_ui.permissions import item_permission
 from weko_workflow.schema.marshmallow import ActionSchema, \
     ActivitySchema, GetRequestMailListSchema, ResponseMessageSchema, CancelSchema, PasswdSchema, LockSchema,\
     ResponseLockSchema, LockedValueSchema, GetFeedbackMailListSchema, SaveActivityResponseSchema,\
@@ -85,7 +89,7 @@ from .romeo import search_romeo_issn, search_romeo_jtitles
 from .scopes import activity_scope
 from .utils import IdentifierHandle, auto_fill_title, \
     check_authority_by_admin, check_continue, check_doi_validation_not_pass, \
-    check_existed_doi, is_terms_of_use_only, \
+    check_existed_doi, is_terms_of_use_only, limiter, \
     delete_cache_data, delete_guest_activity, filter_all_condition, \
     get_account_info, get_actionid, get_activity_display_info, \
     get_application_and_approved_date, get_approval_keys, get_cache_data, \
@@ -420,6 +424,7 @@ def iframe_success():
 
 @workflow_blueprint.route('/activity/new', methods=['GET'])
 @login_required
+@item_permission.require(http_exception=403)
 def new_activity():
     """New activity.
     Args:
@@ -600,6 +605,7 @@ def _generate_download_url(record_id :str ,file_name :str) -> str:
 
 @workflow_blueprint.route('/activity/list', methods=['GET'])
 @login_required
+@item_permission.require(http_exception=403)
 def list_activity():
     """List activity."""
     activity = WorkActivity()
@@ -630,6 +636,7 @@ def list_activity():
 
 
 @workflow_blueprint.route('/activity/init-guest', methods=['POST'])
+@limiter.limit("5 per minute", key_func=get_remote_address)
 def init_activity_guest():
     """Init workflow activity for guest user.
         Return URL of workflow activity made from the request body.
@@ -639,12 +646,18 @@ def init_activity_guest():
     """
     post_data = request.get_json()
 
+    if post_data.get('guest_mail'):
+        try:
+            validate_email(post_data.get('guest_mail'), check_deliverability=False)
+        except EmailNotValidError:
+            return jsonify(msg='Invalid guest_mail'), 400
+
     password_for_download = ""
     if post_data.get('password_for_download'):
         pwd = post_data['password_for_download']
         password_for_download = hash_password(pwd)
 
-    if is_terms_of_use_only(post_data["workflow_id"]):
+    if is_terms_of_use_only(post_data.get('workflow_id')):
         # if the workflow is terms_of_use_only(利用規約のみ) ,
         # do not create activity. redirect file download.
         file_name = post_data["file_name"]
@@ -780,6 +793,41 @@ def verify_deletion(activity_id="0"):
     Returns:
         dict: JSON response with code, is_deleted, and for_delete status.
     """
+    # 当事者検証。login_required_customize は session["guest_token"] の
+    # 有無(ゲスト)またはログイン有無しか見ないため、activity_id との
+    # 整合性はここで検証する。
+    if not current_user.is_authenticated:
+        # ゲストの場合: session["guest_token"] をデコードして得た
+        # activity_id とリクエストの activity_id が一致するかを検証する。
+        # guest_token はサーバ側が display_guest_activity 等で発行時に
+        # 署名検証(oracle10.verify)済みの値をセッション(署名済みcookie)へ
+        # 格納したものであり、改ざんされていないことが前提のため、ここでは
+        # base64デコードのみで activity_id を取り出す。
+        guest_token = session.get('guest_token')
+        token_activity_id = None
+        if guest_token:
+            try:
+                decoded = base64.b64decode(guest_token.encode()).decode()
+                params = decoded.split(" ")
+                if len(params) == 4:
+                    token_activity_id = params[0]
+            except Exception as ex:
+                current_app.logger.debug(
+                    'failed to decode guest_token: {}'.format(ex))
+        if not token_activity_id or token_activity_id != activity_id:
+            return jsonify(code=403, msg=_('Authorization required')), 403
+    else:
+        # ログインユーザーの場合: System/Repository Administratorは無条件、
+        # Community Administratorは担当コミュニティのアクティビティのみ、
+        # それ以外は申請者本人のみ許可する。
+        activity_for_auth = WorkActivity().get_activity_by_id(activity_id)
+        if activity_for_auth is None:
+            return jsonify(code=403, msg=_('Authorization required')), 403
+        is_owner = str(activity_for_auth.activity_login_user) == \
+            str(current_user.get_id())
+        if not is_owner and not check_authority_by_admin(activity_for_auth):
+            return jsonify(code=403, msg=_('Authorization required')), 403
+
     is_deleted = False
     for_delete = False
     activity = WorkActivity().get_activity_by_id(activity_id)
@@ -1270,6 +1318,26 @@ def display_activity(activity_id="0", community_id=None):
     )
 
 
+def _get_shared_user_ids_from_list(shared_user_ids_list):
+    """Get shared user ids from list.
+
+    モジュールトップレベル関数(元は check_authority_action 内のネスト関数)。
+    check_authority(action_idなし分岐)からも共用する。
+
+    Args:
+        shared_user_ids_list (list): List of shared user ids.
+    Returns:
+        list: List of shared user ids.
+    """
+    shared_user_ids = []
+    for shared_user in (shared_user_ids_list or []):
+        if isinstance(shared_user, dict):
+            shared_user_ids.append(shared_user.get('user'))
+        elif isinstance(shared_user, int):
+            shared_user_ids.append(shared_user)
+    return shared_user_ids
+
+
 def check_authority(func):
     """Check Authority."""
     @wraps(func)
@@ -1281,6 +1349,33 @@ def check_authority(func):
         # If user has admin role
         if check_authority_by_admin(activity_detail):
             return func(*args, **kwargs)
+
+        action_id = kwargs.get('action_id')
+        if action_id is None:
+            # action_idを取らないエンドポイント向け:
+            # 申請者本人または共有編集者を許可する
+            if activity_detail is None:
+                return jsonify(code=403, msg=_('Authorization required'))
+            cur_user = int(current_user.get_id())
+            if activity_detail.activity_login_user == cur_user:
+                return func(*args, **kwargs)
+            shared_ids = []
+            im = ItemMetadata.query.filter_by(
+                id=activity_detail.item_id).one_or_none()
+            if im:
+                shared_ids += _get_shared_user_ids_from_list(
+                    im.json.get('shared_user_ids', []))
+                shared_ids += _get_shared_user_ids_from_list(
+                    im.json.get('weko_shared_ids', []))
+            elif activity_detail.temp_data:
+                temp_data = json.loads(activity_detail.temp_data)
+                shared_ids += _get_shared_user_ids_from_list(
+                    activity_detail.shared_user_ids or [])
+                shared_ids += _get_shared_user_ids_from_list(
+                    temp_data.get('metainfo', {}).get('shared_user_ids', []))
+            if cur_user in shared_ids:
+                return func(*args, **kwargs)
+            return jsonify(code=403, msg=_('Authorization required'))
 
         is_set, is_allow, is_deny = validate_action_role_user(
             activity_id=kwargs.get('activity_id'),
@@ -1300,23 +1395,6 @@ def check_authority_action(activity_id='0', action_id=0,
                            contain_login_item_application=False,
                            action_order=0):
     """Check authority."""
-
-    def _get_shared_user_ids_from_list(shared_user_ids_list):
-        """Get shared user ids from list.
-
-        Args:
-            shared_user_ids_list (list): List of shared user ids.
-        Returns:
-            list: List of shared user ids.
-        """
-        shared_user_ids = []
-        for shared_user in shared_user_ids_list:
-            if isinstance(shared_user, dict):
-                shared_user_ids.append(shared_user.get('user'))
-            elif isinstance(shared_user, int):
-                shared_user_ids.append(shared_user)
-        return shared_user_ids
-
     if not current_user.is_authenticated:
         return 1
 
@@ -2879,6 +2957,7 @@ def get_feedback_maillist(activity_id='0'):
 
 @workflow_blueprint.route('/get_request_maillist/<string:activity_id>', methods=['GET'])
 @login_required
+@check_authority
 def get_request_maillist(activity_id='0'):
     """アクティビティに設定されているリクエストメール送信先の情報を取得して返す
 
