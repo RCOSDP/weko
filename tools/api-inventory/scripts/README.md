@@ -113,7 +113,7 @@ python3 tools/api-inventory/scripts/reconcile.py
 python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo
 #    URI の一部でも探せる: --uri /api/items/import-task
 
-# 3) 追記する
+# 3) 追記する(no_registry.tsv にも同じ番号で書き足される)
 python3 tools/api-inventory/scripts/add_row.py --endpoint api:weko_admin.foo --append
 
 # 4) TODO の列を埋める(下記)
@@ -129,6 +129,33 @@ python3 tools/api-inventory/scripts/prioritize.py
 python3 tools/api-inventory/scripts/build_checklist.py
 python3 tools/api-inventory/scripts/reconcile.py --gate   # 差分0になること
 ```
+
+### `no` は主キー。振り直さない・使い回さない
+
+`no` は起票(`fix_ticket`)・許可リスト・所見の本文から参照される。振り直すと
+それらが**黙って別の経路を指す**。払い出した番号はプライベートリポジトリ側の
+`no_registry.tsv` に、廃止した番号も含めて全部残っている。
+
+`add_row.py` は、台帳と `no_registry.tsv` の両方の最大値の次を新しい番号にし、
+`--append` のとき `no_registry.tsv` にも同じ番号で書き足す。台帳だけを見て
+「最大値 + 1」にすると、末尾の行を廃止した直後にその番号をもう一度振ってしまう。
+手で行を足すときも、この二つを揃えること。
+
+### 台帳から行を消す
+
+経路が無くなった行は台帳から消してよいが、**番号は詰めない**。
+
+1. 台帳(`weko3_api_list_full.tsv`)から行を消す
+2. `no_registry.tsv` の同じ番号の行は**消さずに**、`status` を `廃止` にし、
+   `note` に理由を書く
+3. 手順6(派生列の再計算 → 32列版の再生成 → 突き合わせ)を回す
+
+経路の表記だけが変わった(uri の改名、method の追加など)ときは、行を消して
+足し直すのではなく、同じ番号のまま台帳と `no_registry.tsv` を書き換え、
+`no_registry.tsv` の `note` に旧値を書く。
+
+振り直しや使い回しは、プライベートリポジトリ側の `tests/test_no_stability.py` が
+リリースタグと `main` の台帳と突き合わせて落とす。
 
 ### 機械付与スクリプトで TODO を減らす
 
@@ -695,7 +722,7 @@ git push origin main --follow-tags
 | `test_coverage.py` | full.tsv + テストコード | full.tsv の 59-63列 |
 | `prioritize.py` | full.tsv | full.tsv の 57-58, 64列 + 末尾列順の正規化 |
 | `build_checklist.py` | full.tsv | **`weko3_api_list.tsv` を全体再生成** |
-| `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記(`--append`) |
+| `add_row.py` | `api_snapshot.json` + git | full.tsv に新規行の雛形を追記し、`no_registry.tsv` に番号を払い出す(`--append`) |
 | `apply_probe_results.py` | probe.json | full.tsv の `dynamic_verified`(空欄のみ / `--overwrite` で差し替え、`--keep-history` で旧値を ` ‖ 旧: ` として残す) |
 | `measure.sh` | `measure_profile.json` | 実測の唯一の入口。上記を固定順で回し `measure_report.md` を書く |
 | `_ensure_profile.py` / `_read_profile.py` / `_targets.py` / `_report.py` | — | `measure.sh` の内部ヘルパ |
@@ -1079,6 +1106,10 @@ python3 tools/api-inventory/probe.py probe_results.json    # 未認証+各ロー
 ```bash
 python3 tools/api-inventory/merge.py out/ merged.tsv       # 分割TSVを結合・重複排除・採番
 ```
+
+**初回生成専用。** 全行に `no` を振り直すので、既存の台帳に使ってはいけない
+(`no` は主キーで、振り直すと起票や許可リストが別の経路を指す)。既存の台帳に
+行を足すのは `add_row.py`。
 
 ## Phase 5: チェックリスト版(32列)を生成
 ```bash
