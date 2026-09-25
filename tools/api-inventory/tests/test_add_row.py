@@ -6,6 +6,9 @@
 末尾の行を廃止した直後にその番号をもう一度振ってしまう。
 """
 import json
+import os
+import subprocess
+import sys
 
 import add_row
 from conftest import FULL_HEADER, make_row, run
@@ -81,3 +84,34 @@ def test_払い出し記録のヘッダが違えば書き込まない(tmp_path):
             '--full', full, '--snapshot', snap, '--weko-root', tmp_path)
     assert p.returncode != 0
     assert full.read_text(encoding='utf-8') == before
+
+
+def test_払い出し記録に書けなければ台帳を触らない(tmp_path):
+    """記録を先に書く。逆順だと、台帳にだけある記録漏れの番号が残る。"""
+    full, snap = _setup(tmp_path, [1], registry=['1\tUIアプリ\tGET\t/demo1\tdemo.v1\t現役\t'])
+    reg = tmp_path / 'no_registry.tsv'
+    reg.chmod(0o444)
+    if os.access(reg, os.W_OK):                    # root では読み取り専用にならない
+        import pytest
+        pytest.skip('読み取り専用のファイルに書けてしまう環境')
+    before = full.read_text(encoding='utf-8')
+    p = run('add_row.py', '--endpoint', 'ui:demo.new', '--append',
+            '--full', full, '--snapshot', snap, '--weko-root', tmp_path)
+    assert p.returncode != 0
+    assert full.read_text(encoding='utf-8') == before
+
+
+def test_並行して追記しても同じ番号を二度払い出さない(tmp_path):
+    full, snap = _setup(tmp_path, [1], registry=['1\tUIアプリ\tGET\t/demo1\tdemo.v1\t現役\t'])
+    e = {k: v for k, v in os.environ.items() if k != 'WEKO_API_INVENTORY_DIR'}
+    cmd = [sys.executable, os.path.join(os.path.dirname(add_row.__file__), 'add_row.py'),
+           '--endpoint', 'ui:demo.new', '--append',
+           '--full', str(full), '--snapshot', str(snap), '--weko-root', str(tmp_path)]
+    procs = [subprocess.Popen(cmd, env=e, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+             for _ in range(8)]
+    assert all(p.wait() == 0 for p in procs)
+    nos = [l.split('\t')[0] for l in full.read_text(encoding='utf-8').rstrip('\n').split('\n')[1:]]
+    assert sorted(nos, key=int) == [str(i) for i in range(1, 10)]
+    reg_nos = [l.split('\t')[0] for l in
+               (tmp_path / 'no_registry.tsv').read_text(encoding='utf-8').rstrip('\n').split('\n')[1:]]
+    assert reg_nos == [str(i) for i in range(1, 10)]

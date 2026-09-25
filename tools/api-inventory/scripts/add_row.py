@@ -26,6 +26,7 @@ test_coverage.py → prioritize.py が付与する。
 もう一度振ってしまう。`--append` では `no_registry.tsv` にも同じ番号で書き足す。
 """
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -143,7 +144,7 @@ def _nos(lines):
 
 
 def next_no(full_lines, registry_lines):
-    """台帳と払い出し記録のどちらでもまだ使われていない、最小の番号。"""
+    """台帳と払い出し記録の最大値の次の番号(欠番は埋めない)。"""
     return max(_nos(full_lines) + _nos(registry_lines) + [0]) + 1
 
 
@@ -187,6 +188,13 @@ def main():
         for k in keys:
             print('  ' + k)
 
+    # 番号を読んでから両ファイルに書き終えるまでを排他にする。並行して --append を
+    # 回すと、同じ最大値を読んで同じ番号を二度払い出してしまうため。ロックは台帳
+    # そのものに掛ける(ロック用のファイルを作ると台帳の隣に紛れて commit される)。
+    lock = open(full, 'a') if a.append else None
+    if lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+
     lines = open(full, encoding='utf-8').read().rstrip('\n').split('\n')
     hdr = lines[0].split('\t')
     registry = a.registry or os.path.join(os.path.dirname(os.path.abspath(full)), REGISTRY)
@@ -202,14 +210,18 @@ def main():
         no += 1
 
     if a.append:
-        with open(full, 'a', encoding='utf-8') as f:
-            for r in rows:
-                f.write('\t'.join(r) + '\n')
-        print(f'{full} に {len(rows)} 行を追記しました。')
+        # 払い出し記録を先に書く。台帳の書き込みが後で失敗しても、番号が1つ
+        # 欠番になるだけで済む(逆順だと、台帳にだけある記録漏れの番号が残る)。
         if reg_lines:
             with open(registry, 'a', encoding='utf-8') as f:
                 for r in rows:
                     f.write('\t'.join(registry_entry(hdr, r)) + '\n')
+        with open(full, 'a', encoding='utf-8') as f:
+            for r in rows:
+                f.write('\t'.join(r) + '\n')
+        lock.close()
+        print(f'{full} に {len(rows)} 行を追記しました。')
+        if reg_lines:
             print(f'{registry} に同じ番号を払い出しました。')
         else:
             print(f'注意: {registry} が無いため、番号の払い出しを記録していません。')
