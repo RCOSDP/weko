@@ -15,7 +15,8 @@ from conftest import SCRIPTS
 TOOL = os.path.dirname(SCRIPTS)
 CI = os.path.join(TOOL, 'ci')
 # リポジトリのルート直下にある(ツールだけ取り出した環境には無い)。
-WORKFLOWS = os.path.join(os.path.dirname(os.path.dirname(TOOL)), '.github', 'workflows')
+ROOT = os.path.dirname(os.path.dirname(TOOL))
+WORKFLOWS = os.path.join(ROOT, '.github', 'workflows')
 
 ORIGINALS = sorted(f for f in os.listdir(CI) if f.endswith('.yml'))
 
