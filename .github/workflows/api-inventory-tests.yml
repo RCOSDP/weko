@@ -19,6 +19,7 @@ on:
     paths: &paths
       - 'tools/api-inventory/**'
       - '.github/workflows/api-inventory-tests.yml'
+      - '.github/workflows/api-inventory-drift.yml'
   push:
     branches: ['**']
     paths: *paths
