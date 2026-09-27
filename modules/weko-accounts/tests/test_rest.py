@@ -22,7 +22,9 @@
 
 from flask import json
 
-from weko_accounts.errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, UserNotFoundError, InvalidPasswordError, DisabledUserError
+from weko_accounts.errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, \
+    InvalidCredentialsError, InvalidLoginRequestError, DisabledUserError
+from weko_accounts.utils import limiter
 
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoLogin_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
@@ -57,8 +59,9 @@ def test_WekoLogin_post(app, client, users_login):
         content_type='application/json',
     )
     res_data = json.loads(res.get_data())
-    assert res.status_code == UserNotFoundError.code
-    assert res_data['message'] == UserNotFoundError.description
+    assert res.status_code == InvalidCredentialsError.code
+    assert res_data['message'] == InvalidCredentialsError.description
+    unknown_user_body = res.get_data()
 
     # Invalid password : 403 error
     req_json = {
@@ -71,8 +74,10 @@ def test_WekoLogin_post(app, client, users_login):
         content_type='application/json',
     )
     res_data = json.loads(res.get_data())
-    assert res.status_code == InvalidPasswordError.code
-    assert res_data['message'] == InvalidPasswordError.description
+    assert res.status_code == InvalidCredentialsError.code
+    assert res_data['message'] == InvalidCredentialsError.description
+    # Unknown account and wrong password are indistinguishable
+    assert res.get_data() == unknown_user_body
 
     # Inactive user : 403 error
     req_json = {
@@ -116,6 +121,57 @@ def test_WekoLogin_post(app, client, users_login):
     res_data = json.loads(res.get_data())
     assert res.status_code == UserAllreadyLoggedInError.code
     assert res_data['message'] == UserAllreadyLoggedInError.description
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoLogin_post_invalid_body -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_WekoLogin_post_invalid_body(app, client, users_login):
+    """Malformed request bodies are rejected with 400."""
+    version = 'v1'
+    bodies = [
+        None,
+        [],
+        {},
+        {'email': users_login[5]['email']},
+        {'password': 'dummy'},
+        {'email': users_login[5]['email'], 'password': 1},
+        {'email': ['a'], 'password': 'dummy'},
+        {'email': '', 'password': ''},
+    ]
+    for body in bodies:
+        res = client.post(
+            f'/{version}/login',
+            data=json.dumps(body),
+            content_type='application/json',
+        )
+        res_data = json.loads(res.get_data())
+        assert res.status_code == InvalidLoginRequestError.code
+        assert res_data['message'] == InvalidLoginRequestError.description
+
+    # Body that is not JSON at all
+    res = client.post(
+        f'/{version}/login',
+        data='not json',
+        content_type='application/json',
+    )
+    assert res.status_code == InvalidLoginRequestError.code
+
+
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoAccountsREST_limiter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_WekoAccountsREST_limiter(instance_path):
+    """REST-only application also gets the rate limiter."""
+    from flask import Flask
+    from weko_accounts import WekoAccountsREST
+
+    app_ = Flask('testapi', instance_path=instance_path)
+    before = len(app_.before_request_funcs.get(None, []))
+    ext = WekoAccountsREST(app_)
+    assert app_.extensions.get('limiter') is limiter
+    after = len(app_.before_request_funcs.get(None, []))
+    assert after > before
+
+    # Initializing again on the same app does not register the hook twice
+    ext.init_limiter(app_)
+    assert len(app_.before_request_funcs.get(None, [])) == after
 
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoLogout_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
