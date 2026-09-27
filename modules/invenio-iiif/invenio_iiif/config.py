@@ -30,6 +30,8 @@ IIIF_MANIFEST_ENDPOINTS = {
     "recid": {
         "pid_type": "recid",
         "route": "/records/<pid_value>",
+        "permission_factory_imp":
+            "weko_records_ui.permissions:page_permission_factory",
     },
 
 }

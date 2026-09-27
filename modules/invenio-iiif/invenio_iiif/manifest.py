@@ -23,6 +23,7 @@ from uritools import uricompose
 from .previewer import can_preview
 from .utils import iiif_image_key
 from .handlers import image_opener
+from .permissions import iiif_object_permission_factory
 
 
 class IIIFMetadata(dict):
@@ -103,6 +104,7 @@ class IIIFManifest(object):
             obj
             for obj in ObjectVersion.get_by_bucket(bucket).all()
             if can_preview(PreviewFile(None, None, obj))
+            and iiif_object_permission_factory(obj, record=self.record).can()
         ]
 
         if not images:

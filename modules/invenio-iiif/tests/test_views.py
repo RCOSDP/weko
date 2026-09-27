@@ -189,3 +189,43 @@ def test_manifest_view(app,records,mocker):
 
         result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
         assert result.status_code == 204
+
+
+# .tox/c1/bin/pytest --cov=invenio_iiif tests/test_views.py::test_manifest_view_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
+def test_manifest_view_permission(app,records,mocker):
+    from invenio_pidstore.resolver import Resolver
+    from invenio_iiif.manifest import IIIFManifest
+    from invenio_records.api import Record
+    pid_value=records[0][0].pid_value
+    resolver=Resolver(pid_type="recid",object_type="rec",getter=Record.get_record)
+    manifest_class=IIIFManifest
+
+    def factory(can):
+        return MagicMock(return_value=MagicMock(can=MagicMock(return_value=can)))
+
+    with app.test_request_context("/test"):
+        # allowed
+        permission_factory = factory(True)
+        result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
+        assert result.status_code == 204
+        assert permission_factory.call_args[0][0]["recid"] == records[0][2]["recid"]
+
+        # denied for anonymous user
+        mock_user = mocker.patch("invenio_iiif.views.current_user")
+        mock_user.is_authenticated = False
+        with pytest.raises(HTTPException) as httperror:
+            manifest_view(pid_value,resolver,factory(False),manifest_class)
+        assert httperror.value.code == 401
+
+        # denied for authenticated user
+        mock_user.is_authenticated = True
+        with pytest.raises(HTTPException) as httperror:
+            manifest_view(pid_value,resolver,factory(False),manifest_class)
+        assert httperror.value.code == 403
+
+
+# .tox/c1/bin/pytest --cov=invenio_iiif tests/test_views.py::test_manifest_endpoint_permission_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
+def test_manifest_endpoint_permission_config():
+    from invenio_iiif.config import IIIF_MANIFEST_ENDPOINTS
+    assert IIIF_MANIFEST_ENDPOINTS["recid"]["permission_factory_imp"] == \
+        "weko_records_ui.permissions:page_permission_factory"
