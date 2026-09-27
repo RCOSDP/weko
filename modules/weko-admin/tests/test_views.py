@@ -897,12 +897,39 @@ def test_get_ogp_image(api, db, site_info, file_instance, mocker):
 
 #def get_search_init_display_index(selected_index=None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_search_init_display_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_search_init_display_index(api):
+def test_get_search_init_display_index(api, users):
     url = url_for("weko_admin.get_search_init_display_index",selected_index=1)
+    login_user_via_session(client=api, email=users[0]["email"])
     data = [{"id":"0","parent":"#","text":"Root Index","state":{"opened":True}}]
     with patch("weko_admin.views.get_init_display_index",return_value=data):
         res = api.get(url)
         assert response_data(res) == {"indexes":data}
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_search_init_display_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+@pytest.mark.parametrize("index,is_permission",[
+                         (0,True),# sysadmin
+                         (1,True),# repoadmin
+                         (2,False),# comadmin
+                         (3,False),# contributor
+                         (4,False),# generaluser
+                         ])
+def test_get_search_init_display_index_acl(api,users,index,is_permission):
+    url = url_for("weko_admin.get_search_init_display_index",selected_index=1)
+    login_user_via_session(client=api, email=users[index]["email"])
+    with patch("weko_admin.views.get_init_display_index",return_value=[]) as mock_get:
+        res = api.get(url)
+        assert_role(res, is_permission)
+        if not is_permission:
+            mock_get.assert_not_called()
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_search_init_display_index_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_search_init_display_index_guest(api):
+    url = url_for("weko_admin.get_search_init_display_index",selected_index=1)
+    with patch("weko_admin.views.get_init_display_index",return_value=[]) as mock_get:
+        res = api.get(url)
+        assert res.status_code == 302
+        mock_get.assert_not_called()
 
 
 #def save_restricted_access():

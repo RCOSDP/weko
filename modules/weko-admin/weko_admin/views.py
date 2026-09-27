@@ -765,6 +765,9 @@ def get_ogp_image():
 
 @blueprint_api.route('/search/init_display_index/<string:selected_index>',
                      methods=['GET'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def get_search_init_display_index(selected_index=None):
     """Get search init display index.
 
