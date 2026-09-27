@@ -99,6 +99,34 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
+def file_permission_required(f):
+    """Require the file permission on the file requested to a record view.
+
+    For views registered in ``RECORDS_UI_ENDPOINTS`` whose signature is
+    ``view(pid, record, **kwargs)`` and whose route has ``<filename>``.
+    The file is resolved in the same way as the previewer does, and checked
+    with :func:`file_permission_factory`, as ``file_ui`` does.
+
+    If the user may not access the file, a guest user is redirected to the
+    login page and a logged in user gets 403. A missing file is left to the
+    view (which returns 404).
+    """
+    @wraps(f)
+    def decorated(pid, record, *args, **kwargs):
+        from invenio_previewer.proxies import current_previewer
+        fileobj = current_previewer.record_file_factory(
+            pid, record, request.view_args.get(
+                'filename', request.args.get('filename', type=str))
+        )
+        if fileobj and not file_permission_factory(record, fjson=fileobj).can():
+            if not current_user.is_authenticated:
+                from weko_accounts.views import _redirect_method
+                return _redirect_method(has_next=True)
+            abort(403)
+        return f(pid, record, *args, **kwargs)
+    return decorated
+
+
 def check_file_download_permission(record, fjson, is_display_file_info=False, item_type=None):
     """Check file download."""
     def site_license_check(item_type):

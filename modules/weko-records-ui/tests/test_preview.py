@@ -86,6 +86,53 @@ def test_preview(app,records):
             assert preview(record.pid,record,template)==""
     
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_preview.py::test_preview_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_preview_file_permission(app, records, users):
+    @app.route('/record/<pid_value>/preview_permission_test/<path:filename>')
+    def view_preview_permission_test(pid_value, filename):
+        return ''
+
+    from werkzeug.exceptions import Forbidden
+
+    indexer, results = records
+    # record 5 has a single file whose accessrole is open_no
+    record = results[4]['record']
+    recid = results[4]['recid']
+    filename = 'helloworld.pdf'
+    template = 'invenio_records_ui/detail.html'
+    url = '/record/{}/preview_permission_test/{}'.format(recid.pid_value, filename)
+
+    # guest user: redirected to login
+    with app.test_request_context(url):
+        with patch('weko_accounts.views._redirect_method', return_value='redirect') as mock_redirect:
+            assert preview(record.pid, record, template) == 'redirect'
+            mock_redirect.assert_called_once_with(has_next=True)
+
+    # logged in user without file permission
+    with app.test_request_context(url):
+        with patch('flask_login.utils._get_user', return_value=users[4]['obj']):
+            with pytest.raises(Forbidden):
+                preview(record.pid, record, template)
+
+    # owner and sysadmin can preview
+    for user in (users[7], users[2]):
+        with app.test_request_context(url):
+            with patch('flask_login.utils._get_user', return_value=user['obj']):
+                assert "<title>Preview</title>" in preview(record.pid, record, template)
+
+    # file permission is checked with the requested file
+    with app.test_request_context(url):
+        checker = MagicMock()
+        checker.can.return_value = False
+        with patch('flask_login.utils._get_user', return_value=users[2]['obj']):
+            with patch('weko_records_ui.permissions.file_permission_factory', return_value=checker) as mock_factory:
+                with pytest.raises(Forbidden):
+                    preview(record.pid, record, template)
+                args, kwargs = mock_factory.call_args
+                assert args[0] == record
+                assert kwargs['fjson'].get('filename') == filename
+
+
 # def children_to_list(node):
 def test_children_to_list(app):
     obj1 = MagicMock()
