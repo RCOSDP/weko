@@ -235,6 +235,16 @@ def item_changes_search_factory(search,
                 "bool": {
                     "must": [
                         {
+                            # Deleted items are kept so that the change
+                            # list can report their deletion.
+                            "terms": {
+                                "publish_status": [
+                                    PublishStatus.PUBLIC.value,
+                                    PublishStatus.DELETE.value
+                                ]
+                            }
+                        },
+                        {
                             "range": {
                                 "publish_date": {
                                     "lte": "now/d"

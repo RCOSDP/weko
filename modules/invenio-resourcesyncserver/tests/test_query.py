@@ -194,3 +194,42 @@ def test_item_changes_search_factory_except_syntaxerror(monkeypatch):
         search = DummySearch()
         with pytest.raises(query_mod.InvalidQueryRESTError):
             query_mod.item_changes_search_factory(search, index_id=1)
+
+
+@pytest.mark.parametrize("is_root", [True, False])
+def test_item_changes_search_factory_publish_status(monkeypatch, is_root):
+    from invenio_resourcesyncserver import query as query_mod
+    from weko_schema_ui.models import PublishStatus
+
+    class DummySearch:
+        def __init__(self):
+            self.query = None
+        def update_from_dict(self, q):
+            self.query = q
+
+    class DummyIndexes:
+        @staticmethod
+        def get_list_path_publish(index_id):
+            return ["1"]
+        @staticmethod
+        def get_child_list(q):
+            return []
+
+    monkeypatch.setattr(query_mod, "Indexes", DummyIndexes)
+    app = Flask(__name__)
+    app.config["WEKO_ROOT_INDEX"] = 0
+    with app.app_context():
+        search = DummySearch()
+        result = query_mod.item_changes_search_factory(
+            search, index_id=0 if is_root else 1,
+            date_from="2020-01-01", date_until="2020-12-31")
+        must = result.query["post_filter"]["bool"]["must"]
+        status_filters = [
+            m["terms"]["publish_status"] for m in must
+            if isinstance(m, dict) and "publish_status" in m.get("terms", {})
+        ]
+        assert len(status_filters) == 1
+        assert PublishStatus.PUBLIC.value in status_filters[0]
+        assert PublishStatus.DELETE.value in status_filters[0]
+        assert PublishStatus.PRIVATE.value not in status_filters[0]
+        assert PublishStatus.NEW.value not in status_filters[0]

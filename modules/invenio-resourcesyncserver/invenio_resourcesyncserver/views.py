@@ -21,6 +21,7 @@ from lxml import etree
 from weko_index_tree.models import Index
 
 from .api import ChangeListHandler, ResourceListHandler
+from .permissions import public_record_required
 from .utils import render_capability_xml, render_well_know_resourcesync
 
 blueprint = Blueprint(
@@ -60,6 +61,7 @@ def resource_dump(index_id):
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/file_content.zip")
+@public_record_required()
 def file_content(index_id, record_id):
     """Download file content."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
@@ -80,6 +82,7 @@ def capability():
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/resourcedump_manifest.xml")
+@public_record_required()
 def resource_dump_manifest(index_id, record_id):
     """Render resource dump manifest."""
     resource = ResourceListHandler.get_resource_by_repository_id(index_id)
@@ -138,6 +141,7 @@ def change_dump(index_id, from_date):
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/changedump_manifest.xml")
+@public_record_required()
 def change_dump_manifest(index_id, record_id):
     """Render change dump manifest."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
@@ -149,6 +153,7 @@ def change_dump_manifest(index_id, record_id):
 
 
 @blueprint.route("/resync/<index_id>/<record_id>/change_dump_content.zip")
+@public_record_required()
 def change_dump_content(index_id, record_id):
     """Render change dump content."""
     cl = ChangeListHandler.get_change_list_by_repo_id(index_id)
