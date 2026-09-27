@@ -166,6 +166,57 @@ def test_get_path_name_dict(i18n_app, users, indices):
         assert get_path_name_dict('33_44')
 
 
+def _add_unpublished_index(db, index_id):
+    from weko_index_tree.models import Index
+    with db.session.begin_nested():
+        db.session.add(Index(
+            index_name="unpublished",
+            index_name_english="unpublished",
+            public_state=False,
+            id=index_id,
+        ))
+    db.session.commit()
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_get_path_name_dict_admin_sees_unpublished -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_path_name_dict_admin_sees_unpublished(i18n_app, db, users, indices):
+    _add_unpublished_index(db, 77)
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        res = get_path_name_dict('33_44_77')
+        data = json.loads(res.data)
+        assert set(data.keys()) == {"33", "44", "77"}
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_get_path_name_dict_filters_unbrowsable -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_path_name_dict_filters_unbrowsable(i18n_app, db, users, indices):
+    _add_unpublished_index(db, 77)
+    # contributor
+    with patch("flask_login.utils._get_user", return_value=users[1]['obj']):
+        res = get_path_name_dict('77')
+        assert json.loads(res.data) == {}
+    # non-existent index is skipped
+    with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
+        res = get_path_name_dict('33_99999')
+        assert set(json.loads(res.data).keys()) == {"33"}
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_get_path_name_dict_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+def test_get_path_name_dict_guest(app, client, db, indices):
+    _add_unpublished_index(db, 77)
+    url = url_for("weko_search_ui.get_path_name_dict", path_str="33_77", _external=True)
+    res = client.get(url)
+    assert res.status_code == 200
+    assert "77" not in json.loads(res.data)
+
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_views.py::test_get_path_name_dict_invalid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
+@pytest.mark.parametrize("path_str", ["abc", "33_x", "33__44", "-1", "1" * 19])
+def test_get_path_name_dict_invalid(app, client, db, indices, path_str):
+    url = url_for("weko_search_ui.get_path_name_dict", path_str=path_str, _external=True)
+    res = client.get(url)
+    assert res.status_code == 400
+
+
 # def gettitlefacet():
 def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
