@@ -1529,8 +1529,13 @@ def validate_bibtex_export():
     @return:
     """
     from .utils import validate_bibtex
-    post_data = request.get_json()
-    record_ids = post_data['record_ids']
+    post_data = request.get_json(silent=True)
+    record_ids = post_data.get('record_ids') \
+        if isinstance(post_data, dict) else None
+    if not isinstance(record_ids, list) or not all(
+            isinstance(i, (int, str)) and not isinstance(i, bool)
+            for i in record_ids):
+        abort(400)
     invalid_record_ids = validate_bibtex(record_ids)
     return jsonify(invalid_record_ids=invalid_record_ids)
 
