@@ -11,7 +11,7 @@
 from __future__ import absolute_import, print_function
 
 import pytest
-from mock import patch
+from mock import MagicMock, patch
 from werkzeug.exceptions import HTTPException
 from flask import url_for,make_response
 from flask_iiif.utils import iiif_image_url
@@ -27,20 +27,49 @@ from invenio_iiif.views import create_blueprint_from_app,create_blueprint,create
 
 # .tox/c1/bin/pytest --cov=invenio_iiif tests/test_views.py -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio_iiif/.tox/c1/tmp
 
-def test_get_image(client, image_object, image_uuid):
+def _patch_object_permission(mocker, can):
+    return mocker.patch(
+        "invenio_iiif.handlers.iiif_object_permission_factory",
+        return_value=MagicMock(can=MagicMock(return_value=can)))
+
+
+def test_get_image(client, image_object, image_uuid, mocker):
     """Test retrieval of image."""
     #with pytest.raises(AttributeError):
+    _patch_object_permission(mocker, True)
     res = client.get(iiif_image_url(uuid=image_uuid, size='200,200'))
     assert res.status_code == 200
     assert res.content_type == 'image/png'
 
 
-def test_image_info(client, image_object, image_uuid):
+def test_get_image_no_permission(client, image_object, image_uuid, mocker):
+    """Test retrieval of image without permission."""
+    _patch_object_permission(mocker, False)
+    res = client.get(iiif_image_url(uuid=image_uuid, size='200,200'))
+    assert res.status_code == 404
+
+
+def test_get_image_default_permission(client, image_object, image_uuid):
+    """Test retrieval of image not linked to a record by anonymous user."""
+    res = client.get(iiif_image_url(uuid=image_uuid, size='200,200'))
+    assert res.status_code == 404
+
+
+def test_image_info(client, image_object, image_uuid, mocker):
     """Test retrieval of image info."""
+    _patch_object_permission(mocker, True)
     res = client.get(
         url_for('iiifimageinfo', version='v2', uuid=image_uuid))
     assert res.status_code == 200
     assert res.content_type == 'application/json'
+
+
+def test_image_info_no_permission(client, image_object, image_uuid, mocker):
+    """Test retrieval of image info without permission."""
+    _patch_object_permission(mocker, False)
+    res = client.get(
+        url_for('iiifimageinfo', version='v2', uuid=image_uuid))
+    assert res.status_code == 404
 
 
 def test_get_restricted_image(client, image_object, image_uuid):
@@ -160,5 +189,3 @@ def test_manifest_view(app,records,mocker):
 
         result = manifest_view(pid_value,resolver,permission_factory,manifest_class)
         assert result.status_code == 204
-        
-    
