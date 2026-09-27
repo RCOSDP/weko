@@ -126,7 +126,8 @@ DEPOSIT_REST_ENDPOINTS = dict(
         max_result_window=10000,
         # create_permission_factory_imp='',
         # read_permission_factory_imp='',
-        # update_permission_factory_imp='',
+        update_permission_factory_imp=(
+            'weko_items_ui.permissions:edit_permission_factory'),
         delete_permission_factory_imp=deny_all,
     )
 )

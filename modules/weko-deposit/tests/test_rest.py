@@ -312,3 +312,99 @@ def test_put(app, client, users, records):
                                 data=json.dumps(data), headers=headers)
                 assert res.status_code == 200
                 mock_external.assert_not_called()
+
+
+# 以下は invenio-deposit が作る更新系ルートの権限判定。
+# conftest の base_app はこれらの blueprint を登録していないため、
+# 使うテストでだけ登録する。client より先に作る必要があるので、
+# テスト関数の引数では client より前に置く。
+@pytest.fixture()
+def deposit_rest_app(base_app):
+    from invenio_deposit import InvenioDepositREST
+    InvenioDepositREST(base_app)
+    return base_app
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_update_permission_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_update_permission_config():
+    from weko_deposit import config
+
+    for endpoints in (config.DEPOSIT_REST_ENDPOINTS,
+                      config.WEKO_DEPOSIT_REST_ENDPOINTS):
+        assert endpoints['depid']['update_permission_factory_imp'] == \
+            'weko_items_ui.permissions:edit_permission_factory'
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_actions_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.parametrize('action', ['edit', 'discard'])
+def test_depid_actions_guest(deposit_rest_app, client, deposit, action):
+    from invenio_records_rest.errors import InvalidDataRESTError
+    url = url_for('invenio_deposit_rest.depid_actions',
+                  pid_value=deposit, action=action)
+    mock_action = MagicMock(side_effect=InvalidDataRESTError())
+    with patch.object(WekoDeposit, action, mock_action):
+        res = client.post(url, data=json.dumps({}),
+                          content_type='application/json')
+    assert res.status_code == 401
+    mock_action.assert_not_called()
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_actions_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.parametrize('index, status_code', [
+    (0, 403),  # contributor       所有者でも管理者でもない
+    (1, 400),  # repoadmin
+    (2, 400),  # sysadmin
+    (3, 403),  # comadmin          当該コミュニティ配下ではない
+    (4, 403),  # generaluser
+    (5, 403),  # originalroleuser
+    (6, 400),  # originalroleuser2 repoadmin ロールを持つ
+    (7, 400),  # user              deposit の所有者
+])
+def test_depid_actions_users(deposit_rest_app, client, users, deposit,
+                             index, status_code):
+    # 権限判定を通った利用者だけがアクション本体に入る。本体は
+    # モックで 400 を返させ、判定の結果(401/403)と区別する。
+    from invenio_records_rest.errors import InvalidDataRESTError
+    login_user_via_session(client=client, email=users[index]['email'])
+    url = url_for('invenio_deposit_rest.depid_actions',
+                  pid_value=deposit, action='edit')
+    mock_action = MagicMock(side_effect=InvalidDataRESTError())
+    with patch.object(WekoDeposit, 'edit', mock_action):
+        res = client.post(url, data=json.dumps({}),
+                          content_type='application/json')
+    assert res.status_code == status_code
+    assert mock_action.called == (status_code == 400)
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_update_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_depid_item_update_guest(deposit_rest_app, client, deposit):
+    url = url_for('invenio_deposit_rest.depid_item', pid_value=deposit)
+    res = client.put(url, data='x', content_type='text/plain')
+    assert res.status_code == 401
+    res = client.patch(url, data='null',
+                       content_type='application/json-patch+json')
+    assert res.status_code == 401
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_depid_item_update_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.parametrize('index, allowed', [
+    (0, False),  # contributor       所有者でも管理者でもない
+    (1, True),   # repoadmin
+    (2, True),   # sysadmin
+    (3, False),  # comadmin          当該コミュニティ配下ではない
+    (4, False),  # generaluser
+    (5, False),  # originalroleuser
+    (6, True),   # originalroleuser2 repoadmin ロールを持つ
+    (7, True),   # user              deposit の所有者
+])
+def test_depid_item_update_users(deposit_rest_app, client, users, deposit,
+                                 index, allowed):
+    # 権限判定を通ると、PUT は未対応の Content-Type で 415、
+    # PATCH は空の本文で 400 になり、レコードは書き換わらない。
+    login_user_via_session(client=client, email=users[index]['email'])
+    url = url_for('invenio_deposit_rest.depid_item', pid_value=deposit)
+    res = client.put(url, data='x', content_type='text/plain')
+    assert res.status_code == (415 if allowed else 403)
+    res = client.patch(url, data='null',
+                       content_type='application/json-patch+json')
+    assert res.status_code == (400 if allowed else 403)
