@@ -491,6 +491,8 @@ def db(app):
     # invenio_stats.utils reads Community, and the model has to be imported
     # before create_all() for its table to be part of the metadata.
     from invenio_communities.models import Community  # noqa: F401
+    # The stats views look up the record of a bucket.
+    from invenio_records_files.models import RecordsBuckets  # noqa: F401
 
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
