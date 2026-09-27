@@ -314,7 +314,7 @@ def test_put(app, client, users, records):
                 mock_external.assert_not_called()
 
 
-# 以下は invenio-deposit が作る更新系ルートの権限判定。
+# 以下は invenio-deposit / invenio-records-rest が作る更新系ルートの権限判定。
 # conftest の base_app はこれらの blueprint を登録していないため、
 # 使うテストでだけ登録する。client より先に作る必要があるので、
 # テスト関数の引数では client より前に置く。
@@ -325,10 +325,25 @@ def deposit_rest_app(base_app):
     return base_app
 
 
+@pytest.fixture()
+def records_rest_app(base_app):
+    from invenio_records_rest.views import create_blueprint_from_app
+    from weko_deposit import config as weko_deposit_config
+    # 本番では invenio_config.module で weko_deposit.config が読み込まれる。
+    # テストアプリはそれを通らないので、同じ値をここで入れる。
+    base_app.config['RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY'] = \
+        weko_deposit_config.RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY
+    base_app.extensions['invenio-records-rest'].reset_permission_factories()
+    base_app.register_blueprint(create_blueprint_from_app(base_app))
+    return base_app
+
+
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_update_permission_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
 def test_update_permission_config():
+    from invenio_records_rest.utils import deny_all
     from weko_deposit import config
 
+    assert config.RECORDS_REST_DEFAULT_UPDATE_PERMISSION_FACTORY is deny_all
     for endpoints in (config.DEPOSIT_REST_ENDPOINTS,
                       config.WEKO_DEPOSIT_REST_ENDPOINTS):
         assert endpoints['depid']['update_permission_factory_imp'] == \
@@ -408,3 +423,29 @@ def test_depid_item_update_users(deposit_rest_app, client, users, deposit,
     res = client.patch(url, data='null',
                        content_type='application/json-patch+json')
     assert res.status_code == (400 if allowed else 403)
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_recid_item_update_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_recid_item_update_guest(records_rest_app, client, deposit):
+    url = url_for('invenio_records_rest.recid_item', pid_value=deposit)
+    res = client.put(url, data=json.dumps({}),
+                     content_type='application/json')
+    assert res.status_code == 401
+    res = client.patch(url, data=json.dumps([]),
+                       content_type='application/json-patch+json')
+    assert res.status_code == 401
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_recid_item_update_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+@pytest.mark.parametrize('index', [0, 1, 2, 3, 4, 5, 6, 7])
+def test_recid_item_update_users(records_rest_app, client, users, deposit,
+                                 index):
+    # この経路の更新は画面から使われていないため、既定どおり誰にも許可しない。
+    login_user_via_session(client=client, email=users[index]['email'])
+    url = url_for('invenio_records_rest.recid_item', pid_value=deposit)
+    res = client.put(url, data=json.dumps({}),
+                     content_type='application/json')
+    assert res.status_code == 403
+    res = client.patch(url, data=json.dumps([]),
+                       content_type='application/json-patch+json')
+    assert res.status_code == 403
