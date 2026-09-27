@@ -56,6 +56,21 @@ def is_public_record(record_id):
     return True
 
 
+def can_download_file(record, file):
+    """Check that the current user can download the file of the record.
+
+    :param record: Record that owns the file.
+    :param file: File object of the record.
+    :return: True if the file can be downloaded.
+    """
+    from weko_records_ui.permissions import check_file_download_permission
+    try:
+        return bool(check_file_download_permission(record, file.info()))
+    except Exception as ex:
+        current_app.logger.debug(ex)
+        return False
+
+
 def public_record_required(param='record_id'):
     """Abort with 404 unless the record in the URL is public.
 

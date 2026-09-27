@@ -1,8 +1,9 @@
 import pytest
-from mock import patch
+from mock import MagicMock, patch
 from werkzeug.exceptions import NotFound
 
 from invenio_resourcesyncserver.permissions import (
+    can_download_file,
     is_public_record,
     public_record_required
 )
@@ -81,3 +82,38 @@ def test_public_record_required(i18n_app):
         assert view2(recid="3") == "ok"
         with pytest.raises(NotFound):
             view2()
+
+
+# def can_download_file(record, file):
+def test_can_download_file(i18n_app):
+    record = {"recid": "1"}
+    file = MagicMock()
+    file.info.return_value = {"filename": "a.txt", "accessrole": "open_access"}
+    target = "weko_records_ui.permissions.check_file_download_permission"
+
+    with patch(target, return_value=True) as m:
+        assert can_download_file(record, file) is True
+        m.assert_called_once_with(record, file.info.return_value)
+    with patch(target, return_value=False):
+        assert can_download_file(record, file) is False
+    with patch(target, return_value=None):
+        assert can_download_file(record, file) is False
+    with patch(target, side_effect=Exception("error")):
+        assert can_download_file(record, file) is False
+
+
+# check_file_download_permission is not mocked: a file whose access role
+# does not allow anonymous download is excluded.
+@pytest.mark.parametrize("fjson, expected", [
+    ({"filename": "a.txt", "accessrole": "open_access",
+      "date": [{"dateType": "Available", "dateValue": "2000-01-01"}]}, True),
+    ({"filename": "a.txt", "accessrole": "open_access",
+      "date": [{"dateType": "Available", "dateValue": "2999-01-01"}]}, False),
+    ({"filename": "a.txt", "accessrole": "open_no"}, False),
+])
+def test_can_download_file_guest(i18n_app, users, fjson, expected):
+    record = {"recid": "1", "item_type_id": "1", "owner": "1",
+              "_deposit": {"created_by": 1}}
+    file = MagicMock()
+    file.info.return_value = fjson
+    assert can_download_file(record, file) == expected
