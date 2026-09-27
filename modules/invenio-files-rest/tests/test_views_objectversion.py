@@ -641,3 +641,67 @@ def test_put_header_invalid_tags(app, client, bucket, permissions, get_md5,
         headers={header_name: 'a=1&a=2'},
     )
     assert resp.status_code == 400
+
+
+# def is_guest_login_can_access_file(permission):
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_is_guest_login_can_access_file -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_is_guest_login_can_access_file(app, db, bucket, objects):
+    """Test guest access limited to the buckets of the guest activity."""
+    from flask import session
+    from invenio_files_rest.models import Bucket
+    from invenio_files_rest.permissions import permission_factory
+    from invenio_files_rest.views import is_guest_login_can_access_file
+
+    other_bucket = Bucket.create()
+    db.session.commit()
+    target = 'invenio_files_rest.views.get_guest_activity_bucket_ids'
+
+    with app.test_request_context():
+        # No guest token
+        with patch(target, return_value={str(bucket.id)}) as mock_ids:
+            assert not is_guest_login_can_access_file(
+                permission_factory(objects[0], 'object-read'))
+            mock_ids.assert_not_called()
+
+        session['guest_token'] = 'guest_token_value'
+        with patch(target, return_value={str(bucket.id)}) as mock_ids:
+            for action in ['object-read', 'bucket-update', 'object-delete',
+                           'object-delete-version']:
+                target_obj = bucket if action == 'bucket-update' \
+                    else objects[0]
+                assert is_guest_login_can_access_file(
+                    permission_factory(target_obj, action))
+            mock_ids.assert_called_with('guest_token_value')
+
+            # Bucket not used by the guest activity
+            assert not is_guest_login_can_access_file(
+                permission_factory(other_bucket, 'bucket-update'))
+            # Action not allowed to guest
+            assert not is_guest_login_can_access_file(
+                permission_factory(bucket, 'bucket-read'))
+
+        with patch(target, return_value=set()):
+            assert not is_guest_login_can_access_file(
+                permission_factory(objects[0], 'object-read'))
+
+
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_put_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize('is_guest_bucket, expected', [
+    (True, 200),
+    (False, 404),
+])
+def test_put_guest(client, bucket, is_guest_bucket, expected):
+    """Test upload of an object with a guest token."""
+    object_url = url_for(
+        'invenio_files_rest.object_api', bucket_id=bucket.id, key='test.txt')
+    bucket_ids = {str(bucket.id)} if is_guest_bucket else {'other_bucket'}
+    with client.session_transaction() as sess:
+        sess['guest_token'] = 'guest_token_value'
+    with patch('invenio_files_rest.views.get_guest_activity_bucket_ids',
+               return_value=bucket_ids):
+        resp = client.put(
+            object_url,
+            input_stream=BytesIO(b'guest_content'),
+        )
+    assert resp.status_code == expected
+

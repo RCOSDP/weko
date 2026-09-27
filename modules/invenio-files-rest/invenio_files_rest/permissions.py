@@ -157,3 +157,42 @@ def has_update_version_role(user):
             if lst.name in roles_user:
                 return True
     return False
+
+
+def get_guest_activity_bucket_ids(token):
+    """Get the ids of the buckets used by the guest activity of a token.
+
+    The buckets are those of the item registered in the activity and of the
+    root version of that item.
+
+    :param token: The guest activity token.
+    :return: A set of bucket ids as strings.
+    """
+    from invenio_pidstore.models import PersistentIdentifier
+    from invenio_records_files.models import RecordsBuckets
+    from weko_workflow.api import WorkActivity
+    from weko_workflow.models import GuestActivity
+
+    if not token:
+        return set()
+    guest_activity = GuestActivity.query.filter_by(token=token).first()
+    if not guest_activity:
+        return set()
+    activity = WorkActivity.get_activity_by_id(guest_activity.activity_id)
+    if not activity or not activity.item_id:
+        return set()
+
+    record_ids = {activity.item_id}
+    recid = PersistentIdentifier.query.filter_by(
+        pid_type='recid', object_type='rec',
+        object_uuid=activity.item_id).first()
+    if recid:
+        root = PersistentIdentifier.query.filter_by(
+            pid_type='recid',
+            pid_value=recid.pid_value.split('.')[0]).first()
+        if root and root.object_uuid:
+            record_ids.add(root.object_uuid)
+
+    records_buckets = RecordsBuckets.query.filter(
+        RecordsBuckets.record_id.in_(list(record_ids))).all()
+    return {str(rb.bucket_id) for rb in records_buckets}

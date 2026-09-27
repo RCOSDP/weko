@@ -31,6 +31,7 @@ from .errors import DuplicateTagError, ExhaustedStreamError, FileSizeError, \
     InvalidTagError, MissingQueryParameter, MultipartInvalidChunkSize
 from .models import Bucket, Location, MultipartObject, ObjectVersion, \
     ObjectVersionTag, Part
+from .permissions import get_guest_activity_bucket_ids
 from .proxies import current_files_rest, current_permission_factory
 from .serializer import json_serializer
 from .signals import file_downloaded, file_previewed
@@ -375,6 +376,8 @@ need_bucket_permission = partial(
 def is_guest_login_can_access_file(permission):
     """Check guest login upload file.
 
+    Only the buckets used by the guest activity of the token are allowed.
+
     Args:
         permission: The permission to check.
 
@@ -387,10 +390,15 @@ def is_guest_login_can_access_file(permission):
             "files-rest-object-read", "files-rest-bucket-update",
             "files-rest-object-delete", "files-rest-object-delete-version",
         ]
+        bucket_ids = None
         for need in permission.needs:
             if need.method == 'action' and \
                     need.value in guest_access_file_actions:
-                return True
+                if bucket_ids is None:
+                    bucket_ids = get_guest_activity_bucket_ids(
+                        session.get('guest_token'))
+                if getattr(need, 'argument', None) in bucket_ids:
+                    return True
     return False
 
 
