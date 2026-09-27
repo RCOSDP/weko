@@ -35,7 +35,6 @@ from invenio_oauth2server.provider import oauth2
 from invenio_pidstore.resolver import Resolver
 from werkzeug.utils import import_string
 
-from weko_accounts.utils import roles_required
 from weko_admin.api import TempDirInfo
 from weko_deposit.api import WekoRecord
 from weko_items_ui.scopes import item_create_scope, item_update_scope, item_delete_scope
@@ -50,8 +49,9 @@ from weko_workflow.errors import WekoWorkflowException
 from weko_workflow.utils import get_site_info_name
 from weko_workflow.scopes import activity_scope
 
-from .config import WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE
-from .decorators import check_on_behalf_of, check_package_contents
+from .decorators import (
+    check_deposit_role, check_on_behalf_of, check_package_contents
+)
 from .errors import ErrorType, WekoSwordserverException
 from .utils import (
     check_import_file_format,
@@ -172,7 +172,7 @@ def get_service_document():
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_create_scope.id)
-@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
+@check_deposit_role()
 @check_on_behalf_of()
 @check_package_contents()
 def post_service_document():
@@ -488,7 +488,7 @@ def post_service_document():
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_update_scope.id)
-@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
+@check_deposit_role()
 @check_on_behalf_of()
 @check_package_contents()
 def put_object(recid):
@@ -1202,7 +1202,7 @@ def _sort_links_for_status(links):
 @limiter.limit("")
 @require_oauth_scopes(write_scope.id, actions_scope.id)
 @require_oauth_scopes(item_delete_scope.id)
-@roles_required(WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE)
+@check_deposit_role()
 @check_on_behalf_of()
 def delete_object(recid):
     """Deleting the entire Object

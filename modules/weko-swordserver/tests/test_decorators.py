@@ -8,7 +8,9 @@ from invenio_deposit.scopes import write_scope
 from invenio_oauth2server.ext import verify_oauth_token_and_set_current_user
 from unittest.mock import MagicMock
 from weko_swordserver.errors import ErrorType, WekoSwordserverException
+from werkzeug.exceptions import Forbidden, Unauthorized
 from weko_swordserver.decorators import (
+    check_deposit_role,
     check_oauth,
     check_on_behalf_of,
     check_package_contents,
@@ -45,6 +47,50 @@ def test_check_oauth(app, client, users, tokens):
 
         assert e.value.errorType == ErrorType.AuthenticationFailed
         assert e.value.message == "Authentication is failed."
+
+
+# def check_deposit_role():
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_decorators.py::test_check_deposit_role -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test_check_deposit_role(app, users):
+    func = check_deposit_role()(lambda x, y: x + y)
+    contributor = users[3]["obj"]
+    generaluser = users[4]["obj"]
+    default_roles = app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"]
+    try:
+        # default roles
+        assert "Contributor" in default_roles
+        assert "General" not in default_roles
+        with app.test_request_context(method="POST"):
+            login_user(contributor)
+            assert func(x=1, y=2) == 3
+        with app.test_request_context(method="POST"):
+            login_user(generaluser)
+            with pytest.raises(Forbidden):
+                func(x=1, y=2)
+
+        # the application config is applied at request time
+        app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"] = ["General"]
+        with app.test_request_context(method="POST"):
+            login_user(contributor)
+            with pytest.raises(Forbidden):
+                func(x=1, y=2)
+        with app.test_request_context(method="POST"):
+            login_user(generaluser)
+            assert func(x=1, y=2) == 3
+
+        # no roles are allowed
+        app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"] = []
+        with app.test_request_context(method="POST"):
+            login_user(contributor)
+            with pytest.raises(Forbidden):
+                func(x=1, y=2)
+
+        # not logged in
+        with app.test_request_context(method="POST"):
+            with pytest.raises(Unauthorized):
+                func(x=1, y=2)
+    finally:
+        app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"] = default_roles
 
 
 # def check_on_behalf_of():
