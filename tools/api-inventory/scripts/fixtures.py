@@ -188,6 +188,19 @@ def _users():
 
 
 # ---------------------------------------------------------------- インデックス
+def _default_groups():
+    """画面からインデックスを作ったときと同じ閲覧・投稿グループの既定値。
+
+    weko_index_tree.api.Indexes.get_account_group と同じく、全グループに
+    "-89"(No Group)を足したもの。v2.1.0 からインデックスの閲覧判定は
+    ロールに加えてグループの一致も要る(check_groups)。グループに属さない
+    利用者とゲストは "-89" として照合されるので、これが無いと公開インデックスでも
+    一般ユーザ・未ログインが遮断され、公開アイテムの測定結果が遮断に化ける。
+    """
+    from weko_groups.models import Group
+    return ",".join([str(g.id) for g in Group.query.all()] + ["-89"])
+
+
 @step("index")
 def _index():
     from weko_index_tree.models import Index
@@ -213,6 +226,8 @@ def _index():
     idx.parent = 0
     idx.public_state = True
     idx.harvest_public_state = True
+    idx.browsing_group = _default_groups()
+    idx.contribute_group = _default_groups()
     db.session.add(idx)
     db.session.flush()
     OUT["index"] = int(idx.id)
@@ -249,6 +264,8 @@ def _index():
         c.index_name_english = en
         c.public_state = public
         c.harvest_public_state = public
+        c.browsing_group = _default_groups()
+        c.contribute_group = _default_groups()
         db.session.add(c)
         OUT["indexes"][en] = int(c.id)
     db.session.flush()
@@ -678,9 +695,12 @@ def _index_acl():
       * "-98" はロールを持たない認証済ユーザの扱い
       * 認証済ユーザは*自分の全ロールがリストに含まれる*必要がある(AND判定)。
         "1,2" は System/Repository 管理者だけが通り、Contributor は通らない
-      * browsing_group は所属していれば通る
+      * ロールに加えて browsing_group の一致も要る。所属グループがあれば
+        そのどれかが、無ければ "-89"(No Group)が含まれていないと遮断される。
+        ゲストも "-89" として照合される
 
-    group を使うのでグループ作成の後に置く。
+    group を使うのでグループ作成の後に置く。index ステップの時点では
+    測定用グループがまだ無いことがあるので、ここで既定のグループを入れ直す。
     """
     import datetime
     from weko_index_tree.models import Index
@@ -691,6 +711,15 @@ def _index_acl():
     gid = (OUT.get("group") or {}).get("id")
     future = datetime.datetime(2099, 1, 1)
     private_id = (OUT.get("indexes") or {}).get("Restricted")
+    groups = _default_groups()
+
+    # index ステップで作ったインデックスにも、測定用グループを含めた既定値を入れ直す
+    for iid in [root] + list((OUT.get("indexes") or {}).values()):
+        base = Index.query.filter_by(id=iid).one_or_none()
+        if base is not None:
+            base.browsing_group = groups
+            base.contribute_group = groups
+            db.session.add(base)
 
     specs = [
         (900016, "公開前資料", "Embargoed", root,
@@ -733,8 +762,8 @@ def _index_acl():
         idx.harvest_public_state = True
         idx.browsing_role = "3,-98,-99"
         idx.contribute_role = "1,2,3,4,-98,-99"
-        idx.browsing_group = None
-        idx.contribute_group = None
+        idx.browsing_group = groups
+        idx.contribute_group = groups
         idx.public_date = None
         for k, v in extra.items():
             setattr(idx, k, v)
