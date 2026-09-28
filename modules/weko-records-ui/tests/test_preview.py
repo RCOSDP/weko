@@ -87,7 +87,7 @@ def test_preview(app,records):
     
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_preview.py::test_preview_file_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_preview_file_permission(app, records, users):
+def test_preview_file_permission(app, db, records, users):
     @app.route('/record/<pid_value>/preview_permission_test/<path:filename>')
     def view_preview_permission_test(pid_value, filename):
         return ''
@@ -99,6 +99,13 @@ def test_preview_file_permission(app, records, users):
     record = results[4]['record']
     recid = results[4]['recid']
     filename = 'helloworld.pdf'
+    # アイテム登録時と同じく、ファイルのメタデータ(accessrole など)を
+    # ファイル実体の JSON に書き込んでおく。権限判定はこの値を見る
+    file_md = [f for f in record.get_file_data() if f.get('filename') == filename][0]
+    for f in record.files:
+        if f.obj.key == filename:
+            f.obj.file.update_json(file_md)
+    db.session.commit()
     template = 'invenio_records_ui/detail.html'
     url = '/record/{}/preview_permission_test/{}'.format(recid.pid_value, filename)
 
