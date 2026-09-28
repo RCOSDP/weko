@@ -196,6 +196,8 @@ def _test_query_record_view_count(client, records):
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_record_view_count_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_record_view_count_error(client, db, records):
+    # リクエストの後はフィクスチャのオブジェクトがセッションから外れるので先に控える
+    record_uuid = str(records[0][0].object_uuid)
     with patch_page_permission(True):
         # record does not exist
         _uuid = uuid.uuid4()
@@ -209,9 +211,8 @@ def test_query_record_view_count_error(client, db, records):
         )
         assert res.status_code==404
 
-        _uuid = str(records[0][0].object_uuid)
         res = client.get(
-            url_for('invenio_stats.get_record_view_count', record_id=_uuid))
+            url_for('invenio_stats.get_record_view_count', record_id=record_uuid))
         assert res.status_code==200
 
         # GET:Invalid uuid
@@ -228,12 +229,12 @@ def test_query_record_view_count_error(client, db, records):
         assert res.status_code==400
 
         # POST:Invalid request data
-        res = client.post('/api/stats/{}'.format(_uuid))
+        res = client.post('/api/stats/{}'.format(record_uuid))
         assert res.status_code==400
         for _data in [{}, {'date': 'test'}, {'date': 202209}, []]:
             res = client.post(
                 url_for('invenio_stats.get_record_view_count',
-                        record_id=_uuid),
+                        record_id=record_uuid),
                 data=json.dumps(_data),
                 content_type='application/json',
             )
@@ -345,6 +346,8 @@ def _test_query_file_stats_count(client, db, records, bucket):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_file_stats_count_permission -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_file_stats_count_permission(client, db, records, bucket):
     _link_bucket(db, records[0][1], bucket)
+    # リクエストの後はフィクスチャのオブジェクトがセッションから外れるので先に控える
+    record_id = records[0][1].id
     url = url_for('invenio_stats.get_file_stats_count',
                   bucket_id=bucket.id, file_key='test.pdf')
     headers = [('Content-Type', 'application/json'),
@@ -354,12 +357,12 @@ def test_query_file_stats_count_permission(client, db, records, bucket):
     with patch_page_permission(True) as mock_factory:
         res = client.get(url)
         assert res.status_code==200
-        assert mock_factory.call_args[0][0].id == records[0][1].id
+        assert mock_factory.call_args[0][0].id == record_id
 
         res = client.post(url, headers=headers,
                           data=json.dumps({'date': 'total'}))
         assert res.status_code==200
-        assert mock_factory.call_args[0][0].id == records[0][1].id
+        assert mock_factory.call_args[0][0].id == record_id
 
     # users who cannot view the record are rejected
     with patch_page_permission(False):

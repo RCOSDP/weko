@@ -168,12 +168,16 @@ def test_get_path_name_dict(i18n_app, users, indices):
 
 def _add_unpublished_index(db, index_id):
     from weko_index_tree.models import Index
+    # (parent, position) に一意制約があるので、フィクスチャのインデックスと重ならない位置に置く
+    used = [i.position for i in Index.query.filter_by(parent=0).all()]
     with db.session.begin_nested():
         db.session.add(Index(
             index_name="unpublished",
             index_name_english="unpublished",
             public_state=False,
             id=index_id,
+            parent=0,
+            position=(max(used) + 1) if used else 0,
         ))
     db.session.commit()
 
