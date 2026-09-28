@@ -94,7 +94,10 @@ def test_save_widget_layout_setting_guest(client, users):
         assert res.status_code == 302
 
 
-@pytest.mark.parametrize('id, status_code', user_results1)
+# save_widget_item is now protected by repository_scope_required as well.
+# This request carries no data_id/data.repository, so the scope cannot be
+# resolved and only System/Repository Administrator are allowed.
+@pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
 def test_save_widget_item_login(client, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
@@ -110,6 +113,98 @@ def test_save_widget_item_guest(client, users):
                               data=json.dumps({}),
                               content_type="application/json")
         assert res.status_code == 302
+
+
+# save_widget_item scope check (repository_scope_required).
+# data_id -> the widget being updated (source repository, taken from DB),
+# data.repository -> the repository requested by the client (destination).
+# .tox/c1/bin/pytest --cov=weko_gridlayout tests/test_views.py -k save_widget_item_scope -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-gridlayout/.tox/c1/tmp
+def test_save_widget_item_scope_no_role(client, users, widget_item):
+    """ロールなしログインユーザーは拒否されること。"""
+    login_user_via_session(client=client, email=users[4]["email"])
+    with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+        res = client.post(
+            "/admin/save_widget_item",
+            data=json.dumps({"flag_edit": False,
+                             "data": {"repository": "Root Index"}}),
+            content_type="application/json")
+        assert res.status_code == 403
+
+
+@pytest.mark.parametrize('id', [1, 2])  # repoadmin, sysadmin
+def test_save_widget_item_scope_super_user(client, users, widget_item, id):
+    """System/Repository Administratorは新規作成・更新とも許可されること。"""
+    login_user_via_session(client=client, email=users[id]["email"])
+    with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+        # create
+        res = client.post(
+            "/admin/save_widget_item",
+            data=json.dumps({"flag_edit": False,
+                             "data": {"repository": "Root Index"}}),
+            content_type="application/json")
+        assert res.status_code == 200
+
+        # update
+        res = client.post(
+            "/admin/save_widget_item",
+            data=json.dumps({"flag_edit": True,
+                             "data_id": widget_item[0].widget_id,
+                             "data": {"repository": "Root Index"}}),
+            content_type="application/json")
+        assert res.status_code == 200
+
+
+@pytest.mark.parametrize('repository, status_code',
+                         [("Root Index", 200), ("other", 403)])
+def test_save_widget_item_scope_comadmin_create(client, users, repository,
+                                                status_code):
+    """Community Administratorの新規作成は担当コミュニティのみ許可されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])  # comadmin
+    community = MagicMock(id="Root Index")
+    with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                   return_value=[community]):
+            res = client.post(
+                "/admin/save_widget_item",
+                data=json.dumps({"flag_edit": False,
+                                 "data": {"repository": repository}}),
+                content_type="application/json")
+            assert res.status_code == status_code
+
+
+@pytest.mark.parametrize('repository, status_code',
+                         [("Root Index", 200), ("other", 403)])
+def test_save_widget_item_scope_comadmin_update(client, users, widget_item,
+                                                repository, status_code):
+    """担当内ウィジェットの更新は許可され、担当外への移動は拒否されること。"""
+    login_user_via_session(client=client, email=users[3]["email"])  # comadmin
+    community = MagicMock(id="Root Index")
+    with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                   return_value=[community]):
+            res = client.post(
+                "/admin/save_widget_item",
+                data=json.dumps({"flag_edit": True,
+                                 "data_id": widget_item[0].widget_id,
+                                 "data": {"repository": repository}}),
+                content_type="application/json")
+            assert res.status_code == status_code
+
+
+def test_save_widget_item_scope_not_found(client, users, widget_item):
+    """存在しないdata_idを指定した場合は404になること。"""
+    login_user_via_session(client=client, email=users[3]["email"])  # comadmin
+    community = MagicMock(id="Root Index")
+    with patch("weko_gridlayout.views.WidgetItemServices.save_command", return_value={}):
+        with patch("invenio_communities.models.Community.get_repositories_by_user",
+                   return_value=[community]):
+            res = client.post(
+                "/admin/save_widget_item",
+                data=json.dumps({"flag_edit": True,
+                                 "data_id": 999999,
+                                 "data": {"repository": "Root Index"}}),
+                content_type="application/json")
+            assert res.status_code == 404
 
 
 @pytest.mark.parametrize('id, status_code', user_results_repo_scope_no_target)
@@ -1036,12 +1131,12 @@ def test_save_widget_layout_setting_scope_anonymous(client, users):
     assert res.status_code == 302
 
 
-def test_save_widget_layout_setting_scope_id_param_prefers_db_value(
+def test_save_widget_layout_setting_scope_both_params_required(
         client, users, db_register):
-    """既存ページ更新時はDB側の所属(repository_id)が優先されること。
+    """既存ページ更新時はDB側とbody側の双方が担当範囲内であることを要求すること。
 
-    bodyには担当外のOtherRepoが送られているが、page_id=1の実データは
-    'Root Index'に属するため、'Root Index'担当のComadminは許可される。
+    page_id=1の実データは'Root Index'(担当内)に属するが、bodyでは担当外の
+    OtherRepoが指定されているため拒否される。
     """
     login_user_via_session(client=client, email=users[3]["email"])
     with patch("weko_gridlayout.views.WidgetDesignServices.update_widget_design_setting",
@@ -1052,7 +1147,7 @@ def test_save_widget_layout_setting_scope_id_param_prefers_db_value(
                 "/admin/save_widget_layout_setting",
                 data=json.dumps({"repository_id": "OtherRepo", "page_id": 1}),
                 content_type="application/json")
-    assert res.status_code == 200
+    assert res.status_code == 403
 
 
 def test_save_widget_layout_setting_scope_id_param_not_found(
@@ -1113,9 +1208,9 @@ def test_save_widget_design_page_scope_anonymous(client, users):
     assert res.status_code == 302
 
 
-def test_save_widget_design_page_scope_id_param_prefers_db_value(
+def test_save_widget_design_page_scope_both_params_required(
         client, users, db_register):
-    """既存ページ更新時はDB側の所属(repository_id)が優先されること。"""
+    """既存ページ更新時はDB側とbody側の双方が担当範囲内であることを要求すること。"""
     login_user_via_session(client=client, email=users[3]["email"])
     with patch("weko_gridlayout.views.WidgetDesignPageServices.add_or_update_page",
               return_value={}):
@@ -1125,7 +1220,7 @@ def test_save_widget_design_page_scope_id_param_prefers_db_value(
                 "/admin/save_widget_design_page",
                 data=json.dumps({"repository_id": "OtherRepo", "page_id": 1}),
                 content_type="application/json")
-    assert res.status_code == 200
+    assert res.status_code == 403
 
 
 # def delete_widget_design_page():

@@ -312,6 +312,9 @@ def load_widget_type():
 
 @blueprint_api.route('/save_widget_item', methods=['POST'])
 @login_required
+@repository_scope_required(repository_id_param='data.repository',
+                           id_param='data_id', id_model=WidgetItem,
+                           pk_attr='widget_id')
 def save_widget_item():
     """Save Language List."""
     if request.headers['Content-Type'] != 'application/json':
