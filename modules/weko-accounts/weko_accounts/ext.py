@@ -137,7 +137,6 @@ class WekoAccounts(object):
         """
         from .utils import limiter
         limiter.init_app(app)
-        app.extensions.setdefault('limiter', limiter)
     
     def init_login(self, app):
         """Initialize login context processor.
@@ -176,18 +175,16 @@ class WekoAccountsREST(object):
         self.init_unauthorized_handler(app)
 
     def init_limiter(self, app):
-        """Initialize rate limiting for the REST application.
+        """Initialize rate limiting of the login API.
 
-        The limiter is shared with :class:`WekoAccounts`; skip it when the
-        same application has already been initialized by that extension.
+        Only the login API is limited. The shared limiter of
+        :class:`WekoAccounts` is not used here, because its default limits
+        would apply to every endpoint of the REST application.
 
         :param app: An instance of :class:`flask.Flask`.
         """
-        from .utils import limiter
-        if app.extensions.get('limiter') is limiter:
-            return
-        limiter.init_app(app)
-        app.extensions.setdefault('limiter', limiter)
+        from .utils import login_limiter
+        login_limiter.init_app(app)
 
     def init_unauthorized_handler(self, app):
         """Return 401 JSON instead of redirecting to the login screen.

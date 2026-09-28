@@ -34,7 +34,7 @@ from weko_logging.activity_logger import UserActivityLogger
 
 from .errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, \
     InvalidCredentialsError, InvalidLoginRequestError, DisabledUserError
-from .utils import limiter
+from .utils import limiter, login_limit_value, login_limiter
 
 
 def create_blueprint(app, endpoints):
@@ -92,11 +92,14 @@ class WekoLogin(ContentNegotiatedMethodView):
 
     view_name = '{0}_accounts'
 
+    # Flask-Limiter matches limits by the name of the view function, so the
+    # limit is applied to the function made by as_view(), not to post().
+    decorators = [login_limiter.limit(login_limit_value)]
+
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(WekoLogin, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
     def post(self, **kwargs):
         """
         Login as weko user.

@@ -24,7 +24,6 @@ from flask import json
 
 from weko_accounts.errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, \
     InvalidCredentialsError, InvalidLoginRequestError, DisabledUserError
-from weko_accounts.utils import limiter
 
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoLogin_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
@@ -158,20 +157,58 @@ def test_WekoLogin_post_invalid_body(app, client, users_login):
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoAccountsREST_limiter -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
 def test_WekoAccountsREST_limiter(instance_path):
-    """REST-only application also gets the rate limiter."""
+    """Only the login API of the REST application is rate limited."""
+    import os
+
     from flask import Flask
+    from invenio_db import db as db_
     from weko_accounts import WekoAccountsREST
+    from weko_accounts.utils import login_limiter
 
     app_ = Flask('testapi', instance_path=instance_path)
+    app_.config.update(
+        WEKO_API_LIMIT_RATE_DEFAULT=['2 per minute'],
+        # the teardown of the REST blueprint commits the db session.
+        # sqlite is not used, because invenio-db registers sqlite settings
+        # on every engine and breaks the other tests
+        SQLALCHEMY_DATABASE_URI=os.getenv(
+            'SQLALCHEMY_DATABASE_URI',
+            'postgresql+psycopg2://invenio:dbpass123@postgresql:5432/wekotest'),
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    )
+    db_.init_app(app_)
+    # Flask-Limiter registers the limit every time as_view() applies the
+    # decorator, so the limits of the apps made by the other tests pile up.
+    # A real process makes the REST application only once.
+    login_limiter._dynamic_route_limits.clear()
     before = len(app_.before_request_funcs.get(None, []))
     ext = WekoAccountsREST(app_)
-    assert app_.extensions.get('limiter') is limiter
+
+    # the shared limiter, whose default limits apply to every endpoint,
+    # is not initialized on the REST application
+    assert app_.extensions.get('limiter') is login_limiter
     after = len(app_.before_request_funcs.get(None, []))
-    assert after > before
+    assert after == before + 1
 
     # Initializing again on the same app does not register the hook twice
     ext.init_limiter(app_)
     assert len(app_.before_request_funcs.get(None, [])) == after
+
+    @app_.route('/other')
+    def other():
+        return 'ok'
+
+    login_limiter.reset()
+    with app_.test_client() as c:
+        # the login API is limited by WEKO_API_LIMIT_RATE_DEFAULT
+        codes = [c.post('/v1/login', data='x',
+                        content_type='application/json').status_code
+                 for _ in range(3)]
+        assert codes[:2] == [InvalidLoginRequestError.code] * 2
+        assert codes[2] == 429
+
+        # other endpoints are not limited
+        assert all(c.get('/other').status_code == 200 for _ in range(5))
 
 
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_rest.py::test_WekoLogout_post -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
