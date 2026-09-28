@@ -1358,7 +1358,7 @@ def check_authority_action(activity_id='0', action_id=0,
                 # if exist shared_user_ids or owner allow to access
                 if int(cur_user) == int(activity_owner):
                     return 0
-            
+
             if proxy_posting:
                 # If current user is in activity_user_ids or temp_user_ids
                 if int(cur_user) in activity_user_ids + temp_user_ids:
@@ -2802,6 +2802,7 @@ def save_item_application(activity_id='0', action_id='0'):
 @workflow_blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
 @login_required
+@check_authority
 def get_feedback_maillist(activity_id='0'):
     """アクティビティに設定されているフィードバックメール送信先の情報を取得して返す
 

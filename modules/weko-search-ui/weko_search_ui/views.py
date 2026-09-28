@@ -22,10 +22,11 @@
 
 import time
 import traceback
+from functools import wraps
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, flash, jsonify, render_template, request
+from flask import Blueprint, abort, current_app, flash, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -41,7 +42,10 @@ from weko_admin.models import AdminSettings
 from weko_admin.utils import get_search_setting
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import IndexStyle
-from weko_index_tree.utils import get_index_link_list
+from weko_index_tree.utils import (
+    filter_index_list_by_role,
+    get_index_link_list
+)
 from weko_records.api import ItemLink, FeedbackMailList
 from weko_records_ui.ipaddr import check_site_license_permission
 from weko_workflow.utils import (
@@ -77,6 +81,43 @@ blueprint_api = Blueprint(
     static_folder="static",
 )
 
+def check_index_permission(view):
+    """Require access to indexes supplied as ``path_str`` or ``index_id``."""
+
+    @wraps(view)
+    def decorated_view(*args, **kwargs):
+        path_str = kwargs.get("path_str")
+        index_id = kwargs.get("index_id")
+        if path_str is not None:
+            index_ids = path_str.split("_")
+        elif index_id is not None:
+            index_ids = [str(index_id)]
+        else:
+            abort(404)
+
+        index_list = []
+        for index_id in index_ids:
+            if not index_id.isdigit():
+                abort(404)
+
+            index = Indexes.get_index(index_id=index_id)
+            if index is None:
+                abort(404)
+
+            index_list.append(index)
+
+        allowed_index_list = filter_index_list_by_role(index_list)
+        if not allowed_index_list:
+            abort(403)
+
+        if path_str is not None:
+            kwargs["path_str"] = "_".join(str(index.id) for index in allowed_index_list)
+        else:
+            kwargs["index_id"] = allowed_index_list[0].id
+
+        return view(*args, **kwargs)
+
+    return decorated_view
 
 @blueprint.route("/search/index")
 @check_index_access_permissions
@@ -351,6 +392,7 @@ def opensearch_description():
 
 
 @blueprint.route("/journal_info/<int:index_id>", methods=["GET"])
+@check_index_permission
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
@@ -373,8 +415,8 @@ def get_child_list(index_id=0):
     """Get child id list to index list display."""
     return jsonify(Indexes.get_child_id_list(index_id))
 
-
 @blueprint.route("/get_path_name_dict/<string:path_str>", methods=["GET"])
+@check_index_permission
 def get_path_name_dict(path_str=""):
     """Get path and name."""
     path_name_dict = {}
