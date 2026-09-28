@@ -111,6 +111,27 @@ def generate_random_str(length=128):
     )
 
 
+def shib_sp_source_required(f):
+    """Accept the request only from the addresses of the Shibboleth SP.
+
+    The attributes of the IdP are taken from the request itself, so they must
+    come only from the login script of the SP. The address is checked against
+    ``WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS``, and any other request is rejected
+    with 403.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        allowed = current_app.config.get(
+            'WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS', [])
+        if request.remote_addr not in allowed:
+            current_app.logger.warning(
+                'Shibboleth SP attributes from a disallowed address: {}'.format(
+                    request.remote_addr))
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
+
+
 def parse_attributes():
     """Parse arguments from environment variables."""
     attrs = {}
