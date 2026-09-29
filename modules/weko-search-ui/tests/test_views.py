@@ -148,6 +148,17 @@ def test_journal_detail(i18n_app, users, indices):
         assert journal_detail(33)
 
 
+def test_journal_detail_forbidden(client, users, indices):
+    url = url_for("weko_search_ui.journal_detail", index_id=33)
+    with patch(
+        "flask_login.utils._get_user",
+        side_effect=lambda: _fresh_user(users[3]),
+    ), patch("weko_search_ui.utils.filter_index_list_by_role", return_value=[]):
+        response = client.get(url)
+
+    assert response.status_code == 403
+
+
 # def search_feedback_mail_list():
 def test_search_feedback_mail_list(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):

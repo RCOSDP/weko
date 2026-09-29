@@ -4354,7 +4354,8 @@ def test_get_feedback_maillist_acl_nologin(client,db_register2):
     (5, 200),
     (6, 200),
 ])
-def test_get_feedback_maillist_acl_users(client, users, users_index, status_code):
+def test_get_feedback_maillist_acl_users(
+        client, users, db_register_full_action, users_index, status_code):
     """Test of get feedback maillist."""
     login(client=client, email=users[users_index]['email'])
     url = url_for('weko_workflow.get_feedback_maillist', activity_id='1')

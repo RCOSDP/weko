@@ -2880,6 +2880,7 @@ def save_item_application(activity_id='0', action_id='0'):
 @workflow_blueprint.route('/get_feedback_maillist/<string:activity_id>',
                  methods=['GET'])
 @login_required
+@check_authority
 def get_feedback_maillist(activity_id='0'):
     """アクティビティに設定されているフィードバックメール送信先の情報を取得して返す
 

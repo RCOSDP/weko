@@ -59,6 +59,7 @@ from .utils import (
     check_index_access_permissions,
     check_permission,
     get_journal_info,
+    check_index_permission
 )
 
 _signals = Namespace()
@@ -347,6 +348,7 @@ def opensearch_description():
 
 
 @blueprint.route("/journal_info/<int:index_id>", methods=["GET"])
+@check_index_permission
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
