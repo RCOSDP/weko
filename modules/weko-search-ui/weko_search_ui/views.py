@@ -372,7 +372,6 @@ def get_child_list(index_id=0):
 
 
 @blueprint.route("/get_path_name_dict/<string:path_str>", methods=["GET"])
-@check_index_permission
 def get_path_name_dict(path_str=""):
     """Get path and name."""
     path_name_dict = {}
