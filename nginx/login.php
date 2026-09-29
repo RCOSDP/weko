@@ -15,7 +15,10 @@ if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'] && $_SERVER['NO_CHECK_WEKOSOCIETYAFF
   }else{
     $next='%2F';
   }
-  $url = $base."/weko/shib/login?next=".$next;
+  // Post to the loopback address. WEKO accepts the attributes only from the
+  // addresses in WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS, and nginx allows the
+  // POST to /weko/shib/login only from the loopback address.
+  $url = $_SERVER['REQUEST_SCHEME']."://127.0.0.1/weko/shib/login?next=".$next;
   $curl = curl_init();
   $post_args=[];
   $post_args['SHIB_ATTR_USER_NAME']=$_SERVER['HTTP_WEKOID'];
@@ -32,6 +35,7 @@ if(!$_SERVER['HTTP_WEKOSOCIETYAFFILIATION'] && $_SERVER['NO_CHECK_WEKOSOCIETYAFF
   $cookie=tempnam(sys_get_temp_dir(),'cookie_');
   //set options
   curl_setopt($curl,CURLOPT_URL,$url);
+  curl_setopt($curl, CURLOPT_HTTPHEADER, array('Host: '.$_SERVER['SERVER_NAME']));
   curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
   curl_setopt($curl,CURLOPT_SSL_VERIFYPEER, false);
   curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, 0);
