@@ -99,6 +99,34 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
+def file_permission_required(f):
+    """Require the file permission on the file requested to a record view.
+
+    For views registered in ``RECORDS_UI_ENDPOINTS`` whose signature is
+    ``view(pid, record, **kwargs)`` and whose route has ``<filename>``.
+    The file is resolved in the same way as the previewer does, and checked
+    with :func:`file_permission_factory`, as ``file_ui`` does.
+
+    If the user may not access the file, a guest user is redirected to the
+    login page and a logged in user gets 403. A missing file is left to the
+    view (which returns 404).
+    """
+    @wraps(f)
+    def decorated(pid, record, *args, **kwargs):
+        from invenio_previewer.proxies import current_previewer
+        fileobj = current_previewer.record_file_factory(
+            pid, record, request.view_args.get(
+                'filename', request.args.get('filename', type=str))
+        )
+        if fileobj and not file_permission_factory(record, fjson=fileobj).can():
+            if not current_user.is_authenticated:
+                from weko_accounts.views import _redirect_method
+                return _redirect_method(has_next=True)
+            abort(403)
+        return f(pid, record, *args, **kwargs)
+    return decorated
+
+
 def check_file_download_permission(record, fjson, is_display_file_info=False, item_type=None):
     """Check file download."""
     def site_license_check(item_type):
@@ -135,12 +163,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
             is_ok = True
         # Check super users
         else:
-            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-            for role in list(current_user.roles or []):
-                if role.name in super_users:
-                    is_ok = True
-                    break
+            is_ok = is_superuser_or_record_comadmin(record)
         return is_ok
 
     if fjson:
@@ -170,11 +193,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
             return is_can
 
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-        for role in list(current_user.roles or []):
-            if role.name in supers:
-                return is_can
+        if is_superuser_or_record_comadmin(record):
+            return is_can
 
         try:
             from .utils import is_future
@@ -723,12 +743,31 @@ def is_owners_or_superusers(record) -> bool:
         return True
 
     # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            return True
+    return is_superuser_or_record_comadmin(record)
 
+
+def is_superuser_or_record_comadmin(record) -> bool:
+    """Check whether the current user administers the record.
+
+    System and Repository Administrators administer every record.
+    A Community Administrator administers only the records placed under
+    the indexes of the communities the user belongs to
+    (see :func:`has_comadmin_permission`), as in :func:`check_created_id`.
+
+    Args:
+        record (dict): the record metadata.
+
+    Returns:
+        bool: True if the current user is a super user, or a Community
+        Administrator of a community that the record belongs to.
+    """
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    comadmin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    role_names = [role.name for role in list(current_user.roles or [])]
+    if any(name in supers for name in role_names):
+        return True
+    if any(name in comadmin for name in role_names):
+        return has_comadmin_permission(record)
     return False
 
 
