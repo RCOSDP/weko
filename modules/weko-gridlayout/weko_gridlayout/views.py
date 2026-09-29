@@ -21,6 +21,9 @@ from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.exceptions import NotFound
 from invenio_db import db
+from weko_accounts.utils import roles_required
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
 
 from .api import WidgetItems
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
@@ -296,6 +299,9 @@ def delete_widget_design_page():
 
 @blueprint_api.route('/load_widget_type', methods=['GET'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def load_widget_type():
     """Get Widget Type List."""
     results = get_widget_type_list()
@@ -592,6 +598,9 @@ def upload_file(community_id):
 @blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
                  methods=["GET"]
                  )
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def uploaded_file(filename, community_id=0):
     """Get widget static file.
 
