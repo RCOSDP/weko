@@ -134,12 +134,46 @@ def test_gzip_response(create_app):
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_generate_all_item_urls -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_generate_all_item_urls(app,records):
     with app.test_request_context():
-        result = iter(current_app.extensions["weko-sitemap"]._generate_all_item_urls())
-        for i,r in enumerate(result):
-            if i==0:
-                assert r["loc"] == "http://test_server/records/1"
-            if i==1:
-                assert r["loc"] == "http://test_server/records/2"
+        with patch("weko_index_tree.utils.check_index_permissions", return_value=True):
+            result = list(current_app.extensions["weko-sitemap"]._generate_all_item_urls())
+        assert [r["loc"] for r in result] == [
+            "http://test_server/records/1",
+            "http://test_server/records/2",
+        ]
+
+
+def _sitemap_record(publish_status="0", pubdate="2022-08-20"):
+    return {
+        "publish_status": publish_status,
+        "pubdate": {"attribute_name": "PubDate", "attribute_value": pubdate},
+        "path": ["1"],
+    }
+
+
+# .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_generate_all_item_urls_not_public -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
+@pytest.mark.parametrize("record_2, index_permission, expected", [
+    (_sitemap_record(), True, ["1", "2"]),
+    (_sitemap_record(publish_status="1"), True, ["1"]),
+    (_sitemap_record(publish_status="-1"), True, ["1"]),
+    (_sitemap_record(pubdate="2999-01-01"), True, ["1"]),
+    (None, True, ["1"]),
+    (_sitemap_record(), False, []),
+])
+def test_generate_all_item_urls_not_public(app, records, record_2, index_permission, expected):
+    def get_record_by_pid(pid):
+        if pid == "1":
+            return _sitemap_record()
+        if record_2 is None:
+            raise Exception("pid does not exist")
+        return record_2
+
+    with app.test_request_context():
+        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", side_effect=get_record_by_pid):
+            with patch("weko_index_tree.utils.check_index_permissions", return_value=index_permission):
+                result = list(current_app.extensions["weko-sitemap"]._generate_all_item_urls())
+    assert [r["loc"] for r in result] == [
+        "http://test_server/records/{}".format(i) for i in expected
+    ]
     
 # .tox/c1/bin/pytest --cov=weko_sitemap tests/test_ext.py::test_load_cache_pages -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-sitemap/.tox/c1/tmp
 def test_load_cache_pages(create_app):

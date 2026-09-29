@@ -118,15 +118,39 @@ class WekoSitemap(Sitemap):
              .limit(current_app.config['WEKO_SITEMAP_TOTAL_MAX_URL_COUNT']))
 
         for recid, rm in q.yield_per(1000):
+            pid_value = (recid.pid_value).replace('.1', '')
+            if not self._is_public_item(pid_value):
+                continue
             yield {
                 'loc': url_for('invenio_records_ui.recid',
-                               pid_value=(recid.pid_value).replace(
-                                   '.1', ''),
+                               pid_value=pid_value,
                                _external=True),
                 # W3C Datetime format YYYY-MM-DDThh:mmTZD
                 'lastmod': format_datetime(
                     rm.updated, 'yyyy-MM-ddTHH:mm:ssz', 'full')
             }
+
+    @staticmethod
+    def _is_public_item(pid_value):
+        """Check that the item detail page is open to the public.
+
+        Uses the same checks as the detail page for a guest user: the item
+        is published, its publication date has come and it belongs to an
+        index that guests can browse.
+
+        :param pid_value: Identifier of the item (without version).
+        :return: True if the item can be listed in the sitemap.
+        """
+        from weko_deposit.api import WekoRecord
+        from weko_index_tree.utils import check_index_permissions
+        from weko_records_ui.permissions import check_publish_status
+        try:
+            record = WekoRecord.get_record_by_pid(pid_value)
+            return bool(check_publish_status(record)) \
+                and bool(check_index_permissions(record))
+        except Exception as ex:
+            current_app.logger.debug(ex)
+            return False
 
     def _load_cache_pages(self):
         """Get pages from cache instead of re-creating them."""

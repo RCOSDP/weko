@@ -21642,6 +21642,51 @@ def test_validate_bibtex_export_acl_nologin(
             assert res.status_code == 200
 
 
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_bibtex_export_invalid_input -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "data, content_type",
+    [
+        ("", "application/json"),
+        ("not json", "application/json"),
+        (json.dumps({}), "application/json"),
+        (json.dumps([1]), "application/json"),
+        (json.dumps({"record_ids": 1}), "application/json"),
+        (json.dumps({"record_ids": [{"id": 1}]}), "application/json"),
+        (json.dumps({"record_ids": [True]}), "application/json"),
+        (json.dumps({"record_ids": [1]}), "text/plain"),
+    ],
+)
+def test_validate_bibtex_export_invalid_input(app, client, users, data, content_type):
+    url = url_for("weko_items_ui.validate_bibtex_export", _external=True)
+    with patch("weko_items_ui.utils.validate_bibtex", return_value=[]) as mock_validate:
+        res = client.post(url, data=data, content_type=content_type)
+        assert res.status_code == 400
+        mock_validate.assert_not_called()
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_bibtex_export_not_viewable -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_bibtex_export_not_viewable(
+    app, client, users, db_records, db_itemtype, db_oaischema
+):
+    app.config.update(OAISERVER_XSL_URL=None)
+    schema = {}
+    schema['root_name'] = db_oaischema.form_data.get('root_name')
+    schema['schema_location'] = db_oaischema.schema_location
+    schema['namespaces'] = db_oaischema.namespaces
+    schema['schema'] = json.loads(
+        db_oaischema.xsd, object_pairs_hook=OrderedDict)
+    url = url_for("weko_items_ui.validate_bibtex_export", _external=True)
+    with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
+        with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
+            # guest: a private record and a missing record get the same answer
+            res = client.post(
+                url, data=json.dumps({"record_ids": [2, 9999]}),
+                content_type="application/json"
+            )
+            assert res.status_code == 200
+            assert json.loads(res.data) == {"invalid_record_ids": [2, 9999]}
+
+
 # def export():
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_export_acl_nologin -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_export_acl_nologin(client, users, db_oaischema):

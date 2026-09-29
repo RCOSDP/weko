@@ -9336,7 +9336,7 @@ def test_get_workflow_by_item_type_id(app, db_workflow, db_itemtype):
 
 # def validate_bibtex(record_ids):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_bibtex -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_bibtex(app, db, db_records, db_itemtype, db_oaischema):
+def test_validate_bibtex(app, db, users, db_records, db_itemtype, db_oaischema):
     app.config.update(OAISERVER_XSL_URL=None)
     schema = {}
     schema['root_name'] = db_oaischema.form_data.get('root_name')
@@ -9346,7 +9346,39 @@ def test_validate_bibtex(app, db, db_records, db_itemtype, db_oaischema):
         db_oaischema.xsd, object_pairs_hook=OrderedDict)
     with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
         with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
-            assert validate_bibtex([1]) == []
+            with app.test_request_context():
+                with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                    assert validate_bibtex([1]) == []
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_bibtex_viewable_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_bibtex_viewable_only(app, db, users, db_records, db_itemtype, db_oaischema):
+    app.config.update(OAISERVER_XSL_URL=None)
+    schema = {}
+    schema['root_name'] = db_oaischema.form_data.get('root_name')
+    schema['schema_location'] = db_oaischema.schema_location
+    schema['namespaces'] = db_oaischema.namespaces
+    schema['schema'] = json.loads(
+        db_oaischema.xsd, object_pairs_hook=OrderedDict)
+    with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
+        with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data') as mock_serialize:
+            with app.test_request_context():
+                # guest: a private record (recid 2) is reported in the same
+                # way as a record that does not exist, and is not serialized
+                assert validate_bibtex([2, 9999]) == [2, 9999]
+                mock_serialize.assert_not_called()
+
+                # the detail page permission decides whether a record is used
+                with patch('weko_items_ui.utils.page_permission_factory') as mock_perm:
+                    mock_perm.return_value.can.return_value = True
+                    assert validate_bibtex([1]) == []
+                    mock_perm.return_value.can.return_value = False
+                    assert validate_bibtex([1]) == [1]
+
+                # sysadmin can validate the private record
+                with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                    assert validate_bibtex([2]) == []
+                    assert validate_bibtex([9999]) == [9999]
 
 
 # def make_bibtex_data(record_ids):

@@ -23,6 +23,8 @@ from invenio_db import db
 
 from . import config
 from .errors import InvalidRequestInputError, UnknownQueryError
+from .permissions import bucket_view_permission_required, \
+    record_view_permission_required
 from .proxies import current_stats
 from .utils import QueryCommonReportsHelper, QueryFileReportsHelper, \
     QueryItemRegReportHelper, QueryRecordViewPerIndexReportHelper, \
@@ -44,6 +46,24 @@ def stats_api_access_required(f):
             return abort(403)
         return f(*args, **kwargs)
     return wrapper
+
+
+def get_query_date(data):
+    """Get the target month from the request body.
+
+    :param data: Request body, ``{'date': 'total'}`` or
+        ``{'date': 'YYYY-MM'}``.
+    :returns: None for 'total', otherwise the 'YYYY-MM' string.
+    """
+    try:
+        date = data['date']
+        if date == 'total':
+            return None
+        datetime.strptime(date, '%Y-%m')
+        return date
+    except (TypeError, KeyError, ValueError):
+        current_app.logger.error(traceback.format_exc())
+        abort(400)
 
 
 class WekoQuery(ContentNegotiatedMethodView):
@@ -241,6 +261,7 @@ class QueryRecordViewCount(WekoQuery):
 
         return result
 
+    @record_view_permission_required
     def get(self, **kwargs):
         """Get total record view count."""
         record_id = kwargs.get('record_id')
@@ -251,19 +272,16 @@ class QueryRecordViewCount(WekoQuery):
             abort(400)
         return self.make_response(self.get_data(record_uuid, get_period=True))
 
+    @record_view_permission_required
     def post(self, **kwargs):
         """Get record view count with date."""
         record_id = kwargs.get('record_id')
-        d = request.get_json(force=False)
         try:
             record_uuid = uuid.UUID(record_id)
-            if d['date'] == 'total':
-                date = None
-            else:
-                date = d['date']
-        except (TypeError, ValueError):
+        except ValueError:
             current_app.logger.error(traceback.format_exc())
             abort(400)
+        date = get_query_date(request.get_json(force=False, silent=True))
         return self.make_response(self.get_data(record_uuid, date))
 
 
@@ -384,6 +402,7 @@ class QueryFileStatsCount(WekoQuery):
 
         return result
 
+    @bucket_view_permission_required
     def get(self, **kwargs):
         """Get total file download/preview count."""
         bucket_id = kwargs.get('bucket_id')
@@ -394,15 +413,12 @@ class QueryFileStatsCount(WekoQuery):
                 file_key,
                 get_period=True))
 
+    @bucket_view_permission_required
     def post(self, **kwargs):
         """Get file download/preview count with date."""
         bucket_id = kwargs.get('bucket_id')
         file_key = kwargs.get('file_key')
-        d = request.get_json(force=False)
-        if d['date'] == 'total':
-            date = None
-        else:
-            date = d['date']
+        date = get_query_date(request.get_json(force=False, silent=True))
         return self.make_response(self.get_data(bucket_id, file_key, date))
 
 

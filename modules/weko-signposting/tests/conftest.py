@@ -20,6 +20,7 @@ from unittest.mock import patch
 
 import pytest
 from flask import Flask
+from flask_babelex import Babel
 from sqlalchemy_utils.functions import create_database, database_exists
 
 from invenio_access import InvenioAccess
@@ -39,6 +40,7 @@ from invenio_records_ui import InvenioRecordsUI
 from weko_index_tree import WekoIndexTree
 from weko_index_tree.api import Indexes
 from weko_logging.audit import WekoLoggingUserActivity
+from weko_records_ui.config import RECORDS_UI_ENDPOINTS
 from weko_signposting import WekoSignposting
 from weko_signposting.views import blueprint
 from weko_workflow import WekoWorkflow
@@ -76,13 +78,14 @@ def base_app(instance_path):
         INDEXER_FILE_DOC_TYPE="content",
         TESTING=True,
         OAISERVER_METADATA_FORMATS=oaiserver,
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            'System Administrator',
+            'Repository Administrator',
+        ],
+        WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
         RECORDS_UI_ENDPOINTS=dict(
-            recid_signposting=dict(
-                pid_type='recid',
-                route='/records/<pid_value>',
-                view_imp='weko_signposting.api.requested_signposting',
-                methods=['HEAD']
-            ),
+            # Use the definition shipped by weko-records-ui as is.
+            recid_signposting=RECORDS_UI_ENDPOINTS['recid_signposting'],
             recid=dict(
                 pid_type='recid',
                 route='/records/<pid_value>',
@@ -94,6 +97,9 @@ def base_app(instance_path):
             ),
         ),
     )
+    # The detail page permission compares the publish date in the user's
+    # timezone.
+    Babel(app_)
     InvenioAccess(app_)
     InvenioAccounts(app_)
     InvenioDB(app_)

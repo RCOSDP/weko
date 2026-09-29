@@ -49,6 +49,7 @@ from weko_items_ui.utils import _export_item, check_item_type_name, \
 
 from .config import INVENIO_CAPABILITY_URL, VALIDATE_MESSAGE, WEKO_ROOT_INDEX
 from .models import ChangeListIndexes, ResourceListIndexes
+from .permissions import can_download_file
 from .query import get_items_by_index_tree
 
 import urllib.parse
@@ -475,6 +476,8 @@ class ResourceListHandler(object):
             record = WekoRecord.get_record_by_pid(record_id)
             if record:
                 for file in record.files:
+                    if not can_download_file(record, file):
+                        continue
                     current_app.logger.debug(file.info())
                     file_info = file.info()
                     path = 'recid_{}/{}'.format(
@@ -969,18 +972,24 @@ class ChangeListHandler(object):
             else:
                 prev_record = None
             if current_record:
-                list_file = [file for file in current_record.files]
+                list_file = [
+                    (current_record, file) for file in current_record.files
+                ]
                 current_checksum = [
                     file.info().get('checksum') for file in current_record.files
                 ]
                 prev_checksum = []
                 if prev_record:
-                    list_file.extend([file for file in prev_record.files])
+                    list_file.extend(
+                        [(prev_record, file) for file in prev_record.files]
+                    )
                     prev_checksum = [
                         file.info().get('checksum') for file in
                         prev_record.files
                     ]
-                for file in list_file:
+                for record, file in list_file:
+                    if not can_download_file(record, file):
+                        continue
                     file_info = file.info()
                     change = None
                     if file_info.get('checksum') in prev_checksum:
