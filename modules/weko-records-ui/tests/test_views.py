@@ -1640,27 +1640,53 @@ def test_preview_able(app):
         assert ret == False
 
 # def get_uri():
+# no.499: get_uri には record_edit_permission_required(param='pid_value') を
+# 追加した。JSON body のキー名は pid_value(pid ではない)なので、記録の所有者
+# (records フィクスチャの owner=1 = users[7] "user@test.org")でのみ成功し、
+# 無関係な第三者(users[4] "generaluser@test.org")は拒否されることを確認する。
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_uri -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_uri(app,client,db_sessionlifetime,records):
+def test_get_uri(app,client,db_sessionlifetime,records,users):
     # 404を発生させるとwebassets.exceptions.FilterErrorが発生する対策
     app.register_error_handler(404, None)
 
     url = url_for("weko_records_ui.get_uri",  _external=True)
+
+    # 匿名ユーザー -> 401(login_required)
     res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
-    assert res.status_code == 200
-    assert json.loads(res.data)=={'status': True}
+    assert res.status_code == 401
 
-    res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
-    assert res.status_code == 200
-    assert json.loads(res.data)=={'status': True}
+    # レコード編集権限のないユーザー(第三者) -> 403
+    with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 403
 
-    # Invalid request data
-    res = client.post("/get_uri")
-    assert res.status_code == 400
+    # レコード編集権限のあるユーザー(所有者) -> 成功
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 200
+        assert json.loads(res.data)=={'status': True}
 
-    # Invalid pid_value
-    res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"test","accessrole":"1"}), content_type='application/json', follow_redirects=False)
-    assert res.status_code == 404
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 200
+        assert json.loads(res.data)=={'status': True}
+
+        # Invalid request data
+        res = client.post("/get_uri")
+        assert res.status_code == 400
+
+        # Invalid pid_value
+        # record_edit_permission_required が先に check_created_id_by_recid("test")
+        # を評価し、存在しない recid なので permitted=False として 403 を返す
+        # (view 本体の NoResultFound/PIDDoesNotExistError -> 404 処理まで到達しない)
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"test","accessrole":"1"}), content_type='application/json', follow_redirects=False)
+        assert res.status_code == 403
+
+    # pid_value ではなく別のキー名(pid)で送るとパラメータが見つからず 400
+    # (record_edit_permission_required(param='pid_value') が正しいキー名を
+    # 見ていることの確認)
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 400
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

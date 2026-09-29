@@ -22,7 +22,12 @@ else:
         next = qs['next'][0]
     else:
         next = '%2F'
-    url = base_url + '/weko/shib/login?next=' + next
+    # Post to the loopback address. WEKO accepts the attributes only from the
+    # addresses in WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS, and nginx allows the
+    # POST to /weko/shib/login only from the loopback address.
+    url = os.environ.get('REQUEST_SCHEME') + '://127.0.0.1' \
+        + '/weko/shib/login?next=' + next
+    headers = {'Host': os.environ.get('HTTP_HOST')}
 
     # Get the fastcgi_params
     fastcgi_params = []
@@ -47,7 +52,8 @@ else:
     cookie_jar = cookiejar.LWPCookieJar(temp_path)
 
     # Request to the Shibboleth login
-    response = requests.post(url, data=data, verify=False, cookies=cookie_jar)
+    response = requests.post(url, data=data, headers=headers, verify=False,
+                             cookies=cookie_jar)
     response.raise_for_status()
     redirect = response.text
 

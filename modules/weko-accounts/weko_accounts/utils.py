@@ -54,6 +54,24 @@ Example:
 
 """
 
+login_limiter = Limiter(
+    app=None,
+    key_func=lambda: f"{request.endpoint}_{get_remote_addr()}",
+    default_limits=[],
+)
+"""Limiter only for the login API of the REST application.
+
+It has no default limits, so only the views decorated with it are limited.
+The shared :data:`limiter` is not initialized on the REST application,
+because its default limits would apply to every API endpoint.
+"""
+
+
+def login_limit_value():
+    """Return the rate limit of the login API from the configuration."""
+    return ';'.join(current_app.config.get(
+        'WEKO_API_LIMIT_RATE_DEFAULT', WEKO_API_LIMIT_RATE_DEFAULT))
+
 
 def get_remote_addr():
     """
@@ -109,6 +127,27 @@ def generate_random_str(length=128):
     return "".join(
         rng.choice(string.ascii_letters + string.digits) for _ in range(0, length)
     )
+
+
+def shib_sp_source_required(f):
+    """Accept the request only from the addresses of the Shibboleth SP.
+
+    The attributes of the IdP are taken from the request itself, so they must
+    come only from the login script of the SP. The address is checked against
+    ``WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS``, and any other request is rejected
+    with 403.
+    """
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        allowed = current_app.config.get(
+            'WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS', [])
+        if request.remote_addr not in allowed:
+            current_app.logger.warning(
+                'Shibboleth SP attributes from a disallowed address: {}'.format(
+                    request.remote_addr))
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated
 
 
 def parse_attributes():

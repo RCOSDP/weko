@@ -99,6 +99,8 @@ RECORDS_UI_ENDPOINTS = dict(
         pid_type='recid',
         route='/records/<pid_value>',
         view_imp='weko_signposting.api.requested_signposting',
+        permission_factory_imp='weko_records_ui.permissions'
+                               ':page_permission_factory',
         methods=['HEAD']
     ),
     recid=dict(

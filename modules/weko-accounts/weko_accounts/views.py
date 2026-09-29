@@ -44,7 +44,8 @@ from weko_admin.models import AdminSettings, db
 from weko_logging.activity_logger import UserActivityLogger
 
 from .api import ShibUser, sync_shib_gakunin_map_groups
-from .utils import generate_random_str, parse_attributes
+from .utils import generate_random_str, parse_attributes, \
+    shib_sp_source_required
 
 
 _app = LocalProxy(lambda: current_app.extensions['weko-admin'].app)
@@ -544,6 +545,7 @@ def find_user_by_email(shib_attributes):
     return user
 
 @blueprint.route('/shib/login', methods=['POST'])
+@shib_sp_source_required
 def shib_sp_login():
     """The request from shibboleth sp.
 

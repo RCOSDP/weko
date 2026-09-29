@@ -11,9 +11,10 @@
 import tempfile
 
 import pkg_resources
-from flask import g
-from invenio_files_rest.views import ObjectResource
+from flask import abort, g
 from invenio_files_rest.models import ObjectVersion
+
+from .permissions import iiif_object_permission_factory
 
 try:
     pkg_resources.get_distribution('wand')
@@ -31,12 +32,13 @@ def protect_api(uuid=None, **kwargs):
     """Retrieve object and check permissions.
 
     Retrieve ObjectVersion of image being requested and check permission
-    using the Invenio-Files-REST permission factory.
+    of the record and the file which the object belongs to.
     """
     bucket, version_id, key = uuid.split(':', 2)
-    # skip Invenio-Files-REST permission factory
-    g.obj = ObjectVersion.get(bucket, key, version_id=version_id)
-    #g.obj = ObjectResource.get_object(bucket, key, version_id)
+    obj = ObjectVersion.get(bucket, key, version_id=version_id)
+    if not obj or not iiif_object_permission_factory(obj).can():
+        abort(404)
+    g.obj = obj
     return g.obj
 
 

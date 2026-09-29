@@ -12,6 +12,7 @@ import json
 from functools import partial
 
 from flask import Blueprint, abort, current_app, redirect, url_for
+from flask_login import current_user
 from invenio_pidstore.errors import (
     PIDDeletedError,
     PIDDoesNotExistError,
@@ -157,7 +158,10 @@ def manifest_view(
             )
             abort(500)
 
-    # TODO Check permissions
+    if permission_factory and not permission_factory(record).can():
+        if current_user.is_authenticated:
+            abort(403)
+        abort(401)
 
     manifest = manifest_class(record)
     data = manifest.dumps()

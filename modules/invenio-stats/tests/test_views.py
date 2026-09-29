@@ -131,9 +131,29 @@ class mockPIDVersioning:
         self.children = self.mockChild(child)
         pass
 
+
+class mockPermissionChecker:
+    def __init__(self, result):
+        self.result = result
+
+    def can(self):
+        return self.result
+
+
+def patch_page_permission(result):
+    """Patch the record detail page permission used by the stats views."""
+    return patch(
+        "weko_records_ui.permissions.page_permission_factory",
+        return_value=mockPermissionChecker(result))
+
 # class QueryRecordViewCount(WekoQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_record_view_count -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_record_view_count(client, db, es, records):
+    with patch_page_permission(True):
+        _test_query_record_view_count(client, records)
+
+
+def _test_query_record_view_count(client, records):
     _uuid = str(records[0][0].object_uuid)
 
     # get
@@ -176,38 +196,95 @@ def test_query_record_view_count(client, db, es, records):
 
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_record_view_count_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
 def test_query_record_view_count_error(client, db, records):
-    _uuid = uuid.uuid4()
-    res = client.get(
-        url_for('invenio_stats.get_record_view_count', record_id=_uuid))
-    assert res.status_code==200
+    # リクエストの後はフィクスチャのオブジェクトがセッションから外れるので先に控える
+    record_uuid = str(records[0][0].object_uuid)
+    with patch_page_permission(True):
+        # record does not exist
+        _uuid = uuid.uuid4()
+        res = client.get(
+            url_for('invenio_stats.get_record_view_count', record_id=_uuid))
+        assert res.status_code==404
+        res = client.post(
+            url_for('invenio_stats.get_record_view_count', record_id=_uuid),
+            data=json.dumps({'date': 'total'}),
+            content_type='application/json',
+        )
+        assert res.status_code==404
 
+        res = client.get(
+            url_for('invenio_stats.get_record_view_count', record_id=record_uuid))
+        assert res.status_code==200
+
+        # GET:Invalid uuid
+        res = client.get(
+            url_for('invenio_stats.get_record_view_count', record_id='test'))
+        assert res.status_code==400
+
+        # POST:Invalid uuid
+        res = client.post(
+            url_for('invenio_stats.get_record_view_count', record_id='test'),
+            data=json.dumps({'date': 'total'}),
+            content_type='application/json',
+        )
+        assert res.status_code==400
+
+        # POST:Invalid request data
+        res = client.post('/api/stats/{}'.format(record_uuid))
+        assert res.status_code==400
+        for _data in [{}, {'date': 'test'}, {'date': 202209}, []]:
+            res = client.post(
+                url_for('invenio_stats.get_record_view_count',
+                        record_id=record_uuid),
+                data=json.dumps(_data),
+                content_type='application/json',
+            )
+            assert res.status_code==400
+
+
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_record_view_count_permission -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_record_view_count_permission(client, db, records):
     _uuid = str(records[0][0].object_uuid)
-    res = client.get(
-        url_for('invenio_stats.get_record_view_count', record_id=_uuid))
-    assert res.status_code==200
+    url = url_for('invenio_stats.get_record_view_count', record_id=_uuid)
+    headers = [('Content-Type', 'application/json'),
+               ('Accept', 'application/json')]
 
-    # GET:Invalid uuid
-    res = client.get(
-        url_for('invenio_stats.get_record_view_count', record_id='test'))
-    assert res.status_code==400
+    # the permission of the record detail page is checked
+    with patch_page_permission(True) as mock_factory:
+        res = client.get(url)
+        assert res.status_code==200
+        assert str(mock_factory.call_args[0][0].id) == _uuid
 
-    # POST:Invalid uuid
-    res = client.post(
-        url_for('invenio_stats.get_record_view_count', record_id='test'),
-        data=json.dumps({'date': 'total'}),
-        content_type='application/json',
-    )
-    assert res.status_code==400
+        res = client.post(url, headers=headers,
+                          data=json.dumps({'date': 'total'}))
+        assert res.status_code==200
+        assert str(mock_factory.call_args[0][0].id) == _uuid
 
-    # POST:Invalid request data
-    res = client.post('/api/stats/{}'.format(_uuid))
-    assert res.status_code==400
+    # users who cannot view the record are rejected
+    with patch_page_permission(False):
+        res = client.get(url)
+        assert res.status_code==403
+
+        res = client.post(url, headers=headers,
+                          data=json.dumps({'date': 'total'}))
+        assert res.status_code==403
 
 
 # class QueryFileStatsCount(WekoQuery):
 # .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_file_stats_count -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
-def test_query_file_stats_count(client, db):
-    _uuid = uuid.uuid4()
+def test_query_file_stats_count(client, db, records, bucket):
+    with patch_page_permission(True):
+        _test_query_file_stats_count(client, db, records, bucket)
+
+
+def _link_bucket(db, record, bucket):
+    from invenio_records_files.models import RecordsBuckets
+    RecordsBuckets.create(record=record.model, bucket=bucket)
+    db.session.commit()
+
+
+def _test_query_file_stats_count(client, db, records, bucket):
+    _link_bucket(db, records[0][1], bucket)
+    _uuid = bucket.id
 
     # get_data
     res = QueryFileStatsCount.get_data(QueryFileStatsCount, bucket_id=_uuid, file_key='test.pdf', root_file_id=uuid.uuid4())
@@ -264,6 +341,72 @@ def test_query_file_stats_count(client, db):
         url_for('invenio_stats.get_file_stats_count', bucket_id=_uuid, file_key='test.pdf'),
         headers=headers, data=json.dumps(_data2))
     assert res.status_code==200
+
+
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_file_stats_count_permission -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_file_stats_count_permission(client, db, records, bucket):
+    _link_bucket(db, records[0][1], bucket)
+    # リクエストの後はフィクスチャのオブジェクトがセッションから外れるので先に控える
+    record_id = records[0][1].id
+    url = url_for('invenio_stats.get_file_stats_count',
+                  bucket_id=bucket.id, file_key='test.pdf')
+    headers = [('Content-Type', 'application/json'),
+               ('Accept', 'application/json')]
+
+    # the permission of the record detail page is checked
+    with patch_page_permission(True) as mock_factory:
+        res = client.get(url)
+        assert res.status_code==200
+        assert mock_factory.call_args[0][0].id == record_id
+
+        res = client.post(url, headers=headers,
+                          data=json.dumps({'date': 'total'}))
+        assert res.status_code==200
+        assert mock_factory.call_args[0][0].id == record_id
+
+    # users who cannot view the record are rejected
+    with patch_page_permission(False):
+        res = client.get(url)
+        assert res.status_code==403
+
+        res = client.post(url, headers=headers,
+                          data=json.dumps({'date': 'total'}))
+        assert res.status_code==403
+
+
+# .tox/c1/bin/pytest --cov=invenio_stats tests/test_views.py::test_query_file_stats_count_error -v -s -vv --cov-branch --cov-report=term --cov-config=tox.ini --basetemp=/code/modules/invenio-stats/.tox/c1/tmp
+def test_query_file_stats_count_error(client, db, records, bucket):
+    headers = [('Content-Type', 'application/json'),
+               ('Accept', 'application/json')]
+    with patch_page_permission(True):
+        # bucket without record
+        url = url_for('invenio_stats.get_file_stats_count',
+                      bucket_id=uuid.uuid4(), file_key='test.pdf')
+        res = client.get(url)
+        assert res.status_code==404
+        res = client.post(url, headers=headers,
+                          data=json.dumps({'date': 'total'}))
+        assert res.status_code==404
+
+        # invalid bucket id
+        url = url_for('invenio_stats.get_file_stats_count',
+                      bucket_id='test', file_key='test.pdf')
+        res = client.get(url)
+        assert res.status_code==400
+        res = client.post(url, headers=headers,
+                          data=json.dumps({'date': 'total'}))
+        assert res.status_code==400
+
+        # invalid request data
+        _link_bucket(db, records[0][1], bucket)
+        url = url_for('invenio_stats.get_file_stats_count',
+                      bucket_id=bucket.id, file_key='test.pdf')
+        res = client.post(url)
+        assert res.status_code==400
+        for _data in [{}, {'date': 'test'}, {'date': 202209}, []]:
+            res = client.post(url, headers=headers,
+                              data=json.dumps(_data))
+            assert res.status_code==400
 
 
 # class QueryItemRegReport(WekoQuery):

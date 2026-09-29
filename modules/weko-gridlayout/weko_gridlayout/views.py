@@ -21,10 +21,15 @@ from invenio_stats.utils import QueryCommonReportsHelper
 from sqlalchemy.orm.exc import NoResultFound
 from werkzeug.exceptions import NotFound
 from invenio_db import db
+from weko_accounts.utils import roles_required
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+
+from weko_admin.permissions import repository_scope_required
 
 from .api import WidgetItems
 from .config import WEKO_GRIDLAYOUT_ACCESS_COUNTER_TYPE
-from .models import WidgetDesignPage
+from .models import WidgetDesignPage, WidgetItem
 from .services import WidgetDataLoaderServices, WidgetDesignPageServices, \
     WidgetDesignServices, WidgetItemServices
 from .utils import WidgetBucket, get_default_language, \
@@ -143,6 +148,7 @@ def load_widget_design_page_setting(page_id: str, current_language=''):
 @blueprint_api.route('/load_widget_list_design_setting',
                      methods=['POST'])
 @login_required
+@repository_scope_required(repository_id_param='repository_id')
 def load_widget_list_design_setting():
     """Get Widget list, to display on the Widget List panel on UI.
 
@@ -178,6 +184,8 @@ def load_widget_list_design_setting():
 
 @blueprint_api.route('/save_widget_layout_setting', methods=['POST'])
 @login_required
+@repository_scope_required(repository_id_param='repository_id',
+                           id_param='page_id', id_model=WidgetDesignPage)
 # TODO: Allow this to be used for both or make a different path
 def save_widget_layout_setting():
     """Save Widget design setting into DB.
@@ -254,6 +262,8 @@ def load_widget_design_page():
 
 @blueprint_api.route('/save_widget_design_page', methods=['POST'])
 @login_required
+@repository_scope_required(repository_id_param='repository_id',
+                           id_param='page_id', id_model=WidgetDesignPage)
 def save_widget_design_page():
     """Save Widget design page into DB.
 
@@ -275,6 +285,7 @@ def save_widget_design_page():
 
 @blueprint_api.route('/delete_widget_design_page', methods=['POST'])
 @login_required
+@repository_scope_required(id_param='page_id', id_model=WidgetDesignPage)
 def delete_widget_design_page():
     """Delete Widget design page into DB.
 
@@ -296,6 +307,9 @@ def delete_widget_design_page():
 
 @blueprint_api.route('/load_widget_type', methods=['GET'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def load_widget_type():
     """Get Widget Type List."""
     results = get_widget_type_list()
@@ -304,6 +318,9 @@ def load_widget_type():
 
 @blueprint_api.route('/save_widget_item', methods=['POST'])
 @login_required
+@repository_scope_required(repository_id_param='data.repository',
+                           id_param='data_id', id_model=WidgetItem,
+                           pk_attr='widget_id')
 def save_widget_item():
     """Save Language List."""
     if request.headers['Content-Type'] != 'application/json':
@@ -315,6 +332,8 @@ def save_widget_item():
 
 @blueprint_api.route('/delete_widget_item', methods=['POST'])
 @login_required
+@repository_scope_required(id_param='data_id', id_model=WidgetItem,
+                           pk_attr='widget_id')
 def delete_widget_item():
     """Delete Language List."""
     if request.headers['Content-Type'] != 'application/json':
@@ -592,6 +611,9 @@ def upload_file(community_id):
 @blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
                  methods=["GET"]
                  )
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def uploaded_file(filename, community_id=0):
     """Get widget static file.
 

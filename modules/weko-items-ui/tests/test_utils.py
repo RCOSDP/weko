@@ -8718,6 +8718,96 @@ def test__export_item(app, db, users, db_records, db_itemtype):
             assert _export_item(1,'JSON',True,'./tests/data/',records_data)[1] == {'1': {'weko_creator_id': '1', "weko_shared_ids": []}}
 
 
+# issue62783: 非公開/他人所有アイテムのexportスキップ(所有権・公開状態チェック)
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_item_permission_public_anonymous -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test__export_item_permission_public_anonymous(app, db, users, db_records, db_itemtype):
+    """未ログイン(匿名)ユーザーが公開アイテムをexport -> 成功すること."""
+    depid, recid, parent, doi, record, item = db_records[0]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        # current_user未認証(匿名)を想定
+        with patch("flask_login.utils._get_user", return_value=None), \
+                patch("weko_items_ui.utils.get_user_roles", return_value=(False, None)), \
+                patch("weko_items_ui.utils.check_created_id", return_value=False), \
+                patch("weko_items_ui.utils.check_publish_status", return_value=True):
+            exported_item, list_item_role = _export_item(
+                1, 'JSON', False, './tests/data/'
+            )
+            assert exported_item != {}
+            assert exported_item['record_id'] == record.id
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_item_permission_private_anonymous_skip -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test__export_item_permission_private_anonymous_skip(app, db, users, db_records, db_itemtype):
+    """未ログイン(匿名)ユーザーが非公開アイテムをexport -> スキップされること."""
+    depid, recid, parent, doi, record, item = db_records[2]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        with patch("flask_login.utils._get_user", return_value=None), \
+                patch("weko_items_ui.utils.get_user_roles", return_value=(False, None)), \
+                patch("weko_items_ui.utils.check_created_id", return_value=False), \
+                patch("weko_items_ui.utils.check_publish_status", return_value=False):
+            assert _export_item(2, 'JSON', False, './tests/data/') == ({}, {})
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_item_permission_private_owner -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test__export_item_permission_private_owner(app, db, users, db_records, db_itemtype):
+    """非公開アイテムをその所有者がexport -> 成功すること."""
+    depid, recid, parent, doi, record, item = db_records[2]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        with patch("flask_login.utils._get_user", return_value=users[0]["obj"]), \
+                patch("weko_items_ui.utils.get_user_roles", return_value=(False, [users[0]["id"]])), \
+                patch("weko_items_ui.utils.check_created_id", return_value=True), \
+                patch("weko_items_ui.utils.check_publish_status", return_value=False):
+            exported_item, list_item_role = _export_item(
+                2, 'JSON', False, './tests/data/'
+            )
+            assert exported_item != {}
+            assert exported_item['record_id'] == record.id
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__export_item_permission_private_other_user_skip -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test__export_item_permission_private_other_user_skip(app, db, users, db_records, db_itemtype):
+    """非公開アイテムを所有者でない第三者(ログイン済)がexport -> スキップされること."""
+    depid, recid, parent, doi, record, item = db_records[2]
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        with patch("flask_login.utils._get_user", return_value=users[7]["obj"]), \
+                patch("weko_items_ui.utils.get_user_roles", return_value=(False, [users[7]["id"]])), \
+                patch("weko_items_ui.utils.check_created_id", return_value=False), \
+                patch("weko_items_ui.utils.check_publish_status", return_value=False):
+            assert _export_item(2, 'JSON', False, './tests/data/') == ({}, {})
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_export_items_skip_non_permitted_records -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_export_items_skip_non_permitted_records(app, db_itemtype, db_records, users):
+    """公開/非公開アイテムが混在する一括exportで、公開アイテムのみ結果に含まれること."""
+    post_data = {
+        'export_file_contents_radio': 'False',
+        'export_format_radio': 'JSON',
+        'record_ids': '[1,2]',
+        'invalid_record_ids': '[]',
+    }
+    with app.test_request_context(headers=[("Accept-Language", "en")]):
+        with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
+            def fake_export_item(record_id, *args, **kwargs):
+                if str(record_id) == '1':
+                    return (
+                        {
+                            'record_id': 1,
+                            'name': 'recid_1',
+                            'files': [],
+                            'path': 'recid_1',
+                            'item_type_id': '1',
+                            'researchmap_linkage': '',
+                        },
+                        {},
+                    )
+                # 非公開かつ権限なし -> スキップ扱い
+                return {}, {}
+
+            with patch("weko_items_ui.utils._export_item", side_effect=fake_export_item):
+                res = export_items(post_data)
+                assert res.status_code == 200
+
+
 # def _custom_export_metadata(record_metadata: dict, hide_item: bool = True,
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test__custom_export_metadata -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test__custom_export_metadata(app,db_itemtype,users):
@@ -9336,7 +9426,7 @@ def test_get_workflow_by_item_type_id(app, db_workflow, db_itemtype):
 
 # def validate_bibtex(record_ids):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_bibtex -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_bibtex(app, db, db_records, db_itemtype, db_oaischema):
+def test_validate_bibtex(app, db, users, db_records, db_itemtype, db_oaischema):
     app.config.update(OAISERVER_XSL_URL=None)
     schema = {}
     schema['root_name'] = db_oaischema.form_data.get('root_name')
@@ -9346,7 +9436,39 @@ def test_validate_bibtex(app, db, db_records, db_itemtype, db_oaischema):
         db_oaischema.xsd, object_pairs_hook=OrderedDict)
     with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
         with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data'):
-            assert validate_bibtex([1]) == []
+            with app.test_request_context():
+                with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                    assert validate_bibtex([1]) == []
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_utils.py::test_validate_bibtex_viewable_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_bibtex_viewable_only(app, db, users, db_records, db_itemtype, db_oaischema):
+    app.config.update(OAISERVER_XSL_URL=None)
+    schema = {}
+    schema['root_name'] = db_oaischema.form_data.get('root_name')
+    schema['schema_location'] = db_oaischema.schema_location
+    schema['namespaces'] = db_oaischema.namespaces
+    schema['schema'] = json.loads(
+        db_oaischema.xsd, object_pairs_hook=OrderedDict)
+    with patch('weko_schema_ui.schema.cache_schema', return_value=schema):
+        with patch('weko_schema_ui.serializers.WekoBibTexSerializer.serialize', return_value='test_data') as mock_serialize:
+            with app.test_request_context():
+                # guest: a private record (recid 2) is reported in the same
+                # way as a record that does not exist, and is not serialized
+                assert validate_bibtex([2, 9999]) == [2, 9999]
+                mock_serialize.assert_not_called()
+
+                # the detail page permission decides whether a record is used
+                with patch('weko_items_ui.utils.page_permission_factory') as mock_perm:
+                    mock_perm.return_value.can.return_value = True
+                    assert validate_bibtex([1]) == []
+                    mock_perm.return_value.can.return_value = False
+                    assert validate_bibtex([1]) == [1]
+
+                # sysadmin can validate the private record
+                with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+                    assert validate_bibtex([2]) == []
+                    assert validate_bibtex([9999]) == [9999]
 
 
 # def make_bibtex_data(record_ids):

@@ -20,7 +20,11 @@
 
 """WEKO3 module docstring."""
 
+from functools import wraps
+
 import pkg_resources
+from flask import abort, current_app, request
+from flask_login import current_user
 from flask_principal import ActionNeed
 from invenio_access import Permission, action_factory
 
@@ -55,3 +59,88 @@ def admin_permission_factory(action):
         from flask_principal import Permission
 
     return Permission(action_class)
+
+
+def _is_super_user(user):
+    """Check whether the user has a system/repository administrator role."""
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    return any(role.name in supers for role in (user.roles or []))
+
+
+def _is_community_admin(user):
+    """Check whether the user has a community administrator role."""
+    comadmin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    return any(role.name in comadmin for role in (user.roles or []))
+
+
+def _lookup_param(data, kwargs, path):
+    """リクエストデータまたはURL変数からパラメータ値を取得する。
+
+    pathにドットが含まれる場合はネストしたdictを辿る
+    (例: 'data.repository')。途中がdictでない、またはキーが
+    存在しない場合はNoneを返す。
+    """
+    if not path:
+        return None
+    if '.' not in path:
+        return data.get(path) or kwargs.get(path)
+    value = data
+    for key in path.split('.'):
+        if not isinstance(value, dict) or key not in value:
+            return None
+        value = value[key]
+    return value
+
+
+def repository_scope_required(repository_id_param=None,
+                               id_param=None, id_model=None, id_attr='repository_id',
+                               pk_attr='id'):
+    """repository_id(またはid_param経由でid_modelから解決したid_attr)が
+    current_userの担当範囲内であることを要求する。
+
+    - System/Repository Administrator: 無条件許可
+    - Community Administrator: 担当コミュニティ(Community.get_repositories_by_user)のみ許可
+    - id_param(既存レコード=移動元)とrepository_id_param(リクエスト指定=移動先)の
+      両方の値が取得できた場合は、双方が担当範囲内であることを要求する
+      (担当外コミュニティへのレコード移動を防ぐ)。片方しか取得できない場合は
+      取得できた方だけで判定する
+    - repository_id_param / id_param にはドット記法でネストしたキーを指定できる
+      (例: 'data.repository')
+    - pk_attr: id_modelの主キー列名。デフォルトは'id'。主キーが異なる場合は
+      明示的に指定する(例: WidgetItemはid列を持たず主キーはwidget_id)
+    """
+    def decorator(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if not current_user.is_authenticated:
+                abort(401)
+            if _is_super_user(current_user):
+                return f(*args, **kwargs)
+
+            data = request.get_json(silent=True) or request.form or request.args
+            repository_ids = []
+
+            target_id = _lookup_param(data, kwargs, id_param)
+            if target_id:
+                record = id_model.query.filter_by(**{pk_attr: target_id}).one_or_none()
+                if record is None:
+                    abort(404)
+                # 移動元(既存レコードの現在の所属)
+                repository_ids.append(getattr(record, id_attr, None))
+            requested_repository_id = _lookup_param(data, kwargs, repository_id_param)
+            if requested_repository_id:
+                # 移動先(リクエストで指定された所属)
+                repository_ids.append(requested_repository_id)
+
+            if _is_community_admin(current_user) and repository_ids:
+                # weko_admin初期化時のimportで循環参照が発生するため、
+                # get_repository_list()と同様に関数内でimportする。
+                from invenio_communities.models import Community
+                communities = Community.get_repositories_by_user(current_user)
+                community_ids = {str(c.id) for c in communities}
+                if all(str(rid) in community_ids for rid in repository_ids):
+                    return f(*args, **kwargs)
+
+            abort(403)
+        return wrapped
+    return decorator

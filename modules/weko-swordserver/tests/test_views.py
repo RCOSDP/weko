@@ -387,6 +387,30 @@ def test_post_service_document(app,client,db,users,make_crate,esindex,location,i
     assert result.status_code == 412
     assert result.json.get("error") == "Failed to verify request body and digest."
 
+# .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document_deposit_role_config -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
+def test_post_service_document_deposit_role_config(app, client, users, make_zip, tokens, mocker):
+    token_direct = tokens[0]["token"].access_token
+    url = url_for("weko_swordserver.post_service_document")
+    mocker_check_item = mocker.patch("weko_swordserver.views.check_import_items")
+    default_roles = app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"]
+    app.config["WEKO_SWORDSERVER_DIGEST_VERIFICATION"] = False
+    # the configured roles do not include the user's role
+    app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"] = ["Contributor"]
+    try:
+        login_user_via_session(client=client, email=users[0]["email"])
+        headers = {
+            "Authorization": "Bearer {}".format(token_direct),
+            "Content-Disposition": "attachment; filename=payload.zip",
+            "Packaging": "http://purl.org/net/sword/3.0/package/SimpleZip",
+        }
+        storage = FileStorage(filename="payload.zip", stream=make_zip())
+        result = client.post(url, data={"file": storage}, content_type="multipart/form-data", headers=headers)
+        assert result.status_code == 403
+        assert result.json.get("error") == "Not allowed operation in your role or token scope."
+        mocker_check_item.assert_not_called()
+    finally:
+        app.config["WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE"] = default_roles
+
 # .tox/c1/bin/pytest --cov=weko_swordserver tests/test_views.py::test_post_service_document_multi_recid -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-swordserver/.tox/c1/tmp
 def test_post_service_document_multi_recid(app, client, db, users, make_zip, tokens, mocker):
     mocker.patch("invenio_pidstore.resolver.Resolver.resolve", return_value=(MagicMock(), MagicMock()))

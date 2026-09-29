@@ -783,6 +783,38 @@ def test_shib_login(client,redis_connect,users,mocker):
         assert "Server error has occurred. Please contact server " \
                 "administrator." in called_kwargs.get("ams_error", "")
 
+# .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login_source -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-accounts/.tox/c1/tmp
+def test_shib_sp_login_source(app, client, mocker):
+    """The attributes of the SP are accepted only from the allowed addresses."""
+    url = url_for("weko_accounts.shib_sp_login")
+    mock_parse = mocker.patch("weko_accounts.views.parse_attributes",
+                              return_value=({}, True))
+    data = {"Shib-Session-ID": "dummy"}
+
+    # other addresses are rejected before the attributes are read
+    res = client.post(url, data=data,
+                      environ_base={"REMOTE_ADDR": "203.0.113.10"})
+    assert res.status_code == 403
+    mock_parse.assert_not_called()
+
+    # the loopback address is accepted (the default of the test client)
+    client.post(url, data=data, environ_base={"REMOTE_ADDR": "127.0.0.1"})
+    assert mock_parse.called
+
+    # the allowed addresses follow the configuration
+    mock_parse.reset_mock()
+    app.config["WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS"] = ["203.0.113.10"]
+    try:
+        client.post(url, data=data,
+                    environ_base={"REMOTE_ADDR": "203.0.113.10"})
+        assert mock_parse.called
+        res = client.post(url, data=data,
+                          environ_base={"REMOTE_ADDR": "127.0.0.1"})
+        assert res.status_code == 403
+    finally:
+        app.config["WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS"] = ["127.0.0.1", "::1"]
+
+
 #def shib_sp_login():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_shib_sp_login -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
 def test_shib_sp_login(client, redis_connect,mocker, db, users):

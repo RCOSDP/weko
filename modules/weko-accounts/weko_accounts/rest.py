@@ -25,15 +25,16 @@ import inspect
 from flask import Blueprint, current_app, jsonify, request, make_response
 from flask_login import login_user, logout_user
 from flask_security import current_user
-from flask_security.utils import verify_password
+from flask_security.utils import hash_password, verify_password
 
 from invenio_accounts.models import User
 from invenio_db import db
 from invenio_rest import ContentNegotiatedMethodView
 from weko_logging.activity_logger import UserActivityLogger
 
-from .errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, UserNotFoundError, InvalidPasswordError, DisabledUserError
-from .utils import limiter
+from .errors import VersionNotFoundRESTError, UserAllreadyLoggedInError, \
+    InvalidCredentialsError, InvalidLoginRequestError, DisabledUserError
+from .utils import limiter, login_limit_value, login_limiter
 
 
 def create_blueprint(app, endpoints):
@@ -91,11 +92,14 @@ class WekoLogin(ContentNegotiatedMethodView):
 
     view_name = '{0}_accounts'
 
+    # Flask-Limiter matches limits by the name of the view function, so the
+    # limit is applied to the function made by as_view(), not to post().
+    decorators = [login_limiter.limit(login_limit_value)]
+
     def __init__(self, *args, **kwargs):
         """Constructor."""
         super(WekoLogin, self).__init__(*args, **kwargs)
 
-    @limiter.limit('')
     def post(self, **kwargs):
         """
         Login as weko user.
@@ -113,9 +117,14 @@ class WekoLogin(ContentNegotiatedMethodView):
 
     def post_v1(self, **kwargs):
 
-        data = request.get_json()
-        email = data['email']
-        password = data['password']
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            raise InvalidLoginRequestError()
+        email = data.get('email')
+        password = data.get('password')
+        if not isinstance(email, str) or not isinstance(password, str) \
+                or not email or not password:
+            raise InvalidLoginRequestError()
 
         # Check if user is already logged in
         if current_user.is_authenticated:
@@ -123,11 +132,14 @@ class WekoLogin(ContentNegotiatedMethodView):
 
         # Get User
         user = User.query.filter_by(email=email).first()
-        if not user:
-            raise UserNotFoundError()
+        if not user or not user.password:
+            # Spend the same hashing cost as a real check so that the
+            # response does not depend on whether the account exists.
+            hash_password(password)
+            raise InvalidCredentialsError()
         # Verify password
         if not verify_password(password, user.password):
-            raise InvalidPasswordError()
+            raise InvalidCredentialsError()
 
         # Check if user is active
         if not user.active:

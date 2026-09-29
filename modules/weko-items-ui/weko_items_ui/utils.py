@@ -38,6 +38,7 @@ from io import StringIO
 
 import bagit
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm.exc import NoResultFound
 from elasticsearch.exceptions import NotFoundError
 from elasticsearch import exceptions as es_exceptions
 from flask import abort, current_app, flash, redirect, request, send_file, url_for
@@ -75,7 +76,8 @@ from weko_records.serializers.utils import get_item_type_name
 from weko_records.utils import replace_fqdn_of_file_metadata
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
 from weko_records_ui.permissions import (
-    check_created_id, check_file_download_permission, check_publish_status
+    check_created_id, check_file_download_permission, check_publish_status,
+    page_permission_factory
 )
 from weko_redis.redis import RedisConnection
 from weko_search_ui.config import ROCRATE_METADATA_FILE, WEKO_IMPORT_DOI_TYPE
@@ -2625,6 +2627,8 @@ def export_items(post_data):
                 include_contents,
                 record_path,
             )
+            if not exported_item:
+                continue  # 権限なしレコードはスキップ
             result['items'].append(exported_item)
 
             item_type_id = exported_item.get('item_type_id')
@@ -2858,6 +2862,14 @@ def _export_item(record_id,
     record = WekoRecord.get_record_by_pid(record_id)
     list_item_role = {}
     if record:
+        roles = get_user_roles()
+        is_allowed = (
+            roles[0]
+            or check_created_id(record)
+            or check_publish_status(record)
+        )
+        if not is_allowed:
+            return {}, {}   # 権限なしレコードはスキップ扱い
         exported_item['record_id'] = record.id
         exported_item['name'] = 'recid_{}'.format(record_id)
         exported_item['files'] = []
@@ -3742,14 +3754,24 @@ def get_workflow_by_item_type_id(
 def validate_bibtex(record_ids):
     """Validate data of records for Bibtex exporting.
 
+    A record that does not exist or that the current user may not view
+    (as judged by the detail page permission) is reported as invalid,
+    in the same way as a record lacking required items.
+
     @param record_ids:
-    @return:
+    @return: list of record ids that cannot be exported.
     """
     lst_invalid_ids = []
     err_msg = _('Please input all required item.')
     from weko_schema_ui.serializers import WekoBibTexSerializer
     for record_id in record_ids:
-        record = WekoRecord.get_record_by_pid(record_id)
+        try:
+            record = WekoRecord.get_record_by_pid(record_id)
+        except (PIDDoesNotExistError, NoResultFound):
+            record = None
+        if record is None or not page_permission_factory(record).can():
+            lst_invalid_ids.append(record_id)
+            continue
         pid = record.pid_recid
         serializer = WekoBibTexSerializer()
         result = serializer.serialize(pid, record, True)

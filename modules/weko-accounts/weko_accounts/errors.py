@@ -55,6 +55,20 @@ class InvalidPasswordError(RESTException):
     description = 'Invalid password.'
 
 
+class InvalidCredentialsError(RESTException):
+    """Email or password is incorrect."""
+
+    code = 403
+    description = 'Invalid email or password.'
+
+
+class InvalidLoginRequestError(RESTException):
+    """Login request body is malformed."""
+
+    code = 400
+    description = 'Invalid request.'
+
+
 class DisabledUserError(RESTException):
     """Account is disabled."""
 

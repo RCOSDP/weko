@@ -5249,6 +5249,16 @@ def create_limmiter():
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)
 
 
+# NOTE: create_limmiter() above binds the Limiter to a throw-away Flask app
+# (``Flask(__name__)``) instead of the real application, and is never
+# init_app()'d against the running app, so it does not actually enforce any
+# rate limit. ``limiter`` below is a module-level instance following the
+# same pattern as ``weko_accounts.utils.limiter``: it is created unbound and
+# then initialized against the real application in
+# ``WekoWorkflow.init_limiter`` (see ``ext.py``).
+limiter = Limiter(key_func=get_remote_address)
+
+
 def convert_to_timezone(dt, user_timezone=None):
     """
     Convert a datetime object to the specified timezone.

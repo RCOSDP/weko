@@ -324,6 +324,50 @@ def test_check_file_download_permission(app, records, users, db_file_permission,
     with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
         assert check_file_download_permission(record, fjson, False) == False
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_file_download_permission_comadmin -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "accessrole, is_display_file_info",
+    [
+        ("open_no", False),
+        ("open_no", True),
+        ("open_restricted", False),
+    ],
+)
+def test_check_file_download_permission_comadmin(
+        app, records, users, db_file_permission, accessrole, is_display_file_info):
+    indexer, results = records
+    record = results[0]["record"]
+    record['_deposit']['created_by'] = 1
+    record['owner'] = '1'
+    record['weko_shared_ids'] = []
+    fjson = {'url': {'url': 'https://weko3.example.org/record/11/files/001.jpg'},
+             'date': [{'dateType': 'Available', 'dateValue': '2022-09-27'}], 'format': 'image/jpeg',
+             'filename': 'helloworld.pdf', 'filesize': [{'value': '2.7 MB'}], 'accessrole': accessrole,
+             'version_id': 'd73bd9cb-aa9e-4cd0-bf07-c5976d40bdde', 'displaytype': 'preview',
+             'is_thumbnail': False, 'future_date_message': '', 'download_preview_message': '', 'size': 2700000.0,
+             'mimetype': 'image/jpeg', 'file_order': 0}
+
+    with patch("weko_records_ui.permissions.check_site_license_permission", return_value=False), \
+            patch("weko_records_ui.permissions.check_open_restricted_permission", return_value=False):
+        # comadmin: record under the user's community
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("weko_records_ui.permissions.has_comadmin_permission", return_value=True) as mock_comadmin:
+                assert check_file_download_permission(record, fjson, is_display_file_info) == True
+                mock_comadmin.assert_called_with(record)
+
+        # comadmin: record outside the user's communities
+        with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("weko_records_ui.permissions.has_comadmin_permission", return_value=False):
+                assert check_file_download_permission(record, fjson, is_display_file_info) == False
+
+        # repoadmin / sysadmin: always allowed, community is not consulted
+        for user in (users[1], users[2]):
+            with patch("flask_login.utils._get_user", return_value=user["obj"]):
+                with patch("weko_records_ui.permissions.has_comadmin_permission", return_value=False) as mock_comadmin:
+                    assert check_file_download_permission(record, fjson, is_display_file_info) == True
+                    mock_comadmin.assert_not_called()
+
+
 # def check_open_restricted_permission(record, fjson):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_permissions.py::test_check_open_restricted_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_check_open_restricted_permission(app, records, users,db_file_permission,mocker):
@@ -1270,9 +1314,13 @@ def test_is_owners_or_superusers(app,records,users):
         # sysadmin
         with  patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
             assert is_owners_or_superusers(testrec)
-        # comadmin
+        # comadmin: only for records under the user's communities
         with  patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
-            assert is_owners_or_superusers(testrec)
+            with patch("weko_records_ui.permissions.has_comadmin_permission", return_value=True) as mock_comadmin:
+                assert is_owners_or_superusers(testrec)
+                mock_comadmin.assert_called_once_with(testrec)
+            with patch("weko_records_ui.permissions.has_comadmin_permission", return_value=False):
+                assert not is_owners_or_superusers(testrec)
 
 
 # def __isint(str): -> bool:
