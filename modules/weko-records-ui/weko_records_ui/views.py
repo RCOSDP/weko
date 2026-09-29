@@ -37,6 +37,7 @@ from flask_babelex import get_locale, gettext as _
 from flask_login import login_required
 from flask_security import current_user
 from sqlalchemy.orm.exc import NoResultFound
+from werkzeug.exceptions import HTTPException
 from invenio_db import db
 from invenio_files_rest.models import ObjectVersion, FileInstance
 from invenio_files_rest.permissions import has_update_version_role
@@ -95,6 +96,7 @@ from weko_records_ui.permissions import (
 from weko_records_ui.utils import (
     check_items_settings, can_manage_onetime_url, can_manage_secret_url,
     create_download_url, create_secret_url_record, delete_version,
+    ensure_url_record_matches,
     export_preprocess, get_billing_file_download_permission, get_file_info_list,
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price,
     get_min_price_billing_file_download, get_record_permalink, hide_by_email,
@@ -953,13 +955,23 @@ def copy_secret_url(pid, record, **kwargs):
     Raises:
         flask.abort:
             - 403 if the user does not have enough permissions.
+            - 404 if the URL does not exist or does not belong to the requested pid/filename.
             - 500 if an error occurs while preparing the URL.
     """
     try:
         if not can_manage_secret_url(record, kwargs['filename']):
             abort(403)
         url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
+        # Reject (as 404) when the secret_url_id does not exist,
+        # or when it exists but does not match the requested pid/filename.
+        if not url_record or not ensure_url_record_matches(
+                url_record, pid.pid_value, kwargs['filename']):
+            abort(404)
         url = create_download_url(url_record)
+    except HTTPException:
+        # Let abort()'s intended status code (403/404) propagate as-is,
+        # so we simply re-raise the HTTPException.
+        raise
     except Exception as e:
         current_app.logger.error(e)
         abort(500)
@@ -986,13 +998,23 @@ def copy_onetime_url(pid, record, **kwargs):
     Raises:
         flask.abort:
             - 403 if the user does not have enough permissions.
+            - 404 if the URL does not exist or does not belong to the requested pid/filename.
             - 500 if an error occurs while preparing the URL.
     """
     try:
         if not can_manage_onetime_url(record, kwargs['filename']):
             abort(403)
         url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
+        # Reject (as 404) when the onetime_url_id does not exist,
+        # or when it exists but does not actually belong to the requested pid/filename.
+        if not url_record or not ensure_url_record_matches(
+                url_record, pid.pid_value, kwargs['filename']):
+            abort(404)
         url = create_download_url(url_record)
+    except HTTPException:
+        # Let abort()'s intended status code (403/404) propagate as-is,
+        # so we simply re-raise the HTTPException.
+        raise
     except Exception as e:
         current_app.logger.error(e)
         abort(500)
@@ -1019,15 +1041,23 @@ def delete_secret_url(pid, record, **kwargs):
     Raises:
         flask.abort:
             - 403 if the user does not have enough permissions.
+            - 404 if the URL does not exist or does not belong to the requested pid/filename.
             - 500 if an error occurs while deleting the URL.
     """
     try:
         if not can_manage_secret_url(record, kwargs['filename']):
             abort(403)
         url_record = FileSecretDownload.get_by_id(kwargs['secret_url_id'])
-        if not url_record:
+        # Reject (as 404) when the secret_url_id does not exist,
+        # or when it exists but does not actually belong to the requested pid/filename.
+        if not url_record or not ensure_url_record_matches(
+                url_record, pid.pid_value, kwargs['filename']):
             abort(404)
         url_record.delete_logically()
+    except HTTPException:
+        # Let abort()'s intended status code (403/404) propagate as-is,
+        # so we simply re-raise the HTTPException.
+        raise
     except Exception as e:
         current_app.logger.error(e)
         abort(500)
@@ -1054,15 +1084,23 @@ def delete_onetime_url(pid, record, **kwargs):
     Raises:
         flask.abort:
             - 403 if the user does not have enough permissions.
+            - 404 if the URL does not exist or does not belong to the requested pid/filename.
             - 500 if an error occurs while deleting the URL.
     """
     try:
         if not can_manage_onetime_url(record, kwargs['filename']):
             abort(403)
         url_record = FileOnetimeDownload.get_by_id(kwargs['onetime_url_id'])
-        if not url_record:
+        # Reject (as 404) when the onetime_url_id does not exist,
+        # or when it exists but does not actually belong to the requested pid/filename.
+        if not url_record or not ensure_url_record_matches(
+                url_record, pid.pid_value, kwargs['filename']):
             abort(404)
         url_record.delete_logically()
+    except HTTPException:
+        # Let abort()'s intended status code (403/404) propagate as-is,
+        # so we simply re-raise the HTTPException.
+        raise
     except Exception as e:
         current_app.logger.error(e)
         abort(500)
