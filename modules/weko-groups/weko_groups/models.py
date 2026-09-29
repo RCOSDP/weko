@@ -517,7 +517,7 @@ class Group(db.Model):
             return False
         elif self.is_admin(user):
             return True
-        elif self.subscription_policy != SubscriptionPolicy.CLOSED:
+        elif self.subscription_policy == SubscriptionPolicy.OPEN:
             return True
         else:
             return False

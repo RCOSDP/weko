@@ -33,6 +33,9 @@ from invenio_admin.proxies import current_admin
 from six.moves.urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
 from invenio_db import db
+from weko_accounts.utils import roles_required
+from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
+    WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
 
 from .forms import GroupForm, NewMemberForm
 from .models import Group, Membership
@@ -116,6 +119,7 @@ def groupcount():
 
 
 @blueprint.route('/grouplist', methods=['GET'])
+@login_required
 def grouplist():
     """
     Get logined group list info.
@@ -210,6 +214,9 @@ def invitations():
 @blueprint.route('/new', methods=['GET', 'POST'])
 @register_breadcrumb(blueprint, 'breadcrumbs.settings.group.new', _('New'))
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def new():
     """
     Create new group.
@@ -250,6 +257,9 @@ def new():
      {'text': _('Manage')}]
 )
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def manage(group_id):
     """
     Manage your group.
@@ -294,6 +304,9 @@ def manage(group_id):
 
 @blueprint.route('/<int:group_id>/delete', methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def delete(group_id):
     """
     Delete group.
@@ -328,6 +341,9 @@ def delete(group_id):
 
 @blueprint.route('/<int:group_id>/members', methods=['GET', 'POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 @register_breadcrumb(
     blueprint, 'breadcrumbs.settings.group.members', _('Members'),
     dynamic_list_constructor=lambda:
@@ -417,6 +433,9 @@ def leave(group_id):
 @blueprint.route('/<int:group_id>/members/<int:user_id>/approve',
                  methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def approve(group_id, user_id):
     """
     Approve a user.
@@ -455,6 +474,9 @@ def approve(group_id, user_id):
 @blueprint.route('/<int:group_id>/members/<int:user_id>/remove',
                  methods=['POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def remove(group_id, user_id):
     """
     Remove user from a group.
@@ -549,6 +571,9 @@ def reject(group_id):
 
 @blueprint.route('/<int:group_id>/members/new', methods=['GET', 'POST'])
 @login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
+                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 @register_breadcrumb(
     blueprint,
     'breadcrumbs.settings.newmember',
