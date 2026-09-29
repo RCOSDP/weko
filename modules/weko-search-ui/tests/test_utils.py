@@ -59,6 +59,7 @@ from weko_search_ui.utils import (
     check_tsv_import_items,
     check_xml_import_items,
     check_index_access_permissions,
+    check_index_permission,
     check_permission,
     check_provide_in_system,
     check_sub_item_is_system,
@@ -4841,6 +4842,40 @@ def test_check_index_access_permissions_issue_50659(i18n_app, client_request_arg
         with patch("flask.request.args", new_callable=lambda: {"search_type": "2", "q": "test"}):
             with pytest.raises(BadRequest):
                 test_function()
+
+# .tox/c1/bin/pytest --cov=weko_search_ui tests/test_utils.py::test_check_index_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search_ui/.tox/c1/tmp
+def test_check_index_permission():
+    @check_index_permission
+    def test_function(**kwargs):
+        return kwargs
+
+    with pytest.raises(NotFound):
+        test_function()
+
+    with patch("weko_search_ui.utils.Indexes.get_index") as get_index:
+        with pytest.raises(NotFound):
+            test_function(path_str="1_invalid")
+        get_index.assert_called_once_with(index_id="1")
+
+    with patch("weko_search_ui.utils.Indexes.get_index", return_value=None):
+        with pytest.raises(NotFound):
+            test_function(index_id=1)
+
+    index = MagicMock(id=1)
+    with patch("weko_search_ui.utils.Indexes.get_index", return_value=index), \
+            patch("weko_search_ui.utils.filter_index_list_by_role", return_value=[]):
+        with pytest.raises(Forbidden):
+            test_function(index_id=1)
+
+    first_index = MagicMock(id=1)
+    second_index = MagicMock(id=2)
+    with patch("weko_search_ui.utils.Indexes.get_index", side_effect=[first_index, second_index]), \
+            patch("weko_search_ui.utils.filter_index_list_by_role", return_value=[second_index]):
+        assert test_function(path_str="1_2") == {"path_str": "2"}
+
+    with patch("weko_search_ui.utils.Indexes.get_index", return_value=first_index), \
+            patch("weko_search_ui.utils.filter_index_list_by_role", return_value=[first_index]):
+        assert test_function(index_id="1") == {"index_id": 1}
 
 
 # def handle_check_file_metadata(list_record, data_path):

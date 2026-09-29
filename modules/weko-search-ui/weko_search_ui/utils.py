@@ -85,8 +85,10 @@ from weko_handle.api import Handle
 from weko_index_tree.utils import (
     check_index_permissions,
     check_restrict_doi_with_indexes,
+    filter_index_list_by_role
 )
 from weko_index_tree.models import Index
+from weko_index_tree.api import Indexes
 from weko_indextree_journal.api import Journals
 from weko_logging.activity_logger import UserActivityLogger
 from weko_records.api import FeedbackMailList, JsonldMapping, RequestMailList, ItemTypes, ItemLink, ItemApplication
@@ -5440,6 +5442,43 @@ def check_index_access_permissions(func):
 
     return decorated_view
 
+def check_index_permission(view):
+    """Require access to indexes supplied as ``path_str`` or ``index_id``."""
+
+    @wraps(view)
+    def decorated_view(*args, **kwargs):
+        path_str = kwargs.get("path_str")
+        index_id = kwargs.get("index_id")
+        if path_str is not None:
+            index_ids = path_str.split("_")
+        elif index_id is not None:
+            index_ids = [str(index_id)]
+        else:
+            abort(404)
+
+        index_list = []
+        for index_id in index_ids:
+            if not index_id.isdigit():
+                abort(404)
+
+            index = Indexes.get_index(index_id=index_id)
+            if index is None:
+                abort(404)
+
+            index_list.append(index)
+
+        allowed_index_list = filter_index_list_by_role(index_list)
+        if not allowed_index_list:
+            abort(403)
+
+        if path_str is not None:
+            kwargs["path_str"] = "_".join(str(index.id) for index in allowed_index_list)
+        else:
+            kwargs["index_id"] = allowed_index_list[0].id
+
+        return view(*args, **kwargs)
+
+    return decorated_view
 
 def handle_check_file_metadata(list_record, data_path):
     """Check file contents, thumbnails metadata.
