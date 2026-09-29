@@ -517,9 +517,10 @@ def test_get_feedback_mail(api, users):
 
 #def get_send_mail_history():
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_send_mail_history -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_send_mail_history(api, mocker):
+def test_get_send_mail_history(api, users, mocker):
     mocker.patch("weko_admin.views.FeedbackMail.load_feedback_mail_history",side_effect=lambda x, y:{"page":x})
     url = url_for("weko_admin.get_send_mail_history")
+    login_user_via_session(client=api, email=users[0]["email"])  # sysadmin
     input = {"page":2, "repo_id":"Root Index"}
     res = api.get(url,query_string=input)
     assert response_data(res) == {"page":2}
@@ -527,6 +528,29 @@ def test_get_send_mail_history(api, mocker):
     input = {"page":"not page", "repo_id":"Root Index"}
     res = api.get(url,query_string=input)
     assert response_data(res) == {"page":1}
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_send_mail_history_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_send_mail_history_guest(api, mocker):
+    """未ログインの場合は401になること。"""
+    mocker.patch("weko_admin.views.FeedbackMail.load_feedback_mail_history",side_effect=lambda x, y:{"page":x})
+    url = url_for("weko_admin.get_send_mail_history")
+    res = api.get(url, query_string={"page":1, "repo_id":"Root Index"})
+    assert res.status_code == 401
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_send_mail_history_scope -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+@pytest.mark.parametrize("index,repo_id,is_permission",[
+                         (2, "comm1", True),        # comadmin(担当コミュニティ)
+                         (2, "other_repo", False),  # comadmin(担当外コミュニティ)
+                         (3, "comm1", False),       # contributor(コミュニティ管理者ロールなし)
+                         (4, "comm1", False),       # generaluser(ロールなし)
+                         ])
+def test_get_send_mail_history_scope(api, users, community, index, repo_id, is_permission, mocker):
+    """repository_scope_requiredによるコミュニティ管理者のスコープ制御を確認する。"""
+    mocker.patch("weko_admin.views.FeedbackMail.load_feedback_mail_history",side_effect=lambda x, y:{"page":x})
+    login_user_via_session(client=api, email=users[index]["email"])
+    url = url_for("weko_admin.get_send_mail_history")
+    res = api.get(url, query_string={"page":1, "repo_id":repo_id})
+    assert_role(res, is_permission)
 
 
 #def get_failed_mail():

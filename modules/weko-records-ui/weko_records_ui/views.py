@@ -1459,6 +1459,8 @@ def preview_able(file_json):
     return True
 
 @blueprint.route("/get_uri", methods=['POST'])
+@login_required
+@record_edit_permission_required(param='pid_value')
 def get_uri():
     """_summary_
     ---
