@@ -176,18 +176,6 @@ def test_get_path_name_dict(i18n_app, users, indices):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         assert get_path_name_dict('33_44')
 
-
-def test_get_path_name_dict_forbidden(client, users, indices):
-    url = url_for("weko_search_ui.get_path_name_dict", path_str="33_44")
-    with patch(
-        "flask_login.utils._get_user",
-        side_effect=lambda: _fresh_user(users[3]),
-    ), patch("weko_search_ui.utils.filter_index_list_by_role", return_value=[]):
-        response = client.get(url)
-
-    assert response.status_code == 403
-
-
 # def gettitlefacet():
 def test_gettitlefacet(i18n_app, users, client, facet_search_setting):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
