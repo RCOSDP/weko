@@ -463,13 +463,21 @@ def test_delete_widget_design_page(client, users):
 
 
 # def load_widget_type():
-def test_load_widget_type(client, users):
-    login_user_via_session(client=client, email=users[2]['obj'].email)
+user_results2 = [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results2)
+def test_load_widget_type(client, users, id, status_code):
+    login_user_via_session(client=client, email=users[id]['obj'].email)
     res = client.get(
         url_for("weko_gridlayout_api.load_widget_type"),
         headers={"Content-Type": "application/json"}
     )
-    assert res.status_code == 200
+    assert res.status_code == status_code
 
 
 # def save_widget_item():
@@ -838,6 +846,24 @@ def test_upload_file(client, users, communities):
 
 
 # def uploaded_file(filename, community_id=0):
+user_results2 = [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 403),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results2)
+def test_uploaded_file(client, users, id, status_code):
+    login_user_via_session(client=client, email=users[id]["email"])
+    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value="test"):
+        res = client.get(
+            url_for("weko_gridlayout.uploaded_file", community_id="Root Index", filename="file")
+        )
+        assert res.status_code == status_code
+        assert res.get_data(as_text=True) == "test"
+
+
 def test_uploaded_file(client, communities):
     # The view returns whatever get_file() gives it, so the stand-in has to be
     # something Flask can turn into a response - a function is not.
@@ -847,7 +873,6 @@ def test_uploaded_file(client, communities):
         )
         assert res.status_code == 200
         assert res.get_data(as_text=True) == "test"
-
 
 # def unlocked_widget():
 def test_unlocked_widget(client, users):
