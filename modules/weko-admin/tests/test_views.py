@@ -617,7 +617,7 @@ def test_resend_failed_mail(api,users,mocker):
 @pytest.mark.parametrize("index,is_permission",[
                          (0,True),# sysadmin
                          (1,True),# repoadmin
-                         (2,True),# comadmin
+                         (2,False),# comadmin (Root Index is not in scope)
                          (3,False),# contributor
                          (4,False),# generaluser
                          ])
@@ -628,6 +628,32 @@ def test_manual_send_site_license_mail_acl(api,users,site_license,index,is_permi
         with patch("weko_admin.views.send_site_license_mail"):
             res = api.post(url,data={"repo_id": "Root Index"})
             assert_role(res, is_permission)
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_manual_send_site_license_mail_repository_scope -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+@pytest.mark.parametrize("index,repo_id,is_permission",[
+                         (0,"comm1",True),# sysadmin, any repository
+                         (1,"comm1",True),# repoadmin, any repository
+                         (1,"other",True),# repoadmin, any repository
+                         (2,"comm1",True),# comadmin, own repository
+                         (2,"other",False),# comadmin, other repository
+                         (2,"",False),# comadmin, no repository
+                         ])
+def test_manual_send_site_license_mail_repository_scope(api,db,users,site_license,community,index,repo_id,is_permission):
+    if repo_id:
+        site_license[0]["Info"].repository_id = repo_id
+        db.session.commit()
+    url = url_for("weko_admin.manual_send_site_license_mail",start_month="202201",end_month="202203")
+    login_user_via_session(client=api, email=users[index]["email"])
+    with patch("weko_admin.views.QueryCommonReportsHelper.get", return_value={"institution_name":[]}):
+        with patch("weko_admin.views.send_site_license_mail") as mock_send:
+            res = api.post(url,data={"repo_id": repo_id})
+            if is_permission:
+                assert res.status_code == 200
+                assert res.data == b"finished"
+                mock_send.assert_called_once()
+            else:
+                assert res.status_code == 403
+                mock_send.assert_not_called()
 
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_manual_send_site_license_mail_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
 def test_manual_send_site_license_mail_guest(api, site_license):
@@ -871,12 +897,39 @@ def test_get_ogp_image(api, db, site_info, file_instance, mocker):
 
 #def get_search_init_display_index(selected_index=None):
 # .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_search_init_display_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
-def test_get_search_init_display_index(api):
+def test_get_search_init_display_index(api, users):
     url = url_for("weko_admin.get_search_init_display_index",selected_index=1)
+    login_user_via_session(client=api, email=users[0]["email"])
     data = [{"id":"0","parent":"#","text":"Root Index","state":{"opened":True}}]
     with patch("weko_admin.views.get_init_display_index",return_value=data):
         res = api.get(url)
         assert response_data(res) == {"indexes":data}
+
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_search_init_display_index_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+@pytest.mark.parametrize("index,is_permission",[
+                         (0,True),# sysadmin
+                         (1,True),# repoadmin
+                         (2,False),# comadmin
+                         (3,False),# contributor
+                         (4,False),# generaluser
+                         ])
+def test_get_search_init_display_index_acl(api,users,index,is_permission):
+    url = url_for("weko_admin.get_search_init_display_index",selected_index=1)
+    login_user_via_session(client=api, email=users[index]["email"])
+    with patch("weko_admin.views.get_init_display_index",return_value=[]) as mock_get:
+        res = api.get(url)
+        assert_role(res, is_permission)
+        if not is_permission:
+            mock_get.assert_not_called()
+
+# .tox/c1/bin/pytest --cov=weko_admin tests/test_views.py::test_get_search_init_display_index_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-admin/.tox/c1/tmp
+def test_get_search_init_display_index_guest(api):
+    url = url_for("weko_admin.get_search_init_display_index",selected_index=1)
+    with patch("weko_admin.views.get_init_display_index",return_value=[]) as mock_get:
+        res = api.get(url)
+        assert res.status_code == 302
+        mock_get.assert_not_called()
 
 
 #def save_restricted_access():
