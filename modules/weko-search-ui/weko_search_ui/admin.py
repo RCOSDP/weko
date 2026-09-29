@@ -1194,7 +1194,7 @@ class ItemBulkExport(BaseView):
         """Check export status."""
         if not current_user.is_authenticated:
             abort(302)
-        check_celery = check_celery_is_run()
+        check_celery = check_celery_is_run(is_task=True)
         check_life_time = check_session_lifetime()
         export_status, download_uri, message, run_message, \
             status, start_time, finish_time = get_export_status()

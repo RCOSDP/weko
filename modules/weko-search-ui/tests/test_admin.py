@@ -903,7 +903,9 @@ class TestItemBulkExport:
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_check_export_status -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_check_export_status(self,app,client,users, redis_connect,mocker):
 
-        mocker.patch("weko_search_ui.admin.check_celery_is_run",return_value=True)
+        mock_check_celery_is_run = mocker.patch(
+            "weko_search_ui.admin.check_celery_is_run", return_value=True
+        )
         mocker.patch("weko_search_ui.admin.check_session_lifetime",return_value=True)
         start_time_str = '2024/05/01 12:55:36'
 
@@ -927,6 +929,7 @@ class TestItemBulkExport:
                     'status': 'STARTED',
                     'uri_status': False
                 }}
+                mock_check_celery_is_run.assert_called_with(is_task=True)
 
             with patch('weko_search_ui.admin.get_export_status',
                        return_value=(True, 'test_uri', '', '', 'STARTED', start_time_str, '')):
@@ -942,6 +945,7 @@ class TestItemBulkExport:
                     'status': 'STARTED',
                     'uri_status': True
                 }}
+                mock_check_celery_is_run.assert_called_with(is_task=True)
 
 # .tox/c1/bin/pytest --cov=weko_search_ui tests/test_admin.py::TestItemBulkExport::test_cancel_export -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-search-ui/.tox/c1/tmp
     def test_cancel_export(self, app, client, users, redis_connect, mocker):
