@@ -1,5 +1,4 @@
 import re
-from collections import namedtuple
 import pytest
 from weko_records_ui.utils import (
     can_manage_onetime_url,
@@ -768,40 +767,46 @@ def test_is_private_index(app,records):
     assert is_private_index(record)==False
 
 
-# Rows returned by Indexes.get_path_list() are SQLAlchemy KeyedTuples with
-# labeled columns (weko-index-tree/weko_index_tree/api.py recs_query()).
-IndexRow = namedtuple('IndexRow', ['public_state'])
-
-
 # def is_private_index(record):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_private_index_decision_table -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 @pytest.mark.parametrize(
-    "path_list, expected",
+    "delegate_return, expected",
     [
         pytest.param(
-            [IndexRow(public_state=True)], False,
-            id="rule1_single_index_public"),
+            True, False,
+            id="rule1_at_least_one_fully_public_chain"),
         pytest.param(
-            [IndexRow(public_state=False)], True,
-            id="rule2_single_index_nonpublic"),
+            False, True,
+            id="rule2_no_fully_public_chain_eg_future_dated_or_nonpublic_ancestor"),
         pytest.param(
-            [IndexRow(public_state=True)] * 7, False,
-            id="rule3_multiple_indexes_all_public"),
-        pytest.param(
-            [IndexRow(public_state=True), IndexRow(public_state=False)],
-            False, id="rule4_multiple_indexes_mixed"),
-        # Rule 5: All indexes are private (non-public)
-        pytest.param(
-            [IndexRow(public_state=False), IndexRow(public_state=False)],
-            True, id="rule5_multiple_indexes_all_nonpublic_bugfix"),
-        # Rule 6: no index at all (path is empty) is now treated as private.
-        pytest.param([], True, id="rule6_no_index_at_all"),
+            None, True,
+            id="rule3_delegate_returns_none_eg_all_indexes_deleted"),
     ],
 )
-def test_is_private_index_decision_table(path_list, expected):
-    with patch("weko_index_tree.api.Indexes.get_path_list",
-               return_value=path_list):
-        assert is_private_index({"path": ["1"]}) is expected
+def test_is_private_index_decision_table(delegate_return, expected):
+    with patch(
+        "weko_index_tree.api.Indexes.is_public_state_and_not_in_future",
+        return_value=delegate_return,
+    ) as mock_delegate:
+        assert is_private_index({"path": ["1", "2"]}) is expected
+        mock_delegate.assert_called_once_with(["1", "2"])
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        pytest.param({"path": []}, id="rule4_empty_path_list"),
+        pytest.param({}, id="rule5_no_path_key_at_all"),
+    ],
+)
+def test_is_private_index_no_index_short_circuits(record):
+    # An item that belongs to no index at all must be treated as private
+    # without even querying Indexes.is_public_state_and_not_in_future().
+    with patch(
+        "weko_index_tree.api.Indexes.is_public_state_and_not_in_future"
+    ) as mock_delegate:
+        assert is_private_index(record) is True
+        mock_delegate.assert_not_called()
 
 
 # def validate_download_record(record: dict):

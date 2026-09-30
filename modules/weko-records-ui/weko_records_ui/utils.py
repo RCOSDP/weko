@@ -1338,13 +1338,21 @@ def is_private_index(record):
             False if at least one index is public.
     Note:
         - An item that belongs to no index at all is treated as private.
-        - If the item belongs to at least one public index, it is not private.
+        - An index is only treated as public if its own public_state is
+          True and its public_date (if set) is today or in the past, AND
+          every ancestor index above it in the tree satisfies the same
+          condition. If any ancestor index is non-public (or has a
+          public_date in the future), the index is treated as non-public
+          as well, regardless of the index's own public_state.
+        - If the item belongs to at least one such public index, it is not
+          private.
     """
     from weko_index_tree.api import Indexes
     list_index = record.get("path")
-    indexes = Indexes.get_path_list(list_index)
-    # Check if all indexes the item belongs to are non-public.
-    return all(not index.public_state for index in indexes)
+    if not list_index:
+        return True
+    # Delegate the public/private determination to the Indexes API.
+    return not Indexes.is_public_state_and_not_in_future(list_index)
 
 
 def validate_download_record(record):
