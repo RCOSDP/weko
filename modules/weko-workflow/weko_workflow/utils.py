@@ -1194,11 +1194,15 @@ class MappingData(object):
     record = None
     item_map = None
 
-    def __init__(self, item_id=None, record=None):
+    def __init__(self, item_id=None, record=None, item_type_id=None):
         """Initilize pagination."""
         self.record = WekoRecord.get_record(item_id) if item_id else record
-        item_type = self.get_data_item_type()
-        item_type_mapping = Mapping.get_record(item_type.id)
+        if not item_type_id:
+            item_type = self.get_data_item_type()
+            if item_type is None:
+                raise ValueError("item_type is None")
+            item_type_id = item_type.id
+        item_type_mapping = Mapping.get_record(item_type_id)
         self.item_map = get_full_mapping(item_type_mapping, "jpcoar_mapping")
 
     def get_data_item_type(self):
@@ -1318,12 +1322,18 @@ class IdentifierHandle(object):
     item_metadata = None
     metadata_mapping = None
 
-    def __init__(self, item_id=None):
+    def __init__(self, item_id=None, record=None, item_type_id=None):
         """Initialize IdentifierHandle."""
         self.item_uuid = item_id
         if item_id:
-            self.metadata_mapping = MappingData(item_id)
-            self.item_type_id = self.metadata_mapping.get_data_item_type().id
+            if record:
+                self.metadata_mapping = MappingData(record=record, item_type_id=item_type_id)
+            else:
+                self.metadata_mapping = MappingData(item_id=item_id, item_type_id=item_type_id)
+            if item_type_id:
+                self.item_type_id = item_type_id
+            else:
+                self.item_type_id = self.metadata_mapping.get_data_item_type().id
             self.item_metadata = ItemsMetadata.get_record(item_id)
             self.item_record = self.metadata_mapping.record
 
@@ -5237,6 +5247,16 @@ def check_pretty(pretty):
 def create_limmiter():
     from .config import WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT
     return Limiter(app=Flask(__name__), key_func=get_remote_address, default_limits=WEKO_WORKFLOW_API_LIMIT_RATE_DEFAULT)
+
+
+# NOTE: create_limmiter() above binds the Limiter to a throw-away Flask app
+# (``Flask(__name__)``) instead of the real application, and is never
+# init_app()'d against the running app, so it does not actually enforce any
+# rate limit. ``limiter`` below is a module-level instance following the
+# same pattern as ``weko_accounts.utils.limiter``: it is created unbound and
+# then initialized against the real application in
+# ``WekoWorkflow.init_limiter`` (see ``ext.py``).
+limiter = Limiter(key_func=get_remote_address)
 
 
 def convert_to_timezone(dt, user_timezone=None):

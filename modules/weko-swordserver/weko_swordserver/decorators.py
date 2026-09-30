@@ -13,6 +13,7 @@ from flask import current_app, request
 from invenio_oauth2server.decorators import (
     require_api_auth, require_oauth_scopes
 )
+from weko_accounts.utils import roles_required
 
 from .errors import ErrorType, WekoSwordserverException
 
@@ -43,6 +44,24 @@ def check_oauth(*scopes):
                 return f(*args, **kwargs)
         return decorated
     return wrapper
+
+def check_deposit_role():
+    """Decorator to check the roles allowed to deposit items.
+
+    The allowed roles are read from
+    ``WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE`` on each request, so that the
+    application configuration is applied.
+    """
+    def wrapper(f):
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            roles = current_app.config.get(
+                "WEKO_SWORDSERVER_DEPOSIT_ROLE_ENABLE", []
+            )
+            return roles_required(roles)(f)(*args, **kwargs)
+        return decorated
+    return wrapper
+
 
 def check_on_behalf_of():
     """Decorator to check onBehalfOf header."""

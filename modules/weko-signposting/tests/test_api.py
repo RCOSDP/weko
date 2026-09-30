@@ -23,6 +23,10 @@ def test_requested_signposting(app, client, db_records, mocker):
     depid, recid, parent, doi, record, item = db_records[0]
     expected = json_data("data/link_str.json")
 
+    # the record is public and its index is viewable
+    mocker.patch(
+        "weko_records_ui.permissions.check_index_permissions",
+        return_value=True)
     mock_permalink = mocker.patch("weko_signposting.api.get_record_doi")
     mock_permalink.return_value = None
 
@@ -42,6 +46,34 @@ def test_requested_signposting(app, client, db_records, mocker):
     result = res.headers["Link"]
     assert result == expected_link
     assert res.status_code == 200
+
+
+# .tox/c1/bin/pytest --cov=weko_signposting tests/test_api.py::test_requested_signposting_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-signposting/.tox/c1/tmp
+def test_requested_signposting_permission(app, client, db_records, users,
+                                          mocker):
+    # the record is not public
+    depid, recid, parent, doi, record, item = db_records[2]
+    assert record["publish_status"] == "1"
+    mocker.patch("weko_signposting.api.get_record_doi", return_value=None)
+    url = url_for("invenio_records_ui.recid_signposting",
+                  pid_value=recid.pid_value)
+
+    # guest: redirected to the login page, no links
+    res = client.head(url)
+    assert res.status_code == 302
+    assert "Link" not in res.headers
+
+    # user without permission to view the record
+    with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
+        res = client.head(url)
+    assert res.status_code == 403
+    assert "Link" not in res.headers
+
+    # administrator can view the record
+    with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+        res = client.head(url)
+    assert res.status_code == 200
+    assert "Link" in res.headers
 
 
 # def get_record_doi(recid):

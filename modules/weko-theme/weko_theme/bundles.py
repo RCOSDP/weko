@@ -116,3 +116,10 @@ widget_js = Bundle(
     filters='jsmin',
     output="gen/widget.%(version)s.js",
 )
+
+js_preview_widget = Bundle(
+    widget_js,
+    'js/weko_theme/preview_widget.js',
+    filters='jsmin',
+    output="gen/widget_preview.%(version)s.js",
+)

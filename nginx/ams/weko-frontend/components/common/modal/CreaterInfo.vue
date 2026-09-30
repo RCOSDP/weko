@@ -7,7 +7,7 @@
         </div>
         <div class="basis-1/6 flex text-end justify-end pr-3">
           <button type="button" class="btn-close">
-            <img src="/img/btn/btn-close.svg" alt="×" @click="closeModal" />
+            <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-close.svg`" alt="×" @click="closeModal" />
           </button>
         </div>
       </div>
@@ -55,6 +55,7 @@ defineExpose({
 /////////////////////////////////// */
 
 const modalShowFlag = ref(false);
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function

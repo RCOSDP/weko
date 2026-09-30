@@ -274,11 +274,11 @@ class ItemTypeMetaDataView(BaseView):
             ]
 
             if not upgrade_version:
-                Mapping.create(item_type_id=record.model.id,
+                Mapping.create_or_update(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))
             # Just update Mapping when create new record
             elif record.model.id != item_type_id:
-                Mapping.create(item_type_id=record.model.id,
+                Mapping.create_or_update(item_type_id=record.model.id,
                                mapping=table_row_map.get('mapping'))
                 workflow = WorkFlow()
                 workflow_list = workflow.get_workflow_by_itemtype_id(
@@ -649,7 +649,7 @@ class ItemTypeMetaDataView(BaseView):
                 'WEKO_ITEMTYPES_UI_UPGRADE_VERSION_ENABLED'
             ]
             item_type_id=record.model.id
-            Mapping.create(
+            Mapping.create_or_update(
                 item_type_id=item_type_id,
                 mapping=import_data['ItemTypeMapping'].get('mapping')
             )
@@ -950,7 +950,7 @@ class ItemTypeMappingView(BaseView):
             return jsonify(duplicate=True, err_items=lst_duplicate,
                            msg=_('Duplicate mapping as below:'))
         try:
-            Mapping.create(item_type_id=data.get('item_type_id'),
+            Mapping.create_or_update(item_type_id=data.get('item_type_id'),
                            mapping=data_mapping)
             db.session.commit()
             UserActivityLogger.info(

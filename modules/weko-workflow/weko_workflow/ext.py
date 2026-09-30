@@ -43,10 +43,19 @@ class WekoWorkflow(object):
         from .sessions import upt_activity_item
         from .views import depositactivity_blueprint, workflow_blueprint
         self.init_config(app)
+        self.init_limiter(app)
         item_created.connect(upt_activity_item, app)
         app.register_blueprint(workflow_blueprint)
         app.register_blueprint(depositactivity_blueprint)
         app.extensions['weko-workflow'] = self
+
+    def init_limiter(self, app):
+        """Initialize rate limiting.
+
+        :param app: The flask application.
+        """
+        from .utils import limiter
+        limiter.init_app(app)
 
     def init_config(self, app):
         """Initialize configuration.

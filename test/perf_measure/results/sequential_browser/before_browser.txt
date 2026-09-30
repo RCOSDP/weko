@@ -1,0 +1,8 @@
+# Headless-Chromium E2E  label=before  time=2026-07-23T07:12:23.597Z
+# base=https://weko3.example.org:18443 detail_recid=3000001 iterations=100
+# metric = navigation start -> networkidle (includes JS + AJAX render), seconds
+
+     URL     min     med    mean     p90     max       n
+     top   1.516   1.623   2.248   1.828  12.208     100
+  detail   1.079   1.260   1.729   1.355  12.134     100
+  search   1.205   1.391   1.824   1.501  12.227     100

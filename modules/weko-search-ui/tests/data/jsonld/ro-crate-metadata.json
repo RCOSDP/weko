@@ -103,7 +103,8 @@
         }
       ],
       "wk:itemLinks": [],
-      "wk:metadataAutoFill": true
+      "wk:metadataAutoFill": true,
+      "wk:researchmapLinkage": true
     },
     {
       "@id": "ro-crate-metadata.json",

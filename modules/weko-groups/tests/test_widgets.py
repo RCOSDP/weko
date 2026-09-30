@@ -29,15 +29,22 @@ from weko_groups.widgets import RadioGroupWidget
 
 # class RadioGroupWidget(object):
 # def __call__(self, field, **kwargs):
-# ERROR ~ AttributeError: 'list' object has no attribute 'default'
 def test___call__(app):
-    test = RadioGroupWidget()
+    # The widget reads field.default and iterates the field to get its
+    # subfields, so it needs the field itself - not a bare list of subfields.
+    test = RadioGroupWidget(descriptions={"data": "description"})
     subfield = MagicMock()
     subfield.label = MagicMock()
     subfield.label.text = "text"
     subfield.data = "data"
-    subfield.checked = "checked"
+    subfield.return_value = "<input>"
 
-    field = subfield
+    field = MagicMock()
+    field.default = "data"
+    field.__iter__.return_value = iter([subfield])
 
-    test.__call__(field=[field])
+    html = test.__call__(field=field)
+
+    assert subfield.checked is True
+    assert "text" in html
+    assert "description" in html

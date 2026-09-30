@@ -143,7 +143,7 @@ def test_open_search_detail_data(app, db, db_index, render, form, mapping, hit, 
         form=json_data(form),
         tag=1
     )
-    _item_type_mapping = Mapping.create(
+    _item_type_mapping = Mapping.create_or_update(
         item_type_id=_item_type.id,
         mapping=json_data(mapping)
     )

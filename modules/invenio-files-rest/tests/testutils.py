@@ -21,9 +21,10 @@ else:
 
 
 def login_user(client, user):
-    """Log in a specified user."""
+    """Log in a specified user, given either the User or its id."""
+    user_id = getattr(user, 'id', user)
     with client.session_transaction() as sess:
-        sess['user_id'] = user.id if user else None
+        sess['user_id'] = user_id
         sess['_fresh'] = True
 
 

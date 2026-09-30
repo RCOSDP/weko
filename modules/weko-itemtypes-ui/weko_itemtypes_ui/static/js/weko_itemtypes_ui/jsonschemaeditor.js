@@ -586,9 +586,10 @@
 			}
 		},
 		changeRequired: function changeRequired(event) {
-			if (event.target.checked) {
+			if (event.target.checked && this.state.required.indexOf(event.target.name) === -1) {
 				this.state.required.push(event.target.name);
-			} else {
+			}
+			else if (!event.target.checked && this.state.required.indexOf(event.target.name) !== -1) {
 				var i = this.state.required.indexOf(event.target.name);
 				this.state.required.splice(i, 1);
 			}

@@ -20,7 +20,7 @@
 
 """Database models for weko-gridlayout."""
 
-from flask import current_app
+from flask import current_app, g, has_request_context
 from invenio_accounts.models import User
 from invenio_db import db
 from sqlalchemy import Sequence
@@ -406,14 +406,40 @@ class WidgetDesignSetting(db.Model):
         Returns:
             dict: {'repository_id':'','':'settings'}
         """
+        # Cache the lookup per request: the widget design for a repository is
+        # fetched several times while rendering a page (get_design_layout and
+        # has_widget_design both read it). g is cleared each request, so no
+        # cross-request invalidation is needed. Callers only read the result.
+        cache = None
+        key = str(repository_id)
+        if has_request_context():
+            cache = getattr(g, '_widget_design_setting_cache', None)
+            if cache is None:
+                cache = g._widget_design_setting_cache = {}
+            if key in cache:
+                return cache[key]
+
         query_result = cls.query.filter_by(
-            repository_id=str(repository_id)).one_or_none()
+            repository_id=key).one_or_none()
         data = {}
         if query_result is not None:
             data['repository_id'] = query_result.repository_id
             data['settings'] = query_result.settings
 
+        if cache is not None:
+            cache[key] = data
         return data
+
+    @classmethod
+    def _clear_request_cache(cls, repository_id=None):
+        """Drop the per-request select_by_repository_id cache."""
+        if has_request_context():
+            cache = getattr(g, '_widget_design_setting_cache', None)
+            if cache is not None:
+                if repository_id is None:
+                    cache.clear()
+                else:
+                    cache.pop(str(repository_id), None)
 
     @classmethod
     def update(cls, repository_id, settings):
@@ -433,6 +459,7 @@ class WidgetDesignSetting(db.Model):
                     query_result.settings = settings
                     db.session.merge(query_result)
                 db.session.commit()
+                cls._clear_request_cache(repository_id)
                 return True
             except Exception as ex:
                 current_app.logger.error(ex)
@@ -455,6 +482,7 @@ class WidgetDesignSetting(db.Model):
                     widget_setting.settings = settings
                 db.session.add(widget_setting)
             db.session.commit()
+            cls._clear_request_cache(repository_id)
             return True
         except Exception as ex:
             db.session.rollback()

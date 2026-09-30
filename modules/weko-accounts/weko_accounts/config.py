@@ -29,6 +29,14 @@ WEKO_ACCOUNTS_BASE_TEMPLATE = 'weko_accounts/base.html'
 WEKO_ACCOUNTS_SHIB_LOGIN_ENABLED = False
 """Enable Shibboleth user login system."""
 
+WEKO_ACCOUNTS_SHIB_SP_ALLOWED_ADDRS = ['127.0.0.1', '::1']
+"""Addresses allowed to post the attributes of the Shibboleth SP.
+
+The attributes are posted by the login script of the SP (nginx/login.py),
+which runs on the web server and posts to the loopback address. The address
+is the one nginx passes as REMOTE_ADDR.
+"""
+
 WEKO_ACCOUNTS_SHIB_CACHE_PREFIX = 'Shib-Session-'
 """Shibboleth cache prefix info."""
 
@@ -64,6 +72,8 @@ WEKO_ACCOUNTS_SHIB_LOGIN_CACHE_TTL = 180
 
 WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL = '{}secure/login.py'
 """Login proxy URL."""
+
+WEKO_ACCOUNTS_SHIB_AMS_LOGIN_URL = '{}ams/login'
 
 WEKO_ACCOUNTS_SSO_ATTRIBUTE_MAP = {
     'SHIB_ATTR_EPPN': (False, 'shib_eppn'),
@@ -242,8 +252,9 @@ WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = {
     "role_mapping":{
         "radm":"Repository Administrator",
         "cadm":"Community Administrator",
-        "cont":"Contributor",
-    }
+        "cont":"Contributor"
+    },
+    "group_keyword":"gr"
 }
 """Patterns for Gakunin group names."""
 

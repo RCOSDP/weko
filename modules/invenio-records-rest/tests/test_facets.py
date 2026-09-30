@@ -85,6 +85,58 @@ def test_create_filter_dsl():
         assert not filters
         assert args == kwargs
 
+def test_create_filter_dsl_accessrights():
+    app = Flask('testapp')
+    app.config['WEKO_SEARCH_FIX_ACCESSRIGHTS'] = True
+    # Definition of new_accessRights
+    definitions = {
+        "accessRights": lambda values: Q('terms', accessRights=values),
+        "new_accessRights": {
+            "filters": {
+                "filters": {
+                    "open": {"term": {"accessRights": "open"}},
+                    "closed": {"term": {"accessRights": "closed"}},
+                }
+            }
+        }
+    }
+    # Values included in new_accessrights_filters
+    with app.test_request_context('?accessRights=open&accessRights=closed'):
+        kwargs = MultiDict()
+        filters, args = _create_filter_dsl(kwargs, definitions)
+        assert len(filters) == 1
+        assert filters[0].to_dict() == {
+            "bool": {
+                "should": [
+                    {"term": {"accessRights": "open"}},
+                    {"term": {"accessRights": "closed"}}
+                ]
+            }
+        }
+        assert args.getlist('accessRights') == ['open', 'closed']
+
+    # Values not included in new_accessrights_filters
+    with app.test_request_context('?accessRights=unknown'):
+        kwargs = MultiDict()
+        filters, args = _create_filter_dsl(kwargs, definitions)
+        assert filters == []
+        assert args.getlist('accessRights') == []
+
+    # When the request value is empty
+    with app.test_request_context(''):
+        kwargs = MultiDict()
+        filters, args = _create_filter_dsl(kwargs, definitions)
+        assert filters == []
+        assert args == kwargs
+
+    definitions = {
+        "other": lambda values: Q('terms', other=values),
+    }
+    with app.test_request_context('?other=open'):
+        kwargs = MultiDict()
+        filters, args = _create_filter_dsl(kwargs, definitions)
+        assert filters == [Q('terms', other=['open'])]
+        assert args.getlist('other') == ['open']
 
 def test_post_filter(app):
     """Test post filter."""

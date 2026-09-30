@@ -10,15 +10,19 @@
 
 from __future__ import absolute_import, print_function
 
+import tempfile
+
 import pytest
+import uuid
+import os
 from invenio_admin import InvenioAdmin
 from wtforms.validators import ValidationError
 from unittest.mock import patch, MagicMock
 from flask import get_flashed_messages
 from sqlalchemy.exc import SQLAlchemyError
 
-from invenio_files_rest.admin import require_slug, validate_uri, LocationModelView
-from invenio_files_rest.models import Bucket, ObjectVersion, Location
+from invenio_files_rest.admin import require_slug, validate_uri, LocationModelView, FileInstanceModelView
+from invenio_files_rest.models import Bucket, ObjectVersion, Location, FileInstance
 
 def test_require_slug():
     """Test admin views."""
@@ -68,9 +72,18 @@ def test_admin_views(app, db, dummy_location):
         assert res.status_code == 200
         assert str(obj.file_id) in res.get_data(as_text=True)
 
+        # LocationModelView.get_query() hides default locations from anyone
+        # without the system-administrator role, and this client is anonymous.
+        # dummy_location is the default one.
+        visible_loc = Location(name='visibleloc', uri=tempfile.mkdtemp(),
+                               default=False)
+        db.session.add(visible_loc)
+        db.session.commit()
+
         res = client.get('/admin/location/')
         assert res.status_code == 200
-        assert str(b1.location.name) in res.get_data(as_text=True)
+        assert 'visibleloc' in res.get_data(as_text=True)
+        assert str(b1.location.name) not in res.get_data(as_text=True)
 
         res = client.get('/admin/objectversion/')
         assert res.status_code == 200
@@ -93,6 +106,133 @@ def make_location(**overrides):
     )
     defaults.update(overrides)
     return Location(**defaults)
+
+
+class TestFileInstanceModelView():
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model(self, app, db, mocker, dummy_location):
+        """Test delete_model when file exists on disk."""
+        
+        # dummy_location.uri配下にテストファイルを作成
+        test_file_path = os.path.join(dummy_location.uri, 'test-file.txt')
+        with open(test_file_path, 'w') as f:
+            f.write('test content')
+        
+        # ファイルが存在することを確認
+        assert os.path.exists(test_file_path)
+        
+        model = MagicMock()
+        model.id = uuid.uuid4()
+        model.uri = test_file_path
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        mock_file_query = MagicMock()
+        mock_file_query.filter_by.return_value.one_or_none.return_value = MagicMock()
+        mocker.patch('invenio_files_rest.admin.FileInstance.query', mock_file_query)
+        mock_update_location_size = mocker.patch('invenio_files_rest.admin.update_location_size')
+        mock_super = mocker.patch("flask_admin.contrib.sqla.ModelView.delete_model")
+
+        result = view.delete_model(model)
+
+        # ファイルが削除されたか確認
+        assert not os.path.exists(test_file_path)
+        mock_super.assert_called_once_with(model)
+        mock_update_location_size.assert_called_once_with()
+
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_file_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_file_not_found(self, app, db, mocker):
+        """Test delete_model when file does not exist in database."""
+        
+        model = MagicMock()
+        model.id = uuid.uuid4()
+        model.uri = '/tmp/nonexistent-file'
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        # Mock os.path.exists to return False (file does not exist on disk)
+        mocker.patch('invenio_files_rest.admin.os.path.exists', return_value=False)
+        
+        # Mock FileInstance.query to return None (file not found in database)
+        mock_query = MagicMock()
+        mock_query.filter_by.return_value.one_or_none.return_value = None
+        mocker.patch('invenio_files_rest.admin.FileInstance.query', mock_query)
+
+        # Verify that FileNotFoundError is raised
+        with pytest.raises(FileNotFoundError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'File not found' in str(exc_info.value)
+
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_db_only -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_db_only(self, app, db, mocker):
+        """Test delete_model when file exists only in database, not on disk."""
+        
+        model = MagicMock()
+        model.id = uuid.uuid4()
+        model.uri = '/tmp/nonexistent-file'
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        # Mock os.path.exists to return False (file does not exist on disk)
+        mocker.patch('invenio_files_rest.admin.os.path.exists', return_value=False)
+        
+        # Mock FileInstance.query to return a file instance (file exists in DB)
+        mock_file = MagicMock()
+        mock_query = MagicMock()
+        mock_query.filter_by.return_value.one_or_none.return_value = mock_file
+        mocker.patch('invenio_files_rest.admin.FileInstance.query', mock_query)
+
+        mock_update_location_size = mocker.patch('invenio_files_rest.admin.update_location_size')
+        mock_super = mocker.patch("flask_admin.contrib.sqla.ModelView.delete_model")
+
+        result = view.delete_model(model)
+
+        mock_super.assert_called_once_with(model)
+        mock_update_location_size.assert_called_once_with()
+    
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_invalid_uri_or_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_invalid_uri_or_id(self, app, db, mocker):
+        """Test delete_model when file URI is invalid."""
+        model = MagicMock()
+        model.uri = None
+        model.id = uuid.uuid4()
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        with pytest.raises(ValueError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Invalid uri or id' in str(exc_info.value)
+
+        model = MagicMock()
+        model.uri = '/tmp/test-file'
+        model.id = None
+        view = FileInstanceModelView(FileInstance, db.session)
+
+        with pytest.raises(ValueError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Invalid uri or id' in str(exc_info.value)
+    
+    # .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_admin.py::TestFileInstanceModelView::test_delete_model_not_exists_uri_or_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+    def test_delete_model_not_exists_uri_or_id(self, app, db, mocker):
+        class Model:
+            pass
+        
+        model = Model()
+        model.uri = '/tmp/test-file'
+        view = FileInstanceModelView(FileInstance, db.session)
+        
+        with pytest.raises(AttributeError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Model has no attribute uri or id' in str(exc_info.value)
+
+        model = Model()
+        model.id = uuid.uuid4()
+        view = FileInstanceModelView(FileInstance, db.session)
+        
+        with pytest.raises(AttributeError) as exc_info:
+            view.delete_model(model)
+        
+        assert 'Model has no attribute uri or id' in str(exc_info.value)
 
 
 class TestLocationModelView():
@@ -249,7 +389,7 @@ class TestLocationModelView():
         mock_user.roles = [mock_role_repoad]
         with patch('invenio_files_rest.admin.current_user', mock_user):
             view = LocationModelView(Location, db.session)
-            assert view.can_create
+            assert not view.can_create
 
         # Test Case (Pos): Community Administrator can not create
         mock_role_repoad = MagicMock()
@@ -288,7 +428,7 @@ class TestLocationModelView():
         mock_user.roles = [mock_role_repoad]
         with patch('invenio_files_rest.admin.current_user', mock_user):
             view = LocationModelView(Location, db.session)
-            assert view.can_edit
+            assert not view.can_edit
 
         # Test Case (Pos): Community Administrator can not create
         mock_role_repoad = MagicMock()
@@ -327,7 +467,7 @@ class TestLocationModelView():
         mock_user.roles = [mock_role_repoad]
         with patch('invenio_files_rest.admin.current_user', mock_user):
             view = LocationModelView(Location, db.session)
-            assert view.can_delete
+            assert not view.can_delete
 
         # Test Case (Pos): Community Administrator can not delete
         mock_role_repoad = MagicMock()
@@ -381,7 +521,7 @@ class TestLocationModelView():
                 query = view.get_query()
                 locations = query.all()
                 location_names = {loc.name for loc in locations}
-                assert 'default-loc' not in location_names
+                assert 'default-loc' in location_names
                 assert 'non-default-loc' in location_names
             
             # Test Case: Community Administrator does not see default locations
@@ -414,6 +554,9 @@ class TestLocationModelView():
 
     def test_get_count_query(self, app, db, monkeypatch):
         """Test get_count_query filters locations based on user roles."""
+        # get_count_query() hands back flask-admin's SELECT count(*)
+        # query, so the number is its scalar result; .count() would only
+        # say how many rows that query returns, which is always 1.
         monkeypatch.setenv('INVENIO_ROLE_SYSTEM', 'System Administrator')
         monkeypatch.setenv('INVENIO_ROLE_REPOSITORY', 'Repository Administrator')
         
@@ -436,7 +579,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should see all locations in the database
                 total_locations = db.session.query(Location).count()
                 assert count == total_locations
@@ -448,7 +591,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
@@ -460,7 +603,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count
@@ -470,7 +613,7 @@ class TestLocationModelView():
             with patch('invenio_files_rest.admin.current_user', mock_user):
                 view = LocationModelView(Location, db.session)
                 query = view.get_count_query()
-                count = query.count()
+                count = query.scalar()
                 # Should only see non-default locations
                 non_default_count = db.session.query(Location).filter_by(default=False).count()
                 assert count == non_default_count

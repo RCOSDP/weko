@@ -18,7 +18,7 @@ DBNAME = os.getenv('INVENIO_POSTGRESQL_DBNAME')
 # テーブル名
 TABLE_NAME_DICT = {'SEARCH_MANAGEMENT':'search_management'}
 # 検索設定を追加するアイテムタイプのID
-ITEM_TYPE_ID = 51000
+ITEM_TYPE_ID = 32001
 
 
 def update(username=USERNAME, password=PASSWORD, host=HOST, port=PORT, dbname=DBNAME, item_type_id = ITEM_TYPE_ID):

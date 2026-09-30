@@ -17,6 +17,7 @@ export default defineNuxtConfig({
   css: ['@/assets/sass/styles.scss'],
   ssr: false,
   app: {
+    buildAssetsDir: '/ams/_nuxt/',
     head: {
       htmlAttrs: { lang: 'ja' },
       title: 'AMS-alpha',

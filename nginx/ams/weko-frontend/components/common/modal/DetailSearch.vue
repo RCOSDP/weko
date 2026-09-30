@@ -10,7 +10,7 @@
         <!-- 閉じるボタン -->
         <div class="basis-1/6 flex text-end justify-end pr-3">
           <button type="button" class="btn-close">
-            <img src="/img/btn/btn-close.svg" alt="×" @click="closeModal" />
+            <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-close.svg`" alt="×" @click="closeModal" />
           </button>
         </div>
       </div>
@@ -196,6 +196,7 @@ const conditions = reactive({ type: '0', keyword: '', detail: {}, detailData: {}
 const columnList = ref<any[]>([]);
 const selected = ref(selectorDefault);
 let selector = JSON.parse(JSON.stringify(DetailColumn));
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -280,7 +281,7 @@ function search() {
     closeModal();
   } else {
     sessionStorage.setItem('conditions', JSON.stringify(conditions));
-    navigateTo('/search');
+    navigateTo(`${appConf.amsPath ?? ''}/search`);
     closeModal();
   }
 }
@@ -358,6 +359,7 @@ try {
   await $fetch(useAppConfig().wekoApi + '/tree/index', {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
+    credentials: 'omit',
     headers: {
       'Cache-Control': 'no-store',
       Pragma: 'no-cache',

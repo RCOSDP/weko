@@ -20,12 +20,13 @@
 
 """Blueprint for weko-search-ui."""
 
+import re
 import time
 import traceback
 from xml.etree import ElementTree
 
 from blinker import Namespace
-from flask import Blueprint, current_app, flash, jsonify, render_template, request
+from flask import Blueprint, abort, current_app, flash, jsonify, render_template, request
 from flask_babelex import gettext as _
 from flask_login import login_required
 from flask_security import current_user
@@ -58,6 +59,7 @@ from .utils import (
     check_index_access_permissions,
     check_permission,
     get_journal_info,
+    check_index_permission
 )
 
 _signals = Namespace()
@@ -246,12 +248,13 @@ def search():
                         # disply_setting = dict(size=100, timestamp=ts)
 
         index_link_list = get_index_link_list()
+
+        # Get display control settings (fetch once, reuse for all sub-settings).
+        display_control = get_search_setting().get("display_control", {})
+
         # Get Facet search setting.
         display_facet_search = (
-            get_search_setting()
-            .get("display_control", {})
-            .get("display_facet_search", {})
-            .get("status", False)
+            display_control.get("display_facet_search", {}).get("status", False)
         )
         ctx.update(
             {
@@ -261,10 +264,7 @@ def search():
 
         # Get index tree setting.
         display_index_tree = (
-            get_search_setting()
-            .get("display_control", {})
-            .get("display_index_tree", {})
-            .get("status", False)
+            display_control.get("display_index_tree", {}).get("status", False)
         )
         ctx.update(
             {
@@ -274,10 +274,7 @@ def search():
 
         # Get display_community setting.
         display_community = (
-            get_search_setting()
-            .get("display_control", {})
-            .get("display_community", {})
-            .get("status", False)
+            display_control.get("display_community", {}).get("status", False)
         )
         ctx.update({"display_community": display_community})
 
@@ -351,6 +348,7 @@ def opensearch_description():
 
 
 @blueprint.route("/journal_info/<int:index_id>", methods=["GET"])
+@check_index_permission
 def journal_detail(index_id=0):
     """Render a check view."""
     result = get_journal_info(index_id)
@@ -376,13 +374,21 @@ def get_child_list(index_id=0):
 
 @blueprint.route("/get_path_name_dict/<string:path_str>", methods=["GET"])
 def get_path_name_dict(path_str=""):
-    """Get path and name."""
+    """Get path and name.
+
+    Only indexes that the current user can browse are included.
+    """
+    from weko_index_tree.utils import check_index_permissions
     path_name_dict = {}
     path_arr = path_str.split("_")
+    if not all(re.match(r"^[0-9]{1,18}$", path) for path in path_arr):
+        abort(400)
     for path in path_arr:
-        index = Indexes.get_index(index_id=path)
+        index = Indexes.get_index(index_id=int(path))
+        if index is None or not check_index_permissions(index_id=index.id):
+            continue
         idx_name = index.index_name
-        idx_name_en = index.index_name_english
+        idx_name_en = index.index_name_english or ""
         if current_i18n.language == "ja" and idx_name:
             path_name_dict[path] = idx_name.replace("\n", r"<br\>").replace(
                 "&EMPTY&", ""

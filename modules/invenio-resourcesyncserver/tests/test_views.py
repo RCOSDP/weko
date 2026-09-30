@@ -5,6 +5,7 @@ from lxml import etree
 from flask import current_app, make_response, request
 from flask_login import current_user
 from mock import patch, MagicMock
+from werkzeug.exceptions import NotFound
 from werkzeug.local import LocalProxy
 
 from invenio_resourcesyncserver.api import ResourceListHandler, ChangeListHandler
@@ -184,8 +185,9 @@ def test_file_content(i18n_app, indices):
         return item
     data1.get_record_content_file = get_record_content_file
 
-    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
-        assert file_content(index_id=index_id, record_id=record_id) is not None
+    with patch("invenio_resourcesyncserver.permissions.is_public_record", return_value=True):
+        with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
+            assert file_content(index_id=index_id, record_id=record_id) is not None
     
     # Exception coverage
     # file_content(index_id=index_id, record_id=record_id) is not None
@@ -209,8 +211,9 @@ def test_resource_dump_manifest(i18n_app):
         return item
     data1.get_record_content_file = get_record_content_file
 
-    with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
-        assert "Response" in str(type(resource_dump_manifest(index_id=index_id, record_id=record_id)))
+    with patch("invenio_resourcesyncserver.permissions.is_public_record", return_value=True):
+        with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=data1):
+            assert "Response" in str(type(resource_dump_manifest(index_id=index_id, record_id=record_id)))
 
     # Exception coverage
     # resource_dump_manifest(index_id=index_id, record_id=record_id)
@@ -323,8 +326,9 @@ def test_change_dump_manifest(i18n_app, indices):
         
     data1.get_change_list_by_repo_id = get_change_list_by_repo_id
 
-    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
-        assert "Response" in str(type(change_dump_manifest(index_id=index_id, record_id=record_id)))
+    with patch("invenio_resourcesyncserver.permissions.is_public_record", return_value=True):
+        with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+            assert "Response" in str(type(change_dump_manifest(index_id=index_id, record_id=record_id)))
 
     # Exception coverage
     # change_dump_manifest(index_id=index_id)
@@ -346,8 +350,9 @@ def test_change_dump_content(i18n_app, indices):
         
     data1.get_change_list_by_repo_id = get_change_list_by_repo_id
 
-    with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
-        assert str(type(change_dump_content(index_id=index_id, record_id=record_id))) == str(type(get_change_list_by_repo_id(index_id)))
+    with patch("invenio_resourcesyncserver.permissions.is_public_record", return_value=True):
+        with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=data1):
+            assert str(type(change_dump_content(index_id=index_id, record_id=record_id))) == str(type(get_change_list_by_repo_id(index_id)))
 
     # Exception coverage
     # change_dump_content(index_id=index_id)
@@ -376,3 +381,21 @@ def test_record_detail_in_index(i18n_app, indices):
 
     with patch("invenio_resourcesyncserver.views.getrecord", return_value=test):
         assert "Response" in str(type(record_detail_in_index(index_id=index_id, record_id=record_id)))
+
+
+@pytest.mark.parametrize("view", [
+    file_content,
+    resource_dump_manifest,
+    change_dump_manifest,
+    change_dump_content,
+])
+def test_record_views_not_public(i18n_app, view):
+    handler = MagicMock()
+    with patch("invenio_resourcesyncserver.permissions.is_public_record", return_value=False):
+        with patch("invenio_resourcesyncserver.api.ResourceListHandler.get_resource_by_repository_id", return_value=handler):
+            with patch("invenio_resourcesyncserver.api.ChangeListHandler.get_change_list_by_repo_id", return_value=handler):
+                with pytest.raises(NotFound):
+                    view(index_id=33, record_id="1")
+    handler.get_record_content_file.assert_not_called()
+    handler.get_resource_dump_manifest.assert_not_called()
+    handler.get_change_dump_manifest_xml.assert_not_called()

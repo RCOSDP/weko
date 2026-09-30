@@ -39,6 +39,7 @@ from invenio_mail.models import MailTemplates
 from weko_index_tree.models import Index
 from weko_records.api import ItemTypes
 from weko_records.models import ItemTypeProperty
+from weko_accounts.api import map_role_condition
 from weko_admin.models import AdminSettings
 
 from . import config
@@ -46,7 +47,7 @@ from .api import Action, Flow, WorkActivity, WorkFlow
 from .config import WEKO_WORKFLOW_SHOW_HARVESTING_ITEMS
 from .models import WorkflowRole
 from .utils import recursive_get_specified_properties, check_activity_settings
-
+from sqlalchemy import not_
 
 class FlowSettingView(BaseView):
     @expose('/', methods=['GET'])
@@ -70,7 +71,7 @@ class FlowSettingView(BaseView):
         :return:
         """
         users = User.query.filter_by(active=True).all()
-        roles = Role.query.all()
+        roles = Role.query.filter(not_(map_role_condition())).all()
         if set(role.name for role in current_user.roles) & \
                 set(current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']):
             repositories = [{"id": "Root Index"}] + Community.query.all()
@@ -109,7 +110,7 @@ class FlowSettingView(BaseView):
 
         if not self._check_auth(flow_id) :
             abort(403)
-        
+
         if not use_restricted_item:
             for action in flow.flow_actions:
                 if action.action_role:
@@ -323,7 +324,7 @@ class WorkFlowSettingView(BaseView):
         """
         workflow = WorkFlow()
         workflows = workflow.get_workflow_list(user=current_user)
-        role = Role.query.all()
+        role = Role.query.filter(not_(map_role_condition())).all()
         for wf in workflows:
             index_tree = Index().get_index_by_id(wf.index_tree_id)
             wf.index_tree = index_tree
@@ -362,7 +363,7 @@ class WorkFlowSettingView(BaseView):
         index_list = Index().get_all()
         location_list = Location.query.order_by(Location.id.asc()).all()
         hide = []
-        role = Role.query.all()
+        role = Role.query.filter(not_(map_role_condition())).all()
         display_label = self.get_language_workflows("display")
         hide_label = self.get_language_workflows("hide")
         display_hide = self.get_language_workflows("display_hide")
@@ -382,7 +383,7 @@ class WorkFlowSettingView(BaseView):
         is_display_restricted_access_checkbox = is_sysadmin \
                                                 and current_app.config.get('WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS', False) \
                                                 and current_app.config.get('WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG', False)
-        if '0' == workflow_id:                                                                                              
+        if '0' == workflow_id:
             """Create new workflow"""
             return self.render(
                 'weko_workflow/admin/workflow_detail.html',
@@ -408,12 +409,13 @@ class WorkFlowSettingView(BaseView):
             .filter(WorkflowRole.workflow_id == workflows.id) \
             .filter(WorkflowRole.role_id == Role.id) \
             .all()
+        hide = [r for r in hide if r in role]
         if hide:
             display = self.get_displays(hide, role)
         else:
             display = role
             hide = []
-        
+
         if workflows.open_restricted \
             and not is_sysadmin \
             and current_app.config["WEKO_ADMIN_RESTRICTED_ACCESS_DISPLAY_FLAG"]:

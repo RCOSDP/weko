@@ -392,3 +392,299 @@ def test_validate_partial(app, db):
         record['a'] = 1
         with pytest.raises(ValidationError) as exc_info:
             record.commit(validator=PartialDraft4Validator)
+
+@pytest.mark.parametrize(
+    "fix_accessrights, access_path, updated, meta_patch, expected",
+    [
+        # Empty data
+        (True, None, None, {}, None),
+
+        # Only updated is set
+        (True, None, datetime(2026, 3, 1, 0, 0, 0), None, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # item_type_id is None
+        (True, None, datetime(2026, 3, 1, 0, 0, 0), {"item_type_id": None}, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # Only item_type_id is set
+        (True, None, datetime(2026, 3, 1, 0, 0, 0), {"item_type_id": 1}, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # Empty file attribute
+        (True, None, datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": []
+            }
+        }, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # Empty file attribute (updated=None)
+        (True, None, None, {"item_type_id": 1, "item_foo": {"attribute_type": "file", "attribute_value_mlt": []}}, None),
+
+        # open_date is in the future
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2027, 1, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2026-12-31"}], "accessrole": "open_date"}
+                ]
+            }
+        }, datetime(2027, 1, 1, 0, 0, 0)),
+
+        # open_date is in the past
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2026-01-01"}], "accessrole": "open_date"}
+                ]
+            }
+        }, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # open_access file
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2026-04-01"}], "accessrole": "open_access"}
+                ]
+            }
+        }, datetime(2026, 4, 1, 0, 0, 0)),
+
+        # date exists but no accessrole
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2027-01-01"}]}
+                ]
+            }
+        }, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # accessrole exists but no date
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"accessrole": "open_date"}
+                ]
+            }
+        }, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # Multiple open_dates (with access rights info)
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2026-03-31"}], "accessrole": "open_date"},
+                    {"date": [{"dateType": "Available", "dateValue": "2026-03-30"}], "accessrole": "open_date"}
+                ]
+            }
+        }, datetime(2026, 3, 31, 0, 0, 0)),
+
+        # Multiple open_dates (with access rights info), original_updated > max(open_dates)
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 4, 2, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2026-03-31"}], "accessrole": "open_date"},
+                    {"date": [{"dateType": "Available", "dateValue": "2026-03-30"}], "accessrole": "open_date"}
+                ]
+            }
+        }, datetime(2026, 4, 2, 0, 0, 0)),
+        # WEKO_SEARCH_FIX_ACCESSRIGHTS is False
+        (False, "item_1736146823660.attribute_value_mlt.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_1736146823660": {
+                "attribute_name": "アクセス権",
+                "attribute_value_mlt": [
+                    {
+                        "subitem_access_right": "embargoed access",
+                        "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                    }
+                ]
+            },
+            "item_1736148125517": {
+                "attribute_type": "file",
+                "attribute_value_mlt": [
+                    {"date": [{"dateType": "Available", "dateValue": "2026-03-31"}], "accessrole": "open_date"},
+                    {"date": [{"dateType": "Available", "dateValue": "2026-03-30"}], "accessrole": "open_date"}
+                ]
+            }
+        }, datetime(2026, 3, 1, 0, 0, 0)),
+
+        # _get_nested_value list branch (does not contain subitem_access_right)
+        (True, "item_foo.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+            "item_type_id": 1,
+            "item_foo": [
+                {"not_target": 1}
+            ]
+        }, datetime(2026, 3, 1, 0, 0, 0)),
+
+        #Case where attribute_mlt is not in the path
+        (True, "item_foo.subitem_access_right",datetime(2026, 3, 1, 0, 0, 0), {
+                "item_type_id": 1,
+                "item_foo": {
+                    "attribute_type": "アクセス権",
+                    "attribute_value_mlt": [
+                        {"not_target": 1},
+                        {"subitem_access_right": "embargoed access"}
+                    ]
+                }
+            },
+            datetime(2026, 3, 1, 0, 0, 0)
+        ),
+
+        # Case where the path key does not exist
+        (True,"item_foo.subitem_access_right", datetime(2026, 3, 1, 0, 0, 0), {
+                "item_type_id": 1,
+                "item_foo": {
+                    "attribute_type": "file",
+                    "attribute_value_mlt": [
+                        {"not_target": 1}
+                    ]
+                }
+            },
+            datetime(2026, 3, 1, 0, 0, 0)
+        ),
+
+        # Case where value is neither list nor dict
+        (True, "item_foo.subitem_access_right" ,datetime(2026, 3, 1, 0, 0, 0),{
+                "item_type_id": 1,
+                "item_foo": {
+                    "attribute_type": "アクセス権",
+                    "attribute_value_mlt": "invalid"
+                }
+            },
+            datetime(2026, 3, 1, 0, 0, 0)
+        ),
+
+        # Case where updated is None but opendate exists
+        (True, "item_1736146823660.attribute_value_mlt.subitem_access_right" ,None, {
+                "item_type_id": 1,
+                "item_1736146823660": {
+                    "attribute_name": "アクセス権",
+                    "attribute_value_mlt": [
+                        {
+                            "subitem_access_right": "embargoed access",
+                            "subitem_access_right_uri": "http://purl.org/coar/access_right/c_f1cf"
+                        }
+                    ]
+                },
+                "item_1736148125517": {
+                    "attribute_type": "file",
+                    "attribute_value_mlt": [
+                        {"date": [{"dateType": "Available", "dateValue": "2026-03-31"}], "accessrole": "open_date"}
+                    ]
+                }
+            },
+            datetime(2026, 3, 31, 0, 0, 0)
+        ),
+    ]
+)
+# .tox/c1/bin/pytest --cov=invenio_records tests/test_api.py::test_record_updated -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-records/.tox/c1/tmp
+def test_record_updated(app, monkeypatch, access_path, fix_accessrights, updated, meta_patch, expected):
+    base_meta = {
+        "item_type_id": 1
+    }
+    meta = copy.deepcopy(base_meta)
+    if meta_patch is not None:
+        meta.update(copy.deepcopy(meta_patch))
+    else:
+        meta = None
+
+    class DummyQuery:
+        def filter_by(self, id):
+            return self
+        def scalar(self):
+            return meta
+
+    class DummySession:
+        def __init__(self):
+            self.session = self
+        def query(self, *args, **kwargs):
+            return DummyQuery()
+
+    monkeypatch.setattr("weko_records.serializers.utils.get_mapping", lambda i, t: {"accessRights.@value": access_path})
+    with app.app_context():
+        from flask import current_app
+        current_app.config["WEKO_SEARCH_FIX_ACCESSRIGHTS"] = fix_accessrights
+        record = Record({})
+        class DummyModel:
+            def __init__(self, updated, json, id=1):
+                self.updated = updated
+                self.json = json
+                self.id = id
+        record.model = DummyModel(updated=updated, json=meta, id=1)
+        monkeypatch.setattr("invenio_records.api.db", DummySession())
+        result = record.updated
+        assert result == expected

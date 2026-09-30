@@ -120,7 +120,7 @@ def test_serialize_search(app, db):
     )
 
 
-def test_serialize_search2(app, db, item_type):
+def test_serialize_search2(app, db, item_type, request_context):
     """Test JSON serialize."""
     app.config['WEKO_RECORDS_UI_EMAIL_ITEM_KEYS'] = ['creatorMails', 'contributorMails', 'mails']
 

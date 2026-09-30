@@ -1,0 +1,4 @@
+# Local artifacts that should not be committed
+browser/node_modules/
+browser/package-lock.json
+*.log

@@ -1,0 +1,8 @@
+# E2E measurement  label=before  time=2026-07-23 07:07:33
+# base=https://127.0.0.1:18443 host=weko3.example.org detail_recid=3000001 iterations=100 search_size=100
+# search URL is the REST API (/api/records/) where per-hit serialization runs
+
+URL      HTTP        min      med     mean      p90      max     n
+top      200       0.088    0.134    0.402    0.164   11.455   100
+detail   200       0.308    0.478    0.475    0.553    0.633   100
+search   200       1.371    1.801    1.969    2.037    7.126   100

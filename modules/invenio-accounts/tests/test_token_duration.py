@@ -26,8 +26,9 @@ from invenio_accounts import testutils
     (0, False),
     (4, True),
 ])
-def test_forgot_password_token(app, sleep, expired):
+def test_forgot_password_token(recoverable_app, sleep, expired):
     """Test expiration of token for password reset."""
+    app = recoverable_app
     with app.app_context():
         with app.test_client() as client:
             user = testutils.create_test_user('test@example.org')

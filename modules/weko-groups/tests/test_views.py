@@ -23,7 +23,8 @@
 
 import pytest
 from mock import patch, MagicMock
-from flask import Flask, json, jsonify, session, url_for
+from flask import Flask, g, json, jsonify, session, url_for
+from flask_principal import AnonymousIdentity
 
 from weko_groups.models import Group
 from weko_groups.views import (
@@ -75,12 +76,19 @@ def test_groupcount(app_2):
 
 
 # def _has_admin_access():
-def test__has_admin_access(app):
-    with app.app_context():
-        user = MagicMock()
-        user.is_authenticated = True
-        with patch("flask_login.utils._get_user", return_value=user):
-            assert _has_admin_access() == False
+def test__has_admin_access(app_2, db_2):
+    # app_2 rather than app: invenio-admin's permission needs invenio-access
+    # installed, and only base_app registers it.
+    #
+    # That permission also asks flask-principal for the current identity,
+    # which normally only exists once a request has set it up. An anonymous
+    # one is enough here: it carries no admin-access need, so the permission
+    # denies and the call returns False.
+    g.identity = AnonymousIdentity()
+    user = MagicMock()
+    user.is_authenticated = True
+    with patch("flask_login.utils._get_user", return_value=user):
+        assert _has_admin_access() == False
 
 
 # def index():
@@ -133,7 +141,15 @@ def test_invitations(app_2, users):
 
 
 # def new():
-def test_new(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_new(app_2, users, id, status_code):
     from sqlalchemy.exc import IntegrityError
 
     def validate_on_submit_True():
@@ -149,7 +165,7 @@ def test_new(app_2, users):
     
     with app_2.test_request_context():
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.GroupForm", return_value=form):
                     # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
                     # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/new" there is no problem
@@ -163,7 +179,7 @@ def test_new(app_2, users):
                 with patch("weko_groups.views.GroupForm", return_value=form):
                     with patch("weko_groups.views.Group.create", return_value=group):
                         res = client.get(url_for('weko_groups.new'))
-                        assert res.status_code == 302
+                        assert res.status_code == status_code
 
                     # Exception coverage
                     try:
@@ -174,7 +190,15 @@ def test_new(app_2, users):
 
 
 # def manage(group_id):
-def test_manage(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_manage(app_2, users, id, status_code):
     def validate_on_submit_True():
         return True
     
@@ -199,11 +223,12 @@ def test_manage(app_2, users):
             # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
             # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1" there is no problem
             # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/manage" there is no problem
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.Group", return_value=group):
                     with patch("weko_groups.views.GroupForm", return_value=form):
                         try:
-                            client.get(url_for('weko_groups.manage', group_id=1))
+                            res = client.get(url_for('weko_groups.manage', group_id=1))
+                            assert res.status_code == status_code
                         except:
                             pass
         
@@ -230,7 +255,15 @@ def test_manage_2(app_2, users):
 
 
 # def delete(group_id):
-def test_delete(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_delete(app_2, users, id, status_code):
     def can_edit_True(item):
         return True
 
@@ -248,10 +281,10 @@ def test_delete(app_2, users):
 
     with app_2.test_request_context():
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.Group", return_value=group):
                     res = client.post(url_for('weko_groups.delete', group_id=1))
-                    assert res.status_code == 302
+                    assert res.status_code == status_code
         
 
 def test_delete_2(app_2, users):
@@ -264,7 +297,15 @@ def test_delete_2(app_2, users):
 
 
 # def members(group_id):
-def test_members(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 200),
+    (2, 200),
+    (3, 200),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_members(app_2, users, id, status_code):
     def can_edit_True(item):
         return True
 
@@ -282,7 +323,7 @@ def test_members(app_2, users):
 
     with app_2.test_request_context():
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.Group", return_value=group):
                     res = client.post(
                         url_for('weko_groups.members', group_id=1),
@@ -291,7 +332,7 @@ def test_members(app_2, users):
                             "s": "s",
                         }
                     )
-                    assert res.status_code == 200
+                    assert res.status_code == status_code
 
 
 def test_members_2(app_2, users):
@@ -330,7 +371,15 @@ def test_leave_2(app_2, users):
 
 
 # def approve(group_id, user_id): 
-def test_approve(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_approve(app_2, users, id, status_code):
     def can_edit_True(item):
         return True
 
@@ -339,10 +388,10 @@ def test_approve(app_2, users):
 
     with app_2.test_request_context():
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.Membership", return_value=membership):
                     res = client.post(url_for('weko_groups.approve', group_id=1, user_id=users[3]["obj"].id))
-                    assert res.status_code == 302
+                    assert res.status_code == status_code
         
 
 def test_approve_2(app_2, users):
@@ -355,7 +404,15 @@ def test_approve_2(app_2, users):
 
 
 # def remove(group_id, user_id): 
-def test_remove(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_remove(app_2, users, id, status_code):
     def can_edit_True(item):
         return True
 
@@ -364,10 +421,10 @@ def test_remove(app_2, users):
 
     with app_2.test_request_context():
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.Group", return_value=group):
                     res = client.post(url_for('weko_groups.remove', group_id=1, user_id=users[3]["obj"].id))
-                    assert res.status_code == 302
+                    assert res.status_code == status_code
         
 
 def test_remove_2(app_2, users):
@@ -420,7 +477,15 @@ def test_reject(app_2, users):
 
 
 # def new_member(group_id):
-def test_new_member(app_2, users):
+user_results = [
+    (0, 403),
+    (1, 302),
+    (2, 302),
+    (3, 302),
+    (4, 403),
+]
+@pytest.mark.parametrize('id, status_code', user_results)
+def test_new_member(app_2, users, id, status_code):
     def validate_on_submit_True():
         return True
     
@@ -441,15 +506,17 @@ def test_new_member(app_2, users):
         # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'."
         # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/1/members/new" there is no problem 
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
+            with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
                 with patch("weko_groups.views.Group", return_value=group):
                     with patch("weko_groups.views.NewMemberForm", return_value=form):
                         try:
-                            client.get(url_for('weko_groups.new_member', group_id=1))
+                            res = client.get(url_for('weko_groups.new_member', group_id=1))
+                            assert res.status_code == status_code
                         except:
                             pass
                     try:
-                        client.get(url_for('weko_groups.new_member', group_id=1))
+                        res = client.get(url_for('weko_groups.new_member', group_id=1))
+                        assert res.status_code == status_code
                     except:
                         pass
 

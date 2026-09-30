@@ -7,7 +7,7 @@
     <!-- 内容 -->
     <div v-for="element in subSection.text" :key="element">
       <p class="text-sm text-miby-black text-left pt-1 pl-6">
-        {{ $t(element) }}
+        {{ element ? $t(element) : '' }}
       </p>
     </div>
     <!-- メタデータ -->

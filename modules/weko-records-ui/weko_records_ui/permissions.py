@@ -23,6 +23,7 @@
 from datetime import datetime as dt
 from datetime import timedelta, timezone
 from functools import wraps
+import inspect
 import traceback
 from typing import List, Optional
 
@@ -98,6 +99,34 @@ def file_permission_factory(record, *args, **kwargs):
     return type('FileDownLoadPermissionChecker', (), {'can': can})()
 
 
+def file_permission_required(f):
+    """Require the file permission on the file requested to a record view.
+
+    For views registered in ``RECORDS_UI_ENDPOINTS`` whose signature is
+    ``view(pid, record, **kwargs)`` and whose route has ``<filename>``.
+    The file is resolved in the same way as the previewer does, and checked
+    with :func:`file_permission_factory`, as ``file_ui`` does.
+
+    If the user may not access the file, a guest user is redirected to the
+    login page and a logged in user gets 403. A missing file is left to the
+    view (which returns 404).
+    """
+    @wraps(f)
+    def decorated(pid, record, *args, **kwargs):
+        from invenio_previewer.proxies import current_previewer
+        fileobj = current_previewer.record_file_factory(
+            pid, record, request.view_args.get(
+                'filename', request.args.get('filename', type=str))
+        )
+        if fileobj and not file_permission_factory(record, fjson=fileobj).can():
+            if not current_user.is_authenticated:
+                from weko_accounts.views import _redirect_method
+                return _redirect_method(has_next=True)
+            abort(403)
+        return f(pid, record, *args, **kwargs)
+    return decorated
+
+
 def check_file_download_permission(record, fjson, is_display_file_info=False, item_type=None):
     """Check file download."""
     def site_license_check(item_type):
@@ -134,12 +163,7 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
             is_ok = True
         # Check super users
         else:
-            super_users = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-                current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-            for role in list(current_user.roles or []):
-                if role.name in super_users:
-                    is_ok = True
-                    break
+            is_ok = is_superuser_or_record_comadmin(record)
         return is_ok
 
     if fjson:
@@ -169,11 +193,8 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
             return is_can
 
         # Super users
-        supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-            current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-        for role in list(current_user.roles or []):
-            if role.name in supers:
-                return is_can
+        if is_superuser_or_record_comadmin(record):
+            return is_can
 
         try:
             from .utils import is_future
@@ -296,11 +317,12 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
                                 is_billing_can = check_user_group_permission(fjson.get('groups'))
                             else:
                                 is_billing_can = True
-                        if not is_billing_can:
-                            # site license permission check
-                            is_billing_can = site_license_check(item_type)
 
                     is_can = is_login_user and is_role_can and is_billing_can
+
+                    # Grant download permission if user is site license user
+                    if not is_can:
+                        is_can = site_license_check(item_type)
 
             #  can not access
             elif 'open_no' in acsrole:
@@ -320,6 +342,9 @@ def check_file_download_permission(record, fjson, is_display_file_info=False, it
                         is_can = False
             elif 'open_restricted' in acsrole:
                 is_can = check_open_restricted_permission(record, fjson)
+                # Grant download permission if user is site license user
+                if not is_can:
+                    is_can = site_license_check(item_type)
         except BaseException:
             abort(500)
         return is_can
@@ -524,9 +549,11 @@ def check_created_id_by_recid(recid):
 def record_edit_permission_required(param='recid', strip_prefix=None):
     """Require edit permission on the record identified by ``param``.
 
-    The record id is resolved from the view args first, then the request body
-    (form or JSON) and finally the query string, so the same decorator covers
-    ``/records/soft_delete/<recid>`` and POSTs that carry ``pid`` in the form.
+    The record id is resolved from the view args first (keyword *and*
+    positional, so that in-process calls to the view keep working), then the
+    request body (form or JSON) and finally the query string, so the same
+    decorator covers ``/records/soft_delete/<recid>`` and POSTs that carry
+    ``pid`` in the form.
 
     The check itself is :func:`check_created_id`: the creator, a shared user,
     a Community Administrator of the record's community, or a super user.
@@ -549,6 +576,18 @@ def record_edit_permission_required(param='recid', strip_prefix=None):
                 abort(401)
 
             recid = kwargs.get(param)
+            if recid is None and args:
+                # ビュー関数を HTTP 経由ではなく Python から直接呼ぶ経路が
+                # ある (weko_items_ui.views.prepare_delete_item と
+                # weko_workflow.utils.prepare_delete_workflow が
+                # soft_delete(del_value) と位置引数で呼ぶ)。
+                # そこでは kwargs もリクエストボディも param を持たないため、
+                # シグネチャに束ねて位置引数からも取り出す。
+                try:
+                    bound = inspect.signature(f).bind_partial(*args, **kwargs)
+                    recid = bound.arguments.get(param)
+                except TypeError as e:
+                    current_app.logger.error(e)
             if recid is None:
                 recid = request.form.get(param)
             if recid is None and request.mimetype == 'application/json':
@@ -704,12 +743,31 @@ def is_owners_or_superusers(record) -> bool:
         return True
 
     # Super users
-    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER'] + \
-        current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
-    for role in list(current_user.roles or []):
-        if role.name in supers:
-            return True
+    return is_superuser_or_record_comadmin(record)
 
+
+def is_superuser_or_record_comadmin(record) -> bool:
+    """Check whether the current user administers the record.
+
+    System and Repository Administrators administer every record.
+    A Community Administrator administers only the records placed under
+    the indexes of the communities the user belongs to
+    (see :func:`has_comadmin_permission`), as in :func:`check_created_id`.
+
+    Args:
+        record (dict): the record metadata.
+
+    Returns:
+        bool: True if the current user is a super user, or a Community
+        Administrator of a community that the record belongs to.
+    """
+    supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
+    comadmin = current_app.config['WEKO_PERMISSION_ROLE_COMMUNITY']
+    role_names = [role.name for role in list(current_user.roles or [])]
+    if any(name in supers for name in role_names):
+        return True
+    if any(name in comadmin for name in role_names):
+        return has_comadmin_permission(record)
     return False
 
 

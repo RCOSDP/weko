@@ -20,6 +20,7 @@
 
 """Database models for weko-admin."""
 
+import copy
 from datetime import datetime
 import traceback
 
@@ -105,6 +106,15 @@ class SessionLifetime(db.Model):
     def is_anonymous(self):
         """Return whether this UserProfile is anonymous."""
         return False
+
+
+def _invalidate_search_setting_cache():
+    """Invalidate the get_search_setting() short-TTL cache (best-effort)."""
+    try:
+        from weko_admin.utils import delete_search_setting_cache
+        delete_search_setting_cache()
+    except Exception:
+        pass
 
 
 class SearchManagement(db.Model):
@@ -224,6 +234,7 @@ class SearchManagement(db.Model):
                 data_obj.search_setting_all = data
                 db.session.add(data_obj)
             db.session.commit()
+            _invalidate_search_setting_cache()
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.debug(ex)
@@ -256,6 +267,7 @@ class SearchManagement(db.Model):
                 setting_data.search_setting_all = data
                 db.session.merge(setting_data)
             db.session.commit()
+            _invalidate_search_setting_cache()
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.debug(ex)
@@ -1224,6 +1236,21 @@ class FeedbackMailSetting(db.Model, Timestamp):
             return False
 
 
+def _admin_settings_cache():
+    """Return the shared cache if configured, else None."""
+    try:
+        if current_app.extensions.get('invenio-cache') is None:
+            return None
+        from invenio_cache import current_cache
+        return current_cache
+    except Exception:
+        return None
+
+
+def _admin_settings_cache_key(name):
+    return 'admin_settings_{}'.format(name)
+
+
 class AdminSettings(db.Model):
     """settings."""
 
@@ -1264,18 +1291,47 @@ class AdminSettings(db.Model):
 
     @classmethod
     def get(cls, name, dict_to_object=True):
-        """Get settings by name."""
+        """Get settings by name.
+
+        Admin settings change only when an admin saves them, so the settings
+        dict is cached per name for a short TTL to avoid a DB lookup on every
+        call (there are many call sites per request). A deep copy is stored and
+        returned so callers cannot corrupt the shared cache; update()/delete()
+        invalidate the entry.
+        """
         try:
-            admin_setting_object = cls.query.filter_by(name=name).first()
-            if admin_setting_object:
-                if dict_to_object:
-                    return cls.Dict2Obj(admin_setting_object.settings)
-                else:
-                    return admin_setting_object.settings
+            cache = _admin_settings_cache()
+            key = _admin_settings_cache_key(name)
+            settings = None
+            if cache is not None:
+                cached = cache.get(key)
+                if cached is not None:
+                    settings = copy.deepcopy(cached)
+            if settings is None:
+                admin_setting_object = cls.query.filter_by(name=name).first()
+                if not admin_setting_object:
+                    return None
+                settings = admin_setting_object.settings
+                if cache is not None:
+                    cache.set(key, copy.deepcopy(settings),
+                              timeout=current_app.config.get(
+                                  'WEKO_ADMIN_SETTINGS_CACHE_TTL', 300))
+                settings = copy.deepcopy(settings)
+            return cls.Dict2Obj(settings) if dict_to_object else settings
         except Exception as ex:
             traceback.print_exc()
             current_app.logger.error(ex)
         return None
+
+    @classmethod
+    def _invalidate_cache(cls, name):
+        """Drop the cached settings for a name (best-effort)."""
+        cache = _admin_settings_cache()
+        if cache is not None:
+            try:
+                cache.delete(_admin_settings_cache_key(name))
+            except Exception:
+                pass
 
     @classmethod
     def update(cls, name, settings, id=None):
@@ -1297,6 +1353,7 @@ class AdminSettings(db.Model):
                 else:
                     db.session.merge(o)
             db.session.commit()
+            cls._invalidate_cache(name)
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.error(ex)
@@ -1311,6 +1368,7 @@ class AdminSettings(db.Model):
             with db.session.begin_nested():
                 cls.query.filter_by(name=name).delete()
             db.session.commit()
+            cls._invalidate_cache(name)
         except BaseException as ex:
             db.session.rollback()
             current_app.logger.error(ex)

@@ -305,11 +305,42 @@ def test_get_resource_dump_manifest_ResourceListHandler(i18n_app):
 
     with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=True):
         with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=return_data):
-            # try and except is for bypassing ResourceDumpManifest.as_xml()
-            try:
-                assert test.get_resource_dump_manifest(record_id)
-            except:
-                pass
+            with patch("invenio_resourcesyncserver.api.can_download_file", return_value=True):
+                # try and except is for bypassing ResourceDumpManifest.as_xml()
+                try:
+                    assert test.get_resource_dump_manifest(record_id)
+                except:
+                    pass
+
+
+def _sample_file(key, checksum):
+    file = MagicMock()
+    file.info.return_value = {
+        "key": key,
+        "checksum": "sha256:{}".format(checksum),
+        "size": 10,
+    }
+    return file
+
+
+def test_get_resource_dump_manifest_download_permission_ResourceListHandler(i18n_app):
+    test = sample_ResourceListHandler()
+    test.resource_dump_manifest = True
+    allowed = _sample_file("allowed.txt", "aaaa")
+    denied = _sample_file("denied.txt", "bbbb")
+    record = MagicMock()
+    record.files = [allowed, denied]
+    record.get.return_value = "1"
+
+    with patch("invenio_resourcesyncserver.api.ResourceListHandler._validation", return_value=True):
+        with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=record):
+            with patch("invenio_resourcesyncserver.api.can_download_file",
+                       side_effect=lambda r, f: f is allowed) as m:
+                xml = test.get_resource_dump_manifest("1")
+    assert "allowed.txt" in xml
+    assert "denied.txt" not in xml
+    assert "bbbb" not in xml
+    assert m.call_count == 2
 
 
 #     def get_record_content_file(self, record_id):
@@ -531,6 +562,9 @@ def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
     def _is_record_in_index(key):
         return "8.9"
 
+    # _validation() reads self.index.public_state whenever repository_id is
+    # set, and the sample handler leaves index as a plain string.
+    test_str.index = MagicMock(public_state=False)
     assert not test_str.get_change_dump_manifest_xml(record_id)
 
     test_str._validation = _validation
@@ -542,7 +576,48 @@ def test_get_change_dump_manifest_xml_ChangeListHandler(i18n_app):
     with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=return_data):
         with patch("invenio_resourcesyncserver.utils.get_pid", return_value=return_data):
             with patch("weko_deposit.api.WekoRecord.get_record", return_value=return_data):
-                assert test_str.get_change_dump_manifest_xml(record_id)
+                with patch("invenio_resourcesyncserver.api.can_download_file", return_value=True):
+                    assert test_str.get_change_dump_manifest_xml(record_id)
+
+
+def test_get_change_dump_manifest_xml_download_permission_ChangeListHandler(i18n_app):
+    test_str = sample_ChangeListHandler("str")
+    test_str._validation = lambda: True
+    test_str._is_record_in_index = lambda key: True
+
+    kept = _sample_file("kept.txt", "0000")
+    created_ok = _sample_file("created_ok.txt", "1111")
+    created_ng = _sample_file("created_ng.txt", "2222")
+    deleted_ok = _sample_file("deleted_ok.txt", "3333")
+    deleted_ng = _sample_file("deleted_ng.txt", "4444")
+    current_record = MagicMock()
+    current_record.files = [kept, created_ok, created_ng]
+    current_record.get.return_value = "8"
+    prev_record = MagicMock()
+    prev_record.files = [kept, deleted_ok, deleted_ng]
+
+    denied = (created_ng, deleted_ng)
+    checked = []
+
+    def _can_download_file(record, file):
+        checked.append((record, file))
+        return file not in denied
+
+    with patch("weko_deposit.api.WekoRecord.get_record_by_pid", return_value=current_record):
+        with patch("invenio_resourcesyncserver.utils.get_pid", return_value=MagicMock()):
+            with patch("weko_deposit.api.WekoRecord.get_record", return_value=prev_record):
+                with patch("invenio_resourcesyncserver.api.can_download_file",
+                           side_effect=_can_download_file):
+                    xml = test_str.get_change_dump_manifest_xml("8.2")
+
+    assert "created_ok.txt" in xml
+    assert "deleted_ok.txt" in xml
+    assert "created_ng.txt" not in xml
+    assert "deleted_ng.txt" not in xml
+    assert "kept.txt" not in xml
+    # each file is checked against the record that owns it
+    assert (current_record, created_ng) in checked
+    assert (prev_record, deleted_ng) in checked
 
 
 #     def delete(cls, change_list_id):
@@ -755,7 +830,10 @@ def test_get_capability_content_ChangeListHandler(i18n_app):
 def test__date_validation_ChangeListHandler(i18n_app):
     test_str = sample_ChangeListHandler("str")
     test_str.publish_date = datetime.datetime.now() - datetime.timedelta(days=5)
-    date_from = "20221107"
+    # _date_validation only accepts a date in [publish_date, now), so it has to
+    # be relative; a date written into the test stops qualifying as time passes.
+    date_from = (datetime.datetime.now()
+                 - datetime.timedelta(days=2)).strftime("%Y%m%d")
 
     assert test_str._date_validation(date_from)
 

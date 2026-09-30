@@ -3,8 +3,8 @@ FROM ubuntu:focal AS nginx-with-shib
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /tmp
 
-RUN apt-get update -y
-RUN apt-get install -y \
+RUN apt-get update -y && \
+    apt-get install -y \
     	    wget \
 	    curl \
 	    gnupg2 \
@@ -50,9 +50,11 @@ RUN apt-get update && \
 	    php-fpm php-curl
 
 WORKDIR /tmp
-COPY --from=nginx-with-shib /tmp/nginx_1.20.1-1~focal_arm64.deb .
-COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_arm64.deb .
-RUN dpkg -i nginx_1.20.1-1~focal_arm64.deb
+# dpkg-buildpackage names the .deb after the build host architecture
+# (amd64 / arm64), so match it with a wildcard instead of hard-coding it.
+COPY --from=nginx-with-shib /tmp/nginx_1.20.1-1~focal_*.deb ./
+COPY --from=nginx-with-shib /tmp/nginx-dbg_1.20.1-1~focal_*.deb ./
+RUN dpkg -i nginx_1.20.1-1~focal_*.deb
 
 
 ADD supervisord.conf /etc/supervisor/supervisord.conf

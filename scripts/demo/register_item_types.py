@@ -101,7 +101,7 @@ def register_item_types_from_folder(exclusion_list, specified_list=[], update_fl
                         render=item_type
                     )
 
-                    Mapping.create(
+                    Mapping.create_or_update(
                         item_type_id=record.model.id,
                         mapping=item_type['table_row_map']['mapping']
                     )

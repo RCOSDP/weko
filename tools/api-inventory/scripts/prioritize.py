@@ -7,11 +7,20 @@
 
   P1            無認証で既存のファイル実体を上書き/削除できる(データ破壊)、または
                 状態変更系(POST/PUT/DELETE/PATCH)なのに認証・権限チェックが一切ない、
-                または権限チェック機構はあるように見えるが実装上機能していない
-  P2            ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
+                または権限チェック機構はあるように見えるが実装上機能していない、
+                または書き込んだ値が別エンドポイントの認可判定の材料になる
+                (認可入力汚染)、**または参照系でも認証情報・非公開データの実体が
+                無認証で取得できる**
+  ※ 露出内容の区分は「認証情報 / 個人情報 / 非公開データの実体」の3つ。
+                個人情報を落とすと、氏名・メールアドレスの一覧が漏れる経路が
+                「参照系だから」で P3 に沈む。
+  P2            認可の根拠(トークン・発行済みURL)と操作対象の識別子を突き合わせて
+                いない(識別子突合欠落。参照系でも認可バイパスなので P3 に落とさない)、
+                ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
                 ゲストトークン等のバイパス、ロールチェックが実質不問、または「不明」。
                 認証が無い状態変更系でも新規作成のみで既存データを壊さないもの。
-                参照系でも露出内容が認証情報または非公開データの実体であるもの
+                参照系で露出内容が認証情報または非公開データの実体だが、
+                取得に認証が要るもの(無認証で取れるなら P1)
   P3            読み取り系(GET/HEAD)で認証・権限チェックが無い、または
                 ログイン必須のみでロール/所有者スコープなし
   P4            意図的な公開設計(static配信・ヘルスチェック・robots.txt・OAI-PMH等)、
@@ -39,6 +48,8 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import data_path  # noqa: E402
+from schema import (AUTHZ_SCOPE_PATTERNS, AUTHZ_INPUT_PATTERN,  # noqa: E402
+                    ID_BINDING_PATTERN)
 
 WRITE_METHODS = {'POST', 'PUT', 'DELETE', 'PATCH'}
 
@@ -46,6 +57,12 @@ WRITE_METHODS = {'POST', 'PUT', 'DELETE', 'PATCH'}
 CREDENTIAL_WORDS = (
     '露出:秘密情報', '秘密:', 'client_secret', 'access_token', 'refresh_token',
     'password', 'cert_data', '資格情報', '外部トークン', 'APIキー', 'api_key',
+)
+# 露出内容が「個人情報」とみなせる語。schema の語彙 `情報露出:露出:個人情報` と、
+# 台帳が使う `★PII:` 表記を拾う。**素の「個人情報」は見ない** —「個人情報は含まない」
+# のような否定文まで拾ってしまうため。
+PERSONAL_WORDS = (
+    '露出:個人情報', 'PII:',
 )
 # 露出内容が「非公開データの実体」とみなせる語
 NONPUBLIC_BODY_WORDS = (
@@ -143,10 +160,11 @@ def classify(c, H):
         unused_src = '経路なし(実機 url_map に未登録)'
 
     def bump(pri, why):
-        """テスト観点が確認できない行を P2 まで引き上げる。
+        """テスト観点が確認できない行を P3 まで引き上げる。
 
         認可上の問題が無くても「4観点のチェックが確認できない」なら確認対象に
-        上げる。ただし認可の欠陥と同列にはしないため **上限は P2**。
+        上げる。ただし認可の欠陥と同列にはしないため **上限は P3**
+        (モジュール冒頭の判定基準と揃えること)。
         """
         if not gap or gap == '-':
             return pri, why
@@ -159,7 +177,23 @@ def classify(c, H):
     methods = {m.strip() for m in method.split(',') if m.strip()}
     auth_req = auth.split('|')[0].strip()
 
-    is_write_method = bool(methods & WRITE_METHODS)
+    # **HTTP メソッドだけで「状態変更系」と決めない。** POST は「状態を変える」の
+    # 同義ではない。OAI-PMH は仕様上 GET と POST が等価で、検索・エクスポート・
+    # ルックアップ系の AJAX も POST を使う。メソッドだけで見ると、読むだけの経路が
+    # 「認証なしの状態変更系」として最上位に並び、本当に直すべき行が埋もれる。
+    #
+    # 何をするかは台帳の data_op が持っている。ただし data_op は取得とだけ書かれて
+    # いるのに実際は書き込む行があるため(セッション確立・メール送信・一時ファイル
+    # 生成など)、side_effects も併せて見る。
+    #
+    # それでも取りこぼす。`/admin/change_list/delete` が `取得` と書かれている
+    # ような行が実在する。その取りこぼしは下の「指摘のある行を P3 に落とさない」
+    # で受ける。ここでメソッドの判定に指摘を混ぜると、露出の指摘を持つ POST が
+    # すべて状態変更系になり、何が漏れるのかが priority_reason から消える。
+    has_finding = finding.strip() not in ('', '-')
+    mutates = any(k in data_op for k in ('作成', '更新', '削除')) \
+        or field(c, H, 'side_effects').strip() not in ('', '-')
+    is_write_method = bool(methods & WRITE_METHODS) and mutates
     is_destructive = ('削除' in data_op)
     is_mutating = any(k in data_op for k in ('作成', '更新', '削除'))
     no_auth = auth_req in ('不要', '任意(匿名可)')
@@ -167,11 +201,13 @@ def classify(c, H):
     proven = '★' in dyn
     broken_authz = '実効せず' in finding
     login_only = ('ログインのみで到達' in dyn) or ('低権限ログインで到達' in dyn)
-    scope_missing = any(k in finding for k in (
-        '所有者チェック欠落', '権限過小', '兄弟と不揃い', '読み書き非対称'))
+    scope_missing = any(k in finding for k in AUTHZ_SCOPE_PATTERNS)
+    # 認可の根拠と操作対象の識別子を突き合わせていない / 認可判定の入力を
+    # 書き換えられる。どちらも「認証はしている」ので入口だけ見ると正常に見える。
+    id_binding_missing = ID_BINDING_PATTERN in finding
+    authz_input = AUTHZ_INPUT_PATTERN in finding
     guest_bypass = 'session+guest' in auth or 'guest_token' in finding
     unknown = (dyn.strip() in ('', '-'))
-    has_finding = finding.strip() not in ('', '-')
 
     # --- P1: 無認証で既存のファイル実体を壊せる(データ破壊) ---
     # 「データ破壊」= 既存の実データを不可逆に壊すこと。メタデータの更新や
@@ -190,6 +226,15 @@ def classify(c, H):
     if is_write_method and broken_authz and not creates_only:
         return 'P1', f'状態変更系({method})だが権限チェックが実装上機能していない'
 
+    # --- P1: 認可判定の入力そのものを書き換えられる ---
+    # 入口の認可は通っていても、書き込んだ値が**別のエンドポイントの認可判定**の
+    # 材料になる。以降のアクションの認可が丸ごと汚染されるので、単なる
+    # 「範囲が足りない」より重い。新規作成のみでも下げない(壊すのはデータでは
+    # なく認可そのもの)。
+    if is_write_method and authz_input:
+        return 'P1', (f'状態変更系({method})で他エンドポイントの認可判定の入力を'
+                      f'書き換えられる(認可入力汚染)')
+
     # --- P2 ---
     # 認証が無い状態変更系でも、新規作成のみで既存データを壊さないものはここ。
     if is_write_method and (no_auth or unauth_reach or broken_authz) and creates_only:
@@ -205,7 +250,12 @@ def classify(c, H):
 
     # --- 露出内容による引き上げ(参照系でも P1) ---
     # 「読み取り系だから情報漏洩リスクは限定的」は、露出するものが認証情報や
-    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って P1 に上げる。
+    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って上げる。
+    #
+    # **未認証で取れるかどうかで一段変える。** 非公開情報が認証なしで取れるなら、
+    # 攻撃者は何も持たずに済むので P1。認証を経ている(ログインだけ/スコープ不問)
+    # なら、少なくとも有効な資格情報が要るぶん一段下げて P2。この区別が無いと、
+    # 誰でも読める経路と、ログインユーザなら読める経路が同じ棚に並ぶ。
     # 「管理者に集約」のように適切に保護されている行は対象にしない。
     # restricted_content / access_variance は「何が制限されているか」の説明であり、
     # 適切に絞られている旨の記述にも「非公開」が出てくる。露出の根拠には使わない
@@ -219,10 +269,33 @@ def classify(c, H):
     if (not is_write_method) and weak_access:
         cred = [w for w in CREDENTIAL_WORDS if w in exposure]
         body = [w for w in NONPUBLIC_BODY_WORDS if w in exposure or w in store]
-        if cred:
-            return 'P2', f'参照系だが露出内容が認証情報({cred[0]})で、認可が緩い'
-        if body:
-            return 'P2', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
+        pii = [w for w in PERSONAL_WORDS if w in exposure]
+        kind = (f'認証情報({cred[0]})' if cred
+                else f'非公開データの実体({body[0]})' if body
+                else f'個人情報({pii[0]})' if pii else None)
+        if kind and (no_auth or unauth_reach):
+            why = '認証チェックが無い' if no_auth else '未認証で到達(実測)'
+            return 'P1', f'参照系だが露出内容が{kind}で、{why}'
+        if kind:
+            return 'P2', f'参照系だが露出内容が{kind}で、認可が緩い(認証は要る)'
+
+    # --- P2: 参照系でも、認可の根拠と操作対象が結び付いていない ---
+    # 「読み取り系だから P3」は、実害が認可バイパスである行を埋もれさせる。
+    # 有効なトークン/URL を1つ持っていれば、対象だけ差し替えて本来アクセス権の
+    # 無いファイルに届く。認証の有無とは独立した欠陥なので、認可が緩いことを
+    # 条件にしない。
+    if id_binding_missing:
+        return 'P2', (f'{method}: 認可の根拠と操作対象の識別子を突合していない'
+                      f'(有効な資格1つで他リソースに到達しうる)')
+
+    # --- P2: 認可の指摘がある行を、読み取り扱いで P3 に落とさない ---
+    # 状態変更系の判定は data_op と side_effects に依るが、どちらも機械で埋まる
+    # 列で取りこぼす(`/admin/change_list/delete` が `取得` と書かれている等)。
+    # `認可不整合:...` は人が読んで問題ありと判断して書いたもので、区分の変更で
+    # 静かに P3 へ沈めてはいけない。**何が漏れるかの判定(上のブロック)を先に
+    # 通してあるので、ここに来るのは露出語彙に当たらなかった指摘だけ。**
+    if scope_missing or broken_authz or authz_input or guest_bypass:
+        return 'P2', f'{method}: 認可の指摘がある - {finding.split("||")[0].strip()[:56]}'
 
     # --- 対象外: admin-access 相当で保護され、指摘も実証も無い ---
     if (not has_finding) and (not proven) and (

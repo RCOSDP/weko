@@ -46,7 +46,8 @@ from weko_redis.redis import RedisConnection
 from weko_records.models import ItemTypeProperty
 from weko_records.models import ItemType, ItemTypeMapping, ItemTypeName
 from weko_records.api import Mapping
-from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, \
+    WEKO_PERMISSION_ROLE_COMMUNITY
 from weko_index_tree.models import Index
 from weko_gridlayout import WekoGridLayout
 #from weko_admin import WekoAdmin
@@ -119,7 +120,8 @@ def base_app(instance_path):
         FILES_REST_DEFAULT_MAX_FILE_SIZE=None,
         FILES_REST_OBJECT_KEY_MAX_LEN=255,
         BABEL_DEFAULT_TIMEZONE='Asia/Tokyo',
-        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER
+        WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY
     )
     Babel(app_)
     InvenioDB(app_)
@@ -493,7 +495,7 @@ def item_type(db):
     with db.session.begin_nested():
         db.session.add(item_type)
         db.session.add(item_type_property)
-    mappin = Mapping.create(
+    mappin = Mapping.create_or_update(
         item_type.id,
         mapping = json_data("data/item_type/item_type_mapping.json")
     )

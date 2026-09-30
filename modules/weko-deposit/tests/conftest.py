@@ -140,6 +140,10 @@ def base_app(instance_path):
     WEKO_INDEX_TREE_REST_ENDPOINTS["tid"]["index_route"] = "/tree/index/<int:index_id>"
 
     app_.config.update(
+        # weko_records_ui.utils が読む。このテストアプリは WekoRecordsUI を
+        # 初期化していないので、weko_records_ui/config.py の既定値が入らない。
+        WEKO_RECORDS_UI_EMAIL_ITEM_KEYS=[
+            'creatorMails', 'contributorMails', 'mails'],
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,
@@ -632,6 +636,11 @@ def db_itemtype(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
     db.session.commit()
     db.session.refresh(item_type)
@@ -708,13 +717,21 @@ def es_records(app, db, location, db_itemtype, db_oaischema):
             from invenio_files_rest.models import Bucket
             from invenio_records_files.models import RecordsBuckets
             import base64
+            # レコードとその .0 ドラフトは別のバケットを持つ。
+            # invenio_records_files の files プロパティは RecordsBuckets 行が
+            # 無ければ _create_bucket() で新しいバケットを作って紐づけるし、
+            # publish 時は invenio_deposit が snapshot() で別バケットを作る。
+            # 1つのバケットを両方に繋ぐ経路は製品側に無く、そうすると
+            # WekoDeposit.delete() のバケット削除が外部キー違反になる。
             bucket = Bucket.create()
             record_buckets = RecordsBuckets.create(record=record.model, bucket=bucket)
-            record_buckets_0 = RecordsBuckets.create(record=record_0.model, bucket=bucket)
+            bucket_0 = Bucket.create()
+            record_buckets_0 = RecordsBuckets.create(record=record_0.model, bucket=bucket_0)
             stream = BytesIO(b'Hello, World')
             record.files['hello.txt'] = stream
             record_0.files['hello.txt'] = stream
             obj=ObjectVersion.create(bucket=bucket.id, key='hello.txt',stream=stream)
+            ObjectVersion.create(bucket=bucket_0.id, key='hello.txt',stream=BytesIO(b'Hello, World'))
             record['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             record_0['item_1617605131499']['attribute_value_mlt'][0]['file'] = (base64.b64encode(stream.getvalue())).decode('utf-8')
             deposit = aWekoDeposit(record, record.model)

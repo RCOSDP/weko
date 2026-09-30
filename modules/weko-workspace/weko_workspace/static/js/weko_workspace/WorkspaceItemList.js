@@ -17,7 +17,6 @@ document.addEventListener('DOMContentLoaded', function () {
   const groupYearButton = document.getElementById('groupYearicon');
   const itemListContainer = document.getElementById('itemListContainer');
   const pagination = document.querySelector('.pagination');
-  const checkAll = document.getElementById('check_all'); //  すべてチェック
   const placeholder = document.getElementById('placeholder').value;
   const showNoResultsMsg = document.getElementById('showNoResultsMsg').value;
   const remindMsg = document.getElementById('remindMsg').value;
@@ -87,12 +86,12 @@ document.addEventListener('DOMContentLoaded', function () {
   function handleCheckAll() {
     const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
     itemCheckboxes.forEach(checkbox => {
-      checkbox.checked = checkAll.checked;
+      checkbox.checked = document.getElementById('check_all').checked;
       const tr = checkbox.closest('tr');
       const anchor = tr && tr.querySelector('td:nth-child(2) strong a');
       const recid = anchor ? anchor.href.split('/').pop() : null;
       if (recid) {
-        if (checkAll.checked) {
+        if (document.getElementById('check_all').checked) {
           checkedItems.add(recid);
         } else {
           checkedItems.delete(recid);
@@ -101,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  checkAll.addEventListener('change', handleCheckAll);
+
 
   // 個別チェックボックスの処理
   function handleItemCheckboxChange() {
@@ -123,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // すべてチェックボックスの状態を更新
   function updateCheckAllStatus() {
     const itemCheckboxes = document.querySelectorAll('tbody input[type="checkbox"]');
-    checkAll.checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
+    document.getElementById('check_all').checked = itemCheckboxes.length > 0 && [...itemCheckboxes].every(cb => cb.checked);
   }
 
   // ページ変更時にチェックボックスの状態を復元
@@ -183,11 +182,11 @@ document.addEventListener('DOMContentLoaded', function () {
       if (value.trim()) {
         const filtered = workspaceItemList
           .filter(item => fuzzyMatch(value, item))
-          .slice(0, 6) // 最大 6 個
           .map(item => ({
             item,
             matchedField: getMatchedField(value, item),
-          }));
+          }))
+          .sort((a, b) => a.item.title.localeCompare(b.item.title));
         setSuggestions(filtered);
         setIsPopupOpen(true);
       } else {
@@ -243,7 +242,9 @@ document.addEventListener('DOMContentLoaded', function () {
             boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
             zIndex: 1000,
             padding: '5px',
-            fontSize: '12px', // フォントサイズを調整して 6 個の内容に適応
+            fontSize: '12px',
+            overflowY: 'scroll',
+            maxHeight: '162px', 
           },
         },
         suggestions.map(({ item, matchedField }) => React.createElement(
@@ -297,17 +298,66 @@ document.addEventListener('DOMContentLoaded', function () {
     if (filter.options.length === 0 && (filterKey === 'funder_name' || filterKey === 'award_title')) {
       return null;
     }
-
+    
+    const [hoveredOption, setHoveredOption] = React.useState(null);
     var checkboxes = filter.options.map(function(option) {
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.font = window.getComputedStyle(document.body).font;
+      let text_length = '';
+      for (let i = 0; i < option.length; i++) {
+        const next = text_length + option[i];
+        if (ctx.measureText(next).width >= 140) {
+          break;
+        }
+        text_length = next;
+      }
+
+      const long_text = text_length + '...'
+      hover= hoveredOption === option;
+      const text =
+      ctx.measureText(option).width >= 140 &&(filterKey === 'funder_name' || filterKey === 'award_title')
+        ? (hover ? option : long_text)
+        : option 
+      
+      window.addEventListener('scroll', () => {
+        setHoveredOption();
+     });
+     
+      if(document.querySelectorAll('.checkbox-group-exclude')!=null){ 
+          document.querySelectorAll('.checkbox-group-exclude').forEach(el => {
+            el.addEventListener('scroll', () => {
+              setHoveredOption();
+          });
+        });
+      }
+      
       return React.createElement(
         'label',
-        { key: option },
+        { key: option},
         React.createElement('input', {
           type: 'checkbox',
           checked: selectedOptions.includes(option),
-          onChange: function() { handleCheckboxChange(option); }
+          onChange: function() { handleCheckboxChange(option); },
         }),
-        option
+        React.createElement(
+        'span',{id: `e-${option}`,onMouseEnter: function(e) { if(ctx.measureText(option).width >= 140 &&(filterKey === 'funder_name' || filterKey === 'award_title'))
+            { 
+              let place = e.target.getBoundingClientRect();
+              el=document.getElementById('tooltip-'+e.target.id.replace("e-",""))
+              el.style.top = (place.top -20) + 'px'; 
+              el.style.left = place.left + 'px';
+              setHoveredOption(option);
+            }
+            else
+            {setHoveredOption();}
+          }, 
+          onMouseLeave: function() { setHoveredOption(); }},
+        ctx.measureText(option).width >= 140 &&(filterKey === 'funder_name' || filterKey === 'award_title') ? long_text : option
+      ),React.createElement(
+        'span',
+        { id: `tooltip-${option}`,style: hover? {display: 'block',backgroundColor: 'white', border: '1px solid #0f0e0eff',padding: '0px',position: 'fixed'} : {display: 'none'} },
+        text
+      ),
       );
     });
 
@@ -319,15 +369,24 @@ document.addEventListener('DOMContentLoaded', function () {
           remindMsg
         )
       : null;
-
+    
+    function getfilterclassName(){
+      if(singleSelectFilters.includes(filterKey)) {
+      return 'checkbox-group-single';
+      }else if(filterKey === 'funder_name' || filterKey === 'award_title'){
+        return 'checkbox-group-exclude';
+      }else{
+        return '';
+      }
+  }
     return React.createElement(
-      'tr',
+      'tr', {style: { position: 'relative' }},
       null,
-      React.createElement('th', null, filter.label),
+      React.createElement('th', { style: { width: '30%' } }, filter.label),
       React.createElement(
         'td',
         null,
-        React.createElement('div', { className: 'checkbox-group' }, checkboxes),
+        React.createElement('div', { className: `checkbox-group ${getfilterclassName()}`}, checkboxes),
         note
       )
     );
@@ -398,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function () {
           document.close();
         })
         .catch(function(error) {
-          console.error('ページ更新エラー:', error);
+          console.error('Update page error:', error);
           throw error;
         });
     }
@@ -421,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function () {
           return data;
         })
         .catch(function(error) {
-          console.error('JSON取得エラー:', error);
+          console.error('Get json error:', error);
           throw error;
         });
     }
@@ -450,8 +509,8 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
           alert(error.message);
           closeFilter();
-          await refreshPage('/workspace/', 'GET');
-          console.error('保存エラー:', error);
+          await refreshPage('/workspace', 'GET');
+          console.error('Save error:', error);
         }
       };
 
@@ -466,8 +525,8 @@ document.addEventListener('DOMContentLoaded', function () {
           } catch (error) {
             alert(error.message);
             closeFilter();
-            await refreshPage('/workspace/', 'GET');
-            console.error('リセットエラー:', error);
+            await refreshPage('/workspace', 'GET');
+            console.error('Reset error:', error);
           }
         }
       };
@@ -497,10 +556,20 @@ document.addEventListener('DOMContentLoaded', function () {
         })
       )
       .filter((row) => row !== null);
-
+      React.useEffect(() => {
+      if(document.querySelectorAll('.checkbox-group-exclude')!=null){
+          document.querySelectorAll('.checkbox-group-exclude').forEach((el) => {
+             const height = window.getComputedStyle(el).getPropertyValue('height');
+             if(parseFloat(height) >135){
+                el.style.overflowY = 'scroll';
+                el.style.height = '135px';
+             }
+          });
+      }
+      }, []);
     return React.createElement(
       'div',
-      { className: 'row row-4' },
+      { className: 'row row-4', style: { overflow: 'visible' } },
       React.createElement(
         'table',
         null,
@@ -514,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const [isFavorite, setIsFavorite] = React.useState(initialFavoriteSts);
     const handleFavoriteToggle = async () => {
       try {
-        const response = await fetch('/workspace/updateStatus', {
+          const response = await fetch('/workspace/updateStatus', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ itemRecid, favoriteSts: !isFavorite, type }),
@@ -525,8 +594,8 @@ document.addEventListener('DOMContentLoaded', function () {
           if (item) item.favoriteSts = !isFavorite;
           updateDisplay();
         }
-      } catch (error) {
-        console.error('お気に入りステータスの更新に失敗しました:', error);
+        } catch (error) {
+        console.error('Failed to update favorite status:', error);
       }
     };
 
@@ -540,37 +609,49 @@ document.addEventListener('DOMContentLoaded', function () {
     );
   };
 
-  // 閲覧ボタンコンポーネント
-  const ReadButton = ({ itemRecid, initialReadSts, type }) => {
-    const [isRead, setIsRead] = React.useState(initialReadSts);
-    const handleReadToggle = async () => {
-      try {
-        const response = await fetch('/workspace/updateStatus', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ itemRecid, readSts: !isRead, type }),
-        });
-        if (response.ok) {
-          setIsRead(!isRead);
-          const item = items.find((i) => i.recid === itemRecid);
-          if (item) item.readSts = !isRead;
-          updateDisplay();
-        }
-      } catch (error) {
-        console.error('閲覧ステータスの更新に失敗しました:', error);
-      }
-    };
+  
+const handleReadToggle = async (itemRecid, isRead, type, setIsRead) => {
+  try {
+    const response = await fetch('/workspace/updateStatus', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itemRecid, readSts: !isRead, type }),
+    });
+    if (response.ok) {
+      setIsRead(!isRead);
+      const item = items.find((i) => i.recid === itemRecid);
+      if (item) item.readSts = !isRead;
+      updateDisplay();
+    }
+  } catch (error) {
+    console.error('Failed to update viewing status:', error);
+  }
+};
 
-    return React.createElement(
+const ReadButton = ({ itemRecid, initialReadSts, type }) => {
+  const [isRead, setIsRead] = React.useState(initialReadSts);
+
+ return React.createElement(
       'a',
-      { href: '#', onClick: (e) => { e.preventDefault(); handleReadToggle(); } },
+      { href: '#', onClick: (e) => { e.preventDefault(); handleReadToggle(itemRecid, isRead, type, setIsRead); } },
       React.createElement('i', {
         className: isRead ? 'bi bi-book-fill' : 'bi bi-book',
         style: { fontSize: '20px' }
       })
     );
   };
+  
+const Unread = ({ itemRecid, initialReadSts, type }) => {
+    const [isRead2, setIsRead2] = React.useState(initialReadSts);
+    const text = $('#unread').text();
 
+  return React.createElement(
+      'span',
+      { onClick: (e) => { e.preventDefault(); handleReadToggle(itemRecid, isRead2, type, setIsRead2);},className: isRead2 ? 'unread_hide' : 'unread_show'  },
+      text
+    );
+  };
+  
   // ボタンのマウント
   function mountButtons() {
     document.querySelectorAll('.favorite-mount-point').forEach((mountPoint) => {
@@ -592,6 +673,28 @@ document.addEventListener('DOMContentLoaded', function () {
         mountPoint
       );
     });
+
+    document.querySelectorAll('.unread').forEach((mountPoint) => {
+      const itemRecid = mountPoint.dataset.itemRecid;
+      const initialReadSts = JSON.parse(mountPoint.dataset.readSts);
+      const type = mountPoint.dataset.type;
+      ReactDOM.render(
+        React.createElement(Unread, { itemRecid, initialReadSts, type }),
+        mountPoint
+      );
+    });
+
+    document.querySelectorAll('.item_checkbox').forEach((checkbox) => {
+      checkbox.addEventListener('click', function (e) {
+      if (document.querySelectorAll(".item_checkbox:checked").length === document.querySelectorAll(".item_checkbox").length) {
+        document.getElementById('check_all').checked = true;
+      }
+      else{
+         document.getElementById('check_all').checked = false;
+      }
+  });
+});
+  document.getElementById('check_all').addEventListener('change', handleCheckAll);
   }
 
   // 関連ボタンのバインド
@@ -631,6 +734,7 @@ document.addEventListener('DOMContentLoaded', function () {
       table.className = 'table table-striped table-bordered';
       table.style.tableLayout = 'auto';
       const tbody = document.createElement('tbody');
+      tbody.innerHTML += generateItemlabel();
       groupedItems[year].forEach((item) => {
         tbody.innerHTML += generateItemRow(item);
       });
@@ -646,6 +750,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 通常のテーブル表示
   function renderTable(items) {
+    var scrollOffsetY = window.pageYOffset;
     itemListContainer.innerHTML = '';
     const table = document.createElement('table');
     table.className = 'table table-striped table-bordered';
@@ -655,16 +760,44 @@ document.addEventListener('DOMContentLoaded', function () {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = Math.min(startIndex + itemsPerPage, items.length);
     const currentItems = items.slice(startIndex, endIndex);
-
+    
+    tbody.innerHTML += generateItemlabel();
     currentItems.forEach((item) => {
       tbody.innerHTML += generateItemRow(item);
     });
 
     table.appendChild(tbody);
     itemListContainer.appendChild(table);
+    window.scrollTo(0,scrollOffsetY);
     mountButtons();
     bindRelatedButtons();
+    updateReadStatus();
     // restoreCheckedItems(); //  チェック状態復元を追加
+  }
+
+  function generateItemlabel() {
+      return `
+      <tr>
+        <td style="text-align: center; vertical-align: middle;">
+          <input type="checkbox" id="check_all">
+        </td>
+        <td style="text-align: center; vertical-align: middle; width: 50px; white-space: nowrap;">
+          ${document.getElementById('action').innerText}
+        </td>
+        <td style="width: auto;">
+          ${document.getElementById('item_text').innerText}
+        </td>
+        <td style="text-align: center; vertical-align: top; width: 60px;">
+          ${document.getElementById('stats').innerText}
+        </td>
+        <td style="text-align: center; vertical-align: top; width: 30px;">
+          ${document.getElementById('info_text').innerText}
+        </td>
+        <td style="text-align: center; vertical-align: top;">
+          ${document.getElementById('edit_text').innerText}
+        </td>
+      </tr>
+    `;
   }
 
   // 単一アイテムのHTML生成
@@ -676,47 +809,49 @@ document.addEventListener('DOMContentLoaded', function () {
       : '';
     return `
       <tr>
-        <td style="text-align: center; vertical-align: top;">
-          <div class="favorite-mount-point" data-type="1" data-item-recid="${item.recid}" data-favorite-sts='${JSON.stringify(item.favoriteSts)}'></div><br>
-          <div class="read-mount-point" data-type="2" data-item-recid="${item.recid}" data-read-sts='${JSON.stringify(item.readSts)}'></div><br>
-          <input type="checkbox" value="item-checkbox" /><br><br>
+        <td style="text-align: center; vertical-align: middle;">
+          <input type="checkbox" value="item-checkbox" class="item_checkbox" />
+        </td>
+        <td style="text-align: center; vertical-align: middle; width: 50px;">
+          <div class="favorite-mount-point" style="margin-bottom:6px;" data-type="1" data-item-recid="${item.recid}" data-favorite-sts='${JSON.stringify(item.favoriteSts)}'></div>
+          <div class="read-mount-point" data-type="2" data-item-recid="${item.recid}" data-read-sts='${JSON.stringify(item.readSts)}'></div>
         </td>
         <td style="width: auto;">
-          <strong><a href="/records/${item.recid}">${item.title}</a></strong><br><br>
-          ${item.authorlist && item.authorlist.length > 0 ? `<span>${item.authorlist.join(', ')}</span><br><br>` : ''}
-          <span>${item.magazineName || ''} ${(item.magazineName && item.conferenceName) ? '/' : ''} ${item.conferenceName || ''}</span>
-          <span>${item.volume || ''} ${item.issue ? '('+item.issue+')' : ''}</span>
+          <strong><a href="/records/${item.recid}" data-item-title="${item.title}" data-item-recid="${item.recid}">${item.title}</a><span class="unread" data-type="3" data-item-recid="${item.recid}" data-read-sts='${JSON.stringify(item.readSts)}'></span><br>
+          ${item.authorlist && item.authorlist.length > 0 ? `<span>${item.authorlist.join(', ')}</span><br>` : ''}
+          <span>${item.magazineName || ''} ${(item.magazineName && item.conferenceName) ? '/' : ''} ${item.conferenceName || ''} ${(item.magazineName || item.conferenceName) ? '&nbsp;&nbsp;' : ''}</span>
+          <span>${item.volume || ''} ${item.issue ? '('+item.issue+')' : ''} ${(item.volume || item.issue) ? '&nbsp;&nbsp;' : ''}</span>
           <span>${item.funderName || ''} ${(item.funderName && item.awardTitle) ? '|' : ''} ${item.awardTitle || ''}</span>
-          ${(item.magazineName || item.conferenceName || item.volume || item.issue || item.funderName || item.awardTitle) ? '<br><br>' : ''}
-          <span>${item.publicationDate}</span>
-          ${item.relation && item.relation.length > 0 ? `<span><a href="javascript:void(0)" class="relatedButton"><strong>${relation}</strong></a></span><span> </span>` : ''}
+          ${(item.magazineName || item.conferenceName || item.volume || item.issue || item.funderName || item.awardTitle) ? '<br>' : ''}
+          <span>${item.publicationDate} ${item.publicationDate ? '&nbsp;&nbsp;' : ''}</span>
+          ${item.relation && item.relation.length > 0 ? `<span><a href="javascript:void(0)" class="relatedButton"><strong>${relation}</strong></a></span><span> </span> ${item.relation && item.relation.length > 0 ? '&nbsp;&nbsp;' : ''}` : ''}
           ${item.fileSts
             ? `<span>${documentfile} (${item.fileCnt || 0})： ${published}（${item.publicCnt || 0}）、${embargo}（${item.embargoedCnt || 0}）、 ${restricted}（${item.restrictedPublicationCnt || 0}）</span>`
             : `<span>${documentfile} (0)</span>`}<span> </span><br>
           ${relatedInfoHtml}
         </td>
-        <td style="text-align: center; vertical-align: top;">
+        <td style="text-align: center; vertical-align: middle; width: 60px;">
           <span>
-          ${item.doi ? `<a href="${item.doi}">DOI</a>` : 'DOI'}
-          </span><br><br>
-          <span>
-            <i class="bi bi-eye-fill" style="font-size: 20px;"></i>${item.accessCnt}
-          </span><br><br>
+            <i class="bi bi-eye-fill" style="font-size: 20px; display: inline-block; margin-bottom:6px;"></i>${item.accessCnt}
+          </span>
           <span>
             <i class="bi bi-file-earmark" style="font-size: 20px;"></i>${item.downloadCnt}
           </span>
         </td>
-        <td style="text-align: center; vertical-align: top;">
-          <span style="border: 1px solid #000; padding: 5px; border-radius: '4px'">${item.resourceType}</span><br><br>
-          <span>${item.itemStatus}</span><br><br>
-          <span>
+        <td style="text-align: center; vertical-align: top; width: 30px; padding-top:12px; padding-bottom:0px">
+          <span style="border: 1px solid #000; padding: 5px; border-radius: '4px'; white-space:nowrap;">${item.resourceType}</span>
+          <div style="margin-bottom:3px; margin-top:9px;white-space:nowrap;">${item.itemStatus}</div>
+          <div style="margin-bottom:3px;">
             ${item.fbEmailSts
               ? `<i class="bi bi-envelope" style="font-size: 20px;"></i>`
               : `<i class="bi bi-envelope-dash" style="font-size: 20px;"></i>`}
-          </span><br><br>
+          </div>
+          <span>
+          ${item.doi ? `<a href="${item.doi}">DOI</a>` : ''}
+          </span>
         </td>
         <td style="text-align: center; vertical-align: top;">
-          <a href="/records/${item.recid}" class="edit-item" data-item-id="">
+          <a href="/workflow/edit_item_direct/${item.recid}" class="edit-item" data-item-id="">
             <i class="bi bi-pencil-square" style="font-size: 25px;"></i>
           </a>
         </td>
@@ -751,7 +886,25 @@ document.addEventListener('DOMContentLoaded', function () {
       return order === '1' ? (fieldA > fieldB ? 1 : -1) : (fieldA < fieldB ? 1 : -1);
     });
   }
-
+  
+  function updateReadStatus(){
+    document.querySelectorAll('a[data-item-title]').forEach(ta => {
+      ta.addEventListener('click', async function(e){
+          const target=document.querySelector(`.read-mount-point[data-item-recid="${this.dataset.itemRecid}"]`);
+          const itemRecid = target.dataset.itemRecid;
+          const type = target.dataset.type;
+          try {
+            const response = await fetch('/workspace/updateStatus', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ itemRecid, readSts: true, type }),
+          });
+          } catch (error) {
+            console.error('Failed to update viewing status:', error);
+        }
+      })
+    });
+}
   // ページングの更新
   function updatePagination(totalCount) {
     const totalPages = Math.ceil(totalCount / itemsPerPage);

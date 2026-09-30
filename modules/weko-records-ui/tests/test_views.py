@@ -93,7 +93,8 @@ def test_publish_acl_guest(client, records):
     url = url_for("invenio_records_ui.recid_publish", pid_value=1, _external=True)
     res = client.post(url)
     assert res.status_code == 302
-    assert res.location == "http://test_server/records/1"
+    # 未ログインではログイン画面へ飛ばされる (以前は /records/1 だった)。
+    assert res.location.startswith("http://test_server/login/")
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_publish_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -191,7 +192,9 @@ def test_export_acl_guest(client, records):
         # (7, 302),
     ],
 )
-@pytest.mark.timeout(60)
+# 60 秒はフィクスチャの実測 (1件あたり40秒超) に対して短すぎる。
+# pytest-timeout が入るまでこのマーカーは効いていなかった。
+# モジュール全体の上限 (tox.ini の [pytest] timeout = 600) に任せる。
 def test_export_acl(client, records, users, id, status_code):
     login_user_via_session(client=client, email=users[id]["email"])
     url = url_for(
@@ -724,6 +727,51 @@ def test_default_view_method(app, records, itemtypes, indexstyle, users, db):
                                         assert kwargs['index_link_list']
 
 
+def test_default_view_method_caches_oai_xml_and_index(
+        app, records, itemtypes, indexstyle, users, db):
+    """3-1: the JPCOAR OAI XML is cached (getrecord not re-run on the 2nd render,
+    and a revision bump changes the key). 3-2: Indexes.get_index is memoized so
+    it runs at most once per distinct navi path per request."""
+    from invenio_cache import current_cache
+    indexer, results = records
+    record = results[0]["record"]
+    recid = results[0]["recid"]
+    app.config['OAUTH2SERVER_JWT_AUTH_HEADER'] = 'Authorization'
+    with app.test_request_context():
+        with patch('weko_records_ui.views.check_original_pdf_download_permission', return_value=True), \
+             patch("weko_records_ui.views.get_search_detail_keyword", return_value={}), \
+             patch("weko_records_ui.views.get_index_link_list", return_value=[]), \
+             patch("weko_records_ui.views.render_template", return_value=make_response()):
+            current_cache.clear()
+
+            # 3-1: getrecord is invoked only on the first (cache-miss) render.
+            with patch('weko_records_ui.views.getrecord') as m_getrec:
+                m_getrec.return_value = etree.Element('record')
+                default_view_method(recid, record, 'helloworld.pdf')
+                first = m_getrec.call_count
+                assert first >= 1
+                default_view_method(recid, record, 'helloworld.pdf')
+                assert m_getrec.call_count == first  # served from cache
+
+            # 3-2: within one render, Indexes.get_index runs at most once per
+            # distinct path (both navi loops reuse the memo).
+            index = MagicMock()
+            index.index_name = ""
+            index.index_name_english = "index"
+            index.id = 1
+            with patch('weko_records_ui.views.getrecord') as m_getrec2, \
+                 patch('weko_records_ui.views.Indexes.get_index', return_value=index) as m_idx, \
+                 patch('weko_workflow.api.GetCommunity.get_community_by_root_node_id', return_value=None):
+                m_getrec2.return_value = etree.Element('record')
+                default_view_method(recid, record, 'helloworld.pdf')
+                paths = set()
+                for navi in record.navi:
+                    paths.update(navi.path.split('/'))
+                # <= distinct path count (would be ~2x that without the memo)
+                assert m_idx.call_count <= len(paths), \
+                    (m_idx.call_count, len(paths))
+
+
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method2 -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 #     """Display default view.
@@ -1142,6 +1190,11 @@ def test_set_pdfcoverpage_header_acl_error(app, client, records, users, id, resu
         'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
     with patch('weko_records_ui.views.db.session.commit', side_effect=Exception("")):
         res = client.post(url,data=data)
+        if not result:
+            # result=False は「権限が無い」の意。users[0] は contributor で、
+            # 設定の更新は admin 権限が要るので 403。
+            assert res.status_code == 403
+            return
         assert res.status_code == 302
         s = PDFCoverPageSettings.find(1)
         assert s is not None
@@ -1173,6 +1226,11 @@ def test_set_pdfcoverpage_header_acl(app, client, records, users, id, result, pd
     data = {'availability':'enable', 'header-display':'string', 'header-output-string':'Weko Univ', 'header-display-position':'center', 'pdfcoverpage_form': '',
         'header-output-image': (io.BytesIO(b"some initial text data"), 'test.png')}
     res = client.post(url,data=data)
+    if not result:
+        # result=False は「権限が無い」の意。users[0] は contributor で、
+        # 設定の更新は admin 権限が要るので 403。
+        assert res.status_code == 403
+        return
     assert res.status_code == 302
     assert res.location == 'http://test_server/admin/pdfcoverpage'
     s = PDFCoverPageSettings.find(1)
@@ -1372,6 +1430,52 @@ def test_soft_delete_exception(client, records, users):
                     assert res.json == expected_response
 
 
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_soft_delete_called_in_process -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "del_value, expected_recid",
+    [
+        ("1", "1"),                # 通常の削除
+        ("del_ver_1", "1"),        # バージョン削除
+    ],
+)
+def test_soft_delete_called_in_process(app, records, users, del_value,
+                                       expected_recid):
+    """soft_delete ビューを Python から位置引数で呼ぶ経路を守る。
+
+    画面の削除ボタンは POST /items/prepare_delete_item に
+    {"pid_value": ...} を投げ、weko_items_ui.views.prepare_delete_item が
+    ``from weko_records_ui.views import soft_delete`` して
+    ``soft_delete(del_value)`` と *位置引数* で呼ぶ
+    (weko_workflow.utils.prepare_delete_workflow も同じ)。
+
+    このとき kwargs は空で、リクエストボディのキーも recid ではなく
+    pid_value なので、record_edit_permission_required が recid を
+    見つけられずに abort(400) していた (v2.0.4 の回帰)。
+    リクエストは views.py:1362 の try の外なので、素の 400 が返って
+    削除が誰も実行できなくなる。
+    """
+    from weko_records_ui.views import soft_delete
+
+    with patch("flask_login.utils._get_user", return_value=users[2]["obj"]):
+        with app.test_request_context(
+            "/items/prepare_delete_item",
+            method="POST",
+            json={"pid_value": expected_recid},
+        ):
+            with patch("weko_records_ui.views.soft_delete_imp") as mock_imp, \
+                 patch("weko_records_ui.views.delete_version") as mock_ver, \
+                 patch("weko_records_ui.views.call_external_system"):
+                res = soft_delete(del_value)
+
+            assert res.status_code == 200
+            if del_value.startswith("del_ver_"):
+                mock_ver.assert_called_once_with(expected_recid)
+                mock_imp.assert_not_called()
+            else:
+                mock_imp.assert_called_once_with(expected_recid)
+                mock_ver.assert_not_called()
+
+
 # def restore(recid):
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_restore_acl_guest -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
 def test_restore_acl_guest(client, records):
@@ -1536,27 +1640,53 @@ def test_preview_able(app):
         assert ret == False
 
 # def get_uri():
+# no.499: get_uri には record_edit_permission_required(param='pid_value') を
+# 追加した。JSON body のキー名は pid_value(pid ではない)なので、記録の所有者
+# (records フィクスチャの owner=1 = users[7] "user@test.org")でのみ成功し、
+# 無関係な第三者(users[4] "generaluser@test.org")は拒否されることを確認する。
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_get_uri -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
-def test_get_uri(app,client,db_sessionlifetime,records):
+def test_get_uri(app,client,db_sessionlifetime,records,users):
     # 404を発生させるとwebassets.exceptions.FilterErrorが発生する対策
     app.register_error_handler(404, None)
 
     url = url_for("weko_records_ui.get_uri",  _external=True)
+
+    # 匿名ユーザー -> 401(login_required)
     res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
-    assert res.status_code == 200
-    assert json.loads(res.data)=={'status': True}
+    assert res.status_code == 401
 
-    res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
-    assert res.status_code == 200
-    assert json.loads(res.data)=={'status': True}
+    # レコード編集権限のないユーザー(第三者) -> 403
+    with patch("flask_login.utils._get_user", return_value=users[4]["obj"]):
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 403
 
-    # Invalid request data
-    res = client.post("/get_uri")
-    assert res.status_code == 400
+    # レコード編集権限のあるユーザー(所有者) -> 成功
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 200
+        assert json.loads(res.data)=={'status': True}
 
-    # Invalid pid_value
-    res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"test","accessrole":"1"}), content_type='application/json', follow_redirects=False)
-    assert res.status_code == 404
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 200
+        assert json.loads(res.data)=={'status': True}
+
+        # Invalid request data
+        res = client.post("/get_uri")
+        assert res.status_code == 400
+
+        # Invalid pid_value
+        # record_edit_permission_required が先に check_created_id_by_recid("test")
+        # を評価し、存在しない recid なので permitted=False として 403 を返す
+        # (view 本体の NoResultFound/PIDDoesNotExistError -> 404 処理まで到達しない)
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/001.jpg","pid_value":"test","accessrole":"1"}), content_type='application/json', follow_redirects=False)
+        assert res.status_code == 403
+
+    # pid_value ではなく別のキー名(pid)で送るとパラメータが見つからず 400
+    # (record_edit_permission_required(param='pid_value') が正しいキー名を
+    # 見ていることの確認)
+    with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+        res = client.post(url,data=json.dumps({"uri":"https://localhost/record/1/files/001.jpg","pid":"1","accessrole":"1"}), content_type='application/json')
+        assert res.status_code == 400
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_default_view_method_fix35133 -v -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

@@ -10,7 +10,7 @@
         <!-- 閉じるボタン -->
         <div class="basis-1/6 flex text-end justify-end pr-3">
           <button type="button" class="btn-close">
-            <img src="/img/btn/btn-close.svg" alt="×" @click="closeModal" />
+            <img :src="`${appConf.amsImage ?? '/img'}/btn/btn-close.svg`" alt="×" @click="closeModal" />
           </button>
         </div>
       </div>
@@ -192,7 +192,7 @@ function getCaptcha() {
   dirtyAnswer.value = false;
   answeResult.value = false;
 
-  $fetch(appConf.wekoApi + '/captcha/image', {
+  $fetch(`${appConf.amsApi ?? '/api'}/captcha/image`, {
     timeout: useRuntimeConfig().public.apiTimeout,
     method: 'GET',
     headers: {
@@ -227,7 +227,7 @@ async function send() {
   locale.value = String(localStorage.getItem('locale'));
   const contactType = t(props.type);
 
-  await useFetch('/api/mail/send', {
+  await useFetch(`${appConf.amsApi ?? '/api'}/mail/send`, {
     method: 'POST',
     body: JSON.stringify({
       key: captchaKey,

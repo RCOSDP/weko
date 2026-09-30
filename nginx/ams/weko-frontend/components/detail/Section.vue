@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <div class="flex flex-wrap justify-between items-center">
-      <h3 :id="targetId" class="text-miby-black text-xl font-bold">
+      <h3 :id="targetId" class="text-miby-black text-xl font-bold w-1/2 text-left">
         {{ section.name }}
       </h3>
       <div class="inline-block">

@@ -111,6 +111,12 @@ setup(
             'weko_accounts_suggest_js = weko_accounts.bundles:suggest_js',
             'weko_accounts_shibuser_css = weko_accounts.bundles:shibuser_css',
         ],
+        'invenio_db.models': [
+            'weko_accounts = weko_accounts.models',
+        ],
+        'invenio_db.alembic': [
+            'weko_accounts = weko_accounts:alembic',
+        ],
     },
     extras_require=extras_require,
     install_requires=install_requires,

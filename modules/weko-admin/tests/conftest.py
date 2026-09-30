@@ -74,7 +74,8 @@ from weko_index_tree import WekoIndexTree
 from weko_index_tree.models import Index, IndexStyle
 from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
 from weko_records_ui import WekoRecordsUI
-from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER
+from weko_records_ui.config import WEKO_PERMISSION_SUPER_ROLE_USER, \
+    WEKO_PERMISSION_ROLE_COMMUNITY
 from weko_records import WekoRecords
 from weko_records.models import SiteLicenseInfo, SiteLicenseIpAddress,ItemType,ItemTypeName,ItemTypeJsonldMapping
 from weko_redis.redis import RedisConnection
@@ -175,6 +176,7 @@ def base_app(instance_path, cache_config,request ,search_class):
         WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS = WEKO_ADMIN_RESTRICTED_ACCESS_SETTINGS,
         WEKO_WORKFLOW_USAGE_REPORT_WORKFLOW_NAME = 'test workflow31001',
         WEKO_PERMISSION_SUPER_ROLE_USER=WEKO_PERMISSION_SUPER_ROLE_USER,
+        WEKO_PERMISSION_ROLE_COMMUNITY=WEKO_PERMISSION_ROLE_COMMUNITY,
         WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT=WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
     )
     app_.testing = True
@@ -801,7 +803,9 @@ def admin_settings(db):
     settings.append(AdminSettings(id=8,name='convert_pdf_settings',settings={"path":"/tmp/file","pdf_ttl":1800}))
     settings.append(AdminSettings(id=9,name="elastic_reindex_settings",settings={"has_errored": False}))
     settings.append(AdminSettings(id=10,name="sword_api_setting",settings={ "default_format": "TSV","data_format":{ "TSV":{"register_format": "Direct"},"XML":{"workflow": '31001',  "register_format": "Workflow"}}}))
-    settings.append(AdminSettings(id=11,name="report_email_schedule_settings",settings={"details":"","enabled":False,"frequency":"daily"}))
+    # check_send_all_reports iterates repository_id -> schedule, so the
+    # setting is keyed by repository, not a bare schedule.
+    settings.append(AdminSettings(id=11,name="report_email_schedule_settings",settings={"Root Index":{"details":"","enabled":False,"frequency":"daily"}}))
     settings.append(AdminSettings(id=12,name="cris_linkage",settings={'researchmap_cidkey_contents':'','researchmap_pkey_contents':'','merge_mode':''}))
     db.session.add_all(settings)
     db.session.commit()

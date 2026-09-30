@@ -10,7 +10,7 @@ def main():
         res = db.session.query(ItemTypeMapping.id).all()
         for _id in list(res):
             with db.session.begin_nested():
-                item_type = ItemTypeMapping.query.filter(ItemTypeMapping.id==_id).order_by(desc(ItemTypeMapping.created)).first()
+                item_type = ItemTypeMapping.query.filter(ItemTypeMapping.id==_id).first()
                 mapping =  pickle.loads(pickle.dumps(item_type.mapping,-1))
                 for key in list(mapping.keys()):
                     if 'jpcoar_mapping' in mapping[key] and mapping[key]['jpcoar_mapping'] is not "":

@@ -54,6 +54,7 @@ from werkzeug.datastructures import Headers
 from werkzeug.urls import url_quote
 
 from weko_records_ui.errors import AvailableFilesNotFoundRESTError
+from weko_records_ui.ipaddr import check_site_license_permission
 from weko_records_ui.models import (
     FileOnetimeDownload, FileSecretDownload, PDFCoverPageSettings
 )
@@ -248,7 +249,11 @@ def file_ui(
                 return _redirect_method(has_next=True)
             abort(403)
 
-    if not is_preview:
+    # Check site license user for open_restricted download
+    is_site_license_user = check_site_license_permission()
+
+    # Check action is not preview and user is not site license user
+    if not is_site_license_user and not is_preview:
         # open_restricted download
         if 'open_restricted' in fileobj.get('accessrole', '') \
             and not is_terms_of_use_only \

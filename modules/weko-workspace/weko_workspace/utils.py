@@ -48,7 +48,7 @@ from weko_records.api import (
     ItemTypes,
     Mapping,
 )
-from .api import CiNiiURL, JALCURL, DATACITEURL, JamasURL
+from .api import CiNiiURL, JALCURL, DATACITEURL, JamasURL, arXivURL
 from lxml import etree
 
 def is_update_cache():
@@ -963,6 +963,7 @@ def get_cinii_product_identifier(data, type1, type2):
             new_data = dict()
             new_data['@value'] = item.get('@value')
             new_data['@type'] = "DOI"
+            new_data['@relation_type'] = 'isVersionOf'
             result.append(new_data)
         if item.get('@type') == type2:
             new_data = dict()
@@ -1224,7 +1225,7 @@ def get_autofill_key_tree(schema_form, item, result=None):
                 creator_name_object = val.get("creatorName")
                 if creator_name_object:
                     key_data = get_key_value(schema_form,
-                                             creator_name_object, parent_key)
+                                             creator_name_object, parent_key,val)
             elif key == "contributor":
                 contributor_name = val.get("contributorName")
                 if contributor_name:
@@ -1234,7 +1235,7 @@ def get_autofill_key_tree(schema_form, item, result=None):
                 related_identifier = val.get("relatedIdentifier")
                 if related_identifier:
                     key_data = get_key_value(schema_form,
-                                             related_identifier, parent_key)
+                                             related_identifier, parent_key,val)
             else:
                 key_data = get_key_value(schema_form, val, parent_key)
             if key_data:
@@ -1251,7 +1252,7 @@ def get_autofill_key_tree(schema_form, item, result=None):
     return result
 
 
-def get_key_value(schema_form, val, parent_key):
+def get_key_value(schema_form, val, parent_key ,val2={}):
     """Get key value.
 
     Args:
@@ -1309,7 +1310,25 @@ def get_key_value(schema_form, val, parent_key):
                 parent_key,
                 value_key.get("dateType")
             ).get('key')
-
+        
+    if val2.get("@attributes") is not None:
+        value_key = val2.get('@attributes')
+        if value_key.get("relationType") is not None:
+            key_data['@relation_type'] = get_autofill_key_path(
+                schema_form,
+                parent_key,
+                value_key.get("relationType")
+            ).get('key')
+    if val2.get("affiliation") is not None:
+        value_key = val2.get('affiliation')
+        if value_key.get("affiliationName") is not None:
+            value_key = value_key.get('affiliationName')
+            if value_key.get("@value") is not None:
+                key_data['@affiliation'] = get_autofill_key_path(
+                    schema_form,
+                    parent_key,
+                    value_key.get("@value")
+                ).get('key')
     return key_data
 
 
@@ -1606,29 +1625,32 @@ def fill_data(form_model, autofill_data, schema=None, exclude_duplicate_lang=Fal
             return False
 
     if isinstance(autofill_data, list):
-        key = list(form_model.keys())[0] if len(form_model) != 0 else None
-        sub_schema = None
-        if schema:
-            sub_schema = get_subschema(schema, key)
-            if sub_schema and sub_schema.get("type") == "array":
-                sub_schema = sub_schema.get("items")
-
-        if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
-            model_clone = {}
-            deepcopy_API(form_model[key][0], model_clone)
-            result[key]=[]
-            used_lang_set = set()
-            for data in autofill_data:
-                if exclude_duplicate_lang and isinstance(data, dict) and data.get('@language'):
-                    if data.get('@language') in used_lang_set:
-                        continue
-                    used_lang_set.add(data.get('@language'))
-                model = {}
-                deepcopy_API(model_clone, model)
-                new_model = fill_data(model, data, sub_schema, exclude_duplicate_lang)
-                result[key].append(new_model.copy())
-        else:
-            result = fill_data(form_model, autofill_data[0], schema, exclude_duplicate_lang)
+        keys = list(form_model.keys()) if len(form_model) != 0 else None
+        if(keys!=None):
+            for key in keys:
+                sub_schema = None
+                if schema:
+                    sub_schema = get_subschema(schema, key)
+                    if sub_schema and sub_schema.get("type") == "array":
+                        sub_schema = sub_schema.get("items")
+                if is_multiple_data or (not is_multiple_data and isinstance(form_model.get(key),list)):
+                    model_clone = {}
+                    deepcopy_API(form_model[key][0], model_clone)
+                    result[key]=[]
+                    used_lang_set = set()
+                    for data in autofill_data:
+                        if exclude_duplicate_lang and isinstance(data, dict) and data.get('@language'):
+                            if data.get('@language') in used_lang_set:
+                                continue
+                            used_lang_set.add(data.get('@language'))
+                        model = {}
+                        deepcopy_API(model_clone, model)
+                        new_model = fill_data(model, data, sub_schema, exclude_duplicate_lang)
+                        result[key].append(new_model.copy())
+                else:
+                    result = fill_data(form_model, autofill_data[0], schema, exclude_duplicate_lang)
+        
+        
     elif isinstance(autofill_data, dict):
         if isinstance(form_model, dict):
             for k, v in form_model.items():
@@ -2015,6 +2037,8 @@ def get_jalc_product_identifier(data):
     result = list()
     new_data = dict()
     new_data['@value'] = data
+    new_data['@type'] = 'DOI'
+    new_data['@relation_type'] = 'isVersionOf'
     result.append(new_data)
     return result
 
@@ -2326,11 +2350,13 @@ def get_datacite_product_identifier(data):
         new_data = dict()
         new_data['@value'] = data
         new_data['@type'] = "DOI"
+        new_data['@relation_type'] = 'isVersionOf'
         result.append(new_data)
     else:
         new_data = dict()
         new_data['@value'] = None
         new_data['@type'] = None
+        new_data['@relation_type'] = None
         result.append(new_data)
     return result
 
@@ -2351,3 +2377,218 @@ def get_datacite_autofill_item(item_id):
         if jpcoar_item.get(key) is not None:
             datacite_req_item[key] = jpcoar_item.get(key)
     return datacite_req_item
+
+@cached_api_json(timeout=50, key_prefix="arXiv_data")
+def get_arXiv_record_data(doi, item_type_id, exclude_duplicate_lang=True):
+    """Get record data base on arXiv API.
+
+    Args:
+        doi (str): The DOI of the item.
+        item_type_id (int): The item type ID.
+        exclude_duplicate_lang (bool, optional): Whether to exclude duplicate languages in the result. Defaults to True.
+
+    Returns:
+        list: A list of dictionaries containing the record data from arXiv.
+    """
+    result = list()
+    api_response = arXivURL(doi).get_data()
+    if api_response["error"] \
+            or not isinstance(api_response['response'], dict):
+        return result
+    api_data = get_arXiv_data_by_key(api_response, 'all')
+    items = ItemTypes.get_by_id(item_type_id)
+    if items is None:
+        return result
+    elif items.form is not None:
+        autofill_key_tree = get_autofill_key_tree(
+            items.form, get_arXiv_autofill_item(item_type_id))
+        result = build_record_model(
+            autofill_key_tree, api_data, items.schema, exclude_duplicate_lang
+        )
+    return result
+
+def get_arXiv_data_by_key(api, keyword):
+    """Get data from DATACITE based on keyword.
+
+    Args:
+        api (dict): The API response data.
+        keyword (str): The keyword to search for in the API data.
+
+    Returns:
+        dict: A dictionary containing the data for the specified keyword.
+    """
+
+    data_response = api['response']
+    result = dict()
+    if data_response is None:
+        return result
+    data = data_response
+
+    if keyword == 'title':
+        result[keyword] = get_arXiv_title_data(data['feed']['entry'].get('title'))
+    elif keyword == 'identifier':
+        result[keyword] = get_arXiv_identifier_data(data['feed']['entry'].get('id'))
+    elif keyword == 'date':
+        result[keyword] = get_arXiv_date_data(data['feed']['entry'].get('published'),data['feed']['entry'].get('updated'))
+    elif keyword == 'description':
+        result[keyword] = get_arXiv_description_data(data['feed']['entry'].get('summary'),data['feed']['entry'].get('arxiv:comment'))
+    elif keyword == 'creator' :
+        result[keyword] = get_arXiv_creator_data(data['feed']['entry'].get('author'))
+    elif keyword =='relation' :
+        result[keyword] = get_arXiv_relation_data(data['feed']['entry'].get('link'),data['feed']['entry'].get('arxiv:doi'))
+    elif keyword == 'subject' :
+        result[keyword] = get_arXiv_subject_data(data['feed']['entry'].get('category'),data['feed']['entry'].get('arxiv:primary_category'))
+    elif keyword == 'all':
+        for key in current_app.config.get("WEKO_WORKSPACE_ARXIV_REQUIRED_ITEM"):
+            result[key] = get_arXiv_data_by_key(api, key).get(key)
+    return result
+
+
+def get_arXiv_title_data(data):
+    
+    result = list()
+    new_data = dict()
+    new_data["@value"] = data
+
+    result.append(new_data)
+    return result
+
+def get_arXiv_identifier_data(data_id):
+    result = list()
+    new_data_id = dict()
+    result_id = list()
+
+    new_data_id['@value'] = data_id
+    new_data_id['@type'] = 'URI'
+
+    result_id.append(new_data_id)
+    result.append(result_id)
+    
+    return result
+
+def get_arXiv_date_data(data_published,data_updated):
+    result = list()
+    new_data_published = dict()
+    result_published = list()
+
+    new_data_published['@value'] = data_published.split("T")[0]
+    new_data_published['@type'] = 'Submitted'
+
+    new_data_updated = dict()
+    result_updated = list()
+    new_data_updated['@value'] = data_updated.split("T")[0]
+    new_data_updated['@type'] = 'Updated'
+
+    result_published.append(new_data_published)
+    result_updated.append(new_data_updated)
+
+    result.append(result_published)
+    result.append(result_updated)
+    return result
+
+def get_arXiv_description_data(data_summary,data_comment):
+    result = list()
+    new_data_summary = dict()
+    result_summary = list()
+
+    new_data_summary['@value'] = data_summary
+    new_data_summary['@type'] = 'Abstract'
+
+    new_data_comment = dict()
+    result_comment = list()
+
+    new_data_comment['@value'] = data_comment
+    new_data_comment['@type'] = 'Other'
+
+    result_summary.append(new_data_summary)
+    result_comment.append(new_data_comment)
+
+    result.append(result_summary)
+    result.append(result_comment)
+    return result
+
+def get_arXiv_creator_data(data_name):
+    result = list()
+
+    if isinstance(data_name, dict):
+        data_name=[data_name]
+    
+    for data in data_name:
+       new_data_name = dict()
+       name_result = list()
+
+       name=data.get('name')
+       affiliation=data.get('arxiv:affiliation')
+       new_data_name['@value'] = name
+       new_data_name['@affiliation'] = affiliation
+
+       name_result.append(new_data_name)
+       result.append(name_result)
+    return result
+
+def get_arXiv_relation_data(data_relation,data_doi):
+    result = list()
+
+    if isinstance(data_relation, dict):
+        data_relation=[data_relation]
+
+    for data in data_relation:
+        new_data_relation=dict()
+        relation_result=list()
+
+        link=data.get('@href')
+        new_data_relation['@value'] = link
+        new_data_relation['@type']='URI'
+        new_data_relation['@relation_type'] = 'isFormatOf'
+
+        relation_result.append(new_data_relation)
+        result.append(relation_result)
+
+    new_data_doi = dict()
+    doi_result = list()
+
+    new_data_doi['@value'] = data_doi
+    new_data_doi['@type'] = 'DOI'
+    new_data_doi['@relation_type'] = 'isVersionOf'
+
+    doi_result.append(new_data_doi)
+    result.append(doi_result)
+    return result
+
+def get_arXiv_subject_data(data_category,data_primary_category):
+    result = list()
+
+    primary_category=data_primary_category.get('@term')
+
+    if isinstance(data_category, dict):
+        data_category=[data_category]
+
+    for data in data_category:
+        new_data_category=dict()
+        category_result=list()
+        category=data.get('@term')
+        new_data_category['@value'] = category
+        new_data_category['@scheme'] = 'Other'
+        category_result.append(new_data_category)
+        if(category == primary_category):
+            result.insert(0,category_result)
+        else :
+            result.append(category_result)
+    return result
+
+def get_arXiv_autofill_item(item_id):
+    
+    jpcoar_item = get_item_id(item_id)
+    arXiv_req_item = dict()
+    for key in current_app.config.get("WEKO_WORKSPACE_ARXIV_REQUIRED_ITEM"):
+        if jpcoar_item.get(key) is not None:
+            arXiv_req_item[key] = jpcoar_item.get(key)
+        
+        if key == 'identifier':
+            for i in range(len(arXiv_req_item[key])):
+                if not ( "system_identifier_" in  str(arXiv_req_item[key][i].get(key).get("model_id"))):
+                   arXiv_req_item[key]=arXiv_req_item[key][i].get(key)
+                   break
+        
+    return arXiv_req_item
+

@@ -11,6 +11,7 @@ WEKO3 リポジトリは **public** なので、所見(sec_*)や実証結果(dyn
     weko3_api_list.tsv        台帳(24列)
     api_snapshot.json         経路のベースライン
     reconcile_allow.json      実機に無い行の許可リスト
+    no_registry.tsv           no(主キー)の払い出し記録。廃止した番号も残す
 """
 import os
 import sys

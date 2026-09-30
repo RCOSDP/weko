@@ -103,6 +103,8 @@ SETTINGS_TEMPLATE = 'weko_theme/page_setting.html'
 
 COVER_TEMPLATE = 'weko_theme/page_cover.html'
 
+WEKO_THEME_PREVIEW_WIDGET_DESIGN = 'weko_theme/preview_widget_design.html'
+
 WEKO_THEME_INSTANCE_DATA_DIR = 'data'
 """ユーザーデータのィレクトリ."""
 

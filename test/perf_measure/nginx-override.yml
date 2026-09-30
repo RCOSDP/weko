@@ -1,0 +1,9 @@
+# Override to avoid a port clash with the local kind/k8s ingress that already
+# binds host ports 80/443. Bring nginx up with:
+#   docker compose -f docker-compose.arm64.yml -f perf_measure/nginx-override.yml \
+#       -p weko up -d nginx
+services:
+  nginx:
+    ports:
+      - "18080:80"
+      - "18443:443"

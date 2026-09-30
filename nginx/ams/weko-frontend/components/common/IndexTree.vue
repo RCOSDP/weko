@@ -41,6 +41,7 @@ const emits = defineEmits(['clickIndex']);
 /////////////////////////////////// */
 
 const conditions = reactive({ type: '0', keyword: '' });
+const appConf = useAppConfig();
 
 /* ///////////////////////////////////
 // function
@@ -69,6 +70,6 @@ function searchFromItem(indexId: string) {
   }
 
   emits('clickIndex');
-  navigateTo('/search/' + indexId);
+  navigateTo(`${appConf.amsPath ?? ''}/search/${indexId}`);
 }
 </script>

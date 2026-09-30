@@ -103,6 +103,13 @@ def base_app(instance_path):
         SEARCH_ELASTIC_HOSTS="elasticsearch",
         SEARCH_INDEX_PREFIX="test-",
         COMMUNITIES_OAI_FORMAT=COMMUNITIES_OAI_FORMAT,
+        # response.header() resolves index paths through weko-index-tree,
+        # whose role check reads these two straight out of the config.
+        WEKO_PERMISSION_SUPER_ROLE_USER=[
+            'System Administrator',
+            'Repository Administrator',
+        ],
+        WEKO_PERMISSION_ROLE_COMMUNITY=['Community Administrator'],
     )
     if not hasattr(app_, 'cli'):
         from flask_cli import FlaskCLI

@@ -18,12 +18,24 @@
   # MA 02111-1307, USA.
   #}
   
+  <pre class="hide" id="unread">{{_('unread')}}</pre>
+  <pre class="hide" id="action">{{_('Action')}}</pre>
+  <pre class="hide" id="item_text">{{_('Item')}}</pre>
+  <pre class="hide" id="stats">{{_('Stats')}}</pre>
+  <pre class="hide" id="info_text">{{_('Info')}}</pre>
+  <pre class="hide" id="edit_text">{{_('Edit')}}</pre>
+  <pre class="hide" id="please_select">{{_('Please select the following option:')}}</pre>
+  <pre class="hide" id="select_item">{{_('Selected Items')}}</pre>
+  <pre class="hide" id="all_item">{{_('All Items')}}</pre>
+  <pre class="hide" id="cancel">{{_('Cancel')}}</pre>
+  <pre class="hide" id="no_items">{{_('Error: There is no Selected items. Please check the item you want to export')}}</pre>
+  <pre class="hide" id="export_header">{{ export_header }}</pre>
   <div id="search" class="workspace-body-contents">
     <div id="search_res">
       <div class="panel panel-default">
         <div role="navigation" style="display: flex; flex-direction: column; width: 300px;">
           <div id="search-container"></div>
-          <input type="hidden" id="placeholder" value="{{_('Please press Enter after inputting to search.')}}" />
+          <input type="hidden" id="placeholder" value="{{_('Type and press enter to search')}}" />
             <input type="hidden" id="showNoResultsMsg" value="{{_('No results found matching your search criteria.')}}" />
           </div>
           <span style="margin-left: 5px;"><strong>{{username}}</strong></span>
@@ -33,7 +45,6 @@
             <div class="form-inline flow-root">
               <div class="pull-left">
                 <div class="form-group">
-                  <input type="checkbox" id="check_all">
                   <a href="{{ url_for('weko_workspace.itemregister') }}" class="btn btn-primary">
                     <i class="bi bi-folder-plus"></i>
                   </a>
@@ -48,7 +59,7 @@
               <div class="pull-right">
                 <div class="form-group">
                   <a href="javascript:void(0)" class="btn btn-primary" id="groupYearicon">
-                    <i class="bi bi-diagram-3"></i>
+                    {{_('Grouping by year')}}
                   </a>
                   <a id="toggleButton" class="btn btn-primary" data-toggle="dropdown" href="javascript:void(0)" aria-expanded="false">{{_('Filter Display')}}<strong class="caret"></strong></a>
                   <select class="form-control" id="sort_item">
@@ -78,8 +89,8 @@
                       <div id="filter-container" class="container testimonial-group"></div>
                       <input type="hidden" id="remindMsg" value="{{_('This item is excluded from the default condition save target.')}}" />
                       <input type="hidden" id="confirmDeleteMsg" value="{{_('Would you like to remove the filter conditions?')}}" />
-                      <div class="button-group">
-                        <button id="detail-search-btn" type="button" class="btn btn-primary">
+                      <div class="button-group" style="display:flex; justify-content: center; flex-wrap: nowrap; overflow-x: auto;">
+                        <button id="detail-search-btn" type="button" class="btn btn-primary"style="margin-left:27%">
                           <span class="glyphicon glyphicon-search"></span>
                           {{_('Filter')}}
                         </button>
@@ -87,12 +98,12 @@
                           <span class="glyphicon glyphicon-remove"></span>
                           {{_('Clear')}}
                         </button>
-                        <button id="save-search-btn" type="button" class="btn btn-primary">
+                        <button id="save-search-btn" type="button" class="btn btn-primary" style="margin-left:15%">
                           <span class="glyphicon glyphicon-save"></span>
                           {{_('Save')}}
                         </button>
-                        <button id="reset-search-btn" type="button" class="btn btn-default">
-                          <span class="glyphicon glyphicon-remove"></span>
+                        <button id="reset-search-btn" type="button" class="btn btn-danger">
+                          <span class="bi bi-arrow-clockwise" style="font-size: 1.5rem;"></span>
                           {{_('Reset')}}
                         </button>
                       </div>

@@ -20,6 +20,7 @@ from invenio_search import current_search, current_search_client
 
 from invenio_indexer import cli
 from invenio_indexer.api import RecordIndexer
+from tests.conftest import wait_for_messages
 
 
 # .tox/c1/bin/pytest --cov=invenio_indexer tests/test_cli.py::test_run -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -92,6 +93,9 @@ def test_reindex(app, script_info):
                             ['--yes-i-know', '-t', 'recid'],
                             obj=script_info)
         assert 0 == res.exit_code
+        # The publish returns before the broker hands the message to a
+        # consumer, so `run` can otherwise find the queue empty.
+        wait_for_messages(app, 1)
         res = runner.invoke(cli.run, [], obj=script_info)
         assert 0 == res.exit_code
         current_search.flush_and_refresh(index)
@@ -110,6 +114,9 @@ def test_reindex(app, script_info):
                             ['--yes-i-know', '-t', 'recid'],
                             obj=script_info)
         assert 0 == res.exit_code
+        # The publish returns before the broker hands the message to a
+        # consumer, so `run` can otherwise find the queue empty.
+        wait_for_messages(app, 1)
         res = runner.invoke(cli.run, [], obj=script_info)
         assert 0 == res.exit_code
         current_search.flush_and_refresh(index)

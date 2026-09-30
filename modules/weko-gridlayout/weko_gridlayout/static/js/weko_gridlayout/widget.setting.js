@@ -1424,6 +1424,7 @@ class ComponentButtonLayout extends React.Component {
     this.addAlert = this.addAlert.bind(this);
     this.sendRequest = this.sendRequest.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
+    this.previewCommand = this.previewCommand.bind(this);
   }
 
   validateData(request) {
@@ -1735,6 +1736,127 @@ class ComponentButtonLayout extends React.Component {
     }
   }
 
+  previewCommand(event) {
+    event.preventDefault();
+    let requestUrl = "/admin/widgetdesign/preview/";
+
+    // Convert data
+    let data = this.props.data;
+    let multiLangData = data['multiLangSetting'];
+    let currentLabel = data['label'];
+    let currentDescription = data['settings'];
+    let currentLanguage = $("#language")[0].value;
+
+    let noData = true;
+    for (let key in currentDescription) {
+      if (currentDescription.hasOwnProperty(key) && currentDescription[key]) {
+        noData = false;
+        break;
+      }
+    }
+    if (currentLabel || !noData) {
+      let currentLangData = {
+        label: currentLabel,
+      };
+      if ([FREE_DESCRIPTION_TYPE, NOTICE_TYPE, ACCESS_COUNTER, HEADER_TYPE, FOOTER_TYPE].indexOf(data['widget_type']) > -1) {
+        currentLangData["description"] = currentDescription;
+      }
+      multiLangData[currentLanguage] = currentLangData;
+    } else {
+      delete multiLangData[currentLanguage];
+    }
+    if ((data['widget_type'] + "") === ACCESS_COUNTER) {
+      for (let key in multiLangData) {
+        if (multiLangData.hasOwnProperty(key)) {
+          let value = multiLangData[key];
+          value.description['access_counter'] = data.accessInitValue;
+          value.description['count_start_date'] = data.countStartDate;
+        }
+      }
+    }
+    this.props.getValueOfField('multiLangData', multiLangData);
+    this.props.getValueOfField('accessInitValue', data.accessInitValue);
+    this.props.getValueOfField('countStartDate', data.countStartDate);
+    data['multiLangSetting'] = multiLangData;
+    delete data['accessInitValue'];
+    delete data['countStartDate'];
+
+    if (data['widget_type'] === ACCESS_COUNTER) {
+      data.other_message = data.multiLangSetting[currentLanguage].description.other_message
+      data.preceding_message = data.multiLangSetting[currentLanguage].description.preceding_message
+      data.following_message = data.multiLangSetting[currentLanguage].description.following_message
+      data.access_counter = 0
+      data.created_date = data.nowDate
+      data.count_start_date = data.multiLangSetting[currentLanguage].description.count_start_date
+    } else if (data['widget_type'] === NOTICE_TYPE) {
+      data.read_more = data.multiLangSetting[currentLanguage].description.read_more
+      data.hide_the_rest = data.multiLangSetting[currentLanguage].description.hide_the_rest
+    } else if (data['widget_type'] === NEW_ARRIVALS) {
+      data = { ...data, ...data.settings }
+    } else if (data['widget_type'] === MENU_TYPE) {
+      data = { ...data, ...data.settings }
+
+      const endpoints = []
+      const options = $("#showPageSelect option").map(function () {
+        return {
+          value: $(this).val(),
+          label: $(this).text()
+        };
+      }).get();
+
+      options.forEach((item) => {
+        if (data.menu_show_pages.includes(item.value) || data.menu_show_pages.includes(Number(item.value))) {
+          endpoints.push({
+            is_main_layout: false,
+            title:item.label,
+            url: "/"
+          })
+        }
+      })
+      localStorage.setItem(`menu_endpoint_${this.props.data_id}`, JSON.stringify({
+        endpoints
+      }));
+    }
+
+    data.multiLangSetting = data.multiLangSetting[currentLanguage]
+    data.type = data.widget_type
+    data.name = data.multiLangSetting.label
+    data.x = 0
+    data.y = 0
+    data.height = 10
+    data.width = 10
+    data.widget_id = this.props.data_id
+    data.id = data.repository
+
+    let widgetSettingData = {
+    ...data
+    }
+
+    if (widgetSettingData['type'] !== HEADER_TYPE) {
+      delete widgetSettingData['fixedHeaderBackgroundColor']
+      delete widgetSettingData['fixedHeaderTextColor']
+    }
+
+    delete widgetSettingData['widget_type']
+    delete widgetSettingData['repository']
+    delete widgetSettingData['label']
+    delete widgetSettingData['settings']
+    delete widgetSettingData['enable']
+    delete widgetSettingData['language']
+    delete widgetSettingData['multiLanguageChange']
+    delete widgetSettingData['nowDate']
+    delete widgetSettingData['isDisableSaveBtn']
+
+    const widgetListForm = {
+      "error": "",
+      "widget-settings": [widgetSettingData]
+    }
+
+    localStorage.setItem("widget_setting_data", JSON.stringify(widgetListForm));
+    window.open(requestUrl, '_blank');
+
+  }
+
   render() {
     if (this.props.is_edit) {
       return (
@@ -1746,6 +1868,11 @@ class ComponentButtonLayout extends React.Component {
               <span className="glyphicon glyphicon-download-alt"
                     aria-hidden="true"/>
               &nbsp;Save
+            </button>
+            <button onClick={this.previewCommand}
+              className="btn btn-success action-button style-my-button">
+              <span className="glyphicon glyphicon-eye-open" aria-hidden="true" />
+              &nbsp;Preview
             </button>
             <button onClick={this.handleCancel}
                className="btn btn-info cancel-button style-my-button">
@@ -1770,6 +1897,11 @@ class ComponentButtonLayout extends React.Component {
               <span className="glyphicon glyphicon-download-alt"
                     aria-hidden="true"/>
               &nbsp;Save
+            </button>
+            <button onClick={this.previewCommand}
+              className="btn btn-success action-button style-my-button">
+              <span className="glyphicon glyphicon-eye-open" aria-hidden="true" />
+              &nbsp;Preview
             </button>
             <button onClick={this.handleCancel}
                className="btn btn-info cancel-button style-my-button">

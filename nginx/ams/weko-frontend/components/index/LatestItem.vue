@@ -61,7 +61,7 @@
             to=""
             event=""
             style="cursor: pointer"
-            @click="throughDblClick(`/detail?sess=top&number=${item.id}`)">
+            @click="throughDblClick(`${appConf.amsPath ?? ''}/detail?sess=top&number=${item.id}`)">
             <span v-if="itemInfo.hasOwnProperty(appConf.roCrate.root.title)">
               {{ itemInfo[appConf.roCrate.root.title][0] }}
             </span>
@@ -125,7 +125,7 @@
             <p class="data-note text-14px">
               {{ $t('file') + '：' }}
               <span class="font-medium">
-                <span v-if="itemInfo.mainEntity.length < 1" class="text-14px">
+                <span v-if="getFileLength(itemInfo.mainEntity) < 1" class="text-14px">
                   {{ $t('unexist') }}
                 </span>
                 <NuxtLink
@@ -133,7 +133,7 @@
                   class="underline text-miby-link-blue text-14px cursor-pointer"
                   to=""
                   event=""
-                  @click="throughDblClick(`/files?number=${item.id}`)">
+                  @click="throughDblClick(`${appConf.amsPath ?? ''}/files?number=${item.id}`)">
                   {{ $t('exist') + `（${getFileLength(itemInfo.mainEntity)}）` }}
                 </NuxtLink>
               </span>

@@ -1,0 +1,556 @@
+{
+  "INDEX_MESSAGE_ERROR_AUTH": {
+    "msgid": "INDEX_E_0001",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "INDEX_MESSAGE_ERROR_SERVER": {
+    "msgid": "INDEX_E_0002",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "INDEX_MESSAGE_ERROR_GET_LATEST_ITEM": {
+    "msgid": "INDEX_E_0003",
+    "msgstr": "message.error.getLatestItem",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "INDEX_MESSAGE_ERROR_FETCH": {
+    "msgid": "INDEX_E_0004",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "INDEX_MESSAGE_ERROR": {
+    "msgid": "INDEX_E_0005",
+    "msgstr": "message.error.error",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "CONTACT_MESSAGE_SENDING_FAILED": {
+    "msgid": "CONTACT_E_0001",
+    "msgstr": "message.sendingFailed",
+    "position": "toast-top pt-20",
+    "width": "w-auto",
+    "loglevel": "error"
+  },
+  "DETAIL_ITEM_MESSAGE_ERROR_AUTH": {
+    "msgid": "DETAIL_E_0001",
+    "msgstr": "message.error.noItemAuth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_ITEM_MESSAGE_OAUTH_ERROR": {
+    "msgid": "DETAIL_E_0002",
+    "msgstr": "message.error.oauthError",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_ITEM_MESSAGE_ERROR_SERVER": {
+    "msgid": "DETAIL_E_0003",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_ITEM_MESSAGE_ERROR_GET_ITEM_DETAIL": {
+    "msgid": "DETAIL_E_0004",
+    "msgstr": "message.error.getItemDetail",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_ITEM_MESSAGE_ERROR_FETCH": {
+    "msgid": "DETAIL_E_0005",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_SEARCH_MESSAGE_ERROR_AUTH": {
+    "msgid": "DETAIL_E_0006",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_SEARCH_MESSAGE_OAUTH_ERROR": {
+    "msgid": "DETAIL_E_0007",
+    "msgstr": "message.error.oauthError",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_SEARCH_MESSAGE_ERROR_SERVER": {
+    "msgid": "DETAIL_E_0008",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_SEARCH_MESSAGE_ERROR_GET_INDEX": {
+    "msgid": "DETAIL_E_0009",
+    "msgstr": "message.error.getIndex",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_SEARCH_MESSAGE_ERROR_FETCH": {
+    "msgid": "DETAIL_E_0010",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_INDEX_MESSAGE_ERROR_AUTH": {
+    "msgid": "DETAIL_E_0011",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_INDEX_MESSAGE_OAUTH_ERROR": {
+    "msgid": "DETAIL_E_0012",
+    "msgstr": "message.error.oauthError",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_INDEX_MESSAGE_ERROR_SERVER": {
+    "msgid": "DETAIL_E_0013",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_INDEX_MESSAGE_ERROR_GET_INDEX": {
+    "msgid": "DETAIL_E_0014",
+    "msgstr": "message.error.getIndex",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_INDEX_MESSAGE_ERROR_FETCH": {
+    "msgid": "DETAIL_E_0015",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DETAIL_MESSAGE_SENDING_FAILED": {
+    "msgid": "DETAIL_E_0016",
+    "msgstr": "message.sendingFailed",
+    "position": "toast-top pt-20",
+    "width": "w-auto",
+    "loglevel": "error"
+  },
+  "DETAIL_MESSAGE_ERROR": {
+    "msgid": "DETAIL_E_0017",
+    "msgstr": "message.error.error",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_DETAIL_MESSAGE_ERROR_AUTH": {
+    "msgid": "FILES_E_0001",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_DETAIL_MESSAGE_ERROR_SERVER": {
+    "msgid": "FILES_E_0002",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_DETAIL_MESSAGE_ERROR_GET_ITEM_DETAIL": {
+    "msgid": "FILES_E_0003",
+    "msgstr": "message.error.getItemDetail",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_DETAIL_MESSAGE_ERROR_FETCH": {
+    "msgid": "FILES_E_0004",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_ALL_MESSAGE_ERROR_AUTH": {
+    "msgid": "FILES_E_0005",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_ALL_MESSAGE_ERROR_SERVER": {
+    "msgid": "FILES_E_0006",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_ALL_MESSAGE_ERROR_DOWNLOAD_ALL": {
+    "msgid": "FILES_E_0007",
+    "msgstr": "message.error.downloadAll",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_ALL_MESSAGE_ERROR_FETCH": {
+    "msgid": "FILES_E_0008",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_SELECT_MESSAGE_ERROR_AUTH": {
+    "msgid": "FILES_E_0009",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_SELECT_MESSAGE_ERROR_SERVER": {
+    "msgid": "FILES_E_0010",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_SELECT_MESSAGE_ERROR_DOWNLOAD_SELECTED": {
+    "msgid": "FILES_E_0011",
+    "msgstr": "message.error.downloadSelected",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_SELECT_MESSAGE_ERROR_FETCH": {
+    "msgid": "FILES_E_0012",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "FILES_MESSAGE_ERROR": {
+    "msgid": "FILES_E_0013",
+    "msgstr": "message.error.error",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_SERVER": {
+    "msgid": "LOGIN_E_0001",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_REQUEST": {
+    "msgid": "LOGIN_E_0002",
+    "msgstr": "message.error.login",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_FETCH": {
+    "msgid": "LOGIN_E_0003",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_LOGIN_BLOCK": {
+    "msgid": "LOGIN_E_0004",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_NO_USER_INFORMATION": {
+    "msgid": "LOGIN_E_0005",
+    "msgstr": "message.error.noUserInformation",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_SHIB_MESSAGE_ERROR_SERVER": {
+    "msgid": "LOGIN_E_0006",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_SHIB_CACHE_PREFIX": {
+    "msgid": "LOGIN_E_0007",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_SHIB_SESSION_ID": {
+    "msgid": "LOGIN_E_0008",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_SHIB_ATTRS": {
+    "msgid": "LOGIN_E_0009",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_BIND_RELATION_INFO": {
+    "msgid": "LOGIN_E_0010",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_MESSAGE_ERROR_FAILED_GET_RELATION": {
+    "msgid": "LOGIN_E_0011",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "LOGIN_SHIB_MESSAGE_ERROR_LOGIN_FAILED": {
+    "msgid": "LOGIN_E_0012",
+    "msgstr": "message.error.loginFailed",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_SEARCH_MESSAGE_ERROR_AUTH": {
+    "msgid": "ID_E_0001",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_SEARCH_MESSAGE_ERROR_SERVER": {
+    "msgid": "ID_E_0002",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_SEARCH_MESSAGE_ERROR_REQUEST": {
+    "msgid": "ID_E_0003",
+    "msgstr": "message.error.search",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_SEARCH_MESSAGE_ERROR_FETCH": {
+    "msgid": "ID_E_0004",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_INDEX_MESSAGE_ERROR_AUTH": {
+    "msgid": "ID_E_0005",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_INDEX_MESSAGE_ERROR_SERVER": {
+    "msgid": "ID_E_0006",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_INDEX_MESSAGE_ERROR_GET_INDEX": {
+    "msgid": "ID_E_0007",
+    "msgstr": "message.error.getIndex",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_INDEX_MESSAGE_ERROR_FETCH": {
+    "msgid": "ID_E_0008",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_DOWNLOAD_MESSAGE_ERROR_AUTH": {
+    "msgid": "ID_E_0009",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_DOWNLOAD_MESSAGE_ERROR_SERVER": {
+    "msgid": "ID_E_0010",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_DOWNLOAD_MESSAGE_ERROR_DOWNLOAD_RESULT": {
+    "msgid": "ID_E_0011",
+    "msgstr": "message.error.downloadResult",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_DOWNLOAD_MESSAGE_ERROR_FETCH": {
+    "msgid": "ID_E_0012",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "ID_MESSAGE_ERROR": {
+    "msgid": "ID_E_0013",
+    "msgstr": "message.error.error",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+
+  "SEARCH_ITEM_MESSAGE_ERROR_AUTH": {
+    "msgid": "SEARCH_INDEX_E_0001",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_ITEM_MESSAGE_ERROR_SERVER": {
+    "msgid": "SEARCH_INDEX_E_0002",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_ITEM_MESSAGE_ERROR_REQUEST": {
+    "msgid": "SEARCH_INDEX_E_0003",
+    "msgstr": "message.error.search",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_ITEM_MESSAGE_ERROR_FETCH": {
+    "msgid": "SEARCH_INDEX_E_0004",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_DOWNLOAD_MESSAGE_ERROR_AUTH": {
+    "msgid": "SEARCH_INDEX_E_0005",
+    "msgstr": "message.error.auth",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_DOWNLOAD_MESSAGE_ERROR_SERVER": {
+    "msgid": "SEARCH_INDEX_E_0006",
+    "msgstr": "message.error.server",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_DOWNLOAD_MESSAGE_ERROR_RESULT": {
+    "msgid": "SEARCH_INDEX_E_0007",
+    "msgstr": "message.error.downloadResult",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_DOWNLOAD_MESSAGE_ERROR_FETCH": {
+    "msgid": "SEARCH_INDEX_E_0008",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "SEARCH_INDEX_MESSAGE_ERROR": {
+    "msgid": "SEARCH_INDEX_E_0009",
+    "msgstr": "message.error.error",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DOWNLOAD_RANK_MESSAGE_ERROR_DOWNLOAD": {
+    "msgid": "DOWNLOAD_RANK_E_0001",
+    "msgstr": "message.error.download",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "DOWNLOAD_RANK_MESSAGE_ERROR_FETCH": {
+    "msgid": "DOWNLOAD_RANK_E_0002",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "TABLE_STYLE_MESSAGE_ERROR_DOWNLOAD": {
+    "msgid": "TABLE_STYLE_E_0001",
+    "msgstr": "message.error.download",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "TABLE_STYLE_MESSAGE_ERROR_FETCH": {
+    "msgid": "TABLE_STYLE_E_0002",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "TABLE_STYLE_MESSAGE_ERROR_PREVIEW": {
+    "msgid": "TABLE_STYLE_E_0003",
+    "msgstr": "message.error.preview",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "TABLE_STYLE_MESSAGE_ERROR_FETCH_PREVIEW": {
+    "msgid": "TABLE_STYLE_E_0004",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "VIEWS_NUMBER_MESSAGE_ERROR": {
+    "msgid": "VIEWS_NUMBER_E_0001",
+    "msgstr": "message.error.error",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "VIEWS_NUMBER_MESSAGE_ERROR_GET_ITEM": {
+    "msgid": "VIEWS_NUMBER_E_0002",
+    "msgstr": "message.error.getItemViewsNumber",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  },
+  "VIEWS_NUMBER_MESSAGE_ERROR_FETCH": {
+    "msgid": "VIEWS_NUMBER_E_0003",
+    "msgstr": "message.error.fetch",
+    "position": "",
+    "width": "w-full",
+    "loglevel": "error"
+  }
+}

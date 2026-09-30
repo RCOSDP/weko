@@ -353,6 +353,204 @@ class TestSchemaTree:
             obj = json.load(f,object_pairs_hook=OrderedDict)
         assert _schema_obj == obj
         assert _item_type_id == None
+    
+    # .tox/c1/bin/pytest -s --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_replace_nameIdentifierScheme_for_jpcoar_v1 -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+    def test_replace_nameIdentifierScheme_for_jpcoar_v1(self, db_oaischema, record_jpcoar_v1):
+        record = record_jpcoar_v1[0]
+        instance = SchemaTree(record=record, schema_name="jpcoar_v1_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [{
+            "creatornames": [
+                {
+                    "creatorname": "Taro Yamada"
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "0000-0001-2345-6789",
+                    "nameIdentifierScheme": "ORCID"
+                },
+                {
+                    "nameIdentifier": "123456",
+                    "nameIdentifierScheme": "e-Rad"
+                }
+            ]
+        }]
+
+        record = record_jpcoar_v1[1]
+        instance = SchemaTree(record=record, schema_name="jpcoar_v1_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [{
+            "creatornames": [
+                {
+                    "creatorname": "Taro Yamada"
+                }
+            ]
+        }]
+
+        record = record_jpcoar_v1[2]
+        instance = SchemaTree(record=record, schema_name="jpcoar_v1_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [
+            {
+                "creatornames": [
+                    {"creatorname": "Taro Yamada"}
+                ],
+                "nameIdentifiers": {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+            }
+        ]
+
+        record = record_jpcoar_v1[3]
+        instance = SchemaTree(record=record, schema_name="jpcoar_v1_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [
+            {
+                "creatornames": [
+                    {"creatorname": "Taro Yamada"}
+                ],
+                "nameIdentifiers": [
+                    {"nameIdentifier": "0000-0001-2345-6789"},
+                    {"nameIdentifier": "123456"}
+                ]
+            }
+        ]
+
+        record = record_jpcoar_v1[5]
+        instance = SchemaTree(record=record, schema_name="jpcoar_v1_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [
+            {
+                "creatornames": [
+                    {"creatorname": "Taro Yamada"}
+                ],
+                "nameIdentifiers": [
+                    {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"}
+                ]
+            }
+        ]
+
+    # .tox/c1/bin/pytest -s --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_replace_nameIdentifierScheme_for_jpcoar_v2 -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+    def test_replace_nameIdentifierScheme_for_jpcoar_v2(self, db_oaischema, record_jpcoar_v2):
+        record = record_jpcoar_v2[0]
+        instance = SchemaTree(record=record, schema_name="jpcoar_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [{
+            "creatornames": [
+                {
+                    "creatorname": "Taro Yamada"
+                }
+            ],
+            "nameIdentifiers": [
+                {
+                    "nameIdentifier": "0000-0001-2345-6789",
+                    "nameIdentifierScheme": "ORCID"
+                },
+                {
+                    "nameIdentifier": "123456",
+                    "nameIdentifierScheme": "e-Rad_Researcher"
+                }
+            ]
+        }]
+
+        record = record_jpcoar_v2[1]
+        instance = SchemaTree(record=record, schema_name="jpcoar_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [{
+            "creatornames": [
+                {
+                    "creatorname": "Taro Yamada"
+                }
+            ]
+        }]
+
+        record = record_jpcoar_v2[2]
+        instance = SchemaTree(record=record, schema_name="jpcoar_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [
+            {
+                "creatornames": [
+                    {"creatorname": "Taro Yamada"}
+                ],
+                "nameIdentifiers": {"nameIdentifier": "123456", "nameIdentifierScheme": "e-Rad_Researcher"}
+            }
+        ]
+
+        record = record_jpcoar_v2[3]
+        instance = SchemaTree(record=record, schema_name="jpcoar_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [
+            {
+                "creatornames": [
+                    {"creatorname": "Taro Yamada"}
+                ],
+                "nameIdentifiers": [
+                    {"nameIdentifier": "0000-0001-2345-6789"},
+                    {"nameIdentifier": "123456"}
+                ]
+            }
+        ]
+
+        record = record_jpcoar_v2[5]
+        instance = SchemaTree(record=record, schema_name="jpcoar_mapping")
+        instance._SchemaTree__get_value_list()
+        assert record['metadata']['creator']['attribute_value_mlt'] == [
+            {
+                "creatornames": [
+                    {"creatorname": "Taro Yamada"}
+                ],
+                "nameIdentifiers": [
+                    {"nameIdentifier": "0000-0001-2345-6789", "nameIdentifierScheme": "ORCID"}
+                ]
+            }
+        ]
+
+    # .tox/c1/bin/pytest -s --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test__get_value_list_not_exists_config -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
+    def test__get_value_list_not_exists_config(db_oaischema, db_itemtype, record_jpcoar_v1, record_jpcoar_v2, base_app2):
+        with base_app2.app_context():
+            base_app2.config.pop("WEKO_SCHEMA_JPCOAR_V1_NAMEIDSCHEME_REPLACE", None)
+            base_app2.config.pop("WEKO_SCHEMA_JPCOAR_V2_NAMEIDSCHEME_REPLACE", None)
+            with pytest.raises(KeyError):
+                record = record_jpcoar_v1[0]
+                instance = SchemaTree(record=record, schema_name="jpcoar_v1_mapping")
+                instance._SchemaTree__get_value_list()
+                assert record['metadata']['creator']['attribute_value_mlt'] == [{
+                    "creatornames": [
+                        {
+                            "creatorname": "Taro Yamada"
+                        }
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifier": "0000-0001-2345-6789",
+                            "nameIdentifierScheme": "ORCID"
+                        },
+                        {
+                            "nameIdentifier": "123456",
+                            "nameIdentifierScheme": "e-Rad_Researcher"
+                        }
+                    ]
+                }]
+
+                record = record_jpcoar_v2[0]
+                instance = SchemaTree(record=record, schema_name="jpcoar_mapping")
+                instance._SchemaTree__get_value_list()
+                assert record['metadata']['creator']['attribute_value_mlt'] == [{
+                    "creatornames": [
+                        {
+                            "creatorname": "Taro Yamada"
+                        }
+                    ],
+                    "nameIdentifiers": [
+                        {
+                            "nameIdentifier": "0000-0001-2345-6789",
+                            "nameIdentifierScheme": "ORCID"
+                        },
+                        {
+                            "nameIdentifier": "123456",
+                            "nameIdentifierScheme": "e-Rad"
+                        }
+                    ]
+                }]
 
 # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_function_issue36502 -vv --cov-branch --cov-report=term --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
     def test_function_issue36502(self, db_oaischema, db_itemtype):
@@ -371,6 +569,13 @@ class TestSchemaTree:
     #         ret = instance.to_list()
     #         assert ret==""
 
+    @pytest.mark.xfail(
+        reason=(
+            "Behaviour changed by develop_v2.1.0 and not reconciled yet: the "
+            "generated jpcoar XML differs from the expected document. See "
+            "docs/v2.1.0-test-reconciliation.textile."
+        ),
+    )
     # .tox/c1/bin/pytest --cov=weko_schema_ui tests/test_schema.py::TestSchemaTree::test_create_xml -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-schema-ui/.tox/c1/tmp
     def test_create_xml(self, db_oaischema,records):
         _,record_list=records

@@ -21,10 +21,12 @@
 """Views for weko-admin."""
 
 import calendar
+import inspect
 import json
 import sys
 import time
 from datetime import timedelta, datetime
+from functools import wraps
 import traceback
 
 from flask import Blueprint, Response, abort, current_app, flash, json, \
@@ -48,6 +50,7 @@ from .models import AdminSettings
 from .api import send_site_license_mail
 from .config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
     WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
+from .permissions import repository_scope_required
 from .models import FacetSearchSetting, SessionLifetime, SiteInfo, AdminSettings
 from .utils import FeedbackMail, StatisticMail, UsageReport, \
     format_site_info_data, get_admin_lang_setting, \
@@ -471,6 +474,7 @@ def get_feedback_mail():
 
 
 @blueprint_api.route('/get_send_mail_history', methods=['GET'])
+@repository_scope_required(repository_id_param='repo_id')
 def get_send_mail_history():
     """API allow to get send mail history.
 
@@ -541,12 +545,54 @@ def resend_failed_mail():
     return jsonify(result)
 
 
+def _is_repository_in_user_scope(repo_id):
+    """Check whether the current user administers the given repository.
+
+    System and Repository Administrators can handle any repository.
+    Other administrators are limited to the repositories they are assigned
+    to, in the same way as the repository selector of the admin screens.
+
+    :param repo_id: Repository id.
+    :return: True if the current user can handle the repository.
+    """
+    from invenio_communities.models import Community
+    super_roles = current_app.config.get(
+        'WEKO_PERMISSION_SUPER_ROLE_USER',
+        [WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_REPO])
+    if any(role.name in super_roles for role in current_user.roles):
+        return True
+    if not repo_id:
+        return False
+    return any(repo.id == repo_id
+               for repo in Community.get_repositories_by_user(current_user))
+
+
+def _form_repository_scope_required(func):
+    """Require ``repo_id`` sent in the form to be in the user's scope.
+
+    The check applies only when the view reads ``repo_id`` from the form;
+    internal callers that pass ``repo_id`` explicitly are not affected.
+    """
+    signature = inspect.signature(func)
+
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        bound = signature.bind_partial(*args, **kwargs)
+        if not bound.arguments.get('repo_id'):
+            if not _is_repository_in_user_scope(request.form.get('repo_id')):
+                abort(403)
+        return func(*args, **kwargs)
+
+    return decorated_view
+
+
 @blueprint_api.route('/sitelicensesendmail/send/<start_month>/<end_month>',
                      methods=['POST'])
 @login_required
 @roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
                  WEKO_ADMIN_PERMISSION_ROLE_REPO,
                  WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
+@_form_repository_scope_required
 def manual_send_site_license_mail(start_month, end_month, repo_id=None):
     """Send site license mail by manual."""
     if not repo_id:
@@ -721,6 +767,9 @@ def get_ogp_image():
 
 @blueprint_api.route('/search/init_display_index/<string:selected_index>',
                      methods=['GET'])
+@login_required
+@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
+                 WEKO_ADMIN_PERMISSION_ROLE_REPO])
 def get_search_init_display_index(selected_index=None):
     """Get search init display index.
 

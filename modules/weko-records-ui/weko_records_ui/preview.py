@@ -27,7 +27,10 @@ from invenio_previewer.extensions import default
 from invenio_previewer.extensions.zip import make_tree
 from invenio_previewer.proxies import current_previewer
 
+from .permissions import file_permission_required
 
+
+@file_permission_required
 def preview(pid, record, template=None, **kwargs):
     """Preview file for given record.
     

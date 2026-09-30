@@ -52,7 +52,47 @@ from weko_user_profiles import WekoUserProfiles
 from weko_logging.audit import WekoLoggingUserActivity
 
 from weko_accounts import WekoAccounts, WekoAccountsREST
+from weko_accounts.config import WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
 from weko_accounts.views import blueprint
+
+
+@pytest.fixture()
+def map_role_names():
+    """Names used to test GakuNin-managed roles."""
+    pattern = WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
+    prefix = pattern["prefix"]
+    role_key = pattern["role_keyword"]
+    group_key = pattern["group_keyword"]
+    repoid = "test_example_com"
+
+    return {
+        "managed_role": f"{prefix}_{repoid}_{role_key}_radm",
+        "sysadm_role": pattern["sysadm_group"],
+        "unknown_role_suffix": f"{prefix}_{repoid}_{role_key}_unkwown",
+        "group_format_with_role_suffix": f"{prefix}_{repoid}_{group_key}_radm",
+        "invalid_repository_id_role": (
+            f"{prefix}_test!example!com_{role_key}_radm"
+        ),
+        "invalid_prefix_role": f"ng_{repoid}_{role_key}_radm",
+    }
+
+
+@pytest.fixture()
+def map_group_names():
+    """Names used to test GakuNin-managed groups."""
+    pattern = WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
+    prefix = pattern["prefix"]
+    group_key = pattern["group_keyword"]
+    repoid = "test_example_com"
+
+    return {
+        "managed_group": f"{prefix}_{repoid}_{group_key}_library",
+        "invalid_repository_id_group": (
+            f"{prefix}_test!example!com_{group_key}_library"
+        ),
+        "invalid_prefix_group": f"ng_{repoid}_{group_key}_library",
+    }
+
 
 @pytest.yield_fixture()
 def instance_path():
@@ -91,6 +131,7 @@ def base_app(instance_path):
             'HTTP_WEKOID': (False, 'shib_user_name'),
         },
         WEKO_ACCOUNTS_SHIB_IDP_LOGIN_URL='{}secure/login.py',
+        WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT = WEKO_ACCOUNTS_GAKUNIN_GROUP_PATTERN_DICT
     )
     Babel(app_)
     InvenioI18N(app_)
@@ -351,7 +392,7 @@ def weko_roles(app):
 
     Args:
         app (Flask): Flask application.
-    
+
     Returns:
         dict: Dictionary of roles.
     """

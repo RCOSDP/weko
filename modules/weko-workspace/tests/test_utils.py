@@ -106,6 +106,16 @@ from weko_workspace.utils import (
     pack_with_language_value_for_jamas,
     update_workspace_status,
     extract_metadata_info,
+    get_arXiv_record_data,
+    get_arXiv_data_by_key,
+    get_arXiv_title_data,
+    get_arXiv_identifier_data,
+    get_arXiv_date_data,
+    get_arXiv_description_data,
+    get_arXiv_creator_data,
+    get_arXiv_relation_data,
+    get_arXiv_subject_data,
+    get_arXiv_autofill_item
 )
 from weko_workspace.config import WEKO_WORKSPACE_DEFAULT_FILTERS
 
@@ -1494,13 +1504,13 @@ def test_get_cinii_product_identifier():
     # type1 and type2 are in the list
     result = get_cinii_product_identifier(data, 'cir:DOI', 'cir:NAID')
     assert result == [
-        {'@value': '10.1234/test-doi', '@type': 'DOI'},
+        {'@value': '10.1234/test-doi', '@type': 'DOI','@relation_type': 'isVersionOf'},
         {'@value': '123456789', '@type': 'NAID'}
     ]
 
     # type1 is in the list, type2 is not in the list
     result = get_cinii_product_identifier(data, 'cir:DOI', 'cir:ISBN')
-    assert result == [{'@value': '10.1234/test-doi', '@type': 'DOI'}]
+    assert result == [{'@value': '10.1234/test-doi', '@type': 'DOI','@relation_type': 'isVersionOf'}]
 
     # type1 is not in the list, type2 is in the list
     result = get_cinii_product_identifier(data, 'cir:ISBN', 'cir:NAID')
@@ -1752,7 +1762,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
             for key in item_keys:
                 if key == 'creator':
                     expected_calls.append(
-                        call(form, item[key]['creatorName'], item[key]['model_id'])
+                        call(form, item[key]['creatorName'], item[key]['model_id'],item[key])
                     )
                 elif key == 'contributor':
                     expected_calls.append(
@@ -1760,7 +1770,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
                     )
                 elif key == 'relation':
                     expected_calls.append(
-                        call(form, item[key]['relatedIdentifier'], item[key]['model_id'])
+                        call(form, item[key]['relatedIdentifier'], item[key]['model_id'],item[key])
                     )
             mock_get_key_value.assert_has_calls(expected_calls)
         
@@ -1838,7 +1848,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
             assert mock_get_key_value.call_count == 3 
 
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_key_value -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
-@pytest.mark.parametrize('value, parent_key, mock_result, expected_result, expected_value_key_list', [
+@pytest.mark.parametrize('value, parent_key, mock_result, expected_result, expected_value_key_list,value2', [
     (
         {
             "@value": "subitem_1551256294723",
@@ -1847,7 +1857,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
         'item_1617186981471',
         [{'key': 'item_1617186981471.subitem_1551256294723'}],
         {'@value': 'item_1617186981471.subitem_1551256294723'},
-        ['subitem_1551256294723']
+        ['subitem_1551256294723'],{}
     ),
     (
         {
@@ -1869,7 +1879,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
             '@language': 'item_1617186626617.subitem_description_language',
             '@type': 'item_1617186626617.subitem_description_type'
         },
-        ['subitem_description', 'subitem_description_language', 'subitem_description_type']
+        ['subitem_description', 'subitem_description_language', 'subitem_description_type'],{}
     ),
     (
         {
@@ -1888,7 +1898,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
             '@value': 'item_1617186920753.subitem_1522646572813',
             '@type': 'item_1617186920753.subitem_1522646500366'
         },
-        ['subitem_1522646572813', 'subitem_1522646500366']
+        ['subitem_1522646572813', 'subitem_1522646500366'],{}
     ),
     (
         {
@@ -1913,7 +1923,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
             '@scheme': 'item_1617186609386.subitem_1522300014469',
             '@URI': 'item_1617186609386.subitem_1522300048512'
         },
-        ['subitem_1523261968819', 'subitem_1522299896455', 'subitem_1522300014469', 'subitem_1522300048512']
+        ['subitem_1523261968819', 'subitem_1522299896455', 'subitem_1522300014469', 'subitem_1522300048512'],{}
     ),
     (
         {
@@ -1932,7 +1942,7 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
             '@value': 'item_1617186660861.subitem_1522300722591',
             '@type': 'item_1617186660861.subitem_1522300695726'
         },
-        ['subitem_1522300722591', 'subitem_1522300695726']
+        ['subitem_1522300722591', 'subitem_1522300695726'],{}
     ),
     (
         {
@@ -1943,15 +1953,85 @@ def test_get_autofill_key_tree(item_keys, mock_result, expected_result):
         'item_123456789012',
         [],
         {},
-        []
-    )
+        [],
+        {}
+    ),
+    (   
+        {
+        },
+        'item_2947181942734',
+        [
+            {'key': 'item_2947181942734.subitem_2947181942737'}
+        ],
+        {
+            '@relation_type': 'item_2947181942734.subitem_2947181942737',
+        },
+        [ 'subitem_2947181942737'],
+        {
+            "@attributes": {"relationType": "subitem_2947181942737"},"model_id": "item_2947181942734"
+        }
+        
+    ),
+    (   
+        {
+        },
+        'item_29471819427',
+        [
+            {'key': 'item_29471819427.subitem_29471819427'}
+        ],
+        {},
+        [],
+        {
+            "@attributes": {"": ""},"model_id": "item_29471819427"
+        }
+        
+    ),
+    (
+        {},
+        'item_123456789012',
+        [{'key': 'item_120821139.subitem_133434234'},],
+        {'@affiliation': 'item_120821139.subitem_133434234'},
+        ['subitem_133434234'],
+        
+  {
+    "affiliation": {
+        "affiliationName": {
+            "@value": "subitem_133434234","model_id": "item_120821139"
+        }
+    }
+   }
+),
+    (
+        {},
+        'item_1234567890',
+        [{'key': 'item_1208211.subitem_1334342'},],
+        {},
+        [],
+        
+  {
+    "affiliation": {
+    }
+   }
+),
+    (
+        {},
+        'item_123456789',
+        [{'key': 'item_120821.subitem_133434'},],
+        {},
+        [],
+        
+  {
+    "affiliation": {
+        "affiliationName": {}
+    }
+   }
+)
 ])
-def test_get_key_value(value, parent_key, mock_result, expected_result, expected_value_key_list):
+def test_get_key_value(value, parent_key, mock_result, expected_result, expected_value_key_list,value2):
     with open('tests/data/item_type/15_form.json', 'r') as f:
         form = json.load(f)
-    
     with patch('weko_workspace.utils.get_autofill_key_path', side_effect=mock_result) as mock_get_autofill_key_path:
-        result = get_key_value(form, value, parent_key)
+        result = get_key_value(form, value, parent_key,value2)
         assert result == expected_result
         expect_call_args = []
         for key in expected_value_key_list:
@@ -2367,6 +2447,12 @@ def test_fill_data(app):
     autofill_data = ""
     result = fill_data(form_model, autofill_data)
     assert result is None
+    
+    # autofill_data is list, not key
+    form_model = ""
+    autofill_data = []
+    result = fill_data(form_model, autofill_data)
+    assert result == []
     
     # not multiple_data, form.get(key) is not list
     autofill_data = [{"@value": "A.Test1", "@language": "en"}]
@@ -3099,7 +3185,7 @@ def test_pack_data_with_multiple_type_jalc():
 def test_get_jalc_product_identifier():
     data = '10.1234/56789'
     result = get_jalc_product_identifier(data)
-    assert result == [{'@value': '10.1234/56789'}]
+    assert result == [{'@value': '10.1234/56789','@type': 'DOI','@relation_type': 'isVersionOf'}]
 
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_jalc_autofill_item -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 def test_get_jalc_autofill_item(app):
@@ -3503,12 +3589,12 @@ def test_get_datacite_product_identifier():
     # Test with single value
     data = '1234-5678'
     result = get_datacite_product_identifier(data)
-    assert result == [{'@value': '1234-5678', '@type': 'DOI'}]
+    assert result == [{'@value': '1234-5678', '@type': 'DOI','@relation_type': 'isVersionOf'}]
 
     # Test with empty value
     data = ''
     result = get_datacite_product_identifier(data)
-    assert result == [{'@value': None, '@type': None}]
+    assert result == [{'@value': None, '@type': None,'@relation_type': None}]
 
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_datacite_autofill_item -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 def test_get_datacite_autofill_item(app):
@@ -3538,3 +3624,354 @@ def test_get_datacite_autofill_item(app):
         result = get_datacite_autofill_item(15)
         del mock_item['no_required']
         assert result == mock_item
+
+
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_record_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_record_data(app, mocker_itemtype):
+    mock_get_data = {
+        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'error': ''
+    }
+    with patch('weko_workspace.utils.arXivURL.get_data', return_value=mock_get_data):
+        with patch('weko_workspace.utils.get_arXiv_data_by_key', return_value={}):
+            with patch('weko_workspace.utils.get_arXiv_autofill_item'):
+                with patch('weko_workspace.utils.get_autofill_key_tree'):
+                    with patch('weko_items_autofill.utils.sort_by_item_type_order'):
+                        with patch('weko_workspace.utils.build_record_model', return_value=[1]):
+                            current_cache.delete('arXiv_data10.1234/test-doi1')
+                            result = get_arXiv_record_data('10.1234/test-doi', 1)
+                            assert result == [1]
+
+                            # With cache
+                            result = get_arXiv_record_data('10.1234/test-doi', 1)
+                            assert result == [1]
+            
+            item_type = Mock(item_type='test_item_type', form=None)
+            with patch('weko_workspace.utils.ItemTypes.get_by_id', return_value=item_type):
+                current_cache.delete('arXiv_data10.1234/test-doi1')
+                result = get_arXiv_record_data('10.1234/test-doi', 1)
+                assert result == []
+
+            with patch('weko_workspace.utils.ItemTypes.get_by_id', return_value=None):
+                current_cache.delete('arXiv_data10.1234/test-doi1')
+                result = get_arXiv_record_data('10.1234/test-doi', 1)
+                assert result == []
+
+    # Test with error in get_data
+    mock_get_data = {
+        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'error': 'test error message'
+    }
+    with patch('weko_workspace.utils.arXivURL.get_data', return_value=mock_get_data):
+        current_cache.delete('arXiv_data10.1234/test-doi1')
+        result = get_arXiv_record_data('10.1234/test-doi', 1)
+        assert result == []
+
+    # Test with not dict response
+    mock_get_data = {
+        'response': '',
+        'error': ''
+    }
+    with patch('weko_workspace.utils.arXivURL.get_data', return_value=mock_get_data):
+        current_cache.delete('arXiv_data10.1234/test-doi1')
+        result = get_arXiv_record_data('10.1234/test-doi', 1)
+        assert result == []
+    
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_data_by_key -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+@pytest.mark.parametrize('keyword, expected_result', [
+    ('title', {'title': [{'@value': 'test title'}]}),
+    ('identifier', {'identifier': [{'@value': 'test identifier', '@type': 'URI'}]}),
+    ('date', {'date': [{'@value': 'test submitted', '@type': 'Submitted'},{'@value': 'test updated', '@type': 'Updated'}]}),
+    ('description', {'description': [{'@value': 'test summary', '@type': 'Abstract'},{'@value': 'test comment', '@type': 'Other'}]}),
+    ('creator', {'creator': [{'@value': 'test creater', '@affiliation': 'test affiliation'}]}),
+    ('relation', {'relation': [{'@value': 'test link', '@type': 'URI','@relation_type': 'isFormatOf'},{'@value': 'test doi', '@type': 'DOI','@relation_type': 'isVersionOf'}]}),
+    ('subject', {'subject': [{'@value': 'test category', '@schema': 'Other'}]}),
+    ('all', {
+        'title': [{'@value': 'test title'}],
+        'identifier': [{'@value': 'test identifier', '@type': 'URI'}],
+        'date': [{'@value': 'test submitted', '@type': 'Submitted'},{'@value': 'test updated', '@type': 'Updated'}],
+        'description': [{'@value': 'test summary', '@type': 'Abstract'},{'@value': 'test comment', '@type': 'Other'}],
+        'creator': [{'@value': 'test creater', '@affiliation': 'test affiliation'}],
+        'relation': [{'@value': 'test link', '@type': 'URI','@relation_type': 'isFormatOf'},{'@value': 'test doi', '@type': 'DOI','@relation_type': 'isVersionOf'}],
+        'subject': [{'@value': 'test category', '@schema': 'Other'}]
+    }),
+    ('none', {}),
+    ('test',{})
+])
+def test_get_arXiv_data_by_key(app, mocker, keyword, expected_result):
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_title_data',
+        return_value=[{'@value': 'test title'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_identifier_data',
+        return_value=[{'@value': 'test identifier', '@type': 'URI'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_date_data',
+        return_value=[{'@value': 'test submitted', '@type': 'Submitted'},{'@value': 'test updated', '@type': 'Updated'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_description_data',
+        return_value=[{'@value': 'test summary', '@type': 'Abstract'},{'@value': 'test comment', '@type': 'Other'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_creator_data',
+        return_value=[{'@value': 'test creater', '@affiliation': 'test affiliation'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_relation_data',
+        return_value=[{'@value': 'test link', '@type': 'URI','@relation_type': 'isFormatOf'},{'@value': 'test doi', '@type': 'DOI','@relation_type': 'isVersionOf'}]
+    )
+    mocker.patch(
+        'weko_workspace.utils.get_arXiv_subject_data',
+        return_value=[{'@value': 'test category', '@schema': 'Other'}]
+    )
+    
+
+   
+    if keyword == 'none' :
+        api = {
+            'response': None
+        }
+    else:
+        api = {
+            'response': {
+                'feed': {
+                    'entry': {
+                            'title': 'test title',
+                            'identifier': 'test identifer',
+                            'published': 'test submitted',
+                            'updated': 'test updated',
+                            'summary': 'test summary',
+                            'author': {'name':'test creater','arxiv:affiliation':'test affiliation'},
+                            'link': 'test link',
+                            'arxiv:doi': 'test doi',
+                            'category': 'test category',
+                            'arxiv:primary_category': 'test primary category'
+                        },
+                    }
+            }
+        }
+        
+    
+    result = get_arXiv_data_by_key(api, keyword)
+    assert result == expected_result
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_title_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_title_data(app):
+    # Test with valid data
+    data = 'test_title'
+    result = get_arXiv_title_data(data)
+    assert result == [
+        {
+            '@value': 'test_title'
+        }
+    ]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_identifier_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_identifier_data(app):
+    # Test with valid data
+    data = 'test_id'
+    result = get_arXiv_identifier_data(data)
+    assert result == [[
+        {
+            '@value': 'test_id',
+            '@type': 'URI'
+        }
+    ]]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_date_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_date_data(app):
+    # Test with valid data
+    data_published = '2025-12-18T06:27:20Z'
+    data_submitted = '2025-12-19T06:27:20Z'
+    result = get_arXiv_date_data(data_published,data_submitted)
+    assert result == [[
+        {
+            '@value': '2025-12-18',
+            '@type': 'Submitted'
+        }],
+        [{
+            '@value': '2025-12-19',
+            '@type': 'Updated'
+        }
+    ]]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_description_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_description_data(app):
+    # Test with valid data
+    data_summary = 'test_summery'
+    data_comment = 'test_comment'
+    result = get_arXiv_description_data(data_summary,data_comment)
+    assert result == [[
+        {
+            '@value': 'test_summery',
+            '@type': 'Abstract'
+        }],
+        [{
+            '@value': 'test_comment',
+            '@type': 'Other'
+        }
+    ]]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_creator_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_creator_data(app):
+    # Test with valid data
+    data_single_creater = {'name':'test_creater1','arxiv:affiliation':'test_affiliation'}
+    data_multiple_creater = [{'name':'test_creater1'},{'name':'test_creater2'}]
+    result = get_arXiv_creator_data(data_single_creater)
+    assert result == [[
+        {
+            '@value': 'test_creater1',
+            '@affiliation': 'test_affiliation'
+        }
+    ]]
+
+    result = get_arXiv_creator_data(data_multiple_creater)
+    assert result == [[
+        {
+            '@value': 'test_creater1',
+            '@affiliation': None
+        }],
+        [{
+            '@value': 'test_creater2',
+            '@affiliation': None
+        }
+    ]]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_relation_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_relation_data(app):
+    # Test with valid data
+    data_single_link = {'@href':'test_link1'}
+    data_multiple_link = [{'@href':'test_link1'},{'@href':'test_link2'}]
+    data_doi = 'test_doi'
+    result = get_arXiv_relation_data(data_single_link,data_doi)
+    assert result == [[
+        {
+            '@value': 'test_link1',
+            '@type': 'URI',
+            '@relation_type': 'isFormatOf'
+        }],
+        [{
+            '@value': 'test_doi',
+            '@type': 'DOI',
+            '@relation_type': 'isVersionOf'
+        }
+    ]]
+
+    result = get_arXiv_relation_data(data_multiple_link,data_doi)
+    assert result == [[{
+            '@value': 'test_link1',
+            '@type': 'URI',
+            '@relation_type': 'isFormatOf'
+        }
+    ],[{
+            '@value': 'test_link2',
+            '@type': 'URI',
+            '@relation_type': 'isFormatOf'
+        }
+    ],[{
+            '@value': 'test_doi',
+            '@type': 'DOI',
+            '@relation_type': 'isVersionOf'
+        }
+    ]]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_subject_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_subject_data(app):
+    # Test with valid data
+    data_single_category = {'@term':'test_category1'}
+    data_multiple_category = [{'@term':'test_category2'},{'@term':'test_category1'}]
+    data_primary_category = {'@term':'test_category1'}
+    result = get_arXiv_subject_data(data_single_category,data_primary_category)
+    assert result == [[
+        {
+            '@value': 'test_category1',
+            '@scheme': 'Other'
+        }
+    ]]
+
+    result = get_arXiv_subject_data(data_multiple_category,data_primary_category)
+    assert result == [[
+        {
+            '@value': 'test_category1',
+            '@scheme': 'Other'
+        }],
+        [{
+            '@value': 'test_category2',
+            '@scheme': 'Other'
+        }
+    ]]
+
+# .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_autofill_item -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
+def test_get_arXiv_autofill_item(app):
+    mock_item = {
+        'title': {
+            '@value': 'subitem_1551255647225',
+            '@attributes': { 'xml:lang': 'subitem_1551255648112' },
+            'model_id': 'item_1617186331708'
+        },
+        'identifier': 
+            [{'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}, 'model_id': 'system_identifier_doi'}}, 
+             {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}, 'model_id': 'system_identifier_hdl'}}, 
+             {'identifier': {'@value': 'subitem_3204890234', '@attributes': {'identifierType': 'subitem_identifier_type'}, 'model_id': 'item_30002_identifier16'}},
+             {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}, 'model_id': 'system_identifier_uri'}}],
+        'date': [{'date': {'@value': 'subitem_date_issued_datetime', '@attributes': {'dateType': 'subitem_date_issued_type'}, 'model_id': 'item_30002_date11'}}, 
+                 {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}, 
+                  'model_id': 'item_30002_bibliographic_information29'}}],
+    }
+
+    expected={
+        'title': {
+            '@value': 'subitem_1551255647225',
+            '@attributes': { 'xml:lang': 'subitem_1551255648112' },
+            'model_id': 'item_1617186331708'
+        },
+        'identifier': {'@value': 'subitem_3204890234', 
+                       '@attributes': {'identifierType': 'subitem_identifier_type'}, 
+                       'model_id': 'item_30002_identifier16'},
+         'date': [{'date': {'@value': 'subitem_date_issued_datetime', '@attributes': {'dateType': 'subitem_date_issued_type'}, 'model_id': 'item_30002_date11'}}, 
+                 {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}, 
+                  'model_id': 'item_30002_bibliographic_information29'}}],
+    }
+    mock_item2={
+        'title': {
+            '@value': 'subitem_1551255647225',
+            '@attributes': { 'xml:lang': 'subitem_1551255648112' },
+            'model_id': 'item_1617186331708'
+        },
+        'identifier': 
+            [{'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}, 'model_id': 'system_identifier_doi'}}, 
+             {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}, 'model_id': 'system_identifier_hdl'}}, 
+             {'identifier': {'@value': 'subitem_systemidt_identifier', '@attributes': {'identifierType': 'subitem_systemidt_identifier_type'}, 'model_id': 'system_identifier_uri'}}],
+        'date': [{'date': {'@value': 'subitem_date_issued_datetime', '@attributes': {'dateType': 'subitem_date_issued_type'}, 'model_id': 'item_30002_date11'}}, 
+                 {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}, 
+                  'model_id': 'item_30002_bibliographic_information29'}}],
+    }
+    expected2={
+        'title': {
+            '@value': 'subitem_1551255647225',
+            '@attributes': { 'xml:lang': 'subitem_1551255648112' },
+            'model_id': 'item_1617186331708'
+        },
+        'identifier': [{'identifier': {'@attributes': {'identifierType': 'subitem_systemidt_identifier_type'},
+                                '@value': 'subitem_systemidt_identifier',
+                                 'model_id': 'system_identifier_doi'}},
+                       {'identifier': {'@attributes': {'identifierType': 'subitem_systemidt_identifier_type'},
+                                '@value': 'subitem_systemidt_identifier',
+                                'model_id': 'system_identifier_hdl'}},
+                       {'identifier': {'@attributes': {'identifierType': 'subitem_systemidt_identifier_type'},
+                                '@value': 'subitem_systemidt_identifier',
+                                'model_id': 'system_identifier_uri'}}],
+        'date': [{'date': {'@value': 'subitem_date_issued_datetime', '@attributes': {'dateType': 'subitem_date_issued_type'}, 'model_id': 'item_30002_date11'}}, 
+                 {'date': {'@value': 'bibliographicIssueDates.bibliographicIssueDate', '@attributes': {'dateType': 'bibliographicIssueDates.bibliographicIssueDateType'}, 
+                  'model_id': 'item_30002_bibliographic_information29'}}],
+    }
+    with patch('weko_workspace.utils.get_item_id', return_value=mock_item):
+        result = get_arXiv_autofill_item(15)
+        assert result == expected
+    with patch('weko_workspace.utils.get_item_id', return_value=mock_item2):
+        result = get_arXiv_autofill_item(15)
+        assert result == expected2

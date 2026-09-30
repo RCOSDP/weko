@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<EntityDescriptor entityID="https://core-stg.orthros.gakunin.nii.ac.jp/idp" xmlns="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:shibmd="urn:mace:shibboleth:metadata:1.0">
+	<IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+		<Extensions>
+			<shibmd:Scope regexp="false">openidp.nii.ac.jp</shibmd:Scope>
+			<mdui:UIInfo xmlns:mdui="urn:oasis:names:tc:SAML:metadata:ui">
+				<mdui:DisplayName xml:lang="ja">Orthrosテスト環境</mdui:DisplayName>
+				<mdui:DisplayName xml:lang="en">Orthros Test Environments</mdui:DisplayName>
+				<mdui:Description xml:lang="ja">Orthrosは、学認に参加していない機関に所属するユーザにもアカウントを発行し、連携するサービスを利用できるようにするIdPです。</mdui:Description>
+				<mdui:Logo height="473" width="110">https://ui-stg.orthros.gakunin.nii.ac.jp/static/user/img/Orthros_LOGO_02_color.svg</mdui:Logo>
+				<mdui:InformationURL xml:lang="ja">https://meatwiki.nii.ac.jp/confluence/pages/viewpage.action?pageId=118168818</mdui:InformationURL>
+				<mdui:PrivacyStatementURL xml:lang="ja">https://ui-stg.orthros.gakunin.nii.ac.jp/ja/pages/privacy-policy</mdui:PrivacyStatementURL>
+				<mdui:PrivacyStatementURL xml:lang="en">https://ui-stg.orthros.gakunin.nii.ac.jp/en/pages/privacy-policy</mdui:PrivacyStatementURL>
+				<mdui:Keywords xml:lang="en">category:location:others category:organizationType:others</mdui:Keywords>
+			</mdui:UIInfo>
+		</Extensions>
+		<KeyDescriptor>
+			<KeyInfo xmlns="http://www.w3.org/2000/09/xmldsig#">
+				<X509Data>
+					<X509Certificate>MIIC+TCCAeECFDv4A4XtSgsmbs3I/IqVeEslXYP+MA0GCSqGSIb3DQEBCwUAMDgxCzAJBgNVBAMMAkpQMQ4wDAYDVQQIDAVUb2t5bzEZMBcGA1UEAwwQT3J0aHJvcy1JZFAtQ2VydDAgFw0yMzAzMjMwNTEyMTRaGA8yMTIzMDIyNzA1MTIxNFowODELMAkGA1UEAwwCSlAxDjAMBgNVBAgMBVRva3lvMRkwFwYDVQQDDBBPcnRocm9zLUlkUC1DZXJ0MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEApB2B+2YahJI0/2A4XM9S1SB3jM/H+USg5udQT5DN1HawgdpvHo2o2GA1lpZlFahH4KHmlL/4UxCSBavdFfjMBclIfUnE9KHiKSXzhx4Es/HtNUBqwGWDy9JKn8zsJyWm2Qi6DpMMDFJg3e0+3xujf49aKSr7pjwfWxgtTg+mCRXr6RumdI0VZyQUTt8utHuV5xH1g+Q9XBpiYDm19CtcX8pbiG+JAadNUdByVo98oxIGhPMNz86xQq9oi6WcI9+x15CYuOAzS6DQzUdY0V4hn6Emzj4DCSQCatefsIHVIyKSpkmq0fntY3nI40m28MID60sBdVkN+ro7JVrFZsrtIQIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAgMtw2D+vdfHNOhV7DG5Wzcios/6Ko8XHjXtXOzdGWYuLXaNiFi2+OWojI5mlHHo45mB1Bx3CdOl1kBW1Y8FGJqN5+Bed+5qF53FDc8H9g1LOUY1eqWajxw7bG8wqgBRI/+sx1da0f926lj9P9AvyQfHLwus1e2gwMIXBLfVIHu9WKH+Hw3QBYSCzCxWonlVbaU0wV1L7Wmm4jZoVS5+3CpIeKe1nHD1PoNa2ZzZzkNul0CL2C/Fdf95JhfffmGJwStoRf2zq3rAktWixUksqZiGJTYF+umNgG6hCPRKlXAMVTZFVMun8c8NbrFHBW6GNRDOhl8RpanECX5DyAb1bO</X509Certificate>
+				</X509Data>
+			</KeyInfo>
+		</KeyDescriptor>
+		<NameIDFormat>urn:oasis:names:tc:SAML:2.0:nameid-format:persistent</NameIDFormat>
+		<SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://core-stg.orthros.gakunin.nii.ac.jp/orthrosstg.onmicrosoft.com/B2C_1A_USER_EXTENSION_RP_SI/samlp/sso/login" />
+		<SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://core-stg.orthros.gakunin.nii.ac.jp/orthrosstg.onmicrosoft.com/B2C_1A_USER_EXTENSION_RP_SI/samlp/sso/login" />
+	</IDPSSODescriptor>
+	<Organization>
+		<OrganizationName xml:lang="en">National Institute of Informatics</OrganizationName>
+		<OrganizationName xml:lang="ja">国立情報学研究所</OrganizationName>
+		<OrganizationDisplayName xml:lang="en">Orthros Test Environments</OrganizationDisplayName>
+		<OrganizationDisplayName xml:lang="ja">Orthrosテスト環境</OrganizationDisplayName>
+		<OrganizationURL xml:lang="en">https://www.nii.ac.jp/</OrganizationURL>
+	</Organization>
+	<ContactPerson contactType="technical">
+		<GivenName>Orthros Office</GivenName>
+		<EmailAddress>mailto:orthros-office@nii.ac.jp</EmailAddress>
+	</ContactPerson>
+</EntityDescriptor>

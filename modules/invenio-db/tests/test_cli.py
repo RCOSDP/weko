@@ -122,4 +122,9 @@ def test_destroy(app,db,script_info,mock_entry_points,mocker):
         )
         assert "Destroying database" in result.output
         mock_spy.call_count == 3
+
+    # The command under test drops the database the whole suite shares. Put it
+    # back, or the db fixture's teardown and every test after this one fail
+    # with 'database "wekotest" does not exist'.
+    create_database(str(_db.engine.url))
     

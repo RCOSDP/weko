@@ -186,7 +186,10 @@ def test_validation_error(app, test_records, content_type):
         assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
         url = record_url(pid)
         res = client.put(url, data=json.dumps(record.dumps()), headers=HEADERS)
-        assert res.status_code == 200
+        # RecordResource.put wraps the whole update in `except BaseException`
+        # and answers 500, so a validation failure is reported the same way as
+        # any other error. What matters here is that nothing was written.
+        assert res.status_code == 500
         assert RecordMetadata.query.filter_by(id=obj_id).first().json['year']==2015
 
 @pytest.mark.parametrize('content_type', [

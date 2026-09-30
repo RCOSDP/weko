@@ -516,6 +516,25 @@ def db(app):
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
+    # create_all() only creates the parent "user_activity_logs" table (declared
+    # as a range-partitioned table), not its child partitions. Without a
+    # partition covering the current date, any activity logging during a test
+    # fails with "no partition of relation ... found". Create the current-month
+    # partition so tests that trigger activity logging can run.
+    # weko_logging.models._create_current_month_partition が
+    # UserActivityLog.__table__ の after_create で当月分を
+    # user_activity_logs_%Y%m という名前で既に作っている。ここで別名を
+    # 付けると同じ範囲を指す2つ目のパーティションになり
+    # "would overlap partition" で弾かれるので、名前と基準時刻を本番に
+    # 合わせて IF NOT EXISTS を効かせる。
+    _p_start = datetime.utcnow().date().replace(day=1)
+    _p_end = (_p_start + timedelta(days=31)).replace(day=1)
+    _p_name = "user_activity_logs_{}".format(_p_start.strftime('%Y%m'))
+    db_.session.execute(
+        "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
+        "FOR VALUES FROM ('{start}') TO ('{end}');".format(
+            name=_p_name, start=_p_start, end=_p_end))
+    db_.session.commit()
     yield db_
     db_.session.remove()
     db_.drop_all()
@@ -1115,7 +1134,7 @@ def count_json_data():
             "item_custom_sort": {"2": 1}
         }
         index = Index(**index_metadata)
-        mapping = Mapping.create(
+        mapping = Mapping.create_or_update(
             item_type_id=item_type.id,
             mapping={}
         )

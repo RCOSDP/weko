@@ -464,6 +464,7 @@ class HeadlessActivity(WorkActivity):
                 request_maillist=request_maillist,
                 is_display_request_button=False
             )
+            researchmap_linkage = metadata.pop("researchmap", False)
 
             from weko_search_ui.utils import get_data_by_property
             # get value of "Title" from metadata by jpcoar_mapping
@@ -638,6 +639,9 @@ class HeadlessActivity(WorkActivity):
             data = {
                 "metainfo": metadata,
                 "files": self.files_info,
+                "cris_linkage": {
+                    "researchmap": researchmap_linkage
+                },
                 "endpoint": {
                     "initialization": f"/api/deposits/redirect/{pid.pid_value}",
                 }

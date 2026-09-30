@@ -38,15 +38,20 @@ def test_role_has_access(app,users):
         })
         assert test.role_has_access('profile_settings') == True
 
+    # restricted_access is refused outright unless this is on, whatever the
+    # role, so it has to be set before the "allowed" cases.
+    app.config.update(WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = True)
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
         assert test.role_has_access('restricted_access') == True
     
+    # Repository Administrator: 'restricted_access' is in its access list.
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
-        assert test.role_has_access('restricted_access') == False
+        assert test.role_has_access('restricted_access') == True
     
+    # With the switch off nobody gets there, whatever the role.
     app.config.update(WEKO_ADMIN_DISPLAY_RESTRICTED_SETTINGS = False)
     with patch("flask_login.utils._get_user", return_value=users[0]["obj"]):
-        assert test.role_has_access('restricted_access') == True
+        assert test.role_has_access('restricted_access') == False
     
     with patch("flask_login.utils._get_user", return_value=users[1]["obj"]):
         assert test.role_has_access('restricted_access') == False

@@ -26,6 +26,34 @@ from sqlalchemy_utils.functions import create_database, database_exists
 sys.path.append(os.path.dirname(__file__))
 
 
+def remove_sqlite_hacks():
+    """Undo the process-global sqlite hooks that apply_driver_hacks installs.
+
+    ``SQLAlchemy.apply_driver_hacks`` registers ``do_sqlite_connect`` /
+    ``do_sqlite_begin`` on the *Engine class*, not on one engine, so they stay
+    for the rest of the session once any test builds an app with a sqlite URI
+    (``test_invenio_db.test_init``) or hands the method a sqlite URL
+    (``test_shared.TestSQLAlchemy.test_apply_driver_hacks``). Class-level
+    listeners also reach engines that already exist. Every later connection
+    then emits ``PRAGMA foreign_keys=ON``, which PostgreSQL - what the suite
+    actually runs against - rejects as a syntax error.
+    """
+    from sqlalchemy import event
+    from sqlalchemy.engine import Engine
+    from invenio_db.shared import do_sqlite_begin, do_sqlite_connect
+
+    for name, fn in (('connect', do_sqlite_connect), ('begin', do_sqlite_begin)):
+        if event.contains(Engine, name, fn):
+            event.remove(Engine, name, fn)
+
+
+@pytest.fixture(autouse=True)
+def _no_leaked_sqlite_hacks():
+    """Start every test with the sqlite hooks of the previous one gone."""
+    remove_sqlite_hacks()
+    yield
+
+
 @pytest.yield_fixture()
 def db(app):
     import invenio_db
@@ -39,6 +67,10 @@ def db(app):
 
     yield db
     db.session.remove()
+    # A test that ran apply_driver_hacks over a sqlite URL leaves the sqlite
+    # hooks on the Engine class, and they reach this engine too. drop_all()
+    # opens a connection, so clear them before it does.
+    remove_sqlite_hacks()
     db.drop_all()
     # os.remove(join(dirname(__file__),"../test.db"))
 

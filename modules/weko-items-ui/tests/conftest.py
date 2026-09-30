@@ -38,6 +38,7 @@ from invenio_access import InvenioAccess
 from invenio_access.models import ActionRoles, ActionUsers
 from invenio_accounts import InvenioAccounts
 from invenio_accounts.models import Role, User
+from invenio_accounts.utils import jwt_create_token
 from invenio_accounts.testutils import create_test_user
 from invenio_assets import InvenioAssets
 from invenio_communities.models import Community
@@ -51,6 +52,8 @@ from invenio_deposit.config import (
     DEPOSIT_JSONSCHEMAS_PREFIX,
 )
 from invenio_files_rest.models import Location, Bucket,ObjectVersion
+from invenio_oauth2server import InvenioOAuth2Server
+from invenio_oauth2server.models import Client, Token
 from invenio_records_files.api import RecordsBuckets
 from invenio_records_ui import InvenioRecordsUI
 from invenio_files_rest import InvenioFilesREST
@@ -68,6 +71,7 @@ from invenio_pidrelations.contrib.records import RecordDraft
 from invenio_records import InvenioRecords
 from weko_redis.redis import RedisConnection
 from invenio_search import InvenioSearch
+from invenio_cache import InvenioCache
 from invenio_stats import InvenioStats
 from sqlalchemy_utils.functions import create_database, database_exists
 from weko_admin import WekoAdmin
@@ -113,6 +117,7 @@ from weko_items_ui.views import blueprint_api as weko_items_ui_blueprint_api
 from weko_items_ui.config import WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_TYPE_MAPPINGS ,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MAPPINGS,WEKO_ITEMS_UI_CRIS_LINKAGE_RESEARCHMAP_MERGE_MODE_DEFAULT
 from weko_groups import WekoGroups
 from .helpers import create_record, json_data
+from zipfile import ZipFile, ZIP_DEFLATED
 
 
 # @event.listens_for(Engine, "connect")
@@ -272,8 +277,10 @@ def base_app(instance_path):
     InvenioRecordsUI(app_)
     InvenioFilesREST(app_)
     InvenioJSONSchemas(app_)
+    InvenioOAuth2Server(app_)
     InvenioSearch(app_)
     InvenioStats(app_)
+    InvenioCache(app_)
     Menu(app_)
     WekoAccounts(app_)
     WekoRecords(app_)
@@ -331,9 +338,70 @@ def db(app):
     else:
         db_.drop_all()
     db_.create_all()
+    # create_all() only creates the parent "user_activity_logs" table
+    # (declared as a range-partitioned table), not its child partitions.
+    # Without a partition covering the current date, any activity logging
+    # during a test fails with "no partition of relation ... found". Create
+    # the current-month partition so tests that trigger logging can run.
+    # weko_logging.models._create_current_month_partition が
+    # UserActivityLog.__table__ の after_create で当月分を
+    # user_activity_logs_%Y%m という名前で既に作っている。ここで別名を
+    # 付けると同じ範囲を指す2つ目のパーティションになり
+    # "would overlap partition" で弾かれるので、名前と基準時刻を本番に
+    # 合わせて IF NOT EXISTS を効かせる。
+    _p_start = datetime.utcnow().date().replace(day=1)
+    _p_end = (_p_start + timedelta(days=31)).replace(day=1)
+    _p_name = "user_activity_logs_{}".format(_p_start.strftime('%Y%m'))
+    db_.session.execute(
+        "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
+        "FOR VALUES FROM ('{start}') TO ('{end}');".format(
+            name=_p_name, start=_p_start, end=_p_end))
+    db_.session.commit()
     yield db_
     db_.session.remove()
     db_.drop_all()
+
+@pytest.fixture()
+def tokens(app,users,db):
+    scopes = [
+        "deposit:write deposit:actions item:create item:bulkprocess",
+        "deposit:write deposit:actions item:create user:activity item:bulkprocess",
+        "deposit:write user:activity",
+        ""
+    ]
+    tokens = []
+
+    for i, scope in enumerate(scopes):
+        user = users[i]
+        user_id = str(user["id"])
+
+        test_client = Client(
+            client_id=f"dev{user_id}",
+            client_secret=f"dev{user_id}",
+            name="Test name",
+            description="test description",
+            is_confidential=False,
+            user_id=user_id,
+            _default_scopes="deposit:write"
+        )
+        test_token = Token(
+            client=test_client,
+            user_id=user_id,
+            token_type="bearer",
+            access_token=jwt_create_token(user_id=user_id),
+            expires=datetime.now() + timedelta(hours=10),
+            is_personal=False,
+            is_internal=False,
+            _scopes=scope
+        )
+
+        db.session.add(test_client)
+        db.session.add(test_token)
+        tokens.append({"token":test_token, "client":test_client, "scope":scope})
+
+    db.session.commit()
+
+    return tokens
 
 @pytest.fixture()
 def esindex(app,db_records, es):
@@ -684,6 +752,11 @@ def db_itemtype2(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -726,6 +799,11 @@ def db_itemtype3(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -768,6 +846,11 @@ def db_itemtype4(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -810,6 +893,11 @@ def db_itemtype5(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -852,6 +940,11 @@ def db_itemtype6(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -894,6 +987,11 @@ def db_itemtype(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -22522,6 +22620,11 @@ def db_itemtype_15(app, db):
     with db.session.begin_nested():
         db.session.add(item_type_name)
         db.session.add(item_type)
+        # item_type_mapping.item_type_id は ForeignKey だけで relationship()
+        # を持たないため、unit of work が item_type との INSERT 順序を決められ
+        # ない。先に flush して親行を確定させる
+        # (fk_item_type_mapping_item_type_id_item_type)。
+        db.session.flush()
         db.session.add(item_type_mapping)
 
     return {"item_type_name": item_type_name, "item_type": item_type, "item_type_mapping":item_type_mapping}
@@ -23464,3 +23567,17 @@ def restricted_settings(db):
         {"item_application": {"application_item_types": [1], "item_application_enable": True}, "display_request_form": True},
         id=10
     )
+
+@pytest.fixture()
+def make_zip():
+    def factory():
+        fp = BytesIO()
+        with ZipFile(fp, 'w', compression=ZIP_DEFLATED) as new_zip:
+            for dir, subdirs, files in os.walk("tests/data/zip_data/data"):
+                new_zip.write(dir,dir.split("/")[-1])
+                for file in files:
+                    new_zip.write(os.path.join(dir, file),os.path.join(dir.split("/")[-1],file))
+        fp.seek(0)
+        return fp
+    return factory
+

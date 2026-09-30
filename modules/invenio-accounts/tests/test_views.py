@@ -22,12 +22,13 @@ from invenio_accounts.models import SessionActivity
 from invenio_accounts.testutils import create_test_user
 
 
-def test_no_log_in_message_for_logged_in_users(app):
+def test_no_log_in_message_for_logged_in_users(recoverable_app):
     """Test the password reset form for logged in users.
 
     Password reset form should not show log in or sign up messages for logged
     in users.
     """
+    app = recoverable_app
     with app.app_context():
         forgot_password_url = url_for_security('forgot_password')
 

@@ -1,0 +1,20 @@
+# concurrent load test (search REST API)
+{
+  "label": "before_top",
+  "target": "top",
+  "concurrency": 20,
+  "total": 100,
+  "size": 100,
+  "ok": 100,
+  "bad": 0,
+  "wall_s": "5.36",
+  "throughput_rps": "18.65",
+  "p50_ms": 995,
+  "p90_ms": 1102,
+  "p95_ms": 1135,
+  "p99_ms": 1165,
+  "min_ms": 183,
+  "max_ms": 5194,
+  "mean_ms": "988.2"
+}
+label=before_top target=top conc=20 n=100/100 wall=5.36s rps=18.65 p50=995 p90=1102 p95=1135 p99=1165 max=5194 mean=988.2ms

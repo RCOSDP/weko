@@ -735,7 +735,9 @@ def test_find_rss_value(i18n_app, keyword, item_type):
             },
             "_item_metadata": {
                 "item_title": "item_title",
-                "control_number": "9999"
+                "control_number": "9999",
+                # The 'description' branch looks the item type up by this.
+                "item_type_id": 1
             }
         }
     }
@@ -747,7 +749,9 @@ def test_find_rss_value(i18n_app, keyword, item_type):
 
     with patch("weko_gridlayout.utils.get_rss_data_source", return_value="Issued"):
         with patch("weko_records.api.Mapping.get_record", return_value="test"):
-            with patch("weko_records.serializers.utils.get_mapping", return_value=return_data):
+            # weko_gridlayout.utils imports get_mapping by name, so patching
+            # it in weko_records leaves the reference it actually calls alone.
+            with patch("weko_gridlayout.utils.get_mapping", return_value=return_data):
                 find_rss_value(data, keyword) 
                                 
                 
@@ -806,7 +810,15 @@ def test_get_elasticsearch_result_by_date(i18n_app):
     start_date = "2021-11-11"
     end_date = "2021-11-22"
 
-    assert get_elasticsearch_result_by_date(start_date, end_date)
+    # There is no index behind this app, so a real search raises NotFoundError
+    # and the function answers None. Stand the search in to reach the mapping.
+    search_instance = MagicMock()
+    search_instance.execute.return_value.to_dict.return_value = {
+        "hits": {"hits": []}}
+    with patch('weko_gridlayout.utils.item_search_factory',
+               return_value=(search_instance, None)):
+        assert get_elasticsearch_result_by_date(start_date, end_date) == {
+            "hits": {"hits": []}}
 
     with patch('weko_gridlayout.utils.item_search_factory', side_effect=NotFoundError('')):
         # Exception coverage ~ line 779
@@ -818,7 +830,9 @@ def test_get_elasticsearch_result_by_date(i18n_app):
 
 # def validate_main_widget_insertion(repository_id, new_settings, page_id=0):
 def test_validate_main_widget_insertion(i18n_app, widget_item):
-    repository_id = 1
+    # WidgetDesignPage.repository_id is a varchar column; PostgreSQL will not
+    # compare it against an integer.
+    repository_id = "1"
     new_settings = ""
     return_data = MagicMock()
 

@@ -88,8 +88,8 @@ def test_create_acl_guest(client):
     """
     url = url_for("weko_authors.create")
     res = client.post(url,content_type='text/plain')
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/add",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -197,8 +197,8 @@ def test_update_author_acl_guest(client):
     """
     url = url_for("weko_authors.update_author")
     res = client.post(url, content_type='plain/text')
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/edit",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_author_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -327,8 +327,8 @@ def test_delete_author_acl_guest(client):
     """
     url = url_for("weko_authors.delete_author")
     res = client.post(url,content_type='plain/text')
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/delete",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_author_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -421,8 +421,8 @@ def test_get_acl_guest(client):
     """
     url = url_for("weko_authors.get")
     res = client.post(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/search",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -572,8 +572,8 @@ def test_getById_acl_guest(client):
     """
     url = url_for("weko_authors.getById")
     res = client.post(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/search_edit",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_getById_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -632,8 +632,8 @@ def test_mapping_acl_guest(client):
     """
     url = url_for("weko_authors.mapping")
     res = client.post(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/input",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_mapping_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -825,8 +825,8 @@ def test_gatherById_acl_guest(client):
     """
     url = url_for("weko_authors.gatherById")
     res = client.post(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/gather",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_gatherById_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -900,8 +900,8 @@ def test_gatherById(client, users, authors):
 def test_get_managed_communities_acl_guest(client):
     url = url_for("weko_authors.get_managed_communities")
     res = client.get(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/managed_communities",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_managed_communities_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -962,8 +962,8 @@ def test_get_managed_communities(client, users, db):
 def test_get_managed_communities_acl_guest(client):
     url = url_for("weko_authors.get_managed_communities")
     res = client.get(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/managed_communities",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_managed_communities_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1023,8 +1023,8 @@ def test_get_managed_communities(client, users, db):
 def test_get_prefix_list_acl_guest(client):
     url = url_for("weko_authors.get_prefix_list")
     res = client.get(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/search_prefix",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 #.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_prefix_list_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1090,8 +1090,8 @@ def test_get_prefix_list(client, db, users, community):
 def test_get_affiliation_list_acl_guest(client):
     url = url_for("weko_authors.get_affiliation_list")
     res = client.get(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/search_affiliation",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 #.tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_affiliation_list_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1155,8 +1155,8 @@ def test_get_affiliation_list(client, db, users, community):
 def test_get_list_schema_acl_guest(client):
     url = url_for("weko_authors.get_list_schema")
     res = client.get(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/list_vocabulary",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_list_schema_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1181,9 +1181,11 @@ def test_get_list_schema_acl_users(client, users, index, is_permission):
 def test_get_list_schema(client, users):
     url = url_for("weko_authors.get_list_schema")
     login_user_via_session(client=client, email=users[0]['email'])
+    # WEKO_AUTHORS_LIST_SCHEME (weko_authors/config.py); 'index' is the
+    # position of 'Other', the last entry.
     test = {
-        "list":['e-Rad', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
-        "index":11
+        "list":['e-Rad', 'e-Rad_Researcher', 'NRID', 'ORCID', 'ISNI', 'VIAF', 'AID','kakenhi', 'Ringgold', 'GRID', 'ROR', 'researchmap', 'Other'],
+        "index":12
     }
     res = client.get(url)
     assert get_json(res) == test
@@ -1193,8 +1195,8 @@ def test_get_list_schema(client, users):
 def test_get_list_affiliation_schema_acl_guest(client):
     url = url_for("weko_authors.get_list_affiliation_schema")
     res = client.get(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/list_affiliation_scheme",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_get_list_affiliation_schema_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1234,7 +1236,8 @@ def test_update_prefix_acl_guest(client):
     """
     url = url_for("weko_authors.update_prefix")
     res = client.post(url)
-    assert res.location == url_for('security.login',next="/api/authors/edit_prefix",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_prefix_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1326,8 +1329,8 @@ def test_delete_prefix_acl_guest(client, authors_prefix_settings):
     id = authors_prefix_settings[0].id
     url = url_for('weko_authors.delete_prefix', id=id)
     res = client.delete(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/delete_prefix/1",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_prefix_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1376,8 +1379,8 @@ def test_create_prefix_acl_guest(client):
     """
     url = url_for("weko_authors.create_prefix")
     res = client.put(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/add_prefix",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_prefix_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
@@ -1455,8 +1458,8 @@ def test_create_prefix(client, users, community):
 def test_update_affiliation_acl_guest(client):
     url = url_for("weko_authors.update_affiliation")
     res = client.post(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/edit_affiliation",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_update_affiliation_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1538,8 +1541,8 @@ def test_delete_affiliation_acl_guest(client, authors_affiliation_settings):
     # delete prefix
     url = url_for('weko_authors.delete_affiliation', id=1)
     res = client.delete(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/delete_affiliation/1",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_delete_prefix_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp
 @pytest.mark.parametrize('index, is_permission', [
@@ -1589,8 +1592,8 @@ def test_create_affiliation_acl_guest(client):
     """
     url = url_for("weko_authors.create_affiliation")
     res = client.put(url)
-    assert res.status_code == 302
-    assert res.location == url_for('security.login',next="/api/authors/add_affiliation",_external=True)
+    assert res.status_code == 401
+    assert get_json(res) == {'status': 401, 'message': 'Authentication required.'}
 
 
 # .tox/c1/bin/pytest --cov=weko_authors tests/test_views.py::test_create_affiliation_acl_users -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-authors/.tox/c1/tmp

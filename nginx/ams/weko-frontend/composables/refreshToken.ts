@@ -1,13 +1,14 @@
 export default function () {
   const expires = Number(localStorage.getItem('token:expires'));
   const issue = Number(localStorage.getItem('token:issue')) ?? 0;
+  const appConf = useAppConfig();
 
   if (expires) {
     if (
       issue + expires * 1000 >= Date.now() &&
       issue + (expires - useRuntimeConfig().public.tokenRefreshLimit) * 1000 <= Date.now()
     ) {
-      useFetch('/api/token/refresh', {
+      useFetch(`${appConf.amsApi ?? '/api'}/token/refresh`, {
         method: 'GET',
         params: { refreshToken: String(localStorage.getItem('token:refresh')) }
       }).then((response) => {

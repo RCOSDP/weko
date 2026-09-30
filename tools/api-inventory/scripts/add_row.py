@@ -19,8 +19,14 @@
 
 派生列(priority / test_* / cleanup)は空のままでよい。後で
 test_coverage.py → prioritize.py が付与する。
+
+`no` は台帳の主キー。**一度振った番号は変えず、使い回さない**。払い出した番号は
+`no_registry.tsv`(廃止した番号も残る)にあるので、新しい番号はそこと台帳の
+両方の最大値の次にする。台帳だけを見ると、末尾の行を廃止した直後にその番号を
+もう一度振ってしまう。`--append` では `no_registry.tsv` にも同じ番号で書き足す。
 """
 import argparse
+import fcntl
 import json
 import os
 import re
@@ -32,6 +38,8 @@ from paths import data_path  # noqa: E402
 from snapshot import default_weko_root  # noqa: E402
 
 AUTO_TODO = 'TODO'
+REGISTRY = 'no_registry.tsv'
+REGISTRY_COLUMNS = ['no', 'app', 'method', 'uri', 'endpoint', 'status', 'note']
 DERIVED = ('priority', 'priority_reason', 'test_normal', 'test_abnormal',
            'test_boundary', 'test_exception', 'test_gap', 'cleanup')
 
@@ -131,6 +139,20 @@ def build(hdr, snap_key, e, root, next_no):
     return [v[n] for n in hdr]
 
 
+def _nos(lines):
+    return [int(l.split('\t')[0]) for l in lines[1:] if l.split('\t')[0].isdigit()]
+
+
+def next_no(full_lines, registry_lines):
+    """台帳と払い出し記録の最大値の次の番号(欠番は埋めない)。"""
+    return max(_nos(full_lines) + _nos(registry_lines) + [0]) + 1
+
+
+def registry_entry(hdr, row):
+    v = dict(zip(hdr, row))
+    return [v['no'], v['app'], v['method'], v['uri'], v['endpoint'], '現役', '']
+
+
 def main():
     p = argparse.ArgumentParser(description='台帳に新規行の雛形を作る')
     p.add_argument('--endpoint', help='api_snapshot.json のキー(例 api:weko_admin.foo)')
@@ -138,6 +160,8 @@ def main():
     p.add_argument('--snapshot', default=None)
     p.add_argument('--full', default=None)
     p.add_argument('--weko-root', default=None)
+    p.add_argument('--registry', default=None,
+                   help=f'番号の払い出し記録(既定は台帳と同じ場所の {REGISTRY})')
     p.add_argument('--append', action='store_true', help='full.tsv に追記する(既定は表示のみ)')
     a = p.parse_args()
     snap_p = a.snapshot or data_path('api_snapshot.json')
@@ -164,21 +188,44 @@ def main():
         for k in keys:
             print('  ' + k)
 
+    # 番号を読んでから両ファイルに書き終えるまでを排他にする。並行して --append を
+    # 回すと、同じ最大値を読んで同じ番号を二度払い出してしまうため。ロックは台帳
+    # そのものに掛ける(ロック用のファイルを作ると台帳の隣に紛れて commit される)。
+    # 'r+' で開く。'a' だと --full の打ち間違いで空の台帳を黙って作ってしまう。
+    lock = open(full, 'r+') if a.append else None
+    if lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+
     lines = open(full, encoding='utf-8').read().rstrip('\n').split('\n')
     hdr = lines[0].split('\t')
-    next_no = max(int(l.split('\t')[0]) for l in lines[1:]
-                  if l.split('\t')[0].isdigit()) + 1
+    registry = a.registry or os.path.join(os.path.dirname(os.path.abspath(full)), REGISTRY)
+    reg_lines = (open(registry, encoding='utf-8').read().rstrip('\n').split('\n')
+                 if os.path.isfile(registry) else [])
+    if reg_lines and reg_lines[0].split('\t') != REGISTRY_COLUMNS:
+        sys.exit(f'{registry} のヘッダが想定と違います: {reg_lines[0]}')
+    no = next_no(lines, reg_lines)
 
     rows = []
     for k in keys:
-        rows.append(build(hdr, k, E[k], root, next_no))
-        next_no += 1
+        rows.append(build(hdr, k, E[k], root, no))
+        no += 1
 
     if a.append:
+        # 払い出し記録を先に書く。台帳の書き込みが後で失敗しても、番号が1つ
+        # 欠番になるだけで済む(逆順だと、台帳にだけある記録漏れの番号が残る)。
+        if reg_lines:
+            with open(registry, 'a', encoding='utf-8') as f:
+                for r in rows:
+                    f.write('\t'.join(registry_entry(hdr, r)) + '\n')
         with open(full, 'a', encoding='utf-8') as f:
             for r in rows:
                 f.write('\t'.join(r) + '\n')
+        lock.close()
         print(f'{full} に {len(rows)} 行を追記しました。')
+        if reg_lines:
+            print(f'{registry} に同じ番号を払い出しました。')
+        else:
+            print(f'注意: {registry} が無いため、番号の払い出しを記録していません。')
         print('  次に: TODO の列をソースを読んで埋め、')
         print('        test_coverage.py → prioritize.py → build_checklist.py を実行')
     else:

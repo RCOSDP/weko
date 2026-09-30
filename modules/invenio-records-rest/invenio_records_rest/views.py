@@ -853,8 +853,9 @@ class RecordsListResource(ContentNegotiatedMethodView):
         if size * page < search_result.hits.total and \
                 size * page < self.max_result_window:
             links['next'] = url_for(endpoint, page=page + 1, **urlkwargs)
-        from weko_search_ui.utils import combine_aggs
+        from weko_search_ui.utils import combine_aggs, fix_aggregations_accessrights
         search_result = combine_aggs(search_result.to_dict())
+        search_result = fix_aggregations_accessrights(search_result)
         return self.make_response(
             pid_fetcher=self.pid_fetcher,
             search_result=search_result,

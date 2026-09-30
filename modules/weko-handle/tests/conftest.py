@@ -22,6 +22,7 @@ import os
 import pytest
 from flask import Flask
 from flask_babelex import Babel
+from jinja2 import ChoiceLoader, DictLoader
 from sqlalchemy_utils.functions import create_database, database_exists
 from invenio_access import InvenioAccess
 from invenio_accounts.ext import InvenioAccounts
@@ -102,6 +103,14 @@ def base_app(instance_path):
             "Repository Administrator",
         ]
     )
+    # weko_handle.index renders invenio_theme/404.html. Installing
+    # invenio-theme here would drag the whole UI stack into a test app that
+    # only exercises three handle endpoints, so supply just that template.
+    app_.jinja_loader = ChoiceLoader([
+        app_.jinja_loader,
+        DictLoader({'invenio_theme/404.html': '<!DOCTYPE html><title>404</title>'}),
+    ])
+
     # with ESTestServer(timeout=30) as server:
     Babel(app_)
     InvenioDB(app_)

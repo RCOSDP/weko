@@ -171,7 +171,20 @@ class WekoAccountsREST(object):
         blueprint = create_blueprint(app, app.config['WEKO_ACCOUNTS_REST_ENDPOINTS'])
         app.register_blueprint(blueprint)
         app.extensions['weko_accounts_rest'] = self
+        self.init_limiter(app)
         self.init_unauthorized_handler(app)
+
+    def init_limiter(self, app):
+        """Initialize rate limiting of the login API.
+
+        Only the login API is limited. The shared limiter of
+        :class:`WekoAccounts` is not used here, because its default limits
+        would apply to every endpoint of the REST application.
+
+        :param app: An instance of :class:`flask.Flask`.
+        """
+        from .utils import login_limiter
+        login_limiter.init_app(app)
 
     def init_unauthorized_handler(self, app):
         """Return 401 JSON instead of redirecting to the login screen.
