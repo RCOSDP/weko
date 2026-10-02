@@ -1338,23 +1338,31 @@ def validate_onetime_download_token(
 
 
 def is_private_index(record):
-    """Check index of workflow is private.
+    """Check index of the record is private.
 
-    :param record:Record data.
-    :return:
+    Args:
+        record (dict): Record data.
+    Returns:
+        bool:
+            True if all indexes the item belongs to are non-public,
+            False if at least one index is public.
+    Note:
+        - An item that belongs to no index at all is treated as private.
+        - An index is only treated as public if its own public_state is
+          True and its public_date (if set) is today or in the past, AND
+          every ancestor index above it in the tree satisfies the same
+          condition. If any ancestor index is non-public (or has a
+          public_date in the future), the index is treated as non-public
+          as well, regardless of the index's own public_state.
+        - If the item belongs to at least one such public index, it is not
+          private.
     """
     from weko_index_tree.api import Indexes
     list_index = record.get("path")
-    indexes = Indexes.get_path_list(list_index)
-    publish_state = 6
-    for index in indexes:
-        if len(indexes) == 1:
-            if not index[publish_state]:
-                return True
-        else:
-            if index[publish_state]:
-                return False
-    return False
+    if not list_index:
+        return True
+    # Delegate the public/private determination to the Indexes API.
+    return not Indexes.is_public_state_and_not_in_future(list_index)
 
 
 def validate_download_record(record):
@@ -2322,6 +2330,32 @@ def convert_token_into_obj(token, is_secret_url):
     return url_obj
 
 
+def ensure_url_record_matches(url_obj, record_id, file_name):
+    """Check that the issued URL record matches the requested target.
+
+    Args:
+        url_obj: The download URL record fetched from the database.
+        record_id: The record (item) ID actually being requested.
+        file_name: The file name actually being requested.
+
+    Returns:
+        bool: True if 'url_obj' was issued for the given
+            'record_id'/'file_name', False otherwise (including when the
+            values do not match, or are None/empty).
+    """
+    # Ensure that the URL object is valid and of the correct type before proceeding.
+    if (
+        url_obj is None or
+        type(url_obj) not in (FileSecretDownload, FileOnetimeDownload)
+    ):
+        return False
+
+    return (
+        str(url_obj.record_id) == str(record_id)
+        and url_obj.file_name == file_name
+    )
+
+
 def validate_url_download(record, filename, token, is_secret_url=None):
     """Validate the request for URL download.
 
@@ -2354,6 +2388,12 @@ def validate_url_download(record, filename, token, is_secret_url=None):
 
     # Check if the URL is still valid
     url_obj = convert_token_into_obj(token, is_secret_url)
+
+    # Check that the token was actually issued for the requested item/file.
+    # The same generic message as the file-access check above is used.
+    if not ensure_url_record_matches(url_obj, record.get('recid'), filename):
+        return False, _('This file is currently not available for this feature.')
+
     if url_obj.is_deleted is True:
         return False, _('This URL has been deactivated.')
     if url_obj.download_count >= url_obj.download_limit:
