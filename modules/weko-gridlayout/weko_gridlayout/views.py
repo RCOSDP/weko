@@ -611,11 +611,12 @@ def upload_file(community_id):
 @blueprint.route('/widget/uploaded/<string:filename>/<string:community_id>',
                  methods=["GET"]
                  )
-@roles_required([WEKO_ADMIN_PERMISSION_ROLE_SYSTEM,
-                 WEKO_ADMIN_PERMISSION_ROLE_REPO,
-                 WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY])
 def uploaded_file(filename, community_id=0):
     """Get widget static file.
+
+    The files are embedded in widgets (e.g. images in a free description
+    widget) and are loaded by the browser on the public pages, so this view
+    must be reachable without logging in.
 
     :param filename: file name.
     :param community_id: community identifier.
