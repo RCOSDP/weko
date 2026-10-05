@@ -141,7 +141,7 @@
             </div>
           </a>
           <div style="padding-left: 14px">
-            <p style="width: 100%; word-wrap: break-word; overflow: hidden;">{{index_path.comment}}</p>
+            <p ng-bind-html="display_comment(index_path.comment) | sanitize" style="width: 100%; word-wrap: break-word;"></p>
           </div>
           <span ng-if="index_path.rss_status" style="position: absolute;top: 9px;right: 15px;">
             <a ng-href="/api/rss.xml?index_id={{ index_path.key.split('/').pop() }}&page=1&count=20&term=14&lang=en"
