@@ -59,6 +59,10 @@ RUN dpkg -i nginx_1.20.1-1~focal_*.deb
 
 
 ADD supervisord.conf /etc/supervisor/supervisord.conf
+# supervisord.conf points shibauthorizer / shibresponder at the x86_64
+# library directory. Rewrite it for the build architecture (e.g. aarch64).
+RUN sed -i "s#/usr/lib/x86_64-linux-gnu/shibboleth/#/usr/lib/$(uname -m)-linux-gnu/shibboleth/#g" \
+    /etc/supervisor/supervisord.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
 ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
