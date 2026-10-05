@@ -47,7 +47,8 @@ RUN apt-get update && \
 	    supervisor \
 	    shibboleth-sp-common \
 	    shibboleth-sp-utils \
-	    php-fpm php-curl
+	    fcgiwrap \
+	    python3-requests
 
 WORKDIR /tmp
 # dpkg-buildpackage names the .deb after the build host architecture
@@ -61,8 +62,6 @@ ADD supervisord.conf /etc/supervisor/supervisord.conf
 ADD shibboleth2.xml /etc/shibboleth/shibboleth2.xml
 ADD attribute-map.xml /etc/shibboleth/attribute-map.xml
 ADD attribute-policy.xml /etc/shibboleth/attribute-policy.xml
-RUN sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.4/fpm/php-fpm.conf && \
-    sed -i 's/\/run\/php/\/tmp/g' /etc/php/7.4/fpm/pool.d/www.conf
 
 ADD ./keys/server.crt /etc/shibboleth/server.crt
 ADD ./keys/server.key /etc/shibboleth/server.key
@@ -82,9 +81,8 @@ ADD redirect_list.map /etc/nginx/redirect_list.map
 RUN chmod 400 /etc/nginx/server.key
 
 RUN mkdir  /usr/share/nginx/html/secure
-#ADD ./phpinfo.php /usr/share/nginx/html/secure/phpinfo.php
-#ADD ./index.php /usr/share/nginx/html/secure/index.php
-ADD ./login.php /usr/share/nginx/html/secure/login.php
+ADD ./login.py /usr/share/nginx/html/secure/login.py
+RUN chmod 755 /usr/share/nginx/html/secure/login.py
 
 ADD ./shib_clear_headers /etc/nginx/shib_clear_headers
 ADD ./shib_fastcgi_params /etc/nginx/shib_fastcgi_params
