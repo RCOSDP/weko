@@ -60,6 +60,7 @@ from weko_records_ui.utils import (
     can_manage_secret_url,
     validate_token,
     validate_url_download,
+    ensure_url_record_matches,
     generate_one_time_download_url,
     parse_one_time_download_token,
     )
@@ -762,27 +763,50 @@ def test_parse_one_time_download_token(app):
 def test_is_private_index(app,records):
     indexer, results = records
     record = results[0]["record"]
+    # Regression: the fixture record belongs to a single public index.
     assert is_private_index(record)==False
 
-    data1 = [
-        [0, 1, 2, 3, 4, 5, 6],
-        [0, 1, 2, 3, 4, 5, 6],
-        [0, 1, 2, 3, 4, 5, 6],
-        [0, 1, 2, 3, 4, 5, 6],
-        [0, 1, 2, 3, 4, 5, 6],
-        [0, 1, 2, 3, 4, 5, 6],
-        [0, 1, 2, 3, 4, 5, 6],
-    ]
 
-    with patch("weko_index_tree.api.Indexes.get_path_list", return_value=data1):
-        assert is_private_index(record) == False
+# def is_private_index(record):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_is_private_index_decision_table -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "delegate_return, expected",
+    [
+        pytest.param(
+            True, False,
+            id="rule1_at_least_one_fully_public_chain"),
+        pytest.param(
+            False, True,
+            id="rule2_no_fully_public_chain_eg_future_dated_or_nonpublic_ancestor"),
+        pytest.param(
+            None, True,
+            id="rule3_delegate_returns_none_eg_all_indexes_deleted"),
+    ],
+)
+def test_is_private_index_decision_table(delegate_return, expected):
+    with patch(
+        "weko_index_tree.api.Indexes.is_public_state_and_not_in_future",
+        return_value=delegate_return,
+    ) as mock_delegate:
+        assert is_private_index({"path": ["1", "2"]}) is expected
+        mock_delegate.assert_called_once_with(["1", "2"])
 
-    data1 = [
-        [0, 1, 2, 3, 4, 5, False],
-    ]
 
-    with patch("weko_index_tree.api.Indexes.get_path_list", return_value=data1):
-        assert is_private_index(record) == True
+@pytest.mark.parametrize(
+    "record",
+    [
+        pytest.param({"path": []}, id="rule4_empty_path_list"),
+        pytest.param({}, id="rule5_no_path_key_at_all"),
+    ],
+)
+def test_is_private_index_no_index_short_circuits(record):
+    # An item that belongs to no index at all must be treated as private
+    # without even querying Indexes.is_public_state_and_not_in_future().
+    with patch(
+        "weko_index_tree.api.Indexes.is_public_state_and_not_in_future"
+    ) as mock_delegate:
+        assert is_private_index(record) is True
+        mock_delegate.assert_not_called()
 
 
 # def validate_download_record(record: dict):
@@ -1480,6 +1504,13 @@ def test_validate_token(app, users):
         match = re.search(r'[?&]token=([^&]+)', url)
         onetime_token = match.group(1)
         assert validate_token(onetime_token, is_secret_url=False) is True
+
+    # Cross-type reuse: a validly-signed secret-URL token must not
+    # validate via the onetime-URL path, and vice versa.
+    with app.test_request_context():
+        assert validate_token(secret_token, is_secret_url=False) is False
+        assert validate_token(onetime_token, is_secret_url=True) is False
+
     invalid_bytes = b'\xb2q\xff\x19\xaf\xfc\xc6T\x8bt\xd6\xf6\xc6 \
                             \x08D\xe7\xf3G;cN\x1bn|\xa2\x88\x01v\xed\x1cA_1'
     with app.test_request_context():
@@ -1564,6 +1595,8 @@ def test_convert_token_into_obj(vldt_token, app, users):
 @patch('weko_records_ui.utils.validate_download_record')
 def test_validate_url_download(vldt_record, vldt_file, is_enabled, vldt_token,
                                app, db, users):
+    matching_record = {'recid': 1}
+    matching_filename = 'test.txt'
     with app.test_request_context():
         secret_obj = FileSecretDownload.create(
             creator_id=1,
@@ -1579,7 +1612,8 @@ def test_validate_url_download(vldt_record, vldt_file, is_enabled, vldt_token,
     is_enabled.return_value  = True
     vldt_file.return_value   = True
     vldt_record.return_value = True
-    assert validate_url_download('', '', secret_token, True) == (True, '')
+    assert validate_url_download(
+        matching_record, matching_filename, secret_token, True) == (True, '')
 
     with app.test_request_context():
         onetime_obj = FileOnetimeDownload.create(
@@ -1594,56 +1628,175 @@ def test_validate_url_download(vldt_record, vldt_file, is_enabled, vldt_token,
         match = re.search(r'[?&]token=([^&]+)', create_download_url(onetime_obj))
         onetime_token = match.group(1)
     db.session.flush()
-    assert validate_url_download('', '', onetime_token, False) == (True, '')
+    assert validate_url_download(
+        matching_record, matching_filename, onetime_token, False) == (True, '')
 
     with patch('weko_records_ui.utils.validate_token',
                return_value=False):
-        assert validate_url_download('', '', secret_token, True) == (
+        assert validate_url_download(
+            matching_record, matching_filename, secret_token, True) == (
             False, 'The provided token is invalid.')
     with patch('weko_records_ui.utils.is_secret_url_feature_enabled',
                return_value=False):
-        assert validate_url_download('', '', secret_token, True) == (
+        assert validate_url_download(
+            matching_record, matching_filename, secret_token, True) == (
                     False, 'This feature is currently disabled.')
     with patch('weko_records_ui.utils.validate_file_access',
                return_value=False):
-        assert validate_url_download('', '', secret_token, True) == (
+        assert validate_url_download(
+            matching_record, matching_filename, secret_token, True) == (
             False, 'This file is currently not available for this feature.')
     with patch('weko_records_ui.utils.validate_download_record',
                return_value=False):
-        assert validate_url_download('', '', secret_token, True) == (
+        assert validate_url_download(
+            matching_record, matching_filename, secret_token, True) == (
             False, 'This file is currently not available for this feature.')
+
+    # record_id/file_name mismatch: Reject
+    assert validate_url_download(
+        {'recid': 999}, matching_filename, secret_token, True) == (
+        False, 'This file is currently not available for this feature.')
+
+    # record_id match, file_name mismatch: not a real file on the item: Reject
+    assert validate_url_download(
+        matching_record, 'nonexistent.txt', secret_token, True) == (
+        False, 'This file is currently not available for this feature.')
+
+    # record_id match, file_name mismatch: a different, legitimately
+    # existing file on the *same* item: Reject
+    assert validate_url_download(
+        matching_record, 'other_legit_file.txt', secret_token, True) == (
+        False, 'This file is currently not available for this feature.')
+
+    # record_id mismatch, file_name mismatch: Reject
+    assert validate_url_download(
+        {'recid': 999}, 'other.txt', secret_token, True) == (
+        False, 'This file is currently not available for this feature.')
+
+    # Same four mismatch cases as above (record_id only / file_name only
+    # with a nonexistent name / file_name only with a different real
+    # file / both), repeated for the onetime-URL path with onetime_token,
+    # to confirm the match check applies identically to both URL types.
+    assert validate_url_download(
+        {'recid': 999}, matching_filename, onetime_token, False) == (
+        False, 'This file is currently not available for this feature.')
+    assert validate_url_download(
+        matching_record, 'nonexistent.txt', onetime_token, False) == (
+        False, 'This file is currently not available for this feature.')
+    assert validate_url_download(
+        matching_record, 'other_legit_file.txt', onetime_token, False) == (
+        False, 'This file is currently not available for this feature.')
+    assert validate_url_download(
+        {'recid': 999}, 'other.txt', onetime_token, False) == (
+        False, 'This file is currently not available for this feature.')
 
     secret_obj.is_deleted = True
     db.session.commit()
-    assert validate_url_download('', '', secret_token, True) == (
+    assert validate_url_download(
+        matching_record, matching_filename, secret_token, True) == (
         False, 'This URL has been deactivated.')
     secret_obj.is_deleted = False
     secret_obj.download_count = 10
     db.session.commit()
-    assert validate_url_download('', '', secret_token, True) == (
+    assert validate_url_download(
+        matching_record, matching_filename, secret_token, True) == (
         False, 'The download limit has been exceeded.')
     secret_obj.download_count = 0
     db.session.commit()
     with patch('weko_records_ui.utils.dt') as mock_dt:
         mock_dt.now.return_value = dt.now(timezone.utc) + timedelta(days=31)
-        assert validate_url_download('', '', secret_token, True) == (
+        assert validate_url_download(
+            matching_record, matching_filename, secret_token, True) == (
             False, 'The expiration date for download has been exceeded.')
 
     onetime_obj.is_deleted = True
     db.session.commit()
-    assert validate_url_download('', '', onetime_token, False) == (
+    assert validate_url_download(
+        matching_record, matching_filename, onetime_token, False) == (
         False, 'This URL has been deactivated.')
     onetime_obj.is_deleted = False
     onetime_obj.download_count = 10
     db.session.commit()
-    assert validate_url_download('', '', onetime_token, False) == (
+    assert validate_url_download(
+        matching_record, matching_filename, onetime_token, False) == (
         False, 'The download limit has been exceeded.')
     onetime_obj.download_count = 0
     db.session.commit()
     with patch('weko_records_ui.utils.dt') as mock_dt:
         mock_dt.now.return_value = dt.now(timezone.utc) + timedelta(days=31)
-        assert validate_url_download('', '', onetime_token, False) == (
+        assert validate_url_download(
+            matching_record, matching_filename, onetime_token, False) == (
             False, 'The expiration date for download has been exceeded.')
+
+
+# def ensure_url_record_matches(url_obj, record_id, file_name):
+# .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_ensure_url_record_matches -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
+def test_ensure_url_record_matches():
+
+    # Build real FileSecretDownload instances.
+    def make_secret(record_id, file_name):
+        return FileSecretDownload(
+            creator_id=1, record_id=record_id, file_name=file_name,
+            label_name='test', expiration_date=dt.now(timezone.utc),
+            download_limit=1)
+
+    # Build real FileOnetimeDownload instances.
+    def make_onetime(record_id, file_name):
+        return FileOnetimeDownload(
+            approver_id=1, record_id=record_id, file_name=file_name,
+            expiration_date=dt.now(timezone.utc), download_limit=1,
+            user_mail='test@example.org', is_guest=False, extra_info={})
+
+    # Decision table.
+    url_obj = make_secret(record_id='1', file_name='test.txt')
+    # rule 1: record_id match, file_name match -> allow (True)
+    assert ensure_url_record_matches(url_obj, '1', 'test.txt') is True
+    # rule 2: record_id match, file_name mismatch -> reject (False)
+    assert ensure_url_record_matches(url_obj, '1', 'other.txt') is False
+    # rule 3: record_id mismatch, file_name match -> reject (False)
+    assert ensure_url_record_matches(url_obj, '2', 'test.txt') is False
+    # rule 4: record_id mismatch, file_name mismatch -> reject (False)
+    assert ensure_url_record_matches(url_obj, '2', 'other.txt') is False
+
+    # Both accepted url_obj types must be recognized.
+    onetime_obj = make_onetime(record_id='1', file_name='test.txt')
+    assert ensure_url_record_matches(onetime_obj, '1', 'test.txt') is True
+
+    # url_obj is None: rejected without raising.
+    assert ensure_url_record_matches(None, '1', 'test.txt') is False
+
+    # url_obj is of a type other than FileSecretDownload/FileOnetimeDownload.
+    class UnexpectedType:
+        def __init__(self, record_id, file_name):
+            self.record_id = record_id
+            self.file_name = file_name
+    assert ensure_url_record_matches(
+        UnexpectedType(record_id='1', file_name='test.txt'),
+        '1', 'test.txt') is False
+
+    # Boundary/abnormal inputs must not raise, and must be rejected when
+    # they do not match a non-None url_obj.
+    assert ensure_url_record_matches(url_obj, None, 'test.txt') is False
+    assert ensure_url_record_matches(url_obj, '1', None) is False
+    assert ensure_url_record_matches(url_obj, '', 'test.txt') is False
+
+    # url_obj.record_id and record_id have different types: compared
+    # after str() conversion, so equal values should still match.
+    int_id_obj = make_secret(record_id=1, file_name='test.txt')
+    assert ensure_url_record_matches(int_id_obj, '1', 'test.txt') is True
+    assert ensure_url_record_matches(int_id_obj, 1, 'test.txt') is True
+    assert ensure_url_record_matches(int_id_obj, '2', 'test.txt') is False
+
+    # file_name containing path traversal / script-injection-like
+    # characters must not raise, and must be rejected unless it is an
+    # exact match.
+    malicious_names = ['../../etc/passwd', '<script>alert(1)</script>',
+                        "' OR '1'='1", '--', 'a' * 5000]
+    for name in malicious_names:
+        assert ensure_url_record_matches(url_obj, '1', name) is False
+        # An exact match (even of an unusual file name) is still allowed.
+        exact_obj = make_secret(record_id='1', file_name=name)
+        assert ensure_url_record_matches(exact_obj, '1', name) is True
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_utils.py::test_validate_file_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp

@@ -894,21 +894,47 @@ def test_copy_secret_url(app, client, records):
         assert res.json['url'] == expected_secret_url
     with patch('weko_records_ui.views.can_manage_secret_url',
                 return_value=False):
-        with pytest.raises(Exception):
-            res = client.get(url)
-            assert res.status_code == 403
-    with patch('weko_records_ui.views.create_download_url',
+        # abort(403) must propagate as an actual 403 response.
+        res = client.get(url)
+        assert res.status_code == 403
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True), \
+         patch('weko_records_ui.views.create_download_url',
                 side_effect=Exception('Test Error')):
+        # can_manage_secret_url must stay True here, otherwise the real
+        # permission check would reject with 403 before ever reaching
+        # create_download_url(), and this would not test a genuine 500.
         res = client.get(url)
         assert res.status_code == 500
     with patch('weko_records_ui.views.can_manage_secret_url',
                 return_value=True):
+        # secret_url_id does not exist
         url = url_for('invenio_records_ui.recid_copy_secret_url',
                         pid_value=records[1]['recid'].pid_value,
                         filename=records[1]['filename'],
                         secret_url_id=99)  # invalid secret_url_id
-        res = client.get(url)
-        assert res.json['url'] is None
+        res_not_exist = client.get(url)
+        assert res_not_exist.status_code == 404
+
+        # secret_url_id exists, but belongs to a *different* item.
+        # Its file_name is deliberately set to match the *requested* filename.
+        other_secret_obj = FileSecretDownload.create(
+            creator_id=1,
+            record_id=records[0]['recid'].pid_value,
+            file_name=records[1]['filename'],
+            label_name='other item link',
+            expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+            download_limit=1,
+        )
+        mismatched_url = url_for(
+            'invenio_records_ui.recid_copy_secret_url',
+            pid_value=records[1]['recid'].pid_value,
+            filename=records[1]['filename'],
+            secret_url_id=other_secret_obj.id)
+        res_mismatch = client.get(mismatched_url)
+        assert res_mismatch.status_code == 404
+        # The mismatch/not exist response must be indistinguishable to the caller.
+        assert res_mismatch.get_data() == res_not_exist.get_data()
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_copy_onetime_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -942,21 +968,49 @@ def test_copy_onetime_url(app, client, records):
         assert res.json['url'] == expected_onetime_url
     with patch('weko_records_ui.views.can_manage_onetime_url',
                 return_value=False):
-          with pytest.raises(Exception):
-                res = client.get(url)
-                assert res.status_code == 403
-    with patch('weko_records_ui.views.create_download_url',
+        # abort(403) must propagate as an actual 403 response
+        res = client.get(url)
+        assert res.status_code == 403
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True), \
+         patch('weko_records_ui.views.create_download_url',
                 side_effect=Exception('Test Error')):
+        # can_manage_onetime_url must stay True here, otherwise the real
+        # permission check would reject with 403 before ever reaching
+        # create_download_url(), and this would not test a genuine 500.
         res = client.get(url)
         assert res.status_code == 500
     with patch('weko_records_ui.views.can_manage_onetime_url',
                 return_value=True):
+        # onetime_url_id does not exist
         url = url_for('invenio_records_ui.recid_copy_onetime_url',
                         pid_value=records[1]['recid'].pid_value,
                         filename=records[1]['filename'],
                         onetime_url_id=99)  # invalid onetime_url_id
-        res = client.get(url)
-        assert res.json['url'] is None
+        res_not_exist = client.get(url)
+        assert res_not_exist.status_code == 404
+
+        # onetime_url_id exists, but belongs to a *different* item.
+        # Its file_name is deliberately set to match the *requested* filename.
+        other_onetime_obj = FileOnetimeDownload.create(
+            approver_id=1,
+            record_id=records[0]['recid'].pid_value,
+            file_name=records[1]['filename'],
+            expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+            download_limit=1,
+            user_mail='test@example.org',
+            is_guest=False,
+            extra_info={}
+        )
+        mismatched_url = url_for(
+            'invenio_records_ui.recid_copy_onetime_url',
+            pid_value=records[1]['recid'].pid_value,
+            filename=records[1]['filename'],
+            onetime_url_id=other_onetime_obj.id)
+        res_mismatch = client.get(mismatched_url)
+        assert res_mismatch.status_code == 404
+        # The mismatch/not exist response must be indistinguishable to the caller.
+        assert res_mismatch.get_data() == res_not_exist.get_data()
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_delete_secret_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -984,11 +1038,16 @@ def test_delete_secret_url(client, records):
         assert secret_obj.is_deleted == True
     with patch('weko_records_ui.views.can_manage_secret_url',
                 return_value=False):
-        with pytest.raises(Exception):
-            res = client.delete(url)
-            assert res.status_code == 403
-    with patch('weko_records_ui.models.FileSecretDownload.delete_logically',
+        # abort(403) must propagate as an actual 403 response.
+        res = client.delete(url)
+        assert res.status_code == 403
+    with patch('weko_records_ui.views.can_manage_secret_url',
+                return_value=True), \
+         patch('weko_records_ui.models.FileSecretDownload.delete_logically',
                 side_effect=Exception('Test Error')):
+        # can_manage_secret_url must stay True here, otherwise the real
+        # permission check would reject with 403 before ever reaching
+        # delete_logically(), and this would not test a genuine 500.
         res = client.delete(url)
         assert res.status_code == 500
     with patch('weko_records_ui.views.can_manage_secret_url',
@@ -997,9 +1056,32 @@ def test_delete_secret_url(client, records):
                         pid_value=records[1]['recid'].pid_value,
                         filename=records[1]['filename'],
                         secret_url_id=99)  # invalid secret_url_id
-        with pytest.raises(Exception):
-            res = client.delete(url)
-            assert res.status_code == 404
+        # abort(404) must propagate as an actual 404 response, not be
+        # swallowed into a 500.
+        res_not_exist = client.delete(url)
+        assert res_not_exist.status_code == 404
+
+        # secret_url_id exists, but belongs to a *different* item.
+        # Its file_name is deliberately set to match the *requested* filename.
+        other_secret_obj = FileSecretDownload.create(
+            creator_id=1,
+            record_id=records[0]['recid'].pid_value,
+            file_name=records[1]['filename'],
+            label_name='other item link',
+            expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+            download_limit=1,
+        )
+        mismatched_url = url_for(
+            'invenio_records_ui.recid_delete_secret_url',
+            pid_value=records[1]['recid'].pid_value,
+            filename=records[1]['filename'],
+            secret_url_id=other_secret_obj.id)
+        res_mismatch = client.delete(mismatched_url)
+        assert res_mismatch.status_code == 404
+        # The mismatch/not exist response must be indistinguishable to the caller.
+        assert res_mismatch.get_data() == res_not_exist.get_data()
+        # The other item's secret URL must remain untouched.
+        assert other_secret_obj.is_deleted == False
 
 
 # .tox/c1/bin/pytest --cov=weko_records_ui tests/test_views.py::test_delete_onetime_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-records-ui/.tox/c1/tmp
@@ -1029,11 +1111,17 @@ def test_delete_onetime_url(client, records):
         assert onetime_obj.is_deleted == True
     with patch('weko_records_ui.views.can_manage_onetime_url',
                 return_value=False):
-        with pytest.raises(Exception):
-            res = client.delete(url)
-            assert res.status_code == 403
-    with patch('weko_records_ui.models.FileOnetimeDownload.delete_logically',
+        # abort(403) must propagate as an actual 403 response.
+        res = client.delete(url)
+        assert res.status_code == 403
+    with patch('weko_records_ui.views.can_manage_onetime_url',
+                return_value=True), \
+         patch('weko_records_ui.models.FileOnetimeDownload.delete_logically',
                 side_effect=Exception('Test Error')):
+            # can_manage_onetime_url must stay True here, otherwise the
+            # real permission check would reject with 403 before ever
+            # reaching delete_logically(), and this would not test a
+            # genuine 500.
             res = client.delete(url)
             assert res.status_code == 500
     with patch('weko_records_ui.views.can_manage_onetime_url',
@@ -1042,9 +1130,34 @@ def test_delete_onetime_url(client, records):
                         pid_value=records[1]['recid'].pid_value,
                         filename=records[1]['filename'],
                         onetime_url_id=99)
-        with pytest.raises(Exception):
-            res = client.delete(url)
-            assert res.status_code == 404
+        # abort(404) must propagate as an actual 404 response, not be
+        # swallowed into a 500.
+        res_not_exist = client.delete(url)
+        assert res_not_exist.status_code == 404
+
+        # onetime_url_id exists, but belongs to a *different* item.
+        # Its file_name is deliberately set to match the *requested* filename.
+        other_onetime_obj = FileOnetimeDownload.create(
+            approver_id=1,
+            record_id=records[0]['recid'].pid_value,
+            file_name=records[1]['filename'],
+            expiration_date=datetime.now(timezone.utc) + timedelta(days=1),
+            download_limit=1,
+            user_mail='test@example.org',
+            is_guest=False,
+            extra_info={}
+        )
+        mismatched_url = url_for(
+            'invenio_records_ui.recid_delete_onetime_url',
+            pid_value=records[1]['recid'].pid_value,
+            filename=records[1]['filename'],
+            onetime_url_id=other_onetime_obj.id)
+        res_mismatch = client.delete(mismatched_url)
+        assert res_mismatch.status_code == 404
+        # The mismatch/not exist response must be indistinguishable to the caller.
+        assert res_mismatch.get_data() == res_not_exist.get_data()
+        # The other item's onetime URL must remain untouched.
+        assert other_onetime_obj.is_deleted == False
 
 
 # def default_view_method(pid, record, filename=None, template=None, **kwargs):

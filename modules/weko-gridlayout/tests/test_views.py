@@ -598,7 +598,9 @@ user_results2 = [
 ]
 @pytest.mark.parametrize('id, status_code', user_results2)
 def test_load_widget_type(client, users, id, status_code):
-    login_user_via_session(client=client, email=users[id]['obj'].email)
+    # Log in with "email": "obj" of users[4] (generaluser) is the sysadmin
+    # object in the users fixture.
+    login_user_via_session(client=client, email=users[id]['email'])
     res = client.get(
         url_for("weko_gridlayout_api.load_widget_type"),
         headers={"Content-Type": "application/json"}
@@ -972,33 +974,37 @@ def test_upload_file(client, users, communities):
 
 
 # def uploaded_file(filename, community_id=0):
-user_results2 = [
-    (0, 403),
-    (1, 200),
-    (2, 200),
-    (3, 403),
-    (4, 403),
+# The files are shown on the public pages, so anyone - including users who
+# are not logged in - can get them.
+uploaded_file_users = [
+    None,  # not logged in
+    0,     # Contributor
+    1,     # Repository Administrator
+    2,     # System Administrator
+    3,     # Community Administrator
+    7,     # user without any role
 ]
-@pytest.mark.parametrize('id, status_code', user_results2)
-def test_uploaded_file(client, users, id, status_code):
-    login_user_via_session(client=client, email=users[id]["email"])
-    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value="test"):
-        res = client.get(
-            url_for("weko_gridlayout.uploaded_file", community_id="Root Index", filename="file")
-        )
-        assert res.status_code == status_code
-        assert res.get_data(as_text=True) == "test"
-
-
-def test_uploaded_file(client, communities):
+@pytest.mark.parametrize('id', uploaded_file_users)
+@pytest.mark.parametrize('community_id', ["Root Index", "comm1"])
+def test_uploaded_file(client, users, communities, id, community_id):
+    if id is not None:
+        login_user_via_session(client=client, email=users[id]["email"])
     # The view returns whatever get_file() gives it, so the stand-in has to be
     # something Flask can turn into a response - a function is not.
-    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value="test"):
+    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value="test") as get_file:
         res = client.get(
-            url_for("weko_gridlayout.uploaded_file", community_id="comm1", filename="file")
+            url_for("weko_gridlayout.uploaded_file", community_id=community_id, filename="file")
         )
         assert res.status_code == 200
         assert res.get_data(as_text=True) == "test"
+        get_file.assert_called_once_with("file", community_id)
+
+
+def test_uploaded_file_without_community(client):
+    with patch('weko_gridlayout.views.WidgetBucket.get_file', return_value="test") as get_file:
+        res = client.get("/widget/uploaded/file")
+        assert res.status_code == 200
+        get_file.assert_called_once_with("file", 0)
 
 # def unlocked_widget():
 def test_unlocked_widget(client, users):
