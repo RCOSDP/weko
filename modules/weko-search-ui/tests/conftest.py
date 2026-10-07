@@ -589,7 +589,7 @@ def base_app(instance_path, search_class, request):
                 "src_pdf": "by-nc-nd.png",
                 "href_pdf": "http://creativecommons.org/licenses/by-nc-nd/4.0/",
                 "txt": "This work is licensed under a Creative Commons Attribution"
-                "-NonCommercial-ShareAlike 4.0 International License.",
+                "-NonCommercial-NoDerivatives 4.0 International License.",
             },
         ],
         WEKO_RECORDS_UI_BULK_UPDATE_FIELDS=WEKO_RECORDS_UI_BULK_UPDATE_FIELDS,
