@@ -7717,7 +7717,7 @@ def test_make_stats_file(app, db, users, db_itemtype, db_records, db_itemtype2, 
                 "src_pdf": "by-nc-nd.png",
                 "href_pdf": "http://creativecommons.org/licenses/by-nc-nd/4.0/",
                 "txt": "This work is licensed under a Creative Commons Attribution"
-                "-NonCommercial-ShareAlike 4.0 International License.",
+                "-NonCommercial-NoDerivatives 4.0 International License.",
             },
         ],
     )
@@ -8109,7 +8109,7 @@ def test_make_stats_file_issue33432(app, users,db_itemtype, db_records,db_itemty
                 "src_pdf": "by-nc-nd.png",
                 "href_pdf": "http://creativecommons.org/licenses/by-nc-nd/4.0/",
                 "txt": "This work is licensed under a Creative Commons Attribution"
-                "-NonCommercial-ShareAlike 4.0 International License.",
+                "-NonCommercial-NoDerivatives 4.0 International License.",
             },
         ],
     )
@@ -8307,7 +8307,7 @@ def test_make_stats_file_issue36234(app, users,db_itemtype,db_records_file):
                 "src_pdf": "by-nc-nd.png",
                 "href_pdf": "http://creativecommons.org/licenses/by-nc-nd/4.0/",
                 "txt": "This work is licensed under a Creative Commons Attribution"
-                "-NonCommercial-ShareAlike 4.0 International License.",
+                "-NonCommercial-NoDerivatives 4.0 International License.",
             },
         ],
     )
