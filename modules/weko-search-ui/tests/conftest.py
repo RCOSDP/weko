@@ -295,7 +295,7 @@ def base_app(instance_path, search_class, request):
         WEKO_INDEX_TREE_STATE_PREFIX="index_tree_expand_state",
         REDIS_PORT="6379",
         DEPOSIT_DEFAULT_JSONSCHEMA=DEPOSIT_DEFAULT_JSONSCHEMA,
-        SERVER_NAME="TEST_SERVER",
+        SERVER_NAME="test_server",
         LOGIN_DISABLED=False,
         INDEXER_DEFAULT_DOCTYPE="item-v1.0.0",
         WEKO_SCHEMA_JPCOAR_V1_SCHEMA_NAME = 'jpcoar_v1_mapping',
@@ -791,6 +791,15 @@ def db(app):
     if not database_exists(str(db_.engine.url)):
         create_database(str(db_.engine.url))
     db_.create_all()
+    _now = datetime.now()
+    _p_start = _now.date().replace(day=1)
+    _p_end = (_p_start + timedelta(days=31)).replace(day=1)
+    _p_name = "user_activity_logs_{}_{:02d}".format(_now.year, _now.month)
+    db_.session.execute(
+        "CREATE TABLE IF NOT EXISTS {name} PARTITION OF user_activity_logs "
+        "FOR VALUES FROM ('{start}') TO ('{end}');".format(
+            name=_p_name, start=_p_start, end=_p_end))
+    db_.session.commit()
     yield db_
     db_.session.remove()
     db_.drop_all()
@@ -874,6 +883,123 @@ def client_request_args(app, file_instance_mock):
                     "referrer": "test",
                     "host": "127.0.0.1",
                     # 'search_type': WEKO_SEARCH_TYPE_DICT["FULL_TEXT"],
+                },
+            )
+        yield r
+
+@pytest.yield_fixture()
+def client_request_args2(app, file_instance_mock):
+    app.register_blueprint(
+        create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
+    )
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "sample_file",
+        "sample_file.txt",
+    )
+
+    # files = {'upload_file': open(file_path,'rb')}
+    # values = {'DB': 'photcat', 'OUT': 'txt', 'SHORT': 'short'}
+
+    # r = requests.post(url, files=files, data=values)
+
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get(
+                "/",
+                query_string={
+                    "index_id": "33",
+                    "page": 1,
+                    "count": 20,
+                    "term": 14,
+                    "lang": "en",
+                    "parent_id": 33,
+                    "index_info": {},
+                    "community": "comm1",
+                    "item_link": "1",
+                    "is_search": 1,
+                    "search_type": WEKO_SEARCH_TYPE_DICT["INDEX"],
+                    "is_change_identifier": True,
+                    "remote_addr": "0.0.0.0",
+                    "referrer": "test",
+                    "host": "127.0.0.1",
+                    "q": "q"
+                },
+            )
+        yield r
+
+@pytest.yield_fixture()
+def client_request_args3(app, file_instance_mock):
+    app.register_blueprint(
+        create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
+    )
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "sample_file",
+        "sample_file.txt",
+    )
+
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get(
+                "/",
+                query_string={
+                    "index_id": "33",
+                    "page": 1,
+                    "count": 20,
+                    "term": 14,
+                    "lang": "en",
+                    "parent_id": 33,
+                    "index_info": {},
+                    "community": "comm1",
+                    "item_link": "1",
+                    "is_search": 0,
+                    "search_type": WEKO_SEARCH_TYPE_DICT["INDEX"],
+                    "is_change_identifier": True,
+                    "remote_addr": "0.0.0.0",
+                    "referrer": "test",
+                    "host": "127.0.0.1",
+                },
+            )
+        yield r
+
+@pytest.yield_fixture()
+def client_request_args4(app, file_instance_mock):
+    app.register_blueprint(
+        create_blueprint(app, app.config["WEKO_SEARCH_REST_ENDPOINTS"])
+    )
+
+    file_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "data",
+        "sample_file",
+        "sample_file.txt",
+    )
+
+    with app.test_client() as client:
+        with patch("flask.templating._render", return_value=""):
+            r = client.get(
+                "/",
+                query_string={
+                    "index_id": "33",
+                    "page": 2,
+                    "count": 20,
+                    "term": 14,
+                    "lang": "en",
+                    "parent_id": 33,
+                    "index_info": {},
+                    "community": "comm1",
+                    "item_link": "1",
+                    "is_search": 1,
+                    "search_type": WEKO_SEARCH_TYPE_DICT["INDEX"],
+                    "is_change_identifier": True,
+                    "remote_addr": "0.0.0.0",
+                    "referrer": "test",
+                    "host": "127.0.0.1",
                 },
             )
         yield r
