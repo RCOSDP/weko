@@ -145,7 +145,7 @@ def test_opensearch_description_acl_guest(app,client_api,db_register2,index_styl
 # def journal_detail(index_id=0):
 def test_journal_detail(i18n_app, users, indices):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
-        assert journal_detail(33)
+        assert journal_detail(index_id=33)
 
 
 def test_journal_detail_forbidden(client, users, indices):

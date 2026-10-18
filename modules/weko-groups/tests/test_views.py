@@ -166,6 +166,13 @@ def test_new(app_2, users, id, status_code):
     with app_2.test_request_context():
         with app_2.test_client() as client:
             with patch("flask_login.utils._get_user", return_value=users[id]["obj"]):
+                if status_code == 403:
+                    # roles_required で弾かれる。要求後にセッションが片付き
+                    # fixture のユーザが detach されるため、続けて要求しない
+                    res = client.get(url_for('weko_groups.new'))
+                    assert res.status_code == status_code
+                    return
+
                 with patch("weko_groups.views.GroupForm", return_value=form):
                     # "Encountered unknown tag 'assets'. Jinja was looking for the following tags: 'endblock'. The innermost block that needs to be closed is 'block'.", 
                     # But upon testing on the actual url on the browser "https://localhost/accounts/settings/groups/new" there is no problem
@@ -555,9 +562,22 @@ def test_new_member_3(app_2, users):
     with app_2.test_request_context():
         group = Group.create(name="name", is_managed=True)
         with app_2.test_client() as client:
-            with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+            # 管理者ロールがあっても is_managed のグループには招待できず戻される
+            with patch("flask_login.utils._get_user", return_value=users[3]["obj"]):
                 res = client.get(url_for('weko_groups.new_member', group_id=group.id))
                 assert res.status_code == 302
+
+
+def test_new_member_4(app_2, users):
+    # 1要求ごとにセッションが片付き fixture のユーザが detach されるため、
+    # 別ユーザでの確認は別のテストに分ける
+    with app_2.test_request_context():
+        group = Group.create(name="name", is_managed=True)
+        with app_2.test_client() as client:
+            # 管理者ロールを持たないユーザは roles_required で弾かれる
+            with patch("flask_login.utils._get_user", return_value=users[7]["obj"]):
+                res = client.get(url_for('weko_groups.new_member', group_id=group.id))
+                assert res.status_code == 403
 
 
 # def remove_csrf(form):

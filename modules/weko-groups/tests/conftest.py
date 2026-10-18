@@ -237,7 +237,7 @@ def users(app, db_2):
         comadmin = User.query.filter_by(email='comadmin@test.org').first()
         repoadmin = User.query.filter_by(email='repoadmin@test.org').first()
         sysadmin = User.query.filter_by(email='sysadmin@test.org').first()
-        generaluser = User.query.filter_by(email='generaluser@test.org')
+        generaluser = User.query.filter_by(email='generaluser@test.org').first()
         originalroleuser = create_test_user(email='originalroleuser@test.org')
         originalroleuser2 = create_test_user(email='originalroleuser2@test.org')
 
@@ -278,7 +278,7 @@ def users(app, db_2):
         {'email': repoadmin.email, 'id': repoadmin.id, 'obj': repoadmin},
         {'email': sysadmin.email, 'id': sysadmin.id, 'obj': sysadmin},
         {'email': comadmin.email, 'id': comadmin.id, 'obj': comadmin},
-        {'email': generaluser.email, 'id': generaluser.id, 'obj': sysadmin},
+        {'email': generaluser.email, 'id': generaluser.id, 'obj': generaluser},
         {'email': originalroleuser.email, 'id': originalroleuser.id, 'obj': originalroleuser},
         {'email': originalroleuser2.email, 'id': originalroleuser2.id, 'obj': originalroleuser2},
         {'email': user.email, 'id': user.id, 'obj': user},

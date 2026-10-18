@@ -55,5 +55,6 @@ def test_view(app):
         with app.test_client() as client:
             res = client.get('/accounts/settings/groups/groupcount')
             assert 200 == res.status_code
+            # grouplist は login_required。未ログインはログイン画面へ飛ばされる
             res = client.get('/accounts/settings/groups/grouplist')
-            assert 200 == res.status_code
+            assert 302 == res.status_code

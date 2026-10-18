@@ -4365,14 +4365,10 @@ def test_get_feedback_maillist_acl_users(
 
 
 # .tox/c1/bin/pytest --cov=weko_workflow tests/test_views.py::test_get_feedback_maillist -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
+# check_authority で弾かれずに本体まで届くよう、アクティビティの申請者ではない
+# ユーザのうち管理者(sysadmin)で確認する。権限の境界は *_acl_* のテストで見る。
 @pytest.mark.parametrize('users_index, status_code', [
-    (0, 200),
-    #(1, 200),
-    #(2, 200),
-    #(3, 200),
-    #(4, 200),
-    #(5, 200),
-    #(6, 200),
+    (2, 200),
 ])
 def test_get_feedback_maillist(client, users, db_register_full_action, users_index, status_code):
     login(client=client, email=users[users_index]['email'])
