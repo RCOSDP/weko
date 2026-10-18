@@ -975,10 +975,11 @@ def test_can_invite_others(example_group):
         assert group.can_invite_others(member)
         assert group.can_invite_others(non_member)
 
+        # 招待できるのは OPEN のときだけ。APPROVAL では管理者のみ
         group.subscription_policy = SubscriptionPolicy.APPROVAL
         assert group.can_invite_others(admin)
-        assert group.can_invite_others(member)
-        assert group.can_invite_others(non_member)
+        assert not group.can_invite_others(member)
+        assert not group.can_invite_others(non_member)
 
         group.subscription_policy = SubscriptionPolicy.CLOSED
         assert group.can_invite_others(admin)
