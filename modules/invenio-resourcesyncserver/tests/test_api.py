@@ -372,6 +372,10 @@ def test_get_record_content_file_ResourceListHandler(i18n_app):
                     # Exception coverage
                     assert not test.get_record_content_file(1)
 
+        # 閲覧権限のないレコードは _export_item が {} を返す
+        with patch("invenio_resourcesyncserver.api._export_item", return_value=({}, {})):
+            assert test.get_record_content_file(1) is None
+
 
 # class ChangeListHandler(object):
 #     def __init__(self, **kwargs):
@@ -803,12 +807,16 @@ def test_get_record_content_file_ChangeListHandler(i18n_app, es_records):
 
     test_str._is_record_in_index = _is_record_in_index
 
-    # Exception coverage
+    # es_records のレコードは非公開なので、匿名では書き出されない
     assert not test_str.get_record_content_file(record_id)
 
-    test_str.get_change_dump_manifest_xml = get_change_dump_manifest_xml
+    with patch("weko_items_ui.utils.check_publish_status", return_value=True):
+        # Exception coverage
+        assert not test_str.get_record_content_file(record_id)
 
-    assert test_str.get_record_content_file(record_id)
+        test_str.get_change_dump_manifest_xml = get_change_dump_manifest_xml
+
+        assert test_str.get_record_content_file(record_id)
 
 
 #     def get_capability_content(cls):

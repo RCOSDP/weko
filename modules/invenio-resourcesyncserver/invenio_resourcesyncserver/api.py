@@ -527,6 +527,9 @@ class ResourceListHandler(object):
                 include_contents,
                 record_path,
             )
+            if not exported_item:
+                # _export_item は閲覧権限のないレコードを {} で返す
+                return None
 
             result['items'].append(exported_item)
 
@@ -1222,6 +1225,9 @@ class ChangeListHandler(object):
                 include_contents,
                 record_path,
             )
+            if not exported_item:
+                # _export_item は閲覧権限のないレコードを {} で返す
+                return None
 
             result['items'].append(exported_item)
 
