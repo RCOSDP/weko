@@ -20469,25 +20469,44 @@ def test_index_upload_acl(client, db_sessionlifetime, users, id, status_code):
 
 # def get_search_data(data_type=''):
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data_acl -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_get_search_data_acl(client_api, db_sessionlifetime):
+def test_get_search_data_acl_nologin(client_api, db_sessionlifetime):
     url = url_for(
         "weko_items_ui_api.get_search_data", data_type="username", _external=True
     )
     res = client_api.get(url)
-    assert res.status_code == 200
-    url = url_for(
-        "weko_items_ui_api.get_search_data", data_type="email", _external=True
-    )
-    res = client_api.get(url)
-    assert res.status_code == 200
+    assert res.status_code == 302
 
-    url = url_for("weko_items_ui_api.get_search_data", data_type="hoge", _external=True)
-    res = client_api.get(url)
-    assert res.status_code == 200
+
+@pytest.mark.parametrize(
+    "id, status_code",
+    [
+        (0, 200),
+        (1, 200),
+        (2, 200),
+        (3, 200),
+        (4, 403),
+        (5, 403),
+        (6, 200),
+        (7, 403),
+    ],
+)
+def test_get_search_data_acl(client_api, db_sessionlifetime, users, id, status_code):
+    login_user_via_session(client=client_api, email=users[id]["email"])
+
+    for data_type in ("username", "email", "hoge"):
+        url = url_for(
+            "weko_items_ui_api.get_search_data",
+            data_type=data_type,
+            _external=True,
+        )
+        res = client_api.get(url)
+        assert res.status_code == status_code
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_get_search_data -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
 def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
+    login_user_via_session(client=client_api, email=users[0]["email"])
+
     url = url_for(
         "weko_items_ui_api.get_search_data", data_type="username", _external=True
     )
