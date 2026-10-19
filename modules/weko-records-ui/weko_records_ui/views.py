@@ -71,7 +71,7 @@ from .models import FilePermission, PDFCoverPageSettings
 from .permissions import check_content_clickable, check_created_id, \
     check_file_download_permission, check_original_pdf_download_permission, \
     check_permission_period, file_permission_factory, get_permission, \
-    check_charge, create_charge, close_charge, secure_charge
+    check_charge, create_charge, close_charge, secure_charge, get_file_charge_info
 from .utils import get_billing_file_download_permission, \
     get_google_detaset_meta, get_google_scholar_meta, get_groups_price, \
     get_min_price_billing_file_download, get_record_permalink, hide_by_email, \
@@ -1050,6 +1050,7 @@ def charge():
                 already      : 課金済み
                 error        : 課金失敗
                 credit_error : 課金失敗(クレジットカード情報の不備)
+                price_changed: リクエスト時から価格が変更された（変更後のprice, unit を含む）
         redirect:
             カード会社の3DS2.0画面へのリダイレクトURL
     '''
@@ -1060,6 +1061,28 @@ def charge():
     file_name = request.values.get('file_name')
     title = request.values.get('title')
     price = request.values.get('price')
+    if not item_id or not str(item_id).isdigit():
+        return jsonify({'status': 'error'})
+    if not price or not str(price).isdigit() or not file_name:
+        return jsonify({'status': 'error'})
+
+    # 課金額はリクエストの値ではなくサーバーで算出した値を使う
+    try:
+        charge_status, server_price, unit = get_file_charge_info(int(item_id), file_name)
+    except Exception as e:
+        current_app.logger.error(f'Error in get_charge_price: user: {current_user.id}, item_id: {item_id}, file_name: {file_name}')
+        current_app.logger.error(e)
+        return jsonify({'status': 'error'})
+    if charge_status == 'already':
+        return jsonify({'status': 'already'})
+    if charge_status != 'ok':
+        # not_required / invalid は通常の画面操作では起きないため、専用の応答は設けない
+        current_app.logger.warning(f'Charge rejected ({charge_status}): user: {current_user.id}, item_id: {item_id}, file_name: {file_name}')
+        return jsonify({'status': 'error'})
+    if int(price) != server_price:
+        # 画面表示後に価格が変わった、または改ざんされた。課金せずに再確認させる
+        current_app.logger.warning(f'Price mismatch in charge: user: {current_user.id}, item_id: {item_id}, request_price: {price}, server_price: {server_price}')
+        return jsonify({'status': 'price_changed', 'price': server_price, 'unit': unit})
     file_url = current_app.config['THEME_SITEURL'] + f'/record/{item_id}/files/{file_name}'
     ret_url = urljoin(
         current_app.config['THEME_SITEURL'],
@@ -1087,7 +1110,7 @@ def charge():
 
     # 課金予約
     try:
-        redirect_url = create_charge(current_user.id, int(item_id), price, title, file_url, ret_url)
+        redirect_url = create_charge(current_user.id, int(item_id), server_price, title, file_url, ret_url)
         if redirect_url in ['connection_error', 'api_error']:
             # 課金失敗
             return jsonify({'status': 'error'})

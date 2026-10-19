@@ -32,10 +32,12 @@ from flask_security import current_user
 from invenio_access import Permission, action_factory
 from invenio_accounts.models import User, Role
 from invenio_db import db
+from invenio_pidstore.errors import PIDDoesNotExistError
 from invenio_pidstore.models import PersistentIdentifier
 from invenio_records.models import RecordMetadata
 from weko_accounts.models import ShibbolethUser
 from weko_admin.models import AdminSettings
+from weko_deposit.api import WekoRecord
 from weko_groups.api import Group, Membership, MembershipState
 from weko_index_tree.utils import check_index_permissions, get_user_roles
 from weko_index_tree.api import Indexes
@@ -493,13 +495,13 @@ def check_created_id(record):
 
     Returns:
         bool: True is the current user has the edit permission.
-    """    
+    """
     is_himself = False
     # Super users
     supers = current_app.config['WEKO_PERMISSION_SUPER_ROLE_USER']
     user_id = current_user.get_id() \
             if current_user and current_user.is_authenticated else None
-    if user_id is not None:    
+    if user_id is not None:
         created_id = record.get('_deposit', {}).get('created_by')
         shared_id = record.get('weko_shared_id')
         if user_id and created_id and user_id == str(created_id):
@@ -591,6 +593,59 @@ def check_billing_file_permission(item_id, file_name, download_status={}):
             return True
 
     return False
+
+
+def get_file_charge_info(item_id, file_name):
+    """課金可否と課金額をサーバー側で判定する。
+
+    画面の Charge ボタン表示条件(utils.get_file_info_list の add_billing_info)と
+    同じ判定を行う。
+
+    Args:
+        item_id   : アイテムID
+        file_name : ファイル名
+
+    Returns:
+        tuple: (status, price, unit)
+            status:
+                ok           : 課金可能
+                already      : 購入済み
+                not_required : 課金せずにダウンロード可能
+                invalid      : 課金対象ではない
+            price (int) : 課金額(税込)。status が ok 以外の場合は None
+            unit  (str) : 通貨単位。status が ok 以外の場合は None
+    """
+    try:
+        record = WekoRecord.get_record_by_pid(item_id)
+    except PIDDoesNotExistError:
+        return 'invalid', None, None
+
+    fjson = None
+    for key in record:
+        meta_data = record.get(key)
+        if not isinstance(meta_data, dict) or meta_data.get('attribute_type') != 'file':
+            continue
+        attribute_value_mlt = meta_data.get("attribute_value_mlt", [])
+        for file_metadata in attribute_value_mlt:
+            if isinstance(file_metadata, dict) \
+                    and file_metadata.get('filename') == file_name:
+                fjson = file_metadata
+                break
+        if fjson is not None:
+            break
+
+    if fjson is None or not fjson.get('billing'):
+        return 'invalid', None, None
+    download_status = {}
+    if check_file_download_permission(record, fjson, check_billing_file=True, download_status=download_status):
+        if download_status.get('charge_status') == 'already':
+            return 'already', None, None
+        return 'not_required', None, None
+
+    price, unit = get_file_price(record['_deposit']['id'])
+    if price is None or price <= 0:
+        return 'invalid', None, None
+    return 'ok', price, unit
 
 
 def get_file_price(item_id):
@@ -815,11 +870,11 @@ def create_charge(user_id, item_id, price, title, file_url, ret_url):
 
 def secure_charge(user_id, access_id):
     """3DS2.0認証後決済を行う
-    
+
     Args:
         user_id   : User ID
         access_id : Access ID
-        
+
     Returns:
         str:
             connection_error : 通信エラー
@@ -872,15 +927,15 @@ def secure_charge(user_id, access_id):
         # GMO通信エラー
         current_app.logger.error(f'connection_error in secure_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}')
         return 'connection_error'
-    
+
     if isinstance(res_json, dict):
         if str(res_json.get('charge_status')) == '4':
             # 3DS2.0認証後決済成功
             return str(res_json.get('trade_id'))
-    
+
     current_app.logger.error(f'invalid response by charge API in secure_charge: url: {url}, params: {params}, proxies: {proxies if proxy_mode else ""}, res_json: {res_json}')
     return 'api_error'
-    
+
 
 def close_charge(user_id, trade_id):
     """課金確定を行う
@@ -963,7 +1018,7 @@ def _get_content_id_for_charge(item_id):
     # Check item has Y_handle
     try:
         """
-        examle: 
+        examle:
           Y_handle: "http://id.nii.ac.jp/1000/00000001"
             --> content_id: "1000_00000001"
         """

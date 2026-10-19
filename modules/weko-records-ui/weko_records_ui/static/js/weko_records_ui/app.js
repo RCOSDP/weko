@@ -367,18 +367,55 @@ function handleConfirmButton() {
     });
 }
 
+function removeChargeItem(itemid) {
+    const email = document.getElementById('current_user_email').value;
+    const charge_key = 'charge_' + email;
+    let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
+    if (charge_item) {
+        const index = charge_item.indexOf(itemid);
+        if (index != -1) {
+            charge_item.splice(index, 1);
+        }
+        if (charge_item.length == 0) {
+            window.sessionStorage.removeItem(charge_key);
+        } else {
+            window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+        }
+    }
+}
+
+function showChargeConfirmation(price, unit, priceChanged) {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = String(unit);
+    const displayUnit = textarea.value;
+    $('#charge_confirmation_message').text(displayUnit + price + ' ' + $('#charge_confirmation').val());
+    if (priceChanged) {
+        $('#charge_price_changed_message')
+            .text($('#charge_price_changed').val().replace('XXXXX', displayUnit + price))
+            .show();
+    } else {
+        $('#charge_price_changed_message').hide();
+    }
+    $('#action_charge_confirmation').modal('show');
+}
+
 function handleChargeBillingFile() {
     // 課金ボタン押下時の処理
     $('button#charge-button').on('click', function () {
         const data = $(this).data();
-        const message = data.unit + data.price + ' ' + $('#charge_confirmation').val();
-        $('#charge_confirmation_message').html(message);
-        $('#action_charge_confirmation').modal('show');
+        const price = data.price;
+        const unit = data.unit;
+        showChargeConfirmation(price, unit, false);
     });
 
     // 課金ボタン押下時の処理（課金確認メッセージOK時の処理）
     $('button#modal_charge').on('click', function () {
-        $('#action_charge_confirmation').modal('hide');
+        const confirmationModal = $('#action_charge_confirmation');
+        const confirmationHidden = $.Deferred();
+        confirmationModal.one('hidden.bs.modal', function () {
+            confirmationHidden.resolve();
+        });
+        confirmationModal.modal('hide');
         const email = document.getElementById('current_user_email').value;
         const data = $('button#charge-button').data();
         const charge_key = 'charge_' + email;
@@ -389,13 +426,14 @@ function handleChargeBillingFile() {
             charge_item = [data.itemid];
         }
         window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+        const itemid = data.itemid
         let params = {
             'item_id': data.itemid,
             'file_name': data.filename,
             'title': data.title,
             'price': data.price,
         }
-        params = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+        params = $.param(params);
         $.ajax({
             url: '/charge' + '?' + params,
             type: 'GET',
@@ -424,6 +462,15 @@ function handleChargeBillingFile() {
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
                 }
+                else if (data.status == 'price_changed') {
+                    // 価格が変わったので、新しい金額で確認ダイアログを出し直す
+                    $('button#charge-button').data('price', data.price);
+                    $('button#charge-button').data('unit', data.unit);
+                    removeChargeItem(itemid);
+                    confirmationHidden.done(function () {
+                        showChargeConfirmation(data.price, data.unit, true);
+                    });
+                }
                 else {
                     // 課金失敗メッセージ表示
                     const message = $('#charge_error').val();
@@ -447,24 +494,10 @@ function handleChargeBillingFile() {
             location.reload();
         }
         else {
-            const email = document.getElementById('current_user_email').value;
-            const charge_key = 'charge_' + email;
             const url = window.location.href;
             const split_url = url.split('/');
             const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
-            let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
-            if (charge_item) {
-                const index = charge_item.indexOf(itemid);
-                if (index != -1) {
-                    charge_item.splice(index, 1);
-                }
-                if (charge_item.length == 0) {
-                    window.sessionStorage.removeItem(charge_key);
-                }
-                else {
-                    window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
-                }
-            }
+            removeChargeItem(itemid);
         }
     });
 
@@ -475,24 +508,10 @@ function handleChargeBillingFile() {
             location.reload();
         }
         else {
-            const email = document.getElementById('current_user_email').value;
-            const charge_key = 'charge_' + email;
             const url = window.location.href;
             const split_url = url.split('/');
             const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
-            let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
-            if (charge_item) {
-                const index = charge_item.indexOf(itemid);
-                if (index != -1) {
-                    charge_item.splice(index, 1);
-                }
-                if (charge_item.length == 0) {
-                    window.sessionStorage.removeItem(charge_key);
-                }
-                else {
-                    window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
-                }
-            }
+            removeChargeItem(itemid);
         }
     });
 }
@@ -521,7 +540,7 @@ function handleConfirmBillingFile() {
         let params = {
             'item_id': itemid,
         }
-        params = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+        params = $.param(params);
         $.ajax({
             url: '/charge/show' + '?' + params,
             type: 'GET',
