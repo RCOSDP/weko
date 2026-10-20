@@ -384,14 +384,29 @@ function removeChargeItem(itemid) {
     }
 }
 
-function showChargeConfirmation(price, unit, priceChanged) {
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = String(unit);
-    const displayUnit = textarea.value;
-    $('#charge_confirmation_message').text(displayUnit + price + ' ' + $('#charge_confirmation').val());
+function showChargeConfirmation(price, unit, priceChanged, previousPrice, previousUnit) {
+    const getDisplayUnit = function (value) {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = String(value);
+        return textarea.value;
+    };
+    const priceWithUnit = getDisplayUnit(unit) + price;
+    const confirmationMessage = $('#charge_confirmation_message').empty();
+    if (priceChanged) {
+        confirmationMessage.append(
+            $('<del>').text(getDisplayUnit(previousUnit) + previousPrice),
+            document.createTextNode(' '),
+            $('<span style="color: red;">').text(priceWithUnit)
+        );
+    } else {
+        confirmationMessage.text(priceWithUnit);
+    }
+    confirmationMessage.append(
+        document.createTextNode(' ' + $('#charge_confirmation').val())
+    );
     if (priceChanged) {
         $('#charge_price_changed_message')
-            .text($('#charge_price_changed').val().replace('XXXXX', displayUnit + price))
+            .text($('#charge_price_changed').val().replace('XXXXX', priceWithUnit))
             .show();
     } else {
         $('#charge_price_changed_message').hide();
@@ -427,6 +442,8 @@ function handleChargeBillingFile() {
             charge_item = [itemid];
         }
         window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+        const previousPrice = data.price;
+        const previousUnit = data.unit;
         let params = {
             'item_id': itemid,
             'file_name': data.filename,
@@ -468,7 +485,7 @@ function handleChargeBillingFile() {
                     $('button#charge-button').data('unit', data.unit);
                     removeChargeItem(itemid);
                     confirmationHidden.done(function () {
-                        showChargeConfirmation(data.price, data.unit, true);
+                        showChargeConfirmation(data.price, data.unit, true, previousPrice, previousUnit);
                     });
                 }
                 else {
