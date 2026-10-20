@@ -20516,7 +20516,6 @@ def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
         "error": "",
         "results": [
             "user",
-            "contributor",
             "comadmin",
             "repoadmin",
             "sysadmin",
@@ -20534,7 +20533,6 @@ def test_get_search_data(client_api, users, db_userprofile, db_sessionlifetime):
         "error": "",
         "results": [
             "user@test.org",
-            "contributor@test.org",
             "comadmin@test.org",
             "repoadmin@test.org",
             "sysadmin@test.org",
