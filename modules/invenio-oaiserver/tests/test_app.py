@@ -27,3 +27,18 @@ def test_init():
     app = Flask('testapp')
     with pytest.warns(None):
         InvenioOAIServer(app)
+
+
+def test_resumption_token_expire_time_default():
+    """Scroll keep-alive defaults to 1 hour, not 24 hours."""
+    app = Flask('testapp')
+    InvenioOAIServer(app)
+    assert app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME'] == 3600
+
+
+def test_resumption_token_expire_time_override():
+    """A value set by the instance config is kept."""
+    app = Flask('testapp')
+    app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME'] = 600
+    InvenioOAIServer(app)
+    assert app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME'] == 600

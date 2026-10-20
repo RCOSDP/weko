@@ -35,15 +35,28 @@ The legitimate values are ``YYYY-MM-DD`` and ``YYYY-MM-DDThh:mm:ssZ``
 with meanings as defined in ISO8601.
 """
 
-OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME = 24 * 60 * 60
+OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME = 60 * 60
 """The expiration time of a resumption token in seconds.
 
-**Default: 60 seconds = 1 minute**.
+**Default: 3600 seconds = 1 hour**.
+
+The same value is used as the keep-alive of the Elasticsearch scroll
+opened by ListRecords / ListIdentifiers. The keep-alive is renewed on
+every page request, so it only needs to cover the interval between two
+consecutive requests of a harvester, not the whole harvest.
 
 .. note::
 
     Setting longer expiration time may have a negative impact on your
     Elasticsearch cluster as it might need to keep open cursors.
+    A scroll is cleared only when the last page is returned, so every
+    harvest abandoned halfway keeps its scroll contexts on the heap until
+    this time elapses. The previous default (24 hours) caused the heap of
+    the Elasticsearch data nodes to grow for days.
+
+    Elasticsearch rejects a keep-alive longer than
+    ``search.max_keep_alive`` (default: 24h). Keep this value at or below
+    that setting.
 
     https://www.elastic.co/guide/en/elasticsearch/reference/current/search-request-scroll.html
 """

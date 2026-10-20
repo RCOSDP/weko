@@ -460,3 +460,28 @@ def test_get_records_range_branch(es_app, db, monkeypatch, fix_access, from_, un
         get_records(**kwargs)
         assert called["filter"] == expect_range
         assert called["rq"] == expect_rq
+
+
+def test_get_records_scroll_keep_alive(es_app, db):
+    """The scroll keep-alive follows OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME."""
+    assert es_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME'] == 3600
+
+    # first page: the scroll is opened with the configured keep-alive
+    with patch.object(current_search_client, 'search',
+                      wraps=current_search_client.search) as mock_search:
+        get_records()
+    assert mock_search.call_args[1]['scroll'] == '3600s'
+
+    # next pages: the keep-alive is renewed with the same value
+    response = {'_scroll_id': 'dummy', 'hits': {'total': 0, 'hits': []}}
+    with patch.object(current_search_client, 'scroll',
+                      return_value=response) as mock_scroll, \
+            patch.object(current_search_client, 'clear_scroll'):
+        get_records(resumptionToken={'page': 2, 'scroll_id': 'dummy'})
+    mock_scroll.assert_called_once_with(scroll_id='dummy', scroll='3600s')
+
+    es_app.config['OAISERVER_RESUMPTION_TOKEN_EXPIRE_TIME'] = 600
+    with patch.object(current_search_client, 'search',
+                      wraps=current_search_client.search) as mock_search:
+        get_records()
+    assert mock_search.call_args[1]['scroll'] == '600s'
