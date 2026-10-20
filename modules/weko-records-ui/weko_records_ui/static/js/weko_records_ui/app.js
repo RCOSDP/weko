@@ -373,10 +373,10 @@ function removeChargeItem(itemid) {
     let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
     if (charge_item) {
         const index = charge_item.indexOf(itemid);
-        if (index != -1) {
+        if (index !== -1) {
             charge_item.splice(index, 1);
         }
-        if (charge_item.length == 0) {
+        if (charge_item.length === 0) {
             window.sessionStorage.removeItem(charge_key);
         } else {
             window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
@@ -419,16 +419,16 @@ function handleChargeBillingFile() {
         const email = document.getElementById('current_user_email').value;
         const data = $('button#charge-button').data();
         const charge_key = 'charge_' + email;
+        const itemid = data.itemid;
         let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
         if (charge_item) {
-            charge_item.push(data.itemid);
+            charge_item.push(itemid);
         } else {
-            charge_item = [data.itemid];
+            charge_item = [itemid];
         }
         window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
-        const itemid = data.itemid
         let params = {
-            'item_id': data.itemid,
+            'item_id': itemid,
             'file_name': data.filename,
             'title': data.title,
             'price': data.price,
@@ -443,26 +443,26 @@ function handleChargeBillingFile() {
                     window.location.href = data.redirect_url;
                     return;
                 }
-                if (data.status == 'success') {
+                if (data.status === 'success') {
                     $('#success_flag').val('true')
                     // 課金成功メッセージ表示
                     const message = $('#charge_success').val();
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
                 }
-                else if (data.status == 'already') {
+                else if (data.status === 'already') {
                     // 課金済みメッセージ表示
                     const message = $('#charge_already').val();
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
                 }
-                else if (data.status == 'credit_error') {
+                else if (data.status === 'credit_error') {
                     // 課金失敗メッセージ表示
                     const message = $('#charge_credit_error').val();
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
                 }
-                else if (data.status == 'price_changed') {
+                else if (data.status === 'price_changed') {
                     // 価格が変わったので、新しい金額で確認ダイアログを出し直す
                     $('button#charge-button').data('price', data.price);
                     $('button#charge-button').data('unit', data.unit);
@@ -489,7 +489,7 @@ function handleChargeBillingFile() {
 
     $('button#charge_modal_ok').on('click', function () {
         $('#action_charge_success').modal('hide');
-        if ($('#success_flag').val() == 'true') {
+        if ($('#success_flag').val() === 'true') {
             // 画面を更新
             location.reload();
         }
@@ -503,7 +503,7 @@ function handleChargeBillingFile() {
 
     $('button#charge_modal_close_icon').on('click', function () {
         $('#action_charge_success').modal('hide');
-        if ($('#success_flag').val() == 'true') {
+        if ($('#success_flag').val() === 'true') {
             // 画面を更新
             location.reload();
         }

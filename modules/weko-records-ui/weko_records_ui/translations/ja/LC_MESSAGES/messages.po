@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2026-10-19 17:22+0900\n"
+"POT-Creation-Date: 2026-10-20 10:49+0900\n"
 "PO-Revision-Date: 2021-02-02 03:25+0000\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -203,9 +203,8 @@ msgid "Terms and Conditions"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/_macros.html:232
-#, fuzzy
 msgid "I have read and agreed to the Terms and Conditions"
-msgstr "上記の条件に同意する"
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/_macros.html:242
 #: weko_records_ui/templates/weko_records_ui/box/analysis.html:79
@@ -287,14 +286,12 @@ msgid "Download"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:284
-#, fuzzy
 msgid "Charge"
-msgstr "課金に失敗しました。"
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:303
-#, fuzzy
 msgid "Information"
-msgstr "かかります。 購入しますか？"
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:318
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:327
@@ -492,12 +489,12 @@ msgid "Publish"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:59
-msgid "charge_price_changed"
-msgstr ""
-
-#: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:60
 msgid "charge_confirmation"
 msgstr "かかります。 購入しますか？"
+
+#: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:60
+msgid "charge_price_changed"
+msgstr "価格が変更されました。この金額（XXXXX）で課金しますか？"
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_success.html:40
 msgid "charge_success"

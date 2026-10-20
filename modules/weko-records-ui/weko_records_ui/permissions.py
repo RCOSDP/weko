@@ -623,7 +623,8 @@ def get_file_charge_info(item_id, file_name):
     fjson = None
     for key in record:
         meta_data = record.get(key)
-        if not isinstance(meta_data, dict) or meta_data.get('attribute_type') != 'file':
+        if not isinstance(meta_data, dict) or \
+           meta_data.get('attribute_type') != 'file':
             continue
         attribute_value_mlt = meta_data.get("attribute_value_mlt", [])
         for file_metadata in attribute_value_mlt:
@@ -637,7 +638,8 @@ def get_file_charge_info(item_id, file_name):
     if fjson is None or not fjson.get('billing'):
         return 'invalid', None, None
     download_status = {}
-    if check_file_download_permission(record, fjson, check_billing_file=True, download_status=download_status):
+    if check_file_download_permission(record, fjson, check_billing_file=True,
+                                       download_status=download_status):
         if download_status.get('charge_status') == 'already':
             return 'already', None, None
         return 'not_required', None, None

@@ -9,7 +9,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2026-10-19 17:22+0900\n"
+"POT-Creation-Date: 2026-10-20 10:49+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -482,11 +482,11 @@ msgid "Publish"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:59
-msgid "charge_price_changed"
+msgid "charge_confirmation"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:60
-msgid "charge_confirmation"
+msgid "charge_price_changed"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_success.html:40

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: weko-records-ui 0.1.0.dev20170000\n"
 "Report-Msgid-Bugs-To: wekosoftware@nii.ac.jp\n"
-"POT-Creation-Date: 2026-10-19 17:22+0900\n"
+"POT-Creation-Date: 2026-10-20 10:49+0900\n"
 "PO-Revision-Date: 2018-04-12 18:06+0900\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -24,9 +24,8 @@ msgid "Author flag was updated."
 msgstr "Updated Author flag"
 
 #: weko_records_ui/admin.py:153
-#, fuzzy
 msgid "Institution Name was updated."
-msgstr "Updated Author flag"
+msgstr ""
 
 #: weko_records_ui/admin.py:216 weko_records_ui/admin.py:225
 #: weko_records_ui/admin.py:234
@@ -289,14 +288,12 @@ msgid "Download"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:284
-#, fuzzy
 msgid "Charge"
-msgstr "Charge failed."
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:303
-#, fuzzy
 msgid "Information"
-msgstr "will be charged. Do you really want to purchase?"
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:318
 #: weko_records_ui/templates/weko_records_ui/body_contents.html:327
@@ -494,12 +491,12 @@ msgid "Publish"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:59
-msgid "charge_price_changed"
-msgstr ""
-
-#: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:60
 msgid "charge_confirmation"
 msgstr "will be charged. Do you really want to purchase?"
+
+#: weko_records_ui/templates/weko_records_ui/modal_charge_confirmation.html:60
+msgid "charge_price_changed"
+msgstr "The price has changed. Do you want to purchase at this price (XXXXX)?"
 
 #: weko_records_ui/templates/weko_records_ui/modal_charge_success.html:40
 msgid "charge_success"
@@ -714,9 +711,8 @@ msgid "Hide Email"
 msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:61
-#, fuzzy
 msgid "Open Date"
-msgstr "Open Access"
+msgstr ""
 
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:67
 #: weko_records_ui/templates/weko_records_ui/admin/item_setting.html:76
