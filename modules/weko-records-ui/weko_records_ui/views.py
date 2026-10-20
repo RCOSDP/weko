@@ -1074,7 +1074,7 @@ def charge():
         )
     except Exception as e:
         current_app.logger.error(
-            f'Error in get_charge_price: user: {current_user.id}, '
+            f'Error in get_file_charge_info: user: {current_user.id}, '
             f'item_id: {item_id}, file_name: {file_name}')
         current_app.logger.error(e)
         return jsonify({'status': 'error'})

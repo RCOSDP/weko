@@ -848,6 +848,14 @@ msgstr "Include tax"
 msgid "price"
 msgstr "Price"
 
+# NOTE: Defined by email_modal in weko-theme/macros/modal_page.html and
+# rendered via weko-records-ui/templates/weko_records_ui/body_contents.html.
+msgid "Email address"
+msgstr ""
+
+msgid "Email address(reconfirmation)"
+msgstr ""
+
 #~ msgid "Privating"
 #~ msgstr ""
 
@@ -1607,10 +1615,3 @@ msgstr "Price"
 #~ "undergraduate students or those who do"
 #~ " not register their positions."
 #~ msgstr ""
-
-#~ msgid "Email address"
-#~ msgstr ""
-
-#~ msgid "Email address(reconfirmation)"
-#~ msgstr ""
-

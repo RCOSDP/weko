@@ -846,6 +846,14 @@ msgstr "税込"
 msgid "price"
 msgstr "価格"
 
+# NOTE: Defined by email_modal in weko-theme/macros/modal_page.html and
+# rendered via weko-records-ui/templates/weko_records_ui/body_contents.html.
+msgid "Email address"
+msgstr "メールアドレス"
+
+msgid "Email address(reconfirmation)"
+msgstr "メールアドレス（確認用）"
+
 #~ msgid "item type"
 #~ msgstr ""
 
@@ -857,10 +865,3 @@ msgstr "価格"
 #~ "undergraduate students or those who do"
 #~ " not register their positions."
 #~ msgstr "このデータは利用できません（学部生または役職が登録されていないため）"
-
-#~ msgid "Email address"
-#~ msgstr "メールアドレス"
-
-#~ msgid "Email address(reconfirmation)"
-#~ msgstr "メールアドレス（確認用）"
-
