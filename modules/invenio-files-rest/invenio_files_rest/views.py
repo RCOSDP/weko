@@ -983,6 +983,37 @@ class ObjectResource(ContentNegotiatedMethodView):
         :param download: The download flag. (Default: ``None``)
         :returns: A Flask response.
         """
+        from invenio_records_files.models import RecordsBuckets
+        from weko_deposit.api import WekoRecord
+        from weko_records_ui.permissions import page_permission_factory, check_created_id
+
+        rb = RecordsBuckets.query.filter_by(bucket_id=str(bucket)).one_or_none()
+        record = WekoRecord.get_record(rb.record_id) if rb else None
+        file_meta = None
+
+        if not record:
+            abort(404, 'file does not exists.')
+        # Check Permission
+        if not check_created_id(record):
+            if not page_permission_factory(record).can():
+                abort(404, 'file does not exists.')
+            else:
+                for file in record.files:
+                    if file.data and file.data.get('filename', '') == key:
+                        file_meta = file.data
+                        break
+
+            if file_meta:
+                if (record.is_input_open_access_date(file_meta) and record.is_future_open_date(record, file_meta)) or \
+                        record.is_do_not_publish(file_meta) or \
+                        file_meta.get('accessrole', '') == 'open_restricted':
+                    abort(404, 'file does not exists.')
+                if file_meta.get('accessrole', '') == 'open_login' and \
+                        not current_user.is_authenticated:
+                    abort(404, 'file does not exists.')
+            else:
+                abort(404, 'file does not exists.')
+
         if upload_id:
             return self.multipart_listparts(bucket, key, upload_id)
         else:
