@@ -991,18 +991,22 @@ class ObjectResource(ContentNegotiatedMethodView):
         record = WekoRecord.get_record(rb.record_id) if rb else None
         file_meta = None
 
+        # if record is None
         if not record:
             abort(404, 'file does not exists.')
-        # Check Permission
+        # if user is not the creator of the record or superuser
         if not check_created_id(record):
+            # if user can not access the record
             if not page_permission_factory(record).can():
                 abort(404, 'file does not exists.')
             else:
+                # get file metadata from record.files
                 for file in record.files:
                     if file.data and file.data.get('filename', '') == key:
                         file_meta = file.data
                         break
 
+            # check file permission from file metadata
             if file_meta:
                 if (record.is_input_open_access_date(file_meta) and record.is_future_open_date(record, file_meta)) or \
                         record.is_do_not_publish(file_meta) or \

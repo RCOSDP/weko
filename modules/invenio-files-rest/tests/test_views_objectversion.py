@@ -55,6 +55,7 @@ def test_get_not_found(client, headers, weko_users, bucket):
     """Test getting a non-existing object."""
     login_user_via_session(client=client, email=weko_users["sysadmin"]["email"])
 
+    # no-existing bucket_id
     resp = client.get(
         url_for(
             'invenio_files_rest.object_api',
@@ -89,12 +90,14 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
         bucket_id=bucket_id,
         key=key, )
 
+    # no-existing record
     resp = client.get(
         object_url,
         query_string='versionId={0}'.format(obj.version_id, download=True),
         headers=headers)
     assert resp.status_code == 404
 
+    # uploadId is existing
     mock_record = MagicMock()
     with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
         resp = client.get(
@@ -106,12 +109,14 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
         else:
             assert resp.status_code == no_perm
 
+        # record is not published
         resp = client.get(
                 object_url,
                 query_string='versionId={0}'.format(obj.version_id, download=True),
                 headers=headers)
         assert resp.status_code == no_perm
 
+        # user is creator of the record
         if role_name != "guest":
             with patch('weko_records_ui.permissions.check_created_id', return_value=True):
                 resp = client.get(
@@ -125,6 +130,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+    # file accessrole is open_date and date is future
     file_meta = {
         'filename': key,
         'accessrole': 'open_date',
@@ -151,6 +157,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+    # file accessrole is open_date and date is not future
     file_meta = {
         'filename': key,
         'accessrole': 'open_date',
@@ -177,6 +184,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+    # file accessrole is open_no
     file_meta = {
         'filename': key,
         'accessrole': 'open_no'
@@ -201,6 +209,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+        # community admin has permission of the record
         if role_name == "comadmin":
             with patch('weko_records_ui.permissions.has_comadmin_permission', return_value=True):
                 resp = client.get(
@@ -212,6 +221,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                 assert (resp.headers['Content-Disposition'] ==
                                 'attachment; filename={0}'.format(obj.key))
 
+    # file accessrole is open_restricted
     file_meta = {
         'filename': key,
         'accessrole': 'open_restricted'
@@ -236,6 +246,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+    # file accessrole is open_login
     file_meta = {
         'filename': key,
         'accessrole': 'open_login'
@@ -260,6 +271,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+    # file accessrole is open_access
     file_meta = {
         'filename': key,
         'accessrole': 'open_access'
@@ -284,6 +296,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                     assert (resp.headers['Content-Disposition'] ==
                                     'attachment; filename={0}'.format(obj.key))
 
+    # no-existing versionId
     file_meta = {
         'filename': key,
         'accessrole': 'open_access'
@@ -303,6 +316,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                         headers=headers)
                 assert resp.status_code == 404
 
+    # no-existing file in the record
     mock_record = MagicMock()
     mock_record.files = []
     mock_record.is_input_open_access_date.return_value = False
@@ -316,6 +330,7 @@ def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm,
                         headers=headers)
                 assert resp.status_code == no_perm
 
+    # no-existing filename
     object_url = url_for(
         'invenio_files_rest.object_api',
         bucket_id=bucket_id,
