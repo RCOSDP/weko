@@ -10,6 +10,7 @@
 
 from __future__ import absolute_import, print_function
 
+import uuid
 import pytest
 from datetime import timedelta
 from flask import url_for
@@ -17,7 +18,10 @@ from fs.opener import opener
 from unittest.mock import patch
 from six import BytesIO
 from tests.testutils import BadBytesIO, login_user
+from datetime import date
+from mock import MagicMock
 
+from invenio_accounts.testutils import login_user_via_session
 from invenio_files_rest.models import FileInstance, ObjectVersion
 from invenio_files_rest.tasks import remove_file_data
 
@@ -46,83 +50,295 @@ SWALLOWED_ERROR_SILENT_XFAIL = pytest.mark.xfail(
 )
 
 
-def test_get_not_found(client, headers, bucket, permissions):
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_get_not_found -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+def test_get_not_found(client, headers, weko_users, bucket):
     """Test getting a non-existing object."""
-    cases = [
-        None,
-        'auth',
-        'bucket',
-        'objects',
-        'location',
-    ]
+    login_user_via_session(client=client, email=weko_users["sysadmin"]["email"])
 
-    for user in cases:
-        login_user(client, permissions[user])
-        # resp = client.get(
-        #     url_for(
-        #         'invenio_files_rest.object_api',
-        #         bucket_id=bucket.id,
-        #         key='non-existing.pdf',
-        #     ),
-        #     headers=headers,
-        # )
-        # assert resp.status_code == 404
-
-
-def test_get(client, headers, bucket, objects, permissions):
-    """Test getting an object."""
-    cases = [
-        (None, 404),
-        ('auth', 404),
-        ('bucket', 200),
-        ('location', 200),
-        ('objects', 200),
-    ]
-
-    for user, expected in cases:
-        login_user(client, permissions[user])
-
-        for obj in objects:
-            object_url = url_for(
-                'invenio_files_rest.object_api',
-                bucket_id=bucket.id,
-                key=obj.key, )
-
-            # # Get specifying version (of latest obj).
-            # resp = client.get(
-            #     object_url,
-            #     query_string='versionId={0}'.format(obj.version_id),
-            #     headers=headers)
-            # assert resp.status_code == expected
-
-            # # Get latest
-            # resp = client.get(object_url, headers=headers)
-            # assert resp.status_code == expected
-
-            # if resp.status_code == 200:
-            #     assert resp.get_etag()[0] == obj.file.checksum
-
-
-def test_get_download(client, headers, bucket, objects, permissions):
-    """Test getting an object."""
-    login_user(client, permissions['objects'])
-
-    for obj in objects:
-        object_url = url_for(
+    resp = client.get(
+        url_for(
             'invenio_files_rest.object_api',
-            bucket_id=bucket.id,
-            key=obj.key)
+            bucket_id=uuid.uuid4(),
+            key='non-existing.pdf',
+        ),
+        headers=headers,
+    )
+    assert resp.status_code == 404
 
-        # # Get specifying version (of latest obj).
-        # resp = client.get(
-        #     object_url,
-        #     query_string=dict(versionId=obj.version_id, download=True),
-        #     headers=headers)
-        # assert resp.status_code == 200
 
-        # # Check if the 'Content-Disposition' is an attachment
-        # assert (resp.headers['Content-Disposition'] ==
-        #         'attachment; filename={0}'.format(obj.key))
+# .tox/c1/bin/pytest --cov=invenio_files_rest tests/test_views_objectversion.py::test_get -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-files-rest/.tox/c1/tmp
+@pytest.mark.parametrize(
+    "role_name, no_perm, has_perm",
+    [
+        ("guest", 404, 404),
+        ("contributor", 404, 200),
+        ("repoadmin", 200, 200),
+        ("sysadmin", 200, 200),
+        ("comadmin", 404, 200),
+        ("user", 404, 404),
+    ],
+)
+def test_get(app, client, headers, weko_users, weko_objects, role_name, no_perm, has_perm):
+    """Test getting an object."""
+    key, obj, bucket_id = weko_objects
+    if role_name != "guest":
+        login_user_via_session(client=client, email=weko_users[role_name]["email"])
+
+    object_url = url_for(
+        'invenio_files_rest.object_api',
+        bucket_id=bucket_id,
+        key=key, )
+
+    resp = client.get(
+        object_url,
+        query_string='versionId={0}'.format(obj.version_id, download=True),
+        headers=headers)
+    assert resp.status_code == 404
+
+    mock_record = MagicMock()
+    with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+        resp = client.get(
+            object_url,
+            query_string='uploadId={0}'.format(obj.version_id, download=True),
+            headers=headers)
+        if role_name in ["repoadmin", "sysadmin"]:
+            assert resp.status_code == 404
+        else:
+            assert resp.status_code == no_perm
+
+        resp = client.get(
+                object_url,
+                query_string='versionId={0}'.format(obj.version_id, download=True),
+                headers=headers)
+        assert resp.status_code == no_perm
+
+        if role_name != "guest":
+            with patch('weko_records_ui.permissions.check_created_id', return_value=True):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == has_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_date',
+        'date': [{'dateValue': str(date.max)}]
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = True
+    mock_record.is_future_open_date.return_value = True
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == no_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_date',
+        'date': [{'dateValue': '2000-01-01'}]
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = True
+    mock_record.is_future_open_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == has_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_no'
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = True
+    with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+        with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+            with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == no_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+        if role_name == "comadmin":
+            with patch('weko_records_ui.permissions.has_comadmin_permission', return_value=True):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == has_perm
+                assert resp.get_etag()[0] == obj.file.checksum
+                assert (resp.headers['Content-Disposition'] ==
+                                'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_restricted'
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == no_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_login'
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == has_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_access'
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == has_perm
+
+                if resp.status_code == 200:
+                    assert resp.get_etag()[0] == obj.file.checksum
+                    assert (resp.headers['Content-Disposition'] ==
+                                    'attachment; filename={0}'.format(obj.key))
+
+    file_meta = {
+        'filename': key,
+        'accessrole': 'open_access'
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(uuid.uuid4(), download=True),
+                        headers=headers)
+                assert resp.status_code == 404
+
+    mock_record = MagicMock()
+    mock_record.files = []
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == no_perm
+
+    object_url = url_for(
+        'invenio_files_rest.object_api',
+        bucket_id=bucket_id,
+        key='key.pdf', )
+    file_meta = {
+        'filename': 'empty.pdf',
+        'accessrole': 'open_access'
+    }
+    mock_file = MagicMock()
+    mock_file.data = file_meta
+    mock_record = MagicMock()
+    mock_record.files = [mock_file]
+    mock_record.is_input_open_access_date.return_value = False
+    mock_record.is_do_not_publish.return_value = False
+    with patch('weko_records_ui.permissions.check_publish_status', return_value=True):
+        with patch('weko_records_ui.permissions.check_index_permissions', return_value=True):
+            with patch('weko_deposit.api.WekoRecord.get_record', return_value=mock_record):
+                resp = client.get(
+                        object_url,
+                        query_string='versionId={0}'.format(obj.version_id, download=True),
+                        headers=headers)
+                assert resp.status_code == 404
+
 
 
 def test_last_modified_utc_conversion(client, headers, bucket, permissions):
