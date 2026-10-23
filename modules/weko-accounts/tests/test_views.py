@@ -55,11 +55,11 @@ def test_redirect_method(app,mocker):
         )
         mock_render = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
         _redirect_method(False)
-        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.php")
+        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.py")
 
         mock_render = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
         _redirect_method(True)
-        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.php?next="+url)
+        mock_render.assert_called_with("http://TEST_SERVER.localdomain/secure/login.py?next="+url)
 
 #def index():
 # .tox/c1/bin/pytest --cov=weko_accounts tests/test_views.py::test_index -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workflow/.tox/c1/tmp
@@ -398,15 +398,15 @@ def test_shib_stub_login(client,mocker):
     # next is /
     mock_redirect = mocker.patch("weko_accounts.views.redirect",return_value=make_response())
     res = client.get(url+"?next=/")
-    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php?next=/")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.py?next=/")
 
     # next is /next_page
     res = client.get(url+"?next=/next_page")
-    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php?next=/next_page")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.py?next=/next_page")
 
     # next is None
     res = client.get(url)
-    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.php?next=/")
+    mock_redirect.assert_called_with("http://test_server.localdomain/secure/login.py?next=/")
 
     current_app.config.update(
         WEKO_ACCOUNTS_SHIB_IDP_LOGIN_ENABLED=False
