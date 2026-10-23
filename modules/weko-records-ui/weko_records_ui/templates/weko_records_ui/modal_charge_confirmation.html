@@ -31,6 +31,8 @@
       <div class="modal-body" style="overflow-x: auto;">
         <span class="glyphicon glyphicon-question-sign fa-3x" style="vertical-align: middle; margin: 0 10px"></span>
         <span id="charge_confirmation_message" style="margin: 0 10px"></span>
+        <div id="charge_price_changed_message" class="alert alert-warning" role="alert"
+            style="display: none; margin: 10px 10px 0;"></div>
       </div>
       <div class="modal-body">
         <span>
@@ -55,4 +57,5 @@
     </div>
   </div>
   <input type="hidden" id="charge_confirmation" name="charge_confirmation" value="{{_('charge_confirmation')}}">
+  <input type="hidden" id="charge_price_changed" value="{{_('charge_price_changed')}}">
 </div>

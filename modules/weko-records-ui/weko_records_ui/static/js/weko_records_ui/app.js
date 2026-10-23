@@ -367,35 +367,90 @@ function handleConfirmButton() {
     });
 }
 
+function removeChargeItem(itemid) {
+    const email = document.getElementById('current_user_email').value;
+    const charge_key = 'charge_' + email;
+    let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
+    if (charge_item) {
+        const index = charge_item.indexOf(itemid);
+        if (index !== -1) {
+            charge_item.splice(index, 1);
+        }
+        if (charge_item.length === 0) {
+            window.sessionStorage.removeItem(charge_key);
+        } else {
+            window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+        }
+    }
+}
+
+function showChargeConfirmation(price, unit, priceChanged, previousPrice, previousUnit) {
+    const getDisplayUnit = function (value) {
+        const textarea = document.createElement('textarea');
+        textarea.innerHTML = String(value);
+        return textarea.value;
+    };
+    const priceWithUnit = getDisplayUnit(unit) + price;
+    const confirmationMessage = $('#charge_confirmation_message').empty();
+    if (priceChanged) {
+        confirmationMessage.append(
+            $('<del>').text(getDisplayUnit(previousUnit) + previousPrice),
+            document.createTextNode(' '),
+            $('<span style="color: red;">').text(priceWithUnit)
+        );
+    } else {
+        confirmationMessage.text(priceWithUnit);
+    }
+    confirmationMessage.append(
+        document.createTextNode(' ' + $('#charge_confirmation').val())
+    );
+    if (priceChanged) {
+        $('#charge_price_changed_message')
+            .text($('#charge_price_changed').val().replace('XXXXX', priceWithUnit))
+            .show();
+    } else {
+        $('#charge_price_changed_message').hide();
+    }
+    $('#action_charge_confirmation').modal('show');
+}
+
 function handleChargeBillingFile() {
     // 課金ボタン押下時の処理
     $('button#charge-button').on('click', function () {
         const data = $(this).data();
-        const message = data.unit + data.price + ' ' + $('#charge_confirmation').val();
-        $('#charge_confirmation_message').html(message);
-        $('#action_charge_confirmation').modal('show');
+        const price = data.price;
+        const unit = data.unit;
+        showChargeConfirmation(price, unit, false);
     });
 
     // 課金ボタン押下時の処理（課金確認メッセージOK時の処理）
     $('button#modal_charge').on('click', function () {
-        $('#action_charge_confirmation').modal('hide');
+        const confirmationModal = $('#action_charge_confirmation');
+        const confirmationHidden = $.Deferred();
+        confirmationModal.one('hidden.bs.modal', function () {
+            confirmationHidden.resolve();
+        });
+        confirmationModal.modal('hide');
         const email = document.getElementById('current_user_email').value;
         const data = $('button#charge-button').data();
         const charge_key = 'charge_' + email;
+        const itemid = data.itemid;
         let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
         if (charge_item) {
-            charge_item.push(data.itemid);
+            charge_item.push(itemid);
         } else {
-            charge_item = [data.itemid];
+            charge_item = [itemid];
         }
         window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
+        const previousPrice = data.price;
+        const previousUnit = data.unit;
         let params = {
-            'item_id': data.itemid,
+            'item_id': itemid,
             'file_name': data.filename,
             'title': data.title,
             'price': data.price,
         }
-        params = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+        params = $.param(params);
         $.ajax({
             url: '/charge' + '?' + params,
             type: 'GET',
@@ -405,24 +460,33 @@ function handleChargeBillingFile() {
                     window.location.href = data.redirect_url;
                     return;
                 }
-                if (data.status == 'success') {
+                if (data.status === 'success') {
                     $('#success_flag').val('true')
                     // 課金成功メッセージ表示
                     const message = $('#charge_success').val();
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
                 }
-                else if (data.status == 'already') {
+                else if (data.status === 'already') {
                     // 課金済みメッセージ表示
                     const message = $('#charge_already').val();
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
                 }
-                else if (data.status == 'credit_error') {
+                else if (data.status === 'credit_error') {
                     // 課金失敗メッセージ表示
                     const message = $('#charge_credit_error').val();
                     $('#charge_success_message').html(message);
                     $('#action_charge_success').modal('show');
+                }
+                else if (data.status === 'price_changed') {
+                    // 価格が変わったので、新しい金額で確認ダイアログを出し直す
+                    $('button#charge-button').data('price', data.price);
+                    $('button#charge-button').data('unit', data.unit);
+                    removeChargeItem(itemid);
+                    confirmationHidden.done(function () {
+                        showChargeConfirmation(data.price, data.unit, true, previousPrice, previousUnit);
+                    });
                 }
                 else {
                     // 課金失敗メッセージ表示
@@ -442,57 +506,29 @@ function handleChargeBillingFile() {
 
     $('button#charge_modal_ok').on('click', function () {
         $('#action_charge_success').modal('hide');
-        if ($('#success_flag').val() == 'true') {
+        if ($('#success_flag').val() === 'true') {
             // 画面を更新
             location.reload();
         }
         else {
-            const email = document.getElementById('current_user_email').value;
-            const charge_key = 'charge_' + email;
             const url = window.location.href;
             const split_url = url.split('/');
             const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
-            let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
-            if (charge_item) {
-                const index = charge_item.indexOf(itemid);
-                if (index != -1) {
-                    charge_item.splice(index, 1);
-                }
-                if (charge_item.length == 0) {
-                    window.sessionStorage.removeItem(charge_key);
-                }
-                else {
-                    window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
-                }
-            }
+            removeChargeItem(itemid);
         }
     });
 
     $('button#charge_modal_close_icon').on('click', function () {
         $('#action_charge_success').modal('hide');
-        if ($('#success_flag').val() == 'true') {
+        if ($('#success_flag').val() === 'true') {
             // 画面を更新
             location.reload();
         }
         else {
-            const email = document.getElementById('current_user_email').value;
-            const charge_key = 'charge_' + email;
             const url = window.location.href;
             const split_url = url.split('/');
             const itemid = Number(split_url[split_url.length - 1].split('?')[0]);
-            let charge_item = JSON.parse(window.sessionStorage.getItem(charge_key));
-            if (charge_item) {
-                const index = charge_item.indexOf(itemid);
-                if (index != -1) {
-                    charge_item.splice(index, 1);
-                }
-                if (charge_item.length == 0) {
-                    window.sessionStorage.removeItem(charge_key);
-                }
-                else {
-                    window.sessionStorage.setItem(charge_key, JSON.stringify(charge_item));
-                }
-            }
+            removeChargeItem(itemid);
         }
     });
 }
@@ -521,7 +557,7 @@ function handleConfirmBillingFile() {
         let params = {
             'item_id': itemid,
         }
-        params = Object.keys(params).map(key => key + '=' + params[key]).join('&');
+        params = $.param(params);
         $.ajax({
             url: '/charge/show' + '?' + params,
             type: 'GET',
