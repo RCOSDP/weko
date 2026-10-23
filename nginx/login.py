@@ -14,7 +14,9 @@ if not os.environ.get('HTTP_WEKOSOCIETYAFFILIATION') \
     and os.environ.get('NO_CHECK_WEKOSOCIETYAFFILIATION') != 'TRUE':
     # Alert and redirect to the base URL if the permission is invalid
     print('Content-Type: text/html; charset=utf-8\n\n')
-    print('<script type="text/javascript">window.alert("Permission is invalid");window.location.href="{}";</script>'.format(base_url))
+    print('<script type="text/javascript">'
+          'window.alert("Permission is invalid");'
+          'window.location.href="{}";</script>'.format(base_url))
 else:
     # Get the next URL
     qs = parse.parse_qs(os.environ.get('QUERY_STRING'))
@@ -30,10 +32,12 @@ else:
     data['SHIB_ATTR_EPPN'] = os.environ.get('Remote-User')
     data['SHIB_ATTR_MAIL'] = os.environ.get('mail')
     data['SHIB_ATTR_SESSION_ID'] = os.environ.get('Shib-Session-ID')
-    data['SHIB_ATTR_ROLE_AUTHORITY_NAME'] = os.environ.get('HTTP_WEKOSOCIETYAFFILIATION')
+    data['SHIB_ATTR_ROLE_AUTHORITY_NAME'] = \
+        os.environ.get('HTTP_WEKOSOCIETYAFFILIATION')
     data['SHIB_ATTR_PAGE_NAME'] = os.environ.get('HTTP_WEKOSOCIETYSUBGROUP')
     data['SHIB_ATTR_ACTIVE_FLAG'] = os.environ.get('HTTP_WEKOACTIVEUSER')
-    data['SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG'] = os.environ.get('HTTP_WEKOSITEUSERWITHINIPRANGE')
+    data['SHIB_ATTR_SITE_USER_WITHIN_IP_RANGE_FLAG'] = \
+        os.environ.get('HTTP_WEKOSITEUSERWITHINIPRANGE')
     data['SHIB_ATTR_ORGANIZATION'] = os.environ.get('HTTP_UIDPDOMAINNAME')
     data['SHIB_ATTR_HANDLE'] = os.environ.get('HTTP_DISPLAYNAME')
 
