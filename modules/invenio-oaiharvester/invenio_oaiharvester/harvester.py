@@ -1832,12 +1832,21 @@ class DDIMapper(BaseMapper):
                 for key, val in data_mapping.items():
                     full_key = current_key + '.' + key
                     if full_key in lst_keys_unique:
+                        # An empty element (e.g. <depositr/>) is parsed as
+                        # None by xmltodict. Treat it as 'no value' and skip
+                        # it so that the other elements of the record are
+                        # still registered.
+                        if val is None:
+                            continue
                         if isinstance(val, str):
                             val = {TEXT: val}
                         elif isinstance(val, list):
-                            for i in range(len(val)):
-                                if isinstance(val[i], str):
-                                    val[i] = {TEXT: val[i]}
+                            # Repeated elements: drop only the empty ones
+                            # and keep the ones that have a value.
+                            val = [{TEXT: i} if isinstance(i, str) else i
+                                   for i in val if i is not None]
+                            if not val:
+                                continue
 
                         if dict_data.get(full_key):
                             if isinstance(val, list):

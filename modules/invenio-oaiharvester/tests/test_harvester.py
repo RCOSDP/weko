@@ -2357,6 +2357,167 @@ class TestDDIMapper:
         assert result == test
 
 
+#     Empty elements (e.g. <depositr/>) are parsed as None by xmltodict.
+#     They must be treated as "no value" without breaking the whole record.
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestDDIMapper::test_ddi_harvest_processing_empty_element -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+    def test_ddi_harvest_processing_empty_element(self, db_itemtype):
+        xml_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2023-03-02T04:08:53Z</responseDate><request metadataPrefix="ddi" verb="GetRecord" identifier="oai:weko3.example.org:00000075">https://192.168.56.103/oai</request><GetRecord><record><header><identifier>oai:weko3.example.org:00000075</identifier><datestamp>2023-03-02T04:06:46Z</datestamp><setSpec>1557820086539</setSpec></header><metadata><codeBook xmlns="ddi:codebook:2_5"><stdyDscr></stdyDscr></codeBook></metadata></record></GetRecord></OAI-PMH>'
+        tree = etree.fromstring(xml_str)
+        record = tree.findall("./GetRecord/record", namespaces=tree.nsmap)[0]
+        xml = etree.tostring(record, encoding="utf-8").decode()
+
+        def _run(data):
+            mapper = DDIMapper(xml)
+            mapper.map_itemtype('codeBook')
+            res = {"$schema": mapper.itemtype.id, "pubdate": str(mapper.datestamp())}
+            mapper.ddi_harvest_processing(data, res)
+            return res
+
+        # (1) single empty element (None): the element is skipped and the
+        #     other elements of the same record are registered as usual.
+        data = OrderedDict([
+            ('@xmlns', 'ddi:codebook:2_5'),
+            ('stdyDscr', OrderedDict([
+                ('citation', OrderedDict([
+                    ('@xml:lang', 'ja'),
+                    ('titlStmt', OrderedDict([
+                        ('titl', OrderedDict([
+                            ('@xml:lang', 'ja'),
+                            ('#text', 'test ddi title'),
+                        ])),
+                        ('altTitl', None),
+                    ])),
+                    ('distStmt', OrderedDict([
+                        ('distrbtr', OrderedDict([
+                            ('@URI', 'https://www.ier.hit-u.ac.jp/'),
+                            ('@abbr', 'IER'),
+                            ('@xml:lang', 'ja'),
+                            ('@affiliation', 'Hitotsubashi University'),
+                            ('#text', 'Institute of Economic Research'),
+                        ])),
+                        ('depositr', None),
+                    ])),
+                ])),
+            ])),
+        ])
+        res = _run(data)
+        assert res['item_1551264308487'] == [
+            {'subitem_1551255647225': 'test ddi title',
+             'subitem_1551255648112': 'ja'}]
+        assert res['item_1592405734122'] == [
+            {'subitem_1592369405220': 'Institute of Economic Research',
+             'subitem_1591320914113': 'https://www.ier.hit-u.ac.jp/',
+             'subitem_1591320889728': 'IER',
+             'subitem_1592369407829': 'ja',
+             'subitem_1591320890384': 'Hitotsubashi University'}]
+        assert 'item_1551264326373' not in res    # altTitl
+        assert 'item_1602147887655' not in res    # depositr
+
+        # (2) repeated element with empty and non-empty entries mixed:
+        #     only the empty ones are dropped.
+        data = OrderedDict([
+            ('@xmlns', 'ddi:codebook:2_5'),
+            ('stdyDscr', OrderedDict([
+                ('stdyInfo', OrderedDict([
+                    ('subject', OrderedDict([
+                        ('topcClas', [
+                            OrderedDict([
+                                ('@vocab', 'NDC'),
+                                ('@xml:lang', 'en'),
+                                ('#text', 'Statistics'),
+                            ]),
+                            None,
+                            OrderedDict([
+                                ('@vocab', 'NDC'),
+                                ('@xml:lang', 'en'),
+                                ('#text', 'Geography'),
+                            ]),
+                            None,
+                        ]),
+                    ])),
+                ])),
+            ])),
+        ])
+        res = _run(data)
+        assert res['item_1551264822581'] == [
+            {'subitem_1592472785169': 'Statistics',
+             'subitem_1592472786088': 'NDC',
+             'subitem_1592472785698': 'en'},
+            {'subitem_1592472785169': 'Geography',
+             'subitem_1592472786088': 'NDC',
+             'subitem_1592472785698': 'en'}]
+
+        # (3) repeated element whose entries are all empty: nothing is
+        #     registered for that element.
+        data = OrderedDict([
+            ('@xmlns', 'ddi:codebook:2_5'),
+            ('stdyDscr', OrderedDict([
+                ('stdyInfo', OrderedDict([
+                    ('subject', OrderedDict([
+                        ('topcClas', [None, None]),
+                    ])),
+                ])),
+            ])),
+        ])
+        res = _run(data)
+        assert 'item_1551264822581' not in res
+
+        # (4) element with attributes but no text: the attribute values are
+        #     registered as before.
+        data = OrderedDict([
+            ('@xmlns', 'ddi:codebook:2_5'),
+            ('stdyDscr', OrderedDict([
+                ('citation', OrderedDict([
+                    ('distStmt', OrderedDict([
+                        ('depositr', OrderedDict([
+                            ('@abbr', 'IER'),
+                        ])),
+                    ])),
+                ])),
+            ])),
+        ])
+        res = _run(data)
+        assert res['item_1602147887655'] == [{'subitem_1602143331441': 'IER'}]
+
+# .tox/c1/bin/pytest --cov=invenio_oaiharvester tests/test_harvester.py::TestDDIMapper::test_map_empty_element -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/invenio-oaiharvester/.tox/c1/tmp
+    def test_map_empty_element(self, db_itemtype):
+        # End-to-end: the XML goes through xmltodict, so <altTitl/>,
+        # <depositr/> and <holdings/> become None in the parsed data.
+        xml_str = '<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/ http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd"><responseDate>2026-08-10T05:18:31Z</responseDate><request metadataPrefix="ddi" verb="GetRecord" identifier="oai:d-repo.ier.hit-u.ac.jp:02035824">https://d-repo.ier.hit-u.ac.jp/oai</request><GetRecord><record><header><identifier>oai:d-repo.ier.hit-u.ac.jp:02035824</identifier><datestamp>2026-07-17T05:27:24Z</datestamp><setSpec>1621381809390</setSpec></header><metadata><codeBook xmlns="ddi:codebook:2_5" xsi:schemaLocation="https://ddialliance.org/Specification/DDI-Codebook/2.5/XMLSchema/codebook.xsd"><stdyDscr><citation xml:lang="ja"><titlStmt><titl xml:lang="ja">Circumference and Area (1940)</titl><altTitl/><IDNo agency="IER"/></titlStmt><distStmt><distrbtr URI="https://www.ier.hit-u.ac.jp/Japanese/" abbr="IER" xml:lang="ja" affiliation="Hitotsubashi University">Institute of Economic Research</distrbtr><depositr/></distStmt><holdings URI="https://d-repo.ier.hit-u.ac.jp/records/2035824"/><holdings/><holdings/></citation><stdyInfo xml:lang="ja"><subject><topcClas vocab="NDC" xml:lang="ja">Statistics</topcClas><topcClas/></subject><abstract xml:lang="ja">test abstract</abstract><sumDscr><anlyUnit/><anlyUnit/><universe/></sumDscr></stdyInfo></stdyDscr></codeBook></metadata></record></GetRecord></OAI-PMH>'
+        tree = etree.fromstring(xml_str)
+        record = tree.findall("./GetRecord/record", namespaces=tree.nsmap)[0]
+        xml = etree.tostring(record, encoding="utf-8").decode()
+        mapper = DDIMapper(xml)
+        result = mapper.map()
+
+        # the record is registered: no exception, title and other values present
+        assert result['$schema'] == 11
+        assert result['pubdate'] == '2026-07-17'
+        assert result['title'] == 'Circumference and Area (1940)'
+        assert result['item_1551264308487'] == [
+            {'subitem_1551255647225': 'Circumference and Area (1940)',
+             'subitem_1551255648112': 'ja'}]
+        assert result['item_1592405734122'] == [
+            {'subitem_1592369405220': 'Institute of Economic Research',
+             'subitem_1591320914113': 'https://www.ier.hit-u.ac.jp/Japanese/',
+             'subitem_1591320889728': 'IER',
+             'subitem_1592369407829': 'ja',
+             'subitem_1591320890384': 'Hitotsubashi University'}]
+        assert result['item_1551264822581'] == [
+            {'subitem_1592472785169': 'Statistics',
+             'subitem_1592472786088': 'NDC',
+             'subitem_1592472785698': 'ja'}]
+        assert result['item_1551264846237'] == [
+            {'subitem_1551255577890': 'test abstract',
+             'subitem_1551255592625': 'ja'}]
+        # attribute-only element: the attribute value is registered
+        assert result['item_1586157591881'] == [{'subitem_1591256665864': 'IER'}]
+        # empty elements are not registered
+        assert 'item_1551264326373' not in result    # altTitl
+        assert 'item_1602147887655' not in result    # depositr
+        assert result['type'] == [{"resourcetype": "dataset",
+                                   "resourceuri": "http://purl.org/coar/resource_type/c_ddb1"}]
+
 def test_biosample01(db_itemtype):
 
     record = {'record': {'header': {}}}
