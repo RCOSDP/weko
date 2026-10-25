@@ -3630,7 +3630,7 @@ def test_get_datacite_autofill_item(app):
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_record_data -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 def test_get_arXiv_record_data(app, mocker_itemtype):
     mock_get_data = {
-        'response': {"title": [{"@value": "test title", "@language": "ja"}]},
+        'response': {"feed": {"entry": {"id": "http://arxiv.org/abs/2301.00001v1", "title": "test title"}}},
         'error': ''
     }
     with patch('weko_workspace.utils.arXivURL.get_data', return_value=mock_get_data):
@@ -3677,6 +3677,34 @@ def test_get_arXiv_record_data(app, mocker_itemtype):
         current_cache.delete('arXiv_data10.1234/test-doi1')
         result = get_arXiv_record_data('10.1234/test-doi', 1)
         assert result == []
+
+    # Test with no entry (no hit), error entry (invalid ID) and empty entry list
+    for response in [
+        {"feed": {"title": "arXiv Query"}},
+        {"feed": None},
+        {},
+        {"feed": {"entry": {"id": "http://arxiv.org/api/errors#incorrect_id_format_for_abc", "title": "Error"}}},
+        {"feed": {"entry": []}},
+    ]:
+        with patch('weko_workspace.utils.arXivURL.get_data', return_value={'response': response, 'error': ''}):
+            with patch('weko_workspace.utils.get_arXiv_data_by_key') as mock_by_key:
+                current_cache.delete('arXiv_data2301.000011')
+                result = get_arXiv_record_data('2301.00001', 1)
+                assert result == []
+                mock_by_key.assert_not_called()
+
+    # Test with multiple entries: use the first entry
+    response = {"feed": {"entry": [{"id": "http://arxiv.org/abs/2301.00001v1"}, {"id": "http://arxiv.org/abs/2301.00002v1"}]}}
+    with patch('weko_workspace.utils.arXivURL.get_data', return_value={'response': response, 'error': ''}):
+        with patch('weko_workspace.utils.get_arXiv_data_by_key', return_value={}) as mock_by_key:
+            with patch('weko_workspace.utils.get_arXiv_autofill_item'):
+                with patch('weko_workspace.utils.get_autofill_key_tree'):
+                    with patch('weko_workspace.utils.build_record_model', return_value=[1]):
+                        current_cache.delete('arXiv_data10.1234/test-doi1')
+                        result = get_arXiv_record_data('10.1234/test-doi', 1)
+                        assert result == [1]
+                        api = mock_by_key.call_args[0][0]
+                        assert api['response']['feed']['entry'] == {"id": "http://arxiv.org/abs/2301.00001v1"}
     
 # .tox/c1/bin/pytest tests/test_utils.py::test_get_arXiv_data_by_key -vv -s --cov-branch --cov=weko_workspace --cov-report=term --basetemp=/code/modules/weko-workspace/tests/.tox/c1/tmp
 @pytest.mark.parametrize('keyword, expected_result', [

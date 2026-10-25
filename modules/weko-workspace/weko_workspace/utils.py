@@ -2395,6 +2395,15 @@ def get_arXiv_record_data(doi, item_type_id, exclude_duplicate_lang=True):
     if api_response["error"] \
             or not isinstance(api_response['response'], dict):
         return result
+    # No hit returns a feed without entry. Invalid ID returns an error entry.
+    feed = api_response['response'].get('feed') or {}
+    entry = feed.get('entry') if isinstance(feed, dict) else None
+    if isinstance(entry, list):
+        entry = entry[0] if entry else None
+        feed['entry'] = entry
+    if not isinstance(entry, dict) \
+            or '/api/errors' in str(entry.get('id', '')):
+        return result
     api_data = get_arXiv_data_by_key(api_response, 'all')
     items = ItemTypes.get_by_id(item_type_id)
     if items is None:

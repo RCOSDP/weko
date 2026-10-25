@@ -5,7 +5,7 @@ from requests.cookies import RequestsCookieJar
 from requests.exceptions import RequestException
 from requests.models import Response
 
-from weko_workspace.api import JamasURL, CiNiiURL, JALCURL, DATACITEURL, arXivURL
+from weko_workspace.api import JamasURL, CiNiiURL, JALCURL, DATACITEURL, arXivURL, extract_arxiv_id
 
 
 # class JamasURL:
@@ -471,6 +471,42 @@ class TestDATACITEURL:
             result = datacite.get_data()
             assert result == {"response":"","error":"request error"}
 
+# def extract_arxiv_id(value):
+# .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::test_extract_arxiv_id -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
+@pytest.mark.parametrize("value, expected", [
+    # new style
+    ("2301.00001", "2301.00001"),
+    ("0704.0001", "0704.0001"),
+    ("2301.00001v2", "2301.00001v2"),
+    (" 2301.00001 ", "2301.00001"),
+    ("arXiv:2301.00001", "2301.00001"),
+    ("ARXIV:2301.00001v1", "2301.00001v1"),
+    # old style
+    ("hep-th/9901001", "hep-th/9901001"),
+    ("math.AG/0601001", "math.AG/0601001"),
+    ("arXiv:hep-th/9901001v3", "hep-th/9901001v3"),
+    # URL
+    ("https://arxiv.org/abs/2301.00001", "2301.00001"),
+    ("http://arxiv.org/abs/2301.00001v2/", "2301.00001v2"),
+    ("https://arxiv.org/pdf/2301.00001.pdf", "2301.00001"),
+    ("https://export.arxiv.org/abs/hep-th/9901001", "hep-th/9901001"),
+    # arXiv DOI
+    ("10.48550/arXiv.2301.00001", "2301.00001"),
+    ("https://doi.org/10.48550/arXiv.2301.00001", "2301.00001"),
+    # not arXiv ID
+    ("10.5109/16119", None),
+    ("https://doi.org/10.5109/16119", None),
+    ("10.1234/5678901", None),
+    ("2301.001", None),
+    ("23010.00001", None),
+    ("https://example.org/abs/2301.00001", None),
+    ("", None),
+    (None, None),
+])
+def test_extract_arxiv_id(value, expected):
+    assert extract_arxiv_id(value) == expected
+
+
 # class arXivURL:
 class TestarXivURL:
 #     def __init__(self, naid, timeout=None, http_proxy=None, https_proxy=None):
@@ -492,6 +528,11 @@ class TestarXivURL:
         assert arXiv._doi == "10.5109/16119"
         assert arXiv._timeout == 10
         assert arXiv._proxy == {"http":"test_http_proxy","https":"test_https_proxy"}
+        assert arXiv._arxiv_id is None
+
+        # arXiv ID
+        arXiv = arXivURL("arXiv:2301.00001v2")
+        assert arXiv._arxiv_id == "2301.00001v2"
         
 
 #     def _create_endpoint(self):
@@ -501,6 +542,10 @@ class TestarXivURL:
         result = arXiv._create_endpoint()
         assert result == "10.5109/16119"
 
+        arXiv = arXivURL("hep-th/9901001")
+        result = arXiv._create_endpoint()
+        assert result == "hep-th/9901001"
+
 
 #     def _create_url(self):
 # .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_create_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
@@ -509,6 +554,14 @@ class TestarXivURL:
         result = arXiv._create_url()
         assert result == "https://export.arxiv.org/api/query?search_query=doi:10.5109/16119"
 
+        arXiv = arXivURL("2301.00001")
+        result = arXiv._create_url()
+        assert result == "https://export.arxiv.org/api/query?id_list=2301.00001"
+
+        arXiv = arXivURL("https://doi.org/10.48550/arXiv.2301.00001")
+        result = arXiv._create_url()
+        assert result == "https://export.arxiv.org/api/query?id_list=2301.00001"
+
 
 #     def url(self):
 # .tox/c1/bin/pytest --cov=weko_workspace tests/test_api.py::TestarXivURL::test_url -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-workspace/.tox/c1/tmp
@@ -516,6 +569,10 @@ class TestarXivURL:
         arXiv = arXivURL("10.5109/16119")
         result = arXiv.url
         assert result == "https://export.arxiv.org/api/query?search_query=doi:10.5109/16119"
+
+        arXiv = arXivURL("hep-th/9901001v1")
+        result = arXiv.url
+        assert result == "https://export.arxiv.org/api/query?id_list=hep-th/9901001v1"
 
 
 #     def _do_http_request(self):
