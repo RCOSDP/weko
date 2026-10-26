@@ -231,12 +231,19 @@ WEKO_ACCOUNTS_SKIP_CONFIRMATION_PAGE = False
 """Skip shibboleth confirmation page."""
 
 WEKO_ACCOUNTS_IDP_ENTITY_ID = ''
-"""IdP entity ID that institution owned."""
+"""Entity ID of this repository's Shibboleth SP (not the IdP's).
+
+Despite the name, set the SP entity ID here. Its host name is used to build
+the Redis key of the GakuNin mAP group cache and to match GakuNin mAP group
+IDs. If an IdP entity ID is set, the key does not match the one written by
+weko-group-cache-db and the groups are silently not synchronized.
+"""
 
 WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING = {}
+# Keyed by the value of WEKO_ACCOUNTS_IDP_ENTITY_ID (the SP entity ID) as is.
 # {
-#     "http://idp.example.org/idp/shibboleth": [
-#        "jc_role_sysadm", "jc_role_repoadm", "jc_role_comadm"],
+#     "https://repo.example.org/shibboleth-sp": [
+#        "jc_repo_example_org_ro_cont"],
 #}
 
 WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS = False
