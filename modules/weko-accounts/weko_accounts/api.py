@@ -338,8 +338,10 @@ class ShibUser(object):
 
         Gets the roles to add based on Shibboleth attributes.
         Specifically, if the WEKO_ACCOUNTS_SHIB_BIND_GAKUNIN_MAP_GROUPS setting
-        is True, it determines the roles to add based on the
-        WEKO_SHIB_ATTR_IS_MEMBER_OF or WEKO_ACCOUNTS_IDP_ENTITY_ID attribute.
+        is True, it determines the roles to add based on the isMemberOf
+        attribute. If the attribute is empty, it falls back to
+        WEKO_ACCOUNTS_GAKUNIN_DEFAULT_GROUP_MAPPING keyed by
+        WEKO_ACCOUNTS_IDP_ENTITY_ID (the SP entity ID).
 
         Returns:
             list: List of roles to add.
@@ -685,8 +687,11 @@ def remove_contribute_role(self, role_id):
 def create_fqdn_from_entity_id():
     """Create a fully qualified domain name (FQDN) from the entity ID.
 
+    The entity ID is WEKO_ACCOUNTS_IDP_ENTITY_ID, which holds this
+    repository's SP entity ID despite its name.
+
     Returns:
-        str: FQDN derived from the entity ID.
+        str: FQDN derived from the entity ID, with "." and "-" replaced by "_".
     """
     idp_entity_id = current_app.config.get('WEKO_ACCOUNTS_IDP_ENTITY_ID')
     if not idp_entity_id:
@@ -820,7 +825,8 @@ def is_map_sysadm_role(role_name):
 def _is_gakunin_map_configured():
     """Return whether the required GakuNin mAP settings are configured.
 
-    Both the group-pattern dictionary and IdP entity ID must be truthy.
+    Both the group-pattern dictionary and WEKO_ACCOUNTS_IDP_ENTITY_ID
+    (the SP entity ID) must be truthy.
 
     Returns:
         bool: ``True`` when both required settings are configured.
