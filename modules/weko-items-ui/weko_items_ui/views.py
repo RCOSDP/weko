@@ -32,6 +32,7 @@ import tempfile
 
 from copy import deepcopy
 from datetime import date, datetime, timedelta
+from functools import wraps
 
 from flask import (
     Blueprint, abort, current_app, flash, jsonify, redirect,
@@ -122,6 +123,37 @@ blueprint_api = Blueprint(
     static_folder='static',
     url_prefix="/items",
 )
+
+
+def require_activity_user_or_item_access(func):
+    """Require activity email, item access, or a guest token."""
+
+    @wraps(func)
+    def decorated_view(*args, **kwargs):
+        if request.headers.get('Content-Type') != 'application/json':
+            return func(*args, **kwargs)
+
+        data = request.get_json()
+        activity_id = data.get('activity_id')
+        activity = WorkActivity().get_activity_by_id(activity_id)
+        if activity is None:
+            abort(404)
+
+        user_email = getattr(current_user, "email", None)
+        mail_addresses = (activity.extra_info or {}).get('user_mail', [])
+        if isinstance(mail_addresses, str):
+            mail_addresses = [mail_addresses]
+
+        if (
+            not session.get("guest_token")
+            and not item_permission.can()
+            and user_email not in mail_addresses
+        ):
+            abort(403)
+
+        return func(*args, **kwargs)
+
+    return decorated_view
 
 #  OAポリシー取得エンドポイント
 @blueprint.route("/api/oa_policies", methods=["GET"])
@@ -861,8 +893,8 @@ def get_search_data(data_type=''):
 
 
 @blueprint_api.route('/validate_email_and_index', methods=['POST'])
-@login_required
-@item_permission.require(http_exception=403)
+@login_required_customize
+@require_activity_user_or_item_access
 def validate_user_email_and_index():
     """Validate user mail and index.
 

@@ -9,8 +9,9 @@ import responses
 import os
 import pytest
 from sqlalchemy.exc import SQLAlchemyError
-from flask import json, url_for, make_response
+from flask import json, session, url_for, make_response
 from jinja2.exceptions import TemplateNotFound
+from werkzeug.exceptions import Forbidden, NotFound
 
 from invenio_accounts.testutils import login_user_via_session
 from invenio_oauth2server.provider import oauth2
@@ -27,8 +28,89 @@ from weko_items_ui.views import (
     default_view_method,
     prepare_delete_item,
     prepare_edit_item,
+    require_activity_user_or_item_access,
     to_links_js,
 )
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_require_activity_user_or_item_access -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_require_activity_user_or_item_access(app):
+    def protected_view():
+        return "permitted"
+
+    activity = MagicMock(extra_info={"user_mail": "owner@example.org"})
+
+    # ゲストトークンがあれば403を返さない。
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.item_permission.can",
+        return_value=False,
+    ), patch(
+        "weko_items_ui.views.current_user",
+        MagicMock(email="other@example.org"),
+    ), app.test_request_context(json={"activity_id": "activity-1"}):
+        session["guest_token"] = "guest-token"
+        assert require_activity_user_or_item_access(
+            protected_view
+        )() == "permitted"
+
+    # item-access があれば403を返さない。
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.item_permission.can",
+        return_value=True,
+    ), patch(
+        "weko_items_ui.views.current_user",
+        MagicMock(email="other@example.org"),
+    ), app.test_request_context(json={"activity_id": "activity-1"}):
+        assert require_activity_user_or_item_access(
+            protected_view
+        )() == "permitted"
+
+    # アクティビティ作成者のメールアドレスと一致すれば403を返さない。
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.item_permission.can",
+        return_value=False,
+    ), patch(
+        "weko_items_ui.views.current_user",
+        MagicMock(email="owner@example.org"),
+    ), app.test_request_context(json={"activity_id": "activity-1"}):
+        assert require_activity_user_or_item_access(
+            protected_view
+        )() == "permitted"
+
+    # 対象アクティビティが存在しない場合は404を返す。
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=None,
+    ), app.test_request_context(json={"activity_id": "activity-missing"}):
+        with pytest.raises(NotFound) as exc_info:
+            require_activity_user_or_item_access(protected_view)()
+
+    assert exc_info.value.code == 404
+
+    # ゲストトークン、item-access、メールアドレス一致がない場合は403を返す。
+    activity = MagicMock(extra_info={"user_mail": []})
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.item_permission.can",
+        return_value=False,
+    ), patch(
+        "weko_items_ui.views.current_user",
+        MagicMock(email="other@example.org"),
+    ), app.test_request_context(json={"activity_id": "activity-1"}):
+        with pytest.raises(Forbidden) as exc_info:
+            require_activity_user_or_item_access(protected_view)()
+
+    assert exc_info.value.code == 403
 
 
 # def index(item_type_id=0):
@@ -20978,9 +21060,18 @@ def test_get_search_data_acl_user(client_api, users, db_userprofile, db_sessionl
         (7, 403), # user             item-access なし
     ],
 )
-def test_validate_user_email_and_index_login(client_api, users, id, status_code):
+def test_validate_user_email_and_index_login(
+    client_api, db_sessionlifetime, users, id, status_code
+):
     login_user_via_session(client=client_api, email=users[id]["email"])
-    with patch("weko_items_ui.views.validate_user_mail_and_index", return_value=""):
+    activity = MagicMock(extra_info={"user_mail": []})
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.validate_user_mail_and_index",
+        return_value="",
+    ):
         res = client_api.post(
             "/api/items/validate_email_and_index",
             data=json.dumps({}),
@@ -20990,7 +21081,9 @@ def test_validate_user_email_and_index_login(client_api, users, id, status_code)
 
 
 # .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_user_email_and_index_guest -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
-def test_validate_user_email_and_index_guest(client_api, users):
+def test_validate_user_email_and_index_guest(
+    client_api, db_sessionlifetime, users
+):
     with patch("weko_items_ui.views.validate_user_mail_and_index", return_value=""):
         res = client_api.post(
             "/api/items/validate_email_and_index",
@@ -20998,6 +21091,100 @@ def test_validate_user_email_and_index_guest(client_api, users):
             content_type="application/json",
         )
         assert res.status_code == 401
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_user_email_and_index_rejects_non_json_content_type -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_user_email_and_index_rejects_non_json_content_type(
+    client_api, db_sessionlifetime, users
+):
+    login_user_via_session(client=client_api, email=users[0]["email"])
+
+    res = client_api.post(
+        "/api/items/validate_email_and_index",
+        data="{}",
+        content_type="text/plain",
+    )
+
+    assert res.status_code == 200
+    assert json.loads(res.data)["error"] == "Header Error"
+
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_user_email_and_index_with_guest_token -v --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_user_email_and_index_with_guest_token(
+    client_api, db_sessionlifetime
+):
+    with client_api.session_transaction() as sess:
+        sess["guest_token"] = "guest-token"
+
+    activity = MagicMock(extra_info={"user_mail": []})
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.validate_user_mail_and_index",
+        return_value="",
+    ):
+        res = client_api.post(
+            "/api/items/validate_email_and_index",
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+
+    assert res.status_code == 200
+
+# .tox/c1/bin/pytest --cov=weko_items_ui tests/test_views.py::test_validate_user_email_and_index_checks_activity_email -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-items-ui/.tox/c1/tmp
+def test_validate_user_email_and_index_checks_activity_email(
+    client_api, db_sessionlifetime, users
+):
+    login_user_via_session(client=client_api, email=users[4]["email"])
+    request_data = {"activity_id": "activity-1"}
+
+    activity = MagicMock(
+        extra_info={
+            "user_mail": [users[4]["email"]],
+        }
+    )
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ), patch(
+        "weko_items_ui.views.validate_user_mail_and_index",
+        return_value="",
+    ):
+        res = client_api.post(
+            "/api/items/validate_email_and_index",
+            data=json.dumps(request_data),
+            content_type="application/json",
+        )
+
+    assert res.status_code == 200
+
+    activity.extra_info = {
+        "user_mail": ["another-user@example.org"],
+    }
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ):
+        res = client_api.post(
+            "/api/items/validate_email_and_index",
+            data=json.dumps(request_data),
+            content_type="application/json",
+        )
+
+    assert res.status_code == 403
+
+    activity.extra_info = {}
+    with patch(
+        "weko_items_ui.views.WorkActivity.get_activity_by_id",
+        return_value=activity,
+    ):
+        res = client_api.post(
+            "/api/items/validate_email_and_index",
+            data=json.dumps(request_data),
+            content_type="application/json",
+        )
+
+    assert res.status_code == 403
 
 
 # def validate_user_info():

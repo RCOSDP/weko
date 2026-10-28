@@ -24,6 +24,7 @@ import json
 import sys
 from functools import wraps
 from wsgiref.util import request_uri
+from flask import session
 
 import redis
 from redis import sentinel
@@ -69,7 +70,8 @@ def require_item_edit_permission(f):
     def decorated(*args, **kwargs):
         # 循環 import を避けるため関数内で読み込む
         from weko_items_ui.permissions import edit_permission_factory
-        if not (current_user and current_user.is_authenticated):
+        guest_token = session.get("guest_token")
+        if not (current_user and current_user.is_authenticated) and not guest_token:
             abort(401)
         pid_value = kwargs.get('pid_value')
         pid_value = str(getattr(pid_value, 'value', pid_value))
@@ -86,7 +88,7 @@ def require_item_edit_permission(f):
         r = RecordMetadata.query.filter_by(id=pid.object_uuid).first()
         if r is None:
             abort(404, "Item not found")
-        if not edit_permission_factory(r.json).can():
+        if not edit_permission_factory(r.json).can() and not guest_token:
             abort(403, "You do not have permission to edit this item")
         return f(*args, **kwargs)
     return decorated

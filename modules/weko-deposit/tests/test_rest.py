@@ -28,12 +28,159 @@ import redis
 
 from elasticsearch import ElasticsearchException
 from sqlalchemy.exc import SQLAlchemyError
-from flask import url_for
+from flask import session, url_for
+from werkzeug.exceptions import Forbidden, NotFound, Unauthorized
 from weko_deposit.api import WekoDeposit, WekoRecord
+from weko_deposit.rest import require_item_edit_permission
 from invenio_accounts.testutils import login_user_via_session
 
 
 # .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py -vv -s --cov-branch --cov-report=term --cov-report=html --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+
+
+# .tox/c1/bin/pytest --cov=weko_deposit tests/test_rest.py::test_require_item_edit_permission -vv -s --cov-branch --cov-report=term --basetemp=/code/modules/weko-deposit/.tox/c1/tmp
+def test_require_item_edit_permission(app, item_edit_permission_records):
+    def create_protected_view():
+        view = MagicMock(return_value="permitted")
+        return view, require_item_edit_permission(view)
+
+    def permission_factory(can_edit):
+        permission = MagicMock()
+        permission.can.return_value = can_edit
+        return patch(
+            "weko_items_ui.permissions.edit_permission_factory",
+            return_value=permission,
+        )
+
+    # 未認証かつゲストトークンなしの場合は401を返す。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=False),
+    ), app.test_request_context():
+        with pytest.raises(Unauthorized) as exc_info:
+            protected_view(pid_value=item_edit_permission_records["record_pid"])
+
+    assert exc_info.value.code == 401
+    view.assert_not_called()
+
+    # 認証済みかつゲストトークンありの場合は401を返さない。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=True),
+    ), permission_factory(False), app.test_request_context():
+        session["guest_token"] = "guest-token"
+        assert protected_view(
+            pid_value=item_edit_permission_records["record_pid"]
+        ) == "permitted"
+
+    view.assert_called_once_with(
+        pid_value=item_edit_permission_records["record_pid"]
+    )
+
+    # 未認証でもゲストトークンがあれば401を返さない。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=False),
+    ), permission_factory(False), app.test_request_context():
+        session["guest_token"] = "guest-token"
+        assert protected_view(
+            pid_value=item_edit_permission_records["record_pid"]
+        ) == "permitted"
+
+    view.assert_called_once_with(
+        pid_value=item_edit_permission_records["record_pid"]
+    )
+
+    # バージョン付きPIDは親のrecidを使って編集権限を確認する。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=True),
+    ), permission_factory(True), app.test_request_context():
+        versioned_pid = "{}.1".format(
+            item_edit_permission_records["parent_pid"]
+        )
+        assert protected_view(pid_value=versioned_pid) == "permitted"
+
+    view.assert_called_once_with(pid_value=versioned_pid)
+
+    # PIDが存在しない場合は404とItem not foundを返す。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=True),
+    ), app.test_request_context():
+        with pytest.raises(NotFound) as exc_info:
+            protected_view(pid_value="item-edit-missing")
+
+    assert exc_info.value.code == 404
+    assert exc_info.value.description == "Item not found"
+    view.assert_not_called()
+
+    # PIDに対応するレコードが存在しない場合は404とItem not foundを返す。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=True),
+    ), app.test_request_context():
+        with pytest.raises(NotFound) as exc_info:
+            protected_view(
+                pid_value=item_edit_permission_records["record_missing_pid"]
+            )
+
+    assert exc_info.value.code == 404
+    assert exc_info.value.description == "Item not found"
+    view.assert_not_called()
+
+    # 編集権限もゲストトークンもない場合は403を返す。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=True),
+    ), permission_factory(False), app.test_request_context():
+        with pytest.raises(Forbidden) as exc_info:
+            protected_view(
+                pid_value=item_edit_permission_records["record_pid"]
+            )
+
+    assert exc_info.value.code == 403
+    assert exc_info.value.description == (
+        "You do not have permission to edit this item"
+    )
+    view.assert_not_called()
+
+    # 編集権限があればゲストトークンがなくても403を返さない。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=True),
+    ), permission_factory(True), app.test_request_context():
+        assert protected_view(
+            pid_value=item_edit_permission_records["record_pid"]
+        ) == "permitted"
+
+    view.assert_called_once_with(
+        pid_value=item_edit_permission_records["record_pid"]
+    )
+
+    # 編集権限がなくてもゲストトークンがあれば403を返さない。
+    view, protected_view = create_protected_view()
+    with patch(
+        "weko_deposit.rest.current_user",
+        MagicMock(is_authenticated=False),
+    ), permission_factory(False), app.test_request_context():
+        session["guest_token"] = "guest-token"
+        assert protected_view(
+            pid_value=item_edit_permission_records["record_pid"]
+        ) == "permitted"
+
+    view.assert_called_once_with(
+        pid_value=item_edit_permission_records["record_pid"]
+    )
+
 
 # def test_publish(app, location):
 #    deposit = WekoDeposit.create({})
