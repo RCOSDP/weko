@@ -122,6 +122,7 @@ jobs:
         COMPOSE_DOCKER_CLI_BUILD: 1
 
     - name: Wait for services to be ready
+      id: wait
       run: |
         echo "Waiting for WEKO services to start..."
         start_time=$(date +%s)
@@ -174,6 +175,16 @@ jobs:
         WEKO_BASE_URL: https://localhost
         WEKO_TEST_EMAIL: wekosoftware@nii.ac.jp
         WEKO_TEST_PASSWORD: uspass123
+
+    # install.sh が scripts/demo/item_type.sql から投入した JSON-LD マッピングを、
+    # 同じく投入されたアイテムタイプに対して検証する。
+    # UIテストの成否に関わらず、WEKO が起動していれば実行する。
+    - name: Validate JSON-LD mappings
+      if: ${{ !cancelled() && steps.wait.outcome == 'success' }}
+      shell: bash
+      run: |
+        docker compose exec -T web python /code/scripts/ci/validate_jsonld_mappings.py \
+          | tee -a "$GITHUB_STEP_SUMMARY"
 
     - name: Upload test results
       uses: actions/upload-artifact@v4
