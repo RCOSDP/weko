@@ -53,6 +53,7 @@ from invenio_files_rest import InvenioFilesREST
 from invenio_files_rest.views import blueprint as invenio_files_rest_blueprint
 from invenio_files_rest.models import Bucket, Location, ObjectVersion
 from invenio_pidstore.models import PersistentIdentifier, PIDStatus, Redirect
+from invenio_records.models import RecordMetadata
 from invenio_i18n import InvenioI18N
 from weko_index_tree.api import Indexes
 from weko_index_tree.models import Index
@@ -299,6 +300,41 @@ def db(app):
     db_.session.remove()
     db_.drop_all()
     # drop_database(str(db_.engine.url))
+
+
+@pytest.fixture()
+def item_edit_permission_records(db):
+    """Create records and recids for item edit permission tests."""
+    record_uuid = uuid.uuid4()
+    record = RecordMetadata(id=record_uuid, json={}, version_id=1)
+    db.session.add(record)
+    record_pid = PersistentIdentifier.create(
+        "recid",
+        "item-edit",
+        object_type="rec",
+        object_uuid=record_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    parent_pid = PersistentIdentifier.create(
+        "recid",
+        "item-edit-parent",
+        object_type="rec",
+        object_uuid=record_uuid,
+        status=PIDStatus.REGISTERED,
+    )
+    record_missing_pid = PersistentIdentifier.create(
+        "recid",
+        "item-edit-orphan",
+        object_type="rec",
+        object_uuid=uuid.uuid4(),
+        status=PIDStatus.REGISTERED,
+    )
+    db.session.commit()
+    return {
+        "record_pid": record_pid.pid_value,
+        "parent_pid": parent_pid.pid_value,
+        "record_missing_pid": record_missing_pid.pid_value,
+    }
 
 
 @pytest.fixture()

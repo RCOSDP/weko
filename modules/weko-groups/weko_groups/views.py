@@ -33,7 +33,7 @@ from invenio_admin.proxies import current_admin
 from six.moves.urllib.parse import urlparse
 from sqlalchemy.exc import IntegrityError
 from invenio_db import db
-from weko_accounts.utils import roles_required
+from weko_accounts.utils import roles_required, login_required_customize
 from weko_admin.config import WEKO_ADMIN_PERMISSION_ROLE_REPO, \
     WEKO_ADMIN_PERMISSION_ROLE_SYSTEM, WEKO_ADMIN_PERMISSION_ROLE_COMMUNITY
 
@@ -119,7 +119,7 @@ def groupcount():
 
 
 @blueprint.route('/grouplist', methods=['GET'])
-@login_required
+@login_required_customize
 def grouplist():
     """
     Get logined group list info.
