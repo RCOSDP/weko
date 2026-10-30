@@ -279,7 +279,7 @@ msgid "DOI Input"
 msgstr ""
 
 #: weko_workspace/templates/weko_workspace/item_register.html:130
-msgid "Please enter the DOI."
+msgid "Please enter the DOI or arXiv ID."
 msgstr ""
 
 #: weko_workspace/templates/weko_workspace/item_register.html:136

@@ -279,8 +279,8 @@ msgid "DOI Input"
 msgstr "DOI入力"
 
 #: weko_workspace/templates/weko_workspace/item_register.html:130
-msgid "Please enter the DOI."
-msgstr "DOIを入力してください。"
+msgid "Please enter the DOI or arXiv ID."
+msgstr "DOIまたはarXiv IDを入力してください。"
 
 #: weko_workspace/templates/weko_workspace/item_register.html:136
 msgid "Get"

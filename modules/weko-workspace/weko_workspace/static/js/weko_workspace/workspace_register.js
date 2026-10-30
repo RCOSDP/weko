@@ -2427,7 +2427,7 @@ function toObject(arr) {
         }
         // $('#meta-search').modal('show');
         if (!$('#doiInput').val()) {
-          alert('please input the DOI');
+          alert('please input the DOI or arXiv ID');
           $scope.isButtonDisabled = false;
           return;
         }

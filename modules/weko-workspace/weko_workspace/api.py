@@ -20,6 +20,7 @@
 
 """WEKO3 module docstring."""
 
+import re
 import traceback
 import requests
 import urllib.parse
@@ -425,6 +426,42 @@ class DATACITEURL:
             response['error'] = str(e)
         return response
 
+
+ARXIV_ID_PATTERN = re.compile(
+    r'^(?:arxiv:)?'
+    r'(\d{4}\.\d{4,5}'                      # new style: 2301.00001
+    r'|[a-z][a-z-]*(?:\.[a-z]{2})?/\d{7})'    # old style: hep-th/9901001
+    r'(?:v\d+)?$',
+    re.IGNORECASE)
+"""arXiv identifier pattern (with optional "arXiv:" prefix and version)."""
+
+ARXIV_PREFIX_PATTERN = re.compile(
+    r'^(?:https?://(?:www\.|export\.)?arxiv\.org/(?:abs|pdf)/'
+    r'|(?:https?://(?:dx\.)?doi\.org/)?10\.48550/arxiv\.)',
+    re.IGNORECASE)
+"""arXiv abstract/PDF URL or arXiv DOI (10.48550/arXiv.) prefix."""
+
+
+def extract_arxiv_id(value):
+    """Extract arXiv identifier from input value.
+
+    Accepts a bare arXiv ID (e.g. "2301.00001", "hep-th/9901001"),
+    "arXiv:" prefixed ID, arxiv.org abs/pdf URL and arXiv DOI
+    (10.48550/arXiv.xxxx).
+
+    :param value: input value.
+    :return: arXiv identifier, or None if value is not an arXiv ID.
+    """
+    if not isinstance(value, str):
+        return None
+    value = ARXIV_PREFIX_PATTERN.sub('', value.strip().rstrip('/'))
+    if value.lower().endswith('.pdf'):
+        value = value[:-4]
+    if not ARXIV_ID_PATTERN.match(value):
+        return None
+    return re.sub(r'^arxiv:', '', value, flags=re.IGNORECASE)
+
+
 class arXivURL:
     """The Class retrieves the metadata from arXiv."""
 
@@ -443,6 +480,7 @@ class arXivURL:
         """
         if not doi:
             raise ValueError('DOI is required.')
+        self._arxiv_id = extract_arxiv_id(doi)
         self._doi = "/".join(doi.strip().strip("/").split("/")[-2:])
         if timeout:
             self._timeout = timeout
@@ -456,6 +494,8 @@ class arXivURL:
 
         :return: endpoint string.
         """
+        if self._arxiv_id:
+            return self._arxiv_id
         endpoint_url = self._doi
         return endpoint_url
 
@@ -467,6 +507,8 @@ class arXivURL:
         """
         endpoint = self._create_endpoint()
 
+        if self._arxiv_id:
+            return config.WEKO_WORKSPACE_ARXIV_ID_API_URL + endpoint
         url =  config.WEKO_WORKSPACE_ARXIV_API_URL + endpoint
         return url
 

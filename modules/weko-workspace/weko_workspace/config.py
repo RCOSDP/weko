@@ -318,6 +318,9 @@ WEKO_WORKSPACE_DATACITE_API_URL = 'https://api.datacite.org/dois/'
 WEKO_WORKSPACE_ARXIV_API_URL = 'https://export.arxiv.org/api/query?search_query=doi:'
 """arXiv API URL"""
 
+WEKO_WORKSPACE_ARXIV_ID_API_URL = 'https://export.arxiv.org/api/query?id_list='
+"""arXiv API URL for arXiv ID"""
+
 WEKO_WORKSPACE_CINII_REQUIRED_ITEM = [
     'title',
     'creator',
