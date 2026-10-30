@@ -128,6 +128,8 @@ DEPOSIT_REST_ENDPOINTS = dict(
         # read_permission_factory_imp='',
         # update_permission_factory_imp='',
         delete_permission_factory_imp=deny_all,
+        create_decorators=['weko_accounts.utils:login_required_customize'],
+        update_decorators=['weko_deposit.rest:require_item_edit_permission'],
     )
 )
 

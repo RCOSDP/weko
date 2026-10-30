@@ -28,7 +28,7 @@ from __future__ import absolute_import, print_function
 
 import json
 from copy import deepcopy
-from functools import partial
+from functools import partial, wraps
 
 from flask import Blueprint, abort, current_app, make_response, request, \
     url_for
@@ -61,6 +61,26 @@ def create_error_handlers(blueprint):
         status=403, message='Invalid action'
     ))
     records_rest_error_handlers(blueprint)
+
+
+def decorate_view(view_func, decorators, methods):
+    """Apply ``decorators`` to the requests of ``view_func`` in ``methods``.
+
+    :param view_func: The view function.
+    :param decorators: List of decorators or their import strings.
+    :param methods: HTTP methods the decorators are applied to.
+    :returns: The wrapped view function.
+    """
+    decorated = view_func
+    for decorator in reversed(decorators):
+        decorated = obj_or_import_string(decorator)(decorated)
+
+    @wraps(view_func)
+    def dispatch(*args, **kwargs):
+        if request.method in methods:
+            return decorated(*args, **kwargs)
+        return view_func(*args, **kwargs)
+    return dispatch
 
 
 def create_blueprint(endpoints):
@@ -116,6 +136,13 @@ def create_blueprint(endpoints):
             '{0}/files/<path:key>'.format(options['item_route'])
         )
 
+        route_decorators = {
+            options['list_route']: (
+                options.pop('create_decorators', []), ('POST',)),
+            options['item_route']: (
+                options.pop('update_decorators', []), ('PUT', 'PATCH')),
+        }
+
         options.setdefault('search_class', DepositSearch)
         search_class = obj_or_import_string(options['search_class'])
 
@@ -127,6 +154,11 @@ def create_blueprint(endpoints):
         options.setdefault('indexer_class', None)
 
         for rule in records_rest_url_rules(endpoint, **options):
+            decorators, methods = route_decorators.get(
+                rule['rule'], ([], ()))
+            if decorators:
+                rule['view_func'] = decorate_view(
+                    rule['view_func'], decorators, methods)
             blueprint.add_url_rule(**rule)
 
         search_class_kwargs = {}
