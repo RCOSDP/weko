@@ -97,3 +97,6 @@ def test_deposit_rest_endpoints_route_decorators():
     assert DEPOSIT_REST_ENDPOINTS['depid']['update_decorators'] == expected
     assert WEKO_DEPOSIT_REST_ENDPOINTS['depid']['update_decorators'] \
         == expected
+    assert DEPOSIT_REST_ENDPOINTS['depid']['action_decorators'] == expected
+    assert WEKO_DEPOSIT_REST_ENDPOINTS['depid']['action_decorators'] \
+        == expected

@@ -142,6 +142,7 @@ def create_blueprint(endpoints):
             options['item_route']: (
                 options.pop('update_decorators', []), ('PUT', 'PATCH')),
         }
+        action_decorators = options.pop('action_decorators', [])
 
         options.setdefault('search_class', DepositSearch)
         search_class = obj_or_import_string(options['search_class'])
@@ -192,6 +193,9 @@ def create_blueprint(endpoints):
             pid_type=options['pid_type'],
             ctx=ctx,
         )
+        if action_decorators:
+            deposit_actions = decorate_view(
+                deposit_actions, action_decorators, ('POST',))
 
         blueprint.add_url_rule(
             '{0}/actions/<any({1}):action>'.format(
