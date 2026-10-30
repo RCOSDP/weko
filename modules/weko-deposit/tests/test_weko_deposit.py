@@ -81,3 +81,19 @@ def test_ItemResource_put(app, db):
             res = client.put("/deposits/redirect/1",
                             data=json.dumps(data), headers=headers)
             assert res.status_code == 200
+
+
+def test_deposit_rest_endpoints_route_decorators():
+    """Test route decorators of the deposit REST endpoints."""
+    from weko_deposit.config import (DEPOSIT_REST_ENDPOINTS,
+                                     WEKO_DEPOSIT_REST_ENDPOINTS)
+
+    expected = ['weko_accounts.utils:login_required_customize']
+    assert DEPOSIT_REST_ENDPOINTS['depid']['create_decorators'] == expected
+    assert WEKO_DEPOSIT_REST_ENDPOINTS['depid']['create_decorators'] \
+        == expected
+
+    expected = ['weko_deposit.rest:require_item_edit_permission']
+    assert DEPOSIT_REST_ENDPOINTS['depid']['update_decorators'] == expected
+    assert WEKO_DEPOSIT_REST_ENDPOINTS['depid']['update_decorators'] \
+        == expected

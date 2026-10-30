@@ -59,6 +59,13 @@ class ExpiredActivityError(RESTException):
     code = 400
     description = _('Expired token.')
 
+
+class GuestTokenDisabledError(RESTException):
+    """Guest token is disabled."""
+
+    code = 403
+    description = _('This function is not available.')
+
 class IndexNotFoundError(RESTException):
     """Index not found."""
 

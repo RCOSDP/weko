@@ -2328,3 +2328,33 @@ def test_get_detail_search_list(i18n_app, users):
     with patch("flask_login.utils._get_user", return_value=users[3]['obj']):
         result =  get_detail_search_list()
         assert result
+
+
+# class UsageReport: send_reminder_mail
+def test_usage_report_send_reminder_mail_guest_token_disabled():
+    from flask import Flask
+
+    from weko_admin.utils import UsageReport
+
+    app = Flask('testapp')
+    app.config.update(
+        THEME_SITEURL='https://example.org',
+        THEME_INSTITUTION_NAME={'ja': '', 'en': ''},
+        WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED=False,
+    )
+    from mock import MagicMock
+
+    activity = MagicMock()
+    activity.extra_info = {'is_guest': True, 'guest_mail': 'a@example.org'}
+    with app.test_request_context():
+        with patch('weko_admin.utils.UsageReport._UsageReport__get_site_info',
+                   return_value=('', '')), \
+                patch('weko_admin.utils.UsageReport.'
+                      '_UsageReport__get_default_mail_sender',
+                      return_value=''):
+            usage_report = UsageReport()
+            with patch.object(usage_report,
+                              '_UsageReport__process_send_mail') as send:
+                assert usage_report.send_reminder_mail(
+                    [], 'mail-id', [activity]) is True
+                send.assert_not_called()

@@ -5824,3 +5824,77 @@ def test_reset_flow_action_roles_restricted_access(app,db,db_register_full_actio
        assert action_role.specify_property == None
        assert action_role.action_item_registrant == False
 
+
+# def is_guest_token_issue_enabled / is_guest_token_accept_enabled
+# def guest_token_issue_required / clear_guest_session
+def test_guest_token_settings():
+    from flask import Flask
+
+    from weko_workflow.errors import GuestTokenDisabledError
+    from weko_workflow.utils import (
+        clear_guest_session, generate_guest_activity_token_value,
+        guest_token_issue_required, init_activity_for_guest_user,
+        is_guest_token_accept_enabled, is_guest_token_issue_enabled,
+        validate_guest_activity_token)
+
+    app = Flask('testapp')
+    app.config.update(
+        SECRET_KEY='test',
+        WEKO_RECORDS_UI_SECRET_KEY='test',
+        WEKO_WORKFLOW_DATE_FORMAT='%Y-%m-%d',
+        WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN=(
+            'activity={} file_name={} date={} email={}'),
+    )
+
+    @guest_token_issue_required
+    def view():
+        return 'ok'
+
+    with app.test_request_context():
+        # default
+        assert is_guest_token_issue_enabled() is False
+        assert is_guest_token_accept_enabled() is False
+
+        # enabled
+        app.config['WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED'] = True
+        app.config['WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED'] = True
+        assert is_guest_token_issue_enabled() is True
+        assert is_guest_token_accept_enabled() is True
+        token = generate_guest_activity_token_value(
+            'A-1', 'a.txt', datetime.datetime(2026, 1, 1), 'a@example.org')
+        assert validate_guest_activity_token(token, 'a.txt')[0] is True
+        assert view() == 'ok'
+
+        # issue disabled
+        app.config['WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED'] = False
+        with pytest.raises(GuestTokenDisabledError):
+            generate_guest_activity_token_value(
+                'A-1', 'a.txt', datetime.datetime(2026, 1, 1),
+                'a@example.org')
+        with pytest.raises(GuestTokenDisabledError):
+            init_activity_for_guest_user({'extra_info': {}})
+        with pytest.raises(GuestTokenDisabledError):
+            view()
+        assert validate_guest_activity_token(token, 'a.txt')[0] is True
+
+        # accept disabled
+        app.config['WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED'] = True
+        app.config['WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED'] = False
+        assert validate_guest_activity_token(token, 'a.txt') \
+            == (False, None, None)
+
+        session['guest_token'] = token
+        session['guest_email'] = 'a@example.org'
+        session['guest_url'] = '/workflow/activity/guest-user/a.txt'
+        session['other'] = 'value'
+        clear_guest_session()
+        assert 'guest_token' not in session
+        assert 'guest_email' not in session
+        assert 'guest_url' not in session
+        assert session['other'] == 'value'
+
+        # accept enabled keeps the guest session
+        app.config['WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED'] = True
+        session['guest_token'] = token
+        clear_guest_session()
+        assert session['guest_token'] == token

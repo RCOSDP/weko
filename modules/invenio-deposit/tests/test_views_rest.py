@@ -623,3 +623,80 @@ def test_simple_rest_flow(app, test_client, api, es, location, fake_schemas, use
             # assert res.status_code == 200
             # data = json.loads(res.data.decode('utf-8'))
             # assert 'Revision 2' == data['metadata']['title']
+
+
+def test_decorate_view():
+    """Test decorators are applied to the given methods only."""
+    from flask import Flask, abort
+
+    from invenio_deposit.views.rest import decorate_view
+
+    def deny(f):
+        def decorated(*args, **kwargs):
+            abort(418)
+        return decorated
+
+    def view():
+        return 'ok'
+
+    app = Flask('testapp')
+    app.add_url_rule(
+        '/items', view_func=decorate_view(view, [deny], ('POST', 'PUT')),
+        methods=['GET', 'POST', 'PUT', 'PATCH'])
+    with app.test_client() as client:
+        assert client.get('/items').status_code == 200
+        assert client.patch('/items').status_code == 200
+        assert client.post('/items').status_code == 418
+        assert client.put('/items').status_code == 418
+
+
+def test_create_blueprint_route_decorators():
+    """Test create_decorators and update_decorators options."""
+    from flask import Flask
+    from invenio_db import InvenioDB
+
+    from invenio_deposit.views.rest import create_blueprint
+
+    endpoints = dict(
+        depid=dict(
+            pid_type='depid',
+            pid_minter='deposit',
+            pid_fetcher='deposit',
+            record_serializers={
+                'application/json': ('invenio_records_rest.serializers'
+                                     ':json_v1_response'),
+            },
+            search_serializers={
+                'application/json': ('invenio_records_rest.serializers'
+                                     ':json_v1_search'),
+            },
+            list_route='/deposits/',
+            item_route='/deposits/<pid_value>',
+            default_media_type='application/json',
+            create_decorators=[_abort_factory(418)],
+            update_decorators=[_abort_factory(409)],
+        )
+    )
+    app = Flask('testapp')
+    app.config.update(
+        SQLALCHEMY_DATABASE_URI='sqlite://',
+        SQLALCHEMY_TRACK_MODIFICATIONS=False,
+    )
+    InvenioDB(app)
+    app.register_blueprint(create_blueprint(endpoints))
+    with app.test_client() as client:
+        assert client.post('/deposits/').status_code == 418
+        assert client.put('/deposits/1').status_code == 409
+        assert client.patch('/deposits/1').status_code == 409
+    assert 'create_decorators' in endpoints['depid']
+    assert 'update_decorators' in endpoints['depid']
+
+
+def _abort_factory(code):
+    from flask import abort
+
+    def decorator(f):
+        def decorated(*args, **kwargs):
+            abort(code)
+        return decorated
+    return decorator

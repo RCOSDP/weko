@@ -43,3 +43,17 @@ def test_init(app):
     # assert 'weko-search-ui' not in app.extensions
     # ext.init_app(app)
     # assert 'weko-search-ui' in app.extensions
+
+
+def test_records_rest_endpoints_permission_factories():
+    """Test permission factories of the records REST endpoints."""
+    from weko_search_ui.config import RECORDS_REST_ENDPOINTS
+
+    for endpoint in ("recid", "opensearch", "worksapce"):
+        options = RECORDS_REST_ENDPOINTS[endpoint]
+        for key in (
+            "create_permission_factory_imp",
+            "update_permission_factory_imp",
+            "delete_permission_factory_imp",
+        ):
+            assert options[key] == "invenio_records_rest.utils:deny_all"

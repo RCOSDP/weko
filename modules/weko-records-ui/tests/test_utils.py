@@ -1879,3 +1879,19 @@ def test_delete_version(app, records):
                     "weko_records_ui.utils.call_external_system") as mock_external:
                     delete_version("2.0")
                     mock_external.assert_not_called()
+
+
+# def create_usage_report_for_user
+def test_create_usage_report_for_user_guest_token_disabled():
+    from flask import Flask
+
+    from weko_records_ui.utils import create_usage_report_for_user
+
+    app = Flask('testapp')
+    app.config['WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED'] = False
+    with app.app_context():
+        with patch('weko_records_ui.utils.WorkActivity') as work_activity:
+            assert create_usage_report_for_user(
+                {'usage_application_activity_id': 'A-1',
+                 'is_guest': True}) is None
+            work_activity.assert_not_called()

@@ -1094,7 +1094,10 @@ def create_usage_report_for_user(onetime_download_extra_info: dict):
     is_guest = onetime_download_extra_info.get('is_guest', False)
 
     # Get Usage Application Activity.
-    from weko_workflow.utils import create_record_metadata_for_user
+    from weko_workflow.utils import create_record_metadata_for_user, \
+        is_guest_token_issue_enabled
+    if is_guest and not is_guest_token_issue_enabled():
+        return None
     usage_application_activity = WorkActivity().get_activity_by_id(
         activity_id)
 

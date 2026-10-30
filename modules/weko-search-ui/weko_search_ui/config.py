@@ -138,6 +138,17 @@ RECORDS_REST_ENDPOINTS["worksapce"]["search_serializers"] = {
     "application/json": ("weko_records.serializers:opensearch_v1_search"),
 }
 
+for _endpoint in ("recid", "opensearch", "worksapce"):
+    RECORDS_REST_ENDPOINTS[_endpoint][
+        "create_permission_factory_imp"
+    ] = "invenio_records_rest.utils:deny_all"
+    RECORDS_REST_ENDPOINTS[_endpoint][
+        "update_permission_factory_imp"
+    ] = "invenio_records_rest.utils:deny_all"
+    RECORDS_REST_ENDPOINTS[_endpoint][
+        "delete_permission_factory_imp"
+    ] = "invenio_records_rest.utils:deny_all"
+
 # RECORDS_REST_ENDPOINTS['recid']['read_permission_factory_imp'] = allow_all
 
 INDEXER_DEFAULT_INDEX = "{}-weko-item-v1.0.0".format(index_prefix)  # Use direct index

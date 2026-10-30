@@ -132,6 +132,8 @@ def base_app(instance_path, cache_config,request ,search_class):
     os.environ['INVENIO_ELASTICSEARCH_HOST']='elasticsearch_test'
     app_ = Flask('test_weko_admin_app', instance_path=instance_path)
     app_.config.update(
+        WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED=True,
+        WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED=True,
         SERVER_NAME='test_server',
         ACCOUNTS_USE_CELERY=False,
         SECRET_KEY='SECRET_KEY',

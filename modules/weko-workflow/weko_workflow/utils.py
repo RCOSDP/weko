@@ -27,6 +27,7 @@ import re
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timedelta
+from functools import wraps
 import sys
 from typing import List, NoReturn, Optional, Tuple, Union, cast
 import traceback
@@ -87,7 +88,7 @@ from .api import Flow, GetCommunity, UpdateItem, WorkActivity, \
     WorkActivityHistory, WorkFlow
 from .config import DOI_VALIDATION_INFO, DOI_VALIDATION_INFO_CROSSREF, DOI_VALIDATION_INFO_DATACITE, IDENTIFIER_GRANT_SELECT_DICT, \
     WEKO_SERVER_CNRI_HOST_LINK, WEKO_STR_TRUE
-from .errors import InvalidParameterValueError
+from .errors import GuestTokenDisabledError, InvalidParameterValueError
 from .models import Action as _Action
 from .models import ActionStatusPolicy, Activity, ActivityStatusPolicy, \
     FlowAction, FlowActionRole, GuestActivity
@@ -3553,6 +3554,45 @@ def send_mail_url_guest_user(mail_info):
         return True
 
 
+def is_guest_token_issue_enabled() -> bool:
+    """Check whether tokens for guest activities are issued.
+
+    Returns:
+        bool: True if ``WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED`` is set.
+    """
+    return bool(current_app.config.get(
+        'WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED', False))
+
+
+def is_guest_token_accept_enabled() -> bool:
+    """Check whether tokens for guest activities are accepted.
+
+    Returns:
+        bool: True if ``WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED`` is set.
+    """
+    return bool(current_app.config.get(
+        'WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED', False))
+
+
+def guest_token_issue_required(f):
+    """Abort with 403 unless tokens for guest activities are issued."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not is_guest_token_issue_enabled():
+            raise GuestTokenDisabledError()
+        return f(*args, **kwargs)
+    return decorated
+
+
+def clear_guest_session():
+    """Drop the guest session unless guest tokens are accepted."""
+    if is_guest_token_accept_enabled():
+        return
+    for key in ('guest_token', 'guest_email', 'guest_url'):
+        if key in session:
+            session.pop(key)
+
+
 def generate_guest_activity_token_value(
     activity_id: str, file_name: str, activity_date: datetime, guest_mail: str
 ) -> str:
@@ -3567,7 +3607,12 @@ def generate_guest_activity_token_value(
     Returns:
         [str]: token value string.
 
+    Raises:
+        GuestTokenDisabledError: tokens for guest activities are not issued.
+
     """
+    if not is_guest_token_issue_enabled():
+        raise GuestTokenDisabledError()
     date_form_str = current_app.config['WEKO_WORKFLOW_DATE_FORMAT']
     token_pattern = current_app.config['WEKO_WORKFLOW_ACTIVITY_TOKEN_PATTERN']
     activity_date = activity_date.strftime(date_form_str)
@@ -3589,7 +3634,11 @@ def init_activity_for_guest_user(
     @param data:
     @param is_usage_report:
     @return:
+    @raise GuestTokenDisabledError: tokens for guest activities are not issued.
     """
+    if not is_guest_token_issue_enabled():
+        raise GuestTokenDisabledError()
+
     def _get_guest_activity():
         _guest_activity = {
             "user_mail": guest_mail,
@@ -3698,6 +3747,8 @@ def validate_guest_activity_token(
     @param file_name:
     @return:
     """
+    if not is_guest_token_accept_enabled():
+        return False, None, None
     try:
         secret_key = current_app.config['WEKO_RECORDS_UI_SECRET_KEY']
         decode_param = base64.b64decode(token.encode()).decode()

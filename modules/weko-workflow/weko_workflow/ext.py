@@ -41,8 +41,10 @@ class WekoWorkflow(object):
         """
         from weko_deposit.signals import item_created
         from .sessions import upt_activity_item
+        from .utils import clear_guest_session
         from .views import depositactivity_blueprint, workflow_blueprint
         self.init_config(app)
+        app.before_request(clear_guest_session)
         item_created.connect(upt_activity_item, app)
         app.register_blueprint(workflow_blueprint)
         app.register_blueprint(depositactivity_blueprint)
