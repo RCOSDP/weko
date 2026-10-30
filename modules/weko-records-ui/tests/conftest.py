@@ -190,6 +190,8 @@ def base_app(instance_path):
 
     # os.environ['FPDF_FONT_DIR'] = "/code/modules/weko-records-ui/weko_records_ui/fonts/"
     app_.config.update(
+        WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED=True,
+        WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED=True,
         CELERY_ALWAYS_EAGER=True,
         CELERY_CACHE_BACKEND="memory",
         CELERY_EAGER_PROPAGATES_EXCEPTIONS=True,

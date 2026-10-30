@@ -93,7 +93,8 @@ from .utils import IdentifierHandle, auto_fill_title, \
     get_pid_and_record, get_pid_value_by_activity_detail, \
     get_record_by_root_ver, get_thumbnails, get_usage_data, \
     get_workflow_item_type_names, grant_access_rights_to_all_open_restricted_files, handle_finish_workflow, \
-    init_activity_for_guest_user, is_enable_item_name_link, \
+    guest_token_issue_required, init_activity_for_guest_user, \
+    is_enable_item_name_link, \
     is_hidden_pubdate, is_show_autofill_metadata, \
     is_usage_application_item_type, prepare_data_for_guest_activity, \
     prepare_doi_link_workflow, process_send_approval_mails, \
@@ -630,6 +631,7 @@ def list_activity():
 
 
 @workflow_blueprint.route('/activity/init-guest', methods=['POST'])
+@guest_token_issue_required
 def init_activity_guest():
     """Init workflow activity for guest user.
         Return URL of workflow activity made from the request body.

@@ -1875,12 +1875,13 @@ class UsageReport:
         from weko_workflow.api import WorkActivity
         from weko_workflow.models import ActionStatusPolicy
         from weko_workflow.utils import generate_guest_activity_token_value, \
-            process_send_mail
+            is_guest_token_issue_enabled, process_send_mail
         self.__activities_id = []
         self.__activities_number = 0
         self.__work_activity = WorkActivity()
         self.__action_status_policy = ActionStatusPolicy()
         self.__activity_token_value = generate_guest_activity_token_value
+        self.__is_guest_token_issue_enabled = is_guest_token_issue_enabled
         self.__process_send_mail = process_send_mail
         self.__page_number = 1
         self.__usage_report_activities_data = []
@@ -1991,6 +1992,9 @@ class UsageReport:
                 .get("WEKO_WORKFLOW_REQUEST_FOR_REGISTER_USAGE_REPORT")
 
         for activity in activities:
+            if (activity.extra_info or {}).get('is_guest') \
+                    and not self.__is_guest_token_issue_enabled():
+                continue
             if activity.item_id:
                 records_id.append(activity.item_id)
 

@@ -184,6 +184,8 @@ def base_app(instance_path, search_class, cache_config):
     """Flask application fixture."""
     app_ = Flask('testapp', instance_path=instance_path)
     app_.config.update(
+        WEKO_WORKFLOW_GUEST_TOKEN_ISSUE_ENABLED=True,
+        WEKO_WORKFLOW_GUEST_TOKEN_ACCEPT_ENABLED=True,
         SECRET_KEY='SECRET_KEY',
         TESTING=True,
         SERVER_NAME='TEST_SERVER.localdomain',

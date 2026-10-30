@@ -61,6 +61,7 @@ from weko_workflow.api import WorkActivity, WorkFlow
 from weko_workflow.models import GuestActivity
 from weko_workflow.scopes import activity_scope
 from weko_workflow.utils import check_etag, check_pretty, init_activity_for_guest_user
+from weko_workflow.utils import is_guest_token_issue_enabled
 
 from .errors import AvailableFilesNotFoundRESTError, ContentsNotFoundError, DateFormatRESTError, \
     FilesNotFoundRESTError, InternalServerError, InvalidEmailError, InvalidRequestError, \
@@ -502,6 +503,8 @@ class FileApplication(ContentNegotiatedMethodView):
             except Exception as ex:
                 # invalid email
                 raise InvalidEmailError() # 400 Error
+            if not is_guest_token_issue_enabled():
+                raise PermissionError()  # 403 Error
 
         # Check pretty
         check_pretty(param_pretty)
