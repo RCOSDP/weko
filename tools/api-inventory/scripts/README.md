@@ -1163,7 +1163,7 @@ python3 scripts/build_checklist.py     # 24列版(=32列)へ引き継ぐ
 ```
 
 **実行順が重要**: `prioritize.py` は `test_gap` を参照して「テスト観点が確認できない行」を
-P2 まで引き上げるため、`test_coverage.py` を先に回すこと。
+P3 まで引き上げるため、`test_coverage.py` を先に回すこと。
 
 ## test_coverage.py
 
@@ -1182,12 +1182,48 @@ P2 まで引き上げるため、`test_coverage.py` を先に回すこと。
 
 「データ破壊」は **既存の実データを不可逆に壊すこと** と定義している。メタデータの
 更新や新規作成は含めない。新規作成しかせず既存データを壊さないものは、認証が
-無くても P0 ではなく P1 に置く。
+無くても P1 ではなく P2 に置く。
+
+状態変更系の P1 は、**永続データ(データベース/ファイルストレージ)を作成・更新・
+削除するもの** に限る。`data_store` の保存先種別が PostgreSQL かファイルである
+ことで判定する。POST で受けるだけの取得(ログイン・検索・エクスポート等)や、
+セッション・Redis・ES・外部サービスだけを書き換えるもの(言語切替・CAPTCHA・
+統計・Handle 等)は P1 にしない。
+
+アプリの外側で行う認証は `infra_auth.py` で判定し、見つかった行は `auth_required` が
+`不要` でも無認証として扱わない(P5)。
+
+- OAuth2 クライアント認証: 実装関数に `@oauth2.token_handler` / `@oauth2.revoke_handler`
+- nginx: URI に一致する location(nginx と同じ優先順位で選ぶ)に `deny all`・
+  `auth_basic`・`auth_request`・`limit_except`、または `if ($var) { return 403; }`
+  があるもの。`$var` が `map` なら `$request_method` を当てはめ、他の変数(接続元等)は
+  任意の値として評価する。行の全メソッドで拒否される場合だけ守られているとみなす
+- Shibboleth SP: `shib_request` のある location で、`shibboleth2.xml` の RequestMap が
+  そのパスに `requireSession` を効かせているもの
+
+nginx と SP の設定はリポジトリ同梱の `nginx/weko.conf`・`nginx/shibboleth2.xml` を読む
+(`WEKO_NGINX_CONF`・`WEKO_SHIB_CONF` で差し替え可)。サイトごとに設定を変えている
+場合、その差は判定に入らない。
+
+ビューの中で行う本人認証は `credential_auth.py` で判定し、同じく P5 にする。
+
+- パスワード: `verify_password` / `check_password` / `verify_and_update_password`
+- トークン: 関数名が「検証の動詞 + token」のもの(`convert_token_into_obj`、
+  `validate_*_token`、`*_token_status` 等)。CSRF トークンと CAPTCHA は本人確認では
+  ないので含めない
+- 実装関数と、そこから呼ぶ同じパッケージ内の関数を1段までたどる(同名の定義が複数
+  あるものはたどらない)。`post` → `post_v1` のような振り分け先も含める
+- ソースの無い Flask-Security の行は endpoint 名(`security.login` 等)で判定する
+
+本人認証をするビュー(ログイン等)は未認証のリクエストがビューまで届くのが正常なので、
+実測の「未認証で到達」は★実証(突破)が無ければ認証の欠落として数えない。
+
+テストは `python3 -m pytest tools/api-inventory/tests`。
 
 参照系でも、露出内容が **認証情報** または **非公開データの実体** であり認可が
-緩い行は P1 に上げる。「読み取り系だから限定的」は露出物次第で成り立たないため。
+緩い行は P2 に上げる。「読み取り系だから限定的」は露出物次第で成り立たないため。
 
-`deprecated` の記述から **非利用** を判定し、認可上の判定が P2 以下なら
+`deprecated` の記述から **非利用** を判定し、認可上の判定が P3 以下なら
 `整理対象` に置き換える(削除すれば認可の問題ごと消える)。
 
 `reconcile_allow.json` に登録された URI(=実機の url_map に無いことを確認済み)は
@@ -1195,7 +1231,7 @@ P2 まで引き上げるため、`test_coverage.py` を先に回すこと。
 有効になるため。判定に `dynamic_verified` を使わないのは、実測欄の粒度がばらついていて
 同じ機能群が別区分に割れるため(プラグイン群8件が対象外3件と整理対象5件に割れていた)。
 
-いずれも P0/P1 の行は優先度を落とさず、理由に事情を添えるだけにする。
+いずれも P1/P2 の行は優先度を落とさず、理由に事情を添えるだけにする。
 
 末尾の派生列(priority / test_* / cleanup)の並びは `prioritize.py` が正規化するため、
 実行順に依存しない。
