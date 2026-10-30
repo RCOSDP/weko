@@ -675,6 +675,7 @@ def test_create_blueprint_route_decorators():
             default_media_type='application/json',
             create_decorators=[_abort_factory(418)],
             update_decorators=[_abort_factory(409)],
+            action_decorators=[_abort_factory(403)],
         )
     )
     app = Flask('testapp')
@@ -688,8 +689,12 @@ def test_create_blueprint_route_decorators():
         assert client.post('/deposits/').status_code == 418
         assert client.put('/deposits/1').status_code == 409
         assert client.patch('/deposits/1').status_code == 409
+        assert client.post('/deposits/1/actions/edit').status_code == 403
+        assert client.post('/deposits/1/actions/discard').status_code == 403
+        assert client.post('/deposits/1/actions/publish').status_code == 403
     assert 'create_decorators' in endpoints['depid']
     assert 'update_decorators' in endpoints['depid']
+    assert 'action_decorators' in endpoints['depid']
 
 
 def _abort_factory(code):
