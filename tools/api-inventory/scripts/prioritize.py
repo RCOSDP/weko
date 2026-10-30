@@ -3,33 +3,58 @@
 
     python3 prioritize.py            # $WEKO_API_INVENTORY_DIR の台帳を更新
 
-判定基準(上から順に評価し、最初に合致したものを採用する):
+判定基準(classify が上から順に評価し、最初に合致したものを採用する):
 
-  P1            無認証で既存のファイル実体を上書き/削除できる(データ破壊)、または
-                状態変更系(POST/PUT/DELETE/PATCH)なのに認証・権限チェックが一切ない、
-                または権限チェック機構はあるように見えるが実装上機能していない
-  P2            ログイン必須のみで所有者/ロール/スコープの限定がない状態変更系(IDOR疑い)、
-                ゲストトークン等のバイパス、ロールチェックが実質不問、または「不明」。
-                認証が無い状態変更系でも新規作成のみで既存データを壊さないもの。
-                参照系でも露出内容が認証情報または非公開データの実体であるもの
-  P3            読み取り系(GET/HEAD)で認証・権限チェックが無い、または
-                ログイン必須のみでロール/所有者スコープなし
+  「無認証」は auth_required が 不要/任意(匿名可)、または実測で未認証のまま到達
+  したこと。ただし infra_auth がアプリの外側の認証(OAuth2 クライアント認証・
+  nginx・Shibboleth SP)を、credential_auth がビュー内の本人認証(パスワード・
+  トークンの検証)を見つけた行は、auth_required が 不要 でも無認証としない。
+  ビュー内の本人認証がある行は、実測の「未認証で到達」も★実証が無ければ数えない
+  (ログイン等は未認証のリクエストがビューまで届くのが正常なため)。
+  「書き込み系」は method に POST/PUT/DELETE/PATCH を含むこと。
+  「新規作成のみ」は data_op に 作成 を含み 更新/削除 を含まないこと。
+  「永続データを変更」は data_store にデータベース(PostgreSQL)かファイルストレージ
+  があり、data_op に 作成/更新/削除 を含むこと。セッション・Redis・ES・
+  外部サービスだけを書き換えるものは含めない。
+
+  P1            (1) 無認証で、data_store がファイル実体かつ data_op が更新/削除
+                (2) 書き込み系・無認証で、永続データを変更し、新規作成のみではない
+                (3) 書き込み系で指摘に「実効せず」があり、永続データを変更し、
+                    新規作成のみではない
+                ※ POST で受けるだけの取得(ログイン・検索・エクスポート等)や
+                  セッションだけを変えるもの(言語切替等)は P1 にならない
+  P2            書き込み系で、無認証/「実効せず」だが新規作成のみ、
+                ゲストトークンのバイパス経路がある、ログインのみで到達するか
+                所有者/ロールの限定が欠けている、または到達可否が未測定。
+                読み取り系でも、認可が緩く(無認証・ログインのみ・スコープ欠落)
+                指摘か★実証があり、露出内容が認証情報または非公開データの実体のもの
+  管理者向け    auth が admin-role-table/admin-access 相当または auth_required が
+                要(管理)で、指摘も★実証も無いもの。確認対象から外さず次で振り分ける
+                  bola_risk に★(ID 直指定で他リソースを操作できる懸念)
+                      書き込み系 → P2、読み取り系 → P3
+                  リポジトリ/コミュニティ管理者も使える書き込み系 → P3
+                      (自分の管轄だけを操作できるか確かめる)
+                  リポジトリ/コミュニティ管理者も使える読み取り系 → P5
+                  システム管理者のみ → P5
   P4            意図的な公開設計(static配信・ヘルスチェック・robots.txt・OAI-PMH等)、
                 または deny_all 常時拒否
-  P5            具体的な権限/所有者チェック機構が明記されており破綻が見えない
-  整理対象      非利用(未使用/非推奨/呼出元なし)で、認可上の判定が P3 以下
+  P3            読み取り系で、無認証、またはログインのみ/スコープ欠落の指摘がある、
+                または指摘があるが到達可否が未測定
+  P5            デコレータ以外の仕組みで認証している(infra_auth/credential_auth)、
+                具体的な権限/所有者チェック機構がある、または auth_required が 要 で
+                破綻が見えない
+  P3            上のいずれにも合致しない(手動確認が必要)
+
+  P1/P2 は管理者向け・P4 より先に評価する。管理画面や公開設計のエンドポイントでも、
+  P1/P2 の条件に合えばそちらが優先される。
+
+テスト観点による引き上げ(bump、P4/P5 と管理者向けの P3/P5 に適用):
+  test_gap が「特定不能」、または 正常値/異常値/境界値/例外処理 の4観点が
+  全て欠けている行は P3 に上げる。一部の欠落なら優先度は変えず理由に追記する。
+
+classify の後に decide が次を重ねる(いずれも P1/P2 の行は優先度を変えない):
   環境依存      実機の url_map に存在しない(プラグイン未導入・config で無効・動的登録)
-  対象外        認証必須かつ admin-access 相当の権限チェックがあり、指摘も★実証も無い
-
-テスト観点による引き上げ(上限 P3):
-  正常値/異常値/境界値/例外処理 のチェックが確認できない行は、認可上の問題が
-  無くても確認対象に上げる。ただし引き上げは P3 まで。
-
-評価順について: 「対象外」と P3 は P2 より先に評価する。admin-access で保護された
-管理画面や、意図的に公開している OAI-PMH を「認証なしの読み取り系」として
-P2 に落とすと、実際に見るべき行が埋もれるため。ただし **指摘(security_finding)や
-★実証がある行は「対象外」にしない**(保護されているように見えて破綻している行を
-除外してしまうため)。
+  整理対象      非利用(未使用/非推奨/実質未使用/呼出元なし/経路なし)
 """
 import argparse
 import json
@@ -39,8 +64,17 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import data_path  # noqa: E402
+import credential_auth  # noqa: E402
+import infra_auth  # noqa: E402
 
 WRITE_METHODS = {'POST', 'PUT', 'DELETE', 'PATCH'}
+
+# data_store の保存先の種別がデータベース/ファイルストレージであるもの。
+# data_store は「対象 / 種別:詳細; 種別:詳細」の形なので、区切りの直後に
+# 種別として現れたものだけを拾う(「ファイルダウンロード統計」や
+# 「認証情報ファイル:」のような対象名・修飾語には反応させない)。
+PERSISTENT_STORE_RE = re.compile(
+    r'(?:^|[/;；→])\s*(?:PostgreSQL|ファイル)(?=[:：(]|\s*(?:[/;；→]|$))')
 
 # 露出内容が「認証情報」とみなせる語
 CREDENTIAL_WORDS = (
@@ -72,7 +106,7 @@ def load_allow():
 
     実測欄(dynamic_verified)の粒度はばらついており、同じ機能群でも
     「経路なし」と書かれた行と空欄の行が混在する。それを判定に使うと
-    同一グループが 整理対象 と 対象外 に割れる。突き合わせで確認済みの
+    同一グループが 整理対象 と別の区分に割れる。突き合わせで確認済みの
     allow リストを正とする。
     """
     p = data_path('reconcile_allow.json', required=False)
@@ -92,6 +126,9 @@ def norm_uri(u):
 
 # 「非利用」とみなす根拠。deprecated 列の記述と、実機 url_map に無いこと。
 UNUSED_WORDS = ('未使用', '非推奨', '実質未使用', '呼出元なし', '経路なし')
+
+# 自分の管轄(リポジトリ/コミュニティ)だけを操作できるはずの管理者ロール
+SCOPED_ADMIN_ROLES = ('Repository Administrator', 'Community Administrator')
 
 # 具体的な権限/所有者チェック機構(P4 の根拠)
 CONCRETE_AUTHZ = [
@@ -118,7 +155,7 @@ def classify(c, H):
     """(priority, reason, cleanup) を返す。
 
     cleanup は「非利用につき整理対象」の根拠。非利用の行は、認可上の問題が
-    P2 以下なら **削除すれば済む** ので `整理対象` に置き換える。P0/P1 の行は
+    P3 以下なら **削除すれば済む** ので `整理対象` に置き換える。P1/P2 の行は
     優先度を落とさず、理由に「削除が最短の対応」であることを添える。
     """
     method = field(c, H, 'method').upper()
@@ -143,10 +180,10 @@ def classify(c, H):
         unused_src = '経路なし(実機 url_map に未登録)'
 
     def bump(pri, why):
-        """テスト観点が確認できない行を P2 まで引き上げる。
+        """テスト観点が確認できない行を P3 まで引き上げる。
 
         認可上の問題が無くても「4観点のチェックが確認できない」なら確認対象に
-        上げる。ただし認可の欠陥と同列にはしないため **上限は P2**。
+        上げる。ただし認可の欠陥と同列にはしないため **上限は P3**。
         """
         if not gap or gap == '-':
             return pri, why
@@ -161,10 +198,29 @@ def classify(c, H):
 
     is_write_method = bool(methods & WRITE_METHODS)
     is_destructive = ('削除' in data_op)
-    is_mutating = any(k in data_op for k in ('作成', '更新', '削除'))
+    # 永続データ(データベース/ファイルストレージ)を作成・更新・削除するか。
+    # セッション・Redis・ES・外部サービスだけを書き換えるもの(言語切替・CAPTCHA・
+    # 統計・Handle 等)は含めない。保存先が書かれていない行(data_store が '-')も同様。
+    persists = bool(PERSISTENT_STORE_RE.search(store))
+    is_mutating = persists and any(k in data_op for k in ('作成', '更新', '削除'))
     no_auth = auth_req in ('不要', '任意(匿名可)')
+    # アプリの外側(OAuth2 プロバイダ・nginx・Shibboleth SP)で行う認証と、
+    # ビューの中で行う本人認証(パスワード・トークンの検証)。
+    # デコレータに現れないので auth_required は「不要」になっているが、無認証ではない。
+    impl_file, impl_line = field(c, H, 'impl_file'), field(c, H, 'impl_line')
+    infra = infra_auth.detect(
+        [u.strip() for u in uri.split(';')], sorted(methods), impl_file, impl_line)
+    cred = '' if infra else credential_auth.credential_auth(
+        impl_file, impl_line, field(c, H, 'endpoint'))
+    if infra or cred:
+        no_auth = False
     unauth_reach = ('未認証で到達' in dyn) or ('未認証で' in dyn and '★' in dyn)
     proven = '★' in dyn
+    # ビューで本人認証をするもの(ログイン等)は、未認証のリクエストがビューまで
+    # 届くのが正常な動き。届いただけでは認証の欠落とみなさず、★実証(突破)が
+    # あるときだけ残す。
+    if cred and not proven:
+        unauth_reach = False
     broken_authz = '実効せず' in finding
     login_only = ('ログインのみで到達' in dyn) or ('低権限ログインで到達' in dyn)
     scope_missing = any(k in finding for k in (
@@ -182,12 +238,15 @@ def classify(c, H):
         return 'P1', f'無認証で既存のファイル実体を上書き/削除できる (data_op={data_op})'
 
     # --- P1: 状態変更系で認証・権限が無い/機能していない ---
-    # ただし新規作成しかせず既存データを壊さないものは P1 に下げる(下の P1 で拾う)。
+    # 永続データを作成・更新・削除するものに限る。POST で受けるだけの取得や、
+    # セッションだけを変えるものは P1 にしない。
+    # ただし新規作成しかせず既存データを壊さないものは P2 に下げる(下の P2 で拾う)。
     creates_only = ('作成' in data_op) and not ('更新' in data_op or '削除' in data_op)
-    if is_write_method and (no_auth or unauth_reach) and not creates_only:
+    if is_write_method and is_mutating and (no_auth or unauth_reach) \
+            and not creates_only:
         why = '認証チェックが無い' if no_auth else '認証はあるが未認証で到達(実測)'
         return 'P1', f'状態変更系({method})で{why}'
-    if is_write_method and broken_authz and not creates_only:
+    if is_write_method and is_mutating and broken_authz and not creates_only:
         return 'P1', f'状態変更系({method})だが権限チェックが実装上機能していない'
 
     # --- P2 ---
@@ -203,9 +262,9 @@ def classify(c, H):
     if is_write_method and unknown:
         return 'P2', f'状態変更系({method})だが到達可否が未測定(不明)'
 
-    # --- 露出内容による引き上げ(参照系でも P1) ---
+    # --- 露出内容による引き上げ(参照系でも P2) ---
     # 「読み取り系だから情報漏洩リスクは限定的」は、露出するものが認証情報や
-    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って P1 に上げる。
+    # 非公開データの実体である場合には成り立たない。認可が緩い行に限って P2 に上げる。
     # 「管理者に集約」のように適切に保護されている行は対象にしない。
     # restricted_content / access_variance は「何が制限されているか」の説明であり、
     # 適切に絞られている旨の記述にも「非公開」が出てくる。露出の根拠には使わない
@@ -224,11 +283,23 @@ def classify(c, H):
         if body:
             return 'P2', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
 
-    # --- 対象外: admin-access 相当で保護され、指摘も実証も無い ---
-    if (not has_finding) and (not proven) and (
-            'admin-role-table' in auth or 'admin-access' in auth
-            or auth_req == '要(管理)'):
-        return bump('対象外', '認証必須+admin-access 相当の権限チェックあり、指摘なし')
+    # --- 管理者向け: admin-access 相当で保護され、指摘も実証も無い ---
+    # 管理者向けでも確認対象から外さない。リポジトリ管理者・コミュニティ管理者は
+    # 自分の管轄だけを操作できるはずなので、他の管轄に手が届かないかを確かめる。
+    is_admin = ('admin-role-table' in auth or 'admin-access' in auth
+                or auth_req == '要(管理)')
+    if is_admin and (not has_finding) and (not proven):
+        roles = field(c, H, 'roles')
+        scoped_admin = any(r in roles for r in SCOPED_ADMIN_ROLES)
+        if '★' in field(c, H, 'bola_risk'):
+            if is_write_method:
+                return 'P2', f'状態変更系({method}): 管理者向けだが object-level 認可が無く、ID の直接指定で他のリソースを操作できる懸念'
+            return 'P3', f'読み取り系({method}): 管理者向けだが object-level 認可が無く、ID の直接指定で他のリソースを読める懸念'
+        if scoped_admin and is_write_method:
+            return bump('P3', f'状態変更系({method}): リポジトリ/コミュニティ管理者も実行でき、管轄の限定を確認できない')
+        if scoped_admin:
+            return bump('P5', '管理者向けの読み取り系(リポジトリ/コミュニティ管理者を含む)')
+        return bump('P5', 'システム管理者のみ')
 
     # --- P4: 意図的な公開設計 / deny_all ---
     for pat, label in PUBLIC_BY_DESIGN:
@@ -249,6 +320,8 @@ def classify(c, H):
             return 'P3', f'読み取り系({method})に指摘があるが到達可否は未測定'
 
     # --- P5 ---
+    if infra or cred:
+        return bump('P5', f'デコレータ以外の仕組みで認証している({infra or cred})')
     hit = [k for k in CONCRETE_AUTHZ if k in auth]
     if hit:
         return bump('P5', f'具体的な権限チェック機構あり({", ".join(hit[:3])})')
@@ -337,7 +410,7 @@ def apply_to(path, out=None):
     return counts
 
 
-ORDER = ['P1', 'P2', 'P3', 'P4', 'P5', '整理対象', '環境依存', '対象外']
+ORDER = ['P1', 'P2', 'P3', 'P4', 'P5', '整理対象', '環境依存']
 
 
 def main():
