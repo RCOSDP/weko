@@ -78,9 +78,12 @@ def test_ItemResource_put(app, db):
         headers = {'content-type': 'application/json'}
         with patch('weko_deposit.tasks.RecordsSearch', mock_recordssearch), \
              patch("weko_deposit.rest.WekoRecord.get_record_by_pid", return_value=None):
+            # put には require_item_edit_permission が付いているため、
+            # 未認証では本体に入る前に 401 になる。
+            # ログイン後の更新の流れは test_rest.py::test_put で見ている。
             res = client.put("/deposits/redirect/1",
                             data=json.dumps(data), headers=headers)
-            assert res.status_code == 200
+            assert res.status_code == 401
 
 
 def test_deposit_rest_endpoints_route_decorators():
