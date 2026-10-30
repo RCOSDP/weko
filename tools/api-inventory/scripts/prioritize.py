@@ -28,8 +28,14 @@
                 所有者/ロールの限定が欠けている、または到達可否が未測定。
                 読み取り系でも、認可が緩く(無認証・ログインのみ・スコープ欠落)
                 指摘か★実証があり、露出内容が認証情報または非公開データの実体のもの
-  対象外        auth が admin-role-table/admin-access 相当または auth_required が
-                要(管理)で、指摘も★実証も無い
+  管理者向け    auth が admin-role-table/admin-access 相当または auth_required が
+                要(管理)で、指摘も★実証も無いもの。確認対象から外さず次で振り分ける
+                  bola_risk に★(ID 直指定で他リソースを操作できる懸念)
+                      書き込み系 → P2、読み取り系 → P3
+                  リポジトリ/コミュニティ管理者も使える書き込み系 → P3
+                      (自分の管轄だけを操作できるか確かめる)
+                  リポジトリ/コミュニティ管理者も使える読み取り系 → P5
+                  システム管理者のみ → P5
   P4            意図的な公開設計(static配信・ヘルスチェック・robots.txt・OAI-PMH等)、
                 または deny_all 常時拒否
   P3            読み取り系で、無認証、またはログインのみ/スコープ欠落の指摘がある、
@@ -39,10 +45,10 @@
                 破綻が見えない
   P3            上のいずれにも合致しない(手動確認が必要)
 
-  P1/P2 は対象外・P4 より先に評価する。管理画面や公開設計のエンドポイントでも、
+  P1/P2 は管理者向け・P4 より先に評価する。管理画面や公開設計のエンドポイントでも、
   P1/P2 の条件に合えばそちらが優先される。
 
-テスト観点による引き上げ(bump、対象外/P4/P5 にのみ適用):
+テスト観点による引き上げ(bump、P4/P5 と管理者向けの P3/P5 に適用):
   test_gap が「特定不能」、または 正常値/異常値/境界値/例外処理 の4観点が
   全て欠けている行は P3 に上げる。一部の欠落なら優先度は変えず理由に追記する。
 
@@ -100,7 +106,7 @@ def load_allow():
 
     実測欄(dynamic_verified)の粒度はばらついており、同じ機能群でも
     「経路なし」と書かれた行と空欄の行が混在する。それを判定に使うと
-    同一グループが 整理対象 と 対象外 に割れる。突き合わせで確認済みの
+    同一グループが 整理対象 と別の区分に割れる。突き合わせで確認済みの
     allow リストを正とする。
     """
     p = data_path('reconcile_allow.json', required=False)
@@ -120,6 +126,9 @@ def norm_uri(u):
 
 # 「非利用」とみなす根拠。deprecated 列の記述と、実機 url_map に無いこと。
 UNUSED_WORDS = ('未使用', '非推奨', '実質未使用', '呼出元なし', '経路なし')
+
+# 自分の管轄(リポジトリ/コミュニティ)だけを操作できるはずの管理者ロール
+SCOPED_ADMIN_ROLES = ('Repository Administrator', 'Community Administrator')
 
 # 具体的な権限/所有者チェック機構(P4 の根拠)
 CONCRETE_AUTHZ = [
@@ -274,11 +283,23 @@ def classify(c, H):
         if body:
             return 'P2', f'参照系だが露出内容が非公開データの実体({body[0]})で、認可が緩い'
 
-    # --- 対象外: admin-access 相当で保護され、指摘も実証も無い ---
-    if (not has_finding) and (not proven) and (
-            'admin-role-table' in auth or 'admin-access' in auth
-            or auth_req == '要(管理)'):
-        return bump('対象外', '認証必須+admin-access 相当の権限チェックあり、指摘なし')
+    # --- 管理者向け: admin-access 相当で保護され、指摘も実証も無い ---
+    # 管理者向けでも確認対象から外さない。リポジトリ管理者・コミュニティ管理者は
+    # 自分の管轄だけを操作できるはずなので、他の管轄に手が届かないかを確かめる。
+    is_admin = ('admin-role-table' in auth or 'admin-access' in auth
+                or auth_req == '要(管理)')
+    if is_admin and (not has_finding) and (not proven):
+        roles = field(c, H, 'roles')
+        scoped_admin = any(r in roles for r in SCOPED_ADMIN_ROLES)
+        if '★' in field(c, H, 'bola_risk'):
+            if is_write_method:
+                return 'P2', f'状態変更系({method}): 管理者向けだが object-level 認可が無く、ID の直接指定で他のリソースを操作できる懸念'
+            return 'P3', f'読み取り系({method}): 管理者向けだが object-level 認可が無く、ID の直接指定で他のリソースを読める懸念'
+        if scoped_admin and is_write_method:
+            return bump('P3', f'状態変更系({method}): リポジトリ/コミュニティ管理者も実行でき、管轄の限定を確認できない')
+        if scoped_admin:
+            return bump('P5', '管理者向けの読み取り系(リポジトリ/コミュニティ管理者を含む)')
+        return bump('P5', 'システム管理者のみ')
 
     # --- P4: 意図的な公開設計 / deny_all ---
     for pat, label in PUBLIC_BY_DESIGN:
@@ -389,7 +410,7 @@ def apply_to(path, out=None):
     return counts
 
 
-ORDER = ['P1', 'P2', 'P3', 'P4', 'P5', '整理対象', '環境依存', '対象外']
+ORDER = ['P1', 'P2', 'P3', 'P4', 'P5', '整理対象', '環境依存']
 
 
 def main():

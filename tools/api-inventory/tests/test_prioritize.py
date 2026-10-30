@@ -15,7 +15,8 @@ import infra_auth  # noqa: E402
 import prioritize  # noqa: E402
 
 COLS = ['method', 'uri', 'auth_required', 'auth_method', 'data_op', 'data_store',
-        'dynamic_verified', 'impl_file', 'impl_line', 'endpoint', 'test_gap']
+        'dynamic_verified', 'impl_file', 'impl_line', 'endpoint', 'test_gap',
+        'roles', 'bola_risk']
 H = {n: i for i, n in enumerate(COLS)}
 
 VIEWS = '''
@@ -49,7 +50,7 @@ def row(**kw):
             'data_store': '対象 / PostgreSQL:t',
             'dynamic_verified': '[実測] anon=400(到達)',
             'impl_file': 'pkg/views.py', 'impl_line': '9', 'endpoint': '',
-            'test_gap': '-'}
+            'test_gap': '-', 'roles': '', 'bola_risk': 'N/A(リソースID無し)'}
     base.update(kw)
     return [base[n] for n in COLS]
 
@@ -87,3 +88,34 @@ def test_proven_bypass_still_counts_for_credential_view():
 def test_framework_login_endpoint():
     r = row(impl_file='(framework/自動生成)', impl_line='0', endpoint='security.login')
     assert prioritize.classify(r, H)[0] == 'P5'
+
+
+SYS = 'System Administrator'
+REPO = 'System Administrator; Repository Administrator'
+COM = 'System Administrator; Repository Administrator; Community Administrator'
+
+
+def admin_row(**kw):
+    base = {'auth_required': '要(管理)', 'auth_method': 'admin-role-table',
+            'impl_file': '', 'impl_line': ''}
+    base.update(kw)
+    return row(**base)
+
+
+@pytest.mark.parametrize('method, roles, bola, expected', [
+    ('POST', REPO, 'N/A(リソースID無し)', 'P3'),   # 管轄の限定を確かめる
+    ('POST', COM, 'N/A(リソースID無し)', 'P3'),
+    ('GET', COM, 'N/A(リソースID無し)', 'P5'),
+    ('POST', SYS, 'N/A(リソースID無し)', 'P5'),    # システム管理者のみ
+    ('POST', REPO, '★object-level認可なし', 'P2'),
+    ('GET', REPO, '★object-level認可なし', 'P3'),
+    ('GET', SYS, '★object-level認可なし', 'P3'),
+])
+def test_admin_rows_are_not_excluded(method, roles, bola, expected):
+    r = admin_row(method=method, roles=roles, bola_risk=bola)
+    assert prioritize.classify(r, H)[0] == expected
+
+
+def test_admin_row_with_test_gap_is_raised_to_p3():
+    r = admin_row(method='GET', roles=SYS, test_gap='特定不能')
+    assert prioritize.classify(r, H)[0] == 'P3'
